@@ -133,3 +133,31 @@ The decision lives in `src/common/seed-safety.ts` (tested by
 
 - `DATABASE_URL` must be exported in your shell before running `seed:countries`.
 - For importer runs, pass an absolute path to the OMNES `.xlsx` source file.
+
+## 5) Reprise des dossiers existants en français
+
+```bash
+npm --prefix backend run backfill:cases-fr              # simulation
+npm --prefix backend run backfill:cases-fr -- --apply   # écrit
+```
+
+Repasse en français le texte anglais écrit en base **avant** le correctif
+« l'app parle français, le serveur écrivait en anglais ». Le correctif ne valait
+que pour les dossiers à venir : les lignes déjà créées gardent leur texte
+anglais, que l'app affiche tel quel — et que `milestone-reminder.service.ts`
+recopie jusque dans le corps français des notifications push.
+
+Table des règles : `src/modules/cases/legacy-english-copy.ts`. Chaque règle est
+la trace exacte d'une écriture d'avant le correctif, si bien qu'une phrase
+saisie à la main par un conseiller n'en déclenche aucune. La simulation exécute
+la vraie transaction puis l'annule : elle montre l'état d'après, pas un
+pronostic. Rejouable sans risque.
+
+Preuve de comportement sur un vrai Postgres :
+
+```bash
+createdb kpb_reprise_test
+DATABASE_URL="postgresql://$USER@localhost:5432/kpb_reprise_test?schema=public" npx prisma db push
+KPB_RUN_POSTGRES_INTEGRATION=true DATABASE_URL="postgresql://$USER@localhost:5432/kpb_reprise_test?schema=public" \
+  npx jest --runInBand src/modules/cases/cases-legacy-copy.postgres.spec.ts
+```

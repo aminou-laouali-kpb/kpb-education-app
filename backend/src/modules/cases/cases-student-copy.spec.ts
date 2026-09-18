@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { REPRISES, appliquer } from './legacy-english-copy';
+
 /**
  * L'app est livrée en français uniquement (`kShippedLocale = 'fr'`), et le
  * client affiche ces champs TELS QUELS : `case_api_codec.dart` les passe par
@@ -106,5 +108,60 @@ describe('copie des dossiers vue par l’étudiant', () => {
       // l'étudiant ne doit pas l'annoncer.
       expect(REASSIGNMENT_CRON).not.toMatch(/after 10h inactivity/i);
     });
+  });
+});
+
+/**
+ * La table de reprise des dossiers déjà en base (`legacy-english-copy.ts`) doit
+ * rester collée au service : elle réécrit l'historique vers les MÊMES phrases
+ * que celles écrites aujourd'hui. Si quelqu'un reformule une phrase du service
+ * sans toucher la table, les anciens dossiers et les nouveaux diront deux
+ * choses différentes — ces tests le font échouer ici plutôt qu'en production.
+ */
+describe('table de reprise des dossiers existants', () => {
+  const SERVICES = `${CASES_SERVICE}\n${REASSIGNMENT_CRON}`;
+
+  /** Le plus long fragment fixe d'un remplacement, hors segment capturé. */
+  const fragmentFixe = (francais: string): string =>
+    francais
+      .split('\\1')
+      .reduce((a, b) => (b.length > a.length ? b : a), '');
+
+  it.each(REPRISES.map((r) => [`${r.table}.${r.colonne}`, r] as const))(
+    'la cible française de %s est encore celle du service : %p',
+    (_cible, regle) => {
+      expect(SERVICES).toContain(fragmentFixe(regle.francais));
+    },
+  );
+
+  it.each(REPRISES.filter((r) => !r.motif).map((r) => [r.anglais, r] as const))(
+    'le service n’écrit plus %p, que la reprise corrige en base',
+    (_anglais, regle) => {
+      expect(SERVICES).not.toContain(regle.anglais);
+    },
+  );
+
+  it.each(REPRISES.filter((r) => r.motif).map((r) => [r.anglais, r] as const))(
+    'la reprise de %p est rejouable',
+    (_motif, regle) => {
+      // Une reprise relancée par sécurité, ou rejouée sur une réplique, ne doit
+      // pas retraiter ce qu'elle a déjà traduit : la sortie française ne doit
+      // pas correspondre à son propre motif.
+      const rendu = regle.francais.replace(/\\1/g, 'Awa Traoré');
+      expect(appliquer(regle, rendu)).toBe(rendu);
+    },
+  );
+
+  it('ne définit pas deux règles pour la même valeur', () => {
+    const cles = REPRISES.map((r) => `${r.table}.${r.colonne}=${r.anglais}`);
+    expect(new Set(cles).size).toBe(cles.length);
+  });
+
+  it('n’écrit jamais une cible française encore anglaise', () => {
+    // Garde-fou bête mais utile : une règle dont la cible contient encore la
+    // phrase anglaise signerait un copier-coller raté.
+    for (const r of REPRISES) {
+      expect(r.francais).not.toBe(r.anglais);
+    }
   });
 });

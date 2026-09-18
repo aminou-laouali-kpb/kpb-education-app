@@ -306,7 +306,7 @@ export class CasesService {
               caseId: c.id,
               status: CaseStatus.CounselorAssigned,
               title: 'Conseiller attribué',
-              description: `${nextCounsellor.fullName} a été attribué à votre dossier.`,
+              description: `Votre dossier a été attribué à ${nextCounsellor.fullName}.`,
             },
           });
         }
@@ -558,7 +558,7 @@ export class CasesService {
             caseId: id,
             status: CaseStatus.UnderReview,
             title: 'Document ajouté',
-            description: `${input.title} a été ajouté au dossier.`,
+            description: `Le document « ${input.title} » a été ajouté au dossier.`,
           },
         });
 
@@ -743,7 +743,7 @@ export class CasesService {
               (await tx.case.findUnique({ where: { id } }))?.status ??
               CaseStatus.Submitted,
             title: 'Action ajoutée',
-            description: `${input.title} a été ajouté à votre dossier.`,
+            description: `L’action « ${input.title} » a été ajoutée à votre dossier.`,
           },
         });
 
