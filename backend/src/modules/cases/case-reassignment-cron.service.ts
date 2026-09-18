@@ -98,8 +98,8 @@ export class CaseReassignmentCronService {
             data: {
               caseId: item.id,
               status: CaseStatus.CounselorAssigned,
-              title: 'Case reassigned',
-              description: `Auto-reassigned after 10h inactivity to ${next.fullName}.`,
+              title: 'Dossier réattribué',
+              description: `Votre dossier a été réattribué à ${next.fullName}.`,
             },
           });
         }),
