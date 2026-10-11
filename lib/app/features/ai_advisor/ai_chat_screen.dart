@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/coach_service.dart';
 import '../../core/services/ai_content_report_service.dart';
 import '../../core/ui/components/verified_advisor_sheet.dart';
@@ -100,6 +101,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       });
       _scrollToBottom();
     } catch (_) {
+      unawaited(AnalyticsService.instance.logCoachLoadFailed());
       if (!mounted) return;
       setState(() {
         _bootstrapping = false;
@@ -172,7 +174,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
     ));
   }
 
-  Future<void> _sendMessage(String text) async {
+  /// [source] : `input` (zone de saisie) ou `suggestion` (puce tapée) — pour
+  /// savoir si les suggestions servent. Mesuré par `ai_coach_message_sent`,
+  /// qui ne porte JAMAIS le texte.
+  Future<void> _sendMessage(String text, {String source = 'input'}) async {
     if (text.trim().isEmpty) return;
     // Un seul tour à la fois : un deuxième envoi pendant le streaming remettait
     // le brouillon à zéro et mélangeait les deux réponses (et le quota était
@@ -201,6 +206,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _textController.clear();
 
     var assistantIndex = -1;
+    // Comment le tour s'est terminé — `unreachable` tant que le flux n'a rien
+    // dit, puis écrasé par l'événement qui le clôt.
+    var result = 'unreachable';
 
     try {
       await for (final event in _coach.sendMessage(
@@ -215,6 +223,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           // counter can be stale, e.g. two devices). Show the same friendly
           // hand-off state as a client-side exhaustion — never a raw error.
           final isQuotaRefusal = looksLikeCoachQuotaError(event.message);
+          result = isQuotaRefusal ? 'quota_refused' : 'error';
           setState(() {
             _isTyping = false;
             if (isQuotaRefusal) {
@@ -259,6 +268,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         }
 
         if (event.type == 'done') {
+          result = 'ok';
           setState(() {
             _isTyping = false;
             if (event.quotaRemaining != null) {
@@ -282,6 +292,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
         ));
       });
     }
+
+    unawaited(AnalyticsService.instance.logCoachMessageSent(
+      source: source,
+      result: result,
+      quotaRemaining: _remainingMessages,
+    ));
 
     if (mounted && _isTyping) {
       setState(() => _isTyping = false);
@@ -609,7 +625,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
           return Padding(
             padding: const EdgeInsets.only(bottom: 7),
             child: GestureDetector(
-              onTap: () => _sendMessage(sug),
+              onTap: () => _sendMessage(sug, source: 'suggestion'),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),

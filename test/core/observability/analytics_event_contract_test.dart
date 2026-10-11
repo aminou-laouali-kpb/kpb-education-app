@@ -24,6 +24,9 @@ void main() {
       AnalyticsEventName.eefPrivateInfoOpened,
       AnalyticsEventName.eefTourShown,
       AnalyticsEventName.eefTourCompleted,
+      AnalyticsEventName.onboardingValidationFailed,
+      AnalyticsEventName.aiCoachMessageSent,
+      AnalyticsEventName.aiCoachLoadFailed,
     ];
     for (final e in events) {
       expect(e.length, lessThanOrEqualTo(40), reason: e);
@@ -298,6 +301,62 @@ void main() {
         '`tour_cards_seen`',
       ]) {
         expect(doc, contains(needle), reason: '$needle absent du contrat');
+      }
+    });
+  });
+
+  // Les trous de mesure comblés en octobre 2026 : chaque nouvel événement
+  // porte EXACTEMENT ses clés — jamais un texte saisi.
+  group('trous de mesure (octobre 2026)', () {
+    String doc() => File('docs/analytics-event-contract.md').readAsStringSync();
+
+    test('`onboarding_validation_failed` : `step` et `reason`, rien d\'autre',
+        () {
+      expect(AnalyticsEventName.onboardingValidationFailed,
+          'onboarding_validation_failed');
+      expect(
+        AnalyticsService.onboardingValidationParams(
+                step: 1, reason: 'consent_missing')
+            .keys
+            .toSet(),
+        {AnalyticsParamKey.step, AnalyticsParamKey.reason},
+      );
+    });
+
+    test('`ai_coach_message_sent` ne porte jamais le texte de la question', () {
+      final params = AnalyticsService.coachMessageParams(
+        source: 'suggestion',
+        result: 'ok',
+      );
+      expect(params.keys.toSet(), {
+        AnalyticsParamKey.source,
+        AnalyticsParamKey.result,
+        AnalyticsParamKey.quotaRemaining,
+      });
+      // Quota inconnu : -1, pas une clé absente (un trou dans le tableau).
+      expect(params[AnalyticsParamKey.quotaRemaining], -1);
+    });
+
+    test('`view_item` dit la famille du contenu', () {
+      expect(
+        AnalyticsService.viewItemParams('p1', 'program'),
+        {
+          AnalyticsParamKey.itemId: 'p1',
+          AnalyticsParamKey.itemCategory: 'program'
+        },
+      );
+    });
+
+    test('docs/analytics-event-contract.md documente les nouveautés', () {
+      final text = doc();
+      for (final name in [
+        'onboarding_validation_failed',
+        'ai_coach_message_sent',
+        'ai_coach_load_failed',
+        'kpb_screen',
+        'item_category',
+      ]) {
+        expect(text, contains(name), reason: name);
       }
     });
   });

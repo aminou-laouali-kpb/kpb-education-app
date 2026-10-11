@@ -192,6 +192,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final Set<String> _docs = {};
   bool _hasConsented = false;
 
+  /// Vrai dès qu'un « Continuer » a échoué sur la page. Avant : les erreurs
+  /// restent cachées (on ne gronde pas un formulaire vide) ; après : chaque
+  /// champ se revalide à la frappe, et les sections hors formulaire
+  /// (naissance, tuteur, consentement) affichent leur erreur EN PLACE.
+  ///
+  /// Le bouton qui « ne faisait rien » — erreur hors de l'écran, simple bandeau
+  /// posé SUR le bouton — était l'écran le plus rage-cliqué de l'app : 253
+  /// comptes, 13 % de ceux qui voyaient l'étape 1 (PostHog, octobre 2026).
+  final Set<int> _attemptedPages = {};
+
+  // Les sections de l'étape 1 qui ne sont pas des champs de formulaire : on y
+  // fait défiler la page quand ce sont elles qui bloquent.
+  final _birthDateKey = GlobalKey();
+  final _guardianKey = GlobalKey();
+  final _consentKey = GlobalKey();
+
   // Age gate + self-attested guardian consent for declared minors (<18).
   DateTime? _birthDate;
   final _guardianNameCtrl = TextEditingController();
@@ -436,67 +452,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _next() {
     final valid = switch (_page) {
-      0 => () {
-          final formValid = _key0.currentState?.validate() ?? false;
-          if (!formValid) return false;
-          if (!_hasConsented) {
-            Get.snackbar(
-              'onboarding_consent_required_title'.tr,
-              'onboarding_consent_required_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.privacy_tip_outlined,
-                  color: KpbColors.error),
-            );
-            return false;
-          }
-          if (_accountType == AccountType.student) {
-            if (_birthDate == null) {
-              Get.snackbar(
-                'onboarding_birthdate_required_title'.tr,
-                'onboarding_birthdate_required'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.cake_outlined, color: KpbColors.error),
-              );
-              return false;
-            }
-            if (_isUnderMinimumAge) {
-              Get.snackbar(
-                'onboarding_under_16_title'.tr,
-                'onboarding_under_16_body'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.cake_outlined, color: KpbColors.error),
-              );
-              return false;
-            }
-            // Declared minor: a guardian must be named, reachable, and consent
-            // recorded before any data sync or AI processing.
-            if (_isMinor &&
-                (_guardianNameCtrl.text.trim().isEmpty ||
-                    _guardianContactCtrl.text.trim().isEmpty ||
-                    !_guardianConsented)) {
-              Get.snackbar(
-                'guardian_consent_required_title'.tr,
-                'guardian_consent_required'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.family_restroom_outlined,
-                    color: KpbColors.error),
-              );
-              return false;
-            }
-          }
-          return true;
+      0 => _validateIdentityPage(),
+      1 => () {
+          final ok = _key1.currentState?.validate() ?? false;
+          if (!ok) _onPageInvalid(1, 'required_fields', _key1);
+          return ok;
         }(),
-      1 => _key1.currentState?.validate() ?? false,
       2 => () {
           if (_fieldIds.isEmpty) {
+            _logValidationFailed(2, 'fields_missing');
             Get.snackbar(
               'onboarding_selection_required_title'.tr,
               'onboarding_select_field_body'.tr,
@@ -509,6 +473,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             return false;
           }
           if (_countryIds.isEmpty) {
+            _logValidationFailed(2, 'countries_missing');
             Get.snackbar(
               'onboarding_selection_required_title'.tr,
               'onboarding_select_country_body'.tr,
@@ -537,6 +502,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } else {
       _submit();
     }
+  }
+
+  /// La raison qui bloque l'étape 1, dans l'ORDRE de la page (de haut en bas),
+  /// ou null quand tout passe. Les champs du formulaire viennent d'abord : ils
+  /// sont au-dessus de la naissance, du tuteur et du consentement.
+  String? _identityIssue({required bool formValid}) {
+    if (!formValid) return 'required_fields';
+    if (_accountType == AccountType.student) {
+      if (_birthDate == null) return 'birth_date_missing';
+      if (_isUnderMinimumAge) return 'under_minimum_age';
+      if (_guardianIncomplete) return 'guardian_incomplete';
+    }
+    if (!_hasConsented) return 'consent_missing';
+    return null;
+  }
+
+  /// Déclaré mineur : un tuteur doit être nommé, joignable, et son accord
+  /// donné avant toute synchronisation ou tout traitement IA.
+  bool get _guardianIncomplete =>
+      _isMinor &&
+      (_guardianNameCtrl.text.trim().isEmpty ||
+          _guardianContactCtrl.text.trim().isEmpty ||
+          !_guardianConsented);
+
+  bool _validateIdentityPage() {
+    final formValid = _key0.currentState?.validate() ?? false;
+    final issue = _identityIssue(formValid: formValid);
+    if (issue == null) return true;
+    final target = switch (issue) {
+      'birth_date_missing' || 'under_minimum_age' => _birthDateKey,
+      'guardian_incomplete' => _guardianKey,
+      'consent_missing' => _consentKey,
+      _ => null,
+    };
+    _onPageInvalid(0, issue, _key0, section: target);
+    return false;
+  }
+
+  /// Un « Continuer » refusé : on le DIT (erreurs en place, page défilée
+  /// jusqu'au premier problème, vibration) et on le mesure.
+  void _onPageInvalid(
+    int page,
+    String reason,
+    GlobalKey<FormState> formKey, {
+    GlobalKey? section,
+  }) {
+    setState(() => _attemptedPages.add(page));
+    HapticFeedback.mediumImpact();
+    _logValidationFailed(page, reason);
+    // Après la trame : les erreurs qu'on vient d'allumer doivent être montées
+    // pour qu'on puisse les atteindre.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = section?.currentContext ?? _firstFieldError(formKey);
+      if (target == null || !target.mounted) return;
+      unawaited(Scrollable.ensureVisible(
+        target,
+        alignment: 0.15,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      ));
+    });
+  }
+
+  void _logValidationFailed(int page, String reason) {
+    unawaited(AnalyticsService.instance.logOnboardingValidationFailed(
+      step: page + 1,
+      reason: reason,
+    ));
+  }
+
+  /// Le premier champ en erreur, dans l'ordre de l'arbre — qui est celui de
+  /// l'écran, la page étant une seule colonne.
+  BuildContext? _firstFieldError(GlobalKey<FormState> formKey) {
+    BuildContext? found;
+    void visit(Element element) {
+      if (found != null) return;
+      if (element is StatefulElement) {
+        final state = element.state;
+        if (state is FormFieldState && state.hasError) {
+          found = element;
+          return;
+        }
+      }
+      element.visitChildren(visit);
+    }
+
+    final root = formKey.currentContext;
+    if (root is Element) root.visitChildren(visit);
+    return found;
   }
 
   void _prev() {
@@ -620,6 +675,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Page 0 — Identité & compte
                 _Page(
                   formKey: _key0,
+                  autovalidate: _attemptedPages.contains(0),
                   title: 'onboarding_welcome_title'.tr,
                   subtitle: 'onboarding_welcome_subtitle'.tr,
                   child: _PageIdentity(
@@ -640,6 +696,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     guardianNameCtrl: _guardianNameCtrl,
                     guardianContactCtrl: _guardianContactCtrl,
                     guardianConsented: _guardianConsented,
+                    showErrors: _attemptedPages.contains(0),
+                    isUnderMinimumAge: _isUnderMinimumAge,
+                    guardianIncomplete: _guardianIncomplete,
+                    birthDateKey: _birthDateKey,
+                    guardianKey: _guardianKey,
+                    consentKey: _consentKey,
+                    onGuardianChanged: () => setState(() {}),
                     onAccountType: (v) => setState(() => _accountType = v),
                     onLanguage: (v) => setState(() => _language = v),
                     onPhoneCode: (v) => setState(() => _phoneCode = v),
@@ -657,6 +720,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_accountType != AccountType.partner)
                   _Page(
                     formKey: _key1,
+                    autovalidate: _attemptedPages.contains(1),
                     title: 'onboarding_academic_title'.tr,
                     subtitle: 'onboarding_academic_subtitle'.tr,
                     child: _PageAcademic(
@@ -848,41 +912,55 @@ class _Page extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.autovalidate = false,
   });
   final Key formKey;
   final String title, subtitle;
   final Widget child;
 
+  /// Revalider chaque champ à la frappe — une fois qu'un envoi a échoué.
+  final bool autovalidate;
+
   @override
   Widget build(BuildContext context) {
+    // Une colonne dans un SingleChildScrollView, PAS une ListView : une liste
+    // paresseuse démonte les champs sortis de l'écran, et un champ démonté
+    // n'est ni validé par `Form.validate()` ni atteignable pour y faire
+    // défiler la page. Une douzaine de champs : rien à économiser.
     return Form(
       key: formKey,
-      child: ListView(
+      autovalidateMode: autovalidate
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(KpbSpacing.pagePad),
-        children: [
-          const SizedBox(height: KpbSpacing.sm),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              height: 1.25,
-              color: KpbColors.brandNavy,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: KpbSpacing.sm),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                height: 1.25,
+                color: KpbColors.brandNavy,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: KpbColors.textMuted,
-              height: 1.4,
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                color: KpbColors.textMuted,
+                height: 1.4,
+              ),
             ),
-          ),
-          const SizedBox(height: KpbSpacing.lg),
-          child,
-        ],
+            const SizedBox(height: KpbSpacing.lg),
+            child,
+          ],
+        ),
       ),
     );
   }
@@ -984,7 +1062,21 @@ class _PageIdentity extends StatelessWidget {
     required this.guardianConsented,
     required this.onBirthDate,
     required this.onGuardianConsent,
+    required this.showErrors,
+    required this.isUnderMinimumAge,
+    required this.guardianIncomplete,
+    required this.birthDateKey,
+    required this.guardianKey,
+    required this.consentKey,
+    required this.onGuardianChanged,
   });
+
+  /// Un « Continuer » a déjà échoué : les sections hors formulaire montrent
+  /// leur erreur en place (et plus dans un bandeau posé sur le bouton).
+  final bool showErrors;
+  final bool isUnderMinimumAge, guardianIncomplete;
+  final GlobalKey birthDateKey, guardianKey, consentKey;
+  final VoidCallback onGuardianChanged;
 
   final AccountType accountType;
   final String language, country;
@@ -1167,40 +1259,54 @@ class _PageIdentity extends StatelessWidget {
 
         // ── Âge + consentement tuteur (mineurs) ────────────────────
         if (accountType == AccountType.student) ...[
-          InkWell(
-            onTap: () async {
-              final now = DateTime.now();
-              final lastDate = DateTime(now.year - 16, now.month, now.day);
-              var initial =
-                  birthDate ?? DateTime(now.year - 18, now.month, now.day);
-              if (initial.isAfter(lastDate)) initial = lastDate;
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: initial,
-                firstDate: DateTime(now.year - 80),
-                lastDate: lastDate,
-                helpText: 'birth_date'.tr,
-              );
-              if (picked != null) onBirthDate(picked);
-            },
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'birth_date'.tr,
-                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+          Builder(builder: (context) {
+            final birthError = !showErrors
+                ? null
+                : birthDate == null
+                    ? 'onboarding_birthdate_required'.tr
+                    : isUnderMinimumAge
+                        ? 'onboarding_under_16_body'.tr
+                        : null;
+            return InkWell(
+              key: birthDateKey,
+              onTap: () async {
+                final now = DateTime.now();
+                final lastDate = DateTime(now.year - 16, now.month, now.day);
+                var initial =
+                    birthDate ?? DateTime(now.year - 18, now.month, now.day);
+                if (initial.isAfter(lastDate)) initial = lastDate;
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: initial,
+                  firstDate: DateTime(now.year - 80),
+                  lastDate: lastDate,
+                  helpText: 'birth_date'.tr,
+                );
+                if (picked != null) onBirthDate(picked);
+              },
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'birth_date'.tr,
+                  suffixIcon:
+                      const Icon(Icons.calendar_today_outlined, size: 18),
+                  errorText: birthError,
+                  errorMaxLines: 3,
+                ),
+                child: Text(
+                  birthDate == null
+                      ? 'birth_date_hint'.tr
+                      : '${birthDate!.day.toString().padLeft(2, '0')}/${birthDate!.month.toString().padLeft(2, '0')}/${birthDate!.year}',
+                  style: birthDate == null
+                      ? TextStyle(color: KpbColors.textMuted)
+                      : null,
+                ),
               ),
-              child: Text(
-                birthDate == null
-                    ? 'birth_date_hint'.tr
-                    : '${birthDate!.day.toString().padLeft(2, '0')}/${birthDate!.month.toString().padLeft(2, '0')}/${birthDate!.year}',
-                style: birthDate == null
-                    ? TextStyle(color: KpbColors.textMuted)
-                    : null,
-              ),
-            ),
-          ),
+            );
+          }),
           if (isMinor) ...[
             const SizedBox(height: KpbSpacing.md),
             Container(
+              key: guardianKey,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: guardianConsented
@@ -1208,8 +1314,11 @@ class _PageIdentity extends StatelessWidget {
                     : KpbColors.surfaceMuted,
                 borderRadius: KpbRadius.mdBr,
                 border: Border.all(
-                  color:
-                      guardianConsented ? KpbColors.success : KpbColors.border,
+                  color: showErrors && guardianIncomplete
+                      ? KpbColors.error
+                      : guardianConsented
+                          ? KpbColors.success
+                          : KpbColors.border,
                 ),
               ),
               child: Column(
@@ -1230,21 +1339,30 @@ class _PageIdentity extends StatelessWidget {
                     controller: guardianNameCtrl,
                     decoration: InputDecoration(labelText: 'guardian_name'.tr),
                     textInputAction: TextInputAction.next,
+                    onChanged: (_) => onGuardianChanged(),
                   ),
                   const SizedBox(height: KpbSpacing.sm),
                   TextFormField(
                     controller: guardianContactCtrl,
                     decoration:
                         InputDecoration(labelText: 'guardian_contact'.tr),
+                    onChanged: (_) => onGuardianChanged(),
                   ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: guardianConsented,
-                    activeColor: KpbColors.success,
-                    title: Text('guardian_consent_checkbox'.tr,
-                        style: KpbTextStyles.bodySm),
-                    onChanged: (v) => onGuardianConsent(v ?? false),
+                  // Son propre Material : sans lui, la tuile peindrait son
+                  // effet d'encre sous le fond coloré de la carte.
+                  Material(
+                    type: MaterialType.transparency,
+                    child: CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: guardianConsented,
+                      activeColor: KpbColors.success,
+                      title: Text('guardian_consent_checkbox'.tr,
+                          style: KpbTextStyles.bodySm),
+                      onChanged: (v) => onGuardianConsent(v ?? false),
+                    ),
                   ),
+                  if (showErrors && guardianIncomplete)
+                    _InlineError('guardian_consent_required'.tr),
                 ],
               ),
             ),
@@ -1253,88 +1371,147 @@ class _PageIdentity extends StatelessWidget {
         ],
 
         // ── GDPR Consent ──────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color:
-                hasConsented ? KpbColors.successLight : KpbColors.surfaceMuted,
+        // Toute la carte coche la case : la case seule (24 px) était la cible
+        // la plus petite de l'écran, et un appui sur la phrase ne faisait
+        // rien. Les deux liens gardent leur propre geste (le plus profond
+        // gagne).
+        Material(
+          key: consentKey,
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onConsent(!hasConsented),
             borderRadius: KpbRadius.mdBr,
-            border: Border.all(
-              color: hasConsented ? KpbColors.success : KpbColors.border,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: hasConsented,
-                  onChanged: (v) => onConsent(v ?? false),
-                  activeColor: KpbColors.success,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+            child: Ink(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasConsented
+                    ? KpbColors.successLight
+                    : KpbColors.surfaceMuted,
+                borderRadius: KpbRadius.mdBr,
+                border: Border.all(
+                  color: hasConsented
+                      ? KpbColors.success
+                      : showErrors
+                          ? KpbColors.error
+                          : KpbColors.border,
                 ),
               ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: KpbColors.textMuted,
-                      height: 1.4,
-                    ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextSpan(text: 'onboarding_consent_accept_prefix'.tr),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: GestureDetector(
-                          onTap: () => Get.to(() => PrivacyPolicyScreen()),
-                          child: Text(
-                            'privacy_policy_inline'.tr,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: KpbColors.actionPrimary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: KpbColors.actionPrimary,
-                            ),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: hasConsented,
+                          onChanged: (v) => onConsent(v ?? false),
+                          activeColor: KpbColors.success,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
-                      TextSpan(text: 'onboarding_consent_and'.tr),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: GestureDetector(
-                          onTap: () =>
-                              Get.to(() => const TermsOfServiceScreen()),
-                          child: Text(
-                            'onboarding_terms_of_use_inline'.tr,
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
                             style: TextStyle(
                               fontSize: 13,
-                              color: KpbColors.actionPrimary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: KpbColors.actionPrimary,
+                              color: KpbColors.textMuted,
+                              height: 1.4,
                             ),
+                            children: [
+                              TextSpan(
+                                  text: 'onboarding_consent_accept_prefix'.tr),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      Get.to(() => PrivacyPolicyScreen()),
+                                  child: Text(
+                                    'privacy_policy_inline'.tr,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: KpbColors.actionPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: KpbColors.actionPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              TextSpan(text: 'onboarding_consent_and'.tr),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: GestureDetector(
+                                  onTap: () => Get.to(
+                                      () => const TermsOfServiceScreen()),
+                                  child: Text(
+                                    'onboarding_terms_of_use_inline'.tr,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: KpbColors.actionPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: KpbColors.actionPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
                           ),
                         ),
                       ),
-                      const TextSpan(text: '.'),
                     ],
                   ),
-                ),
+                  if (showErrors && !hasConsented)
+                    _InlineError('onboarding_consent_required_body'.tr),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         const SizedBox(height: KpbSpacing.md),
       ],
+    );
+  }
+}
+
+/// Une erreur écrite SOUS la section qui bloque, dans la couleur des erreurs
+/// de champ — là où l'œil la cherche, et pas dans un bandeau qui couvre le
+/// bouton « Continuer ».
+class _InlineError extends StatelessWidget {
+  const _InlineError(this.message);
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 16, color: KpbColors.error),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: KpbColors.error,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

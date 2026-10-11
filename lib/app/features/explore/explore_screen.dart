@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/commons_logo.dart';
 import '../../core/utils/country_utils.dart';
@@ -217,6 +220,7 @@ void openInstitutionDetail(
   InstitutionModel institution,
   AppController controller,
 ) {
+  unawaited(AnalyticsService.instance.logViewInstitution(institution.id));
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,

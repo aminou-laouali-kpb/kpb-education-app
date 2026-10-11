@@ -9,6 +9,7 @@ import 'package:posthog_flutter/posthog_flutter.dart';
 import '../config/app_config.dart';
 import '../observability/analytics_event_contract.dart';
 import '../observability/crashlytics_observability.dart';
+import '../observability/posthog_screen_context_observer.dart';
 import '../utils/app_logger.dart';
 
 /// Applies one consent decision to one collector. See
@@ -49,6 +50,9 @@ class AnalyticsService {
   late final List<NavigatorObserver> navigatorObservers = [
     observer,
     if (AppConfig.posthogEnabled) PosthogObserver(),
+    // L'écran courant en super propriété, pour les événements natifs
+    // (`$rageclick`) dont le `$screen_name` vaut sinon « Flutter ».
+    if (AppConfig.posthogEnabled) PosthogScreenContextObserver(),
   ];
 
   /// Mirrors a Firebase event to PostHog. No-op when PostHog is not configured;
@@ -784,6 +788,44 @@ class AnalyticsService {
     }
   }
 
+  /// Les raisons fermées d'un échec de contrôle de l'onboarding.
+  static const onboardingValidationReasons = <String>{
+    'required_fields',
+    'consent_missing',
+    'birth_date_missing',
+    'under_minimum_age',
+    'guardian_incomplete',
+    'fields_missing',
+    'countries_missing',
+  };
+
+  /// Les propriétés de `onboarding_validation_failed` : `step` et `reason`,
+  /// rien d'autre. Exposée pour qu'un test lise la liste EXACTE des clés.
+  @visibleForTesting
+  static Map<String, Object> onboardingValidationParams({
+    required int step,
+    required String reason,
+  }) =>
+      <String, Object>{
+        AnalyticsParamKey.step: step,
+        AnalyticsParamKey.reason: reason,
+      };
+
+  /// « Continuer » tapé alors que la page ne passe pas le contrôle. [reason]
+  /// est l'une de [onboardingValidationReasons] — jamais une valeur saisie.
+  Future<void> logOnboardingValidationFailed({
+    required int step,
+    required String reason,
+  }) async {
+    final params = onboardingValidationParams(step: step, reason: reason);
+    try {
+      await _logEvent(AnalyticsEventName.onboardingValidationFailed, params);
+      _mirror(AnalyticsEventName.onboardingValidationFailed, params);
+    } catch (e, s) {
+      _logError('logOnboardingValidationFailed', e, s);
+    }
+  }
+
   /// A sign-in / sign-up attempt failed. [method] is 'google' | 'email';
   /// [reason] a coarse code ('oauth_error', 'rate_limited', 'send_error',
   /// 'verify_error'). Makes auth drop-off attributable per method.
@@ -913,35 +955,91 @@ class AnalyticsService {
     }
   }
 
-  Future<void> logViewInstitution(String institutionId) async {
+  /// `view_item` : un contenu du catalogue a été ouvert. [category] dit sa
+  /// famille (`scholarship`, `program`, `country`, `institution`) — sans elle,
+  /// seules les bourses étaient comptées, et les programmes et pays (les deux
+  /// fiches les plus ouvertes après l'accueil) restaient invisibles.
+  Future<void> _logViewItem(String itemId, String category) async {
     try {
-      await _analytics.logViewItem(
-        items: [
-          AnalyticsEventItem(itemId: institutionId, itemCategory: 'institution')
-        ],
-      );
-      _mirror('view_item', {
-        AnalyticsParamKey.itemId: institutionId,
-        'item_category': 'institution',
-      });
+      final sink = logEventSink;
+      if (sink != null) {
+        await sink('view_item', viewItemParams(itemId, category));
+      } else {
+        await _analytics.logViewItem(
+          items: [AnalyticsEventItem(itemId: itemId, itemCategory: category)],
+        );
+      }
+      _mirror('view_item', viewItemParams(itemId, category));
     } catch (e, s) {
-      _logError('logViewInstitution', e, s);
+      _logError('logViewItem.$category', e, s);
     }
   }
 
-  Future<void> logViewScholarship(String scholarshipId) async {
+  /// Les propriétés de `view_item` côté PostHog : l'identifiant du contenu
+  /// (un id de catalogue, pas une donnée personnelle) et sa famille.
+  @visibleForTesting
+  static Map<String, Object> viewItemParams(String itemId, String category) =>
+      <String, Object>{
+        AnalyticsParamKey.itemId: itemId,
+        AnalyticsParamKey.itemCategory: category,
+      };
+
+  Future<void> logViewInstitution(String institutionId) =>
+      _logViewItem(institutionId, 'institution');
+
+  Future<void> logViewScholarship(String scholarshipId) =>
+      _logViewItem(scholarshipId, 'scholarship');
+
+  Future<void> logViewProgram(String programId) =>
+      _logViewItem(programId, 'program');
+
+  Future<void> logViewCountry(String countryId) =>
+      _logViewItem(countryId, 'country');
+
+  // ── Coach IA ─────────────────────────────────────────────────────────────
+
+  /// Les propriétés de `ai_coach_message_sent` : trois valeurs fermées ou
+  /// numériques, JAMAIS le texte de la question. [quotaRemaining] vaut -1 quand
+  /// le serveur ne l'a pas dit.
+  @visibleForTesting
+  static Map<String, Object> coachMessageParams({
+    required String source,
+    required String result,
+    int? quotaRemaining,
+  }) =>
+      <String, Object>{
+        AnalyticsParamKey.source: source,
+        AnalyticsParamKey.result: result,
+        AnalyticsParamKey.quotaRemaining: quotaRemaining ?? -1,
+      };
+
+  /// Un tour du coach s'est terminé. [source] : `input` ou `suggestion` ;
+  /// [result] : `ok`, `quota_refused`, `error` ou `unreachable`.
+  Future<void> logCoachMessageSent({
+    required String source,
+    required String result,
+    int? quotaRemaining,
+  }) async {
+    final params = coachMessageParams(
+      source: source,
+      result: result,
+      quotaRemaining: quotaRemaining,
+    );
     try {
-      await _analytics.logViewItem(
-        items: [
-          AnalyticsEventItem(itemId: scholarshipId, itemCategory: 'scholarship')
-        ],
-      );
-      _mirror('view_item', {
-        AnalyticsParamKey.itemId: scholarshipId,
-        'item_category': 'scholarship',
-      });
+      await _logEvent(AnalyticsEventName.aiCoachMessageSent, params);
+      _mirror(AnalyticsEventName.aiCoachMessageSent, params);
     } catch (e, s) {
-      _logError('logViewScholarship', e, s);
+      _logError('logCoachMessageSent', e, s);
+    }
+  }
+
+  /// L'écran du coach n'a pas pu se charger (quota, suggestions, historique).
+  Future<void> logCoachLoadFailed() async {
+    try {
+      await _logEvent(AnalyticsEventName.aiCoachLoadFailed, const {});
+      _mirror(AnalyticsEventName.aiCoachLoadFailed);
+    } catch (e, s) {
+      _logError('logCoachLoadFailed', e, s);
     }
   }
 
