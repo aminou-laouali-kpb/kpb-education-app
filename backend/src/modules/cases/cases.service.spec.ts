@@ -289,7 +289,10 @@ describe('CasesService — private document ownership', () => {
               id: 'doc-1',
               title: 'Passport',
               fileUrl: 'storage://2026-07-11/123e4567-e89b-12d3-a456-426614174000.pdf',
-              case: { assignedAdvisorName: 'Awa KPB' },
+              case: {
+                assignedAdvisorName: 'Awa KPB',
+                counsellor: { adminUserId: 'admin-linked' },
+              },
             }),
           },
         }),
@@ -312,6 +315,14 @@ describe('CasesService — private document ownership', () => {
         fullName: 'Other advisor',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+    // Le conseiller lié par son profil y accède même sous un autre nom.
+    await expect(
+      service.getInternalDocument('case-1', 'doc-1', {
+        role: 'counselor',
+        fullName: 'Renamed advisor',
+        id: 'admin-linked',
+      }),
+    ).resolves.toMatchObject({ id: 'doc-1' });
   });
 });
 
@@ -403,5 +414,61 @@ describe('CasesService — student projection never leaks internal data', () => 
     expect(result.internalNotes).toHaveLength(1);
     expect(emitted).toHaveLength(1);
     expectNoInternal(emitted[0]);
+  });
+});
+
+describe('CasesService — counselor scope on admin routes', () => {
+  function makeScoped(found: boolean) {
+    const calls: any[] = [];
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (p: any) => Promise<any>) =>
+        fn({
+          case: {
+            findFirst: async (args: any) => {
+              calls.push(args);
+              return found ? { id: 'case-1' } : null;
+            },
+            findMany: async (args: any) => {
+              calls.push(args);
+              return [];
+            },
+          },
+        }),
+      tryExecute: async () => null,
+    } as unknown as PrismaService;
+    const service = new CasesService(
+      prisma,
+      { get: () => null } as unknown as ModuleRef,
+      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+    );
+    return { service, calls };
+  }
+  const counselor = { id: 'admin-7', role: InternalRole.Counselor, fullName: 'Awa KPB' };
+
+  it('lists only the cases assigned to the counselor', async () => {
+    const { service, calls } = makeScoped(true);
+    await service.findAllForAdmin(counselor);
+    expect(calls[0].where.OR).toEqual([
+      { counsellor: { adminUserId: 'admin-7' } },
+      { assignedAdvisorName: { equals: 'Awa KPB', mode: 'insensitive' } },
+    ]);
+  });
+
+  it("refuses a counselor writing to a case that isn't theirs", async () => {
+    const { service } = makeScoped(false);
+    await expect(
+      service.assertStaffCanAccessCase('case-9', counselor),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('lets admins through without a lookup', async () => {
+    const { service, calls } = makeScoped(false);
+    await service.assertStaffCanAccessCase('case-9', {
+      id: 'a',
+      role: InternalRole.Admin,
+      fullName: 'A',
+    });
+    expect(calls).toHaveLength(0);
   });
 });

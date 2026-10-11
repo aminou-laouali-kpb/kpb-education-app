@@ -410,6 +410,9 @@ export default function CasesPage() {
                 </form>
               </section>
 
+              {/* L'affectation est réservée à l'équipe (le serveur refuse un
+                  conseiller) : inutile de lui montrer un formulaire voué au 403. */}
+              {session?.user.role !== 'counselor' && (
               <section style={{ ...panelCardStyle, display: 'grid', gap: 12 }}>
                 <h3 style={panelTitleStyle}>{t('cases.assignTitle')}</h3>
                 <form onSubmit={submitAssignment} style={{ display: 'grid', gap: 12 }}>
@@ -473,6 +476,7 @@ export default function CasesPage() {
                   <Button type="submit">{t('cases.saveAssignmentCta')}</Button>
                 </form>
               </section>
+              )}
 
               <section style={{ ...panelCardStyle, display: 'grid', gap: 12 }}>
                 <h3 style={panelTitleStyle}>{t('cases.createTaskTitle')}</h3>

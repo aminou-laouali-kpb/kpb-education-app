@@ -40,6 +40,23 @@ export interface CaseMessagingActor {
   fullName?: string;
 }
 
+export type StaffActor = { id: string; role: string; fullName: string };
+
+/** Dossiers attribués à un conseiller : profil conseiller lié OU nom d'affectation. */
+function counselorCaseScope(staff: StaffActor) {
+  return {
+    OR: [
+      { counsellor: { adminUserId: staff.id } },
+      {
+        assignedAdvisorName: {
+          equals: staff.fullName.trim(),
+          mode: 'insensitive' as const,
+        },
+      },
+    ],
+  };
+}
+
 @Injectable()
 export class CasesService {
   private readonly logger = new Logger(CasesService.name);
@@ -105,8 +122,38 @@ export class CasesService {
     );
   }
 
-  async findAllForAdmin() {
-    return this.findAll();
+  async findAllForAdmin(staff?: StaffActor) {
+    if (staff?.role !== InternalRole.Counselor) return this.findAll();
+    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
+    // comprises).
+    this.assertDb();
+    const items = await this.prismaService.execute((prisma) =>
+      prisma.case.findMany({
+        where: counselorCaseScope(staff),
+        include: CASE_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+    return (items ?? []).map((c) =>
+      this.mapDbCase(c, { includeInternal: true }),
+    );
+  }
+
+  /**
+   * Barrière des écritures staff : un conseiller ne modifie que les dossiers
+   * qui lui sont attribués (profil conseiller lié, ou nom d'affectation).
+   * Les autres rôles autorisés par le contrôleur passent.
+   */
+  async assertStaffCanAccessCase(id: string, staff: StaffActor) {
+    if (staff.role !== InternalRole.Counselor) return;
+    this.assertDb();
+    const found = await this.prismaService.execute((prisma) =>
+      prisma.case.findFirst({
+        where: { id, ...counselorCaseScope(staff) },
+        select: { id: true },
+      }),
+    );
+    if (!found) throw new NotFoundException(`Case ${id} not found.`);
   }
 
   async findOne(id: string, ownerUserId?: string) {
@@ -531,7 +578,7 @@ export class CasesService {
   async getInternalDocument(
     id: string,
     documentId: string,
-    internalUser: { role: string; fullName: string },
+    internalUser: { role: string; fullName: string; id?: string },
   ) {
     this.assertDb();
     const document = await this.prismaService.execute((prisma) =>
@@ -541,7 +588,12 @@ export class CasesService {
           id: true,
           title: true,
           fileUrl: true,
-          case: { select: { assignedAdvisorName: true } },
+          case: {
+            select: {
+              assignedAdvisorName: true,
+              counsellor: { select: { adminUserId: true } },
+            },
+          },
         },
       }),
     );
@@ -554,9 +606,11 @@ export class CasesService {
     );
     const isAssignedCounsellor =
       internalUser.role === InternalRole.Counselor &&
-      !!document.case.assignedAdvisorName &&
-      document.case.assignedAdvisorName.trim().toLowerCase() ===
-        internalUser.fullName.trim().toLowerCase();
+      ((!!internalUser.id &&
+        document.case.counsellor?.adminUserId === internalUser.id) ||
+        (!!document.case.assignedAdvisorName &&
+          document.case.assignedAdvisorName.trim().toLowerCase() ===
+            internalUser.fullName.trim().toLowerCase()));
     if (!isAdministrator && !isAssignedCounsellor) {
       // Return 404 rather than 403 so an internal user cannot enumerate
       // sensitive documents outside their assignment.
