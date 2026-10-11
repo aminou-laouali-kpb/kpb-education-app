@@ -199,8 +199,10 @@ String _legalPages() =>
 String _confidentialite() =>
     File('web/public/confidentialite.html').readAsStringSync();
 
-String _translations() =>
-    File('lib/app/core/translations/app_translations.dart').readAsStringSync();
+String _translations() => [
+      'lib/app/core/translations/app_translations_fr.dart',
+      'lib/app/core/translations/app_translations_en.dart',
+    ].map((path) => File(path).readAsStringSync()).join('\n');
 
 bool _matchesSuffix(String host, String suffix) {
   return host == suffix || host.endsWith('.$suffix');

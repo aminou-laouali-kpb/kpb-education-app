@@ -87,8 +87,11 @@ void main() {
       // @intake déjà remplacés, alors que le défaut est précisément un littéral
       // écrit dans la source. La regex attrape « septembre 2026 » mais aussi
       // « September 2027 » ajouté demain par une nouvelle clé.
-      final source = File('lib/app/core/translations/app_translations.dart')
-          .readAsLinesSync()
+      final source = [
+        'lib/app/core/translations/app_translations_fr.dart',
+        'lib/app/core/translations/app_translations_en.dart',
+      ]
+          .expand((path) => File(path).readAsLinesSync())
           .where((line) => !line.trimLeft().startsWith('//'))
           // Les dates de MISE À JOUR des textes légaux (`last_updated_*`) sont
           // des dates fixes par nature — « Dernière mise à jour : septembre
