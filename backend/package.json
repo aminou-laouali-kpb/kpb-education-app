@@ -68,7 +68,7 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.0.0",
-    "@nestjs/platform-socket.io": "^11.0.0",
+    "@nestjs/platform-socket.io": "^12.1.2",
     "@nestjs/schedule": "^5.0.0",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.0.0",
