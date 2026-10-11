@@ -135,7 +135,7 @@ dependencies:
   supabase_flutter: ^2.5.6
 
   collection: any
-  syncfusion_flutter_pdfviewer: ^33.2.3
+  syncfusion_flutter_pdfviewer: ^33.2.13
   local_auth: ^3.0.1
   onesignal_flutter: ^5.0.0
   shimmer: ^3.0.0
