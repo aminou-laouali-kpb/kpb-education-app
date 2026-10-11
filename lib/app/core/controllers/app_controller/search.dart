@@ -12,7 +12,16 @@ mixin _SearchMixin on _AppControllerBase {
         latestOrientationSession: latestOrientationSession,
       );
 
-  AppSearchService get _searchService => AppSearchService(_searchContext);
+  /// One scorer per controller state. It used to be rebuilt on EVERY access,
+  /// so each `recommendedInstitutions` read re-scored the whole catalogue
+  /// (O(institutions × programs)) several times per build. Invalidated by
+  /// [AppController.update], i.e. on every state change.
+  AppSearchService? _searchServiceCache;
+
+  AppSearchService get _searchService =>
+      _searchServiceCache ??= AppSearchService(_searchContext);
+
+  void _invalidateSearchCache() => _searchServiceCache = null;
 
   /// Best-matching program in [countryId] for the current profile, ranked by
   /// the shared search scorer. Replaces the old France/ECE-Lyon-only stub so

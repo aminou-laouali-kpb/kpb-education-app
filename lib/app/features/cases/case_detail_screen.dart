@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -69,7 +70,13 @@ const _flagMap = <String, String>{
 String? _dossierFlag(String text) {
   final lower = text.toLowerCase();
   for (final entry in _flagMap.entries) {
-    if (lower.contains(entry.key)) return entry.value;
+    // Mot ENTIER : par sous-chaîne, « Lausanne » ou « Busan » contenaient
+    // « usa » (🇺🇸) et « machine » contenait « chine » (🇨🇳).
+    final pattern = RegExp(
+      '(^|[^\\p{L}])${RegExp.escape(entry.key)}(\$|[^\\p{L}])',
+      unicode: true,
+    );
+    if (pattern.hasMatch(lower)) return entry.value;
   }
   return null;
 }
@@ -159,7 +166,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
   }
 
   Future<void> _promptUpload(String caseId, DocumentRequest doc) async {
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet(
       context: context,
       builder: (ctx) {
         return SafeArea(
@@ -228,7 +235,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
           ),
         );
       },
-    );
+    ));
   }
 
   /// Admission-milestone review (KPB-75): rate the counsellor 1–5 + optional
@@ -296,6 +303,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
       ),
     );
 
+    // Un envoi qui échoue ne « consomme » pas la demande d'avis : avant,
+    // l'avis était perdu et la carte disparaissait sans moyen de réessayer.
+    var sendFailed = false;
     if (submitted == true) {
       try {
         await _ctrl.apiClient.submitCounsellorReview(
@@ -309,14 +319,18 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
             snackPosition: SnackPosition.BOTTOM,
             margin: const EdgeInsets.all(12));
       } catch (_) {
+        sendFailed = true;
         Get.snackbar('review_prompt_title'.tr, 'review_prompt_error'.tr,
             snackPosition: SnackPosition.BOTTOM,
             margin: const EdgeInsets.all(12));
       }
     }
     textCtrl.dispose();
-    // Asked once — don't re-prompt whether or not they submitted.
-    if (mounted) setState(() => _ctrl.markCaseReviewed(c.id));
+    // Asked once — don't re-prompt after a submit or a dismissal. A failed
+    // send keeps the prompt so the student can retry.
+    if (!sendFailed && mounted) {
+      setState(() => _ctrl.markCaseReviewed(c.id));
+    }
   }
 
   @override

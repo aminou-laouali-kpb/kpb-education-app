@@ -34,6 +34,7 @@ export class CoachController {
   }
 
   @Post('conversations')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createConversation(@Body() body: Record<string, unknown>, @Req() req: any) {
     const profile = (body.profile as Record<string, unknown> | undefined) ?? {};
     return this.coachService.createConversation(req.studentUser.id, profile);
@@ -72,6 +73,7 @@ export class CoachController {
   @Post('conversations/:id/messages')
   postMessage(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() body: Record<string, unknown>,
     @Req() req: any,
   ): Observable<MessageEvent> {

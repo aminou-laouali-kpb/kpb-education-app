@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 
@@ -28,12 +30,19 @@ export class AdminUsersController {
   }
 
   @Post()
-  createUser(@Body() input: CreateAdminUserDto) {
+  createUser(@Body() input: CreateAdminUserDto, @Req() req: any) {
+    assertCanGrant(req.adminUser?.role, input.role);
     return this.adminUsersService.createUser(input);
   }
 
   @Patch(':id')
-  updateUser(@Param('id') id: string, @Body() input: UpdateAdminUserDto) {
+  async updateUser(
+    @Param('id') id: string,
+    @Body() input: UpdateAdminUserDto,
+    @Req() req: any,
+  ) {
+    await this.assertCanManage(req.adminUser?.role, id);
+    if (input.role) assertCanGrant(req.adminUser?.role, input.role);
     return this.adminUsersService.updateUser(id, input);
   }
 
@@ -43,7 +52,24 @@ export class AdminUsersController {
    * admin can hand it over; only the bcrypt hash is stored.
    */
   @Post(':id/reset-password')
-  resetPassword(@Param('id') id: string) {
+  async resetPassword(@Param('id') id: string, @Req() req: any) {
+    // Un Admin pouvait réinitialiser le mot de passe d'un SuperAdmin et
+    // récupérer le mot de passe temporaire : prise de compte du rôle supérieur.
+    await this.assertCanManage(req.adminUser?.role, id);
     return this.adminUsersService.resetPassword(id);
+  }
+
+  private async assertCanManage(actorRole: string | undefined, targetId: string) {
+    if (actorRole === InternalRole.SuperAdmin) return;
+    if ((await this.adminUsersService.getRole(targetId)) === InternalRole.SuperAdmin) {
+      throw new ForbiddenException('Only a super admin can manage a super admin.');
+    }
+  }
+}
+
+/** Seul un SuperAdmin peut créer ou promouvoir un SuperAdmin. */
+function assertCanGrant(actorRole: string | undefined, role: InternalRole) {
+  if (role === InternalRole.SuperAdmin && actorRole !== InternalRole.SuperAdmin) {
+    throw new ForbiddenException('Only a super admin can grant the super admin role.');
   }
 }

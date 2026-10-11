@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/kpb_components.dart';
+import '../../core/utils/external_link.dart';
 
 /// Salon KPB Virtuel — annual 2-day in-app event (Phase 3).
 ///
@@ -286,16 +286,22 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
     }
   }
 
+  /// Sessions dont l'inscription/annulation est en cours : un double tap
+  /// envoyait deux requêtes contradictoires.
+  final Set<String> _togglingSessionIds = <String>{};
+
   Future<void> _toggleRegister(Map<String, dynamic> session) async {
     final id = session['id'] as String?;
-    if (id == null) return;
+    if (id == null || !_togglingSessionIds.add(id)) return;
     final isRegistered = _registeredSessionIds.contains(id);
     try {
       if (isRegistered) {
         await _api.cancelSalonRegistration(id);
+        if (!mounted) return;
         setState(() => _registeredSessionIds.remove(id));
       } else {
         await _api.registerForSalonSession(id);
+        if (!mounted) return;
         setState(() => _registeredSessionIds.add(id));
       }
     } catch (_) {
@@ -303,12 +309,15 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('salon_rsvp_error'.tr)),
       );
+    } finally {
+      _togglingSessionIds.remove(id);
     }
   }
 
+  // Lien venu du serveur : ouvert par le helper qui valide le schéma et
+  // n'échoue pas en exception si l'URL est mal formée.
   Future<void> _join(String? joinUrl) async {
-    if (joinUrl == null || joinUrl.isEmpty) return;
-    await launchUrl(Uri.parse(joinUrl), mode: LaunchMode.externalApplication);
+    await kpbOpenExternalUrlString(joinUrl);
   }
 
   @override

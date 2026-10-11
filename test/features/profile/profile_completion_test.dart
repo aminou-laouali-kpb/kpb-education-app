@@ -233,6 +233,15 @@ void main() {
           warnIfMissed: false);
       await tester.pumpAndSettle();
 
+      // La feuille s'est allongée (section « Filières ») : le bouton peut être
+      // sous le pli.
+      await tester.scrollUntilVisible(find.text('save_changes'), 300,
+          scrollable: find
+              .descendant(
+                of: find.byType(DraggableScrollableSheet),
+                matching: find.byType(Scrollable),
+              )
+              .first);
       await tester.tap(find.text('save_changes'));
       // `_save` termine par un `Get.snackbar`, dont le minuteur d'auto-fermeture
       // survit à `pumpAndSettle` et fait échouer le test sur « A Timer is still

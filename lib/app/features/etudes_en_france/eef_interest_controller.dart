@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -155,7 +156,7 @@ class EefInterestController extends ChangeNotifier {
         _failure = EefInterestFailure.server;
         _phase = EefInterestPhase.failed;
         notifyListeners();
-        _analytics.logEefInterestFailed(_failure!.name);
+        unawaited(_analytics.logEefInterestFailed(_failure!.name));
         return false;
       }
 
@@ -163,17 +164,17 @@ class EefInterestController extends ChangeNotifier {
       _phase = EefInterestPhase.ready;
       notifyListeners();
 
-      _analytics.logEefInterestDeclared(
+      unawaited(_analytics.logEefInterestDeclared(
         wantsPremium: saved.wantsPremium,
         fieldCount: saved.fieldIds.length,
         currentLevel: saved.currentLevel,
-      );
+      ));
       return true;
     } catch (error) {
       _failure = classifyFailure(error);
       _phase = EefInterestPhase.failed;
       notifyListeners();
-      _analytics.logEefInterestFailed(_failure!.name);
+      unawaited(_analytics.logEefInterestFailed(_failure!.name));
       return false;
     }
   }
@@ -212,7 +213,7 @@ class EefInterestController extends ChangeNotifier {
         _failure = EefInterestFailure.server;
         _phase = EefInterestPhase.failed;
         notifyListeners();
-        _analytics.logEefInterestFailed(_failure!.name);
+        unawaited(_analytics.logEefInterestFailed(_failure!.name));
         return false;
       }
 
@@ -224,7 +225,7 @@ class EefInterestController extends ChangeNotifier {
       _failure = classifyFailure(error);
       _phase = EefInterestPhase.failed;
       notifyListeners();
-      _analytics.logEefInterestFailed(_failure!.name);
+      unawaited(_analytics.logEefInterestFailed(_failure!.name));
       return false;
     }
   }

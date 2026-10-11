@@ -5,8 +5,8 @@ tags:
 
   # Défauts CONNUS, documentés, non encore corrigés. Ces tests affirment le
   # comportement CORRECT et sont donc ROUGES par construction : c'est leur
-  # travail. Ils sont exclus du portillon de fusion (flutter-ci.yml) et rapportés
-  # quotidiennement, sans bloquer, par catalog-freshness.yml.
+  # travail. Ils sont exclus du portillon de fusion et exécutés à part, sans
+  # bloquer (`continue-on-error`), par le job « quality » de flutter-ci.yml.
   #
   # Le tag n'est PAS une échappatoire : chaque cas taué ici doit avoir un budget
   # chiffré dans un cliquet vert exécuté par la CI (voir

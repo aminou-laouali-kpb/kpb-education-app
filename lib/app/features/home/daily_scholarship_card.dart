@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -43,7 +44,7 @@ class _DailyScholarshipCardState extends State<DailyScholarshipCard> {
       _loaded = true;
     });
     if (daily != null) {
-      AnalyticsService.instance.logDailyScholarshipViewed(daily.id);
+      unawaited(AnalyticsService.instance.logDailyScholarshipViewed(daily.id));
     }
   }
 

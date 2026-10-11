@@ -7,33 +7,6 @@ import 'kpb_theme_ext.dart';
 // Each skeleton widget manages its own AnimationController for a smooth pulse.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Public: a single skeleton rectangle, adapts to light/dark mode.
-class SkeletonBox extends StatelessWidget {
-  const SkeletonBox({
-    super.key,
-    this.width,
-    this.height = 40,
-    this.borderRadius = 8,
-  });
-
-  final double? width;
-  final double height;
-  final double borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SkeletonPulse(
-      width: width,
-      height: height,
-      borderRadius: borderRadius,
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal pulsing box — reads dark/light from context
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SkeletonPulse extends StatefulWidget {
   const _SkeletonPulse({
     this.width,
@@ -158,27 +131,6 @@ class CasesScreenSkeleton extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, __) =>
           const _SkeletonPulse(height: 100, borderRadius: 12),
-    );
-  }
-}
-
-class ExploreScreenSkeleton extends StatelessWidget {
-  const ExploreScreenSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.85,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: 6,
-      itemBuilder: (_, __) =>
-          const _SkeletonPulse(height: 160, borderRadius: 12),
     );
   }
 }

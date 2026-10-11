@@ -153,6 +153,11 @@ Future<void> main() async {
       repository: repository,
       apiClient: apiClient,
     );
+    // Si le SDK perd la session pendant l'hydratation (refresh refusé), le
+    // contrôleur n'est pas encore enregistré et personne ne réagit : l'app
+    // restait dans le shell sans session. On le détecte juste après.
+    final hadSessionAtBoot =
+        Supabase.instance.client.auth.currentSession != null;
     await controller.hydrate();
     Get.put(controller, permanent: true);
     // PREMIER point du démarrage où le choix persisté est connu — et donc le
@@ -174,8 +179,26 @@ Future<void> main() async {
     final authService = await AuthService.create(apiClient);
     Get.put(authService, permanent: true);
     if (authService.isLoggedIn) {
-      await controller.finishAuthSession();
+      if (controller.profile != null) {
+        // Profil en cache : l'app s'ouvre tout de suite, la session se
+        // termine en arrière-plan (synchro, identité OneSignal, PostHog).
+        unawaited(controller.finishAuthSession());
+      } else {
+        // Sans profil local, il faut le rapatrier avant de router : sinon un
+        // compte existant atterrirait sur l'onboarding.
+        await controller.finishAuthSession();
+      }
+    } else if (hadSessionAtBoot) {
+      await controller.handleSessionLost();
     }
+    // Session perdue plus tard (refresh refusé par le serveur d'auth) : même
+    // traitement, une seule fois. Une déconnexion volontaire passe aussi ici,
+    // mais `logout()` a déjà vidé le profil, donc c'est sans effet.
+    Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (state.event == AuthChangeEvent.signedOut) {
+        unawaited(controller.handleSessionLost());
+      }
+    });
 
     Get.put(SecurityService());
     // ── Push notifications (OneSignal) ─────────────────────────────────────────
@@ -207,7 +230,7 @@ Future<void> main() async {
 
     // ── Quick Actions ────────────────────────────────────────────────────────
     const QuickActions quickActions = QuickActions();
-    quickActions.initialize((String shortcutType) {
+    unawaited(quickActions.initialize((String shortcutType) {
       if (shortcutType == 'action_cases') {
         // Reset stack to shell + Dossiers tab (named `/cases` was never registered).
         Get.offAllNamed(AppRoutes.home);
@@ -217,9 +240,9 @@ Future<void> main() async {
       } else if (shortcutType == 'action_search') {
         Get.toNamed(AppRoutes.search);
       }
-    });
+    }));
 
-    quickActions.setShortcutItems(<ShortcutItem>[
+    unawaited(quickActions.setShortcutItems(<ShortcutItem>[
       const ShortcutItem(
         type: 'action_cases',
         localizedTitle: 'Mes Dossiers',
@@ -230,7 +253,7 @@ Future<void> main() async {
         localizedTitle: 'Nouvelle Recherche',
         icon: 'icon_search',
       ),
-    ]);
+    ]));
 
     // ── Deep links (kpb://) ────────────────────────────────────────────────────
     // The scheme is declared natively (iOS Info.plist + Android intent-filter)
@@ -245,7 +268,8 @@ Future<void> main() async {
     runApp(AppConfig.posthogEnabled ? const PostHogWidget(child: app) : app);
   } catch (error, stack) {
     if (firebaseInitialized) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      unawaited(
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true));
     } else {
       debugPrint('Boot critical error: $error\n$stack');
     }
@@ -320,6 +344,13 @@ class KpbEducationApp extends StatelessWidget {
           transitionDuration: const Duration(milliseconds: 280),
           getPages: AppRoutes.pages,
           navigatorObservers: AnalyticsService.instance.navigatorObservers,
+          // Le verrou d'app est replacé si une navigation le retire ou passe
+          // par-dessus avant le déverrouillage (raccourci, notification).
+          routingCallback: (routing) {
+            if (Get.isRegistered<SecurityService>()) {
+              SecurityService.instance.onRouteChanged(routing?.current);
+            }
+          },
           // Accessibility: honor the user's OS font-size preference (older
           // parents and low-vision users on budget Android phones often crank
           // it up) but clamp it so extreme scales don't shatter fixed-size

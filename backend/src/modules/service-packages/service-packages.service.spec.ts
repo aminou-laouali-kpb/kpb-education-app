@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
@@ -25,6 +25,13 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
     const client = {
       servicePackage: {
         findUnique: async () => opts.pkg ?? activePkg,
+      },
+      userProfile: { findUnique: async () => ({ email: 'a@b.c', phone: '+221', fullName: 'A' }) },
+      case: {
+        findFirst: async ({ where }: { where: { id: string; userId: string } }) =>
+          where.userId === 'u1' && where.id === 'case-own'
+            ? { id: 'case-own', referenceCode: 'KPB-1', requestedCountryId: null }
+            : null,
       },
       servicePurchase: {
         findFirst: async () => opts.existing ?? null,
@@ -89,5 +96,40 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
         packageCode: 'dossier_pret',
       }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  describe('checkout purchase', () => {
+    const base = {
+      userId: 'u1',
+      packageCode: 'dossier_pret',
+      returnUrl: 'kpb://ok',
+      cancelUrl: 'kpb://ko',
+    };
+
+    it('refuses the manual provider', async () => {
+      const { service, created } = makeService();
+      await expect(
+        service.purchase({ ...base, provider: 'manual' }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(created).toHaveLength(0);
+    });
+
+    it("refuses another student's case", async () => {
+      const { service, created, getIntentCalls } = makeService();
+      await expect(
+        service.purchase({ ...base, caseId: 'case-of-someone-else' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(created).toHaveLength(0);
+      expect(getIntentCalls()).toBe(0);
+    });
+
+    it('creates the intent first and links it in a single insert', async () => {
+      const { service, created, getIntentCalls } = makeService();
+      await service.purchase({ ...base, caseId: 'case-own' });
+      expect(getIntentCalls()).toBe(1);
+      expect(created).toEqual([
+        expect.objectContaining({ caseId: 'case-own', paymentIntentId: 'pi-1' }),
+      ]);
+    });
   });
 });

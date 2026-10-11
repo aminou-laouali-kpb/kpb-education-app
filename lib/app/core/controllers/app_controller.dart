@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,8 @@ import 'package:get/get.dart';
 
 import '../navigation/shell_tabs.dart';
 import '../services/analytics_service.dart';
+import '../navigation/app_boot_screen.dart';
+import '../ui/app_tokens.dart';
 import '../services/case_message_outbox.dart';
 import '../services/case_socket_service.dart';
 import '../services/safe_crashlytics.dart';
@@ -120,6 +124,22 @@ class AppController extends _AppControllerBase
   AppController({required super.repository, super.apiClient});
 
   static const int shellTabCount = StudentShellTab.count;
+
+  /// Every state change goes through `update()`: drop the memoized search
+  /// scorer so the next read sees the new catalogue / profile.
+  @override
+  void update([List<Object>? ids, bool condition = true]) {
+    _invalidateSearchCache();
+    super.update(ids, condition);
+  }
+
+  /// Mutations persist before (or without) notifying: invalidate there too,
+  /// so a read between a mutation and its `update()` is never stale.
+  @override
+  void _persist() {
+    _invalidateSearchCache();
+    super._persist();
+  }
 }
 
 abstract class _AppControllerBase extends GetxController {
@@ -157,6 +177,10 @@ abstract class _AppControllerBase extends GetxController {
   int commercialShellIndex = 0;
   int selectedOrientationQuestion = 0;
   bool isSyncing = false;
+
+  /// The sync currently running, so [finishAuthSession] can wait for it
+  /// instead of being silently skipped by the `isSyncing` guard.
+  Future<void>? _inFlightSync;
   DateTime? lastSyncedAt;
   String? syncError;
 
@@ -218,7 +242,6 @@ abstract class _AppControllerBase extends GetxController {
       <String, CountryModel>{};
   final CaseSocketService _caseSocket = CaseSocketService();
   final Map<String, DateTime> _caseLastReadAt = <String, DateTime>{};
-  String? _activeCaseSocketId;
   // True while the remote participant is typing (shown in CaseDetailScreen).
   bool isCaseAdvisorTyping = false;
   final List<OrientationSession> _orientationHistory = <OrientationSession>[];
@@ -394,50 +417,51 @@ abstract class _AppControllerBase extends GetxController {
     }
     if (CatalogCacheService.isInitialized) {
       final cache = CatalogCacheService.instance;
+      final raws = <String, String?>{
+        for (final r in const [
+          'fields',
+          'countries',
+          'institutions',
+          'programs',
+          'scholarships',
+        ])
+          r: cache.readRaw(r),
+      };
 
-      final cachedFields = cache.read('fields');
+      // Décodage JSON + fromJson d'environ un millier d'objets HORS du thread
+      // principal : fait ici, il figeait l'interface au démarrage.
+      final decoded = await Isolate.run(
+        () => decodeCachedCatalog(<String, String?>{
+          'fields': raws['fields'],
+          'countries': raws['countries'],
+          'institutions': raws['institutions'],
+          'programs': raws['programs'],
+          'scholarships': raws['scholarships'],
+        }),
+      );
       fields
         ..clear()
-        ..addAll(cachedFields.isNotEmpty
-            ? cachedFields
-                .whereType<Map<String, dynamic>>()
-                .map(FieldModel.fromJson)
-            : MockCatalog.fields);
-
-      final cachedCountries = cache.read('countries');
+        ..addAll(
+            decoded.fields.isNotEmpty ? decoded.fields : MockCatalog.fields);
       countries
         ..clear()
-        ..addAll(cachedCountries.isNotEmpty
-            ? cachedCountries
-                .whereType<Map<String, dynamic>>()
-                .map(CountryModel.fromJson)
+        ..addAll(decoded.countries.isNotEmpty
+            ? decoded.countries
             : MockCatalog.countries);
-
-      final cachedInstitutions = cache.read('institutions');
       institutions
         ..clear()
-        ..addAll(cachedInstitutions.isNotEmpty
-            ? cachedInstitutions
-                .whereType<Map<String, dynamic>>()
-                .map(InstitutionModel.fromJson)
+        ..addAll(decoded.institutions.isNotEmpty
+            ? decoded.institutions
             : MockCatalog.institutions);
-
-      final cachedPrograms = cache.read('programs');
       programs
         ..clear()
-        ..addAll(cachedPrograms.isNotEmpty
-            ? cachedPrograms
-                .whereType<Map<String, dynamic>>()
-                .map(ProgramModel.fromJson)
+        ..addAll(decoded.programs.isNotEmpty
+            ? decoded.programs
             : MockCatalog.programs);
-
-      final cachedScholarships = cache.read('scholarships');
       scholarships
         ..clear()
-        ..addAll(cachedScholarships.isNotEmpty
-            ? cachedScholarships
-                .whereType<Map<String, dynamic>>()
-                .map(ScholarshipModel.fromJson)
+        ..addAll(decoded.scholarships.isNotEmpty
+            ? decoded.scholarships
             : MockCatalog.scholarships);
     } else {
       fields
@@ -461,7 +485,23 @@ abstract class _AppControllerBase extends GetxController {
       ..addAll(MockCatalog.academyCourses);
     _applyMvpCountryLock();
     if (AppConfig.enableRemoteSync) {
-      await syncRemoteData(silent: true);
+      // Local d'abord : la synchro part en arrière-plan au lieu de bloquer
+      // `runApp` (environ 10 requêtes, 3 tentatives, 15 s de timeout — sur
+      // un réseau 2G l'écran de démarrage restait affiché plusieurs minutes).
+      // Le cache local s'affiche tout de suite ; la synchro met à jour
+      // l'écran à la fin. Un compte connecté SANS profil local est géré par
+      // `finishAuthSession`, qui attend cette synchro (voir `_inFlightSync`).
+      unawaited(
+        syncRemoteData(silent: true).catchError((Object e, StackTrace s) {
+          safeRecordError(
+            e,
+            s,
+            reason: 'hydrate.backgroundSync',
+            domain: CrashlyticsObsDomain.sync,
+            operation: 'hydrate_background_sync',
+          );
+        }),
+      );
     }
     update();
   }
@@ -577,7 +617,14 @@ abstract class _AppControllerBase extends GetxController {
   Future<void> finishAuthSession() async {
     isGuestMode = false;
     if (AppConfig.enableRemoteSync) {
-      await syncRemoteData(silent: true);
+      // Un simple `syncRemoteData` était sauté si une synchro tournait déjà
+      // (catalogue lent au démarrage), datait de moins de 30 s ou était en
+      // backoff : le profil restait null, un compte existant atterrissait sur
+      // l'onboarding et finissait par écraser son profil serveur. On attend la
+      // synchro en cours, puis on force si le profil n'est toujours pas là.
+      final running = _inFlightSync;
+      if (isSyncing && running != null) await running;
+      await syncRemoteData(silent: true, force: profile == null);
     }
     maybeRestoreOnboardingFromProfile();
     unawaited(syncOneSignalIdentity());
@@ -678,11 +725,60 @@ abstract class _AppControllerBase extends GetxController {
   }
 
   Future<void> logout() async {
-    AnalyticsService.instance.logLogout();
+    unawaited(AnalyticsService.instance.logLogout());
     unawaited(OneSignalService.instance.logout());
     // Keep the historical logout contract: callers that do not await this
     // Future must still observe an anonymous in-memory state immediately.
     // Session/cache cleanup remains awaited below before the Future completes.
+    _resetUserState();
+    _persist();
+    update();
+    if (Get.isRegistered<AuthService>()) {
+      await Get.find<AuthService>().clearSession();
+    }
+    // Les messages en attente appartiennent au compte qui se déconnecte : sans
+    // ce vidage, ils étaient rejoués sous le compte suivant (téléphone partagé).
+    try {
+      await CaseMessageOutbox.instance.clear();
+    } catch (_) {
+      // Outbox not initialized in this session — nothing to clear.
+    }
+    await _clearSuccessLabLocalData();
+  }
+
+  bool _sessionLossInProgress = false;
+
+  /// The Supabase session is gone for good (revoked refresh token, signed out
+  /// by the SDK). Single entry point for the API client's permanent-failure
+  /// path, the `signedOut` auth listener and the cold-start check, so the
+  /// user is logged out and routed to the auth screen exactly once — instead
+  /// of staying in the shell with no session while local edits silently stop
+  /// syncing.
+  Future<void> handleSessionLost() async {
+    if (_sessionLossInProgress || profile == null || isGuestMode) return;
+    _sessionLossInProgress = true;
+    try {
+      await logout();
+      unawaited(Get.offAll(() => const AppBootScreen()));
+      Get.snackbar(
+        'api_client_session_expired_title'.tr,
+        'api_client_session_expired_message'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        backgroundColor: KpbColors.errorLight,
+        colorText: KpbColors.error,
+        duration: const Duration(seconds: 4),
+      );
+    } finally {
+      _sessionLossInProgress = false;
+    }
+  }
+
+  /// Everything that belongs to the signed-in user, in ONE place. Logout and
+  /// account deletion each kept their own partial list: credits, purchases,
+  /// roadmap steps, read markers and remote ids survived a logout and were
+  /// re-persisted for the next account on a shared phone.
+  void _resetUserState() {
     profile = null;
     _profileNeedsPush = false;
     hasCompletedOnboarding = false;
@@ -690,17 +786,20 @@ abstract class _AppControllerBase extends GetxController {
     latestOrientationSession = null;
     _savedItems.clear();
     _savedItemTombstones.clear();
+    _remoteSavedItemIds.clear();
     _cases.clear();
+    _caseLastReadAt.clear();
     _orientationHistory.clear();
     _searchHistory.clear();
     _pendingOrientationAnswers = {};
     pendingOrientationQuestionIndex = 0;
-    _persist();
-    update();
-    if (Get.isRegistered<AuthService>()) {
-      await Get.find<AuthService>().clearSession();
-    }
-    await _clearSuccessLabLocalData();
+    _purchasedCourseIds.clear();
+    _reviewCredits = 0;
+    _reviewedCaseIds.clear();
+    _completedRoadmapSteps = {};
+    _commercialLeads.clear();
+    _lastSyncAttemptAt = null;
+    _syncBackoffUntil = null;
   }
 
   /// GDPR / store-required account deletion (KPB-67). When remote sync is on we
@@ -718,18 +817,7 @@ abstract class _AppControllerBase extends GetxController {
       await Get.find<AuthService>().clearSession();
     }
     await _wipeLocalData();
-    profile = null;
-    _profileNeedsPush = false;
-    hasCompletedOnboarding = false;
-    isGuestMode = false;
-    latestOrientationSession = null;
-    _savedItems.clear();
-    _savedItemTombstones.clear();
-    _cases.clear();
-    _orientationHistory.clear();
-    _searchHistory.clear();
-    _pendingOrientationAnswers = {};
-    pendingOrientationQuestionIndex = 0;
+    _resetUserState();
     update();
   }
 
@@ -910,11 +998,11 @@ abstract class _AppControllerBase extends GetxController {
     clearOrientationProgress();
     _persist();
     update();
-    HapticFeedback.heavyImpact();
-    AnalyticsService.instance.logOrientationComplete(
+    unawaited(HapticFeedback.heavyImpact());
+    unawaited(AnalyticsService.instance.logOrientationComplete(
       totalQuestions: orientationQuestions.length,
       matchCount: session.recommendations.length,
-    );
+    ));
     return session;
   }
 
@@ -1043,7 +1131,7 @@ abstract class _AppControllerBase extends GetxController {
     final now = DateTime.now();
     final referenceId = (_cases.length + 1).toString().padLeft(3, '0');
     final created = StudentCase(
-      id: 'case-${now.millisecondsSinceEpoch}',
+      id: '$_localCaseIdPrefix${now.millisecondsSinceEpoch}',
       referenceCode: 'KPB-${now.year}-$referenceId',
       type: type,
       title: LocalizedText(fr: title, en: title),
@@ -1195,9 +1283,11 @@ abstract class _AppControllerBase extends GetxController {
         createdAt: now,
       ),
     ];
+    // Le statut ne change PAS localement : passer à « En attente de ta
+    // réponse » juste après la réponse de l'étudiant affichait une action
+    // urgente à faire sur l'accueil. Le serveur reste maître du statut.
     _cases[index] = caseItem.copyWith(
       updatedAt: now,
-      status: CaseStatus.awaitingStudent,
       messages: updatedMessages,
       timeline: [
         ...caseItem.timeline,
@@ -1212,7 +1302,7 @@ abstract class _AppControllerBase extends GetxController {
             en: 'The case has been updated with a new message.',
           ),
           createdAt: now,
-          status: CaseStatus.awaitingStudent,
+          status: caseItem.status,
         ),
       ],
     );
@@ -1220,11 +1310,11 @@ abstract class _AppControllerBase extends GetxController {
     update();
 
     if (ConnectivityService.instance.isOnline) {
-      if (_caseSocket.isConnected && _activeCaseSocketId == caseId) {
-        _caseSocket.sendMessage(caseId, text.trim());
-      } else {
-        unawaited(_createRemoteCaseMessage(caseId, text));
-      }
+      // Toujours par REST, même socket ouvert : l'envoi socket n'avait ni
+      // accusé de réception ni repli, et un message refusé (limite, longueur)
+      // restait affiché comme envoyé. Le serveur diffuse ensuite le message
+      // dans la room, donc le temps réel du conseiller est inchangé.
+      unawaited(_createRemoteCaseMessage(caseId, text));
     } else {
       unawaited(CaseMessageOutbox.instance.enqueue(
         caseId: caseId,
@@ -1260,7 +1350,6 @@ abstract class _AppControllerBase extends GetxController {
     if (!AppConfig.enableRemoteSync) return;
     if (!await _apiClient.hasAuthSession()) return;
 
-    _activeCaseSocketId = caseId;
     await _caseSocket.connect(caseId);
 
     _caseSocket.onMessage((data) => ingestRemoteCaseMessage(caseId, data));
@@ -1290,7 +1379,6 @@ abstract class _AppControllerBase extends GetxController {
 
   Future<void> disconnectCaseDetailSocket() async {
     await _caseSocket.disconnect();
-    _activeCaseSocketId = null;
     isCaseAdvisorTyping = false;
     update();
   }
@@ -1389,6 +1477,8 @@ abstract class _AppControllerBase extends GetxController {
     }
 
     isSyncing = true;
+    final syncDone = Completer<void>();
+    _inFlightSync = syncDone.future;
     _lastSyncAttemptAt = now;
     if (!silent) {
       syncError = null;
@@ -1446,6 +1536,14 @@ abstract class _AppControllerBase extends GetxController {
           _cases
             ..clear()
             ..addAll(mergedCases);
+          // Un dossier dont la création distante a échoué gardait son id local
+          // (`case-<ms>`) pour toujours, avec le texte « transmise à l'équipe
+          // KPB ». On retente à chaque synchro.
+          for (final localOnly in mergedCases
+              .where((c) => _localCaseId.hasMatch(c.id))
+              .toList()) {
+            unawaited(_createRemoteCase(localOnly));
+          }
 
           final remoteSavedItems = await _apiClient.listSavedItems();
           final remoteSavedParsed =
@@ -1480,6 +1578,16 @@ abstract class _AppControllerBase extends GetxController {
             final id = _remoteSavedItemIds[key];
             if (id == null || id.isEmpty) {
               unawaited(_createRemoteSavedItem(item));
+            }
+          }
+          // Rejoue les suppressions qui n'ont pas atteint le serveur (id
+          // distant inconnu au moment du retrait, ou erreur réseau) : le
+          // tombstone masquait l'élément ici, mais le serveur le gardait et il
+          // réapparaissait après un logout ou sur un autre appareil.
+          for (final item in remoteSavedParsed) {
+            final key = _savedItemKey(item.type, item.itemId);
+            if (_savedItemTombstones.contains(key)) {
+              unawaited(_deleteRemoteSavedItem(item));
             }
           }
         } catch (error, stack) {
@@ -1621,6 +1729,7 @@ abstract class _AppControllerBase extends GetxController {
       );
     } finally {
       isSyncing = false;
+      if (!syncDone.isCompleted) syncDone.complete();
       update();
     }
   }
@@ -1814,8 +1923,17 @@ abstract class _AppControllerBase extends GetxController {
     }
   }
 
+  /// Prefix of the temporary id a case carries until the server has it.
+  static const String _localCaseIdPrefix = 'case-';
+  static final RegExp _localCaseId = RegExp(r'^case-\d{10,}$');
+
+  /// Local case ids whose remote create is in flight — a sync retry must not
+  /// create the same case twice.
+  final Set<String> _caseCreatesInFlight = <String>{};
+
   Future<void> _createRemoteCase(StudentCase localCase) async {
     if (!AppConfig.enableRemoteSync) return;
+    if (!_caseCreatesInFlight.add(localCase.id)) return;
     try {
       final response = await _apiClient.createCase(<String, dynamic>{
         'type': CaseApiCodec.encodeCaseType(localCase.type),
@@ -1838,6 +1956,8 @@ abstract class _AppControllerBase extends GetxController {
         domain: CrashlyticsObsDomain.cases,
         operation: 'create_remote_case',
       );
+    } finally {
+      _caseCreatesInFlight.remove(localCase.id);
     }
   }
 
@@ -1874,6 +1994,22 @@ abstract class _AppControllerBase extends GetxController {
         domain: CrashlyticsObsDomain.cases,
         operation: 'create_remote_case_message',
       );
+      final status = e is DioException ? e.response?.statusCode : null;
+      if (status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 408 &&
+          status != 429) {
+        // Refus définitif (message trop long, dossier introuvable…) : le
+        // remettre en file le ferait échouer à chaque reconnexion, en silence.
+        Get.snackbar(
+          'KPB Education',
+          'case_message_send_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+        );
+        return;
+      }
       // Network blip — queue it. The connectivity listener will retry.
       await CaseMessageOutbox.instance.enqueue(
         caseId: caseId,
@@ -1883,8 +2019,20 @@ abstract class _AppControllerBase extends GetxController {
     }
   }
 
+  Future<void>? _flushInFlight;
+
   /// Flush the offline message queue. Called on connectivity-restored events.
-  Future<void> flushPendingCaseMessages() async {
+  /// Two callers (reconnect listener, sync) could run it concurrently and send
+  /// the same queued entries twice: a second call joins the running flush.
+  Future<void> flushPendingCaseMessages() {
+    final running = _flushInFlight;
+    if (running != null) return running;
+    final flush = _flushPendingCaseMessages();
+    _flushInFlight = flush;
+    return flush.whenComplete(() => _flushInFlight = null);
+  }
+
+  Future<void> _flushPendingCaseMessages() async {
     if (!AppConfig.enableRemoteSync) return;
     if (!await _apiClient.hasAuthSession()) return;
     final outbox = CaseMessageOutbox.instance;
@@ -2034,8 +2182,11 @@ abstract class _AppControllerBase extends GetxController {
       // faisait échouer le PATCH ENTIER en 400 — le patch restait en attente
       // et `syncRemoteData` sautait à jamais le rapatriement du profil, donc
       // l'email du compte n'était jamais restauré.
-      'phone': profile.phone,
-      'whatsApp': profile.whatsApp,
+      // Téléphone et WhatsApp ne sont PAS persistés localement (RGPD) : après
+      // un redémarrage à froid ils valent '' jusqu'au premier GET du profil.
+      // Les envoyer vides effaçait le numéro côté serveur.
+      if (profile.phone.isNotEmpty) 'phone': profile.phone,
+      if (profile.whatsApp.isNotEmpty) 'whatsApp': profile.whatsApp,
       'countryOfResidence': profile.countryOfResidence,
       'preferredLanguage': profile.preferredLanguage,
       'currentLevel': profile.currentLevel,
@@ -2080,4 +2231,38 @@ abstract class _AppControllerBase extends GetxController {
       _cases.insert(0, caseItem);
     }
   }
+}
+
+/// Decoded catalogue snapshot, built in a background isolate.
+typedef DecodedCatalog = ({
+  List<FieldModel> fields,
+  List<CountryModel> countries,
+  List<InstitutionModel> institutions,
+  List<ProgramModel> programs,
+  List<ScholarshipModel> scholarships,
+});
+
+/// Pure function (no plugin, no Get) so it can run in `Isolate.run`. A corrupt
+/// or missing resource decodes to an empty list — the caller then falls back
+/// to the bundled sample catalogue, as before.
+DecodedCatalog decodeCachedCatalog(Map<String, String?> raws) {
+  List<T> decode<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+    final raw = raws[key];
+    if (raw == null) return <T>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <T>[];
+      return decoded.whereType<Map<String, dynamic>>().map(fromJson).toList();
+    } catch (_) {
+      return <T>[];
+    }
+  }
+
+  return (
+    fields: decode('fields', FieldModel.fromJson),
+    countries: decode('countries', CountryModel.fromJson),
+    institutions: decode('institutions', InstitutionModel.fromJson),
+    programs: decode('programs', ProgramModel.fromJson),
+    scholarships: decode('scholarships', ScholarshipModel.fromJson),
+  );
 }

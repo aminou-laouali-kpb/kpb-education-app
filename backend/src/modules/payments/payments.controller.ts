@@ -36,6 +36,7 @@ export class PaymentsController {
   create(
     @Req() req: StudentReq,
     @Body()
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     body: {
       provider: 'cinetpay' | 'paydunya' | 'stripe' | 'manual';
       amountMinor: number;
@@ -96,6 +97,7 @@ export class AdminPaymentsController {
   @Patch('intents/:id/mark-paid')
   markPaid(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() body: { note?: string },
   ) {
     return this.paymentsService.markPaidManually(id, body.note);

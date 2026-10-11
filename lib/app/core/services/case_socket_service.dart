@@ -37,23 +37,27 @@ class CaseSocketService {
     await disconnect();
     _currentCaseId = caseId;
 
-    final token =
-        Supabase.instance.client.auth.currentSession?.accessToken ?? '';
-
     final baseUrl = socketBaseUrl(AppConfig.apiBaseUrl);
 
     _socket = io.io(
       '$baseUrl/cases',
       io.OptionBuilder()
           .setTransports(['websocket'])
-          // Socket.IO sends auth payload in the handshake body. Query strings
-          // are routinely captured by proxies/access logs and must never carry
-          // bearer tokens or user-controlled display names.
-          .setAuth({'token': token})
-          .enableAutoConnect()
+          .disableAutoConnect()
           .enableReconnection()
           .build(),
     );
+    // Socket.IO sends auth payload in the handshake body. Query strings are
+    // routinely captured by proxies/access logs and must never carry bearer
+    // tokens or user-controlled display names.
+    //
+    // Une FONCTION, relue à chaque (re)connexion : un jeton figé au premier
+    // `connect` expirait au bout d'une heure, les reconnexions étaient alors
+    // refusées par le serveur et le temps réel s'arrêtait sans rien dire.
+    _socket!.auth = (void Function(Map<String, dynamic>) send) => send({
+          'token':
+              Supabase.instance.client.auth.currentSession?.accessToken ?? '',
+        });
 
     // Re-attach any listeners registered before/after a previous connection.
     _bindHandlers();
@@ -70,6 +74,8 @@ class CaseSocketService {
     _socket!.onConnectError((error) {
       debugPrint('[WS] Connection error: $error');
     });
+
+    _socket!.connect();
   }
 
   Future<void> disconnect() async {

@@ -67,8 +67,20 @@ String aiErrorMessage(Object error) {
   if (status == 401 || status == 403) {
     return trOr('tools_ai_error_signin_required');
   }
+  final code = _responseCode(error);
+  if (status == 429 && code == 'ai_daily_quota_reached') {
+    return trOr('tools_ai_error_daily_quota');
+  }
+  if (status == 413 || code == 'ai_input_too_large') {
+    return trOr('tools_ai_error_input_too_large');
+  }
   if (status == 429) {
     return trOr('tools_ai_error_rate_limited');
   }
   return trOr('tools_ai_error_unavailable');
+}
+
+String? _responseCode(DioException error) {
+  final data = error.response?.data;
+  return data is Map && data['code'] is String ? data['code'] as String : null;
 }

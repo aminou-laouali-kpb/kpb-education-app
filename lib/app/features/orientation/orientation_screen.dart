@@ -1299,10 +1299,13 @@ class _ConsultativeView extends StatelessWidget {
                     onPressed: () => showModalBottomSheet<void>(
                       context: context,
                       isScrollControlled: true,
-                      builder: (_) => const CaseComposerSheet(
+                      // Titre et contexte traduits : le dossier partait avec
+                      // un titre anglais visible par l'étudiant.
+                      builder: (_) => CaseComposerSheet(
                         caseType: CaseType.consultation,
-                        title: 'KPB advisory session',
-                        contextLabel: 'Orientation support',
+                        title: 'orientation_consultation_case_title'.tr,
+                        contextLabel:
+                            'orientation_consultation_case_context'.tr,
                       ),
                     ),
                   ),

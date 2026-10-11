@@ -174,6 +174,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
+    // Un seul tour à la fois : un deuxième envoi pendant le streaming remettait
+    // le brouillon à zéro et mélangeait les deux réponses (et le quota était
+    // décompté deux fois).
+    if (_isTyping) return;
     // Defensive only: when the quota is exhausted the input bar is replaced by
     // the advisor hand-off panel, so nothing should reach this path.
     if (_quotaExhausted) return;
@@ -189,7 +193,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
         timestamp: DateTime.now(),
       ));
       _isTyping = true;
-      _assistantDraft = '';
+      // null (et pas '') jusqu'au premier token : c'est ce qui affiche
+      // l'indicateur « en train d'écrire » pendant l'attente.
+      _assistantDraft = null;
     });
     _scrollToBottom();
     _textController.clear();
@@ -771,12 +777,14 @@ class _AiChatScreenState extends State<AiChatScreen> {
             button: true,
             label: 'a11y_send_message'.tr,
             child: GestureDetector(
-              onTap: () => _sendMessage(_textController.text),
+              onTap:
+                  _isTyping ? null : () => _sendMessage(_textController.text),
               child: Container(
                 height: 46,
                 width: 46,
-                decoration: const BoxDecoration(
-                  color: KpbColors.actionPrimary,
+                decoration: BoxDecoration(
+                  color:
+                      _isTyping ? KpbColors.textFaint : KpbColors.actionPrimary,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.send_rounded,

@@ -129,6 +129,7 @@ class _DocumentReviewScreenState extends State<DocumentReviewScreen> {
         text: text,
         language: Get.locale?.languageCode ?? 'fr',
       );
+      if (!mounted) return;
       final review = result['review'] as Map<String, dynamic>?;
       if (review == null) {
         setState(() => _error = 'doc_review_unavailable'.tr);

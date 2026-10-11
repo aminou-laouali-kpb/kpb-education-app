@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -155,6 +156,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // Form keys per page
   final _key0 = GlobalKey<FormState>();
   final _key1 = GlobalKey<FormState>();
+  // Clé STABLE : une `GlobalKey()` créée dans build() recréait le Form et sa
+  // ListView à chaque setState, et la page remontait en haut à chaque puce.
+  final _key2 = GlobalKey<FormState>();
 
   // Controllers
   final _firstNameCtrl = TextEditingController();
@@ -180,9 +184,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _sameWhatsApp = true;
   _DialCode _phoneCode = _dialCodes[0];
   _DialCode _waCode = _dialCodes[0];
-  final Set<String> _fieldIds = {'computer_science', 'business'};
-  final Set<String> _countryIds = {'canada', 'france'};
-  final Set<String> _docs = {'Passport', 'Transcripts'};
+  // Vides par défaut : des choix pré-cochés (informatique, commerce, Canada,
+  // France…) partaient tels quels dans le profil et biaisaient le matching et
+  // les filtres de bourses. La page exige au moins une filière et un pays.
+  final Set<String> _fieldIds = {};
+  final Set<String> _countryIds = {};
+  final Set<String> _docs = {};
   bool _hasConsented = false;
 
   // Age gate + self-attested guardian consent for declared minors (<18).
@@ -564,8 +571,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Ask for push permission via OneSignal; identity is linked in
       // completeOnboarding() → syncOneSignalIdentity().
       await OneSignalService.instance.requestPermission();
-      AnalyticsService.instance
-          .logOnboardingCompleted(accountType: _accountType.name);
+      unawaited(AnalyticsService.instance
+          .logOnboardingCompleted(accountType: _accountType.name));
       final profile = _buildProfile();
       if (_accountType == AccountType.student) {
         // AHA moment (P0-D): await the profile PATCH so the server scores the
@@ -573,10 +580,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // reach _submit, so they keep landing on home.
         await _ctrl.completeOnboardingSynced(profile);
         if (!mounted) return;
-        Get.offAll(() => const AhaMomentScreen());
+        unawaited(Get.offAll(() => const AhaMomentScreen()));
       } else {
         _ctrl.completeOnboarding(profile);
-        Get.offAllNamed(AppRoutes.home);
+        unawaited(Get.offAllNamed(AppRoutes.home));
       }
     } finally {
       // Dans un `finally`, et pas après le `await` : si la remontée échoue, un
@@ -691,7 +698,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Page 2 — Filières, pays, documents
                 if (_accountType != AccountType.partner)
                   _Page(
-                    formKey: GlobalKey(),
+                    formKey: _key2,
                     title: 'onboarding_interests_title'.tr,
                     subtitle: 'onboarding_interests_subtitle'.tr,
                     child: _PageInterests(

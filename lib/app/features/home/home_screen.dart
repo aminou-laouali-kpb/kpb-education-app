@@ -84,11 +84,17 @@ class HomeScreen extends StatelessWidget {
 
     return GetBuilder<AppController>(
       builder: (_) {
-        if (controller.isSyncing && controller.profile == null) {
+        // Un invité n'a JAMAIS de profil : sans le test `isGuestMode`, son
+        // pull-to-refresh remplaçait tout l'accueil par le squelette, et une
+        // synchro ratée par une erreur plein écran alors que le catalogue en
+        // cache était là.
+        final awaitingFirstProfile =
+            controller.profile == null && !controller.isGuestMode;
+        if (controller.isSyncing && awaitingFirstProfile) {
           return const HomeScreenSkeleton();
         }
 
-        if (controller.syncError != null && controller.profile == null) {
+        if (controller.syncError != null && awaitingFirstProfile) {
           return KpbErrorState(
             onRetry: controller.pullToRefresh,
           );
@@ -109,7 +115,9 @@ class HomeScreen extends StatelessWidget {
                 c.status != CaseStatus.rejected)
             .take(2)
             .toList();
-        final urgentScholarship = _findUrgentDeadline(scholarships);
+        // Toute la liste recommandée, pas seulement les 3 cartes affichées.
+        final urgentScholarship =
+            _findUrgentDeadline(controller.recommendedScholarships);
 
         return Container(
           color: KpbColors.canvas,
@@ -447,47 +455,18 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Find nearest scholarship with deadline within 30 days.
+  /// Nearest scholarship whose CONFIRMED deadline falls within 30 days.
   ScholarshipModel? _findUrgentDeadline(List<ScholarshipModel> scholarships) {
-    final now = DateTime.now();
     ScholarshipModel? nearest;
-    int nearestDays = 31;
-
+    var nearestDays = 31;
     for (final s in scholarships) {
-      final parsed = _parseDeadline(s.deadlineLabel.fr);
-      if (parsed != null) {
-        final days = parsed.difference(now).inDays;
-        if (days >= 0 && days <= 30 && days < nearestDays) {
-          nearestDays = days;
-          nearest = s;
-        }
+      final days = s.daysUntilDeadline();
+      if (days != null && days <= 30 && days < nearestDays) {
+        nearestDays = days;
+        nearest = s;
       }
     }
     return nearest;
-  }
-
-  DateTime? _parseDeadline(String label) {
-    const months = {
-      'janvier': 1,
-      'février': 2,
-      'mars': 3,
-      'avril': 4,
-      'mai': 5,
-      'juin': 6,
-      'juillet': 7,
-      'août': 8,
-      'septembre': 9,
-      'octobre': 10,
-      'novembre': 11,
-      'décembre': 12,
-    };
-    final parts = label.toLowerCase().split(' ');
-    if (parts.length < 3) return null;
-    final day = int.tryParse(parts[0]);
-    final month = months[parts[1]];
-    final year = int.tryParse(parts[2]);
-    if (day == null || month == null || year == null) return null;
-    return DateTime(year, month, day);
   }
 }
 
@@ -1724,9 +1703,7 @@ class _UrgentDeadlineCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deadline = controller.resolve(scholarship.deadlineLabel);
-    // Deadline countdown is parsed from the canonical French label
-    // (the month map below is French-only), independent of display locale.
-    final daysLeft = _daysLeft(scholarship.deadlineLabel.fr);
+    final daysLeft = scholarship.daysUntilDeadline() ?? -1;
 
     return KpbPressable(
       onTap: () => Get.toNamed(AppRoutes.scholarships),
@@ -1816,31 +1793,6 @@ class _UrgentDeadlineCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  int _daysLeft(String label) {
-    const months = {
-      'janvier': 1,
-      'février': 2,
-      'mars': 3,
-      'avril': 4,
-      'mai': 5,
-      'juin': 6,
-      'juillet': 7,
-      'août': 8,
-      'septembre': 9,
-      'octobre': 10,
-      'novembre': 11,
-      'décembre': 12,
-    };
-    final parts = label.toLowerCase().split(' ');
-    if (parts.length < 3) return -1;
-    final day = int.tryParse(parts[0]);
-    final month = months[parts[1]];
-    final year = int.tryParse(parts[2]);
-    if (day == null || month == null || year == null) return -1;
-    final dt = DateTime(year, month, day);
-    return dt.difference(DateTime.now()).inDays;
   }
 }
 
@@ -2414,7 +2366,11 @@ class _ParcoursHomeCarouselState extends State<_ParcoursHomeCarousel> {
   void initState() {
     super.initState();
     // Safe to call repeatedly — skips the network round-trip once populated.
-    Get.find<AppController>().fetchParcoursStories();
+    // Après la première frame : l'appel fait un `update()` synchrone, interdit
+    // pendant un build (« setState() called during build » en debug).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Get.find<AppController>().fetchParcoursStories();
+    });
   }
 
   void _open(ParcoursStory story, List<ParcoursStory> videoStories) {

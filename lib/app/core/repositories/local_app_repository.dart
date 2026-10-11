@@ -28,7 +28,20 @@ class LocalAppRepository implements AppRepository {
     if (raw == null || raw.isEmpty) {
       return AppSnapshot.initial();
     }
+    try {
+      return _decodeSnapshot(raw);
+    } catch (_) {
+      // Un instantané illisible (JSON tronqué, champ d'un type inattendu)
+      // faisait échouer le démarrage À CHAQUE lancement (BootstrapErrorApp),
+      // sans autre issue que réinstaller. On repart d'un état vierge en
+      // gardant une copie pour diagnostic ; le serveur restaure le reste.
+      await _preferences.setString('$_storageKey.corrupt', raw);
+      await _preferences.remove(_storageKey);
+      return AppSnapshot.initial();
+    }
+  }
 
+  AppSnapshot _decodeSnapshot(String raw) {
     final json = jsonDecode(raw);
     if (json is! Map<String, dynamic>) {
       return AppSnapshot.initial();

@@ -44,6 +44,29 @@ const PURCHASE_STATUSES: PurchaseStatus[] = [
  * We do *not* auto-refund on payment failure — ops investigates because the
  * failure mode is usually a stuck mobile-money transfer that resolves itself.
  */
+const CHECKOUT_PROVIDERS: ReadonlyArray<string> = ['cinetpay', 'paydunya'];
+
+/**
+ * Projection étudiant d'un achat : jamais les notes du back-office
+ * (`internalNotes`), et du dossier lié seulement l'identifiant et la
+ * référence (pas les téléphones du conseiller ni les champs commerciaux).
+ */
+const STUDENT_PURCHASE_VIEW = {
+  omit: { internalNotes: true },
+  include: {
+    package: true,
+    case: {
+      select: {
+        id: true,
+        referenceCode: true,
+        requestedCountryId: true,
+        source: true,
+      },
+    },
+    paymentIntent: true,
+  },
+} as const;
+
 @Injectable()
 export class ServicePackagesService {
   private readonly logger = new Logger(ServicePackagesService.name);
@@ -115,7 +138,26 @@ export class ServicePackagesService {
     cancelUrl: string;
     customer?: { email?: string; phone?: string; fullName?: string };
   }) {
+    // `manual` n'est pas un moyen de paiement en ligne : seul le back-office
+    // confirme un paiement manuel (flux WhatsApp).
+    const provider = input.provider ?? 'cinetpay';
+    if (!CHECKOUT_PROVIDERS.includes(provider)) {
+      throw new BadRequestException(`Unsupported payment provider: ${provider}`);
+    }
+    if (
+      typeof input.returnUrl !== 'string' ||
+      typeof input.cancelUrl !== 'string' ||
+      !input.returnUrl ||
+      !input.cancelUrl
+    ) {
+      throw new BadRequestException('returnUrl and cancelUrl are required.');
+    }
     const pkg = await this.getPublic(input.packageCode);
+    // Comme le flux WhatsApp : un achat ne peut être rattaché qu'à un dossier
+    // de l'appelant (avant, n'importe quel caseId était accepté).
+    const linkedCase = input.caseId
+      ? await this.getOwnedCase(input.userId, input.caseId)
+      : null;
 
     // Resolve customer details from the stored profile. The access-token
     // payload only carries id/email, so phone/fullName passed by the
@@ -129,28 +171,14 @@ export class ServicePackagesService {
       fullName: profile?.fullName || input.customer?.fullName || '',
     };
 
-    const purchase = await this.prismaService.execute((prisma) =>
-      prisma.servicePurchase.create({
-        data: {
-          packageId: pkg.id,
-          userId: input.userId,
-          caseId: input.caseId,
-          amountXOF: pkg.priceXOF,
-          status: 'pending_payment',
-          source: 'checkout',
-        },
-      }),
-    );
-    if (!purchase) {
-      throw new Error('Failed to create service purchase.');
-    }
-
+    // L'intent d'abord : s'il échoue (fournisseur non configuré…), aucune
+    // ligne ServicePurchase orpheline ne pollue le pipeline admin.
     const intent = await this.paymentsService.createIntent({
       userId: input.userId,
-      provider: input.provider ?? 'cinetpay',
+      provider,
       amountMinor: pkg.priceXOF,
       currency: 'XOF',
-      caseId: input.caseId,
+      caseId: linkedCase?.id,
       description: `KPB — ${pkg.nameFr}`,
       customer,
       returnUrl: input.returnUrl,
@@ -160,14 +188,24 @@ export class ServicePackagesService {
       throw new Error('Failed to create payment intent for purchase.');
     }
 
-    const linked = await this.prismaService.execute((prisma) =>
-      prisma.servicePurchase.update({
-        where: { id: purchase.id },
-        data: { paymentIntentId: intent.id },
-        include: { package: true, case: true, paymentIntent: true },
+    const purchase = await this.prismaService.execute((prisma) =>
+      prisma.servicePurchase.create({
+        data: {
+          packageId: pkg.id,
+          userId: input.userId,
+          caseId: linkedCase?.id,
+          amountXOF: pkg.priceXOF,
+          status: 'pending_payment',
+          source: 'checkout',
+          paymentIntentId: intent.id,
+        },
+        ...STUDENT_PURCHASE_VIEW,
       }),
     );
-    return linked;
+    if (!purchase) {
+      throw new Error('Failed to create service purchase.');
+    }
+    return purchase;
   }
 
   /**
@@ -214,18 +252,7 @@ export class ServicePackagesService {
           source: { not: 'checkout' },
         },
         orderBy: { createdAt: 'desc' },
-        include: {
-          package: true,
-          case: {
-            select: {
-              id: true,
-              referenceCode: true,
-              requestedCountryId: true,
-              source: true,
-            },
-          },
-          paymentIntent: true,
-        },
+        ...STUDENT_PURCHASE_VIEW,
       }),
     );
     if (existing) {
@@ -243,18 +270,7 @@ export class ServicePackagesService {
           source,
           internalNotes: notes,
         },
-        include: {
-          package: true,
-          case: {
-            select: {
-              id: true,
-              referenceCode: true,
-              requestedCountryId: true,
-              source: true,
-            },
-          },
-          paymentIntent: true,
-        },
+        ...STUDENT_PURCHASE_VIEW,
       }),
     );
     if (!purchase) {
@@ -269,7 +285,7 @@ export class ServicePackagesService {
       prisma.servicePurchase.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
-        include: { package: true, case: true, paymentIntent: true },
+        ...STUDENT_PURCHASE_VIEW,
       }),
     );
     return { items: items ?? [] };
@@ -279,7 +295,7 @@ export class ServicePackagesService {
     const purchase = await this.prismaService.execute((prisma) =>
       prisma.servicePurchase.findFirst({
         where: { id, userId },
-        include: { package: true, case: true, paymentIntent: true },
+        ...STUDENT_PURCHASE_VIEW,
       }),
     );
     if (!purchase) {

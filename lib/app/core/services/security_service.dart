@@ -62,10 +62,50 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
   @visibleForTesting
   static VoidCallback? showLockScreenOverride;
 
+  /// Vrai entre l'affichage de l'écran de verrouillage et une authentification
+  /// réussie. Sert à le REPLACER si une navigation le retire ou passe
+  /// par-dessus (raccourci « Mes dossiers », clic de notification :
+  /// `Get.offAllNamed(home)` dépilait le verrou sans authentification).
+  bool _awaitingUnlock = false;
+
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Démarrage à froid : l'app démarre déjà `resumed`, sans transition de
+  /// cycle de vie, donc l'armement initial n'était jamais consommé et l'app
+  /// s'ouvrait déverrouillée après la mort du processus.
+  @override
+  void onReady() {
+    super.onReady();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_lockArmed) return;
+      _lockArmed = false;
+      _checkAndShowLockScreen();
+    });
+    // Un post-frame callback n'est exécuté qu'à la PROCHAINE frame : on la
+    // demande, sinon une app immobile ne l'exécute jamais.
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
+
+  /// À appeler à chaque changement de route (routingCallback) : tant que le
+  /// déverrouillage n'a pas eu lieu, toute autre route que `/app_lock` au
+  /// sommet remet l'écran de verrouillage.
+  void onRouteChanged(String? currentRoute) {
+    if (!_awaitingUnlock || currentRoute == '/app_lock') return;
+    if (!Get.isRegistered<AppController>() ||
+        !Get.find<AppController>().isAppLockEnabled) {
+      _awaitingUnlock = false;
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_awaitingUnlock && Get.currentRoute != '/app_lock') {
+        _showLockScreen();
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   @override
@@ -109,6 +149,11 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
     // ne sont simplement plus le seul rempart contre la boucle.
     if (_isAuthenticating || Get.currentRoute == '/app_lock') return;
 
+    _awaitingUnlock = true;
+    _showLockScreen();
+  }
+
+  void _showLockScreen() {
     final show = showLockScreenOverride;
     if (show != null) {
       show();
@@ -127,13 +172,16 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
           await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
 
       if (!canCheckBiometrics) {
+        _awaitingUnlock = false;
         return true; // Fallback to allowing access if device has no security
       }
 
-      return await _auth.authenticate(
+      final ok = await _auth.authenticate(
         localizedReason: 'security_biometric_reason'.tr,
         persistAcrossBackgrounding: true,
       );
+      if (ok) _awaitingUnlock = false;
+      return ok;
     } on PlatformException catch (_) {
       return false;
     } finally {
@@ -155,8 +203,13 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
   /// alors qu'on retirait la condition qu'il prétendait couvrir — la seconde
   /// garde de [_checkAndShowLockScreen] absorbait la mutation.
   @visibleForTesting
-  void setStateForTest({bool? armed, bool? authenticating}) {
+  void setStateForTest({
+    bool? armed,
+    bool? authenticating,
+    bool? awaitingUnlock,
+  }) {
     if (armed != null) _lockArmed = armed;
     if (authenticating != null) _isAuthenticating = authenticating;
+    if (awaitingUnlock != null) _awaitingUnlock = awaitingUnlock;
   }
 }

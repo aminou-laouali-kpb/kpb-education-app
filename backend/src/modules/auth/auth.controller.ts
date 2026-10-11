@@ -36,6 +36,7 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @Req() req: Request,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: { refreshToken?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -50,7 +51,16 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = readCookie(req.headers.cookie, ADMIN_REFRESH_COOKIE);
+    try {
+      await this.authService.revokeRefreshToken(refreshToken ?? '');
+    } catch {
+      // Base indisponible : le logout efface quand même les cookies.
+    }
     clearAdminAuthCookies(res);
     return { ok: true };
   }

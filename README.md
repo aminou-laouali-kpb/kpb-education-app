@@ -109,10 +109,9 @@ Local backend environment expects a PostgreSQL socket URL by default:
 
 - `DATABASE_URL="postgresql://aminou@localhost/kpb_education?host=/tmp&schema=public"`
 
-## Suggested next execution steps
+## Current state of persistence
 
-1. Migrate `cases`, `appointments`, and `saved-items` fully from in-memory stores to Prisma/PostgreSQL.
-2. Add document storage and upload persistence for `CaseDocument`.
-3. Add background notification delivery jobs for push/email campaign execution.
-4. Expand dashboard edit flows from create-first to full update/archive workflows.
-5. Add stronger auth hardening for production deployment.
+Cases, appointments, saved items, coach conversations and AI quotas are stored
+in PostgreSQL through Prisma. Without `DATABASE_URL`, these routes answer 503
+(`assertDb`) — the remaining in-memory arrays only back the non-production
+degraded mode of the content module, plus per-process caches (Kayak, YouTube).

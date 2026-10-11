@@ -60,8 +60,8 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
     try {
       await _authService.signInWithGoogle();
     } catch (_) {
-      AnalyticsService.instance
-          .logAuthFailed(method: 'google', reason: 'oauth_error');
+      unawaited(AnalyticsService.instance
+          .logAuthFailed(method: 'google', reason: 'oauth_error'));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('auth_google_error'.tr)),
@@ -316,11 +316,11 @@ Future<void> navigateAfterAuth({String method = 'email'}) async {
     final controller = Get.find<AppController>();
     await controller.finishAuthSession();
     if (controller.hasCompletedOnboarding) {
-      AnalyticsService.instance.logLogin(method: method);
-      Get.offAll(() => const AppRootShell());
+      unawaited(AnalyticsService.instance.logLogin(method: method));
+      unawaited(Get.offAll(() => const AppRootShell()));
     } else {
-      AnalyticsService.instance.logRegister(method: method);
-      Get.offAll(() => const OnboardingScreen());
+      unawaited(AnalyticsService.instance.logRegister(method: method));
+      unawaited(Get.offAll(() => const OnboardingScreen()));
     }
   } finally {
     // Reset so a later sign-out → sign-in in the same session still navigates.

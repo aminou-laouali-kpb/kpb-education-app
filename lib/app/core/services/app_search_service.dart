@@ -204,27 +204,30 @@ class AppSearchService {
     return min(score, 98);
   }
 
-  List<FieldModel> get recommendedFields {
+  /// Memoized for the lifetime of this service (one controller state).
+  late final List<FieldModel> recommendedFields = () {
     final sorted = _ctx.fields.map((f) => MapEntry(f, _matchField(f))).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(6).map((e) => e.key).toList();
-  }
+  }();
 
-  List<ProgramModel> get recommendedPrograms {
+  /// Memoized for the lifetime of this service (one controller state).
+  late final List<ProgramModel> recommendedPrograms = () {
     final sorted = _ctx.programs
         .map((p) => MapEntry(p, _matchProgram(p)))
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(10).map((e) => e.key).toList();
-  }
+  }();
 
-  List<InstitutionModel> get recommendedInstitutions {
+  /// Memoized for the lifetime of this service (one controller state).
+  late final List<InstitutionModel> recommendedInstitutions = () {
     final sorted = _ctx.institutions
         .map((i) => MapEntry(i, _matchInstitution(i)))
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(6).map((e) => e.key).toList();
-  }
+  }();
 
   List<String> matchExplanation(SearchResultType type, String id) {
     final p = _ctx.profile;
@@ -291,7 +294,11 @@ class AppSearchService {
     return reasons;
   }
 
-  List<ScholarshipModel> get recommendedScholarships {
+  /// Memoized for the lifetime of this service (one controller state).
+  late final List<ScholarshipModel> recommendedScholarships =
+      _computeRecommendedScholarships();
+
+  List<ScholarshipModel> _computeRecommendedScholarships() {
     final activeProfile = _ctx.profile;
     if (activeProfile == null) return _ctx.scholarships.take(4).toList();
 

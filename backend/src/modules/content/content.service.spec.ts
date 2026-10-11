@@ -306,4 +306,24 @@ describe('ContentService', () => {
       );
     });
   });
+
+  describe('public reads', () => {
+    it.each([
+      ['listServiceOffers', 'serviceOffer', { status: 'published' }],
+      ['listSupportDestinations', 'supportDestination', { status: 'published', isVisible: true }],
+      ['listArticles', 'article', { status: 'published' }],
+    ] as const)('%s({ publicOnly }) only queries published items', async (fn, model, where) => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      mockPrismaService.execute.mockImplementation((op: any) => op({ [model]: { findMany } }));
+      await (service as any)[fn]({ publicOnly: true });
+      expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where }));
+    });
+
+    it('admin reads keep every status', async () => {
+      const findMany = jest.fn().mockResolvedValue([]);
+      mockPrismaService.execute.mockImplementation((op: any) => op({ article: { findMany } }));
+      await service.listArticles();
+      expect(findMany.mock.calls[0][0].where).toBeUndefined();
+    });
+  });
 });

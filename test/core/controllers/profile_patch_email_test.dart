@@ -71,4 +71,32 @@ void main() {
       expect(api.payloads.single['fullName'], 'Suzane S.');
     });
   }
+
+  // Téléphone et WhatsApp ne sont pas persistés localement (RGPD) : après un
+  // redémarrage à froid le profil local les a vides. Le PATCH les envoyait
+  // quand même, et le serveur effaçait le numéro WhatsApp.
+  test('le PATCH n\'envoie pas un téléphone ou un WhatsApp vides', () async {
+    AppConfig.enableRemoteSyncOverride = false;
+    final api = _CapturingApi();
+    final controller = AppController(
+      repository: FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(phone: '').copyWith(whatsApp: ''),
+        ),
+      ),
+      apiClient: api,
+    );
+    await controller.hydrate();
+    Get.put<AppController>(controller, permanent: true);
+
+    AppConfig.enableRemoteSyncOverride = true;
+    await controller
+        .updateProfile(controller.profile!.copyWith(fullName: 'Awa D.'));
+
+    expect(api.payloads, hasLength(1));
+    expect(api.payloads.single, isNot(contains('whatsApp')));
+    expect(api.payloads.single, isNot(contains('phone')));
+  });
 }

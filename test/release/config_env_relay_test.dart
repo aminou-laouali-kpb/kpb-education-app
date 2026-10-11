@@ -153,4 +153,44 @@ void main() {
       );
     }
   });
+
+  // Même invariant, étendu à TOUT le backend : les drapeaux des tâches
+  // planifiées (KPB_SCHOLARSHIP_REFRESH_ENABLED, KPB_WEEKLY_DIGEST_ENABLED…)
+  // étaient lus par leurs services, documentés dans .env.example, et absents
+  // du fichier compose — les activer sur le VPS ne changeait rien.
+  test('chaque variable lue par le backend entre dans le conteneur', () {
+    final anyEnvRead = RegExp(r'process\.env\.([A-Z][A-Z0-9_]+)');
+    final relayedAny = RegExp(r'^\s*-\s+([A-Z][A-Z0-9_]+)=', multiLine: true)
+        .allMatches(File('docker-compose.yml').readAsStringSync())
+        .map((m) => m.group(1)!)
+        .toSet();
+    // Lues par le backend mais volontairement NON relayées : les contrôleurs
+    // de paiement (webhooks) ne sont pas enregistrés dans AppModule. Relayer
+    // les clés activerait un paiement en ligne sans confirmation serveur.
+    final intentionallyNotRelayed = RegExp(
+      r'^(KPB_CINETPAY_|KPB_PAYDUNYA_)|^(NODE_ENV|PORT|DATABASE_URL|'
+      r'KPB_RUN_POSTGRES_INTEGRATION|JEST_WORKER_ID|CI)$',
+    );
+    final readAny = <String>{};
+    for (final file in Directory('backend/src')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.ts') && !f.path.endsWith('.spec.ts'))) {
+      readAny.addAll(
+        anyEnvRead.allMatches(file.readAsStringSync()).map((m) => m.group(1)!),
+      );
+    }
+    expect(readAny.length, greaterThan(50), reason: 'Garde morte.');
+    final missing = readAny
+        .difference(relayedAny)
+        .where((v) => !intentionallyNotRelayed.hasMatch(v))
+        .toList()
+      ..sort();
+    expect(
+      missing,
+      isEmpty,
+      reason: 'Lues par backend/src mais absentes de docker-compose.yml :\n'
+          '${missing.map((v) => '  - $v').join('\n')}',
+    );
+  });
 }

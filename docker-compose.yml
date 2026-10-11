@@ -77,6 +77,21 @@ services:
       - KPB_CAMPAIGN_MAIL_FROM=${KPB_CAMPAIGN_MAIL_FROM:-}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
       - YOUTUBE_PLAYLIST_ID=${YOUTUBE_PLAYLIST_ID:-}
+      - YOUTUBE_ALLOWED_PLAYLIST_IDS=${YOUTUBE_ALLOWED_PLAYLIST_IDS:-}
+      # Tâches planifiées. Documentées dans .env.example mais jamais relayées
+      # jusqu'ici : les poser à true sur le VPS ne changeait rien. Fermées par
+      # défaut, comme dans le code.
+      - KPB_SCHOLARSHIP_REFRESH_ENABLED=${KPB_SCHOLARSHIP_REFRESH_ENABLED:-false}
+      - KPB_DAILY_SCHOLARSHIP_ENABLED=${KPB_DAILY_SCHOLARSHIP_ENABLED:-false}
+      - KPB_WEEKLY_DIGEST_ENABLED=${KPB_WEEKLY_DIGEST_ENABLED:-false}
+      - KPB_MATCH_RECOMPUTE_ENABLED=${KPB_MATCH_RECOMPUTE_ENABLED:-false}
+      - KPB_PARCOURS_WEEKLY_ENABLED=${KPB_PARCOURS_WEEKLY_ENABLED:-false}
+      # Quotas IA quotidiens par utilisateur (vide = défaut du code : 30 / 10 / 10).
+      - KPB_AI_DAILY_QUOTA_TOOLS=${KPB_AI_DAILY_QUOTA_TOOLS:-}
+      - KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW=${KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW:-}
+      - KPB_AI_DAILY_QUOTA_ORIENTATION=${KPB_AI_DAILY_QUOTA_ORIENTATION:-}
+      - GROQ_TIMEOUT_MS=${GROQ_TIMEOUT_MS:-}
+      - CLAMAV_TIMEOUT_MS=${CLAMAV_TIMEOUT_MS:-}
       # Flight price search (Kayak Price-Insights affiliate API; leave blank
       # to fall back to a browser deeplink).
       - KPB_KAYAK_API_KEY=${KPB_KAYAK_API_KEY:-}
@@ -296,10 +311,20 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_KPB_API_BASE_URL: ${KPB_ADMIN_API_BASE_URL:-https://api.kpbeducation.cloud/api}
+        NEXT_PUBLIC_SENTRY_DSN: ${KPB_ADMIN_SENTRY_DSN:-}
     image: kpb-admin:${KPB_IMAGE_TAG:-local}
     container_name: kpb_admin
     restart: always
     mem_limit: 384m
+    # Sans healthcheck, une image admin qui plante passait le déploiement
+    # (le portail ne testait que l'API). La page de connexion est publique et
+    # rendue par le serveur Next : si elle répond, le conteneur sert.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/login || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - traefik
     labels:

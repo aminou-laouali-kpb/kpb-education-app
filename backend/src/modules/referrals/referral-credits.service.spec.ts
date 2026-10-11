@@ -54,6 +54,13 @@ function makeService(setup: Setup): ReferralCreditsService {
     case: {
       count: ({ where }: any) =>
         lazy(() => caseCountByUser.get(where.userId) ?? 0),
+      // The first case is filed after the referral (created "now" in tests).
+      findFirst: ({ where }: any) =>
+        lazy(() =>
+          (caseCountByUser.get(where.userId) ?? 0) > 0
+            ? { createdAt: new Date('2099-01-01T00:00:00Z') }
+            : null,
+        ),
     },
     creditTransaction: {
       create: ({ data }: any) =>
@@ -177,6 +184,21 @@ describe('ReferralCreditsService — crediting (earn)', () => {
     await svc.creditReferrerForFirstCase('referee');
     expect(s.profiles.get('ref')!.reviewCredits).toBe(CREDITS_PER_REFERRAL);
     expect(s.txns).toHaveLength(1);
+  });
+
+  it('does not credit a case filed before the referral existed', async () => {
+    const s = emptySetup();
+    s.profiles.set('ref', { reviewCredits: 0 });
+    s.referralsByReferee.set('referee', {
+      id: 'R1',
+      referrerId: 'ref',
+      // Referral recorded after the (2099) first case of the fixture.
+      createdAt: new Date('2100-01-01T00:00:00Z'),
+    } as any);
+    s.caseCountByUser.set('referee', 1);
+    const svc = makeService(s);
+    expect(await svc.creditReferrerForFirstCase('referee')).toBe(false);
+    expect(s.txns).toHaveLength(0);
   });
 });
 

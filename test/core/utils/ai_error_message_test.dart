@@ -71,4 +71,26 @@ void main() {
     expect(aiErrorMessage(_dio(type: DioExceptionType.receiveTimeout)),
         contains('longer than expected'));
   });
+
+  test('the server daily AI quota gets its own message', () {
+    expect(
+      aiErrorMessage(_dio(
+        status: 429,
+        data: {'code': 'ai_daily_quota_reached'},
+      )),
+      'tools_ai_error_daily_quota'.tr,
+    );
+    // A plain throttler 429 keeps the "try again in a minute" message.
+    expect(
+      aiErrorMessage(_dio(status: 429)),
+      'tools_ai_error_rate_limited'.tr,
+    );
+  });
+
+  test('an oversized input says the text is too long', () {
+    expect(
+      aiErrorMessage(_dio(status: 413, data: {'code': 'ai_input_too_large'})),
+      'tools_ai_error_input_too_large'.tr,
+    );
+  });
 }

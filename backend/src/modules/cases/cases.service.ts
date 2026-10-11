@@ -40,6 +40,23 @@ export interface CaseMessagingActor {
   fullName?: string;
 }
 
+export type StaffActor = { id: string; role: string; fullName: string };
+
+/** Dossiers attribués à un conseiller : profil conseiller lié OU nom d'affectation. */
+function counselorCaseScope(staff: StaffActor) {
+  return {
+    OR: [
+      { counsellor: { adminUserId: staff.id } },
+      {
+        assignedAdvisorName: {
+          equals: staff.fullName.trim(),
+          mode: 'insensitive' as const,
+        },
+      },
+    ],
+  };
+}
+
 @Injectable()
 export class CasesService {
   private readonly logger = new Logger(CasesService.name);
@@ -99,11 +116,44 @@ export class CasesService {
         orderBy: { createdAt: 'desc' },
       }),
     );
-    return (items ?? []).map((c) => this.mapDbCase(c));
+    // Lecture étudiante (userId fourni) : jamais de données internes.
+    return (items ?? []).map((c) =>
+      this.mapDbCase(c, { includeInternal: !userId }),
+    );
   }
 
-  async findAllForAdmin() {
-    return this.findAll();
+  async findAllForAdmin(staff?: StaffActor) {
+    if (staff?.role !== InternalRole.Counselor) return this.findAll();
+    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
+    // comprises).
+    this.assertDb();
+    const items = await this.prismaService.execute((prisma) =>
+      prisma.case.findMany({
+        where: counselorCaseScope(staff),
+        include: CASE_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+      }),
+    );
+    return (items ?? []).map((c) =>
+      this.mapDbCase(c, { includeInternal: true }),
+    );
+  }
+
+  /**
+   * Barrière des écritures staff : un conseiller ne modifie que les dossiers
+   * qui lui sont attribués (profil conseiller lié, ou nom d'affectation).
+   * Les autres rôles autorisés par le contrôleur passent.
+   */
+  async assertStaffCanAccessCase(id: string, staff: StaffActor) {
+    if (staff.role !== InternalRole.Counselor) return;
+    this.assertDb();
+    const found = await this.prismaService.execute((prisma) =>
+      prisma.case.findFirst({
+        where: { id, ...counselorCaseScope(staff) },
+        select: { id: true },
+      }),
+    );
+    if (!found) throw new NotFoundException(`Case ${id} not found.`);
   }
 
   async findOne(id: string, ownerUserId?: string) {
@@ -254,7 +304,7 @@ export class CasesService {
     if (!created) {
       throw new ServiceUnavailableException('Failed to create case.');
     }
-    const mapped = this.mapDbCase(created);
+    const mapped = this.mapDbCase(created, { includeInternal: !userId });
     if (userId) {
       // No-cash referral reward (KPB-77): if this student was referred, credit
       // their referrer on the FIRST case. Fire-and-forget and OUTSIDE the
@@ -345,7 +395,7 @@ export class CasesService {
       throw new ServiceUnavailableException('Failed to update case.');
     }
     const mapped = this.mapDbCase(updated, { includeInternal: true });
-    this.broadcastCaseUpdate(id, mapped as Record<string, unknown>);
+    this.broadcastCaseUpdate(id, this.mapDbCase(updated) as Record<string, unknown>);
     return mapped;
   }
 
@@ -528,7 +578,7 @@ export class CasesService {
   async getInternalDocument(
     id: string,
     documentId: string,
-    internalUser: { role: string; fullName: string },
+    internalUser: { role: string; fullName: string; id?: string },
   ) {
     this.assertDb();
     const document = await this.prismaService.execute((prisma) =>
@@ -538,7 +588,12 @@ export class CasesService {
           id: true,
           title: true,
           fileUrl: true,
-          case: { select: { assignedAdvisorName: true } },
+          case: {
+            select: {
+              assignedAdvisorName: true,
+              counsellor: { select: { adminUserId: true } },
+            },
+          },
         },
       }),
     );
@@ -551,9 +606,11 @@ export class CasesService {
     );
     const isAssignedCounsellor =
       internalUser.role === InternalRole.Counselor &&
-      !!document.case.assignedAdvisorName &&
-      document.case.assignedAdvisorName.trim().toLowerCase() ===
-        internalUser.fullName.trim().toLowerCase();
+      ((!!internalUser.id &&
+        document.case.counsellor?.adminUserId === internalUser.id) ||
+        (!!document.case.assignedAdvisorName &&
+          document.case.assignedAdvisorName.trim().toLowerCase() ===
+            internalUser.fullName.trim().toLowerCase()));
     if (!isAdministrator && !isAssignedCounsellor) {
       // Return 404 rather than 403 so an internal user cannot enumerate
       // sensitive documents outside their assignment.
@@ -620,8 +677,8 @@ export class CasesService {
     if (!assigned) {
       throw new ServiceUnavailableException('Failed to assign case.');
     }
-    const mapped = this.mapDbCase(assigned);
-    this.broadcastCaseUpdate(id, mapped as Record<string, unknown>);
+    const mapped = this.mapDbCase(assigned, { includeInternal: true });
+    this.broadcastCaseUpdate(id, this.mapDbCase(assigned) as Record<string, unknown>);
     return mapped;
   }
 
@@ -752,8 +809,15 @@ export class CasesService {
     return this.createTimelineEvent(id, { title, description });
   }
 
+  /**
+   * Projection d'un dossier. Par défaut = projection ÉTUDIANT (sans notes
+   * internes, téléphones conseiller ni champs commerciaux) : la room
+   * Socket.IO `caseUpdated` est partagée avec l'étudiant, et un oubli d'option
+   * doit fuir le moins possible. Les lectures staff passent
+   * `includeInternal: true` explicitement.
+   */
   private mapDbCase(c: any, opts: { includeInternal?: boolean } = {}) {
-    const includeInternal = opts.includeInternal ?? true;
+    const includeInternal = opts.includeInternal ?? false;
     return {
       id: c.id,
       userId: c.userId,
@@ -788,10 +852,11 @@ export class CasesService {
       // Whether the student has opted into sharing this case with a linked
       // parent. Surfaced so the app can render (and toggle) the share switch.
       parentCanView: c.parentCanView ?? false,
-      leadTag: c.leadTag ?? null,
-      discussionMotive: c.discussionMotive ?? null,
-      lastCommercialInteractionAt:
-        c.lastCommercialInteractionAt?.toISOString() ?? null,
+      leadTag: includeInternal ? (c.leadTag ?? null) : null,
+      discussionMotive: includeInternal ? (c.discussionMotive ?? null) : null,
+      lastCommercialInteractionAt: includeInternal
+        ? (c.lastCommercialInteractionAt?.toISOString() ?? null)
+        : null,
       documentRequests: (c.documents ?? []).map((d: any) => ({
         id: d.id,
         title: d.title,

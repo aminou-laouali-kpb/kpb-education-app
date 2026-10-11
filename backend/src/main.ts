@@ -99,6 +99,16 @@ async function bootstrap() {
   await app.listen(port);
 }
 
+// Filet de sécurité : sans ce handler, une promesse lancée par `void` qui
+// rejette (bug dans une tâche de fond) arrête tout le process Node et coupe
+// toutes les requêtes en cours. On journalise au lieu de mourir.
+process.on('unhandledRejection', (reason) => {
+  console.error(
+    'Unhandled promise rejection',
+    reason instanceof Error ? (reason.stack ?? reason.message) : reason,
+  );
+});
+
 bootstrap().catch((error) => {
   // A boot failure (port in use, misconfigured module) must exit non-zero with a
   // clear log, not surface as an unhandled promise rejection.

@@ -23,6 +23,10 @@ linter:
   rules:
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # Toute Future lancée sans être attendue doit le dire (`unawaited(...)`).
+    # Les « fire-and-forget » silencieux étaient la cause commune de plusieurs
+    # défauts de l'audit (rejets non gérés, ordre de navigation imprévisible).
+    unawaited_futures: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

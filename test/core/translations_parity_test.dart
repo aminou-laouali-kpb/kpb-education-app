@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -66,7 +68,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text("Langue de l'application"), findsOneWidget);
 
-      Get.updateLocale(const Locale('en'));
+      unawaited(Get.updateLocale(const Locale('en')));
       await tester.pumpAndSettle();
       expect(find.text('App language'), findsOneWidget);
     });

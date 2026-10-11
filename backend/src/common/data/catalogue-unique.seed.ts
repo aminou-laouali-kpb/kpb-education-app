@@ -3,7 +3,7 @@
 // Regenerate via scratchpad transform_catalogue.mjs; do not hand-edit.
 // Partner schools/programs are intentionally excluded (see partner-schools.seed.ts).
 // eslint-disable
-/* eslint-disable */
+ 
 
 export type CatalogueInstitutionSeed = {
   id: string;

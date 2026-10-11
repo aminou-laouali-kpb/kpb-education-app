@@ -60,8 +60,10 @@ Future<void> openAiChatIfConsented(
   BuildContext context,
   AppController controller,
 ) async {
-  if (!await ensureAiConsent(context, controller)) return;
-  await Get.to(() => const AiChatScreen());
+  // Même parcours que les outils IA : un invité est envoyé vers le mur de
+  // création de compte au lieu d'un clic mort (copilote et bannière de
+  // l'accueil ne faisaient rien pour lui).
+  await openAiToolIfConsented(context, () => const AiChatScreen());
 }
 
 Future<void> openAiToolIfConsented(

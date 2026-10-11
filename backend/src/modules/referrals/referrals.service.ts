@@ -86,6 +86,25 @@ export class ReferralsService {
         };
       }
 
+      // Parrainage croisé : A parrain de B puis B parrain de A, et chacun
+      // gagnait un crédit (ferme à comptes).
+      const reverse = await db.referral.findFirst({
+        where: { referrerId: userId, refereeProfileId: referrer.id },
+        select: { id: true },
+      });
+      if (reverse) {
+        throw new ForbiddenException('Mutual referrals are not allowed.');
+      }
+
+      // Un code saisi après coup ne doit pas rémunérer un dossier déjà déposé :
+      // le parrainage s'applique avant la première demande.
+      const existingCases = await db.case.count({ where: { userId } });
+      if (existingCases > 0) {
+        throw new ForbiddenException(
+          'A referral code must be used before your first request.',
+        );
+      }
+
       await db.referral.create({
         data: { referrerId: referrer.id, refereeProfileId: userId },
       });

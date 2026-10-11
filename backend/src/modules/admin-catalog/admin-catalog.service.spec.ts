@@ -1239,3 +1239,52 @@ describe('AdminCatalogService — entretien de Institution.programIds', () => {
     expect((institutionUpdates[0].where as { id: string }).id).toBe('inst-a');
   });
 });
+
+describe('AdminCatalogService — institution country change', () => {
+  function makeService(programsElsewhere: number) {
+    const updates: unknown[] = [];
+    const counts: unknown[] = [];
+    const client = {
+      program: {
+        count: async (args: unknown) => {
+          counts.push(args);
+          return programsElsewhere;
+        },
+      },
+      institution: {
+        update: async (args: { where: { id: string } }) => {
+          updates.push(args);
+          return { id: args.where.id };
+        },
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    return { service: new AdminCatalogService(prisma), updates, counts };
+  }
+
+  it('refuses to move an institution whose programs belong to another country', async () => {
+    const { service, updates, counts } = makeService(3);
+    await expect(
+      service.updateInstitution('inst-1', { countryId: 'deu' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(counts).toEqual([
+      { where: { institutionId: 'inst-1', countryId: { not: 'deu' } } },
+    ]);
+    expect(updates).toHaveLength(0);
+  });
+
+  it('allows the move when every program already matches (or there are none)', async () => {
+    const { service, updates } = makeService(0);
+    await service.updateInstitution('inst-1', { countryId: 'deu' });
+    expect(updates).toHaveLength(1);
+  });
+
+  it('does not query programs when the country is unchanged in the payload', async () => {
+    const { service, counts } = makeService(5);
+    await service.updateInstitution('inst-1', { nameFr: 'Nom' });
+    expect(counts).toHaveLength(0);
+  });
+});

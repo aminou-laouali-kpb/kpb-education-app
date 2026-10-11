@@ -62,17 +62,25 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
     super.dispose();
   }
 
+  /// `maxScrollExtent` at which the last page was requested. Without it every
+  /// scroll event near the bottom added a page and rebuilt (filter + sort of
+  /// the whole catalogue), and `_visibleCount` grew without bound.
+  double? _pageRequestedAtExtent;
+
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 400) {
-      // Load next page when within 400 px of the bottom.
-      setState(() => _visibleCount += _pageSize);
-    }
+    final position = _scrollController.position;
+    if (position.pixels < position.maxScrollExtent - 400) return;
+    if (_pageRequestedAtExtent == position.maxScrollExtent) return;
+    // Load next page when within 400 px of the bottom — once per extent: a
+    // new page grows the extent, which re-arms the trigger.
+    _pageRequestedAtExtent = position.maxScrollExtent;
+    setState(() => _visibleCount += _pageSize);
   }
 
   void _resetFilters() {
     setState(() {
       _visibleCount = _pageSize;
+      _pageRequestedAtExtent = null;
       _searchController.clear();
       _filters = ProgramFilterState(partnerOnly: _filters.partnerOnly);
       _quickFilter = _QuickFilter.matches;
@@ -85,6 +93,7 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
       _filters = _filters.copyWith(partnerOnly: value);
       _quickFilter = _QuickFilter.matches;
       _visibleCount = _pageSize;
+      _pageRequestedAtExtent = null;
     });
   }
 
@@ -105,6 +114,7 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
     setState(() {
       _quickFilter = filter;
       _visibleCount = _pageSize;
+      _pageRequestedAtExtent = null;
       switch (filter) {
         case _QuickFilter.matches:
           _filters = _filters.copyWith(
@@ -215,9 +225,15 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
                                   () => _filtersExpanded = !_filtersExpanded),
                               onQuickFilter: (filter) =>
                                   _selectQuickFilter(filter, controller),
+                              // Taper une recherche garde la puce active : la
+                              // remettre sur « Meilleures correspondances »
+                              // sans réappliquer son filtre laissait un filtre
+                              // France/budget actif mais invisible, et perdait
+                              // le filtre « Enregistrés ».
                               onQueryChanged: (value) => setState(() {
                                 _filters = _filters.copyWith(query: value);
-                                _quickFilter = _QuickFilter.matches;
+                                _visibleCount = _pageSize;
+                                _pageRequestedAtExtent = null;
                               }),
                               onFiltersChanged: (next) => setState(() {
                                 _filters = next;

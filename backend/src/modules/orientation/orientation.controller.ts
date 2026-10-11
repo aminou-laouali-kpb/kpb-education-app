@@ -10,6 +10,14 @@ import {
 
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
 import { AiConsentGuard } from '../ai/ai-consent.guard';
+import { AiQuota, AiQuotaGuard } from '../ai/ai-quota.guard';
+
+const ORIENTATION_AI_QUOTA = AiQuota({
+  feature: 'orientation',
+  limitEnv: 'KPB_AI_DAILY_QUOTA_ORIENTATION',
+  defaultDailyLimit: 10,
+  maxBodyBytes: 16 * 1024,
+});
 import { OrientationService } from './orientation.service';
 
 @Controller('orientation')
@@ -26,7 +34,9 @@ export class OrientationController {
   // the guard, an attacker could burn AI quota and spam the DB at the global rate-limit
   // (60 req/min/IP in prod = ~86 400 paid completions/day per IP).
   @Post('sessions')
-  @UseGuards(StudentAuthGuard, AiConsentGuard)
+  @UseGuards(StudentAuthGuard, AiConsentGuard, AiQuotaGuard)
+  @ORIENTATION_AI_QUOTA
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createSession(@Body() body: Record<string, unknown>, @Req() req: any) {
     return this.orientationService.createSession(
       this._withAuthenticatedUserId(body, req),
@@ -34,7 +44,9 @@ export class OrientationController {
   }
 
   @Post('submit')
-  @UseGuards(StudentAuthGuard, AiConsentGuard)
+  @UseGuards(StudentAuthGuard, AiConsentGuard, AiQuotaGuard)
+  @ORIENTATION_AI_QUOTA
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   submit(@Body() body: Record<string, unknown>, @Req() req: any) {
     return this.orientationService.createSession(
       this._withAuthenticatedUserId(body, req),

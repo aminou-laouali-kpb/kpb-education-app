@@ -135,6 +135,32 @@ export class AuthService {
     return this.issueTokens(this.toSessionUser(dbUser));
   }
 
+  /**
+   * Révoque la session de refresh au logout. Avant, le logout effaçait
+   * seulement les cookies : un refresh token copié restait valable 7 jours.
+   * Silencieux sur un jeton invalide ou déjà révoqué (le logout réussit).
+   */
+  async revokeRefreshToken(refreshToken: string): Promise<void> {
+    if (!refreshToken) return;
+    let payload: { sub: string; email: string; type: string };
+    try {
+      payload = this.jwtService.verify(refreshToken, {
+        secret: this.refreshSecret,
+      });
+    } catch {
+      return;
+    }
+    if (payload.type !== 'admin-refresh') return;
+    const dbUser =
+      await this.adminUsersService.findActiveUserByEmailWithCredentials(
+        payload.email || '',
+      );
+    if (!dbUser?.refreshToken) return;
+    if (await bcrypt.compare(refreshToken, dbUser.refreshToken)) {
+      await this.adminUsersService.updateRefreshToken(dbUser.id, null);
+    }
+  }
+
   async verifyToken(token: string): Promise<AdminSessionUser> {
     try {
       const payload = this.jwtService.verify(token);

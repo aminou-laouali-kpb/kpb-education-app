@@ -1,0 +1,49 @@
+# Mises à jour de dépendances. Le dépôt n'en avait aucune : Next.js 15.5.21
+# (RCE critique) et Node 20 en fin de vie sont restés en production faute de
+# signal. Hebdomadaire, regroupé (une PR par écosystème pour mineures et
+# correctifs), et plafonné pour ne pas noyer la revue. Les correctifs de
+# sécurité arrivent de toute façon dès publication (Dependabot security
+# updates, à activer dans Settings → Code security).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /admin
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      admin-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pub
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      flutter-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 2
+
+  - package-ecosystem: docker
+    directory: /admin
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 2

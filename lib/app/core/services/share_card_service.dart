@@ -12,6 +12,7 @@
 // image was missing rather than silently reporting a normal share.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -69,19 +70,19 @@ class ShareCardService {
       );
     } catch (_) {
       // The OS sheet itself refused — report it, don't crash the caller.
-      AnalyticsService.instance.logShareCard(
+      unawaited(AnalyticsService.instance.logShareCard(
         source: source.wireName,
         withImage: false,
         success: false,
-      );
+      ));
       return false;
     }
 
-    AnalyticsService.instance.logShareCard(
+    unawaited(AnalyticsService.instance.logShareCard(
       source: source.wireName,
       withImage: file != null,
       success: true,
-    );
+    ));
     return file != null;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
@@ -939,21 +940,21 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
     final text = _shareText();
     final waUri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
     if (await kpbOpenExternalUrl(waUri)) {
-      AnalyticsService.instance.logShareCard(
+      unawaited(AnalyticsService.instance.logShareCard(
         source: ShareSource.match.wireName,
         withImage: false,
         success: true,
-      );
+      ));
     } else {
       // WhatsApp unavailable → OS share sheet with the same message.
       await SharePlus.instance.share(ShareParams(text: text));
-      AnalyticsService.instance.logShareCard(
+      unawaited(AnalyticsService.instance.logShareCard(
         source: ShareSource.match.wireName,
         withImage: false,
         success: true,
-      );
+      ));
     }
-    if (mounted) Navigator.of(context).maybePop();
+    if (mounted) unawaited(Navigator.of(context).maybePop());
   }
 
   Future<void> _download() async {
@@ -976,7 +977,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
           margin: const EdgeInsets.all(12),
         );
       }
-      if (mounted) Navigator.of(context).maybePop();
+      if (mounted) unawaited(Navigator.of(context).maybePop());
     } finally {
       if (mounted) setState(() => _busy = false);
     }

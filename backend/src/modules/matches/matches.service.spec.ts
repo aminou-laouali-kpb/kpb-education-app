@@ -324,6 +324,7 @@ function prismaDouble(opts: {
     });
   };
   const upserts: Array<Record<string, unknown>> = [];
+  const deletes: Array<Record<string, unknown>> = [];
   /// Les arguments réellement envoyés à `program.findMany`. Ce que le service
   /// DEMANDE compte autant que ce qu'il reçoit : une recommandation est une
   /// surface publique, et le filtre « relu » doit s'y voir.
@@ -359,6 +360,10 @@ function prismaDouble(opts: {
         upserts.push(args);
         return { id: 'match-1' };
       },
+      deleteMany: async (args: Record<string, unknown>) => {
+        deletes.push(args);
+        return { count: 0 };
+      },
     },
     matchExplanation: { upsert: async () => ({ id: 'expl-1' }) },
   };
@@ -378,16 +383,17 @@ function prismaDouble(opts: {
       }
     }),
   };
-  return { prisma, upserts, programQueries, institutionQueries };
+  return { prisma, upserts, deletes, programQueries, institutionQueries };
 }
 
 function serviceWith(opts: Parameters<typeof prismaDouble>[0]) {
-  const { prisma, upserts, programQueries, institutionQueries } =
+  const { prisma, upserts, deletes, programQueries, institutionQueries } =
     prismaDouble(opts);
   return {
     service: new MatchesService(prisma as unknown as PrismaService),
     prisma,
     upserts,
+    deletes,
     programQueries,
     institutionQueries,
   };
@@ -426,6 +432,25 @@ describe('MatchesService', () => {
       expect(result.items[0].institutionName.en).toBe('Test University');
       // Real rows are cached for the weekly recompute to diff against.
       expect(upserts).toHaveLength(1);
+    });
+
+    it('ahaMoment prunes cached rows that left the top (weekly diff baseline)', async () => {
+      const { service, deletes } = serviceWith({});
+      await service.ahaMoment('user-1', 5);
+      expect(deletes).toEqual([
+        {
+          where: {
+            userProfileId: 'user-1',
+            programId: { notIn: ['db-prog-1'] },
+          },
+        },
+      ]);
+    });
+
+    it('schoolMatch does not write into the weekly diff baseline', async () => {
+      const { service, upserts } = serviceWith({});
+      await service.schoolMatch('user-1', 'db-inst-1');
+      expect(upserts).toHaveLength(0);
     });
 
     it('schoolMatch scores the database programs of that institution', async () => {

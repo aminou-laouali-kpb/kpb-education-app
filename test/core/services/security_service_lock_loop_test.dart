@@ -204,4 +204,43 @@ void main() {
       expect(lockRequests, 0);
     });
   });
+
+  group('SecurityService — verrou non contournable', () {
+    testWidgets(
+        'une navigation qui retire l\'écran de verrouillage avant le '
+        'déverrouillage le remet', (tester) async {
+      final service = await buildService(lockEnabled: true);
+      service.setStateForTest(awaitingUnlock: true);
+
+      service.onRouteChanged('/home');
+      await tester.pump();
+      expect(lockRequests, 1);
+
+      // Le verrou lui-même au sommet : rien à faire.
+      service.onRouteChanged('/app_lock');
+      await tester.pump();
+      expect(lockRequests, 1);
+    });
+
+    testWidgets('après déverrouillage, naviguer ne remet pas le verrou',
+        (tester) async {
+      final service = await buildService(lockEnabled: true);
+      service.setStateForTest(awaitingUnlock: false);
+      service.onRouteChanged('/home');
+      await tester.pump();
+      expect(lockRequests, 0);
+    });
+
+    testWidgets('démarrage à froid : le verrou armé est honoré sans resumed',
+        (tester) async {
+      await buildService(lockEnabled: true, armed: true);
+      // En production, `runApp` produit la première frame (qui déclenche
+      // `onReady` de GetX) ; ici on la demande explicitement.
+      for (var i = 0; i < 3; i++) {
+        tester.binding.scheduleFrame();
+        await tester.pump();
+      }
+      expect(lockRequests, 1);
+    });
+  });
 }

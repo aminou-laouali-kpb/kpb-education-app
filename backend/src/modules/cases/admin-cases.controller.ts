@@ -39,8 +39,8 @@ export class AdminCasesController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.casesService.findAllForAdmin();
+  findAll(@Req() req: any) {
+    return this.casesService.findAllForAdmin(req.adminUser);
   }
 
   @Get(':id/documents/:documentId/file')
@@ -75,33 +75,50 @@ export class AdminCasesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() input: UpdateCaseDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() input: UpdateCaseDto,
+    @Req() req: any,
+  ) {
+    await this.casesService.assertStaffCanAccessCase(id, req.adminUser);
     return this.casesService.update(id, input);
   }
 
+  // Affecter un dossier est une décision d'équipe : un conseiller pouvait
+  // s'attribuer n'importe quel dossier, puis en télécharger les pièces.
   @Post(':id/assign')
+  @Roles(InternalRole.Commercial, InternalRole.Admin, InternalRole.SuperAdmin)
   assign(@Param('id') id: string, @Body() input: AssignCaseDto) {
     return this.casesService.assignCase(id, input);
   }
 
   @Post(':id/tasks')
-  createTask(@Param('id') id: string, @Body() input: CreateCaseTaskDto) {
+  async createTask(
+    @Param('id') id: string,
+    @Body() input: CreateCaseTaskDto,
+    @Req() req: any,
+  ) {
+    await this.casesService.assertStaffCanAccessCase(id, req.adminUser);
     return this.casesService.createTask(id, input);
   }
 
   @Post(':id/internal-notes')
-  createInternalNote(
+  async createInternalNote(
     @Param('id') id: string,
     @Body() input: CreateCaseInternalNoteDto,
+    @Req() req: any,
   ) {
+    await this.casesService.assertStaffCanAccessCase(id, req.adminUser);
     return this.casesService.createInternalNote(id, input);
   }
 
   @Post(':id/timeline-events')
-  createTimelineEvent(
+  async createTimelineEvent(
     @Param('id') id: string,
     @Body() input: CreateCaseTimelineEventDto,
+    @Req() req: any,
   ) {
+    await this.casesService.assertStaffCanAccessCase(id, req.adminUser);
     return this.casesService.createTimelineEvent(id, input);
   }
 }

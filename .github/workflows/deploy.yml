@@ -106,6 +106,9 @@ jobs:
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          # Empreinte d'hôte épinglée (sortie de `ssh-keyscan -H <hôte>` relue
+          # hors ligne). Absente : repli sur ssh-keyscan avec avertissement.
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           set -euo pipefail
@@ -123,13 +126,19 @@ jobs:
           # Sans réessai, un déploiement échoue pour une raison qui n'a rien à
           # voir avec le code, et l'opérateur en déduit ce qu'il peut.
           keyscanned=0
-          for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
-              keyscanned=1; break
-            fi
-            echo "ssh-keyscan attempt $attempt failed — retrying in 10s"
-            sleep 10
-          done
+          if [ -n "${KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+            keyscanned=1
+          else
+            echo "::warning::VPS_KNOWN_HOSTS is not set — trusting whatever host key $VPS_HOST presents."
+            for attempt in 1 2 3 4 5; do
+              if ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+                keyscanned=1; break
+              fi
+              echo "ssh-keyscan attempt $attempt failed — retrying in 10s"
+              sleep 10
+            done
+          fi
           if [ "$keyscanned" != "1" ]; then
             echo "::error::ssh-keyscan could not reach $VPS_HOST after 5 attempts."
             echo "::error::The host may be fine: check it from elsewhere before assuming an outage."
@@ -338,6 +347,11 @@ jobs:
           # truncated/corrupt dump before a migration or container is touched.
           docker compose exec -T db pg_restore --list < "$LATEST_DUMP" > /dev/null
           echo "backup ok: $(du -h "$LATEST_DUMP" | cut -f1) $LATEST_DUMP"
+          # Retention : seuls les 5 derniers dumps pré-déploiement sont gardés
+          # (le disque est partagé avec la base, et chaque dump est une copie
+          # complète des données personnelles). Le dump qui vient d'être
+          # vérifié fait toujours partie des 5.
+          ls -1t backups/predeploy-*.dump | tail -n +6 | xargs -r rm -f --
 
           echo "── migrate ──"
           docker compose run --rm --no-deps api npx prisma migrate deploy < /dev/null
@@ -378,17 +392,21 @@ jobs:
           echo "running: $RUNNING_IMAGE"
 
           echo "── health gate ──"
+          # L'API ET la console admin : une image admin cassée donnait
+          # « DEPLOY OK » sans retour arrière.
           healthy=0
           for i in $(seq 1 20); do
             sleep 5
-            if curl -fsS "${HEALTH_URL}/api/health/ready" >/dev/null 2>&1; then
+            admin_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' kpb_admin 2>/dev/null || echo missing)"
+            if curl -fsS "${HEALTH_URL}/api/health/ready" >/dev/null 2>&1 \
+              && { [ "$admin_health" = "healthy" ] || [ "$admin_health" = "none" ]; }; then
               healthy=1; break
             fi
-            echo "not ready yet (attempt $i)"
+            echo "not ready yet (attempt $i, admin: $admin_health)"
           done
 
           if [ "$healthy" != "1" ]; then
-            echo "::error::API unhealthy after deploy — rolling back the code"
+            echo "::error::API or admin unhealthy after deploy — rolling back the code"
             if [ -n "${PREV_TAG:-}" ] && [ "$PREV_TAG" != "$IMAGE_TAG" ]; then
               KPB_IMAGE_TAG="$PREV_TAG" docker compose up -d --no-deps api admin web < /dev/null
               echo "rolled back to $PREV_TAG"
@@ -396,6 +414,7 @@ jobs:
               echo "::warning::no distinct previous tag to roll back to"
             fi
             docker compose logs --tail=80 api || true
+            docker compose logs --tail=40 admin || true
             exit 1
           fi
 

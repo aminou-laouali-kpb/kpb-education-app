@@ -39,3 +39,17 @@ describe('apiFetch', () => {
     );
   });
 });
+
+describe('readableErrorText', () => {
+  it('extracts a Nest message instead of showing raw JSON', async () => {
+    const { readableErrorText } = await import('./api-client');
+    expect(readableErrorText('{"message":"Case not found.","statusCode":404}', 404)).toBe(
+      'Case not found.',
+    );
+    expect(
+      readableErrorText('{"message":["name must be a string","x too long"]}', 400),
+    ).toBe('name must be a string x too long');
+    expect(readableErrorText('Bad Gateway', 502)).toBe('Bad Gateway');
+    expect(readableErrorText('', 500)).toBe('Request failed with status 500');
+  });
+});

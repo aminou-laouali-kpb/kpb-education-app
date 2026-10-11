@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTO-GENERATED — KPB "Parcours & Témoignages" seed data.
 //

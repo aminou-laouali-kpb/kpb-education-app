@@ -3,6 +3,7 @@ import { Request } from 'express';
 
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
 import { AmbassadorService } from './ambassador.service';
+import { ActivateAmbassadorDto } from './dto/activate-ambassador.dto';
 
 type AuthedReq = Request & { studentUser?: { id: string } };
 
@@ -22,12 +23,12 @@ export class AmbassadorController {
 
   /** Activate ambassador mode + mint a referral code. */
   @Post('ambassador/activate')
-  activate(@Req() req: AuthedReq, @Body() body: Record<string, unknown>) {
+  activate(@Req() req: AuthedReq, @Body() body: ActivateAmbassadorDto) {
     return this.ambassadorService.activate(req.studentUser!.id, {
-      displayName: body['displayName'] as string | undefined,
-      campus: body['campus'] as string | undefined,
-      city: body['city'] as string | undefined,
-      payoutAccount: body['payoutAccount'] as string | undefined,
+      displayName: body.displayName,
+      campus: body.campus,
+      city: body.city,
+      payoutAccount: body.payoutAccount,
     });
   }
 

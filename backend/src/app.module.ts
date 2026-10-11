@@ -89,6 +89,8 @@ import { MatchesService } from './modules/matches/matches.service';
 import { MatchRecomputeService } from './modules/matches/match-recompute.service';
 import { AiConsentGuard } from './modules/ai/ai-consent.guard';
 import { AiConsentService } from './modules/ai/ai-consent.service';
+import { AiQuotaGuard } from './modules/ai/ai-quota.guard';
+import { AiQuotaService } from './modules/ai/ai-quota.service';
 import { LlmService } from './modules/ai/llm.service';
 import { OrientationController } from './modules/orientation/orientation.controller';
 import { OrientationService } from './modules/orientation/orientation.service';
@@ -277,6 +279,8 @@ import { SalonService } from './modules/salon/salon.service';
     LlmService,
     AiConsentService,
     AiConsentGuard,
+    AiQuotaService,
+    AiQuotaGuard,
     DocumentReviewService,
     CoachService,
     CoachQuotaService,

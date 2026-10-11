@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/ui/components/kpb_network_image.dart';
 
 import '../../core/repositories/app_api_client.dart';
+import '../../core/utils/external_link.dart';
 
 /// Horizontal "Ils nous font confiance" strip (Phase 3).
 ///
@@ -105,10 +105,9 @@ class _PartnerTile extends StatelessWidget {
 
   final Map<String, dynamic> p;
 
+  // Lien venu du serveur : schéma validé, pas d'exception sur URL invalide.
   Future<void> _open() async {
-    final url = p['websiteUrl'] as String?;
-    if (url == null || url.isEmpty) return;
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    await kpbOpenExternalUrlString(p['websiteUrl'] as String?);
   }
 
   @override

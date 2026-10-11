@@ -14,6 +14,8 @@ describe('ReferralsService', () => {
     existingReferral?: { referrerId: string } | null;
     signedUp?: number;
     caseCreated?: number;
+    reverseReferral?: { id: string } | null;
+    existingCases?: number;
   }) {
     const calls = { created: 0, updated: 0 };
     const db = {
@@ -35,11 +37,13 @@ describe('ReferralsService', () => {
         count: async ({ where }: { where: { referee?: unknown } }) =>
           where.referee ? (opts.caseCreated ?? 0) : (opts.signedUp ?? 0),
         findUnique: async () => opts.existingReferral ?? null,
+        findFirst: async () => opts.reverseReferral ?? null,
         create: async () => {
           calls.created += 1;
           return {};
         },
       },
+      case: { count: async () => opts.existingCases ?? 0 },
     };
     const prisma = {
       execute: async (fn: (c: typeof db) => unknown) => fn(db),
@@ -100,6 +104,24 @@ describe('ReferralsService', () => {
     });
     const out = await service.redeem('u2', 'code1234');
     expect(out.alreadyReferred).toBe(true);
+    expect(calls.created).toBe(0);
+  });
+
+  it('refuses a mutual referral (A refers B, then B refers A)', async () => {
+    const { service, calls } = makeService({
+      referrerByCode: { id: 'u2' },
+      reverseReferral: { id: 'r-1' },
+    });
+    await expect(service.redeem('u1', 'abc12345')).rejects.toThrow('Mutual');
+    expect(calls.created).toBe(0);
+  });
+
+  it('refuses a code redeemed after the first request', async () => {
+    const { service, calls } = makeService({
+      referrerByCode: { id: 'u2' },
+      existingCases: 1,
+    });
+    await expect(service.redeem('u1', 'abc12345')).rejects.toThrow('first request');
     expect(calls.created).toBe(0);
   });
 });

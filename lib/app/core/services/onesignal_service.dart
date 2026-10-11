@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -42,10 +43,10 @@ class OneSignalService {
   Future<void> initialize() async {
     if (_initialized || !AppConfig.oneSignalEnabled) return;
     try {
-      OneSignal.Debug.setLogLevel(
+      unawaited(OneSignal.Debug.setLogLevel(
         kReleaseMode ? OSLogLevel.none : OSLogLevel.warn,
-      );
-      OneSignal.initialize(AppConfig.oneSignalAppId);
+      ));
+      unawaited(OneSignal.initialize(AppConfig.oneSignalAppId));
 
       // Route taps on a notification to the in-app destination if provided.
       OneSignal.Notifications.addClickListener(_onNotificationClicked);
@@ -78,7 +79,7 @@ class OneSignalService {
   }) async {
     if (!_initialized || userId.trim().isEmpty) return;
     try {
-      OneSignal.login(userId.trim());
+      unawaited(OneSignal.login(userId.trim()));
       _applyTags(tags);
     } catch (error) {
       debugPrint('[OneSignal] login failed: $error');
@@ -89,7 +90,7 @@ class OneSignalService {
   Future<void> logout() async {
     if (!_initialized) return;
     try {
-      OneSignal.logout();
+      unawaited(OneSignal.logout());
     } catch (error) {
       debugPrint('[OneSignal] logout failed: $error');
     }

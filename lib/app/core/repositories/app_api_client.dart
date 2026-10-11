@@ -3,17 +3,15 @@ import 'dart:typed_data';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart' show EdgeInsets;
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 
-import '../ui/app_tokens.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 
 import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
-import '../navigation/app_boot_screen.dart';
 import 'app_version_headers.dart';
 
 class AppApiClient {
@@ -1202,7 +1200,8 @@ class AppApiClient {
       queryParameters: {
         'userId': userId,
         'message': message,
-        'fullName': profile['fullName'],
+        // Pas de `fullName` : le serveur ne transmet jamais le nom au modèle,
+        // et une query string finit dans les journaux des proxys.
         'currentLevel': profile['currentLevel'],
         'targetCountryIds':
             (profile['targetCountryIds'] as List<dynamic>?)?.join(',') ?? '',
@@ -1215,8 +1214,11 @@ class AppApiClient {
     if (stream == null) return;
 
     var buffer = '';
-    await for (final chunk in stream) {
-      buffer += utf8.decode(chunk, allowMalformed: true);
+    // Décodage en FLUX : décoder chaque paquet séparément corrompait un
+    // caractère accentué coupé entre deux paquets (« é » → « �� »).
+    await for (final chunk
+        in const Utf8Decoder(allowMalformed: true).bind(stream)) {
+      buffer += chunk;
       final lines = buffer.split('\n');
       buffer = lines.removeLast();
 
@@ -1966,6 +1968,28 @@ class AppApiClient {
   }
 }
 
+/// Whether a failed Supabase token refresh means the session is really dead.
+///
+/// Only an explicit refusal from the auth server (invalid/revoked refresh
+/// token: 400/401/403) or a missing session qualifies. Network errors
+/// ([AuthRetryableFetchException], socket/timeout errors) and server errors
+/// (5xx, [AuthUnknownException]) are transient: the user stays signed in and
+/// the next request retries.
+@visibleForTesting
+bool isPermanentRefreshFailure(Object error) {
+  if (error is AuthSessionMissingException) return true;
+  if (error is AuthRetryableFetchException) return false;
+  if (error is AuthApiException) {
+    final status = int.tryParse(error.statusCode ?? '');
+    return status != null &&
+        status >= 400 &&
+        status < 500 &&
+        status != 408 &&
+        status != 429;
+  }
+  return false;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth interceptor — injects the Supabase Bearer token, refreshes on 401
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2005,8 +2029,12 @@ class _AuthInterceptor extends Interceptor {
     // Bug A: a request that already went through a post-refresh retry must
     // NOT be retried again — that would loop forever if the new token is also
     // rejected (revoked refresh token, clock skew, backend reboot).
+    //
+    // No logout here either: a fresh token rejected again is far more often a
+    // backend hiccup than a dead session, and logout wipes unsynced local data.
+    // A truly revoked session surfaces on the next refresh as a non-retryable
+    // AuthApiException, which IS treated as permanent below.
     if (err.requestOptions.extra['authRetried'] == true) {
-      await _handlePermanentFailure();
       return handler.next(err);
     }
 
@@ -2034,11 +2062,17 @@ class _AuthInterceptor extends Interceptor {
     // refresh failures — a retry that throws AFTER a successful refresh must
     // not call complete() on an already-completed completer (StateError).
     bool refreshed = false;
+    // Only a definitive refusal from the auth server ends the session. A
+    // network failure, a timeout or a 5xx (outage) must NOT log the user out:
+    // logout wipes cases, saved items and the unsynced outbox.
+    bool permanent = false;
     try {
       final response = await _auth.refreshSession();
       refreshed = response.session != null;
-    } catch (_) {
+      permanent = !refreshed;
+    } catch (error) {
       refreshed = false;
+      permanent = isPermanentRefreshFailure(error);
     }
     if (!_refreshCompleter!.isCompleted) {
       _refreshCompleter!.complete(refreshed);
@@ -2046,7 +2080,7 @@ class _AuthInterceptor extends Interceptor {
     _isRefreshing = false;
 
     if (!refreshed) {
-      await _handlePermanentFailure();
+      if (permanent) await _handlePermanentFailure();
       _refreshCompleter = null;
       return handler.next(err);
     }
@@ -2067,22 +2101,7 @@ class _AuthInterceptor extends Interceptor {
     } catch (_) {}
     try {
       if (Get.isRegistered<AppController>()) {
-        final controller = Get.find<AppController>();
-        if (controller.profile != null) {
-          await controller.logout();
-          // Route to the boot gate, not the authenticated shell, so the user
-          // lands on the login/onboarding screen rather than AppShell.
-          Get.offAll(() => const AppBootScreen());
-          Get.snackbar(
-            'api_client_session_expired_title'.tr,
-            'api_client_session_expired_message'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12),
-            backgroundColor: KpbColors.errorLight,
-            colorText: KpbColors.error,
-            duration: const Duration(seconds: 4),
-          );
-        }
+        await Get.find<AppController>().handleSessionLost();
       }
     } catch (_) {}
   }

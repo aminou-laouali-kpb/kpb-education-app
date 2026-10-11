@@ -7,6 +7,7 @@ import { AntivirusService } from '../storage/antivirus.service';
 
 /** Captured at import time, so it is the process start and not the call time. */
 const PROCESS_STARTED_AT = new Date().toISOString();
+const SCAN_CACHE_MS = 30_000;
 
 @Controller('health')
 export class HealthController {
@@ -65,9 +66,25 @@ export class HealthController {
        */
       antivirus: {
         configured: this.antivirus.isEnabled,
-        scanning: await this.antivirus.selfTest().catch(() => false),
+        scanning: await this.antivirusScanning(),
       },
     };
+  }
+
+  /**
+   * Résultat du test EICAR mis en cache 30 s : la route est publique, et
+   * chaque appel envoyait un scan à clamd. Un clamd qui meurt est vu en
+   * 30 s au plus — l'objet du test (panne du 15/08/2026) reste rempli.
+   */
+  private scanCache: { at: number; value: Promise<boolean> } | null = null;
+
+  private antivirusScanning(now = Date.now()): Promise<boolean> {
+    if (this.scanCache && now - this.scanCache.at < SCAN_CACHE_MS) {
+      return this.scanCache.value;
+    }
+    const value = this.antivirus.selfTest().catch(() => false);
+    this.scanCache = { at: now, value };
+    return value;
   }
 
   @Get('live')

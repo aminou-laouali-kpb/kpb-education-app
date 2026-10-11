@@ -64,7 +64,10 @@ export function InstitutionForm({
   onSubmit: () => void;
   onCancel: () => void;
 }) {
-  const countryLocked = editing && (programCount ?? 0) > 0;
+  // Compte encore inconnu (chargement) ⇒ verrouillé : `(null ?? 0) > 0`
+  // déverrouillait le pays pendant le chargement. Le serveur refuse de toute
+  // façon un déplacement qui laisserait des formations sous l'ancien pays.
+  const countryLocked = editing && (programCount === null || programCount > 0);
   return (
     <div style={sectionStyle}>
       <div style={gridStyle}>

@@ -958,6 +958,23 @@ export class AdminCatalogService {
       institutionId: id,
       nextActive: this.bool(input.isActive),
     });
+    const nextCountryId = this.str(input.countryId);
+    if (nextCountryId) {
+      // Le verrou n'existait que dans l'interface (et sautait pendant le
+      // chargement) : changer le pays d'un établissement qui a des formations
+      // laissait ces formations rattachées à l'ancien pays, introuvables par
+      // le bon filtre.
+      const programsInOtherCountry = await this.prisma.execute((db) =>
+        db.program.count({
+          where: { institutionId: id, countryId: { not: nextCountryId } },
+        }),
+      );
+      if ((programsInOtherCountry ?? 0) > 0) {
+        throw new BadRequestException(
+          `Cannot move institution ${id} to ${nextCountryId}: ${programsInOtherCountry} program(s) are still attached to another country. Move or delete them first.`,
+        );
+      }
+    }
     return this.runUpdate(
       () =>
         this.prisma.execute((db) =>

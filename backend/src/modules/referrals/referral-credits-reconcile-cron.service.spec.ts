@@ -64,6 +64,13 @@ function makeCron(setup: Setup): {
     case: {
       count: ({ where }: any) =>
         lazy(() => caseCountByUser.get(where.userId) ?? 0),
+      // The first case is filed after the referral (created "now" in tests).
+      findFirst: ({ where }: any) =>
+        lazy(() =>
+          (caseCountByUser.get(where.userId) ?? 0) > 0
+            ? { createdAt: new Date('2099-01-01T00:00:00Z') }
+            : null,
+        ),
     },
     creditTransaction: {
       create: ({ data }: any) =>

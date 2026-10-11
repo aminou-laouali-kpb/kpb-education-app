@@ -137,6 +137,7 @@ class AppTranslations extends Translations {
           'profile_legal_info': 'Informations légales',
           'profile_my_journey': 'Mon parcours',
           'profile_target_countries': 'Pays visés',
+          'profile_fields_of_interest': 'Filières qui t\'intéressent',
           'profile_completed': 'Profil complété',
           'profile_complete_cta': 'Compléter mon profil',
           'see_schools': 'Voir les écoles',
@@ -643,6 +644,10 @@ class AppTranslations extends Translations {
           'parcours_video_unavailable':
               'Cette vidéo n\'est pas disponible pour le moment.',
           'orientation_roadmap_appbar_title': 'Mon parcours',
+          'orientation_consultation_case_title': 'Séance de conseil KPB',
+          'case_message_send_failed':
+              'Ton message n\'a pas pu être envoyé. Vérifie-le puis réessaie.',
+          'orientation_consultation_case_context': 'Accompagnement orientation',
           'orientation_roadmap_heading': 'Ton parcours de candidature',
           'orientation_roadmap_create_case_button': 'Créer mon dossier',
           'case_application_title': 'Dossier de candidature',
@@ -1035,6 +1040,11 @@ class AppTranslations extends Translations {
               'La génération prend plus de temps que prévu. Réessaie dans un instant.',
           'tools_ai_error_rate_limited':
               'Trop de demandes d\'affilée. Réessaie dans une minute.',
+          // Quota quotidien par utilisateur (AiQuotaGuard côté serveur).
+          'tools_ai_error_daily_quota':
+              'Tu as atteint la limite d\'utilisation de l\'IA pour aujourd\'hui. Réessaie demain.',
+          'tools_ai_error_input_too_large':
+              'Ton texte est trop long. Raccourcis-le puis réessaie.',
           'tools_ai_error_signin_required':
               'Reconnecte-toi pour utiliser l\'IA.',
           // Le serveur refuse tant que la date de naissance manque : sans ce
@@ -3689,6 +3699,7 @@ class AppTranslations extends Translations {
           'profile_legal_info': 'Legal information',
           'profile_my_journey': 'My journey',
           'profile_target_countries': 'Target countries',
+          'profile_fields_of_interest': 'Fields you are interested in',
           'profile_completed': 'Profile completed',
           'profile_complete_cta': 'Complete my profile',
           'see_schools': 'See schools',
@@ -4172,6 +4183,10 @@ class AppTranslations extends Translations {
           'parcours_video_unavailable':
               'This video is not available right now.',
           'orientation_roadmap_appbar_title': 'My journey',
+          'orientation_consultation_case_title': 'KPB advisory session',
+          'case_message_send_failed':
+              'Your message could not be sent. Check it and try again.',
+          'orientation_consultation_case_context': 'Orientation support',
           'orientation_roadmap_heading': 'Your application journey',
           'orientation_roadmap_create_case_button': 'Create my case',
           'case_application_title': 'Application case',
@@ -4515,6 +4530,10 @@ class AppTranslations extends Translations {
               'Generation is taking longer than expected. Please try again shortly.',
           'tools_ai_error_rate_limited':
               'Too many requests. Try again in a minute.',
+          'tools_ai_error_daily_quota':
+              'You have reached today\'s AI usage limit. Try again tomorrow.',
+          'tools_ai_error_input_too_large':
+              'Your text is too long. Shorten it and try again.',
           'tools_ai_error_signin_required':
               'Please sign in again to use the AI.',
           'tools_ai_error_birthdate_required':
