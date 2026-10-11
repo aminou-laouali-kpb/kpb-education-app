@@ -218,9 +218,9 @@ export class ProfilesService {
         data: {
           ...(input.fullName ? { fullName: input.fullName } : {}),
           ...(input.phone ? { phone: input.phone } : {}),
-          ...(input.whatsApp !== undefined
-            ? { whatsApp: input.whatsApp }
-            : {}),
+          // Même règle que `phone` : une valeur vide ne remplace pas le numéro
+          // (les anciennes builds envoyaient '' après un redémarrage à froid).
+          ...(input.whatsApp ? { whatsApp: input.whatsApp } : {}),
           ...(input.preferredLanguage
             ? { preferredLanguage: input.preferredLanguage }
             : {}),

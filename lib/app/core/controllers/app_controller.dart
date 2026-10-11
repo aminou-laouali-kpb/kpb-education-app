@@ -2034,8 +2034,11 @@ abstract class _AppControllerBase extends GetxController {
       // faisait échouer le PATCH ENTIER en 400 — le patch restait en attente
       // et `syncRemoteData` sautait à jamais le rapatriement du profil, donc
       // l'email du compte n'était jamais restauré.
-      'phone': profile.phone,
-      'whatsApp': profile.whatsApp,
+      // Téléphone et WhatsApp ne sont PAS persistés localement (RGPD) : après
+      // un redémarrage à froid ils valent '' jusqu'au premier GET du profil.
+      // Les envoyer vides effaçait le numéro côté serveur.
+      if (profile.phone.isNotEmpty) 'phone': profile.phone,
+      if (profile.whatsApp.isNotEmpty) 'whatsApp': profile.whatsApp,
       'countryOfResidence': profile.countryOfResidence,
       'preferredLanguage': profile.preferredLanguage,
       'currentLevel': profile.currentLevel,
