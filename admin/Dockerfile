@@ -1,5 +1,5 @@
 # Stage 1: build the Next.js standalone bundle
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -14,7 +14,7 @@ ENV NEXT_PUBLIC_KPB_API_BASE_URL=$NEXT_PUBLIC_KPB_API_BASE_URL
 RUN npm run build
 
 # Stage 2: minimal runtime (Next standalone server)
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
