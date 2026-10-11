@@ -224,7 +224,6 @@ abstract class _AppControllerBase extends GetxController {
       <String, CountryModel>{};
   final CaseSocketService _caseSocket = CaseSocketService();
   final Map<String, DateTime> _caseLastReadAt = <String, DateTime>{};
-  String? _activeCaseSocketId;
   // True while the remote participant is typing (shown in CaseDetailScreen).
   bool isCaseAdvisorTyping = false;
   final List<OrientationSession> _orientationHistory = <OrientationSession>[];
@@ -1249,9 +1248,11 @@ abstract class _AppControllerBase extends GetxController {
         createdAt: now,
       ),
     ];
+    // Le statut ne change PAS localement : passer à « En attente de ta
+    // réponse » juste après la réponse de l'étudiant affichait une action
+    // urgente à faire sur l'accueil. Le serveur reste maître du statut.
     _cases[index] = caseItem.copyWith(
       updatedAt: now,
-      status: CaseStatus.awaitingStudent,
       messages: updatedMessages,
       timeline: [
         ...caseItem.timeline,
@@ -1266,7 +1267,7 @@ abstract class _AppControllerBase extends GetxController {
             en: 'The case has been updated with a new message.',
           ),
           createdAt: now,
-          status: CaseStatus.awaitingStudent,
+          status: caseItem.status,
         ),
       ],
     );
@@ -1274,11 +1275,11 @@ abstract class _AppControllerBase extends GetxController {
     update();
 
     if (ConnectivityService.instance.isOnline) {
-      if (_caseSocket.isConnected && _activeCaseSocketId == caseId) {
-        _caseSocket.sendMessage(caseId, text.trim());
-      } else {
-        unawaited(_createRemoteCaseMessage(caseId, text));
-      }
+      // Toujours par REST, même socket ouvert : l'envoi socket n'avait ni
+      // accusé de réception ni repli, et un message refusé (limite, longueur)
+      // restait affiché comme envoyé. Le serveur diffuse ensuite le message
+      // dans la room, donc le temps réel du conseiller est inchangé.
+      unawaited(_createRemoteCaseMessage(caseId, text));
     } else {
       unawaited(CaseMessageOutbox.instance.enqueue(
         caseId: caseId,
@@ -1314,7 +1315,6 @@ abstract class _AppControllerBase extends GetxController {
     if (!AppConfig.enableRemoteSync) return;
     if (!await _apiClient.hasAuthSession()) return;
 
-    _activeCaseSocketId = caseId;
     await _caseSocket.connect(caseId);
 
     _caseSocket.onMessage((data) => ingestRemoteCaseMessage(caseId, data));
@@ -1344,7 +1344,6 @@ abstract class _AppControllerBase extends GetxController {
 
   Future<void> disconnectCaseDetailSocket() async {
     await _caseSocket.disconnect();
-    _activeCaseSocketId = null;
     isCaseAdvisorTyping = false;
     update();
   }
@@ -1960,6 +1959,22 @@ abstract class _AppControllerBase extends GetxController {
         domain: CrashlyticsObsDomain.cases,
         operation: 'create_remote_case_message',
       );
+      final status = e is DioException ? e.response?.statusCode : null;
+      if (status != null &&
+          status >= 400 &&
+          status < 500 &&
+          status != 408 &&
+          status != 429) {
+        // Refus définitif (message trop long, dossier introuvable…) : le
+        // remettre en file le ferait échouer à chaque reconnexion, en silence.
+        Get.snackbar(
+          'KPB Education',
+          'case_message_send_failed'.tr,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+        );
+        return;
+      }
       // Network blip — queue it. The connectivity listener will retry.
       await CaseMessageOutbox.instance.enqueue(
         caseId: caseId,
@@ -1969,8 +1984,20 @@ abstract class _AppControllerBase extends GetxController {
     }
   }
 
+  Future<void>? _flushInFlight;
+
   /// Flush the offline message queue. Called on connectivity-restored events.
-  Future<void> flushPendingCaseMessages() async {
+  /// Two callers (reconnect listener, sync) could run it concurrently and send
+  /// the same queued entries twice: a second call joins the running flush.
+  Future<void> flushPendingCaseMessages() {
+    final running = _flushInFlight;
+    if (running != null) return running;
+    final flush = _flushPendingCaseMessages();
+    _flushInFlight = flush;
+    return flush.whenComplete(() => _flushInFlight = null);
+  }
+
+  Future<void> _flushPendingCaseMessages() async {
     if (!AppConfig.enableRemoteSync) return;
     if (!await _apiClient.hasAuthSession()) return;
     final outbox = CaseMessageOutbox.instance;
