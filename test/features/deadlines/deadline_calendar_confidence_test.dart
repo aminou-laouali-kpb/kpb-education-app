@@ -100,10 +100,12 @@ void main() {
         _sheet(
           id: 'chevening_2027',
           name: 'Chevening',
-          // 20 jours et 12 heures : l'écran calcule `difference(now).inDays`
-          // avec SON PROPRE DateTime.now(), quelques millisecondes après celui
-          // du test — sans la marge, 20 jours pile devient 19.
-          deadlineAt: DateTime.now().add(const Duration(days: 20, hours: 12)),
+          // Dans 20 jours CALENDAIRES, en fin de journée : l'écran compte en
+          // jours calendaires, quelle que soit l'heure d'exécution du test.
+          deadlineAt: () {
+            final n = DateTime.now();
+            return DateTime(n.year, n.month, n.day + 20, 23, 59);
+          }(),
           estimated: false,
         ),
       ]);

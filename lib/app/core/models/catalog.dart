@@ -661,6 +661,26 @@ class ScholarshipModel {
   /// confirmée pour ne pas dégrader l'historique.
   final bool deadlineIsEstimated;
 
+  /// Jours CALENDAIRES restants jusqu'à la clôture confirmée (0 = le jour
+  /// même), ou null si la date est inconnue, ESTIMÉE ou passée. Seule source
+  /// des comptes à rebours : l'accueil lisait le libellé texte (« Mai 2026 »,
+  /// « Clôturé — … ») et la carte « Deadline urgente » ne s'affichait jamais ;
+  /// `inDays` tronqué décalait aussi le compte d'un jour.
+  int? daysUntilDeadline({DateTime? now}) {
+    if (deadlineIsEstimated) return null;
+    final close = deadlineAt;
+    if (close == null) return null;
+    final ref = now ?? DateTime.now();
+    if (!ref.isBefore(close)) return null;
+    final c = close.toLocal();
+    final r = ref.toLocal();
+    // Dates UTC construites sur les composantes locales : aucun décalage
+    // d'heure d'été ne fausse la différence en jours.
+    return DateTime.utc(c.year, c.month, c.day)
+        .difference(DateTime.utc(r.year, r.month, r.day))
+        .inDays;
+  }
+
   /// Ouvert / Bientôt clôturé / Clôturé, derived from [deadlineAt]. [now] is
   /// injectable for testing; [soonDays] is the "closing soon" window.
   ScholarshipWindowStatus windowStatus({DateTime? now, int soonDays = 21}) {

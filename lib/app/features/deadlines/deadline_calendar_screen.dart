@@ -40,13 +40,25 @@ const _monthNames = <int, String>{
 
 DateTime? _parseDeadline(String text) {
   final lower = text.toLowerCase();
-  final match = RegExp(r'(\d{1,2})\s+(\w+)\s+(\d{4})').firstMatch(lower);
+  // `\w` est ASCII en Dart : « février », « août » et « décembre » n'étaient
+  // jamais reconnus. N'importe quel mot hors chiffres convient, la table des
+  // mois fait le tri.
+  final match = RegExp(r'(\d{1,2})\s+([^\s\d]+)\s+(\d{4})').firstMatch(lower);
   if (match == null) return null;
   final day = int.tryParse(match.group(1)!);
   final month = _frMonths[match.group(2)!];
   final year = int.tryParse(match.group(3)!);
   if (day == null || month == null || year == null) return null;
   return DateTime(year, month, day);
+}
+
+/// Vrai si [deadline] est un jour ANTÉRIEUR à aujourd'hui. Une échéance du
+/// jour même reste « à venir » jusqu'au soir, même posée à minuit.
+bool _isPastDay(DateTime deadline, DateTime now) {
+  final d = deadline.toLocal();
+  final n = now.toLocal();
+  return DateTime(d.year, d.month, d.day)
+      .isBefore(DateTime(n.year, n.month, n.day));
 }
 
 enum _MilestoneKind { scholarship, roadmap, caseStep, document }
@@ -246,7 +258,7 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
       case _MilestoneFilter.upcoming:
         return entries
             .where((entry) =>
-                entry.deadline != null && !entry.deadline!.isBefore(now))
+                entry.deadline != null && !_isPastDay(entry.deadline!, now))
             .toList();
       case _MilestoneFilter.all:
         return entries.toList();
@@ -255,13 +267,13 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
 
   Map<String, int> _buildStats(List<_MilestoneEntry> entries, DateTime now) {
     final upcoming = entries
-        .where(
-            (entry) => entry.deadline != null && !entry.deadline!.isBefore(now))
+        .where((entry) =>
+            entry.deadline != null && !_isPastDay(entry.deadline!, now))
         .length;
     final urgent = entries
         .where((entry) =>
             entry.deadline != null &&
-            !entry.deadline!.isBefore(now) &&
+            !_isPastDay(entry.deadline!, now) &&
             entry.deadline!.difference(now).inDays <= 30)
         .length;
     final caseLinked = entries
@@ -705,10 +717,17 @@ class _MilestoneTile extends StatelessWidget {
         color: context.kpb.textMuted
       );
     }
-    if (deadline.isBefore(now)) {
+    // En jours CALENDAIRES : une échéance posée à minuit s'affichait
+    // « Passée » toute la journée du jour J, et `inDays` tronqué retirait un
+    // jour au compte à rebours.
+    final local = deadline.toLocal();
+    final today = now.toLocal();
+    final days = DateTime.utc(local.year, local.month, local.day)
+        .difference(DateTime.utc(today.year, today.month, today.day))
+        .inDays;
+    if (days < 0) {
       return (label: 'deadlines_status_past'.tr, color: context.kpb.textMuted);
     }
-    final days = deadline.difference(now).inDays;
     if (days <= 1) {
       return (
         label: 'deadlines_status_today_tomorrow'.tr,
