@@ -153,6 +153,11 @@ Future<void> main() async {
       repository: repository,
       apiClient: apiClient,
     );
+    // Si le SDK perd la session pendant l'hydratation (refresh refusé), le
+    // contrôleur n'est pas encore enregistré et personne ne réagit : l'app
+    // restait dans le shell sans session. On le détecte juste après.
+    final hadSessionAtBoot =
+        Supabase.instance.client.auth.currentSession != null;
     await controller.hydrate();
     Get.put(controller, permanent: true);
     // PREMIER point du démarrage où le choix persisté est connu — et donc le
@@ -175,7 +180,17 @@ Future<void> main() async {
     Get.put(authService, permanent: true);
     if (authService.isLoggedIn) {
       await controller.finishAuthSession();
+    } else if (hadSessionAtBoot) {
+      await controller.handleSessionLost();
     }
+    // Session perdue plus tard (refresh refusé par le serveur d'auth) : même
+    // traitement, une seule fois. Une déconnexion volontaire passe aussi ici,
+    // mais `logout()` a déjà vidé le profil, donc c'est sans effet.
+    Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (state.event == AuthChangeEvent.signedOut) {
+        unawaited(controller.handleSessionLost());
+      }
+    });
 
     Get.put(SecurityService());
     // ── Push notifications (OneSignal) ─────────────────────────────────────────

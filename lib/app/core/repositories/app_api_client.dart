@@ -4,17 +4,14 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:flutter/material.dart' show EdgeInsets;
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 
-import '../ui/app_tokens.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 
 import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
-import '../navigation/app_boot_screen.dart';
 import 'app_version_headers.dart';
 
 class AppApiClient {
@@ -2100,22 +2097,7 @@ class _AuthInterceptor extends Interceptor {
     } catch (_) {}
     try {
       if (Get.isRegistered<AppController>()) {
-        final controller = Get.find<AppController>();
-        if (controller.profile != null) {
-          await controller.logout();
-          // Route to the boot gate, not the authenticated shell, so the user
-          // lands on the login/onboarding screen rather than AppShell.
-          Get.offAll(() => const AppBootScreen());
-          Get.snackbar(
-            'api_client_session_expired_title'.tr,
-            'api_client_session_expired_message'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12),
-            backgroundColor: KpbColors.errorLight,
-            colorText: KpbColors.error,
-            duration: const Duration(seconds: 4),
-          );
-        }
+        await Get.find<AppController>().handleSessionLost();
       }
     } catch (_) {}
   }

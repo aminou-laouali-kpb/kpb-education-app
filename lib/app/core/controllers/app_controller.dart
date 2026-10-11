@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 
 import '../navigation/shell_tabs.dart';
 import '../services/analytics_service.dart';
+import '../navigation/app_boot_screen.dart';
+import '../ui/app_tokens.dart';
 import '../services/case_message_outbox.dart';
 import '../services/case_socket_service.dart';
 import '../services/safe_crashlytics.dart';
@@ -157,6 +159,10 @@ abstract class _AppControllerBase extends GetxController {
   int commercialShellIndex = 0;
   int selectedOrientationQuestion = 0;
   bool isSyncing = false;
+
+  /// The sync currently running, so [finishAuthSession] can wait for it
+  /// instead of being silently skipped by the `isSyncing` guard.
+  Future<void>? _inFlightSync;
   DateTime? lastSyncedAt;
   String? syncError;
 
@@ -577,7 +583,14 @@ abstract class _AppControllerBase extends GetxController {
   Future<void> finishAuthSession() async {
     isGuestMode = false;
     if (AppConfig.enableRemoteSync) {
-      await syncRemoteData(silent: true);
+      // Un simple `syncRemoteData` était sauté si une synchro tournait déjà
+      // (catalogue lent au démarrage), datait de moins de 30 s ou était en
+      // backoff : le profil restait null, un compte existant atterrissait sur
+      // l'onboarding et finissait par écraser son profil serveur. On attend la
+      // synchro en cours, puis on force si le profil n'est toujours pas là.
+      final running = _inFlightSync;
+      if (isSyncing && running != null) await running;
+      await syncRemoteData(silent: true, force: profile == null);
     }
     maybeRestoreOnboardingFromProfile();
     unawaited(syncOneSignalIdentity());
@@ -683,6 +696,55 @@ abstract class _AppControllerBase extends GetxController {
     // Keep the historical logout contract: callers that do not await this
     // Future must still observe an anonymous in-memory state immediately.
     // Session/cache cleanup remains awaited below before the Future completes.
+    _resetUserState();
+    _persist();
+    update();
+    if (Get.isRegistered<AuthService>()) {
+      await Get.find<AuthService>().clearSession();
+    }
+    // Les messages en attente appartiennent au compte qui se déconnecte : sans
+    // ce vidage, ils étaient rejoués sous le compte suivant (téléphone partagé).
+    try {
+      await CaseMessageOutbox.instance.clear();
+    } catch (_) {
+      // Outbox not initialized in this session — nothing to clear.
+    }
+    await _clearSuccessLabLocalData();
+  }
+
+  bool _sessionLossInProgress = false;
+
+  /// The Supabase session is gone for good (revoked refresh token, signed out
+  /// by the SDK). Single entry point for the API client's permanent-failure
+  /// path, the `signedOut` auth listener and the cold-start check, so the
+  /// user is logged out and routed to the auth screen exactly once — instead
+  /// of staying in the shell with no session while local edits silently stop
+  /// syncing.
+  Future<void> handleSessionLost() async {
+    if (_sessionLossInProgress || profile == null || isGuestMode) return;
+    _sessionLossInProgress = true;
+    try {
+      await logout();
+      Get.offAll(() => const AppBootScreen());
+      Get.snackbar(
+        'api_client_session_expired_title'.tr,
+        'api_client_session_expired_message'.tr,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        backgroundColor: KpbColors.errorLight,
+        colorText: KpbColors.error,
+        duration: const Duration(seconds: 4),
+      );
+    } finally {
+      _sessionLossInProgress = false;
+    }
+  }
+
+  /// Everything that belongs to the signed-in user, in ONE place. Logout and
+  /// account deletion each kept their own partial list: credits, purchases,
+  /// roadmap steps, read markers and remote ids survived a logout and were
+  /// re-persisted for the next account on a shared phone.
+  void _resetUserState() {
     profile = null;
     _profileNeedsPush = false;
     hasCompletedOnboarding = false;
@@ -690,17 +752,20 @@ abstract class _AppControllerBase extends GetxController {
     latestOrientationSession = null;
     _savedItems.clear();
     _savedItemTombstones.clear();
+    _remoteSavedItemIds.clear();
     _cases.clear();
+    _caseLastReadAt.clear();
     _orientationHistory.clear();
     _searchHistory.clear();
     _pendingOrientationAnswers = {};
     pendingOrientationQuestionIndex = 0;
-    _persist();
-    update();
-    if (Get.isRegistered<AuthService>()) {
-      await Get.find<AuthService>().clearSession();
-    }
-    await _clearSuccessLabLocalData();
+    _purchasedCourseIds.clear();
+    _reviewCredits = 0;
+    _reviewedCaseIds.clear();
+    _completedRoadmapSteps = {};
+    _commercialLeads.clear();
+    _lastSyncAttemptAt = null;
+    _syncBackoffUntil = null;
   }
 
   /// GDPR / store-required account deletion (KPB-67). When remote sync is on we
@@ -718,18 +783,7 @@ abstract class _AppControllerBase extends GetxController {
       await Get.find<AuthService>().clearSession();
     }
     await _wipeLocalData();
-    profile = null;
-    _profileNeedsPush = false;
-    hasCompletedOnboarding = false;
-    isGuestMode = false;
-    latestOrientationSession = null;
-    _savedItems.clear();
-    _savedItemTombstones.clear();
-    _cases.clear();
-    _orientationHistory.clear();
-    _searchHistory.clear();
-    _pendingOrientationAnswers = {};
-    pendingOrientationQuestionIndex = 0;
+    _resetUserState();
     update();
   }
 
@@ -1389,6 +1443,8 @@ abstract class _AppControllerBase extends GetxController {
     }
 
     isSyncing = true;
+    final syncDone = Completer<void>();
+    _inFlightSync = syncDone.future;
     _lastSyncAttemptAt = now;
     if (!silent) {
       syncError = null;
@@ -1621,6 +1677,7 @@ abstract class _AppControllerBase extends GetxController {
       );
     } finally {
       isSyncing = false;
+      if (!syncDone.isCompleted) syncDone.complete();
       update();
     }
   }
