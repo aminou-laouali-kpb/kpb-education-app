@@ -532,4 +532,23 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-rejected']);
     expect(upserts[0].update.isActive).toBeUndefined();
   });
+
+  it('refuses a second refresh while one is running', async () => {
+    let release!: () => void;
+    let calls = 0;
+    const { service } = makeService({
+      greatYop: () =>
+        calls++ === 0
+          ? new Promise<unknown[]>((resolve) => {
+              release = () => resolve([]);
+            })
+          : Promise.resolve([]),
+    });
+    const first = service.refresh();
+    await expect(service.refresh()).rejects.toThrow('already running');
+    release();
+    await first;
+    // Released: a new run is accepted again.
+    await expect(service.refresh()).resolves.toBeDefined();
+  });
 });

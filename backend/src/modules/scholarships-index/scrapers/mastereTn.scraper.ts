@@ -5,6 +5,14 @@ import {
   ScrapedScholarship,
   ScholarshipScraper,
 } from '../scholarship-source.interface';
+import {
+  detectCountry,
+  detectFundingType,
+  fetchPageHtml,
+  htmlToText,
+  isArticleLink,
+  parseDeadline,
+} from './scraper-text.util';
 
 /**
  * Mastere.tn — French (primary) + English mirror scraper.
@@ -71,16 +79,7 @@ export class MastereTnScraper implements ScholarshipScraper {
         let found = 0;
         for (const m of matches) {
           const u = m[1];
-          if (
-            !u.includes('/bourses/') &&
-            !u.includes('/en/') &&
-            !u.includes('/page/') &&
-            !u.includes('/nous-contacter') &&
-            !u.includes('/about') &&
-            !u.includes('/privacy') &&
-            !u.includes('/termes') &&
-            u !== this.BASE + '/'
-          ) {
+          if (isArticleLink(u)) {
             urls.add(u);
             found++;
           }
@@ -111,13 +110,16 @@ export class MastereTnScraper implements ScholarshipScraper {
       : url.replace('www.mastere.tn/', 'www.mastere.tn/en/');
 
     const body = this.extractArticleBody(html);
+    const bodyText = htmlToText(body);
     const descriptionFr = this.extractDescription(body);
     const advantagesFr = this.extractSection(body, ['Avantages', 'Bénéfices', 'Ce que couvre', 'Couverture', 'Montant', 'Allocation', 'Avantages de la bourse']);
     const eligibilityFr = this.extractSection(body, ['Éligibilité', 'Critères', 'Conditions d\'admissibilité', 'Qui peut postuler', 'Exigences']);
-    const deadlineInfo = this.extractDeadline(body, titleFr);
-    const fundingType = this.detectFunding(titleFr, html);
-    const countryFr = this.detectCountryFr(titleFr, html, body);
-    const countryEn = this.translateCountryToEn(countryFr);
+    const deadlineInfo = this.extractDeadline(bodyText, titleFr);
+    // Texte de l'article, pas le HTML brut (« 100% » du CSS WordPress).
+    const fundingType = detectFundingType(titleFr, bodyText);
+    const country = detectCountry(titleFr, bodyText);
+    const countryFr = country.fr;
+    const countryEn = country.en;
     const levelFr = this.detectLevelFr(titleFr, body);
     const levelEn = this.translateLevelToEn(levelFr);
     const tags = this.buildTags(titleFr, fundingType, levelFr);
@@ -161,7 +163,7 @@ export class MastereTnScraper implements ScholarshipScraper {
       sourceKey,
       nameFr: titleFr.trim(),
       nameEn: titleEn.trim(),
-      countryId: countryEn.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+      countryId: country.id,
       countryNameFr: countryFr,
       countryNameEn: countryEn,
       descriptionFr,
@@ -185,10 +187,8 @@ export class MastereTnScraper implements ScholarshipScraper {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  private async fetchHtml(url: string): Promise<string> {
-    const res = await fetch(url, { headers: this.HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-    return res.text();
+  private fetchHtml(url: string): Promise<string> {
+    return fetchPageHtml(url, this.HEADERS);
   }
 
   private extractMeta(html: string, property: string): string {
@@ -251,103 +251,20 @@ export class MastereTnScraper implements ScholarshipScraper {
     return items;
   }
 
-  private extractDeadline(body: string, title: string): { date: Date | null; label: string } {
-    const patterns = [
-      /Date limite\s*:?\s*([^\n<.]+\d{4})/i,
-      /deadline[^\d]*(\w+\s+\d{1,2},?\s*\d{4})/i,
-      /(\d{1,2}\s+\w+\s+\d{4})/,
-    ];
-    const text = body + ' ' + title;
-    for (const p of patterns) {
-      const m = text.match(p);
-      if (m) {
-        const date = this.parseLooseDate(m[1].trim());
-        if (!isNaN(date.getTime())) {
-          return {
-            date,
-            label: date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }),
-          };
-        }
-      }
-    }
-    return { date: null, label: 'Voir site officiel' };
-  }
-
-  /// Parse a deadline date. Native Date handles English ("March 15, 2026");
-  /// French month names ("15 mars 2026") are parsed explicitly since JS Date
-  /// cannot — previously this silently returned null for FR listings.
-  private parseLooseDate(raw: string): Date {
-    const native = new Date(raw);
-    if (!isNaN(native.getTime())) return native;
-
-    const fr: Record<string, number> = {
-      janvier: 0,
-      fevrier: 1,
-      février: 1,
-      mars: 2,
-      avril: 3,
-      mai: 4,
-      juin: 5,
-      juillet: 6,
-      aout: 7,
-      août: 7,
-      septembre: 8,
-      octobre: 9,
-      novembre: 10,
-      decembre: 11,
-      décembre: 11,
+  private extractDeadline(text: string, title: string): { date: Date | null; label: string } {
+    const near = text.match(/(?:date limite|deadline|clôture|avant le)[^.]{0,80}/i);
+    const date =
+      (near ? parseDeadline(near[0]) : null) ?? parseDeadline(`${title} ${text}`);
+    if (!date) return { date: null, label: 'Voir site officiel' };
+    return {
+      date,
+      label: date.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }),
     };
-    const m = raw
-      .toLowerCase()
-      .match(/(\d{1,2})\s+([a-zàâäéèêëîïôöùûüç]+)\.?\s+(\d{4})/i);
-    if (m) {
-      const month = fr[m[2]];
-      if (month !== undefined) {
-        return new Date(Number(m[3]), month, Number(m[1]));
-      }
-    }
-    return new Date(NaN);
-  }
-
-  private detectFunding(title: string, html: string): FundingType {
-    const text = (title + ' ' + html).toLowerCase();
-    if (text.includes('entièrement financé') || text.includes('fully funded') || text.includes('bourse complète') || text.includes('100%')) {
-      return 'fully_funded';
-    }
-    if (text.includes('partiel') || text.includes('partial') || text.includes('allocation mensuelle')) {
-      return 'partially_funded';
-    }
-    return 'unknown';
-  }
-
-  private detectCountryFr(title: string, html: string, body: string): string {
-    const known: [string, string][] = [
-      ['France', 'France'], ['Allemagne', 'Allemagne'], ['Canada', 'Canada'],
-      ['Japon', 'Japon'], ['Suisse', 'Suisse'], ['Belgique', 'Belgique'],
-      ['Italie', 'Italie'], ['Espagne', 'Espagne'], ['Royaume-Uni', 'Royaume-Uni'],
-      ['Australie', 'Australie'], ['Chine', 'Chine'], ['Turquie', 'Turquie'],
-      ['Maroc', 'Maroc'], ['Tunisie', 'Tunisie'], ['Pays-Bas', 'Pays-Bas'],
-      ['États-Unis', 'États-Unis'], ['Corée du Sud', 'Corée du Sud'],
-      ['Sénégal', 'Sénégal'], ['Suède', 'Suède'],
-    ];
-    const text = title + ' ' + body;
-    for (const [fr] of known) {
-      if (text.includes(fr)) return fr;
-    }
-    return 'International';
-  }
-
-  private translateCountryToEn(fr: string): string {
-    const map: Record<string, string> = {
-      'France': 'France', 'Allemagne': 'Germany', 'Canada': 'Canada',
-      'Japon': 'Japan', 'Suisse': 'Switzerland', 'Belgique': 'Belgium',
-      'Italie': 'Italy', 'Espagne': 'Spain', 'Royaume-Uni': 'United Kingdom',
-      'Australie': 'Australia', 'Chine': 'China', 'Turquie': 'Turkey',
-      'Maroc': 'Morocco', 'Tunisie': 'Tunisia', 'Pays-Bas': 'Netherlands',
-      'États-Unis': 'United States', 'Corée du Sud': 'South Korea',
-      'Sénégal': 'Senegal', 'Suède': 'Sweden', 'International': 'International',
-    };
-    return map[fr] || fr;
   }
 
   private detectLevelFr(title: string, body: string): string {

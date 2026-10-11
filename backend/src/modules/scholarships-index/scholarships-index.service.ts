@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -107,8 +108,24 @@ export class ScholarshipsIndexService {
     }
   }
 
+  /** True while a refresh runs: two runs in parallel doubled the load on the
+   *  sources and raced on the same upserts/deactivations. */
+  private refreshInProgress = false;
+
   /** Triggered from admin UI ("Refresh now" button) and by the cron. */
   async refresh(): Promise<RefreshResult> {
+    if (this.refreshInProgress) {
+      throw new ConflictException('A scholarship refresh is already running.');
+    }
+    this.refreshInProgress = true;
+    try {
+      return await this.runRefresh();
+    } finally {
+      this.refreshInProgress = false;
+    }
+  }
+
+  private async runRefresh(): Promise<RefreshResult> {
     const startedAt = new Date();
     const allScraped: Array<{ prefix: string; rows: ScrapedScholarship[] }> = [];
     const sources: RefreshResult['sources'] = [];

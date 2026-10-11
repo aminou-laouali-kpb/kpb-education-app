@@ -5,6 +5,14 @@ import {
   ScrapedScholarship,
   ScholarshipScraper,
 } from '../scholarship-source.interface';
+import {
+  detectCountry,
+  detectFundingType,
+  fetchPageHtml,
+  htmlToText,
+  isArticleLink,
+  parseDeadline,
+} from './scraper-text.util';
 
 /**
  * Greatyop.com — English (primary) + French mirror scraper.
@@ -75,8 +83,9 @@ export class GreatYopScraper implements ScholarshipScraper {
         let found = 0;
         for (const m of matches) {
           const u = m[1];
-          // Exclude category pages and static pages
-          if (!u.includes('/category/') && !u.includes('/author/') && !u.includes('/tag/') && !u.includes('/page/') && u !== this.BASE_EN + '/') {
+          // Articles only: no category/author/tag pages, no static pages
+          // (/about-us/, /privacy-policy/… were imported as scholarships).
+          if (isArticleLink(u)) {
             urls.add(u);
             found++;
           }
@@ -112,18 +121,21 @@ export class GreatYopScraper implements ScholarshipScraper {
     const tags = this.buildTags(titleEn, categories);
     const levelEn = this.deriveLevelEn(categories);
     const levelFr = this.deriveLevelFr(categories);
-    const fundingType = this.detectFunding(titleEn, html);
-
     // ── Parse structured sections from EN page ─────────────────────────────
     const body = this.extractArticleBody(html);
+    const bodyText = htmlToText(body);
+    // Sur le TEXTE de l'article : le HTML brut contient toujours « 100% »
+    // (CSS WordPress), et tout sortait « fully_funded ».
+    const fundingType = detectFundingType(titleEn, bodyText);
     const descriptionEn = this.extractDescription(body);
     const advantagesEn = this.extractSection(body, ['Benefits', 'Scholarship Benefits', 'What Does', 'Awards', 'Advantages']);
     const eligibilityEn = this.extractSection(body, ['Eligibility', 'Eligibility Criteria', 'Who Can Apply', 'Requirements', 'Eligible']);
-    const deadlineInfo = this.extractDeadline(body, titleEn);
+    const deadlineInfo = this.extractDeadline(bodyText, titleEn);
 
-    // Country extraction
-    const countryEn = this.detectCountry(titleEn, html, body);
-    const countryFr = this.translateCountry(countryEn);
+    // Country: title first, then the most-mentioned in the article text.
+    const country = detectCountry(titleEn, bodyText);
+    const countryEn = country.en;
+    const countryFr = country.fr;
 
     // Application URL
     const applyUrl = this.extractApplyUrl(html) || url;
@@ -169,7 +181,9 @@ export class GreatYopScraper implements ScholarshipScraper {
       sourceKey,
       nameEn: titleEn.trim(),
       nameFr: titleFr.trim(),
-      countryId: countryEn.toLowerCase().replace(/\s+/g, '-') || 'unknown',
+      // `Country.id` est alpha-3 (fra, che…) : un slug ne matchait jamais le
+      // filtre pays de /scholarships.
+      countryId: country.id,
       countryNameEn: countryEn,
       countryNameFr: countryFr,
       descriptionEn,
@@ -193,10 +207,8 @@ export class GreatYopScraper implements ScholarshipScraper {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  private async fetchHtml(url: string): Promise<string> {
-    const res = await fetch(url, { headers: this.HEADERS });
-    if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-    return res.text();
+  private fetchHtml(url: string): Promise<string> {
+    return fetchPageHtml(url, this.HEADERS);
   }
 
   private extractMeta(html: string, property: string): string {
@@ -254,17 +266,6 @@ export class GreatYopScraper implements ScholarshipScraper {
     return levels.join(', ') || 'Tous niveaux';
   }
 
-  private detectFunding(title: string, html: string): FundingType {
-    const text = (title + ' ' + html).toLowerCase();
-    if (text.includes('fully funded') || text.includes('fully-funded') || text.includes('100%')) {
-      return 'fully_funded';
-    }
-    if (text.includes('partial') || text.includes('stipend only')) {
-      return 'partially_funded';
-    }
-    return 'unknown';
-  }
-
   private extractArticleBody(html: string): string {
     // Extract content between entry-content div
     const m = html.match(/<div[^>]*class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i);
@@ -317,74 +318,23 @@ export class GreatYopScraper implements ScholarshipScraper {
     return items;
   }
 
-  private extractDeadline(body: string, title: string): { date: Date | null; label: string } {
-    // Look for "deadline is X" or "apply by X" patterns
-    const patterns = [
-      /deadline[^\d]*(\w+ \d{1,2},?\s*\d{4})/i,
-      /apply by[^\d]*(\w+ \d{1,2},?\s*\d{4})/i,
-      /closing date[^\d]*(\w+ \d{1,2},?\s*\d{4})/i,
-      /(\d{1,2}\s+\w+\s+\d{4})/,
-    ];
-    for (const pattern of patterns) {
-      const m = (body + ' ' + title).match(pattern);
-      if (m) {
-        const date = new Date(m[1]);
-        if (!isNaN(date.getTime())) {
-          return {
-            date,
-            label: date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-          };
-        }
-      }
-    }
-    return { date: null, label: 'See official website' };
-  }
-
-  private detectCountry(title: string, html: string, body: string): string {
-    const known = [
-      'Japan', 'France', 'Germany', 'USA', 'United States', 'Canada',
-      'United Kingdom', 'UK', 'Australia', 'China', 'South Korea', 'Turkey',
-      'Italy', 'Spain', 'Morocco', 'Tunisia', 'Senegal', 'Switzerland',
-      'Belgium', 'Netherlands', 'Sweden', 'Norway', 'Finland',
-    ];
-    const text = title + ' ' + body;
-    for (const c of known) {
-      if (text.includes(c)) return c;
-    }
-    // Try location from Google Calendar event link (location=Country)
-    const locMatch = html.match(/location=([^&]+)/);
-    if (locMatch) return decodeURIComponent(locMatch[1]).trim();
-    return 'International';
-  }
-
-  private translateCountry(en: string): string {
-    const map: Record<string, string> = {
-      Japan: 'Japon',
-      France: 'France',
-      Germany: 'Allemagne',
-      'United States': 'États-Unis',
-      USA: 'États-Unis',
-      Canada: 'Canada',
-      'United Kingdom': 'Royaume-Uni',
-      UK: 'Royaume-Uni',
-      Australia: 'Australie',
-      China: 'Chine',
-      'South Korea': 'Corée du Sud',
-      Turkey: 'Turquie',
-      Italy: 'Italie',
-      Spain: 'Espagne',
-      Morocco: 'Maroc',
-      Tunisia: 'Tunisie',
-      Senegal: 'Sénégal',
-      Switzerland: 'Suisse',
-      Belgium: 'Belgique',
-      Netherlands: 'Pays-Bas',
-      Sweden: 'Suède',
-      Norway: 'Norvège',
-      Finland: 'Finlande',
-      International: 'International',
+  private extractDeadline(text: string, title: string): { date: Date | null; label: string } {
+    // Prefer a date next to a deadline keyword; fall back to any date.
+    const near = text.match(
+      /(?:deadline|apply by|closing date|due date)[^.]{0,80}/i,
+    );
+    const date =
+      (near ? parseDeadline(near[0]) : null) ?? parseDeadline(`${title} ${text}`);
+    if (!date) return { date: null, label: 'See official website' };
+    return {
+      date,
+      label: date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }),
     };
-    return map[en] || en;
   }
 
   private extractApplyUrl(html: string): string | null {
