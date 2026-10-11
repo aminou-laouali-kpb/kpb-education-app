@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { verify as jsonwebtokenVerify } from 'jsonwebtoken';
 import { createPublicKey } from 'crypto';
@@ -25,6 +29,10 @@ interface Jwk {
 }
 
 const JWKS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+// Un `kid` inconnu ne force pas un nouveau fetch plus d'une fois par minute :
+// sinon chaque token forgé déclenche une requête sortante vers Supabase.
+const JWKS_MIN_REFRESH_INTERVAL_MS = 60 * 1000;
+const JWKS_FETCH_TIMEOUT_MS = 5000;
 const SUPABASE_ROLE_TO_ACCOUNT: Record<string, AccountType> = {
   student: 'student',
   parent: 'parent',
@@ -129,7 +137,14 @@ export class SupabaseAuthService {
         ...verifyOptions,
       }) as Record<string, unknown>;
     } catch (error) {
-      if (error instanceof UnauthorizedException) throw error;
+      // Une panne d'infrastructure (JWKS injoignable) est un 503, PAS un 401 :
+      // l'app traite un 401 comme une session morte et déconnecte l'utilisateur.
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ServiceUnavailableException
+      ) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid or expired access token.');
     }
   }
@@ -137,7 +152,11 @@ export class SupabaseAuthService {
   private async resolveSigningKey(token: string): Promise<string> {
     const kid = this.decodeHeader(token).kid;
     let jwk = await this.findJwk(kid);
-    if (!jwk) {
+    if (
+      !jwk &&
+      (!this.jwksCache ||
+        Date.now() - this.jwksCache.fetchedAt > JWKS_MIN_REFRESH_INTERVAL_MS)
+    ) {
       // Key may have rotated since last fetch — force a refresh once.
       this.jwksCache = null;
       jwk = await this.findJwk(kid);
@@ -173,13 +192,17 @@ export class SupabaseAuthService {
     if (this.jwksCache && now - this.jwksCache.fetchedAt < JWKS_CACHE_TTL_MS) {
       return this.jwksCache.keys;
     }
-    const res = await fetch(
-      `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`,
-    );
-    if (!res.ok) {
-      throw new UnauthorizedException('Unable to fetch signing keys.');
+    let body: { keys?: Jwk[] };
+    try {
+      const res = await fetch(
+        `${this.supabaseUrl}/auth/v1/.well-known/jwks.json`,
+        { signal: AbortSignal.timeout(JWKS_FETCH_TIMEOUT_MS) },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      body = (await res.json()) as { keys?: Jwk[] };
+    } catch {
+      throw new ServiceUnavailableException('Unable to fetch signing keys.');
     }
-    const body = (await res.json()) as { keys?: Jwk[] };
     const keys = body.keys ?? [];
     this.jwksCache = { keys, fetchedAt: now };
     return keys;
@@ -257,7 +280,7 @@ export class SupabaseAuthService {
       }),
     );
     if (!created) {
-      throw new UnauthorizedException('Database unavailable.');
+      throw new ServiceUnavailableException('Database unavailable.');
     }
     return created;
   }

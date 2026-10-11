@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
@@ -111,6 +112,7 @@ describe('SupabaseAuthService', () => {
     });
     expect(global.fetch).toHaveBeenCalledWith(
       `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`,
+      expect.objectContaining({ signal: expect.anything() }),
     );
   });
 
@@ -197,5 +199,13 @@ describe('SupabaseAuthService', () => {
     );
 
     expect(result.accountType).toBe('parent');
+  });
+
+  it('answers 503 (not 401) when the JWKS endpoint is unreachable', async () => {
+    const service = await makeService();
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('ECONNRESET'));
+    await expect(service.verifyAndResolve(makeToken({}))).rejects.toBeInstanceOf(
+      ServiceUnavailableException,
+    );
   });
 });
