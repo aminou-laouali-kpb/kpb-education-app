@@ -41,8 +41,8 @@ export class CatalogController {
       fieldId: fieldId?.trim() || undefined,
       countryId: countryId?.trim() || undefined,
       institutionId: institutionId?.trim() || undefined,
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      limit: parseNonNegativeInt(limit),
+      offset: parseNonNegativeInt(offset),
     });
   }
 
@@ -50,4 +50,12 @@ export class CatalogController {
   scholarships() {
     return this.catalogService.getScholarships();
   }
+}
+
+/// `?limit=abc` donnait `Number('abc') = NaN`, et `Math.max(NaN, 1)` vaut NaN :
+/// `take: NaN` partait vers Prisma et l'erreur ressortait en faux 503
+/// « catalogue indisponible ». Une valeur non entière est simplement ignorée.
+function parseNonNegativeInt(raw?: string): number | undefined {
+  if (raw === undefined || !/^\d{1,6}$/.test(raw.trim())) return undefined;
+  return Number(raw.trim());
 }

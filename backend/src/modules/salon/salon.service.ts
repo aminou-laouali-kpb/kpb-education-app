@@ -88,12 +88,29 @@ export class SalonService {
     }
 
     const existing = session.registrations.find((r) => r.userId === userId);
-    if (existing) {
+    if (existing && existing.status !== 'cancelled') {
       return existing;
     }
 
-    if (session.capacity && session.registrations.length >= session.capacity) {
+    // Seules les inscriptions actives occupent une place : une annulation
+    // libère la sienne (avant, une session pouvait s'afficher « pleine » à
+    // cause d'inscriptions annulées).
+    const active = session.registrations.filter(
+      (r) => r.status !== 'cancelled',
+    ).length;
+    if (session.capacity && active >= session.capacity) {
       throw new ConflictException('Session is full.');
+    }
+
+    if (existing) {
+      // Réinscription après annulation : on réactive la ligne existante au
+      // lieu de renvoyer l'inscription annulée avec un 200.
+      return this.prismaService.execute((prisma) =>
+        prisma.salonRegistration.update({
+          where: { id: existing.id },
+          data: { status: 'registered' },
+        }),
+      );
     }
 
     const registration = await this.prismaService.execute((prisma) =>

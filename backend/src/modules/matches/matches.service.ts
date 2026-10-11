@@ -116,7 +116,10 @@ export class MatchesService {
       .map((program) => this.toDto(profile, program, institution, source))
       .sort((a, b) => b.probability - a.probability);
     const best = scored[0];
-    await this.persist(userId, best);
+    // Pas de persistance ici : la table Match n'est lue que par le recalcul
+    // hebdomadaire, qui la compare au dernier « moment aha » affiché. Une ligne
+    // écrite par une fiche établissement entrait dans ce top et déclenchait
+    // chaque semaine un faux push « Tes matches ont bougé ».
     return best;
   }
 
@@ -172,6 +175,7 @@ export class MatchesService {
     }
 
     await Promise.all(items.map((item) => this.persist(userId, item)));
+    await this.pruneOutsideTop(userId, items, source);
     return { items, isEstimate: items.some((i) => i.isEstimate), source };
   }
 
@@ -437,6 +441,27 @@ export class MatchesService {
       fr: `${base.fr} Estimation — complète ton profil pour plus de précision.`,
       en: `${base.en} Estimate — complete your profile for more precision.`,
     };
+  }
+
+  /**
+   * Garde dans Match exactement le dernier top affiché : les lignes d'écoles
+   * sorties du top (jamais supprimées jusque-là) gardaient leur probabilité et
+   * pouvaient rester dans l'instantané du recalcul hebdomadaire.
+   */
+  private async pruneOutsideTop(
+    userId: string,
+    items: MatchDto[],
+    source: MatchDto['source'],
+  ): Promise<void> {
+    if (source === CATALOG_SOURCE_MOCK || items.length === 0) return;
+    await this.prismaService.tryExecute((prisma) =>
+      prisma.match.deleteMany({
+        where: {
+          userProfileId: userId,
+          programId: { notIn: items.map((i) => i.programId) },
+        },
+      }),
+    );
   }
 
   /**
