@@ -293,7 +293,9 @@ export class ProfilesService {
       // Fire-and-forget: low-latency Mautic push. A failure here is fine —
       // the state stays desired≠synced and the reconciliation cron retries.
       if (input.scholarshipNewsletterOptIn !== undefined) {
-        void this.newsletterSync?.syncProfile(updated.id);
+        // `.catch` : syncProfile peut rejeter (erreur DB transitoire) et un
+        // rejet non géré arrêterait le process.
+        void this.newsletterSync?.syncProfile(updated.id).catch(() => false);
       }
       return this.mapDbProfile(updated);
     }

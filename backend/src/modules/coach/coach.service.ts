@@ -1,10 +1,11 @@
 import {
   Injectable,
+  Logger,
   MessageEvent,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 
 import { AiConsentService } from '../ai/ai-consent.service';
 import { LlmService } from '../ai/llm.service';
@@ -21,6 +22,38 @@ import { CoachQuotaService } from './coach-quota.service';
 
 type CoachRole = 'user' | 'assistant';
 
+/** Longueur maximale d'un message étudiant envoyé au coach. */
+export const COACH_MESSAGE_MAX_LENGTH = 2000;
+
+/**
+ * Le profil arrive du client sans DTO : on ne garde que des champs du bon type
+ * pour qu'un `"targetCountryIds": "FR"` ne fasse pas planter `.map()` plus loin.
+ */
+export function sanitizeCoachProfile(raw: unknown): Record<string, unknown> {
+  const source =
+    raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const str = (v: unknown, max = 120) =>
+    typeof v === 'string' ? v.slice(0, max) : undefined;
+  const num = (v: unknown) =>
+    typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+  const ids = Array.isArray(source.targetCountryIds)
+    ? source.targetCountryIds
+        .filter((v): v is string => typeof v === 'string')
+        .map((v) => v.slice(0, 40))
+        .slice(0, 20)
+    : [];
+  return {
+    fullName: str(source.fullName),
+    currentLevel: str(source.currentLevel),
+    preferredLanguage: str(source.preferredLanguage, 10),
+    targetCountryIds: ids,
+    annualTuitionBudgetEur: num(source.annualTuitionBudgetEur),
+    monthlyBudgetEur: num(source.monthlyBudgetEur),
+  };
+}
+
 type CoachMessage = { role: CoachRole; content: string; createdAt: string };
 
 type Conversation = {
@@ -32,6 +65,7 @@ type Conversation = {
 
 @Injectable()
 export class CoachService {
+  private readonly logger = new Logger(CoachService.name);
   /**
    * In-memory store. Used as the source of truth only when the database is
    * unavailable (no `DATABASE_URL`); otherwise conversations live in Postgres
@@ -142,124 +176,170 @@ export class CoachService {
     profile: Record<string, unknown>;
   }): Observable<MessageEvent> {
     return new Observable((subscriber) => {
+      // Tout le tour est dans un try/catch : la promesse est lancée par `void`,
+      // donc une exception qui s'en échapperait deviendrait un rejet non géré
+      // qui arrête le process Node (et toutes les requêtes en cours).
       void (async () => {
-        const conversation = await this.loadConversation(params.conversationId);
-        // Ownership check: reject streaming into someone else's conversation
-        // (same "not found" message so existence isn't leaked).
-        if (!conversation || conversation.userId !== params.userId) {
-          subscriber.next({
-            data: {
-              type: 'error',
-              message: `Conversation ${params.conversationId} not found.`,
-            },
-          } as MessageEvent);
-          subscriber.complete();
-          return;
-        }
-
-        // Consent gates (defense-in-depth; the client also gates entry to the
-        // coach). When the DB is available and the authoritative profile has
-        // not opted into AI processing — or is a minor without recorded
-        // guardian consent — refuse before any PII reaches the LLM provider.
-        const consentBlock = await this.aiConsent.consentBlockCode(
-          params.userId,
-        );
-        if (consentBlock) {
-          subscriber.next({
-            data: {
-              type: 'error',
-              code: consentBlock,
-              message:
-                consentBlock === 'guardian_consent_required'
-                  ? 'Guardian consent required for minors.'
-                  : consentBlock === 'age_verification_required'
-                    ? 'Birth date verification is required before AI processing.'
-                    : 'AI processing consent required.',
-            },
-          } as MessageEvent);
-          subscriber.complete();
-          return;
-        }
-
-        const quota = this.quotaService.consume(params.userId);
-        if (!quota.allowed) {
-          subscriber.next({
-            data: {
-              type: 'error',
-              message:
-                'Quota hebdomadaire atteint (5 messages). Premium bientôt disponible.',
-            },
-          } as MessageEvent);
-          subscriber.complete();
-          return;
-        }
-
-        await this.appendMessage(conversation, 'user', params.message);
-
-        const lang = resolveCoachLanguage(
-          params.profile.preferredLanguage as string,
-        );
-
-        // RAG: ground the reply in verified catalog facts for this question.
-        const verifiedContext = await this.retrieveContext(
-          params.message,
-          (params.profile.targetCountryIds as string[] | undefined) ?? [],
-          lang,
-        );
-
-        // PII minimization: the student's name is intentionally NOT forwarded
-        // to the LLM (the prompt builder pseudonymizes the remaining context).
-        const system = buildCoachSystemPrompt({
-          currentLevel: params.profile.currentLevel as string | undefined,
-          targetCountryIds: params.profile.targetCountryIds as string[] | undefined,
-          annualTuitionBudgetEur:
-            params.profile.annualTuitionBudgetEur as number | undefined,
-          monthlyBudgetEur: params.profile.monthlyBudgetEur as number | undefined,
-          verifiedContext,
-          language: lang,
-        });
-
-        const history = conversation.messages.slice(-8).map((item) => ({
-          role: item.role,
-          content: item.content,
-        }));
-
-        let full = '';
         try {
-          for await (const chunk of this.llmService.streamText({
-            system,
-            messages: history,
-            lang,
-          })) {
-            full += chunk;
-            subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
-          }
-          // Output guardrail: if the model emitted a concrete figure while we
-          // had NO verified context to ground it, it was invented — append a
-          // localized caveat (streamed as a normal token so it persists too).
-          const caveat = unsourcedFigureCaveat(full, verifiedContext, lang);
-          if (caveat) {
-            full += caveat;
-            subscriber.next({
-              data: { type: 'token', text: caveat },
-            } as MessageEvent);
-          }
-          await this.appendMessage(conversation, 'assistant', full.trim());
-          subscriber.next({
-            data: {
-              type: 'done',
-              quotaRemaining: quota.remaining,
-            },
-          } as MessageEvent);
-          subscriber.complete();
+          await this.runStreamTurn(params, subscriber);
         } catch (error) {
-          subscriber.next({
-            data: { type: 'error', message: String(error) },
-          } as MessageEvent);
-          subscriber.complete();
+          this.logger.error(
+            `Coach stream failed: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          if (!subscriber.closed) {
+            subscriber.next({
+              data: { type: 'error', message: 'Coach temporairement indisponible.' },
+            } as MessageEvent);
+            subscriber.complete();
+          }
         }
       })();
     });
+  }
+
+  private async runStreamTurn(
+    rawParams: {
+      conversationId: string;
+      userId: string;
+      message: string;
+      profile: Record<string, unknown>;
+    },
+    subscriber: Subscriber<MessageEvent>,
+  ): Promise<void> {
+    const params = {
+      ...rawParams,
+      message: typeof rawParams.message === 'string' ? rawParams.message : '',
+      profile: sanitizeCoachProfile(rawParams.profile),
+    };
+    if (!params.message.trim() || params.message.length > COACH_MESSAGE_MAX_LENGTH) {
+      subscriber.next({
+        data: {
+          type: 'error',
+          code: 'invalid_message',
+          message: `Message vide ou trop long (${COACH_MESSAGE_MAX_LENGTH} caractères max).`,
+        },
+      } as MessageEvent);
+      subscriber.complete();
+      return;
+    }
+    const conversation = await this.loadConversation(params.conversationId);
+    // Ownership check: reject streaming into someone else's conversation
+    // (same "not found" message so existence isn't leaked).
+    if (!conversation || conversation.userId !== params.userId) {
+      subscriber.next({
+        data: {
+          type: 'error',
+          message: `Conversation ${params.conversationId} not found.`,
+        },
+      } as MessageEvent);
+      subscriber.complete();
+      return;
+    }
+
+    // Consent gates (defense-in-depth; the client also gates entry to the
+    // coach). When the DB is available and the authoritative profile has
+    // not opted into AI processing — or is a minor without recorded
+    // guardian consent — refuse before any PII reaches the LLM provider.
+    const consentBlock = await this.aiConsent.consentBlockCode(
+      params.userId,
+    );
+    if (consentBlock) {
+      subscriber.next({
+        data: {
+          type: 'error',
+          code: consentBlock,
+          message:
+            consentBlock === 'guardian_consent_required'
+              ? 'Guardian consent required for minors.'
+              : consentBlock === 'age_verification_required'
+                ? 'Birth date verification is required before AI processing.'
+                : 'AI processing consent required.',
+        },
+      } as MessageEvent);
+      subscriber.complete();
+      return;
+    }
+
+    const quota = this.quotaService.consume(params.userId);
+    if (!quota.allowed) {
+      subscriber.next({
+        data: {
+          type: 'error',
+          message:
+            'Quota hebdomadaire atteint (5 messages). Premium bientôt disponible.',
+        },
+      } as MessageEvent);
+      subscriber.complete();
+      return;
+    }
+
+    await this.appendMessage(conversation, 'user', params.message);
+
+    const lang = resolveCoachLanguage(
+      params.profile.preferredLanguage as string,
+    );
+
+    // RAG: ground the reply in verified catalog facts for this question.
+    const verifiedContext = await this.retrieveContext(
+      params.message,
+      (params.profile.targetCountryIds as string[] | undefined) ?? [],
+      lang,
+    );
+
+    // PII minimization: the student's name is intentionally NOT forwarded
+    // to the LLM (the prompt builder pseudonymizes the remaining context).
+    const system = buildCoachSystemPrompt({
+      currentLevel: params.profile.currentLevel as string | undefined,
+      targetCountryIds: params.profile.targetCountryIds as string[] | undefined,
+      annualTuitionBudgetEur:
+        params.profile.annualTuitionBudgetEur as number | undefined,
+      monthlyBudgetEur: params.profile.monthlyBudgetEur as number | undefined,
+      verifiedContext,
+      language: lang,
+    });
+
+    const history = conversation.messages.slice(-8).map((item) => ({
+      role: item.role,
+      content: item.content,
+    }));
+
+    let full = '';
+    try {
+      for await (const chunk of this.llmService.streamText({
+        system,
+        messages: history,
+        lang,
+      })) {
+        full += chunk;
+        subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
+      }
+      // Output guardrail: if the model emitted a concrete figure while we
+      // had NO verified context to ground it, it was invented — append a
+      // localized caveat (streamed as a normal token so it persists too).
+      const caveat = unsourcedFigureCaveat(full, verifiedContext, lang);
+      if (caveat) {
+        full += caveat;
+        subscriber.next({
+          data: { type: 'token', text: caveat },
+        } as MessageEvent);
+      }
+      await this.appendMessage(conversation, 'assistant', full.trim());
+      subscriber.next({
+        data: {
+          type: 'done',
+          quotaRemaining: quota.remaining,
+        },
+      } as MessageEvent);
+      subscriber.complete();
+    } catch (error) {
+      this.logger.error(
+        `Coach LLM stream failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      subscriber.next({
+        data: { type: 'error', message: 'Coach temporairement indisponible.' },
+      } as MessageEvent);
+      subscriber.complete();
+    }
   }
 
   // ── RAG retrieval ───────────────────────────────────────────────────────────

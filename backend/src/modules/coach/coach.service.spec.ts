@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { LlmService } from '../ai/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CoachQuotaService } from './coach-quota.service';
-import { CoachService } from './coach.service';
+import { COACH_MESSAGE_MAX_LENGTH, CoachService } from './coach.service';
 
 /**
  * Guards the IDOR fix: a coach conversation must only be readable by its owner.
@@ -141,6 +141,56 @@ describe('CoachService — AI consent gate', () => {
     expect(events.some((e) => e.type === 'token')).toBe(true);
     expect(events.some((e) => e.type === 'done')).toBe(true);
     expect(events.some((e) => e.code === 'ai_consent_required')).toBe(false);
+  });
+
+  // ── Bodies malformés : ne doivent jamais faire tomber le process ──────────
+
+  it('streams normally when targetCountryIds is a string instead of an array', async () => {
+    const service = makeService(new Date());
+    const created = await service.createConversation('user-a', {});
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { targetCountryIds: 'FR', preferredLanguage: 42 },
+      }),
+    );
+    expect(events.some((e) => e.type === 'done')).toBe(true);
+  });
+
+  it('turns an unexpected internal failure into an error event', async () => {
+    const service = makeService(new Date());
+    const created = await service.createConversation('user-a', {});
+    jest
+      .spyOn(service as any, 'retrieveContext')
+      .mockRejectedValue(new Error('boom'));
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: {},
+      }),
+    );
+    expect(events.at(-1)).toMatchObject({ type: 'error' });
+    expect(JSON.stringify(events)).not.toContain('boom');
+  });
+
+  it('rejects an oversized message before reaching the LLM', async () => {
+    const service = makeService(new Date());
+    const created = await service.createConversation('user-a', {});
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'x'.repeat(COACH_MESSAGE_MAX_LENGTH + 1),
+        profile: {},
+      }),
+    );
+    expect(events).toEqual([
+      expect.objectContaining({ type: 'error', code: 'invalid_message' }),
+    ]);
   });
 
   // ── Guardian consent gate (minors) ─────────────────────────────────────────
