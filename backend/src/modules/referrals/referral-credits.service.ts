@@ -52,12 +52,19 @@ export class ReferralCreditsService {
     const minted = await this.prisma.tryExecute(async (db) => {
       const referral = await db.referral.findUnique({
         where: { refereeProfileId: refereeId },
-        select: { id: true, referrerId: true },
+        select: { id: true, referrerId: true, createdAt: true },
       });
       if (!referral) return false; // referee was never referred — nothing to credit
 
       const caseCount = await db.case.count({ where: { userId: refereeId } });
       if (caseCount !== 1) return false; // only the FIRST case earns
+      // …and only a case filed AFTER the referral: a code redeemed after the
+      // fact must not earn on a request that already existed.
+      const firstCase = await db.case.findFirst({
+        where: { userId: refereeId },
+        select: { createdAt: true },
+      });
+      if (!firstCase || firstCase.createdAt < referral.createdAt) return false;
 
       try {
         await db.$transaction([
