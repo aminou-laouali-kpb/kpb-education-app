@@ -179,7 +179,15 @@ Future<void> main() async {
     final authService = await AuthService.create(apiClient);
     Get.put(authService, permanent: true);
     if (authService.isLoggedIn) {
-      await controller.finishAuthSession();
+      if (controller.profile != null) {
+        // Profil en cache : l'app s'ouvre tout de suite, la session se
+        // termine en arrière-plan (synchro, identité OneSignal, PostHog).
+        unawaited(controller.finishAuthSession());
+      } else {
+        // Sans profil local, il faut le rapatrier avant de router : sinon un
+        // compte existant atterrirait sur l'onboarding.
+        await controller.finishAuthSession();
+      }
     } else if (hadSessionAtBoot) {
       await controller.handleSessionLost();
     }

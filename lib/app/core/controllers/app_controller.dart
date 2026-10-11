@@ -466,7 +466,23 @@ abstract class _AppControllerBase extends GetxController {
       ..addAll(MockCatalog.academyCourses);
     _applyMvpCountryLock();
     if (AppConfig.enableRemoteSync) {
-      await syncRemoteData(silent: true);
+      // Local d'abord : la synchro part en arrière-plan au lieu de bloquer
+      // `runApp` (environ 10 requêtes, 3 tentatives, 15 s de timeout — sur
+      // un réseau 2G l'écran de démarrage restait affiché plusieurs minutes).
+      // Le cache local s'affiche tout de suite ; la synchro met à jour
+      // l'écran à la fin. Un compte connecté SANS profil local est géré par
+      // `finishAuthSession`, qui attend cette synchro (voir `_inFlightSync`).
+      unawaited(
+        syncRemoteData(silent: true).catchError((Object e, StackTrace s) {
+          safeRecordError(
+            e,
+            s,
+            reason: 'hydrate.backgroundSync',
+            domain: CrashlyticsObsDomain.sync,
+            operation: 'hydrate_background_sync',
+          );
+        }),
+      );
     }
     update();
   }
