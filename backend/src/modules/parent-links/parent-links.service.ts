@@ -165,10 +165,47 @@ export class ParentLinksService {
     const caseRecord = await this.prismaService.execute((prisma) =>
       prisma.case.findUnique({
         where: { id: caseId },
-        include: {
-          messages: { orderBy: { createdAt: 'asc' } },
-          documents: true,
-          timelineEvents: { orderBy: { createdAt: 'asc' } },
+        // Projection explicite : un parent ne voit ni les coordonnées perso du
+        // conseiller, ni les champs commerciaux (leadTag, discussionMotive),
+        // ni les chemins des fichiers déposés.
+        select: {
+          id: true,
+          userId: true,
+          parentCanView: true,
+          referenceCode: true,
+          title: true,
+          contextLabel: true,
+          status: true,
+          nextStepTitle: true,
+          nextStepDescription: true,
+          assignedAdvisorName: true,
+          requestedCountryId: true,
+          scheduledAt: true,
+          createdAt: true,
+          updatedAt: true,
+          messages: {
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true,
+              senderName: true,
+              senderRole: true,
+              body: true,
+              createdAt: true,
+            },
+          },
+          documents: {
+            select: { id: true, title: true, isProvided: true, uploadedAt: true },
+          },
+          timelineEvents: {
+            orderBy: { createdAt: 'asc' },
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              status: true,
+              createdAt: true,
+            },
+          },
         },
       }),
     );

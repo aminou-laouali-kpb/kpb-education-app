@@ -99,7 +99,10 @@ export class CasesService {
         orderBy: { createdAt: 'desc' },
       }),
     );
-    return (items ?? []).map((c) => this.mapDbCase(c));
+    // Lecture étudiante (userId fourni) : jamais de données internes.
+    return (items ?? []).map((c) =>
+      this.mapDbCase(c, { includeInternal: !userId }),
+    );
   }
 
   async findAllForAdmin() {
@@ -254,7 +257,7 @@ export class CasesService {
     if (!created) {
       throw new ServiceUnavailableException('Failed to create case.');
     }
-    const mapped = this.mapDbCase(created);
+    const mapped = this.mapDbCase(created, { includeInternal: !userId });
     if (userId) {
       // No-cash referral reward (KPB-77): if this student was referred, credit
       // their referrer on the FIRST case. Fire-and-forget and OUTSIDE the
@@ -345,7 +348,7 @@ export class CasesService {
       throw new ServiceUnavailableException('Failed to update case.');
     }
     const mapped = this.mapDbCase(updated, { includeInternal: true });
-    this.broadcastCaseUpdate(id, mapped as Record<string, unknown>);
+    this.broadcastCaseUpdate(id, this.mapDbCase(updated) as Record<string, unknown>);
     return mapped;
   }
 
@@ -620,8 +623,8 @@ export class CasesService {
     if (!assigned) {
       throw new ServiceUnavailableException('Failed to assign case.');
     }
-    const mapped = this.mapDbCase(assigned);
-    this.broadcastCaseUpdate(id, mapped as Record<string, unknown>);
+    const mapped = this.mapDbCase(assigned, { includeInternal: true });
+    this.broadcastCaseUpdate(id, this.mapDbCase(assigned) as Record<string, unknown>);
     return mapped;
   }
 
@@ -752,8 +755,15 @@ export class CasesService {
     return this.createTimelineEvent(id, { title, description });
   }
 
+  /**
+   * Projection d'un dossier. Par défaut = projection ÉTUDIANT (sans notes
+   * internes, téléphones conseiller ni champs commerciaux) : la room
+   * Socket.IO `caseUpdated` est partagée avec l'étudiant, et un oubli d'option
+   * doit fuir le moins possible. Les lectures staff passent
+   * `includeInternal: true` explicitement.
+   */
   private mapDbCase(c: any, opts: { includeInternal?: boolean } = {}) {
-    const includeInternal = opts.includeInternal ?? true;
+    const includeInternal = opts.includeInternal ?? false;
     return {
       id: c.id,
       userId: c.userId,
@@ -788,10 +798,11 @@ export class CasesService {
       // Whether the student has opted into sharing this case with a linked
       // parent. Surfaced so the app can render (and toggle) the share switch.
       parentCanView: c.parentCanView ?? false,
-      leadTag: c.leadTag ?? null,
-      discussionMotive: c.discussionMotive ?? null,
-      lastCommercialInteractionAt:
-        c.lastCommercialInteractionAt?.toISOString() ?? null,
+      leadTag: includeInternal ? (c.leadTag ?? null) : null,
+      discussionMotive: includeInternal ? (c.discussionMotive ?? null) : null,
+      lastCommercialInteractionAt: includeInternal
+        ? (c.lastCommercialInteractionAt?.toISOString() ?? null)
+        : null,
       documentRequests: (c.documents ?? []).map((d: any) => ({
         id: d.id,
         title: d.title,

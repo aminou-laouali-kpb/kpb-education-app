@@ -314,3 +314,94 @@ describe('CasesService — private document ownership', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });
+
+describe('CasesService — student projection never leaks internal data', () => {
+  const dbCase = {
+    id: 'case-1',
+    userId: 'user-1',
+    referenceCode: 'KPB-1',
+    type: 'orientation',
+    title: 'Dossier',
+    status: 'in_review',
+    assignedAdvisorName: 'Fatou',
+    assignedAdvisorPhone: '+221700000000',
+    assignedAdvisorWhatsapp: '+221700000001',
+    leadTag: 'hot',
+    discussionMotive: 'prix',
+    lastCommercialInteractionAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    internalNotes: [
+      {
+        id: 'n1',
+        authorName: 'Fatou',
+        authorRole: 'counselor',
+        body: 'note interne',
+        createdAt: new Date(),
+      },
+    ],
+  };
+
+  function makeListService(emitted: Record<string, unknown>[]) {
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (p: any) => Promise<any>) =>
+        fn({
+          case: {
+            findMany: async () => [dbCase],
+            findUnique: async () => dbCase,
+          },
+          $transaction: async (fn2: (tx: any) => Promise<any>) =>
+            fn2({
+              case: {
+                findUnique: async () => dbCase,
+                update: async () => dbCase,
+              },
+              caseTimelineEvent: { create: async () => ({}) },
+            }),
+        }),
+      tryExecute: async () => null,
+    } as unknown as PrismaService;
+    const moduleRef = {
+      get: () => ({
+        emitCaseUpdated: (_id: string, payload: Record<string, unknown>) =>
+          emitted.push(payload),
+      }),
+    } as unknown as ModuleRef;
+    return new CasesService(
+      prisma,
+      moduleRef,
+      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+    );
+  }
+
+  function expectNoInternal(payload: any) {
+    expect(payload.internalNotes).toEqual([]);
+    expect(payload.assignedAdvisorPhone).toBeNull();
+    expect(payload.assignedAdvisorWhatsapp).toBeNull();
+    expect(payload.leadTag).toBeNull();
+    expect(payload.discussionMotive).toBeNull();
+    expect(JSON.stringify(payload)).not.toContain('note interne');
+  }
+
+  it('GET /cases for a student hides notes, advisor phones and commercial fields', async () => {
+    const [item] = await makeListService([]).findAll('user-1');
+    expectNoInternal(item);
+  });
+
+  it('the admin list still includes internal data', async () => {
+    const [item] = await makeListService([]).findAllForAdmin();
+    expect(item.internalNotes).toHaveLength(1);
+    expect(item.assignedAdvisorPhone).toBe('+221700000000');
+  });
+
+  it('broadcasts the student projection on caseUpdated after an admin update', async () => {
+    const emitted: Record<string, unknown>[] = [];
+    const result = await makeListService(emitted).update('case-1', {
+      status: 'in_review',
+    } as any);
+    expect(result.internalNotes).toHaveLength(1);
+    expect(emitted).toHaveLength(1);
+    expectNoInternal(emitted[0]);
+  });
+});
