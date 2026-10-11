@@ -22,6 +22,9 @@ jobs:
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          # Empreinte d'hôte épinglée (sortie de `ssh-keyscan -H <hôte>` relue
+          # hors ligne). Absente : repli sur ssh-keyscan avec avertissement.
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           set -euo pipefail
@@ -32,14 +35,20 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           scanned=0
-          for attempt in 1 2 3 4 5; do
-            if ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
-              scanned=1
-              break
-            fi
-            echo "ssh-keyscan attempt $attempt failed"
-            sleep 10
-          done
+          if [ -n "${KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+            scanned=1
+          else
+            echo "::warning::VPS_KNOWN_HOSTS is not set — trusting whatever host key $VPS_HOST presents."
+            for attempt in 1 2 3 4 5; do
+              if ssh-keyscan -T 15 -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null; then
+                scanned=1
+                break
+              fi
+              echo "ssh-keyscan attempt $attempt failed"
+              sleep 10
+            done
+          fi
           [ "$scanned" = "1" ] || { echo '::error::VPS host key could not be read'; exit 1; }
 
       - name: Generate current-source manifest

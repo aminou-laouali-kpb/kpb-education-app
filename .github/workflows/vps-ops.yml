@@ -156,13 +156,21 @@ jobs:
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          # Empreinte d'hôte épinglée (sortie de `ssh-keyscan -H <hôte>` relue
+          # hors ligne). Absente : repli sur ssh-keyscan avec avertissement.
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          if [ -n "${KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            echo "::warning::VPS_KNOWN_HOSTS is not set — trusting whatever host key $VPS_HOST presents."
+            ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          fi
 
       # L'App ID OneSignal que l'APP embarque réellement, extrait de la source
       # plutôt que recopié à la main. C'est une valeur publique — elle voyage
