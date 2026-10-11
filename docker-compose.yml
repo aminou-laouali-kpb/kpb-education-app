@@ -77,6 +77,21 @@ services:
       - KPB_CAMPAIGN_MAIL_FROM=${KPB_CAMPAIGN_MAIL_FROM:-}
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY:-}
       - YOUTUBE_PLAYLIST_ID=${YOUTUBE_PLAYLIST_ID:-}
+      - YOUTUBE_ALLOWED_PLAYLIST_IDS=${YOUTUBE_ALLOWED_PLAYLIST_IDS:-}
+      # Tâches planifiées. Documentées dans .env.example mais jamais relayées
+      # jusqu'ici : les poser à true sur le VPS ne changeait rien. Fermées par
+      # défaut, comme dans le code.
+      - KPB_SCHOLARSHIP_REFRESH_ENABLED=${KPB_SCHOLARSHIP_REFRESH_ENABLED:-false}
+      - KPB_DAILY_SCHOLARSHIP_ENABLED=${KPB_DAILY_SCHOLARSHIP_ENABLED:-false}
+      - KPB_WEEKLY_DIGEST_ENABLED=${KPB_WEEKLY_DIGEST_ENABLED:-false}
+      - KPB_MATCH_RECOMPUTE_ENABLED=${KPB_MATCH_RECOMPUTE_ENABLED:-false}
+      - KPB_PARCOURS_WEEKLY_ENABLED=${KPB_PARCOURS_WEEKLY_ENABLED:-false}
+      # Quotas IA quotidiens par utilisateur (vide = défaut du code : 30 / 10 / 10).
+      - KPB_AI_DAILY_QUOTA_TOOLS=${KPB_AI_DAILY_QUOTA_TOOLS:-}
+      - KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW=${KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW:-}
+      - KPB_AI_DAILY_QUOTA_ORIENTATION=${KPB_AI_DAILY_QUOTA_ORIENTATION:-}
+      - GROQ_TIMEOUT_MS=${GROQ_TIMEOUT_MS:-}
+      - CLAMAV_TIMEOUT_MS=${CLAMAV_TIMEOUT_MS:-}
       # Flight price search (Kayak Price-Insights affiliate API; leave blank
       # to fall back to a browser deeplink).
       - KPB_KAYAK_API_KEY=${KPB_KAYAK_API_KEY:-}
