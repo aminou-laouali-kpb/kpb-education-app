@@ -54,11 +54,10 @@ Map<String, String> _eefKeysOf(String localeBlock) {
 }
 
 void main() {
-  final translations = File('lib/app/core/translations/app_translations.dart')
+  final frBlock = File('lib/app/core/translations/app_translations_fr.dart')
       .readAsStringSync();
-  final frBlock = translations.substring(
-      translations.indexOf("'fr': {"), translations.indexOf("'en': {"));
-  final enBlock = translations.substring(translations.indexOf("'en': {"));
+  final enBlock = File('lib/app/core/translations/app_translations_en.dart')
+      .readAsStringSync();
 
   group('les traductions', () {
     test('les deux langues déclarent exactement les mêmes clés eef_', () {

@@ -284,7 +284,9 @@ void main() {
     test(
         'le pack annonce le vrai nombre de clés `eef_help_bubble_*` et '
         '`eef_help_private_*`', () {
-      final source = _read('lib/app/core/translations/app_translations.dart');
+      final source =
+          _read('lib/app/core/translations/app_translations_fr.dart') +
+              _read('lib/app/core/translations/app_translations_en.dart');
       final counted = RegExp(
         r"^\s*'eef_help_(?:bubble|private)_[a-z0-9_]+':",
         multiLine: true,
