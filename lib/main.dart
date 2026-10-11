@@ -335,6 +335,13 @@ class KpbEducationApp extends StatelessWidget {
           transitionDuration: const Duration(milliseconds: 280),
           getPages: AppRoutes.pages,
           navigatorObservers: AnalyticsService.instance.navigatorObservers,
+          // Le verrou d'app est replacé si une navigation le retire ou passe
+          // par-dessus avant le déverrouillage (raccourci, notification).
+          routingCallback: (routing) {
+            if (Get.isRegistered<SecurityService>()) {
+              SecurityService.instance.onRouteChanged(routing?.current);
+            }
+          },
           // Accessibility: honor the user's OS font-size preference (older
           // parents and low-vision users on budget Android phones often crank
           // it up) but clamp it so extreme scales don't shatter fixed-size
