@@ -106,6 +106,14 @@ class CatalogCacheService {
   CatalogDataSource sourceFor(String resource) =>
       CatalogDataSource.parse(_box.get('$_sourcePrefix$resource'));
 
+  /// The raw JSON stored for [resource], or null when absent or untrusted.
+  /// Lets callers decode off the main isolate (see `decodeCachedCatalog`).
+  String? readRaw(String resource) {
+    if (!sourceFor(resource).isTrustworthy) return null;
+    final raw = _box.get(resource);
+    return (raw == null || raw.isEmpty) ? null : raw;
+  }
+
   List<dynamic> read(String resource) {
     if (!sourceFor(resource).isTrustworthy) return const <dynamic>[];
     final raw = _box.get(resource);

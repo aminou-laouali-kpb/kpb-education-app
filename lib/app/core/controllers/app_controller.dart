@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -122,6 +124,22 @@ class AppController extends _AppControllerBase
   AppController({required super.repository, super.apiClient});
 
   static const int shellTabCount = StudentShellTab.count;
+
+  /// Every state change goes through `update()`: drop the memoized search
+  /// scorer so the next read sees the new catalogue / profile.
+  @override
+  void update([List<Object>? ids, bool condition = true]) {
+    _invalidateSearchCache();
+    super.update(ids, condition);
+  }
+
+  /// Mutations persist before (or without) notifying: invalidate there too,
+  /// so a read between a mutation and its `update()` is never stale.
+  @override
+  void _persist() {
+    _invalidateSearchCache();
+    super._persist();
+  }
 }
 
 abstract class _AppControllerBase extends GetxController {
@@ -399,50 +417,51 @@ abstract class _AppControllerBase extends GetxController {
     }
     if (CatalogCacheService.isInitialized) {
       final cache = CatalogCacheService.instance;
+      final raws = <String, String?>{
+        for (final r in const [
+          'fields',
+          'countries',
+          'institutions',
+          'programs',
+          'scholarships',
+        ])
+          r: cache.readRaw(r),
+      };
 
-      final cachedFields = cache.read('fields');
+      // Décodage JSON + fromJson d'environ un millier d'objets HORS du thread
+      // principal : fait ici, il figeait l'interface au démarrage.
+      final decoded = await Isolate.run(
+        () => decodeCachedCatalog(<String, String?>{
+          'fields': raws['fields'],
+          'countries': raws['countries'],
+          'institutions': raws['institutions'],
+          'programs': raws['programs'],
+          'scholarships': raws['scholarships'],
+        }),
+      );
       fields
         ..clear()
-        ..addAll(cachedFields.isNotEmpty
-            ? cachedFields
-                .whereType<Map<String, dynamic>>()
-                .map(FieldModel.fromJson)
-            : MockCatalog.fields);
-
-      final cachedCountries = cache.read('countries');
+        ..addAll(
+            decoded.fields.isNotEmpty ? decoded.fields : MockCatalog.fields);
       countries
         ..clear()
-        ..addAll(cachedCountries.isNotEmpty
-            ? cachedCountries
-                .whereType<Map<String, dynamic>>()
-                .map(CountryModel.fromJson)
+        ..addAll(decoded.countries.isNotEmpty
+            ? decoded.countries
             : MockCatalog.countries);
-
-      final cachedInstitutions = cache.read('institutions');
       institutions
         ..clear()
-        ..addAll(cachedInstitutions.isNotEmpty
-            ? cachedInstitutions
-                .whereType<Map<String, dynamic>>()
-                .map(InstitutionModel.fromJson)
+        ..addAll(decoded.institutions.isNotEmpty
+            ? decoded.institutions
             : MockCatalog.institutions);
-
-      final cachedPrograms = cache.read('programs');
       programs
         ..clear()
-        ..addAll(cachedPrograms.isNotEmpty
-            ? cachedPrograms
-                .whereType<Map<String, dynamic>>()
-                .map(ProgramModel.fromJson)
+        ..addAll(decoded.programs.isNotEmpty
+            ? decoded.programs
             : MockCatalog.programs);
-
-      final cachedScholarships = cache.read('scholarships');
       scholarships
         ..clear()
-        ..addAll(cachedScholarships.isNotEmpty
-            ? cachedScholarships
-                .whereType<Map<String, dynamic>>()
-                .map(ScholarshipModel.fromJson)
+        ..addAll(decoded.scholarships.isNotEmpty
+            ? decoded.scholarships
             : MockCatalog.scholarships);
     } else {
       fields
@@ -2212,4 +2231,38 @@ abstract class _AppControllerBase extends GetxController {
       _cases.insert(0, caseItem);
     }
   }
+}
+
+/// Decoded catalogue snapshot, built in a background isolate.
+typedef DecodedCatalog = ({
+  List<FieldModel> fields,
+  List<CountryModel> countries,
+  List<InstitutionModel> institutions,
+  List<ProgramModel> programs,
+  List<ScholarshipModel> scholarships,
+});
+
+/// Pure function (no plugin, no Get) so it can run in `Isolate.run`. A corrupt
+/// or missing resource decodes to an empty list — the caller then falls back
+/// to the bundled sample catalogue, as before.
+DecodedCatalog decodeCachedCatalog(Map<String, String?> raws) {
+  List<T> decode<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+    final raw = raws[key];
+    if (raw == null) return <T>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <T>[];
+      return decoded.whereType<Map<String, dynamic>>().map(fromJson).toList();
+    } catch (_) {
+      return <T>[];
+    }
+  }
+
+  return (
+    fields: decode('fields', FieldModel.fromJson),
+    countries: decode('countries', CountryModel.fromJson),
+    institutions: decode('institutions', InstitutionModel.fromJson),
+    programs: decode('programs', ProgramModel.fromJson),
+    scholarships: decode('scholarships', ScholarshipModel.fromJson),
+  );
 }
