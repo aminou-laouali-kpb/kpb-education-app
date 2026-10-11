@@ -11,6 +11,10 @@ COPY . .
 # production API host must be supplied here (see docker-compose build args).
 ARG NEXT_PUBLIC_KPB_API_BASE_URL
 ENV NEXT_PUBLIC_KPB_API_BASE_URL=$NEXT_PUBLIC_KPB_API_BASE_URL
+# Vide = rapport d'erreurs désactivé (lib/error-reporting.ts). Jamais passé au
+# build jusqu'ici : Sentry restait muet en production même configuré.
+ARG NEXT_PUBLIC_SENTRY_DSN=
+ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN npm run build
 
 # Stage 2: minimal runtime (Next standalone server)

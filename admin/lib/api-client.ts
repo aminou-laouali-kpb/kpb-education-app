@@ -71,6 +71,52 @@ export async function logoutAdmin(): Promise<void> {
  * dans Excel en croyant que la liste est vide. Ici l'échec est une exception que
  * la page affiche.
  */
+export type ApiError = Error & { status?: number; body?: string };
+
+/**
+ * Extrait le message lisible d'une réponse d'erreur Nest
+ * (`{"message":"…","statusCode":409}`, ou un tableau de messages de
+ * validation). Avant, le JSON brut — accolades comprises — s'affichait tel
+ * quel dans les alertes des pages. Le corps brut reste dans `body`.
+ */
+export function readableErrorText(text: string, status: number): string {
+  if (!text) return `Request failed with status ${status}`;
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (parsed && typeof parsed === 'object' && 'message' in parsed) {
+      const { message } = parsed as { message: unknown };
+      if (Array.isArray(message) && message.length > 0) {
+        return message.map(String).join(' ');
+      }
+      if (typeof message === 'string' && message !== '') return message;
+    }
+  } catch {
+    // Pas du JSON : le texte brut est déjà le message.
+  }
+  return text;
+}
+
+/** Routes où un 401 est une réponse normale, pas une session expirée. */
+const AUTH_PATHS = ['/auth/admin/login', '/auth/admin/session', '/auth/admin/logout'];
+
+async function toApiError(response: Response, path: string): Promise<ApiError> {
+  const text = await response.text().catch(() => '');
+  const error = new Error(readableErrorText(text, response.status)) as ApiError;
+  error.status = response.status;
+  error.body = text;
+  if (
+    response.status === 401 &&
+    typeof window !== 'undefined' &&
+    !AUTH_PATHS.some((p) => path.startsWith(p)) &&
+    window.location.pathname !== '/login'
+  ) {
+    // Session expirée en cours d'usage : retour à la connexion au lieu d'une
+    // alerte « Unauthorized » que rien ne permet de corriger depuis la page.
+    window.location.assign('/login?expired=1');
+  }
+  return error;
+}
+
 export async function apiFetchText(
   path: string,
   options: ApiOptions = {},
@@ -84,12 +130,7 @@ export async function apiFetchText(
   });
 
   if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    const error = new Error(
-      text || `Request failed with status ${response.status}`,
-    ) as Error & { status?: number };
-    error.status = response.status;
-    throw error;
+    throw await toApiError(response, path);
   }
 
   return response.text();
@@ -114,12 +155,7 @@ export async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    const error = new Error(
-      text || `Request failed with status ${response.status}`,
-    ) as Error & { status?: number };
-    error.status = response.status;
-    throw error;
+    throw await toApiError(response, path);
   }
 
   // Mutations frequently return 204 No Content or an empty body; calling

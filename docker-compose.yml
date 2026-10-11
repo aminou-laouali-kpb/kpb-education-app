@@ -311,6 +311,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_KPB_API_BASE_URL: ${KPB_ADMIN_API_BASE_URL:-https://api.kpbeducation.cloud/api}
+        NEXT_PUBLIC_SENTRY_DSN: ${KPB_ADMIN_SENTRY_DSN:-}
     image: kpb-admin:${KPB_IMAGE_TAG:-local}
     container_name: kpb_admin
     restart: always
