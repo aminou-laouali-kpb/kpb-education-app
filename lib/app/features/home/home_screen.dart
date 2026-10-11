@@ -84,11 +84,17 @@ class HomeScreen extends StatelessWidget {
 
     return GetBuilder<AppController>(
       builder: (_) {
-        if (controller.isSyncing && controller.profile == null) {
+        // Un invité n'a JAMAIS de profil : sans le test `isGuestMode`, son
+        // pull-to-refresh remplaçait tout l'accueil par le squelette, et une
+        // synchro ratée par une erreur plein écran alors que le catalogue en
+        // cache était là.
+        final awaitingFirstProfile =
+            controller.profile == null && !controller.isGuestMode;
+        if (controller.isSyncing && awaitingFirstProfile) {
           return const HomeScreenSkeleton();
         }
 
-        if (controller.syncError != null && controller.profile == null) {
+        if (controller.syncError != null && awaitingFirstProfile) {
           return KpbErrorState(
             onRetry: controller.pullToRefresh,
           );
