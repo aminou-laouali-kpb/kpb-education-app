@@ -414,7 +414,10 @@ export class ScholarshipsIndexService {
       total,
       limit,
       offset,
-      hasMore: offset + page.length < total,
+      // Sur la liste réellement chargée (plafonnée à MAX_CANDIDATES), pas
+      // sur `total` : au-delà du plafond, des pages vides s'annonçaient
+      // « hasMore ».
+      hasMore: offset + page.length < mapped.length,
       // True when the student's profile fields matched nothing and the listing
       // fell back to the unfiltered catalog. The client must disclose it rather
       // than presenting the result as a profile-matched list.

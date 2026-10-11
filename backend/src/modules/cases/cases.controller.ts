@@ -142,6 +142,9 @@ export class CasesController {
     if (!file) {
       throw new BadRequestException('File is required under field "file".');
     }
+    // Propriété vérifiée AVANT d'écrire : n'importe quel étudiant pouvait
+    // remplir le volume de fichiers orphelins en visant un dossier d'autrui.
+    await this.casesService.findOne(id, req.studentUser.id);
     const stored = await this.storageService.save(
       file.buffer,
       file.originalname,

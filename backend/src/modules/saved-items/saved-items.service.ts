@@ -7,6 +7,9 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSavedItemDto } from './dto/create-saved-item.dto';
 
+/** Borne de lecture : une liste de favoris n'a pas de raison d'être illimitée. */
+const SAVED_ITEMS_MAX = 1000;
+
 @Injectable()
 export class SavedItemsService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -25,6 +28,7 @@ export class SavedItemsService {
       prisma.savedItem.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
+        take: SAVED_ITEMS_MAX,
       }),
     );
     return (items ?? []).map((item) => ({
@@ -38,8 +42,10 @@ export class SavedItemsService {
 
   async create(input: CreateSavedItemDto, userId: string) {
     this.assertDb();
-    const created = await this.prismaService.execute(async (prisma) => {
-      const existing = await prisma.savedItem.findUnique({
+    // Upsert atomique : la séquence lecture puis création renvoyait un 409
+    // (contrainte unique) sur un double tap, au lieu d'être idempotente.
+    const created = await this.prismaService.execute((prisma) =>
+      prisma.savedItem.upsert({
         where: {
           userId_itemType_itemId: {
             userId,
@@ -47,12 +53,10 @@ export class SavedItemsService {
             itemId: input.itemId,
           },
         },
-      });
-      if (existing) return existing;
-      return prisma.savedItem.create({
-        data: { userId, itemType: input.type, itemId: input.itemId },
-      });
-    });
+        create: { userId, itemType: input.type, itemId: input.itemId },
+        update: {},
+      }),
+    );
     if (!created) {
       throw new ServiceUnavailableException('Failed to persist saved item.');
     }

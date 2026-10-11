@@ -80,3 +80,33 @@ describe('routes étudiant des dossiers', () => {
     expect(CasesService.prototype.update.length).toBe(2);
   });
 });
+
+describe('CasesController — document upload ownership', () => {
+  it("checks case ownership before writing the file (no orphan files on someone else's case)", async () => {
+    const { CasesController } = await import('./cases.controller');
+    const { NotFoundException } = await import('@nestjs/common');
+    const saved: unknown[] = [];
+    const casesService = {
+      findOne: async () => {
+        throw new NotFoundException('Case not found.');
+      },
+      uploadDocument: async () => ({}),
+    };
+    const storage = {
+      save: async (...args: unknown[]) => {
+        saved.push(args);
+        return { url: 'storage://x' };
+      },
+    };
+    const controller = new (CasesController as any)(casesService, storage);
+    await expect(
+      controller.uploadDocument(
+        'case-other',
+        { title: 'Passport' },
+        { buffer: Buffer.from('x'), originalname: 'p.pdf', mimetype: 'application/pdf' },
+        { studentUser: { id: 'u1' } },
+      ),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(saved).toHaveLength(0);
+  });
+});

@@ -79,7 +79,11 @@ export class ParcoursWeeklyService {
     if (recipients.length === 0) return;
 
     // Only look up the story once we know somebody is listening.
-    const story = await this.parcours.pickStoryOfWeek(now);
+    // Le push part le DIMANCHE soir : il annonce le récit de la semaine qui
+    // COMMENCE le lendemain. Choisi sur `now`, il annonçait celui de la
+    // semaine qui se termine, remplacé sur l'accueil quelques heures après.
+    const weekStart = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const story = await this.parcours.pickStoryOfWeek(weekStart);
     if (!story) {
       this.logger.warn(
         'Récit de la semaine: no featured story published — nothing sent.',
@@ -87,7 +91,7 @@ export class ParcoursWeeklyService {
       return;
     }
 
-    const weekKey = this.parcours.weekKey(now);
+    const weekKey = this.parcours.weekKey(weekStart);
     let pushed = 0;
     for (const r of recipients) {
       const outcome = await this.dispatch.dispatch({
