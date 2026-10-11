@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -570,8 +571,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // Ask for push permission via OneSignal; identity is linked in
       // completeOnboarding() → syncOneSignalIdentity().
       await OneSignalService.instance.requestPermission();
-      AnalyticsService.instance
-          .logOnboardingCompleted(accountType: _accountType.name);
+      unawaited(AnalyticsService.instance
+          .logOnboardingCompleted(accountType: _accountType.name));
       final profile = _buildProfile();
       if (_accountType == AccountType.student) {
         // AHA moment (P0-D): await the profile PATCH so the server scores the
@@ -579,10 +580,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // reach _submit, so they keep landing on home.
         await _ctrl.completeOnboardingSynced(profile);
         if (!mounted) return;
-        Get.offAll(() => const AhaMomentScreen());
+        unawaited(Get.offAll(() => const AhaMomentScreen()));
       } else {
         _ctrl.completeOnboarding(profile);
-        Get.offAllNamed(AppRoutes.home);
+        unawaited(Get.offAllNamed(AppRoutes.home));
       }
     } finally {
       // Dans un `finally`, et pas après le `await` : si la remontée échoue, un

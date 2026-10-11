@@ -706,7 +706,7 @@ abstract class _AppControllerBase extends GetxController {
   }
 
   Future<void> logout() async {
-    AnalyticsService.instance.logLogout();
+    unawaited(AnalyticsService.instance.logLogout());
     unawaited(OneSignalService.instance.logout());
     // Keep the historical logout contract: callers that do not await this
     // Future must still observe an anonymous in-memory state immediately.
@@ -740,7 +740,7 @@ abstract class _AppControllerBase extends GetxController {
     _sessionLossInProgress = true;
     try {
       await logout();
-      Get.offAll(() => const AppBootScreen());
+      unawaited(Get.offAll(() => const AppBootScreen()));
       Get.snackbar(
         'api_client_session_expired_title'.tr,
         'api_client_session_expired_message'.tr,
@@ -979,11 +979,11 @@ abstract class _AppControllerBase extends GetxController {
     clearOrientationProgress();
     _persist();
     update();
-    HapticFeedback.heavyImpact();
-    AnalyticsService.instance.logOrientationComplete(
+    unawaited(HapticFeedback.heavyImpact());
+    unawaited(AnalyticsService.instance.logOrientationComplete(
       totalQuestions: orientationQuestions.length,
       matchCount: session.recommendations.length,
-    );
+    ));
     return session;
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -48,7 +49,7 @@ class _StoryOfWeekCardState extends State<StoryOfWeekCard> {
       _loaded = true;
     });
     if (story != null) {
-      AnalyticsService.instance.logStoryOfWeekViewed(story.slug);
+      unawaited(AnalyticsService.instance.logStoryOfWeekViewed(story.slug));
     }
   }
 

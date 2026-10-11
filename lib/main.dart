@@ -230,7 +230,7 @@ Future<void> main() async {
 
     // ── Quick Actions ────────────────────────────────────────────────────────
     const QuickActions quickActions = QuickActions();
-    quickActions.initialize((String shortcutType) {
+    unawaited(quickActions.initialize((String shortcutType) {
       if (shortcutType == 'action_cases') {
         // Reset stack to shell + Dossiers tab (named `/cases` was never registered).
         Get.offAllNamed(AppRoutes.home);
@@ -240,9 +240,9 @@ Future<void> main() async {
       } else if (shortcutType == 'action_search') {
         Get.toNamed(AppRoutes.search);
       }
-    });
+    }));
 
-    quickActions.setShortcutItems(<ShortcutItem>[
+    unawaited(quickActions.setShortcutItems(<ShortcutItem>[
       const ShortcutItem(
         type: 'action_cases',
         localizedTitle: 'Mes Dossiers',
@@ -253,7 +253,7 @@ Future<void> main() async {
         localizedTitle: 'Nouvelle Recherche',
         icon: 'icon_search',
       ),
-    ]);
+    ]));
 
     // ── Deep links (kpb://) ────────────────────────────────────────────────────
     // The scheme is declared natively (iOS Info.plist + Android intent-filter)
@@ -268,7 +268,8 @@ Future<void> main() async {
     runApp(AppConfig.posthogEnabled ? const PostHogWidget(child: app) : app);
   } catch (error, stack) {
     if (firebaseInitialized) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      unawaited(
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true));
     } else {
       debugPrint('Boot critical error: $error\n$stack');
     }

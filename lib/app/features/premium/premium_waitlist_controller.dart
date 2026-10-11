@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -133,7 +134,7 @@ class PremiumWaitlistController extends ChangeNotifier {
       _entry = saved;
       _phase = PremiumWaitlistPhase.ready;
       notifyListeners();
-      _analytics.logPremiumWaitlistJoined();
+      unawaited(_analytics.logPremiumWaitlistJoined());
       return true;
     } catch (error) {
       return _fail(classifyFailure(error));

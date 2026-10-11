@@ -213,7 +213,7 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               await controller.logout();
-              Get.offAll(() => const AppBootScreen());
+              unawaited(Get.offAll(() => const AppBootScreen()));
             },
             style: FilledButton.styleFrom(backgroundColor: KpbColors.error),
             child: Text('logout'.tr),
@@ -287,7 +287,7 @@ class ProfileScreen extends StatelessWidget {
               Navigator.pop(ctx);
               try {
                 await controller.deleteAccount();
-                Get.offAll(() => const AppBootScreen());
+                unawaited(Get.offAll(() => const AppBootScreen()));
               } catch (_) {
                 Get.snackbar(
                   'delete_account'.tr,

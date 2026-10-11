@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -40,18 +41,18 @@ class _MagicLinkEmailScreenState extends State<MagicLinkEmailScreen> {
     try {
       await widget.authService.requestMagicLink(email: email);
       if (!mounted) return;
-      Get.to(
+      unawaited(Get.to(
         () => MagicLinkVerifyScreen(
           authService: widget.authService,
           email: email,
         ),
-      );
+      ));
     } catch (error) {
       final rate = error is AuthException &&
           (error.statusCode == '429' ||
               error.message.toLowerCase().contains('rate'));
-      AnalyticsService.instance.logAuthFailed(
-          method: 'email', reason: rate ? 'rate_limited' : 'send_error');
+      unawaited(AnalyticsService.instance.logAuthFailed(
+          method: 'email', reason: rate ? 'rate_limited' : 'send_error'));
       setState(() {
         _error =
             rate ? 'auth_magic_resend_cooldown'.tr : 'auth_magic_send_error'.tr;

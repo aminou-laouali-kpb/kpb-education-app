@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -393,7 +394,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   builder: (_) => ParentCaseViewScreen(caseId: id),
                 ),
               );
-              if (mounted) _refresh();
+              if (mounted) unawaited(_refresh());
             },
             child: Container(
               margin: const EdgeInsets.only(bottom: KpbSpacing.sm),

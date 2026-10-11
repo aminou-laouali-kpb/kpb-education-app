@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -165,7 +166,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
   }
 
   Future<void> _promptUpload(String caseId, DocumentRequest doc) async {
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet(
       context: context,
       builder: (ctx) {
         return SafeArea(
@@ -234,7 +235,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
           ),
         );
       },
-    );
+    ));
   }
 
   /// Admission-milestone review (KPB-75): rate the counsellor 1–5 + optional

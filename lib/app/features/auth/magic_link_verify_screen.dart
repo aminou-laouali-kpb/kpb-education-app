@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -51,8 +52,8 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
       // + method), so it is not duplicated here.
       await navigateAfterAuth(method: 'email');
     } catch (error) {
-      AnalyticsService.instance
-          .logAuthFailed(method: 'email', reason: 'verify_error');
+      unawaited(AnalyticsService.instance
+          .logAuthFailed(method: 'email', reason: 'verify_error'));
       if (!mounted) return;
       setState(() {
         _error = 'auth_magic_verify_error'.tr;
@@ -74,8 +75,8 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
       final rate = error is AuthException &&
           (error.statusCode == '429' ||
               error.message.toLowerCase().contains('rate'));
-      AnalyticsService.instance.logAuthFailed(
-          method: 'email', reason: rate ? 'rate_limited' : 'send_error');
+      unawaited(AnalyticsService.instance.logAuthFailed(
+          method: 'email', reason: rate ? 'rate_limited' : 'send_error'));
       setState(() {
         _error =
             rate ? 'auth_magic_resend_cooldown'.tr : 'auth_magic_send_error'.tr;

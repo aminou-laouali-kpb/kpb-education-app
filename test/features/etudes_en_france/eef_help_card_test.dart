@@ -14,6 +14,8 @@
 // officielle du plugin (même technique que force_update_screen_test.dart) : le
 // code de production n'a pas été modifié pour être testable.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -255,7 +257,7 @@ void main() {
     testWidgets('les textes et le message prérempli suivent la langue',
         (tester) async {
       await pumpCard(tester, EefHelpStep.hub);
-      Get.updateLocale(const Locale('en'));
+      unawaited(Get.updateLocale(const Locale('en')));
       await tester.pumpAndSettle();
 
       expect(find.text('Unclear? Want some help?'), findsOneWidget);
@@ -277,7 +279,7 @@ void main() {
 
     testWidgets('le lien compact aussi', (tester) async {
       await pumpCard(tester, EefHelpStep.procedure);
-      Get.updateLocale(const Locale('en'));
+      unawaited(Get.updateLocale(const Locale('en')));
       await tester.pumpAndSettle();
 
       expect(
@@ -291,7 +293,7 @@ void main() {
     testWidgets('pays suspendu : textes neutres et message neutre',
         (tester) async {
       await pumpCard(tester, EefHelpStep.hub, country: 'Niger');
-      Get.updateLocale(const Locale('en'));
+      unawaited(Get.updateLocale(const Locale('en')));
       await tester.pumpAndSettle();
 
       expect(
