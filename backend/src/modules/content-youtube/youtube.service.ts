@@ -17,6 +17,7 @@ import { Injectable, Logger } from '@nestjs/common';
 const DEFAULT_PLAYLIST_ID = 'PLpk-LrNodqDjKAEF8B1WwWuMsmK4s2-zD';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 const MAX_RESULTS = 50;
+const FETCH_TIMEOUT_MS = 10_000;
 
 export interface YoutubeVideoDto {
   videoId: string;
@@ -42,14 +43,27 @@ export class YoutubeService {
     return key && key.trim() !== '' ? key.trim() : undefined;
   }
 
+  private allowedPlaylistIds(fallback: string): Set<string> {
+    const extra = (process.env.YOUTUBE_ALLOWED_PLAYLIST_IDS ?? '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    return new Set([DEFAULT_PLAYLIST_ID, fallback, ...extra]);
+  }
+
   async getPlaylist(
     playlistId?: string,
     nowMs = Date.now(),
   ): Promise<{ items: YoutubeVideoDto[]; configured: boolean; cached: boolean }> {
+    const fallback = process.env.YOUTUBE_PLAYLIST_ID?.trim() || DEFAULT_PLAYLIST_ID;
+    // Route publique : un `playlistId` arbitraire consommait le quota de la clé
+    // serveur et remplissait le cache sans limite. Seules les playlists KPB
+    // connues sont servies ; tout autre id retombe sur la playlist par défaut.
+    const requested = playlistId?.trim();
     const id =
-      (playlistId && playlistId.trim()) ||
-      process.env.YOUTUBE_PLAYLIST_ID ||
-      DEFAULT_PLAYLIST_ID;
+      requested && this.allowedPlaylistIds(fallback).has(requested)
+        ? requested
+        : fallback;
 
     const cached = this.cache.get(id);
     if (cached && nowMs - cached.fetchedAt < CACHE_TTL_MS) {
@@ -93,7 +107,9 @@ export class YoutubeService {
       url.searchParams.set('key', this.apiKey as string);
       if (pageToken) url.searchParams.set('pageToken', pageToken);
 
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
       if (!res.ok) {
         throw new Error(`YouTube API HTTP ${res.status}`);
       }

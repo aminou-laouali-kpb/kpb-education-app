@@ -69,9 +69,16 @@ export class ContentService {
   private readonly supportDestinations = [...mockAdminData.supportDestinations];
   private readonly articles = [...mockAdminData.articles];
 
-  async listServiceOffers(): Promise<ContentListResponse<unknown>> {
+  async listServiceOffers(
+    opts: { publicOnly?: boolean } = {},
+  ): Promise<ContentListResponse<unknown>> {
     const items = await this.execOrDegrade('service-offers', (prisma) =>
       prisma.serviceOffer.findMany({
+        // Route publique : jamais de brouillon, d'archive ni d'élément masqué
+        // (l'app filtrait côté client, mais l'API les servait quand même).
+        ...(opts.publicOnly
+          ? { where: { status: 'published' } }
+          : {}),
         orderBy: { createdAt: 'desc' },
       }),
     );
@@ -230,9 +237,16 @@ export class ContentService {
     };
   }
 
-  async listSupportDestinations(): Promise<ContentListResponse<unknown>> {
+  async listSupportDestinations(
+    opts: { publicOnly?: boolean } = {},
+  ): Promise<ContentListResponse<unknown>> {
     const items = await this.execOrDegrade('support-destinations', (prisma) =>
       prisma.supportDestination.findMany({
+        // Route publique : jamais de brouillon, d'archive ni d'élément masqué
+        // (l'app filtrait côté client, mais l'API les servait quand même).
+        ...(opts.publicOnly
+          ? { where: { status: 'published', isVisible: true } }
+          : {}),
         orderBy: { createdAt: 'desc' },
       }),
     );
@@ -389,9 +403,16 @@ export class ContentService {
     };
   }
 
-  async listArticles(): Promise<ContentListResponse<unknown>> {
+  async listArticles(
+    opts: { publicOnly?: boolean } = {},
+  ): Promise<ContentListResponse<unknown>> {
     const items = await this.execOrDegrade('articles', (prisma) =>
       prisma.article.findMany({
+        // Route publique : jamais de brouillon, d'archive ni d'élément masqué
+        // (l'app filtrait côté client, mais l'API les servait quand même).
+        ...(opts.publicOnly
+          ? { where: { status: 'published' } }
+          : {}),
         orderBy: { createdAt: 'desc' },
       }),
     );

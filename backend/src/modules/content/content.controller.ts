@@ -21,12 +21,12 @@ export class ContentController {
 
   @Get('content/service-offers')
   listServiceOffers() {
-    return this.contentService.listServiceOffers();
+    return this.contentService.listServiceOffers({ publicOnly: true });
   }
 
   @Get('content/support-destinations')
   listSupportDestinations() {
-    return this.contentService.listSupportDestinations();
+    return this.contentService.listSupportDestinations({ publicOnly: true });
   }
 
   // Blog/articles are hidden in the MVP app (AppConfig.mvpOnly) — gate to
@@ -35,7 +35,7 @@ export class ContentController {
   @Get('content/articles')
   @UseGuards(MvpGuard)
   listArticles() {
-    return this.contentService.listArticles();
+    return this.contentService.listArticles({ publicOnly: true });
   }
 
   @Get('admin/service-offers')

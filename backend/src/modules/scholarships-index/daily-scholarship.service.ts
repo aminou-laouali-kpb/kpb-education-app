@@ -22,6 +22,7 @@ import {
 import { NotificationDispatchService } from '../notifications/notification-dispatch.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScholarshipsIndexService } from './scholarships-index.service';
+import { publicScholarshipWhere } from '../../common/public-scholarship-where';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SEND_HOUR_LOCAL = 19; // 19:00 in the recipient's local time.
@@ -66,10 +67,12 @@ export class DailyScholarshipService {
   async pickForDate(date: Date): Promise<DailyPick | null> {
     const eligible = await this.prisma.execute((db) =>
       db.scholarship.findMany({
+        // Même règle que la vue publique (fiche vérifiée par un humain) : sinon
+        // la bourse poussée répondait 404 au tap. On garde l'exigence d'une
+        // échéance à venir propre à la « bourse du jour ».
         where: {
-          isActive: true,
-          moderationStatus: 'approved',
-          deadlineAt: { gt: date },
+          ...publicScholarshipWhere(date),
+          AND: [{ deadlineAt: { gt: date } }],
         },
         orderBy: [{ deadlineAt: 'asc' }, { id: 'asc' }],
         select: {

@@ -34,8 +34,14 @@ describe('DailyScholarshipService', () => {
     }
 
     const profileWheres: Array<Record<string, unknown>> = [];
+    const scholarshipWheres: Array<Record<string, unknown>> = [];
     const client = {
-      scholarship: { findMany: async () => opts.scholarships ?? [] },
+      scholarship: {
+        findMany: async ({ where }: { where: Record<string, unknown> }) => {
+          scholarshipWheres.push(where);
+          return opts.scholarships ?? [];
+        },
+      },
       userProfile: {
         findMany: async ({ where }: { where: Record<string, unknown> }) => {
           profileWheres.push(where);
@@ -64,6 +70,7 @@ describe('DailyScholarshipService', () => {
       service: new DailyScholarshipService(prisma, scholarships, dispatch),
       dispatched,
       profileWheres,
+      scholarshipWheres,
     };
   }
 
@@ -135,5 +142,15 @@ describe('DailyScholarshipService', () => {
     });
     await service.sendDailyPush(new Date('2026-07-24T19:00:00Z'));
     expect(dispatched).toHaveLength(0);
+  });
+
+  it('only picks scholarships the public detail view will serve', async () => {
+    const { service, scholarshipWheres } = make();
+    await service.pickForDate(new Date('2026-10-14T08:00:00.000Z'));
+    expect(scholarshipWheres[0]).toMatchObject({
+      isActive: true,
+      moderationStatus: 'approved',
+      lastVerifiedAt: { not: null },
+    });
   });
 });
