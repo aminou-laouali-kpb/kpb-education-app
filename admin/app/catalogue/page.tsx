@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, useCallback, useEffect, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 
 import { DashboardShell } from '../../components/dashboard-shell';
 import {
@@ -148,14 +148,23 @@ export default function CataloguePage() {
     }
   }
 
+  const instCountRequest = useRef<string | null>(null);
+
   function startInstitutionEdit(entry: CatalogInstitution) {
     setInstEditingId(entry.id);
     setInstProgramCount(null);
+    // Seule la réponse de l'édition EN COURS compte : celle d'une fiche ouverte
+    // juste avant pouvait arriver après et écraser le compte.
+    instCountRequest.current = entry.id;
     fetchPrograms({ institutionId: entry.id, limit: 500 })
-      .then((rows) => setInstProgramCount(rows.length))
+      .then((rows) => {
+        if (instCountRequest.current === entry.id) setInstProgramCount(rows.length);
+      })
       // Compte inconnu ⇒ on verrouille, plutôt que d'autoriser un déplacement
       // dont on ne peut pas mesurer les dégâts.
-      .catch(() => setInstProgramCount(1));
+      .catch(() => {
+        if (instCountRequest.current === entry.id) setInstProgramCount(1);
+      });
     setInstDraft({
       nameFr: entry.name.fr,
       nameEn: entry.name.en,
