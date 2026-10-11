@@ -2,6 +2,7 @@ import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
 import { AiConsentGuard } from '../ai/ai-consent.guard';
+import { AiQuota, AiQuotaGuard } from '../ai/ai-quota.guard';
 import {
   DocumentKind,
   DocumentReviewLanguage,
@@ -9,7 +10,13 @@ import {
 } from './document-review.service';
 
 @Controller('document-review')
-@UseGuards(StudentAuthGuard, AiConsentGuard)
+@UseGuards(StudentAuthGuard, AiConsentGuard, AiQuotaGuard)
+@AiQuota({
+  feature: 'document_review',
+  limitEnv: 'KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW',
+  defaultDailyLimit: 10,
+  maxBodyBytes: 48 * 1024,
+})
 export class DocumentReviewController {
   constructor(private readonly service: DocumentReviewService) {}
 

@@ -1,40 +1,52 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 
+import { AiQuotaService } from '../ai/ai-quota.service';
+import { PrismaService } from '../prisma/prisma.service';
+
+const COACH_WEEKLY_LIMIT = 5;
+const FEATURE = 'coach';
+
+/**
+ * Quota hebdomadaire du coach (5 messages, semaine UTC commençant le lundi).
+ * Persisté en base via `AiQuotaService` : l'ancienne `Map` en mémoire
+ * repartait à zéro à chaque redéploiement ou redémarrage du process.
+ */
 @Injectable()
 export class CoachQuotaService {
-  private readonly usage = new Map<string, { weekKey: string; count: number }>();
+  private readonly quota: AiQuotaService;
 
-  private weekKeyUtc(): string {
-    const now = new Date();
-    const day = now.getUTCDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const monday = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + diff,
-    ));
-    return monday.toISOString().slice(0, 10);
+  constructor(
+    @Optional() quota?: AiQuotaService,
+    @Optional() prisma?: PrismaService,
+  ) {
+    this.quota =
+      quota ??
+      new AiQuotaService(
+        prisma ?? ({ tryExecute: async () => null } as unknown as PrismaService),
+      );
   }
 
-  getQuota(userId: string) {
-    const weekKey = this.weekKeyUtc();
-    const entry = this.usage.get(userId);
-    const used = entry?.weekKey === weekKey ? entry.count : 0;
+  async getQuota(userId: string) {
+    const decision = await this.quota.peek({
+      userId,
+      feature: FEATURE,
+      limit: COACH_WEEKLY_LIMIT,
+      period: 'week',
+    });
     return {
-      quotaLimit: 5,
-      quotaRemaining: Math.max(0, 5 - used),
-      quotaResetAt: weekKey,
+      quotaLimit: decision.limit,
+      quotaRemaining: decision.remaining,
+      quotaResetAt: decision.resetsAt.toISOString().slice(0, 10),
     };
   }
 
-  consume(userId: string): { allowed: boolean; remaining: number } {
-    const weekKey = this.weekKeyUtc();
-    const entry = this.usage.get(userId) ?? { weekKey, count: 0 };
-    const count = entry.weekKey === weekKey ? entry.count : 0;
-    if (count >= 5) {
-      return { allowed: false, remaining: 0 };
-    }
-    this.usage.set(userId, { weekKey, count: count + 1 });
-    return { allowed: true, remaining: 4 - count };
+  async consume(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+    const decision = await this.quota.consume({
+      userId,
+      feature: FEATURE,
+      limit: COACH_WEEKLY_LIMIT,
+      period: 'week',
+    });
+    return { allowed: decision.allowed, remaining: decision.remaining };
   }
 }

@@ -1035,6 +1035,11 @@ class AppTranslations extends Translations {
               'La génération prend plus de temps que prévu. Réessaie dans un instant.',
           'tools_ai_error_rate_limited':
               'Trop de demandes d\'affilée. Réessaie dans une minute.',
+          // Quota quotidien par utilisateur (AiQuotaGuard côté serveur).
+          'tools_ai_error_daily_quota':
+              'Tu as atteint la limite d\'utilisation de l\'IA pour aujourd\'hui. Réessaie demain.',
+          'tools_ai_error_input_too_large':
+              'Ton texte est trop long. Raccourcis-le puis réessaie.',
           'tools_ai_error_signin_required':
               'Reconnecte-toi pour utiliser l\'IA.',
           // Le serveur refuse tant que la date de naissance manque : sans ce
@@ -4515,6 +4520,10 @@ class AppTranslations extends Translations {
               'Generation is taking longer than expected. Please try again shortly.',
           'tools_ai_error_rate_limited':
               'Too many requests. Try again in a minute.',
+          'tools_ai_error_daily_quota':
+              'You have reached today\'s AI usage limit. Try again tomorrow.',
+          'tools_ai_error_input_too_large':
+              'Your text is too long. Shorten it and try again.',
           'tools_ai_error_signin_required':
               'Please sign in again to use the AI.',
           'tools_ai_error_birthdate_required':

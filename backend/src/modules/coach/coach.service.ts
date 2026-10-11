@@ -131,7 +131,7 @@ export class CoachService {
           content: greeting.content,
           createdAt: greeting.createdAt.toISOString(),
         },
-        ...this.quotaService.getQuota(userId),
+        ...(await this.quotaService.getQuota(userId)),
       };
     }
 
@@ -153,7 +153,7 @@ export class CoachService {
     return {
       conversationId: id,
       greeting: conversation.messages[0],
-      ...this.quotaService.getQuota(userId),
+      ...(await this.quotaService.getQuota(userId)),
     };
   }
 
@@ -260,7 +260,7 @@ export class CoachService {
       return;
     }
 
-    const quota = this.quotaService.consume(params.userId);
+    const quota = await this.quotaService.consume(params.userId);
     if (!quota.allowed) {
       subscriber.next({
         data: {
