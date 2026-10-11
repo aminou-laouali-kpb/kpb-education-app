@@ -71,7 +71,7 @@ describe('CoachService — AI consent gate', () => {
     } = {},
   ) {
     const llm = {
-      // eslint-disable-next-line @typescript-eslint/require-await
+       
       async *streamText() {
         yield 'Je peux ';
         yield 'aider.';

@@ -39,6 +39,7 @@ export class CommercialController {
   @Patch('leads/:id')
   updateLead(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() body: { leadTag?: string; discussionMotive?: string },
   ) {
     return this.commercialService.updateLead(id, {
@@ -52,6 +53,7 @@ export class CommercialController {
   @Patch('documents/:id/review')
   reviewDocument(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() body: { status?: string },
     @Req() req: AdminRequest,
   ) {

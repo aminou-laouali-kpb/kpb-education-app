@@ -56,6 +56,7 @@ export class ContentController {
     InternalRole.Admin,
     InternalRole.SuperAdmin,
   )
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createServiceOffer(@Body() input: Record<string, unknown>) {
     return this.contentService.createServiceOffer(input);
   }
@@ -69,6 +70,7 @@ export class ContentController {
   )
   updateServiceOffer(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.contentService.updateServiceOffer(id, input);
@@ -92,6 +94,7 @@ export class ContentController {
     InternalRole.Admin,
     InternalRole.SuperAdmin,
   )
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createSupportDestination(@Body() input: Record<string, unknown>) {
     return this.contentService.createSupportDestination(input);
   }
@@ -105,6 +108,7 @@ export class ContentController {
   )
   updateSupportDestination(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.contentService.updateSupportDestination(id, input);
@@ -128,6 +132,7 @@ export class ContentController {
     InternalRole.Admin,
     InternalRole.SuperAdmin,
   )
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createArticle(@Body() input: Record<string, unknown>) {
     return this.contentService.createArticle(input);
   }
@@ -141,6 +146,7 @@ export class ContentController {
   )
   updateArticle(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.contentService.updateArticle(id, input);

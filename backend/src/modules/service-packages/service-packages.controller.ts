@@ -58,6 +58,7 @@ export class MyPurchasesController {
   purchase(
     @Req() req: AuthedReq,
     @Body()
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     body: {
       packageCode: string;
       provider?: 'cinetpay' | 'paydunya' | 'manual';
@@ -83,6 +84,7 @@ export class MyPurchasesController {
   createWhatsAppPurchase(
     @Req() req: AuthedReq,
     @Body()
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     body: {
       packageCode: string;
       caseId?: string;
@@ -150,6 +152,7 @@ export class AdminServicePackagesController {
   @Patch('purchases/:id')
   updatePurchase(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() body: { status: string; internalNotes?: string },
   ) {
     return this.servicePackagesService.updatePurchaseStatus(

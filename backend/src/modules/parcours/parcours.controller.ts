@@ -53,6 +53,7 @@ export class ParcoursController {
     InternalRole.Admin,
     InternalRole.SuperAdmin,
   )
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   create(@Body() input: Record<string, unknown>) {
     return this.parcoursService.create(input);
   }
@@ -64,6 +65,7 @@ export class ParcoursController {
     InternalRole.Admin,
     InternalRole.SuperAdmin,
   )
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   update(@Param('id') id: string, @Body() input: Record<string, unknown>) {
     return this.parcoursService.update(id, input);
   }

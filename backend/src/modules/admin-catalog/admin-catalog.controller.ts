@@ -55,6 +55,7 @@ export class AdminCatalogController {
   setVerification(
     @Req() req: AdminRequest,
     @Body()
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     body: { entity: string; id: string; verified?: boolean; sourceUrl?: string },
   ) {
     return this.service.setVerification(
@@ -68,11 +69,13 @@ export class AdminCatalogController {
 
   // ── Programs (formations) ─────────────────────────────────────────────────
   @Post('programs')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createProgram(@Body() input: Record<string, unknown>) {
     return this.service.createProgram(input);
   }
 
   @Patch('programs/:id')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   updateProgram(@Param('id') id: string, @Body() input: Record<string, unknown>) {
     return this.service.updateProgram(id, input);
   }
@@ -84,6 +87,7 @@ export class AdminCatalogController {
 
   // ── Institutions (universités) ────────────────────────────────────────────
   @Post('institutions')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createInstitution(@Body() input: Record<string, unknown>) {
     return this.service.createInstitution(input);
   }
@@ -91,6 +95,7 @@ export class AdminCatalogController {
   @Patch('institutions/:id')
   updateInstitution(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.service.updateInstitution(id, input);
@@ -103,6 +108,7 @@ export class AdminCatalogController {
 
   // ── Scholarships (bourses) ────────────────────────────────────────────────
   @Post('scholarships')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createScholarship(@Body() input: Record<string, unknown>) {
     return this.service.createScholarship(input);
   }
@@ -110,6 +116,7 @@ export class AdminCatalogController {
   @Patch('scholarships/:id')
   updateScholarship(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.service.updateScholarship(id, input);
@@ -129,6 +136,7 @@ export class AdminCatalogController {
   @Post('scholarships/:id/steps')
   createApplicationStep(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.service.createApplicationStep(id, input);
@@ -138,6 +146,7 @@ export class AdminCatalogController {
   updateApplicationStep(
     @Param('id') id: string,
     @Param('stepId') stepId: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
     return this.service.updateApplicationStep(id, stepId, input);
@@ -184,11 +193,13 @@ export class AdminCatalogController {
 
   // ── Countries (pays) ──────────────────────────────────────────────────────
   @Post('countries')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createCountry(@Body() input: Record<string, unknown>) {
     return this.service.createCountry(input);
   }
 
   @Patch('countries/:id')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   updateCountry(@Param('id') id: string, @Body() input: Record<string, unknown>) {
     return this.service.updateCountry(id, input);
   }
@@ -200,11 +211,13 @@ export class AdminCatalogController {
 
   // ── Fields (filières) ─────────────────────────────────────────────────────
   @Post('fields')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createField(@Body() input: Record<string, unknown>) {
     return this.service.createField(input);
   }
 
   @Patch('fields/:id')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   updateField(@Param('id') id: string, @Body() input: Record<string, unknown>) {
     return this.service.updateField(id, input);
   }

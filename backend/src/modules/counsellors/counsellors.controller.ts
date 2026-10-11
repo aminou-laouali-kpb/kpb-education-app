@@ -81,11 +81,13 @@ export class AdminCounsellorsController {
   }
 
   @Post()
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   create(@Body() input: Record<string, unknown>) {
     return this.counsellorsService.create(input);
   }
 
   @Patch(':id')
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   update(@Param('id') id: string, @Body() input: Record<string, unknown>) {
     return this.counsellorsService.update(id, input);
   }
@@ -93,6 +95,7 @@ export class AdminCounsellorsController {
   @Patch(':id/kyc')
   updateKyc(
     @Param('id') id: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: { kycStatus: string; kycNotes?: string | null },
   ) {
     return this.counsellorsService.updateKyc(
@@ -104,6 +107,7 @@ export class AdminCounsellorsController {
   @Patch('reviews/:reviewId/publish')
   publishReview(
     @Param('reviewId') reviewId: string,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: { isPublished: boolean },
   ) {
     return this.counsellorsService.setReviewPublished(

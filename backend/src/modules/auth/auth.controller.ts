@@ -36,6 +36,7 @@ export class AuthController {
   @Post('refresh')
   async refresh(
     @Req() req: Request,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: { refreshToken?: string },
     @Res({ passthrough: true }) res: Response,
   ) {

@@ -36,6 +36,7 @@ export class OrientationController {
   @Post('sessions')
   @UseGuards(StudentAuthGuard, AiConsentGuard, AiQuotaGuard)
   @ORIENTATION_AI_QUOTA
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   createSession(@Body() body: Record<string, unknown>, @Req() req: any) {
     return this.orientationService.createSession(
       this._withAuthenticatedUserId(body, req),
@@ -45,6 +46,7 @@ export class OrientationController {
   @Post('submit')
   @UseGuards(StudentAuthGuard, AiConsentGuard, AiQuotaGuard)
   @ORIENTATION_AI_QUOTA
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   submit(@Body() body: Record<string, unknown>, @Req() req: any) {
     return this.orientationService.createSession(
       this._withAuthenticatedUserId(body, req),

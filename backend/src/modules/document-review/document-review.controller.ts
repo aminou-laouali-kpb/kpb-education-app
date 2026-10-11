@@ -22,6 +22,7 @@ export class DocumentReviewController {
 
   /// Returns structured, on-rubric feedback for a pasted motivation letter / CV.
   @Post()
+  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
   review(@Body() body: { kind?: string; text?: string; language?: string }) {
     const kind: DocumentKind = body?.kind === 'cv' ? 'cv' : 'motivation';
     const language: DocumentReviewLanguage = String(body?.language ?? '')
