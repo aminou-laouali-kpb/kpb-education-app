@@ -53,7 +53,9 @@ const kTextFaintBudget = <String, int>{
   // La référence de dossier et son badge « provisoire » sont passés à
   // textMuted ; les 4 occurrences restantes sont sur les sous-arbres sombres
   // (timeline navy, carte étudiant) ou décoratives.
-  'lib/app/features/cases/case_detail_screen.dart': 4,
+  // Écran découpé en parties : 1 dans l'écran, 3 dans le fil (timeline navy).
+  'lib/app/features/cases/case_detail_screen.dart': 1,
+  'lib/app/features/cases/case_detail_screen/thread.dart': 3,
 };
 
 void main() {
