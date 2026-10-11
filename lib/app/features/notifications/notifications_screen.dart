@@ -120,15 +120,20 @@ class _StoredNotification {
 /// Whether the current case list yields at least one derived notification.
 /// Drives the home bell's unread dot HONESTLY — there is no stored feed, so the
 /// dot only shows when real case activity would produce a row here.
-bool hasDerivedNotifications(AppController controller) {
+bool hasDerivedNotifications(AppController controller, {DateTime? now}) {
+  final cutoff = (now ?? DateTime.now()).subtract(_rejectedDotWindow);
   for (final c in controller.cases) {
-    if (c.status == CaseStatus.rejected ||
-        isCaseStudentActionStatus(c.status)) {
+    if (isCaseStudentActionStatus(c.status)) return true;
+    // `rejected` est définitif : compté sans limite, il allumait le point
+    // rouge pour toujours. Il ne compte que tant que la décision est récente.
+    if (c.status == CaseStatus.rejected && c.updatedAt.isAfter(cutoff)) {
       return true;
     }
   }
   return false;
 }
+
+const Duration _rejectedDotWindow = Duration(days: 7);
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
