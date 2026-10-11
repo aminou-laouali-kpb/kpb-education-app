@@ -48,8 +48,19 @@ jobs:
           fixture="$(mktemp -d)"
           trap 'rm -rf "$fixture"' EXIT
           # Large enough to pass the minimum-size guard; structurally valid gzip.
+          # A truncated dump (no pg_dump completion marker) must be refused.
           awk 'BEGIN { for (i=0; i<1000; i++) print "CREATE TABLE restore_fixture(id integer);" }' \
-            | gzip > "$fixture/kpb-ci-$(date -u +%Y%m%d-%H%M%SZ).sql.gz"
+            | gzip > "$fixture/kpb-ci-truncated.sql.gz"
+          if CHECK_BACKUP_SERVICE=false BACKUP_DIR="$fixture" \
+            BACKUP_FILE="$fixture/kpb-ci-truncated.sql.gz" MIN_BYTES=100 \
+            bash scripts/check-backup-freshness.sh; then
+            echo "::error::a truncated dump passed the freshness check" >&2
+            exit 1
+          fi
+          rm "$fixture/kpb-ci-truncated.sql.gz"
+          { awk 'BEGIN { for (i=0; i<1000; i++) print "CREATE TABLE restore_fixture(id integer);" }'
+            printf -- '--\n-- PostgreSQL database dump complete\n--\n'
+          } | gzip > "$fixture/kpb-ci-$(date -u +%Y%m%d-%H%M%SZ).sql.gz"
           CHECK_BACKUP_SERVICE=false BACKUP_DIR="$fixture" MIN_BYTES=100 \
             bash scripts/check-backup-freshness.sh
           CHECK_BACKUP_SERVICE=false BACKUP_DIR="$fixture" MIN_BYTES=100 \

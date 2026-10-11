@@ -338,6 +338,11 @@ jobs:
           # truncated/corrupt dump before a migration or container is touched.
           docker compose exec -T db pg_restore --list < "$LATEST_DUMP" > /dev/null
           echo "backup ok: $(du -h "$LATEST_DUMP" | cut -f1) $LATEST_DUMP"
+          # Retention : seuls les 5 derniers dumps pré-déploiement sont gardés
+          # (le disque est partagé avec la base, et chaque dump est une copie
+          # complète des données personnelles). Le dump qui vient d'être
+          # vérifié fait toujours partie des 5.
+          ls -1t backups/predeploy-*.dump | tail -n +6 | xargs -r rm -f --
 
           echo "── migrate ──"
           docker compose run --rm --no-deps api npx prisma migrate deploy < /dev/null

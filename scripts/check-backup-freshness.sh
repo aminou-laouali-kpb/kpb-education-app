@@ -52,7 +52,15 @@ age=$((now - mtime))
 }
 
 case "$newest" in
-  *.sql.gz) gzip -t "$newest" ;;
+  *.sql.gz)
+    gzip -t "$newest"
+    # `gzip -t` accepte un flux tronqué proprement fermé : on exige aussi le
+    # marqueur final que pg_dump écrit en fin de dump texte.
+    gzip -dc "$newest" | tail -n 5 | grep 'PostgreSQL database dump complete' >/dev/null || {
+      echo "error: plain dump is truncated (no completion marker): $newest" >&2
+      exit 1
+    }
+    ;;
   *.dump)
     magic="$(LC_ALL=C head -c 5 "$newest")"
     [ "$magic" = "PGDMP" ] || { echo "error: custom dump has invalid header: $newest" >&2; exit 1; }
