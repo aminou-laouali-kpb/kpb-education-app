@@ -172,10 +172,23 @@ export class ScholarshipsIndexService {
         const ok = await this.upsert(row);
         if (ok) source.upserted += 1;
       }
-      source.deactivated = await this.deactivateMissing(
-        source.prefix,
-        rows.map((r) => r.sourceKey),
-      );
+      // Une source en erreur ou vide n'est PAS la preuve que ses bourses ont
+      // disparu : un 503 ou un challenge Cloudflare renvoie 0 ligne. Sans ce
+      // garde-fou, `NOT IN []` désactivait toutes les fiches de la source.
+      if (source.error || source.fetched === 0) {
+        this.logger.warn(
+          `[${source.prefix}] no rows fetched — skipping deactivation`,
+        );
+        continue;
+      }
+      // Les clés « vues » sont celles RÉCUPÉRÉES (avant déduplication) : une
+      // fiche fusionnée dans le doublon d'une autre source est toujours en
+      // ligne chez sa source, elle ne doit pas être désactivée pour autant.
+      const seenKeys =
+        allScraped
+          .find((s) => s.prefix === source.prefix)
+          ?.rows.map((r) => r.sourceKey) ?? [];
+      source.deactivated = await this.deactivateMissing(source.prefix, seenKeys);
     }
 
     const finishedAt = new Date();
@@ -723,6 +736,20 @@ export class ScholarshipsIndexService {
 
   private async upsert(row: ScrapedScholarship): Promise<boolean> {
     const now = new Date();
+    const existing = await this.prismaService.execute((prisma) =>
+      prisma.scholarship.findUnique({
+        where: { sourceKey: row.sourceKey },
+        select: { moderationStatus: true },
+      }),
+    );
+    // Une fiche approuvée appartient à l'équipe : le robot ne réécrit ni la
+    // date (même par `null`), ni le contenu, ni `isActive` (une fiche
+    // désactivée par un admin le reste), ni `lastVerifiedAt` (qui doit
+    // continuer de dire « vérifiée par un humain »).
+    if (existing?.moderationStatus === 'approved') {
+      return true;
+    }
+    const isRejected = existing?.moderationStatus === 'rejected';
     const result = await this.prismaService.execute((prisma) =>
       prisma.scholarship.upsert({
         where: { sourceKey: row.sourceKey },
@@ -765,7 +792,8 @@ export class ScholarshipsIndexService {
           applicationUrl: row.applicationUrl,
           deadlineAt: row.deadlineAt,
           lastVerifiedAt: now,
-          isActive: true,
+          // Une fiche rejetée par la modération n'est pas réactivée.
+          ...(isRejected ? {} : { isActive: true }),
           tags: row.tags,
           // Update content fields if they now have better data
           ...(row.descriptionFr ? { descriptionFr: row.descriptionFr } : {}),
@@ -788,6 +816,9 @@ export class ScholarshipsIndexService {
           sourceKey: { startsWith: `${prefix}-` },
           NOT: { sourceKey: { in: seenKeys } },
           isActive: true,
+          // Les fiches approuvées ne sont jamais retirées par le robot : c'est
+          // à l'équipe de constater une fermeture.
+          moderationStatus: { not: 'approved' },
         },
         data: { isActive: false },
       }),

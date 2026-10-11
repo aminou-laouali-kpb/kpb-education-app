@@ -412,3 +412,124 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
     });
   });
 });
+
+describe('ScholarshipsIndexService — refresh never wipes or overwrites curated data', () => {
+  const scraped = (sourceKey: string, nameEn = sourceKey) => ({
+    sourceKey,
+    sourceUrl: `https://example.org/${sourceKey}`,
+    applicationUrl: `https://example.org/${sourceKey}/apply`,
+    deadlineAt: null,
+    nameFr: nameEn,
+    nameEn,
+    countryId: 'fra',
+    countryNameFr: 'France',
+    countryNameEn: 'France',
+    descriptionFr: 'd',
+    descriptionEn: 'd',
+    advantagesFr: [],
+    advantagesEn: [],
+    eligibilityFr: [],
+    eligibilityEn: [],
+    fundingType: 'unknown',
+    levelEligibleFr: '',
+    levelEligibleEn: '',
+    deadlineLabelFr: '',
+    deadlineLabelEn: '',
+    tags: [],
+    contentScore: 1,
+  });
+
+  function makeService(opts: {
+    greatYop: () => Promise<unknown[]>;
+    mastereTn?: () => Promise<unknown[]>;
+    existing?: Record<string, string>;
+  }) {
+    const upserts: Array<Record<string, any>> = [];
+    const updateManyCalls: Array<Record<string, any>> = [];
+    const client = {
+      scholarship: {
+        findUnique: async ({ where }: any) =>
+          opts.existing?.[where.sourceKey]
+            ? { moderationStatus: opts.existing[where.sourceKey] }
+            : null,
+        upsert: async (args: any) => {
+          upserts.push(args);
+          return { id: args.where.sourceKey };
+        },
+        updateMany: async (args: any) => {
+          updateManyCalls.push(args);
+          return { count: 0 };
+        },
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      tryExecute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    const greatYop = {
+      prefix: 'greatyop',
+      name: 'GreatYop',
+      fetch: opts.greatYop,
+    } as unknown as GreatYopScraper;
+    const mastereTn = {
+      prefix: 'masteretn',
+      name: 'MastereTn',
+      fetch: opts.mastereTn ?? (async () => []),
+    } as unknown as MastereTnScraper;
+    const service = new ScholarshipsIndexService(
+      prisma,
+      greatYop,
+      mastereTn,
+      {} as ScholarshipContentQualityService,
+    );
+    return { service, upserts, updateManyCalls };
+  }
+
+  it('does not deactivate anything for a source that returned zero rows', async () => {
+    const { service, updateManyCalls } = makeService({
+      greatYop: async () => [],
+    });
+    await service.refresh();
+    expect(updateManyCalls).toHaveLength(0);
+  });
+
+  it('does not deactivate anything for a source that threw', async () => {
+    const { service, updateManyCalls } = makeService({
+      greatYop: async () => {
+        throw new Error('503');
+      },
+    });
+    const result = await service.refresh();
+    expect(result.sources[0].error).toBe('503');
+    expect(updateManyCalls).toHaveLength(0);
+  });
+
+  it('never deactivates approved rows, and counts merged-away keys as seen', async () => {
+    const { service, updateManyCalls } = makeService({
+      greatYop: async () => [scraped('greatyop-a', 'Same Scholarship')],
+      mastereTn: async () => [
+        { ...scraped('masteretn-b', 'Same Scholarship'), contentScore: 9 },
+      ],
+    });
+    await service.refresh();
+    const greatYopCall = updateManyCalls.find(
+      (c) => c.where.sourceKey.startsWith === 'greatyop-',
+    );
+    expect(greatYopCall!.where.moderationStatus).toEqual({ not: 'approved' });
+    expect(greatYopCall!.where.NOT.sourceKey.in).toContain('greatyop-a');
+  });
+
+  it('leaves an approved row untouched and does not reactivate a rejected one', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [scraped('greatyop-approved'), scraped('greatyop-rejected')],
+      existing: {
+        'greatyop-approved': 'approved',
+        'greatyop-rejected': 'rejected',
+      },
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-rejected']);
+    expect(upserts[0].update.isActive).toBeUndefined();
+  });
+});
