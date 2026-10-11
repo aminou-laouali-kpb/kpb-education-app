@@ -1200,7 +1200,8 @@ class AppApiClient {
       queryParameters: {
         'userId': userId,
         'message': message,
-        'fullName': profile['fullName'],
+        // Pas de `fullName` : le serveur ne transmet jamais le nom au modèle,
+        // et une query string finit dans les journaux des proxys.
         'currentLevel': profile['currentLevel'],
         'targetCountryIds':
             (profile['targetCountryIds'] as List<dynamic>?)?.join(',') ?? '',
@@ -1213,8 +1214,11 @@ class AppApiClient {
     if (stream == null) return;
 
     var buffer = '';
-    await for (final chunk in stream) {
-      buffer += utf8.decode(chunk, allowMalformed: true);
+    // Décodage en FLUX : décoder chaque paquet séparément corrompait un
+    // caractère accentué coupé entre deux paquets (« é » → « �� »).
+    await for (final chunk
+        in const Utf8Decoder(allowMalformed: true).bind(stream)) {
+      buffer += chunk;
       final lines = buffer.split('\n');
       buffer = lines.removeLast();
 
