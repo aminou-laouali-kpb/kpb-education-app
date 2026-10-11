@@ -53,6 +53,7 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
     } catch (error) {
       AnalyticsService.instance
           .logAuthFailed(method: 'email', reason: 'verify_error');
+      if (!mounted) return;
       setState(() {
         _error = 'auth_magic_verify_error'.tr;
       });
@@ -66,6 +67,7 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
     setState(() => _resending = true);
     try {
       await widget.authService.requestMagicLink(email: widget.email);
+      if (!mounted) return;
       setState(() => _resendCooldown = 60);
       _startCooldownTimer();
     } catch (error) {

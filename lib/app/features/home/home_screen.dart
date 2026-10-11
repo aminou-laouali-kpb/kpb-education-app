@@ -2366,7 +2366,11 @@ class _ParcoursHomeCarouselState extends State<_ParcoursHomeCarousel> {
   void initState() {
     super.initState();
     // Safe to call repeatedly — skips the network round-trip once populated.
-    Get.find<AppController>().fetchParcoursStories();
+    // Après la première frame : l'appel fait un `update()` synchrone, interdit
+    // pendant un build (« setState() called during build » en debug).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Get.find<AppController>().fetchParcoursStories();
+    });
   }
 
   void _open(ParcoursStory story, List<ParcoursStory> videoStories) {

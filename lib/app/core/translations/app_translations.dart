@@ -644,6 +644,8 @@ class AppTranslations extends Translations {
           'parcours_video_unavailable':
               'Cette vidéo n\'est pas disponible pour le moment.',
           'orientation_roadmap_appbar_title': 'Mon parcours',
+          'orientation_consultation_case_title': 'Séance de conseil KPB',
+          'orientation_consultation_case_context': 'Accompagnement orientation',
           'orientation_roadmap_heading': 'Ton parcours de candidature',
           'orientation_roadmap_create_case_button': 'Créer mon dossier',
           'case_application_title': 'Dossier de candidature',
@@ -4179,6 +4181,8 @@ class AppTranslations extends Translations {
           'parcours_video_unavailable':
               'This video is not available right now.',
           'orientation_roadmap_appbar_title': 'My journey',
+          'orientation_consultation_case_title': 'KPB advisory session',
+          'orientation_consultation_case_context': 'Orientation support',
           'orientation_roadmap_heading': 'Your application journey',
           'orientation_roadmap_create_case_button': 'Create my case',
           'case_application_title': 'Application case',

@@ -57,7 +57,13 @@ const _flagMap = <String, String>{
 String? _dossierFlag(String text) {
   final lower = text.toLowerCase();
   for (final entry in _flagMap.entries) {
-    if (lower.contains(entry.key)) return entry.value;
+    // Mot ENTIER : par sous-chaîne, « Lausanne » ou « Busan » contenaient
+    // « usa » (🇺🇸) et « machine » contenait « chine » (🇨🇳).
+    final pattern = RegExp(
+      '(^|[^\\p{L}])${RegExp.escape(entry.key)}(\$|[^\\p{L}])',
+      unicode: true,
+    );
+    if (pattern.hasMatch(lower)) return entry.value;
   }
   return null;
 }
