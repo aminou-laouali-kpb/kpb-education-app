@@ -24,7 +24,8 @@
     "competitionReadiness": "Competition readiness",
     "eef": "Studying in France",
     "catalogue": "Catalog",
-    "eefPublication": "EEF publication"
+    "eefPublication": "EEF publication",
+    "insights": "Insights"
   },
   "login": {
     "eyebrow": "KPB Operations",
@@ -1103,5 +1104,32 @@
       "program_field_unknown": "field outside the reference list"
     },
     "genericSources": "{n} of the programmes to publish link to a generic source, not to the programme's own page (Mon Master portal: {portal}, ministry dataset: {dataset}). A student tapping “See the official source” will land on that page."
+  },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Registered and active users, filterable by date.",
+    "loadError": "Unable to load insights.",
+    "overviewTitle": "Overview",
+    "totalUsers": "Registered users",
+    "active24h": "Active 24h",
+    "active48h": "Active 48h",
+    "active7d": "Active 7 days",
+    "active30d": "Active 30 days",
+    "signups7d": "Sign-ups (7 days)",
+    "activeDefinition": "“Active” = last sign-in recorded by Supabase Auth. Long-lived sessions that did not sign in again may be under-counted.",
+    "periodTitle": "Period",
+    "from": "From",
+    "to": "To",
+    "apply": "Apply",
+    "preset48h": "48h",
+    "preset7d": "7 days",
+    "preset30d": "30 days",
+    "periodSignups": "Sign-ups in period",
+    "periodActive": "Active in period",
+    "dailyTitle": "Daily breakdown",
+    "colDate": "Date",
+    "colSignups": "Sign-ups",
+    "colActive": "Sign-ins",
+    "empty": "No data."
   }
 }

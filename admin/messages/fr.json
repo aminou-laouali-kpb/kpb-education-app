@@ -24,7 +24,8 @@
     "competitionReadiness": "Préparation concours",
     "eef": "Études en France",
     "catalogue": "Catalogue",
-    "eefPublication": "Publication EEF"
+    "eefPublication": "Publication EEF",
+    "insights": "Insights"
   },
   "login": {
     "eyebrow": "KPB Opérations",
@@ -1103,5 +1104,32 @@
       "program_field_unknown": "domaine hors référentiel"
     },
     "genericSources": "{n} des formations à publier renvoient à une source générique, pas à la fiche de la formation (portail Mon Master : {portal}, jeu de données du ministère : {dataset}). L'étudiant qui touche « Voir la source officielle » arrivera sur cette page."
+  },
+  "insights": {
+    "title": "Insights",
+    "subtitle": "Utilisateurs inscrits et actifs, filtrables par date.",
+    "loadError": "Impossible de charger les insights.",
+    "overviewTitle": "Vue d’ensemble",
+    "totalUsers": "Utilisateurs inscrits",
+    "active24h": "Actifs 24 h",
+    "active48h": "Actifs 48 h",
+    "active7d": "Actifs 7 jours",
+    "active30d": "Actifs 30 jours",
+    "signups7d": "Inscrits (7 jours)",
+    "activeDefinition": "« Actif » = dernière connexion enregistrée par Supabase Auth. Les sessions longues qui n’ont pas redemandé de connexion peuvent être sous-comptées.",
+    "periodTitle": "Période",
+    "from": "Du",
+    "to": "Au",
+    "apply": "Appliquer",
+    "preset48h": "48 h",
+    "preset7d": "7 jours",
+    "preset30d": "30 jours",
+    "periodSignups": "Inscrits sur la période",
+    "periodActive": "Actifs sur la période",
+    "dailyTitle": "Détail par jour",
+    "colDate": "Date",
+    "colSignups": "Inscriptions",
+    "colActive": "Connexions",
+    "empty": "Aucune donnée."
   }
 }

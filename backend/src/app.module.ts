@@ -74,6 +74,8 @@ import { CommercialController } from './modules/commercial/commercial.controller
 import { CommercialService } from './modules/commercial/commercial.service';
 import { AdminDashboardController } from './modules/admin-dashboard/admin-dashboard.controller';
 import { AdminDashboardService } from './modules/admin-dashboard/admin-dashboard.service';
+import { AdminInsightsController } from './modules/admin-insights/admin-insights.controller';
+import { AdminInsightsService } from './modules/admin-insights/admin-insights.service';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
 import { AdminCatalogService } from './modules/admin-catalog/admin-catalog.service';
 import { ImpactController } from './modules/impact/impact.controller';
@@ -211,6 +213,7 @@ import { SalonService } from './modules/salon/salon.service';
     CoachController,
     CommercialController,
     AdminDashboardController,
+    AdminInsightsController,
     AdminCatalogController,
     ImpactController,
     ToolsController,
@@ -286,6 +289,7 @@ import { SalonService } from './modules/salon/salon.service';
     CoachQuotaService,
     CommercialService,
     AdminDashboardService,
+    AdminInsightsService,
     AdminCatalogService,
     ImpactService,
     ToolsService,
