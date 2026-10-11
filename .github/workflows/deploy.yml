@@ -392,17 +392,21 @@ jobs:
           echo "running: $RUNNING_IMAGE"
 
           echo "── health gate ──"
+          # L'API ET la console admin : une image admin cassée donnait
+          # « DEPLOY OK » sans retour arrière.
           healthy=0
           for i in $(seq 1 20); do
             sleep 5
-            if curl -fsS "${HEALTH_URL}/api/health/ready" >/dev/null 2>&1; then
+            admin_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' kpb_admin 2>/dev/null || echo missing)"
+            if curl -fsS "${HEALTH_URL}/api/health/ready" >/dev/null 2>&1 \
+              && { [ "$admin_health" = "healthy" ] || [ "$admin_health" = "none" ]; }; then
               healthy=1; break
             fi
-            echo "not ready yet (attempt $i)"
+            echo "not ready yet (attempt $i, admin: $admin_health)"
           done
 
           if [ "$healthy" != "1" ]; then
-            echo "::error::API unhealthy after deploy — rolling back the code"
+            echo "::error::API or admin unhealthy after deploy — rolling back the code"
             if [ -n "${PREV_TAG:-}" ] && [ "$PREV_TAG" != "$IMAGE_TAG" ]; then
               KPB_IMAGE_TAG="$PREV_TAG" docker compose up -d --no-deps api admin web < /dev/null
               echo "rolled back to $PREV_TAG"
@@ -410,6 +414,7 @@ jobs:
               echo "::warning::no distinct previous tag to roll back to"
             fi
             docker compose logs --tail=80 api || true
+            docker compose logs --tail=40 admin || true
             exit 1
           fi
 
