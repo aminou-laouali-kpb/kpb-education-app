@@ -91,4 +91,26 @@ describe('AuthService', () => {
     expect(verified.email).toBe(user.email);
     expect(verified.languageScope).toEqual(user.languageScope);
   });
+
+  describe('revokeRefreshToken (logout)', () => {
+    it('clears the stored refresh hash when the token matches', async () => {
+      const bcrypt = await import('bcrypt');
+      const jwt = (service as any).jwtService;
+      const token = jwt.sign(
+        { sub: 'admin-1', email: 'a@kpb.education', type: 'admin-refresh' },
+        { secret: (service as any).refreshSecret, expiresIn: '7d' },
+      );
+      mockAdminUsersService.findActiveUserByEmailWithCredentials.mockResolvedValueOnce({
+        id: 'admin-1',
+        refreshToken: await bcrypt.hash(token, 4),
+      });
+      await service.revokeRefreshToken(token);
+      expect(mockAdminUsersService.updateRefreshToken).toHaveBeenCalledWith('admin-1', null);
+    });
+
+    it('ignores an invalid token without throwing', async () => {
+      await expect(service.revokeRefreshToken('not-a-jwt')).resolves.toBeUndefined();
+      expect(mockAdminUsersService.updateRefreshToken).not.toHaveBeenCalled();
+    });
+  });
 });

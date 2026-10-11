@@ -60,6 +60,15 @@ export class AdminUsersService {
     return { items: this.users };
   }
 
+  /** Rôle d'un opérateur (null s'il n'existe pas). */
+  async getRole(id: string): Promise<string | null> {
+    const dbUser = await this.prismaService.execute((prisma) =>
+      prisma.adminUser.findUnique({ where: { id }, select: { role: true } }),
+    );
+    if (dbUser) return dbUser.role;
+    return this.users.find((item) => item.id === id)?.role ?? null;
+  }
+
   async findActiveUserByEmail(email: string) {
     const dbUser = await this.prismaService.execute((prisma) =>
       prisma.adminUser.findFirst({
