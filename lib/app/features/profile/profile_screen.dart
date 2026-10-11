@@ -1826,6 +1826,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
   // cul-de-sac — le seul chemin restant était de rejouer tout l'onboarding.
   DateTime? _birthDate;
   late Set<String> _countryIds;
+  late Set<String> _fieldIds;
   late Set<String> _documents;
   bool _saving = false;
 
@@ -1863,6 +1864,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
             : null;
     _birthDate = p.birthDate;
     _countryIds = p.targetCountryIds.toSet();
+    _fieldIds = p.fieldIds.toSet();
     _documents = p.availableDocuments.toSet();
   }
 
@@ -2142,6 +2144,37 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
                 }).toList(),
               ),
               const SizedBox(height: 24),
+              // Les filières n'étaient modifiables qu'à l'onboarding (et
+              // l'orientation ne faisait qu'en ajouter) : un choix fait une
+              // fois biaisait le matching et les bourses pour toujours.
+              Text(
+                'profile_fields_of_interest'.tr,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: KpbColors.brandNavy,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: widget.controller.fields.map((f) {
+                  final selected = _fieldIds.contains(f.id);
+                  return FilterChip(
+                    label: Text(widget.controller.resolve(f.name)),
+                    selected: selected,
+                    onSelected: (on) => setState(() {
+                      if (on) {
+                        _fieldIds.add(f.id);
+                      } else {
+                        _fieldIds.remove(f.id);
+                      }
+                    }),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
               Text(
                 'available_documents'.tr,
                 style: const TextStyle(
@@ -2215,6 +2248,7 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
       annualTuitionBudgetEur: _annualBudgetEur,
       birthDate: _birthDate,
       targetCountryIds: _countryIds.toList(),
+      fieldIds: _fieldIds.toList(),
       availableDocuments: _documents.toList(),
     );
     unawaited(widget.controller.updateProfile(updated));
