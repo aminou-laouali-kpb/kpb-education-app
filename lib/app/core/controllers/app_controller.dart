@@ -1097,7 +1097,7 @@ abstract class _AppControllerBase extends GetxController {
     final now = DateTime.now();
     final referenceId = (_cases.length + 1).toString().padLeft(3, '0');
     final created = StudentCase(
-      id: 'case-${now.millisecondsSinceEpoch}',
+      id: '$_localCaseIdPrefix${now.millisecondsSinceEpoch}',
       referenceCode: 'KPB-${now.year}-$referenceId',
       type: type,
       title: LocalizedText(fr: title, en: title),
@@ -1502,6 +1502,14 @@ abstract class _AppControllerBase extends GetxController {
           _cases
             ..clear()
             ..addAll(mergedCases);
+          // Un dossier dont la création distante a échoué gardait son id local
+          // (`case-<ms>`) pour toujours, avec le texte « transmise à l'équipe
+          // KPB ». On retente à chaque synchro.
+          for (final localOnly in mergedCases
+              .where((c) => _localCaseId.hasMatch(c.id))
+              .toList()) {
+            unawaited(_createRemoteCase(localOnly));
+          }
 
           final remoteSavedItems = await _apiClient.listSavedItems();
           final remoteSavedParsed =
@@ -1536,6 +1544,16 @@ abstract class _AppControllerBase extends GetxController {
             final id = _remoteSavedItemIds[key];
             if (id == null || id.isEmpty) {
               unawaited(_createRemoteSavedItem(item));
+            }
+          }
+          // Rejoue les suppressions qui n'ont pas atteint le serveur (id
+          // distant inconnu au moment du retrait, ou erreur réseau) : le
+          // tombstone masquait l'élément ici, mais le serveur le gardait et il
+          // réapparaissait après un logout ou sur un autre appareil.
+          for (final item in remoteSavedParsed) {
+            final key = _savedItemKey(item.type, item.itemId);
+            if (_savedItemTombstones.contains(key)) {
+              unawaited(_deleteRemoteSavedItem(item));
             }
           }
         } catch (error, stack) {
@@ -1871,8 +1889,17 @@ abstract class _AppControllerBase extends GetxController {
     }
   }
 
+  /// Prefix of the temporary id a case carries until the server has it.
+  static const String _localCaseIdPrefix = 'case-';
+  static final RegExp _localCaseId = RegExp(r'^case-\d{10,}$');
+
+  /// Local case ids whose remote create is in flight — a sync retry must not
+  /// create the same case twice.
+  final Set<String> _caseCreatesInFlight = <String>{};
+
   Future<void> _createRemoteCase(StudentCase localCase) async {
     if (!AppConfig.enableRemoteSync) return;
+    if (!_caseCreatesInFlight.add(localCase.id)) return;
     try {
       final response = await _apiClient.createCase(<String, dynamic>{
         'type': CaseApiCodec.encodeCaseType(localCase.type),
@@ -1895,6 +1922,8 @@ abstract class _AppControllerBase extends GetxController {
         domain: CrashlyticsObsDomain.cases,
         operation: 'create_remote_case',
       );
+    } finally {
+      _caseCreatesInFlight.remove(localCase.id);
     }
   }
 
