@@ -137,8 +137,9 @@ void main() {
     });
 
     test('applyAnalyticsConsent passe par setCollectionEnabled', () {
-      final controller = File('lib/app/core/controllers/app_controller.dart')
-          .readAsStringSync();
+      final controller =
+          File('lib/app/core/controllers/app_controller/preferences.dart')
+              .readAsStringSync();
       final body = RegExp(r'void applyAnalyticsConsent\(\)\s*\{([^}]*)\}')
           .firstMatch(controller);
 

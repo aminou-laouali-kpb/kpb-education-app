@@ -235,7 +235,10 @@ void main() {
     final snapshot = _read('lib/app/core/repositories/app_snapshot.dart');
     final repository =
         _read('lib/app/core/repositories/local_app_repository.dart');
-    final controller = _read('lib/app/core/controllers/app_controller.dart');
+    // `hydrate()` (session) et `setAnalyticsAllowed()` (préférences).
+    final controller =
+        _read('lib/app/core/controllers/app_controller/session.dart') +
+            _read('lib/app/core/controllers/app_controller/preferences.dart');
 
     // Le marqueur « a-t-il tranché ? » reste distinct de « qu'a-t-il dit ? ».
     // C'est lui qui rend le refus explicite reconnaissable, donc préservable.

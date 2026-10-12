@@ -307,8 +307,8 @@ void main() {
     });
 
     test('la puce OneSignal déclare les étiquettes que le code envoie', () {
-      final controller =
-          _codeWithoutComments('lib/app/core/controllers/app_controller.dart');
+      final controller = _codeWithoutComments(
+          'lib/app/core/controllers/app_controller/session.dart');
       final sync = RegExp(r'syncOneSignalIdentity\(\)\s*async\s*\{(.*?)\n  \}',
               dotAll: true)
           .firstMatch(controller)
