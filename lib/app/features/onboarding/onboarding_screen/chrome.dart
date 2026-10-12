@@ -104,41 +104,55 @@ class _Page extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.child,
+    this.autovalidate = false,
   });
   final Key formKey;
   final String title, subtitle;
   final Widget child;
 
+  /// Revalider chaque champ à la frappe — une fois qu'un envoi a échoué.
+  final bool autovalidate;
+
   @override
   Widget build(BuildContext context) {
+    // Une colonne dans un SingleChildScrollView, PAS une ListView : une liste
+    // paresseuse démonte les champs sortis de l'écran, et un champ démonté
+    // n'est ni validé par `Form.validate()` ni atteignable pour y faire
+    // défiler la page. Une douzaine de champs : rien à économiser.
     return Form(
       key: formKey,
-      child: ListView(
+      autovalidateMode: autovalidate
+          ? AutovalidateMode.onUserInteraction
+          : AutovalidateMode.disabled,
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(KpbSpacing.pagePad),
-        children: [
-          const SizedBox(height: KpbSpacing.sm),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              height: 1.25,
-              color: KpbColors.brandNavy,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: KpbSpacing.sm),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                height: 1.25,
+                color: KpbColors.brandNavy,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: KpbColors.textMuted,
-              height: 1.4,
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                color: KpbColors.textMuted,
+                height: 1.4,
+              ),
             ),
-          ),
-          const SizedBox(height: KpbSpacing.lg),
-          child,
-        ],
+            const SizedBox(height: KpbSpacing.lg),
+            child,
+          ],
+        ),
       ),
     );
   }

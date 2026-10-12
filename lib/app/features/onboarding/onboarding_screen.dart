@@ -196,6 +196,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final Set<String> _docs = {};
   bool _hasConsented = false;
 
+  /// Vrai dès qu'un « Continuer » a échoué sur la page. Avant : les erreurs
+  /// restent cachées (on ne gronde pas un formulaire vide) ; après : chaque
+  /// champ se revalide à la frappe, et les sections hors formulaire
+  /// (naissance, tuteur, consentement) affichent leur erreur EN PLACE.
+  ///
+  /// Le bouton qui « ne faisait rien » — erreur hors de l'écran, simple bandeau
+  /// posé SUR le bouton — était l'écran le plus rage-cliqué de l'app : 253
+  /// comptes, 13 % de ceux qui voyaient l'étape 1 (PostHog, octobre 2026).
+  final Set<int> _attemptedPages = {};
+
+  // Les sections de l'étape 1 qui ne sont pas des champs de formulaire : on y
+  // fait défiler la page quand ce sont elles qui bloquent.
+  final _birthDateKey = GlobalKey();
+  final _guardianKey = GlobalKey();
+  final _consentKey = GlobalKey();
+
   // Age gate + self-attested guardian consent for declared minors (<18).
   DateTime? _birthDate;
   final _guardianNameCtrl = TextEditingController();
@@ -440,67 +456,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _next() {
     final valid = switch (_page) {
-      0 => () {
-          final formValid = _key0.currentState?.validate() ?? false;
-          if (!formValid) return false;
-          if (!_hasConsented) {
-            Get.snackbar(
-              'onboarding_consent_required_title'.tr,
-              'onboarding_consent_required_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.privacy_tip_outlined,
-                  color: KpbColors.error),
-            );
-            return false;
-          }
-          if (_accountType == AccountType.student) {
-            if (_birthDate == null) {
-              Get.snackbar(
-                'onboarding_birthdate_required_title'.tr,
-                'onboarding_birthdate_required'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.cake_outlined, color: KpbColors.error),
-              );
-              return false;
-            }
-            if (_isUnderMinimumAge) {
-              Get.snackbar(
-                'onboarding_under_16_title'.tr,
-                'onboarding_under_16_body'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.cake_outlined, color: KpbColors.error),
-              );
-              return false;
-            }
-            // Declared minor: a guardian must be named, reachable, and consent
-            // recorded before any data sync or AI processing.
-            if (_isMinor &&
-                (_guardianNameCtrl.text.trim().isEmpty ||
-                    _guardianContactCtrl.text.trim().isEmpty ||
-                    !_guardianConsented)) {
-              Get.snackbar(
-                'guardian_consent_required_title'.tr,
-                'guardian_consent_required'.tr,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                duration: const Duration(seconds: 3),
-                icon: const Icon(Icons.family_restroom_outlined,
-                    color: KpbColors.error),
-              );
-              return false;
-            }
-          }
-          return true;
+      0 => _validateIdentityPage(),
+      1 => () {
+          final ok = _key1.currentState?.validate() ?? false;
+          if (!ok) _onPageInvalid(1, 'required_fields', _key1);
+          return ok;
         }(),
-      1 => _key1.currentState?.validate() ?? false,
       2 => () {
           if (_fieldIds.isEmpty) {
+            _logValidationFailed(2, 'fields_missing');
             Get.snackbar(
               'onboarding_selection_required_title'.tr,
               'onboarding_select_field_body'.tr,
@@ -513,6 +477,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             return false;
           }
           if (_countryIds.isEmpty) {
+            _logValidationFailed(2, 'countries_missing');
             Get.snackbar(
               'onboarding_selection_required_title'.tr,
               'onboarding_select_country_body'.tr,
@@ -541,6 +506,96 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } else {
       _submit();
     }
+  }
+
+  /// La raison qui bloque l'étape 1, dans l'ORDRE de la page (de haut en bas),
+  /// ou null quand tout passe. Les champs du formulaire viennent d'abord : ils
+  /// sont au-dessus de la naissance, du tuteur et du consentement.
+  String? _identityIssue({required bool formValid}) {
+    if (!formValid) return 'required_fields';
+    if (_accountType == AccountType.student) {
+      if (_birthDate == null) return 'birth_date_missing';
+      if (_isUnderMinimumAge) return 'under_minimum_age';
+      if (_guardianIncomplete) return 'guardian_incomplete';
+    }
+    if (!_hasConsented) return 'consent_missing';
+    return null;
+  }
+
+  /// Déclaré mineur : un tuteur doit être nommé, joignable, et son accord
+  /// donné avant toute synchronisation ou tout traitement IA.
+  bool get _guardianIncomplete =>
+      _isMinor &&
+      (_guardianNameCtrl.text.trim().isEmpty ||
+          _guardianContactCtrl.text.trim().isEmpty ||
+          !_guardianConsented);
+
+  bool _validateIdentityPage() {
+    final formValid = _key0.currentState?.validate() ?? false;
+    final issue = _identityIssue(formValid: formValid);
+    if (issue == null) return true;
+    final target = switch (issue) {
+      'birth_date_missing' || 'under_minimum_age' => _birthDateKey,
+      'guardian_incomplete' => _guardianKey,
+      'consent_missing' => _consentKey,
+      _ => null,
+    };
+    _onPageInvalid(0, issue, _key0, section: target);
+    return false;
+  }
+
+  /// Un « Continuer » refusé : on le DIT (erreurs en place, page défilée
+  /// jusqu'au premier problème, vibration) et on le mesure.
+  void _onPageInvalid(
+    int page,
+    String reason,
+    GlobalKey<FormState> formKey, {
+    GlobalKey? section,
+  }) {
+    setState(() => _attemptedPages.add(page));
+    HapticFeedback.mediumImpact();
+    _logValidationFailed(page, reason);
+    // Après la trame : les erreurs qu'on vient d'allumer doivent être montées
+    // pour qu'on puisse les atteindre.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = section?.currentContext ?? _firstFieldError(formKey);
+      if (target == null || !target.mounted) return;
+      unawaited(Scrollable.ensureVisible(
+        target,
+        alignment: 0.15,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      ));
+    });
+  }
+
+  void _logValidationFailed(int page, String reason) {
+    unawaited(AnalyticsService.instance.logOnboardingValidationFailed(
+      step: page + 1,
+      reason: reason,
+    ));
+  }
+
+  /// Le premier champ en erreur, dans l'ordre de l'arbre — qui est celui de
+  /// l'écran, la page étant une seule colonne.
+  BuildContext? _firstFieldError(GlobalKey<FormState> formKey) {
+    BuildContext? found;
+    void visit(Element element) {
+      if (found != null) return;
+      if (element is StatefulElement) {
+        final state = element.state;
+        if (state is FormFieldState && state.hasError) {
+          found = element;
+          return;
+        }
+      }
+      element.visitChildren(visit);
+    }
+
+    final root = formKey.currentContext;
+    if (root is Element) root.visitChildren(visit);
+    return found;
   }
 
   void _prev() {
@@ -624,6 +679,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 // Page 0 — Identité & compte
                 _Page(
                   formKey: _key0,
+                  autovalidate: _attemptedPages.contains(0),
                   title: 'onboarding_welcome_title'.tr,
                   subtitle: 'onboarding_welcome_subtitle'.tr,
                   child: _PageIdentity(
@@ -644,6 +700,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     guardianNameCtrl: _guardianNameCtrl,
                     guardianContactCtrl: _guardianContactCtrl,
                     guardianConsented: _guardianConsented,
+                    showErrors: _attemptedPages.contains(0),
+                    isUnderMinimumAge: _isUnderMinimumAge,
+                    guardianIncomplete: _guardianIncomplete,
+                    birthDateKey: _birthDateKey,
+                    guardianKey: _guardianKey,
+                    consentKey: _consentKey,
+                    onGuardianChanged: () => setState(() {}),
                     onAccountType: (v) => setState(() => _accountType = v),
                     onLanguage: (v) => setState(() => _language = v),
                     onPhoneCode: (v) => setState(() => _phoneCode = v),
@@ -661,6 +724,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 if (_accountType != AccountType.partner)
                   _Page(
                     formKey: _key1,
+                    autovalidate: _attemptedPages.contains(1),
                     title: 'onboarding_academic_title'.tr,
                     subtitle: 'onboarding_academic_subtitle'.tr,
                     child: _PageAcademic(

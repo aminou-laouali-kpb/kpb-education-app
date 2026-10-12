@@ -33,7 +33,21 @@ class _PageIdentity extends StatelessWidget {
     required this.guardianConsented,
     required this.onBirthDate,
     required this.onGuardianConsent,
+    required this.showErrors,
+    required this.isUnderMinimumAge,
+    required this.guardianIncomplete,
+    required this.birthDateKey,
+    required this.guardianKey,
+    required this.consentKey,
+    required this.onGuardianChanged,
   });
+
+  /// Un « Continuer » a déjà échoué : les sections hors formulaire montrent
+  /// leur erreur en place (et plus dans un bandeau posé sur le bouton).
+  final bool showErrors;
+  final bool isUnderMinimumAge, guardianIncomplete;
+  final GlobalKey birthDateKey, guardianKey, consentKey;
+  final VoidCallback onGuardianChanged;
 
   final AccountType accountType;
   final String language, country;
@@ -216,40 +230,54 @@ class _PageIdentity extends StatelessWidget {
 
         // ── Âge + consentement tuteur (mineurs) ────────────────────
         if (accountType == AccountType.student) ...[
-          InkWell(
-            onTap: () async {
-              final now = DateTime.now();
-              final lastDate = DateTime(now.year - 16, now.month, now.day);
-              var initial =
-                  birthDate ?? DateTime(now.year - 18, now.month, now.day);
-              if (initial.isAfter(lastDate)) initial = lastDate;
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: initial,
-                firstDate: DateTime(now.year - 80),
-                lastDate: lastDate,
-                helpText: 'birth_date'.tr,
-              );
-              if (picked != null) onBirthDate(picked);
-            },
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'birth_date'.tr,
-                suffixIcon: const Icon(Icons.calendar_today_outlined, size: 18),
+          Builder(builder: (context) {
+            final birthError = !showErrors
+                ? null
+                : birthDate == null
+                    ? 'onboarding_birthdate_required'.tr
+                    : isUnderMinimumAge
+                        ? 'onboarding_under_16_body'.tr
+                        : null;
+            return InkWell(
+              key: birthDateKey,
+              onTap: () async {
+                final now = DateTime.now();
+                final lastDate = DateTime(now.year - 16, now.month, now.day);
+                var initial =
+                    birthDate ?? DateTime(now.year - 18, now.month, now.day);
+                if (initial.isAfter(lastDate)) initial = lastDate;
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: initial,
+                  firstDate: DateTime(now.year - 80),
+                  lastDate: lastDate,
+                  helpText: 'birth_date'.tr,
+                );
+                if (picked != null) onBirthDate(picked);
+              },
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'birth_date'.tr,
+                  suffixIcon:
+                      const Icon(Icons.calendar_today_outlined, size: 18),
+                  errorText: birthError,
+                  errorMaxLines: 3,
+                ),
+                child: Text(
+                  birthDate == null
+                      ? 'birth_date_hint'.tr
+                      : '${birthDate!.day.toString().padLeft(2, '0')}/${birthDate!.month.toString().padLeft(2, '0')}/${birthDate!.year}',
+                  style: birthDate == null
+                      ? TextStyle(color: KpbColors.textMuted)
+                      : null,
+                ),
               ),
-              child: Text(
-                birthDate == null
-                    ? 'birth_date_hint'.tr
-                    : '${birthDate!.day.toString().padLeft(2, '0')}/${birthDate!.month.toString().padLeft(2, '0')}/${birthDate!.year}',
-                style: birthDate == null
-                    ? TextStyle(color: KpbColors.textMuted)
-                    : null,
-              ),
-            ),
-          ),
+            );
+          }),
           if (isMinor) ...[
             const SizedBox(height: KpbSpacing.md),
             Container(
+              key: guardianKey,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: guardianConsented
@@ -257,8 +285,11 @@ class _PageIdentity extends StatelessWidget {
                     : KpbColors.surfaceMuted,
                 borderRadius: KpbRadius.mdBr,
                 border: Border.all(
-                  color:
-                      guardianConsented ? KpbColors.success : KpbColors.border,
+                  color: showErrors && guardianIncomplete
+                      ? KpbColors.error
+                      : guardianConsented
+                          ? KpbColors.success
+                          : KpbColors.border,
                 ),
               ),
               child: Column(
@@ -279,21 +310,30 @@ class _PageIdentity extends StatelessWidget {
                     controller: guardianNameCtrl,
                     decoration: InputDecoration(labelText: 'guardian_name'.tr),
                     textInputAction: TextInputAction.next,
+                    onChanged: (_) => onGuardianChanged(),
                   ),
                   const SizedBox(height: KpbSpacing.sm),
                   TextFormField(
                     controller: guardianContactCtrl,
                     decoration:
                         InputDecoration(labelText: 'guardian_contact'.tr),
+                    onChanged: (_) => onGuardianChanged(),
                   ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: guardianConsented,
-                    activeColor: KpbColors.success,
-                    title: Text('guardian_consent_checkbox'.tr,
-                        style: KpbTextStyles.bodySm),
-                    onChanged: (v) => onGuardianConsent(v ?? false),
+                  // Son propre Material : sans lui, la tuile peindrait son
+                  // effet d'encre sous le fond coloré de la carte.
+                  Material(
+                    type: MaterialType.transparency,
+                    child: CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: guardianConsented,
+                      activeColor: KpbColors.success,
+                      title: Text('guardian_consent_checkbox'.tr,
+                          style: KpbTextStyles.bodySm),
+                      onChanged: (v) => onGuardianConsent(v ?? false),
+                    ),
                   ),
+                  if (showErrors && guardianIncomplete)
+                    _InlineError('guardian_consent_required'.tr),
                 ],
               ),
             ),
@@ -302,88 +342,147 @@ class _PageIdentity extends StatelessWidget {
         ],
 
         // ── GDPR Consent ──────────────────────────────────────────
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color:
-                hasConsented ? KpbColors.successLight : KpbColors.surfaceMuted,
+        // Toute la carte coche la case : la case seule (24 px) était la cible
+        // la plus petite de l'écran, et un appui sur la phrase ne faisait
+        // rien. Les deux liens gardent leur propre geste (le plus profond
+        // gagne).
+        Material(
+          key: consentKey,
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => onConsent(!hasConsented),
             borderRadius: KpbRadius.mdBr,
-            border: Border.all(
-              color: hasConsented ? KpbColors.success : KpbColors.border,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Checkbox(
-                  value: hasConsented,
-                  onChanged: (v) => onConsent(v ?? false),
-                  activeColor: KpbColors.success,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+            child: Ink(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasConsented
+                    ? KpbColors.successLight
+                    : KpbColors.surfaceMuted,
+                borderRadius: KpbRadius.mdBr,
+                border: Border.all(
+                  color: hasConsented
+                      ? KpbColors.success
+                      : showErrors
+                          ? KpbColors.error
+                          : KpbColors.border,
                 ),
               ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: KpbColors.textMuted,
-                      height: 1.4,
-                    ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextSpan(text: 'onboarding_consent_accept_prefix'.tr),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: GestureDetector(
-                          onTap: () => Get.to(() => PrivacyPolicyScreen()),
-                          child: Text(
-                            'privacy_policy_inline'.tr,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: KpbColors.actionPrimary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: KpbColors.actionPrimary,
-                            ),
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: hasConsented,
+                          onChanged: (v) => onConsent(v ?? false),
+                          activeColor: KpbColors.success,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
                           ),
                         ),
                       ),
-                      TextSpan(text: 'onboarding_consent_and'.tr),
-                      WidgetSpan(
-                        alignment: PlaceholderAlignment.baseline,
-                        baseline: TextBaseline.alphabetic,
-                        child: GestureDetector(
-                          onTap: () =>
-                              Get.to(() => const TermsOfServiceScreen()),
-                          child: Text(
-                            'onboarding_terms_of_use_inline'.tr,
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
                             style: TextStyle(
                               fontSize: 13,
-                              color: KpbColors.actionPrimary,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.underline,
-                              decorationColor: KpbColors.actionPrimary,
+                              color: KpbColors.textMuted,
+                              height: 1.4,
                             ),
+                            children: [
+                              TextSpan(
+                                  text: 'onboarding_consent_accept_prefix'.tr),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      Get.to(() => PrivacyPolicyScreen()),
+                                  child: Text(
+                                    'privacy_policy_inline'.tr,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: KpbColors.actionPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: KpbColors.actionPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              TextSpan(text: 'onboarding_consent_and'.tr),
+                              WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: GestureDetector(
+                                  onTap: () => Get.to(
+                                      () => const TermsOfServiceScreen()),
+                                  child: Text(
+                                    'onboarding_terms_of_use_inline'.tr,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: KpbColors.actionPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: KpbColors.actionPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const TextSpan(text: '.'),
+                            ],
                           ),
                         ),
                       ),
-                      const TextSpan(text: '.'),
                     ],
                   ),
-                ),
+                  if (showErrors && !hasConsented)
+                    _InlineError('onboarding_consent_required_body'.tr),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         const SizedBox(height: KpbSpacing.md),
       ],
+    );
+  }
+}
+
+/// Une erreur écrite SOUS la section qui bloque, dans la couleur des erreurs
+/// de champ — là où l'œil la cherche, et pas dans un bandeau qui couvre le
+/// bouton « Continuer ».
+class _InlineError extends StatelessWidget {
+  const _InlineError(this.message);
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 16, color: KpbColors.error),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: KpbColors.error,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

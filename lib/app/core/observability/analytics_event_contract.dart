@@ -32,6 +32,13 @@ abstract final class AnalyticsEventName {
   static const onboardingSkipped = 'onboarding_skipped';
   static const authFailed = 'auth_failed';
 
+  /// « Continuer » tapé sur une page de l'onboarding dont le contrôle a échoué.
+  /// Sans lui, le bouton qui « ne fait rien » ne se voyait qu'en rage clicks
+  /// (13 % des comptes sur l'étape 1, octobre 2026) — sans dire POURQUOI.
+  /// `step` (1-based) et `reason`, un identifiant fermé : jamais une valeur
+  /// saisie.
+  static const onboardingValidationFailed = 'onboarding_validation_failed';
+
   /// Daily "Bourse du jour" (KPB-162): the Home card was seen, and it was
   /// tapped through to the scholarship. viewed → opened gives the card CTR;
   /// saves ride the existing `save_item` event.
@@ -168,6 +175,16 @@ abstract final class AnalyticsEventName {
   static const premiumWaitlistJoined = 'premium_waitlist_joined';
   static const premiumWaitlistFailed = 'premium_waitlist_failed';
 
+  /// Coach IA (KPB Intelligence). `ai_coach_message_sent` part à la fin de
+  /// chaque tour : `source` (`input` ou `suggestion`), `result` (`ok`,
+  /// `quota_refused`, `error`, `unreachable`) et `quota_remaining` (entier, -1
+  /// si inconnu). JAMAIS le texte de la question : il peut contenir un nom, une
+  /// note, une situation familiale. `ai_coach_load_failed` : l'écran n'a pas pu
+  /// charger quota, suggestions et historique — sans lui, une panne du coach
+  /// se lirait comme « personne ne pose de question ».
+  static const aiCoachMessageSent = 'ai_coach_message_sent';
+  static const aiCoachLoadFailed = 'ai_coach_load_failed';
+
   /// Sync / catalog observability (paired with [AnalyticsService] helpers).
   static const syncFullComplete = 'sync_full_complete';
   static const syncConflictResolved = 'sync_conflict_resolved';
@@ -258,4 +275,12 @@ abstract final class AnalyticsParamKey {
   static const accountType = 'account_type';
   static const method = 'method';
   static const reason = 'reason';
+
+  /// Coach IA : d'où vient la question et comment le tour s'est terminé.
+  static const result = 'result';
+  static const quotaRemaining = 'quota_remaining';
+
+  /// `view_item` : la famille du contenu consulté (`scholarship`, `program`,
+  /// `country`, `institution`). Clé GA4 standard, distincte d'`item_type`.
+  static const itemCategory = 'item_category';
 }

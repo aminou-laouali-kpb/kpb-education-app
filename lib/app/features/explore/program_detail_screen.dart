@@ -8,6 +8,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/share_card_service.dart';
+import '../../core/ui/components/log_once.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/ui/components/source_link.dart';
 import '../../core/ui/components/verified_badge.dart';
@@ -91,194 +92,199 @@ class ProgramDetailScreen extends StatelessWidget {
       'program_step_visa_departure'.tr,
     ];
 
-    return Scaffold(
-      backgroundColor: KpbColors.canvas,
-      body: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          _Header(
-            controller: controller,
-            program: program,
-            institution: institution,
-            flag: countryFlag(program.countryId),
-            name: controller.resolve(program.name),
-            subtitle: city.isNotEmpty ? '$level · $city' : level,
-            fit: fit,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 2-col grid — real tuition + intake/language. IntrinsicHeight
-                // gives the stretch Row a bounded height inside the ListView.
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: _StatTile(
-                          label: 'school_fees_per_year'.tr,
-                          // `tuitionForDisplay` rend au minimum l'étiquette :
-                          // le seul repli restant est l'étiquette VIDE.
-                          value: displayedTuition.isNotEmpty
-                              ? displayedTuition
-                              : 'school_intake_on_request'.tr,
-                          sub: '',
-                          subColor: KpbColors.actionPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _StatTile(
-                          label: 'school_intake'.tr,
-                          value: intakeValue,
-                          sub: language.isNotEmpty
-                              ? '${'program_language'.tr}: $language'
-                              : '',
-                          subColor: KpbColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 13),
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    // Une fois par ouverture de la fiche, pas à chaque reconstruction.
+    return LogOnce(
+      onFirstMount: () =>
+          unawaited(AnalyticsService.instance.logViewProgram(programId)),
+      child: Scaffold(
+        backgroundColor: KpbColors.canvas,
+        body: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            _Header(
+              controller: controller,
+              program: program,
+              institution: institution,
+              flag: countryFlag(program.countryId),
+              name: controller.resolve(program.name),
+              subtitle: city.isNotEmpty ? '$level · $city' : level,
+              fit: fit,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 2-col grid — real tuition + intake/language. IntrinsicHeight
+                  // gives the stretch Row a bounded height inside the ListView.
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          description,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            height: 1.65,
-                            color: KpbColors.gray700,
+                        Expanded(
+                          child: _StatTile(
+                            label: 'school_fees_per_year'.tr,
+                            // `tuitionForDisplay` rend au minimum l'étiquette :
+                            // le seul repli restant est l'étiquette VIDE.
+                            value: displayedTuition.isNotEmpty
+                                ? displayedTuition
+                                : 'school_intake_on_request'.tr,
+                            sub: '',
+                            subColor: KpbColors.actionPrimary,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 6,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            VerifiedBadge(
-                                lastVerifiedAt: program.lastVerifiedAt),
-                            KpbSourceLink(url: program.sourceUrl),
-                          ],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatTile(
+                            label: 'school_intake'.tr,
+                            value: intakeValue,
+                            sub: language.isNotEmpty
+                                ? '${'program_language'.tr}: $language'
+                                : '',
+                            subColor: KpbColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-                if (program.campusOfferings.isNotEmpty) ...[
+                  if (description.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              height: 1.65,
+                              color: KpbColors.gray700,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              VerifiedBadge(
+                                  lastVerifiedAt: program.lastVerifiedAt),
+                              KpbSourceLink(url: program.sourceUrl),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (program.campusOfferings.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: 'program_available_on_campuses'.trParams(
+                          {'count': '${program.campusOfferings.length}'}),
+                      icon: Icons.location_city_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (var i = 0;
+                              i < program.campusOfferings.length;
+                              i++) ...[
+                            if (i > 0) const Divider(height: 18),
+                            _CampusOfferingRow(
+                              offering: program.campusOfferings[i],
+                              localeCode: controller.localeCode,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                  if (program.requirements.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: 'program_admission_requirements'.tr,
+                      icon: Icons.fact_check_outlined,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: program.requirements
+                            .map(
+                              (req) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded,
+                                        size: 16, color: KpbColors.success),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        controller.resolve(req),
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          height: 1.55,
+                                          color: KpbColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 13),
                   _Section(
-                    title: 'program_available_on_campuses'.trParams(
-                        {'count': '${program.campusOfferings.length}'}),
-                    icon: Icons.location_city_outlined,
+                    title: 'program_application_process'.tr,
+                    icon: Icons.route_outlined,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        for (var i = 0;
-                            i < program.campusOfferings.length;
-                            i++) ...[
-                          if (i > 0) const Divider(height: 18),
-                          _CampusOfferingRow(
-                            offering: program.campusOfferings[i],
-                            localeCode: controller.localeCode,
-                          ),
+                        for (var i = 0; i < applicationSteps.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 12),
+                          _StepRow(index: i + 1, text: applicationSteps[i]),
                         ],
                       ],
                     ),
                   ),
-                ],
-                if (program.requirements.isNotEmpty) ...[
-                  const SizedBox(height: 13),
-                  _Section(
-                    title: 'program_admission_requirements'.tr,
-                    icon: Icons.fact_check_outlined,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: program.requirements
-                          .map(
-                            (req) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(Icons.check_circle_rounded,
-                                      size: 16, color: KpbColors.success),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      controller.resolve(req),
-                                      style: const TextStyle(
-                                        fontSize: 12.5,
-                                        height: 1.55,
-                                        color: KpbColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          )
-                          .toList(),
+                  const SizedBox(height: 16),
+                  // Primary CTA — creates a KPB application case (dossier).
+                  _PrimaryCta(
+                    label: 'create_application'.tr,
+                    icon: Icons.create_new_folder_rounded,
+                    onTap: () => _openCaseTunnel(
+                      context,
+                      controller,
+                      program,
+                      institution,
                     ),
                   ),
-                ],
-                const SizedBox(height: 13),
-                _Section(
-                  title: 'program_application_process'.tr,
-                  icon: Icons.route_outlined,
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < applicationSteps.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 12),
-                        _StepRow(index: i + 1, text: applicationSteps[i]),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Primary CTA — creates a KPB application case (dossier).
-                _PrimaryCta(
-                  label: 'create_application'.tr,
-                  icon: Icons.create_new_folder_rounded,
-                  onTap: () => _openCaseTunnel(
-                    context,
-                    controller,
-                    program,
-                    institution,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Secondary CTA — WhatsApp hand-off to a KPB counselor.
-                // Deliberately NOT overridden by the country's catalog-level
-                // `whatsAppPrefill`: on a program sheet the advisor must see
-                // which program/school the student was reading, and the
-                // country-level copy is generic (owner video review, 08/2026).
-                _CounselorCta(
-                  onTap: () => openWhatsAppOrToast(
-                    prefill: kpbWhatsAppPrefill(
-                      program: controller.resolve(program.name),
-                      institution: institution != null
-                          ? controller.resolve(institution.name)
-                          : null,
-                      country: country != null
-                          ? controller.resolve(country.name)
-                          : null,
+                  const SizedBox(height: 10),
+                  // Secondary CTA — WhatsApp hand-off to a KPB counselor.
+                  // Deliberately NOT overridden by the country's catalog-level
+                  // `whatsAppPrefill`: on a program sheet the advisor must see
+                  // which program/school the student was reading, and the
+                  // country-level copy is generic (owner video review, 08/2026).
+                  _CounselorCta(
+                    onTap: () => openWhatsAppOrToast(
+                      prefill: kpbWhatsAppPrefill(
+                        program: controller.resolve(program.name),
+                        institution: institution != null
+                            ? controller.resolve(institution.name)
+                            : null,
+                        country: country != null
+                            ? controller.resolve(country.name)
+                            : null,
+                      ),
+                      source: 'program_detail',
+                      contextType: 'program',
                     ),
-                    source: 'program_detail',
-                    contextType: 'program',
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

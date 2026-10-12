@@ -51,6 +51,7 @@ Single source of truth for **custom event names** and **parameter keys** is [`li
 | `onboarding_step_viewed` | `step` (1-based), `step_count`, `account_type` | A stepper page became visible (KPB-158) |
 | `onboarding_completed` | `account_type` | Finished the last onboarding step (KPB-158) |
 | `onboarding_skipped` | `step` (1-based, where skipped) | Left onboarding via Skip (KPB-158) |
+| `onboarding_validation_failed` | `step` (1-based), `reason` (`required_fields`/`consent_missing`/`birth_date_missing`/`under_minimum_age`/`guardian_incomplete`/`fields_missing`/`countries_missing`) | « Continuer » refusé sur une page. Avant lui, l'étape 1 était l'écran le plus rage-cliqué de l'app sans qu'on sache pourquoi (octobre 2026). Une seule raison par refus : la PREMIÈRE de la page, de haut en bas — celle vers laquelle la page défile. Jamais une valeur saisie. |
 | `auth_failed` | `method` (`google`/`email`), `reason` (`oauth_error`/`rate_limited`/`send_error`/`verify_error`) | A sign-in/up attempt failed (KPB-158) |
 | `sign_up` (GA4 built-in) | `method` (`google`/`email`) | New account created — the **signup method** (KPB-158) |
 | `login` (GA4 built-in) | `method` (`google`/`email`) | Returning user signed in |
@@ -62,6 +63,30 @@ Single source of truth for **custom event names** and **parameter keys** is [`li
 ### Onboarding funnel (PostHog dashboard to build)
 
 Funnel steps: `sign_up` → `onboarding_step_viewed` (step 1) → … → `onboarding_step_viewed` (step N) → `onboarding_completed`. The drop between consecutive `step` values localizes where onboarding leaks; split by `account_type` to compare student / parent / partner. `onboarding_skipped` (by `step`) shows where users bail via Skip, and `auth_failed` split by `method` shows whether email OTP or Google loses people **before** signup — the evidence that gates the deferred phone-OTP decision (KPB-158 → KPB-172 review).
+
+## Consultation du catalogue (`view_item`)
+
+| Event | Parameters | Purpose |
+|-------|------------|---------|
+| `view_item` (GA4 built-in) | `item_id`, `item_category` (`scholarship`/`program`/`country`/`institution`) | Une fiche du catalogue ouverte. Jusqu'en octobre 2026, seules les bourses étaient comptées : les fiches programme et pays — les plus ouvertes après l'accueil — n'émettaient rien, et `logViewInstitution` n'avait aucun appelant. La famille est dans `item_category` (clé GA4), **pas** `item_type` (celle de `save_item`). Programme : une fois par ouverture (`LogOnce`), pas à chaque reconstruction. |
+
+## Coach IA (KPB Intelligence)
+
+| Event | Parameters | Purpose |
+|-------|------------|---------|
+| `ai_coach_message_sent` | `source` (`input`/`suggestion`), `result` (`ok`/`quota_refused`/`error`/`unreachable`), `quota_remaining` (entier, `-1` si inconnu) | Un tour du coach terminé. **Jamais le texte de la question** : il peut contenir un nom, une note, une situation familiale. `source` dit si les suggestions servent ; `result` sépare un refus de quota d'une panne. |
+| `ai_coach_load_failed` | — | L'écran n'a pas pu charger quota, suggestions et historique. Sans lui, une panne du coach se lirait comme « personne ne pose de question ». |
+
+## Écran courant des événements natifs (`kpb_screen`)
+
+Les événements captés par le SDK **natif** (`$rageclick`, cycle de vie) ne
+voient qu'une vue native, celle de Flutter : leur `$screen_name` vaut
+« Flutter » partout. `PosthogScreenContextObserver` enregistre donc la route
+Flutter affichée en **super propriété** `kpb_screen` (via
+`Posthog().register`, transmis au natif), avec le même nommage que
+`$screen_name` des événements `$screen` (`root ('/')` pour `/`). Pour situer
+un rage click : filtrer `$rageclick` par `kpb_screen`. Les feuilles et
+dialogues ne la changent pas (seules les `PageRoute` comptent).
 
 ## Engagement & retention (KPB-162 / KPB-164 / KPB-165 / KPB-169)
 
