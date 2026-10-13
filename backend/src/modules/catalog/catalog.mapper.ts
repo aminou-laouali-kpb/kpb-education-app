@@ -193,6 +193,29 @@ function selectCurrentCycle(cycles: ScholarshipCycle[] | undefined) {
   );
 }
 
+/// Plafond du `baseMatch` servi aux applications par `/catalog/scholarships`.
+///
+/// L'app en fait son score de bourse, et ne peut pas être corrigée avant sa
+/// prochaine version : sans profil, elle affiche `baseMatch` TEL QUEL (la 2.2.0
+/// en vente en badge « 78 % », la 2.3.0 en palier « Très bon match » dès 70) ;
+/// avec un profil, il sert de socle auquel elle ajoute pays (+20), domaine
+/// (+15), notes (+25/+10) et souhait de bourse (+10), plafonné à 98. Les fiches
+/// publiées valent 70 à 80 : chaque bourse s'annonçait « très bon match » à un
+/// étudiant dont l'app ne savait rien, et, profil rempli, le plafond de 98
+/// était atteint si vite que le classement ne départageait presque plus rien.
+///
+/// 40 est la valeur que l'app renvoie elle-même, sans profil, pour les
+/// filières, formations et établissements : sous les paliers « bon » (50) et
+/// « très bon » (70), le champ reste présent et entier. Plafond plutôt que
+/// remplacement : une valeur plus basse saisie en admin n'est jamais relevée.
+/// La base n'est pas réécrite : l'admin et le tri de `/scholarships` lisent
+/// toujours la valeur stockée.
+export const PUBLIC_SCHOLARSHIP_BASE_MATCH_CEILING = 40;
+
+function publicBaseMatch(stored: number): number {
+  return Math.max(0, Math.min(stored, PUBLIC_SCHOLARSHIP_BASE_MATCH_CEILING));
+}
+
 export function mapScholarship(
   row: Scholarship & { cycles?: ScholarshipCycle[] },
 ) {
@@ -210,7 +233,7 @@ export function mapScholarship(
     ),
     eligibility: localizedList(row.eligibilityFr, row.eligibilityEn),
     relatedFieldIds: row.relatedFieldIds,
-    baseMatch: row.baseMatch,
+    baseMatch: publicBaseMatch(row.baseMatch),
     deadlineAt: row.deadlineAt,
     // La CONFIANCE de la date, pas seulement la date. Pour 20 des 31 fiches
     // publiées, `deadlineAt` vient de `estimatedCloseAt` (import) : une

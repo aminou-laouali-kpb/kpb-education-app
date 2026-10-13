@@ -3,6 +3,8 @@ import { HttpException, NotFoundException } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  MatchScore,
+  MatchZoneValue,
   ScoringProfile,
   ScoringProgram,
   canonicalLevel,
@@ -753,5 +755,83 @@ describe('MatchesService', () => {
         details: { resource: 'profile' },
       });
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Narrative — the sentence the AHA screen of installed builds prints verbatim.
+//
+// The score compares a few published criteria with what the student declared;
+// it is not an admission probability. So the text never carries a percentage
+// (nor any figure: "(96)" would be the same fake precision) and never promises
+// "chances", whatever the zone and whether the score is an estimate or not.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('MatchesService — narrative', () => {
+  const ZONES: Array<{ zone: MatchZoneValue; probability: number }> = [
+    { zone: 'green', probability: 0.96 },
+    { zone: 'yellow', probability: 0.5 },
+    { zone: 'blue', probability: 0.1 },
+  ];
+  const FORBIDDEN: RegExp[] = [
+    /%/,
+    /\d/,
+    /chance/i,
+    /garanti/i,
+    /guarantee/i,
+    /sûr/i,
+    /\bsure\b/i,
+  ];
+
+  function narrativeOf(
+    zone: MatchZoneValue,
+    probability: number,
+    isEstimate: boolean,
+  ): { fr: string; en: string } {
+    const { service } = serviceWith({});
+    const score: MatchScore = { zone, probability, isEstimate, factors: [] };
+    return service['narrative'](fullProgram, score);
+  }
+
+  describe.each(ZONES)('zone $zone', ({ zone, probability }) => {
+    it.each([false, true])(
+      'isEstimate=%s: no figure, no promise, in both languages',
+      (isEstimate) => {
+        const narrative = narrativeOf(zone, probability, isEstimate);
+
+        expect(Object.keys(narrative).sort()).toEqual(['en', 'fr']);
+        for (const text of [narrative.fr, narrative.en]) {
+          expect(text.trim()).not.toBe('');
+          for (const pattern of FORBIDDEN) {
+            expect(text).not.toMatch(pattern);
+          }
+        }
+        expect(narrative.fr).toContain(fullProgram.nameFr);
+        expect(narrative.en).toContain(fullProgram.nameEn);
+      },
+    );
+
+    it('still says when the score is only a partial indication', () => {
+      const exact = narrativeOf(zone, probability, false);
+      const estimate = narrativeOf(zone, probability, true);
+
+      expect(estimate.fr).not.toBe(exact.fr);
+      expect(estimate.en).not.toBe(exact.en);
+    });
+  });
+
+  it('what ahaMoment and schoolMatch serve carries no percentage either', async () => {
+    const { service } = serviceWith({});
+
+    const aha = await service.ahaMoment('user-1');
+    const school = await service.schoolMatch('user-1', 'db-inst-1');
+
+    expect(aha.items).not.toHaveLength(0);
+    for (const match of [...aha.items, school]) {
+      for (const text of [match.narrative.fr, match.narrative.en]) {
+        expect(text).not.toMatch(/%/);
+        expect(text).not.toMatch(/chance/i);
+      }
+    }
   });
 });

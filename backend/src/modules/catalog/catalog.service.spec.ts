@@ -108,6 +108,31 @@ describe('CatalogService', () => {
         isActive: true,
       });
     });
+
+    it('serves scholarships with a baseMatch capped below the app "good" tier', async () => {
+      // Installed builds show `baseMatch` as is when the student has no
+      // profile ("Très bon match" from 70, "78 %" on 2.2.0). The stored value
+      // is untouched; only what the public endpoint serves is capped.
+      mockPrismaService.execute.mockResolvedValueOnce([
+        {
+          id: 'mastercard-test',
+          nameFr: 'Bourse test',
+          nameEn: 'Test scholarship',
+          countryId: 'can',
+          relatedFieldIds: [],
+          baseMatch: 78,
+          cycles: [],
+        },
+      ]);
+
+      const result = await service.getScholarships();
+
+      expect(result.source).toBe('database');
+      expect(result.items[0]).toMatchObject({
+        id: 'mastercard-test',
+        baseMatch: 40,
+      });
+    });
   });
 
   describe('empty catalog is not a degradation', () => {
