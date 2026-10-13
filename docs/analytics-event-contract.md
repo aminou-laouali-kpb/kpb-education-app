@@ -350,7 +350,7 @@ tout produit payant existant.
 > CSV, mais ces écrans ne l'envoient jamais. La build 54 ajoute le sélecteur
 > (domaines d01–d12, préremplis depuis le profil) : à partir d'elle seulement,
 > `field_count` segmente. Ne pas comparer la distribution avant/après sans
-> filtrer sur la version de l'app (la dimension de version de l'application que Firebase Analytics et PostHog renseignent d'eux-mêmes ; `X-KPB-App-Version` n'est pas lu côté serveur). Écrit ici parce que c'est
+> filtrer sur la version de l'app (la dimension de version de l'application que Firebase Analytics et PostHog renseignent d'eux-mêmes ; `X-KPB-App-Version` n'étiquette aucun événement côté serveur : il ne sert qu'à la répartition des builds, `GET /admin/app-builds`). Écrit ici parce que c'est
 > le document qu'on ouvre pour interpréter l'entonnoir, et qu'un zéro constant
 > se lit autrement comme « personne ne choisit de filière ».
 >

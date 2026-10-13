@@ -961,6 +961,19 @@ utilisateurs : ce n'est ni un identifiant ni une donnée de profil. Un en-tête
 absent (build antérieure, plugin indisponible) ne doit jamais faire échouer une
 requête.
 
+Le serveur les lit depuis le 13/10/2026 (`AppBuildInterceptor`,
+`backend/src/modules/app-builds/`), pour les seules requêtes authentifiées par
+`StudentAuthGuard` : il note sur le profil la dernière version, la dernière
+build et la date de passage (`lastAppVersion`, `lastAppBuild`,
+`lastAppSeenAt`). Rien ne change sur le fil — ni route, ni corps, ni code de
+réponse — et l'écriture n'est pas attendue : au plus une par compte et par 6 h,
+plus tôt seulement si la build ou la version change (une mise à jour), jamais
+plus d'une par minute. Une valeur illisible (version hors motif `2.3.0[-suffixe]` ou plus de
+32 caractères, build hors 1–9 999 999, en-tête répété) vaut « inconnue » et
+n'efface jamais une valeur déjà connue. Une requête sans en-tête rafraîchit
+quand même la date : un compte vu sans build connue est une build ≤ 53, pas un
+compte inactif. Lecture en agrégat seulement : `GET /admin/app-builds`.
+
 ### Le consentement, sur le fil
 
 `POST /etudes-en-france/interest` exige deux champs, et les refuse absents :
@@ -1263,3 +1276,23 @@ toucherait les résidents de France, pas les candidats à la France.
 
 Purpose:
 - manage internal roles and provide the first reporting layer for cases, counseling, and campaigns
+
+## Admin — adoption des builds de l'app
+
+`GET /admin/app-builds` — mêmes rôles que `GET /admin/dashboard` (admin,
+super_admin, counselor, commercial). Pour décider quand relever `minVersion` ou
+changer de fournisseur de push. Que des comptages, aucune ligne par compte ;
+503 sans base plutôt que des zéros.
+
+| Champ | Sens |
+|---|---|
+| `windowDays`, `since` | Fenêtre d'activité : 30 jours avant `generatedAt` |
+| `activeProfiles` | Comptes (élève, parent, partenaire) vus dans la fenêtre — le dénominateur des parts |
+| `byBuild[]` | `{ build, count, share, shareAtOrAbove }`, de la plus récente à la plus ancienne. `shareAtOrAbove` = part qui resterait ouverte si l'app exigeait cette build au minimum |
+| `byVersion[]` | `{ version, count, share }`, de la plus récente à la plus ancienne |
+| `unknownBuild`, `unknownVersion` | `{ count, share }` : vus sans valeur lisible — en pratique les builds ≤ 53 |
+| `neverSeen` | `{ count, share }` sur `allProfiles` : comptes sans aucune requête authentifiée depuis la mise en service |
+
+Les parts sont des ratios 0–1 arrondis à 4 décimales ; `byBuild` + `unknownBuild`
+somment à `activeProfiles`. Un compte multi-appareils compte pour la dernière
+build enregistrée.

@@ -401,6 +401,16 @@ model UserProfile {
   // Last time the profile-completion nudge (KPB-76) was sent — throttles the
   // re-engagement push so an incomplete profile is reminded at most monthly.
   profileNudgedAt           DateTime?
+  // Dernière build de l'app vue pour ce compte (en-têtes X-KPB-App-Version /
+  // X-KPB-App-Build, envoyés depuis la build 54). Écrites par
+  // AppBuildInterceptor, au plus une fois par 6 h par compte (plus tôt après une
+  // mise à jour de l'app), SANS toucher à `updatedAt` (ce n'est pas une
+  // modification du profil). `lastAppSeenAt` est rafraîchi même sans en-tête :
+  // un compte vu sans build connue est une build ≤ 53, pas un compte inactif.
+  // Lues seulement en agrégat (GET /admin/app-builds).
+  lastAppVersion            String?
+  lastAppBuild              Int?
+  lastAppSeenAt             DateTime?
   // Stable per-student referral code (KPB-69) — generated on first read, shared
   // via WhatsApp. Friends who redeem it are attributed back to this profile.
   referralCode              String?                        @unique

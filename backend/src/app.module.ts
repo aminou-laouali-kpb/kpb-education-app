@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { APP_GUARD, Reflector } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
@@ -74,6 +74,10 @@ import { CommercialController } from './modules/commercial/commercial.controller
 import { CommercialService } from './modules/commercial/commercial.service';
 import { AdminDashboardController } from './modules/admin-dashboard/admin-dashboard.controller';
 import { AdminDashboardService } from './modules/admin-dashboard/admin-dashboard.service';
+import { AdminAppBuildsController } from './modules/app-builds/admin-app-builds.controller';
+import { AdminAppBuildsService } from './modules/app-builds/admin-app-builds.service';
+import { AppBuildInterceptor } from './modules/app-builds/app-build.interceptor';
+import { AppBuildTrackerService } from './modules/app-builds/app-build-tracker.service';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
 import { AdminCatalogService } from './modules/admin-catalog/admin-catalog.service';
 import { ImpactController } from './modules/impact/impact.controller';
@@ -211,6 +215,7 @@ import { SalonService } from './modules/salon/salon.service';
     CoachController,
     CommercialController,
     AdminDashboardController,
+    AdminAppBuildsController,
     AdminCatalogController,
     ImpactController,
     ToolsController,
@@ -246,6 +251,9 @@ import { SalonService } from './modules/salon/salon.service';
   providers: [
     Reflector,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Note la build de l'app (en-têtes X-KPB-App-*) des requêtes élève
+    // authentifiées ; ne touche ni à la requête ni à la réponse.
+    { provide: APP_INTERCEPTOR, useClass: AppBuildInterceptor },
     AdminAuthGuard,
     StudentAuthGuard,
     RolesGuard,
@@ -286,6 +294,8 @@ import { SalonService } from './modules/salon/salon.service';
     CoachQuotaService,
     CommercialService,
     AdminDashboardService,
+    AdminAppBuildsService,
+    AppBuildTrackerService,
     AdminCatalogService,
     ImpactService,
     ToolsService,
