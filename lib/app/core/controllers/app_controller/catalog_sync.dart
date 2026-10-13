@@ -40,6 +40,10 @@ mixin _CatalogSyncMixin on _AppControllerBase {
     final syncStarted = DateTime.now();
     var catalogHiveFallbackCount = 0;
     var authSyncFailed = false;
+    // Où et comment la synchro a échoué, pour `sync_full_complete` : sans ça,
+    // un téléphone hors réseau et un serveur en panne se confondaient.
+    String? failureStage;
+    SyncErrorKind? failureKind;
     // One entry per `/catalog/*` resource that resolved in this run. Declared
     // outside the try so the failure path can tell "nothing resolved" from
     // "some resources resolved before the sync blew up".
@@ -62,7 +66,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           await _pushProfileUpdate();
 
           if (!_profileNeedsPush) {
-            final profileJson = await _apiClient.getProfile();
+            final profileJson = await retryTransient(_apiClient.getProfile);
             profile = ProfileApiCodec.userProfileFromApi(
               profileJson,
               fallbackLocale: localeCode,
@@ -75,7 +79,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             );
           }
 
-          final remoteCasesRaw = await _apiClient.listCases();
+          final remoteCasesRaw = await retryTransient(_apiClient.listCases);
           final remoteCases =
               remoteCasesRaw.map(CaseApiCodec.studentCaseFromApi).toList();
           final (mergedCases, caseStats) = mergeCasesRemoteWithLocal(
@@ -97,7 +101,8 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             unawaited(_createRemoteCase(localOnly));
           }
 
-          final remoteSavedItems = await _apiClient.listSavedItems();
+          final remoteSavedItems =
+              await retryTransient(_apiClient.listSavedItems);
           final remoteSavedParsed =
               remoteSavedItems.map(SavedItemApiCodec.fromApi).toList();
           final (mergedSaved, unionExtraLocals) = mergeSavedItemsUnion(
@@ -144,6 +149,8 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           }
         } catch (error, stack) {
           authSyncFailed = true;
+          failureStage = 'account';
+          failureKind = classifySyncError(error);
           if (error is DioException && error.response?.statusCode == 429) {
             _syncBackoffUntil = DateTime.now().add(const Duration(seconds: 60));
             syncError = userFacingSyncError(error, localeCode);
@@ -249,6 +256,8 @@ mixin _CatalogSyncMixin on _AppControllerBase {
         success: !authSyncFailed,
         elapsed: DateTime.now().difference(syncStarted),
         catalogHiveFallbackCount: catalogHiveFallbackCount,
+        failureStage: failureStage,
+        errorKind: failureKind,
       );
     } catch (error, stack) {
       if (error is DioException && error.response?.statusCode == 429) {
@@ -278,6 +287,8 @@ mixin _CatalogSyncMixin on _AppControllerBase {
         success: false,
         elapsed: DateTime.now().difference(syncStarted),
         catalogHiveFallbackCount: catalogHiveFallbackCount,
+        failureStage: 'catalog',
+        errorKind: classifySyncError(error),
       );
     } finally {
       isSyncing = false;
