@@ -34,13 +34,16 @@ function makeTracker(options: {
 
 describe('AppBuildTrackerService', () => {
   let debug: jest.SpyInstance;
+  let error: jest.SpyInstance;
 
   beforeEach(() => {
     debug = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
+    error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
     debug.mockRestore();
+    error.mockRestore();
   });
 
   it('ne fait rien sans base (Prisma désactivé)', () => {
@@ -142,6 +145,76 @@ describe('AppBuildTrackerService', () => {
       false,
     );
     expect(executeRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['rejette', (failure: Error) => jest.fn().mockRejectedValue(failure)],
+    [
+      'jette de façon synchrone',
+      (failure: Error) =>
+        jest.fn(() => {
+          throw failure;
+        }),
+    ],
+  ])(
+    'un échec d’écriture qui %s ne passe jamais par le journal d’erreurs de PrismaService',
+    async (_label, makeExecuteRaw) => {
+      // Le vrai `execute` journalise en erreur tout ce que l'opération lui
+      // laisse remonter : l'échec doit être avalé avant, sinon une simple
+      // mesure perdue ressemblerait à une panne du chemin de données.
+      const previousDatabaseUrl = process.env.DATABASE_URL;
+      delete process.env.DATABASE_URL;
+      const prismaService = new PrismaService();
+      if (previousDatabaseUrl !== undefined) {
+        process.env.DATABASE_URL = previousDatabaseUrl;
+      }
+      const executeRaw = makeExecuteRaw(
+        Object.assign(new Error('relation ... jean.dupont@example.com'), {
+          code: 'P2010',
+        }),
+      );
+      Object.defineProperty(prismaService, 'client', {
+        value: { $executeRaw: executeRaw },
+      });
+      const unhandled = jest.fn();
+      process.on('unhandledRejection', unhandled);
+      try {
+        const tracker = new AppBuildTrackerService(prismaService);
+        expect(tracker.record('p1', { version: '2.3.0', build: 54 }, T0)).toBe(
+          true,
+        );
+        await flush();
+        await flush();
+      } finally {
+        process.off('unhandledRejection', unhandled);
+      }
+
+      expect(executeRaw).toHaveBeenCalledTimes(1);
+      expect(error).not.toHaveBeenCalled();
+      expect(unhandled).not.toHaveBeenCalled();
+      expect(debug).toHaveBeenCalledTimes(1);
+      expect(debug).toHaveBeenCalledWith(expect.stringContaining('P2010'));
+    },
+  );
+
+  it('garde un filet si `execute` rejette lui-même', async () => {
+    const { tracker } = makeTracker({
+      execute: jest.fn().mockRejectedValue(new TypeError('boom')),
+    });
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+    try {
+      expect(tracker.record('p1', { version: '2.3.0', build: 54 }, T0)).toBe(
+        true,
+      );
+      await flush();
+      await flush();
+    } finally {
+      process.off('unhandledRejection', unhandled);
+    }
+
+    expect(unhandled).not.toHaveBeenCalled();
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('TypeError'));
   });
 
   it('ne jette pas même si l’accès à la base jette de façon synchrone', () => {

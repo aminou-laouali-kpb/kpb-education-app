@@ -10,8 +10,10 @@ import type { AppVersionReading } from './app-version-headers';
  *
  * Trois règles, et chacune protège les builds déjà installées :
  *  - l'écriture n'est PAS attendue : la requête ne gagne aucune latence, et un
- *    échec ne la fait jamais échouer (journalisé ici en debug, code borné ;
- *    `PrismaService.execute` garde en plus sa ligne d'erreur habituelle) ;
+ *    échec ne la fait jamais échouer. Il est rattrapé DANS l'opération et
+ *    journalisé ici en debug, code borné : `PrismaService.execute` ne le voit
+ *    donc pas et n'en fait pas une ligne d'erreur — une mesure perdue n'est
+ *    pas une panne du chemin de données ;
  *  - au plus une écriture par compte et par 6 h, plus tôt seulement quand
  *    l'app a changé de build ou de version (voir [AppBuildThrottle]) ;
  *  - SQL brut plutôt que `prisma.userProfile.update` : Prisma poserait
@@ -37,21 +39,29 @@ export class AppBuildTrackerService {
         return false;
       }
       void this.prismaService
-        .execute((prisma) =>
-          prisma.$executeRaw(buildSeenUpdate(profileId, reading, now)),
-        )
-        .catch((error: unknown) => {
-          this.logger.debug(
-            `Dernière build vue non enregistrée (${boundedErrorCode(error)}).`,
-          );
-        });
+        .execute(async (prisma) => {
+          try {
+            return await prisma.$executeRaw(
+              buildSeenUpdate(profileId, reading, now),
+            );
+          } catch (error) {
+            this.logDropped(error);
+            return 0;
+          }
+        })
+        // Filet seulement : l'opération ci-dessus ne rejette pas.
+        .catch((error: unknown) => this.logDropped(error));
       return true;
     } catch (error) {
-      this.logger.debug(
-        `Dernière build vue non enregistrée (${boundedErrorCode(error)}).`,
-      );
+      this.logDropped(error);
       return false;
     }
+  }
+
+  private logDropped(error: unknown): void {
+    this.logger.debug(
+      `Dernière build vue non enregistrée (${boundedErrorCode(error)}).`,
+    );
   }
 }
 
