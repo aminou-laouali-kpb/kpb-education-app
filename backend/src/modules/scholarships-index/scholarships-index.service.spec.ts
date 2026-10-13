@@ -424,6 +424,46 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
       expect(scoreOf(result.items, 'mcf')).toBe(30);
     });
 
+    it("ignores the scrapers' title-derived level tags", async () => {
+      // Forme d'une fiche GreatYop : le libellé vient des catégories
+      // (`undergraduate`), mais buildTags ajoute `masters` parce que le titre
+      // contient « Mastercard », et `phd` dès qu'il contient « doctoral ».
+      const greatYopRow = {
+        ...baseRow,
+        id: 'greatyop-mcf',
+        nameEn: 'Mastercard Foundation Scholars Program at X',
+        nameFr: 'Programme Mastercard Foundation Scholars à X',
+        levelEligibleFr: 'Licence',
+        levelEligibleEn: 'undergraduate',
+        tags: ['undergraduate', 'masters', 'fully-funded'],
+        baseMatch: 30,
+      };
+      const postdocRow = {
+        ...baseRow,
+        id: 'greatyop-postdoc',
+        nameEn: 'Postdoctoral Fellowship at Y',
+        nameFr: 'Bourse postdoctorale à Y',
+        levelEligibleFr: 'Post-doctorat',
+        levelEligibleEn: 'postdoctoral',
+        tags: ['postdoctoral', 'phd'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([greatYopRow, postdocRow]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const master = await service.listForProfile({ lang, level: 'Master' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+
+        expect(scoreOf(master.items, 'greatyop-mcf')).toBe(30);
+        expect(scoreOf(bachelor.items, 'greatyop-mcf')).toBe(60);
+        expect(scoreOf(phd.items, 'greatyop-postdoc')).toBe(30);
+      }
+    });
+
     it('gives no boost for an unrecognised or blank target level', async () => {
       const { service } = makeService([licenceRow]);
 

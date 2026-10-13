@@ -11,9 +11,14 @@ export type CanonicalStudyLevel = ScholarshipStudyLevel | 'doctorate';
 
 /**
  * Tags de niveau reconnus, comparés EXACTEMENT et non en sous-chaîne : le tag
- * `mastercard-foundation` n'est pas un niveau. Vocabulaire du catalogue
- * vérifié, plus les catégories que posent les collecteurs GreatYop et
- * MastereTn (`undergraduate`, `masters`, `phd`).
+ * `mastercard-foundation` n'est pas un niveau. Seulement le vocabulaire du
+ * catalogue vérifié, plus `doctorate`.
+ *
+ * Les tags `undergraduate`, `masters` et `phd` des collecteurs ne sont PAS des
+ * niveaux : GreatYop les déduit aussi du titre en sous-chaîne (« Mastercard… »
+ * devient `masters`, « Postdoctoral… » devient `phd`), MastereTn les recopie
+ * de son propre libellé. Une fiche collectée retombe donc sur ses libellés,
+ * que GreatYop tire de ses seules catégories.
  */
 const LEVEL_TAGS: ReadonlyMap<string, CanonicalStudyLevel> = new Map<
   string,
@@ -21,11 +26,8 @@ const LEVEL_TAGS: ReadonlyMap<string, CanonicalStudyLevel> = new Map<
 >([
   ['secondary', 'secondary'],
   ['bachelor', 'bachelor'],
-  ['undergraduate', 'bachelor'],
   ['master', 'master'],
-  ['masters', 'master'],
   ['doctorate', 'doctorate'],
-  ['phd', 'doctorate'],
 ]);
 
 /**
@@ -79,8 +81,9 @@ export function levelsInText(
  * vaut pas mieux qu'eux — « Secondaire, Licence ou Master — pas de doctorat »
  * CITE le doctorat qu'il exclut.
  *
- * Sans tag de niveau (saisie admin, seed héritée), repli sur les DEUX libellés,
- * FR et EN : le résultat ne dépend jamais de la langue de la requête.
+ * Sans tag de niveau (fiche collectée, saisie admin, seed héritée), repli sur
+ * les DEUX libellés, FR et EN : le résultat ne dépend jamais de la langue de la
+ * requête.
  */
 export function scholarshipLevels(row: {
   tags: readonly string[];

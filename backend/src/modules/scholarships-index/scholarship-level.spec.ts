@@ -39,12 +39,36 @@ describe('scholarshipLevels', () => {
     expect(
       sorted(
         scholarshipLevels({
-          tags: ['Bachelor', 'masters', 'mastercard-foundation', 'phd'],
+          tags: ['Bachelor', 'mastercard-foundation', 'Doctorate', 'masterclass'],
           levelEligibleFr: '',
           levelEligibleEn: '',
         }),
       ),
-    ).toEqual(['bachelor', 'doctorate', 'master']);
+    ).toEqual(['bachelor', 'doctorate']);
+  });
+
+  it("ignores the scrapers' heuristic tags and falls back to the labels", () => {
+    // GreatYop pose `masters` dès que le titre contient « master »
+    // (« Mastercard… ») et `phd` dès qu'il contient « doctoral »
+    // (« Postdoctoral… ») : ces tags ne disent rien du niveau.
+    expect(
+      sorted(
+        scholarshipLevels({
+          tags: ['undergraduate', 'masters', 'phd', 'fully-funded'],
+          levelEligibleFr: 'Licence',
+          levelEligibleEn: 'undergraduate',
+        }),
+      ),
+    ).toEqual(['bachelor']);
+    expect(
+      sorted(
+        scholarshipLevels({
+          tags: ['postdoctoral', 'phd'],
+          levelEligibleFr: 'Post-doctorat',
+          levelEligibleEn: 'postdoctoral',
+        }),
+      ),
+    ).toEqual([]);
   });
 
   it('prefers the tags to the labels when both exist', () => {
