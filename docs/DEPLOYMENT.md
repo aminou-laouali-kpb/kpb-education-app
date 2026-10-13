@@ -404,7 +404,7 @@ docker exec -it kpb_api npm run seed:catalog   # pays + catalogue unique
 docker exec -it kpb_api sh -c 'npm run import:omnes:bundled && npm run seed:omnes'  # formations OMNES
 docker exec -it kpb_api npm run seed:partners  # écoles partenaires (annexe 05)
 docker exec -it kpb_api npm run prisma:seed    # comptes admin (mots de passe temporaires imprimés une fois) + contenu de démo
-docker exec -it kpb_api npm run verify:catalog # confirme 0 référence pays orpheline
+docker exec -it kpb_api npm run verify:catalog # confirme 0 référence pays orpheline ; avertit (::warning::) sur fieldId orphelin, partenaire sans formation, > 1 000 formations
 ```
 
 `seed:omnes`, `seed:partners` et `prisma:seed` **refusent de tourner en

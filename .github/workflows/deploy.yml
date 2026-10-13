@@ -369,6 +369,10 @@ jobs:
           fi
 
           echo "── catalog database integrity ──"
+          # An orphan country reference fails the deploy. The catalogue
+          # consistency checks (orphan fieldId, partner without programs, more
+          # than the 1000 programs installed apps load) only print ::warning::
+          # here: keep this call WITHOUT `--strict`, which Backend CI alone passes.
           docker compose run --rm --no-deps api npm run verify:catalog < /dev/null
 
           echo "── release ──"
