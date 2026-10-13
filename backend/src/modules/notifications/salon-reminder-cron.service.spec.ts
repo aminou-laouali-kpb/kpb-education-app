@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 import { SalonReminderCronService } from './salon-reminder-cron.service';
 
 /** Guards KPB-78: 24h + 1h salon reminders fire once each, deep-link to
@@ -45,7 +45,7 @@ describe('SalonReminderCronService', () => {
         sent.push({ userId, data });
         return true;
       },
-    } as unknown as OneSignalSenderService;
+    } as unknown as PushSenderService;
     return { service: new SalonReminderCronService(prisma, push), sent, updated };
   }
 

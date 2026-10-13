@@ -30,7 +30,7 @@ import 'app/core/services/auth_service.dart';
 import 'app/core/navigation/shell_tabs.dart';
 import 'app/core/services/remote_feature_flags.dart';
 import 'app/core/services/security_service.dart';
-import 'app/core/services/onesignal_service.dart';
+import 'app/core/services/push_service.dart';
 import 'app/core/services/deep_link_service.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'firebase_options.dart';
@@ -181,7 +181,7 @@ Future<void> main() async {
     if (authService.isLoggedIn) {
       if (controller.profile != null) {
         // Profil en cache : l'app s'ouvre tout de suite, la session se
-        // termine en arrière-plan (synchro, identité OneSignal, PostHog).
+        // termine en arrière-plan (synchro, jeton push, PostHog).
         unawaited(controller.finishAuthSession());
       } else {
         // Sans profil local, il faut le rapatrier avant de router : sinon un
@@ -201,14 +201,18 @@ Future<void> main() async {
     });
 
     Get.put(SecurityService());
-    // ── Push notifications (OneSignal) ─────────────────────────────────────────
-    await OneSignalService.instance.initialize();
+    // ── Push notifications (FCM) ─────────────────────────────────────────────
+    // FCM vit dans Firebase : sans lui (démarrage hors ligne), le push reste
+    // inerte et chaque appel du service est un no-op.
+    if (firebaseInitialized) {
+      await PushService.instance.initialize(backend: apiClient);
+    }
     // NB: the OS permission prompt is requested contextually at the end of
     // onboarding (onboarding_screen._submit), not at cold start — asking here
     // would burn iOS's one-shot prompt for guests before any value is shown.
-    // Link an already-signed-in user to OneSignal on cold start.
+    // Re-register an already-signed-in user's device token on cold start.
     if (controller.profile != null) {
-      unawaited(controller.syncOneSignalIdentity());
+      unawaited(controller.syncPushIdentity());
     }
 
     // Force-update gate: async so an unreachable backend never delays boot;

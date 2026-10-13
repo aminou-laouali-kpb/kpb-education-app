@@ -52,7 +52,8 @@ git clone <repo> /docker/kpb && cd /docker/kpb   # ou git pull si déjà cloné
 # 2. Créer le .env de prod À CÔTÉ du docker-compose.yml (voir §1 pour le
 #    contenu complet ; secrets forts, jamais commités). Au minimum :
 #    POSTGRES_* , KPB_JWT_* , KPB_ADMIN_REFRESH_SECRET , SUPABASE_URL ,
-#    CORS_ORIGINS=https://admin.kpbeducation.cloud , GROQ/RESEND/ONESIGNAL…
+#    CORS_ORIGINS=https://admin.kpbeducation.cloud , GROQ/RESEND ,
+#    FCM_SERVICE_ACCOUNT_JSON (push), ONESIGNAL_* (repli anciennes versions)…
 
 # 3. Utiliser un tag d'image immuable (SHA Git ou version de release).
 export KPB_IMAGE_TAG="$(git rev-parse --short=12 HEAD)"

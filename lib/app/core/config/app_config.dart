@@ -65,16 +65,6 @@ class AppConfig {
     defaultValue: 'https://chat.whatsapp.com/KPBEducation',
   );
 
-  // ── OneSignal push notifications ───────────────────────────────────────
-  /// OneSignal App ID. Overridable via --dart-define=KPB_ONESIGNAL_APP_ID.
-  static const oneSignalAppId = String.fromEnvironment(
-    'KPB_ONESIGNAL_APP_ID',
-    defaultValue: '779d9ea8-1a0d-4189-9d51-4077cb8ded2a',
-  );
-
-  /// True when a non-empty OneSignal App ID is configured.
-  static bool get oneSignalEnabled => oneSignalAppId.trim().isNotEmpty;
-
   // ── PostHog product analytics ──────────────────────────────────────────
   /// PostHog project API key (`phc_…`). Client-side keys are designed to ship
   /// in the app, but we keep it out of the repo and inject it per build with

@@ -373,6 +373,7 @@ export class NotificationsService {
         channel: item.channel,
         status: item.status,
         deliveredAt: item.deliveredAt?.toISOString() ?? null,
+        openedAt: item.openedAt?.toISOString() ?? null,
       })),
     };
   }
@@ -405,6 +406,17 @@ export class NotificationsService {
       else if (group.status === 'failed') byChannel[ch].failed += count;
     }
 
+    // Ouvertures signalées par l'application au tap (push seulement). Le taux
+    // se rapporte aux livraisons réussies : une notification jamais arrivée ne
+    // peut pas être ouverte.
+    const opened =
+      (await this.prismaService.execute((prisma) =>
+        prisma.notificationDelivery.count({
+          where: { campaignId, channel: 'push', openedAt: { not: null } },
+        }),
+      )) ?? 0;
+    const pushDelivered = byChannel['push']?.delivered ?? 0;
+
     const totalDeliveries = Object.values(byChannel).reduce(
       (sum, ch) => sum + ch.total,
       0,
@@ -425,6 +437,9 @@ export class NotificationsService {
           totalDeliveries > 0
             ? Math.round((totalDelivered / totalDeliveries) * 100)
             : 0,
+        opened,
+        openRate:
+          pushDelivered > 0 ? Math.round((opened / pushDelivered) * 100) : 0,
       },
     };
   }

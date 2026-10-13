@@ -26,8 +26,8 @@
 //     reflète les drapeaux à l'exécution ;
 //   · la description de la dictée est confrontée à la présence, dans
 //     `speech_input_service.dart`, du chemin réseau `allowPlatformService` ;
-//   · la puce OneSignal est confrontée aux étiquettes réellement envoyées par
-//     `AppController.syncOneSignalIdentity()` (via `oneSignalTargetingTags()`) ;
+//   · la puce Cloud Messaging est confrontée à ce que `PushService` envoie
+//     réellement (jeton + plateforme, vers notre backend seulement) ;
 //   · le libellé de l'interrupteur d'analyse est confronté au fait que
 //     `AnalyticsService.setCollectionEnabled` coupe bien Crashlytics.
 //
@@ -306,88 +306,73 @@ void main() {
           contains('Google'));
     });
 
-    test('la puce OneSignal déclare les étiquettes que le code envoie', () {
+    test('la puce Cloud Messaging déclare ce que le code envoie', () {
       final controller = _codeWithoutComments(
           'lib/app/core/controllers/app_controller/session.dart');
-      final sync = RegExp(r'syncOneSignalIdentity\(\)\s*async\s*\{(.*?)\n  \}',
-              dotAll: true)
-          .firstMatch(controller)
-          ?.group(1);
+      final sync =
+          RegExp(r'syncPushIdentity\(\)\s*async\s*\{(.*?)\n  \}', dotAll: true)
+              .firstMatch(controller)
+              ?.group(1);
       expect(sync, isNotNull,
-          reason: 'syncOneSignalIdentity() introuvable : garde morte.');
-      expect(sync, contains('OneSignalService.instance.login('));
-      // Les étiquettes sont construites par `oneSignalTargetingTags()` ; on
-      // suit le fil jusqu'à la map réellement renvoyée.
-      expect(sync, contains('tags: oneSignalTargetingTags('),
-          reason: 'syncOneSignalIdentity() n\'envoie plus les étiquettes de '
-              'oneSignalTargetingTags() : repointez cette garde.');
-      final builder =
-          _codeWithoutComments('lib/app/core/services/onesignal_tags.dart');
-      final returned = RegExp(r'return\s*\{(.*?)\};', dotAll: true)
-          .firstMatch(builder)
-          ?.group(1);
-      expect(returned, isNotNull,
-          reason: 'map renvoyée par oneSignalTargetingTags() introuvable : '
-              'garde morte.');
+          reason: 'syncPushIdentity() introuvable : garde morte.');
+      // Seul l'identifiant de compte part, et vers NOTRE backend : le ciblage
+      // se calcule sur le serveur. Une étiquette qui reviendrait ici partirait
+      // sans être déclarée.
+      expect(sync, contains('PushService.instance.login(userId: current.id)'));
+      expect(sync!.contains('tags'), isFalse,
+          reason: 'des étiquettes de ciblage repartent : déclarez-les.');
 
-      final tags = RegExp(r"'([a-z_]+)':")
-          .allMatches(returned!)
-          .map((m) => m.group(1)!)
-          .toSet();
+      final push =
+          _codeWithoutComments('lib/app/core/services/push_service.dart');
+      expect(push, contains('registerDeviceToken(token, pushPlatformName())'),
+          reason: 'le jeton n\'est plus enregistré comme la puce le décrit : '
+              'repointez cette garde.');
+      for (final leak in ['email', 'addTags', 'setTags', 'subscribeToTopic']) {
+        expect(push.contains(leak), isFalse,
+            reason: 'PushService transmet « $leak » : la puce dit « aucun '
+                'identifiant de compte ni donnée de profil ».');
+      }
 
-      // Mapping explicite étiquette → mot que la puce doit porter, comme le
-      // `_permissionToToken` de privacy_disclosure_parity_test.dart. Une
-      // étiquette non mappée fait rougir : elle part sans être déclarée.
-      const frWord = <String, String>{
-        'account_type': 'type de compte',
-        'level': 'niveau d\'études',
-        'target_country': 'pays visé',
-        'locale': 'langue',
-      };
-      const enWord = <String, String>{
-        'account_type': 'account type',
-        'level': 'study level',
-        'target_country': 'target country',
-        'locale': 'language',
-      };
+      final frBullet = _bullet(_fr()['privacy_s5_body']!, 'Cloud Messaging');
+      final enBullet = _bullet(_en()['privacy_s5_body']!, 'Cloud Messaging');
+      expect(frBullet, contains('aucun identifiant de compte'));
+      expect(enBullet, contains('no account identifier'));
+    });
 
-      expect(
-        tags.length,
-        4,
-        reason: 'Le nombre d\'étiquettes envoyées à OneSignal a changé '
-            '($tags). Les deux puces annoncent « quatre » / « four » : '
-            'mettez-les à jour, ainsi que ce pin.',
-      );
-
+    // OneSignal ne vit plus dans ce code, mais les versions qui l'embarquent
+    // sont encore installées : le serveur leur envoie leurs notifications, et
+    // leurs abonnements portent les quatre étiquettes qu'elles envoyaient. La
+    // source de vérité est donc l'artefact figé — ces quatre mots ne bougeront
+    // plus. La puce disparaîtra avec le repli serveur (`PushSenderService`).
+    test('la puce OneSignal reste tant que le serveur garde le repli', () {
+      final router = _codeWithoutComments(
+          'backend/src/modules/notifications/push-sender.service.ts');
+      if (!router.contains('OneSignalSenderService')) {
+        fail('Le repli OneSignal a été retiré du serveur : supprimez la puce '
+            'OneSignal des deux politiques, et ce test.');
+      }
       final frBullet = _bullet(_fr()['privacy_s5_body']!, 'OneSignal');
       final enBullet = _bullet(_en()['privacy_s5_body']!, 'OneSignal');
-      final undeclared = <String>[];
-      for (final tag in tags) {
-        final fr = frWord[tag];
-        final en = enWord[tag];
-        if (fr == null || en == null) {
-          undeclared.add('$tag — étiquette non mappée dans ce test');
-          continue;
-        }
-        if (!frBullet.contains(fr)) {
-          undeclared.add('$tag — absent de la puce FR');
-        }
-        if (!enBullet.contains(en)) {
-          undeclared.add('$tag — absent de la puce EN');
-        }
+      expect(frBullet, contains('versions antérieures'));
+      expect(enBullet, contains('earlier versions'));
+      for (final word in [
+        'type de compte',
+        'niveau d\'études',
+        'pays visé',
+        'langue',
+        'jamais votre adresse e-mail',
+      ]) {
+        expect(frBullet, contains(word), reason: word);
       }
-      expect(undeclared, isEmpty, reason: undeclared.join('\n'));
-
-      // La promesse « jamais votre adresse e-mail » ne doit pas survivre au
-      // code qui la tient : c'est ce couplage qui manquait quand l'e-mail
-      // partait chez OneSignal sous une politique muette.
-      expect(frBullet, contains('jamais votre adresse e-mail'));
-      expect(enBullet, contains('never your email address'));
-      final onesignal =
-          _codeWithoutComments('lib/app/core/services/onesignal_service.dart');
-      expect(onesignal.contains('addEmail'), isFalse,
-          reason: 'La politique promet qu\'aucun e-mail ne part, et le service '
-              'appelle addEmail. L\'un des deux ment.');
+      for (final word in [
+        'account type',
+        'study level',
+        'target country',
+        'language',
+        'never your email address',
+      ]) {
+        expect(enBullet, contains(word), reason: word);
+      }
     });
 
     test('l\'interrupteur d\'analyse nomme ce qu\'il coupe vraiment', () {

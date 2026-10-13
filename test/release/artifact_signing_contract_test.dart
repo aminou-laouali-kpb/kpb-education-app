@@ -55,7 +55,7 @@ void main() {
     final analytics = _read('lib/app/core/services/analytics_service.dart');
     final crashlytics =
         _read('lib/app/core/observability/crashlytics_observability.dart');
-    final oneSignal = _read('lib/app/core/services/onesignal_service.dart');
+    final push = _read('lib/app/core/services/push_service.dart');
     final preflight = _read('scripts/preflight-ios-archive.sh');
 
     test('Release uses production APNs and Debug stays development-only', () {
@@ -106,8 +106,7 @@ void main() {
       expect(types, isNot(contains('NSPrivacyCollectedDataTypeLocation')));
     });
 
-    test('OneSignal location capability is linked but never invoked', () {
-      expect(oneSignal, isNot(contains('OneSignal.Location')));
+    test('location purpose string is declared but never requested', () {
       expect(info, contains('NSLocationWhenInUseUsageDescription'));
       expect(
         _plistValue(info, 'NSLocationWhenInUseUsageDescription').toLowerCase(),
@@ -115,9 +114,9 @@ void main() {
       );
     });
 
-    test('OneSignal receives no email or SMS identity', () {
-      expect(oneSignal, isNot(contains('OneSignal.User.addEmail')));
-      expect(oneSignal, isNot(contains('OneSignal.User.addSms')));
+    test('the push SDK is FCM, and OneSignal is gone from the app', () {
+      expect(push, contains('package:firebase_messaging/'));
+      expect(_read('pubspec.yaml'), isNot(contains('onesignal_flutter')));
     });
 
     test('all analytics collectors start inert until consent is restored', () {

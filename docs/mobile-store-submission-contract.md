@@ -105,11 +105,13 @@ binary has a non-empty `POSTHOG_API_KEY`. Replay is declared as Product
 Interaction; text and images remain masked. The preflight makes the key choice
 explicit without printing it.
 
-OneSignal receives the push token, KPB user ID, and the declared targeting tags
-(`account_type`, `level`, `target_country`, `locale`). It no longer receives the
-student's email or phone. The iOS OneSignal distribution links a location
-module, which is why `NSLocationWhenInUseUsageDescription` remains present, but
-the app calls no `OneSignal.Location` API and requests no location permission.
+Push goes through Firebase Cloud Messaging directly: Google receives the device
+push token only; the token-to-account link lives in the KPB backend
+(`DeviceToken`). The app no longer embeds the OneSignal SDK; the backend keeps a
+OneSignal fallback for earlier builds only (see `docs/CONSOLE_ANSWERS.md`
+§0sexies). `NSLocationWhenInUseUsageDescription` was declared for OneSignal's
+location module and is kept as a precaution until the archive proves no library
+references CoreLocation; the app requests no location permission.
 Do not claim location collection. Review the Xcode-generated privacy report for
 the final archive because third-party manifests are aggregated separately.
 

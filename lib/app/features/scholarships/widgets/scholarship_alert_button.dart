@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/ui/app_tokens.dart';
 import '../../../core/repositories/app_api_client.dart';
-import '../../../core/services/onesignal_service.dart';
+import '../../../core/services/push_service.dart';
 
 class ScholarshipAlertButton extends StatefulWidget {
   const ScholarshipAlertButton({
@@ -51,7 +51,7 @@ class _ScholarshipAlertButtonState extends State<ScholarshipAlertButton> {
     try {
       if (next) {
         await client.subscribeScholarshipAlert(widget.scholarshipId);
-        await OneSignalService.instance.requestPermission();
+        await PushService.instance.requestPermission();
       } else {
         await client.unsubscribeScholarshipAlert(widget.scholarshipId);
       }

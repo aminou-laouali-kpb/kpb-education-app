@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto';
 
 import { CaseStatus } from '../../common/enums/case-status.enum';
 import { InternalRole } from '../../common/enums/internal-role.enum';
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferralCreditsService } from '../referrals/referral-credits.service';
 import { CaseLeadMailService } from './case-lead-mail.service';
@@ -64,7 +64,7 @@ export class CasesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly moduleRef: ModuleRef,
-    private readonly pushService: OneSignalSenderService,
+    private readonly pushService: PushSenderService,
     @Optional() private readonly leadMail?: CaseLeadMailService,
   ) {}
 

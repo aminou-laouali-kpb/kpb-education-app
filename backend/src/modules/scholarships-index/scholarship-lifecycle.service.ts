@@ -5,7 +5,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivateScholarshipDto } from './dto/activate-scholarship.dto';
 import { ForecastScholarshipDto } from './dto/forecast-scholarship.dto';
@@ -15,7 +15,7 @@ import { ScholarshipContentQualityService } from './scholarship-content-quality.
 export class ScholarshipLifecycleService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly pushSender: OneSignalSenderService,
+    private readonly pushSender: PushSenderService,
     private readonly contentQuality: ScholarshipContentQualityService,
   ) {}
 

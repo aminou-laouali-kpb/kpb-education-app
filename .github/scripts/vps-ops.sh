@@ -153,43 +153,51 @@ report_key() {
 
 # Le push est-il seulement CAPABLE de partir, et vers la bonne application ?
 #
-# `OneSignalSenderService` se dégrade en silence : sans ces deux variables,
+# `PushSenderService` se dégrade en silence : sans aucune de ces variables,
 # chaque envoi devient un no-op journalisé, le fil d'actualité s'écrit quand
 # même, et le dispatcher rend `push_unconfigured`. Rien, nulle part, ne le
 # disait — c'est la forme d'échec qui a envoyé la build 50 sans PostHog.
+#
+# Deux chemins pendant la transition :
+#   - FCM (`FCM_SERVICE_ACCOUNT_JSON`) : versions de l'app qui enregistrent un
+#     jeton d'appareil — le chemin normal, gratuit ;
+#   - OneSignal (`ONESIGNAL_*`) : versions antérieures, encore abonnées chez
+#     OneSignal. À retirer quand plus personne ne les utilise.
 show_push_state() {
-  echo "── Notifications push (OneSignal) ──"
+  echo "── Notifications push (FCM + OneSignal en transition) ──"
   docker inspect kpb_api >/dev/null 2>&1 \
     || echo "  (conteneur kpb_api introuvable — valeurs lues dans .env, pas dans le processus)"
-  local ok=0
-  report_key ONESIGNAL_APP_ID public || ok=1
-  report_key ONESIGNAL_REST_API_KEY masked || ok=1
-  if [ "$ok" -ne 0 ]; then
+  local fcm=0 onesignal=0
+  report_key FCM_SERVICE_ACCOUNT_JSON masked || fcm=1
+  report_key ONESIGNAL_APP_ID public || onesignal=1
+  report_key ONESIGNAL_REST_API_KEY masked || onesignal=1
+  if [ "$fcm" -ne 0 ] && [ "$onesignal" -ne 0 ]; then
     echo "  → push DÉSACTIVÉ : le fil s'écrira, aucune notification ne partira."
+  elif [ "$fcm" -ne 0 ]; then
+    echo "::warning::FCM_SERVICE_ACCOUNT_JSON absente : seules les anciennes versions de l'app (OneSignal) reçoivent le push. Les nouvelles versions ne reçoivent RIEN."
+  elif [ "$onesignal" -ne 0 ]; then
+    echo "  → push configuré (FCM seul) — les versions de l'app antérieures à FCM ne reçoivent plus rien."
   else
-    echo "  → push configuré."
+    echo "  → push configuré (FCM, et OneSignal pour les anciennes versions)."
   fi
 
   # Comparaison INDICATIVE, et jamais bloquante.
   #
-  # `EXPECTED_ONESIGNAL_APP_ID` vient du `defaultValue` COURANT de
-  # `app_config.dart`. Ce n'est pas nécessairement l'App ID de la build que les
-  # utilisateurs ont installée : le défaut a pu changer depuis la mise en ligne,
-  # et un binaire peut avoir été construit avec `--dart-define`, qui l'emporte.
+  # `EXPECTED_ONESIGNAL_APP_ID` est l'App ID que les builds ANTÉRIEURES à FCM
+  # embarquent. L'app courante n'embarque plus OneSignal : la valeur est donc
+  # figée dans le workflow, comme ces artefacts le sont dans les boutiques.
   #
-  # Un écart mérite donc un REGARD, pas une action. En faire une erreur aurait
-  # invité à basculer le serveur pour le faire correspondre à la source — et à
-  # couper le push pour tous les clients déjà installés. La vérité vit dans
-  # l'artefact distribué : `strings App.framework/App | grep -o '[0-9a-f-]\{36\}'`.
-  if [ -n "${EXPECTED_ONESIGNAL_APP_ID:-}" ]; then
+  # Un écart mérite un REGARD, pas une action. En faire une erreur aurait
+  # invité à basculer le serveur — et à couper le push pour tous les clients
+  # déjà installés. La vérité vit dans l'artefact distribué :
+  # `strings App.framework/App | grep -o '[0-9a-f-]\{36\}'`.
+  if [ -n "${EXPECTED_ONESIGNAL_APP_ID:-}" ] && [ "$onesignal" -eq 0 ]; then
     local server
     server=$(effective_env ONESIGNAL_APP_ID)
-    if [ -z "$server" ]; then
-      : # déjà signalé comme ABSENTE ci-dessus
-    elif [ "$server" = "$EXPECTED_ONESIGNAL_APP_ID" ]; then
-      echo "  App ID identique au défaut courant de app_config.dart ✅"
+    if [ "$server" = "$EXPECTED_ONESIGNAL_APP_ID" ]; then
+      echo "  App ID OneSignal identique à celui des anciennes builds ✅"
     else
-      echo "::warning::l'App ID du serveur ($server) diffère du défaut courant de app_config.dart ($EXPECTED_ONESIGNAL_APP_ID). Ce n'est PAS forcément une panne : la build installée peut porter un autre App ID (défaut modifié depuis la mise en ligne, ou --dart-define). NE PAS basculer le serveur sans avoir lu l'App ID de l'artefact réellement distribué."
+      echo "::warning::l'App ID du serveur ($server) diffère de celui des builds antérieures à FCM ($EXPECTED_ONESIGNAL_APP_ID). Ce n'est PAS forcément une panne : une build peut avoir été construite avec --dart-define. NE PAS basculer le serveur sans avoir lu l'App ID de l'artefact réellement distribué."
     fi
   fi
   echo

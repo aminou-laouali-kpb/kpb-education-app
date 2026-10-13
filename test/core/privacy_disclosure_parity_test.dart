@@ -43,6 +43,10 @@ const _processorSuffixToToken = <String, String>{
   'supabase.co': 'Supabase',
   'resend.com': 'Resend',
   'firebaseio.com': 'Firebase',
+  // Le push part par FCM en direct depuis le backend : titre, corps et jeton
+  // d'appareil. Plus précis que `googleapis.com` (non-processeur, ci-dessous),
+  // il est donc vérifié EN PREMIER — sinon le suffixe générique l'avalait.
+  'fcm.googleapis.com': 'Cloud Messaging',
   'paydunya.com': 'PayDunya',
   'cinetpay.com': 'CinetPay',
   // YouTube a longtemps vécu dans la liste des NON-processeurs, et c'est
@@ -265,8 +269,13 @@ void main() {
     final web = _confidentialite();
 
     hosts.forEach((host, file) {
-      if (_isFirstParty(host) || _isNonProcessor(host)) return;
+      // Le processeur d'abord : un hôte précis (`fcm.googleapis.com`) ne doit
+      // pas être blanchi par un suffixe générique de la liste des
+      // non-processeurs (`googleapis.com`).
       final token = _processorToken(host);
+      if (token == null && (_isFirstParty(host) || _isNonProcessor(host))) {
+        return;
+      }
       if (token == null) {
         unmapped.add('$host  (dans $file)');
         return;
