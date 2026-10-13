@@ -211,6 +211,11 @@ abstract final class AnalyticsParamKey {
   static const elapsedMs = 'elapsed_ms';
   static const catalogHiveFallbackCount = 'catalog_hive_fallback_count';
 
+  /// `sync_full_complete` en échec : l'étape (`account`/`catalog`) et la
+  /// nature de la panne (`timeout`, `connection`, `http_5xx`…), valeurs fermées.
+  static const failureStage = 'failure_stage';
+  static const errorKind = 'error_kind';
+
   static const domain = 'domain';
   static const resolution = 'resolution';
 
