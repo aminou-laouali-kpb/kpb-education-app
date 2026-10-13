@@ -50,7 +50,7 @@ on:
           - full
           - web
       run_seed:
-        description: 'Run prisma:seed after migrating (first install only)'
+        description: 'Run prisma:seed after migrating (first install only: refused, and the deploy stops, if the seeded rows already exist)'
         type: boolean
         required: false
         default: false
@@ -361,10 +361,18 @@ jobs:
 
           if [ "$RUN_SEED" = "true" ]; then
             echo "── seed (explicitly requested) ──"
+            # prisma:seed refuses (exit 1) a production database that already
+            # holds its rows (backend/src/common/seed-safety.ts): on a live
+            # base this stops the deploy here, before the release. No override
+            # is passed from CI on purpose.
             docker compose exec -T api npm run prisma:seed < /dev/null
           fi
 
           echo "── catalog database integrity ──"
+          # An orphan country reference fails the deploy. The catalogue
+          # consistency checks (orphan fieldId, partner without programs, more
+          # than the 1000 programs installed apps load) only print ::warning::
+          # here: keep this call WITHOUT `--strict`, which Backend CI alone passes.
           docker compose run --rm --no-deps api npm run verify:catalog < /dev/null
 
           echo "── release ──"

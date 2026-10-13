@@ -19,6 +19,7 @@ import {
   ScholarshipScraper,
 } from './scholarship-source.interface';
 import { ScholarshipContentQualityService } from './scholarship-content-quality.service';
+import { levelsInText, scholarshipLevels } from './scholarship-level';
 import { GreatYopScraper } from './scrapers/greatyop.scraper';
 import { MastereTnScraper } from './scrapers/mastereTn.scraper';
 
@@ -367,12 +368,19 @@ export class ScholarshipsIndexService {
       (subscriptions ?? []).map((row) => row.scholarshipId),
     );
 
+    // Le niveau se compare en niveaux CANONIQUES, jamais en sous-chaîne d'un
+    // libellé traduit. L'ancien test cherchait `params.level` dans le seul
+    // libellé de la langue demandée : l'app envoie « Bachelor », et en français
+    // la fiche dit « Licence », donc aucun étudiant en Licence ne recevait le
+    // bonus de niveau dans la locale livrée.
+    const targetLevels = levelsInText(params.level);
+
     const mapped = items.map((s) => {
       // Profile-match score
       let matchScore = s.baseMatch;
-      if (params.level) {
-        const levelField = lang === 'fr' ? s.levelEligibleFr : s.levelEligibleEn;
-        if (levelField.toLowerCase().includes(params.level.toLowerCase())) {
+      if (targetLevels.size > 0) {
+        const offered = scholarshipLevels(s);
+        if ([...targetLevels].some((level) => offered.has(level))) {
           matchScore += 30;
         }
       }

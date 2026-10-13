@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 
 import {
@@ -14,15 +15,94 @@ import {
 
 import { mockAdminData } from '../src/common/data/mock-admin';
 import { mockCatalog } from '../src/common/data/mock-catalog';
+import { checkProductionSeed } from '../src/common/seed-safety';
 import { assessLegacyScholarshipSeed } from '../src/modules/scholarships-index/data/legacy-scholarship-seed-safety';
 import { PARCOURS_SEED } from '../src/modules/parcours/data/parcours.seed';
 import * as bcrypt from 'bcrypt';
 
-loadEnvFile?.('.env');
+// Compose supplies DATABASE_URL (and NODE_ENV) to the API container, whose
+// image ships no .env: an unconditional load threw ENOENT there before the
+// production guard could even run.
+if (existsSync('.env')) loadEnvFile?.('.env');
 
 const prisma = new PrismaClient();
 
+// Legacy demo operators, deactivated on every run (see the end of main).
+const LEGACY_DEMO_ADMIN_EMAILS = [
+  'amina@kpb.education',
+  'moussa@kpb.education',
+  'fatou@kpb.education',
+];
+
+/**
+ * How many of the rows this seed writes already exist. Most of them are
+ * upserted with a full `update`, so on a live database a re-run reverts admin
+ * edits (and re-marks uOttawa as a partner): any hit means "not a first
+ * install" for the production guard below.
+ */
+async function countExistingSeedRows(): Promise<number> {
+  const ids = (rows: ReadonlyArray<{ id: string }>) => ({
+    id: { in: rows.map((row) => row.id) },
+  });
+  const counts = await Promise.all([
+    prisma.userProfile.count({ where: { id: 'demo-user' } }),
+    prisma.field.count({ where: ids(mockCatalog.fields) }),
+    prisma.institution.count({ where: ids(mockCatalog.institutions) }),
+    prisma.program.count({ where: ids(mockCatalog.programs) }),
+    prisma.scholarship.count({ where: ids(mockCatalog.scholarships) }),
+    prisma.adminUser.count({
+      where: {
+        email: {
+          in: [
+            ...mockAdminData.adminUsers.map((user) => user.email),
+            ...LEGACY_DEMO_ADMIN_EMAILS,
+          ],
+        },
+      },
+    }),
+    prisma.serviceOffer.count({ where: ids(mockAdminData.serviceOffers) }),
+    prisma.supportDestination.count({
+      where: ids(mockAdminData.supportDestinations),
+    }),
+    prisma.article.count({
+      where: { slug: { in: mockAdminData.articles.map((a) => a.slug) } },
+    }),
+    prisma.forumCategory.count({ where: ids(mockAdminData.forumCategories) }),
+    prisma.forumTopicTag.count({ where: ids(mockAdminData.forumTags) }),
+    prisma.forumModerationAction.count({
+      where: ids(mockAdminData.moderationQueue),
+    }),
+    prisma.notificationTemplate.count({
+      where: ids(mockAdminData.notificationTemplates),
+    }),
+    prisma.notificationCampaign.count({
+      where: ids(mockAdminData.notificationCampaigns),
+    }),
+    prisma.notificationDelivery.count({
+      where: ids(mockAdminData.notificationDeliveries),
+    }),
+    prisma.parcoursStory.count({
+      where: { slug: { in: PARCOURS_SEED.map((story) => story.slug) } },
+    }),
+  ]);
+  return counts.reduce((sum, count) => sum + count, 0);
+}
+
 async function main() {
+  // Production guard: refused on a production database that already holds
+  // any of these rows, unless KPB_ALLOW_PRODUCTION_SEED=1 (see
+  // src/common/seed-safety.ts). A true first install runs as before.
+  const guard = await checkProductionSeed({
+    seed: 'prisma:seed',
+    countExistingRows: countExistingSeedRows,
+  });
+  if (!guard.allowed) {
+    console.error(guard.message);
+    process.exitCode = 1;
+    return;
+  }
+  if (guard.message) console.warn(guard.message);
+
   // Demo student profile — only for dev/demo. Gate behind SEED_DEMO so a
   // production `prisma:seed` (catalog/admin) doesn't create a fake user.
   if (process.env.SEED_DEMO === '1') {
@@ -310,15 +390,7 @@ async function main() {
   // Retire the legacy demo accounts so they can no longer log in (deactivate
   // rather than delete — they may be referenced by historical case assignments).
   await prisma.adminUser.updateMany({
-    where: {
-      email: {
-        in: [
-          'amina@kpb.education',
-          'moussa@kpb.education',
-          'fatou@kpb.education',
-        ],
-      },
-    },
+    where: { email: { in: LEGACY_DEMO_ADMIN_EMAILS } },
     data: { isActive: false },
   });
 

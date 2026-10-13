@@ -149,8 +149,14 @@ jobs:
           npm run seed:countries-m5
           npm run prisma:seed
 
-      - name: Verify catalog country-ref integrity
-        run: npm run verify:catalog
+      - name: Verify catalog integrity (country refs + strict consistency checks)
+        # `--strict` : en plus des références pays (bloquantes partout), les
+        # contrôles de cohérence du catalogue — `fieldId` orphelin, partenaire
+        # sans formation publiée, plus de 1 000 formations dans l'instantané des
+        # builds installées — font échouer ce pas. Le déploiement et vps-ops.sh
+        # lancent le même script SANS le drapeau : ils n'en impriment qu'un
+        # avertissement. Voir src/modules/catalog/catalog-consistency-checks.ts.
+        run: npm run verify:catalog -- --strict
 
       - name: Validate versioned scholarship catalog structure
         # `merge-gate` et non `structure` : ce portail juge la STRUCTURE du

@@ -416,30 +416,37 @@ export class MatchesService {
 
   // Static bilingual narrative (v1 — an LLM narrative is deliberately out of
   // scope so the score path stays deterministic and free).
+  //
+  // Qualitative only: no percentage, no promise of "chances". The score
+  // compares a handful of catalog data (field, minimum grade, fees, teaching
+  // languages, deadline, level) with what the student declared — it says
+  // nothing about an admission decision, so the text describes the fit and
+  // points to the next step. Builds already installed print this text as is.
   private narrative(
     program: ScoringProgram,
     score: MatchScore,
   ): { fr: string; en: string } {
-    const pct = Math.round(score.probability * 100);
     const byZone = {
       green: {
-        fr: `Ton profil correspond très bien à ${program.nameFr} (${pct}% de compatibilité). Fonce, tes chances sont réelles.`,
-        en: `Your profile is a strong match for ${program.nameEn} (${pct}% compatibility). Go for it — your chances are real.`,
+        fr: `Ton profil correspond bien aux critères connus de ${program.nameFr}. Vérifie les conditions officielles et prépare ton dossier.`,
+        en: `Your profile fits the known criteria for ${program.nameEn} well. Check the official requirements and prepare your application.`,
       },
       yellow: {
-        fr: `Ton profil est compatible avec ${program.nameFr} (${pct}%). Un dossier soigné ou une bourse peut faire la différence.`,
-        en: `Your profile is compatible with ${program.nameEn} (${pct}%). A polished application or a scholarship can make the difference.`,
+        fr: `Ton profil correspond en partie aux critères connus de ${program.nameFr}. Compare-le aux conditions officielles et renforce les points faibles de ton dossier.`,
+        en: `Your profile partly fits the known criteria for ${program.nameEn}. Compare it with the official requirements and strengthen the weaker parts of your application.`,
       },
       blue: {
-        fr: `${program.nameFr} est ambitieux pour ton profil actuel (${pct}%). Garde-le en objectif et renforce ton dossier.`,
-        en: `${program.nameEn} is a reach for your current profile (${pct}%). Keep it as a goal and strengthen your application.`,
+        fr: `${program.nameFr} correspond moins à ton profil actuel. Si tu y tiens, garde-le comme objectif : vérifie les conditions officielles et renforce ton dossier.`,
+        en: `${program.nameEn} is less aligned with your current profile. If it matters to you, keep it as a goal: check the official requirements and strengthen your application.`,
       },
     } as const;
     const base = byZone[score.zone];
     if (!score.isEstimate) return { fr: base.fr, en: base.en };
+    // An estimate means a factor had no data on EITHER side (profile or
+    // program), so the text does not blame the profile alone.
     return {
-      fr: `${base.fr} Estimation — complète ton profil pour plus de précision.`,
-      en: `${base.en} Estimate — complete your profile for more precision.`,
+      fr: `${base.fr} Indication partielle : certaines informations manquent, sur ton profil ou sur la formation.`,
+      en: `${base.en} Partial indication: some information is missing, either from your profile or about the program.`,
     };
   }
 

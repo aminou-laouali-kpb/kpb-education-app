@@ -45,6 +45,7 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Dictée vocale | Demande d’accompagnement | Reconnaissance **locale demandée** (correctif 1 du 18/08) ; à défaut, l'app refuse la session et ne l'envoie au service du téléphone qu'après accord explicite | **Garantie inégale** : contrat dur sur iOS (le greffon refuse si le local manque) ; sur Android `onDevice` n'est qu'une préférence et le repli réseau est invisible depuis Dart. Ne pas écrire « jamais transmis ». `NSMicrophoneUsageDescription` + `RECORD_AUDIO` |
 | Profil académique, budget | Onboarding | Postgres + local | Budget → Groq en **tranche** seulement |
 | Jeton push | Runtime | Backend KPB (`DeviceToken`), FCM | |
+| Dernière version / build de l'app, date de dernière requête | En-têtes `X-KPB-App-Version` / `X-KPB-App-Build` (build 54+) des requêtes authentifiées — `backend/src/modules/app-builds/app-build.interceptor.ts` | Postgres (`UserProfile.lastAppVersion`, `lastAppBuild`, `lastAppSeenAt`) | Au plus une écriture par 6 h ; lue seulement en agrégat (`GET /admin/app-builds`) ; incluse dans l'export, supprimée avec le compte |
 | Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés |
 
 ## 3. Permissions (ce que l’OS affiche)

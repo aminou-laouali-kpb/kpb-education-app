@@ -310,6 +310,253 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
     });
   });
 
+  // Le bonus de niveau (+30) se compare en niveaux CANONIQUES. L'ancien test
+  // cherchait `level` en sous-chaîne dans le seul libellé de la langue
+  // demandée : l'app envoie « Bachelor », la fiche française dit « Licence »,
+  // et aucun étudiant en Licence n'était jamais classé par niveau en français.
+  describe('listForProfile — level boost compares canonical levels', () => {
+    const licenceRow = {
+      ...baseRow,
+      id: 'licence',
+      levelEligibleFr: 'Licence de quatre ans à Berekuso',
+      levelEligibleEn: 'Four-year Bachelor at Berekuso',
+      tags: ['bachelor', 'ghana', 'ashesi'],
+      baseMatch: 30,
+    };
+    const masterRow = {
+      ...baseRow,
+      id: 'master',
+      levelEligibleFr: 'Master d’un an',
+      levelEligibleEn: 'One-year Master',
+      tags: ['master', 'uk'],
+      baseMatch: 30,
+    };
+    const scoreOf = (
+      items: Array<{ id: string; matchScore: number }>,
+      id: string,
+    ) => items.find((item) => item.id === id)?.matchScore;
+
+    it('cible Bachelor en locale FR : +30 sur une fiche Licence, rien sur un niveau étranger', async () => {
+      const { service } = makeService([masterRow, licenceRow]);
+
+      const result = await service.listForProfile({
+        lang: 'fr',
+        level: 'Bachelor',
+      });
+
+      expect(scoreOf(result.items, 'licence')).toBe(60);
+      expect(scoreOf(result.items, 'master')).toBe(30);
+      expect(result.items.map((item) => item.id)).toEqual([
+        'licence',
+        'master',
+      ]);
+    });
+
+    it('scores identically whatever the request language', async () => {
+      const { service } = makeService([masterRow, licenceRow]);
+
+      const fr = await service.listForProfile({ lang: 'fr', level: 'Bachelor' });
+      const en = await service.listForProfile({ lang: 'en', level: 'Bachelor' });
+
+      expect(fr.items.map((item) => [item.id, item.matchScore])).toEqual(
+        en.items.map((item) => [item.id, item.matchScore]),
+      );
+    });
+
+    it('falls back to BOTH labels when the scholarship has no level tag', async () => {
+      // Saisie admin ou seed héritée : pas de tag de niveau, seulement les
+      // libellés. Le libellé anglais ne nomme aucun niveau : en locale EN, le
+      // bonus ne peut venir que du libellé français.
+      const untagged = {
+        ...licenceRow,
+        id: 'untagged',
+        levelEligibleFr: 'Licence',
+        levelEligibleEn: 'Four-year degree in Cairo',
+        tags: ['legacy-seed'],
+      };
+      const { service } = makeService([untagged]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const result = await service.listForProfile({ lang, level: 'Bachelor' });
+        expect(scoreOf(result.items, 'untagged')).toBe(60);
+      }
+    });
+
+    it('trusts the level tags over a label that cites an excluded level', async () => {
+      const partnerRow = {
+        ...baseRow,
+        id: 'partner',
+        levelEligibleFr:
+          'Secondaire, Licence ou Master selon le partenaire — pas de doctorat',
+        levelEligibleEn:
+          'Secondary, Bachelor or Master depending on the partner — no doctorate',
+        tags: ['secondary', 'bachelor', 'master', 'mastercard-foundation'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([partnerRow]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
+
+        expect(scoreOf(phd.items, 'partner')).toBe(30);
+        expect(scoreOf(bachelor.items, 'partner')).toBe(60);
+      }
+    });
+
+    it('reads a doctorate from the labels when the level tags stop at master', async () => {
+      // Forme de gates_cambridge_2027 : le catalogue vérifié ne sait pas dire
+      // `doctorate`, la fiche n'a donc que le tag `master`, mais son libellé
+      // accepte le doctorat. L'ancien test en sous-chaîne lui donnait +30 pour
+      // « PhD » en anglais ; le tag seul ne le lui donnait plus.
+      const gatesRow = {
+        ...baseRow,
+        id: 'gates',
+        levelEligibleFr:
+          'Master de recherche ou d’un an à temps plein (MPhil, MRes, LLM, MLitt) ou doctorat — pas de MASt, MBA ni second BA',
+        levelEligibleEn:
+          'Full-time research or one-year Master (MPhil, MRes, LLM, MLitt) or PhD — no MASt, MBA or second BA',
+        tags: ['master', 'uk', 'cambridge', 'fully-funded'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([gatesRow]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+        const master = await service.listForProfile({ lang, level: 'Master' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
+
+        expect(scoreOf(phd.items, 'gates')).toBe(60);
+        expect(scoreOf(master.items, 'gates')).toBe(60);
+        expect(scoreOf(bachelor.items, 'gates')).toBe(30);
+      }
+    });
+
+    it('matches whole words only in the label fallback', async () => {
+      // « Mastercard » contient « master » : en sous-chaîne, une Licence
+      // financée par la Mastercard Foundation passait pour un master.
+      const { service } = makeService([
+        {
+          ...baseRow,
+          id: 'mcf',
+          levelEligibleFr: 'Licence — Mastercard Foundation',
+          levelEligibleEn: 'Undergraduate — Mastercard Foundation',
+          tags: [],
+          baseMatch: 30,
+        },
+      ]);
+
+      const result = await service.listForProfile({ lang: 'fr', level: 'Master' });
+
+      expect(scoreOf(result.items, 'mcf')).toBe(30);
+    });
+
+    it("ignores the scrapers' title-derived level tags", async () => {
+      // Forme d'une fiche GreatYop : le libellé vient des catégories
+      // (`undergraduate`), mais buildTags ajoute `masters` parce que le titre
+      // contient « Mastercard », et `phd` dès qu'il contient « doctoral ».
+      const greatYopRow = {
+        ...baseRow,
+        id: 'greatyop-mcf',
+        nameEn: 'Mastercard Foundation Scholars Program at X',
+        nameFr: 'Programme Mastercard Foundation Scholars à X',
+        levelEligibleFr: 'Licence',
+        levelEligibleEn: 'undergraduate',
+        tags: ['undergraduate', 'masters', 'fully-funded'],
+        baseMatch: 30,
+      };
+      const postdocRow = {
+        ...baseRow,
+        id: 'greatyop-postdoc',
+        nameEn: 'Postdoctoral Fellowship at Y',
+        nameFr: 'Bourse postdoctorale à Y',
+        levelEligibleFr: 'Post-doctorat',
+        levelEligibleEn: 'postdoctoral',
+        tags: ['postdoctoral', 'phd'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([greatYopRow, postdocRow]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const master = await service.listForProfile({ lang, level: 'Master' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+
+        expect(scoreOf(master.items, 'greatyop-mcf')).toBe(30);
+        expect(scoreOf(bachelor.items, 'greatyop-mcf')).toBe(60);
+        expect(scoreOf(phd.items, 'greatyop-postdoc')).toBe(30);
+      }
+    });
+
+    it('gives no boost for an unrecognised or blank target level', async () => {
+      const { service } = makeService([licenceRow]);
+
+      for (const level of ['', '   ', 'BTS']) {
+        const result = await service.listForProfile({ lang: 'fr', level });
+        expect(scoreOf(result.items, 'licence')).toBe(30);
+      }
+    });
+
+    it('leaves the response shape unchanged', async () => {
+      const { service } = makeService([licenceRow]);
+
+      const result = await service.listForProfile({
+        lang: 'fr',
+        level: 'Bachelor',
+      });
+
+      expect(Object.keys(result).sort()).toEqual([
+        'databaseUnavailable',
+        'fieldFilterRelaxed',
+        'hasMore',
+        'items',
+        'limit',
+        'offset',
+        'total',
+      ]);
+      expect(Object.keys(result.items[0]).sort()).toEqual([
+        'advantages',
+        'applicationRequirement',
+        'applicationSteps',
+        'applicationUrl',
+        'countryId',
+        'countryName',
+        'currentCycle',
+        'deadlineAt',
+        'deadlineLabel',
+        'description',
+        'eligibility',
+        'featuredVideo',
+        'fundingType',
+        'id',
+        'isAlertEnabled',
+        'keyRequirements',
+        'lastVerifiedAt',
+        'level',
+        'matchScore',
+        'relatedFieldIds',
+        'sourceUrl',
+        'tags',
+        'title',
+        'typeOfFunding',
+      ]);
+      // `level` reste le libellé localisé affiché par l'app, pas le niveau
+      // canonique qui sert au classement.
+      expect(result.items[0].level).toBe('Licence de quatre ans à Berekuso');
+      expect(result.items[0].tags).toEqual(['bachelor', 'ghana', 'ashesi']);
+      expect(typeof result.items[0].matchScore).toBe('number');
+    });
+  });
+
   describe('publication safety and detail route', () => {
     it('does not approve a scholarship rejected by the quality gate', async () => {
       const update = jest.fn();

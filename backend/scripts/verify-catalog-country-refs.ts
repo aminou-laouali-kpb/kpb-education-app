@@ -3,6 +3,14 @@ import { loadEnvFile } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
 
+import {
+  evaluateCatalogConsistency,
+  parseVerifyCatalogArgs,
+  publicCatalogProgramWhere,
+  publicPartnerInstitutionWhere,
+  renderCatalogConsistencyReport,
+} from '../src/modules/catalog/catalog-consistency-checks';
+
 // Compose supplies DATABASE_URL to the production verification container. Keep
 // local CLI convenience without requiring a .env file in the runtime image.
 if (existsSync('.env')) loadEnvFile?.('.env');
@@ -24,7 +32,7 @@ const prisma = new PrismaClient();
  *
  * Exits non-zero when any orphan is found, so it can be used as a CI gate.
  */
-async function main() {
+async function verifyCountryRefs() {
   const activeCountries = await prisma.country.findMany({
     where: { isActive: true },
     select: { id: true },
@@ -80,6 +88,75 @@ async function main() {
     console.error(`  ${o.table}: countryId="${o.countryId}" (${o.count} row(s))`);
   }
   process.exitCode = 1;
+}
+
+/**
+ * Catalogue consistency checks (logic and rationale in
+ * src/modules/catalog/catalog-consistency-checks.ts): orphan Program.fieldId,
+ * active partner institutions with no active program, and a public catalogue
+ * larger than the 1000-program snapshot installed app builds load.
+ *
+ * They only WARN by default — deploy.yml and vps-ops.sh run without flags, and
+ * a degraded catalogue must not block a release. `--strict` (Backend CI only)
+ * turns them into a failure. Only aggregates are read: vps-ops.sh runs this
+ * inside the live API container, under its memory cap.
+ */
+async function verifyCatalogConsistency(strict: boolean) {
+  const [fields, programsByField, partnerInstitutions, programsByInstitution, publicProgramCount] =
+    await Promise.all([
+      prisma.field.findMany({ select: { id: true } }),
+      prisma.program.groupBy({ by: ['fieldId', 'isActive'], _count: { _all: true } }),
+      prisma.institution.findMany({
+        where: publicPartnerInstitutionWhere(),
+        select: { id: true, nameFr: true },
+      }),
+      prisma.program.groupBy({
+        by: ['institutionId'],
+        where: publicCatalogProgramWhere(),
+        _count: { _all: true },
+      }),
+      prisma.program.count({ where: publicCatalogProgramWhere() }),
+    ]);
+
+  const findings = evaluateCatalogConsistency({
+    fieldIds: fields.map((f) => f.id),
+    programsByField: programsByField.map((row) => ({
+      fieldId: row.fieldId,
+      isActive: row.isActive,
+      count: row._count._all,
+    })),
+    partnerInstitutions,
+    publicProgramsByInstitution: programsByInstitution.map((row) => ({
+      institutionId: row.institutionId,
+      count: row._count._all,
+    })),
+    publicProgramCount,
+  });
+  const report = renderCatalogConsistencyReport(findings, { strict, publicProgramCount });
+  for (const line of report.lines) {
+    // eslint-disable-next-line no-console
+    (report.ok ? console.log : console.error)(line);
+  }
+  if (report.exitCode !== 0) process.exitCode = report.exitCode;
+}
+
+async function main() {
+  // Parsed first: a mistyped flag must fail before any database work.
+  const { strict } = parseVerifyCatalogArgs(process.argv.slice(2));
+  await verifyCountryRefs();
+  try {
+    await verifyCatalogConsistency(strict);
+  } catch (error) {
+    // A warn-only check must not block a deploy by crashing either: only the
+    // country refs above decide that. CI (`--strict`) still fails on it.
+    if (strict) throw error;
+    // eslint-disable-next-line no-console
+    console.error(
+      '::warning::Catalog consistency checks could not run (not blocking without --strict):',
+    );
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
 }
 
 main()
