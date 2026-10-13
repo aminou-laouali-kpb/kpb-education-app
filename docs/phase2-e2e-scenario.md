@@ -6,11 +6,9 @@ Objectif spec : **inscription → onboarding → quiz France → verdict éligib
 
 ```bash
 cd backend
-npm run seed:catalog
-# ou étape par étape :
-# npm run seed:countries-m5
-# npm run import:omnes:bundled   # régénère le JSON depuis scripts/data/omnes_fall_26.xlsx
-# npm run seed:omnes             # 747 programmes OMNES en base
+npm run seed:catalog            # pays M5 + catalogue unique
+npm run import:omnes:bundled    # régénère le JSON depuis scripts/data/omnes_fall_26.xlsx
+npm run seed:omnes              # formations OMNES (seed:catalog ne les sème plus)
 npm run dev
 ```
 

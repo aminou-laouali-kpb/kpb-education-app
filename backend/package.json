@@ -24,7 +24,7 @@
     "seed:partners": "ts-node scripts/seed-partner-schools.ts",
     "seed:countries-m5": "ts-node scripts/seed-countries-m5.ts",
     "seed:catalogue-unique": "ts-node scripts/seed-catalogue-unique.ts",
-    "seed:catalog": "npm run seed:countries-m5 && npm run import:omnes:bundled && npm run seed:omnes && npm run seed:partners && npm run seed:catalogue-unique",
+    "seed:catalog": "npm run seed:countries-m5 && npm run seed:catalogue-unique",
     "verify:catalog": "ts-node scripts/verify-catalog-country-refs.ts",
     "eef:fetch": "ts-node scripts/fetch-eef-catalog.ts",
     "eef:enrich": "ts-node scripts/enrich-eef-catalog.ts",

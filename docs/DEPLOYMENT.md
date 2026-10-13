@@ -400,10 +400,22 @@ Lorsque l'API Container est lancé pour la première fois, la base de données e
 
 ```bash
 docker exec -it kpb_api npx prisma migrate deploy
-docker exec -it kpb_api npm run seed:catalog   # pays + OMNES + partenaires + catalogue unique
+docker exec -it kpb_api npm run seed:catalog   # pays + catalogue unique
+docker exec -it kpb_api sh -c 'npm run import:omnes:bundled && npm run seed:omnes'  # formations OMNES
+docker exec -it kpb_api npm run seed:partners  # écoles partenaires (annexe 05)
 docker exec -it kpb_api npm run prisma:seed    # comptes admin (mots de passe temporaires imprimés une fois) + contenu de démo
 docker exec -it kpb_api npm run verify:catalog # confirme 0 référence pays orpheline
 ```
+
+`seed:omnes`, `seed:partners` et `prisma:seed` **refusent de tourner en
+production** (code de sortie 1) dès que la base contient une des lignes qu'ils
+écriraient : ils ne passent que sur une première installation. `seed:omnes` et
+`seed:partners` ne suppriment ni ne modifient plus jamais une ligne existante
+(ils créaient auparavant tout leur espace `omnes-*` / `partner-*` après l'avoir
+vidé, Mundiapolis et Universiapolis compris). Pour forcer un seed en
+connaissance de cause, et pour ce seul lancement :
+`docker compose exec -e KPB_ALLOW_PRODUCTION_SEED=1 api npm run <seed>`.
+Détails : `backend/scripts/README.md`.
 
 > ℹ️ Le conteneur API **n'exécute volontairement aucune migration au
 > démarrage**. Appliquez `prisma migrate deploy` une seule fois, après la

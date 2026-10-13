@@ -9,8 +9,18 @@
  *   Institution = the SCHOOL (INSEEC, ECE, ESCE, HEIP, Sup de Pub) — 5 total.
  *   Program     = one campus-agnostic formation, carrying campusOfferings[].
  *
+ * Create-only: a school that already exists is left exactly as it is, together
+ * with its formations, and nothing is ever deleted. This script used to
+ * `deleteMany` every `omnes-*` row before recreating them, wiping every edit
+ * made in the admin. A missing school is created with its missing formations
+ * in one transaction, and its `programIds` lists the formations actually
+ * attached to it.
+ *
+ * Refused on a production database that already holds `omnes-*` rows, unless
+ * KPB_ALLOW_PRODUCTION_SEED=1 (see src/common/seed-safety.ts).
+ *
  * Usage:
- *   npm run seed:omnes
+ *   npm run import:omnes:bundled && npm run seed:omnes
  *   ts-node scripts/seed-omnes-programs.ts [path-to-json]
  */
 import { loadEnvFile } from 'node:process';
@@ -20,9 +30,13 @@ import { createHash } from 'node:crypto';
 
 import { Prisma, PrismaClient } from '@prisma/client';
 
+import { checkProductionSeed, linkedProgramIds } from '../src/common/seed-safety';
 import { M5_COUNTRY_SEEDS } from '../src/modules/countries/data/m5-countries.seed';
 
-loadEnvFile?.('.env');
+// Compose supplies DATABASE_URL (and NODE_ENV) to the API container, whose
+// image ships no .env: an unconditional load threw ENOENT there before the
+// production guard could even run.
+if (fs.existsSync('.env')) loadEnvFile?.('.env');
 
 const prisma = new PrismaClient();
 
@@ -87,6 +101,11 @@ function programId(school: string, formationName: string): string {
   return `${PROGRAM_ID_PREFIX}${hash}`;
 }
 
+/// Field ids of the d01..d12 taxonomy (src/modules/orientation/
+/// orientation-fields.data.ts) — the one the app filters on and the catalog
+/// scores against. The former 'computer_science' / 'engineering' / 'business'
+/// are the three demo fields of prisma/seed.ts: a formation filed under them
+/// never surfaced under any real field.
 function inferFieldId(row: OmnesRow): string {
   const text = `${row.programName} ${row.programFamily}`.toLowerCase();
   if (
@@ -94,12 +113,12 @@ function inferFieldId(row: OmnesRow): string {
       text,
     )
   ) {
-    return 'computer_science';
+    return 'd01'; // Informatique & Intelligence Artificielle
   }
   if (/engineer|ingenier|ingénier|aeronaut|aéronaut/.test(text)) {
-    return 'engineering';
+    return 'd03'; // Ingénierie & Sciences
   }
-  return 'business';
+  return 'd02'; // Commerce & Management
 }
 
 function studyLevelsFor(row: OmnesRow): string[] {
@@ -283,6 +302,23 @@ type FormationAcc = {
 };
 
 async function main() {
+  const guard = await checkProductionSeed({
+    seed: 'seed:omnes',
+    countExistingRows: async () =>
+      (await prisma.institution.count({
+        where: { id: { startsWith: INSTITUTION_ID_PREFIX } },
+      })) +
+      (await prisma.program.count({
+        where: { id: { startsWith: PROGRAM_ID_PREFIX } },
+      })),
+  });
+  if (!guard.allowed) {
+    console.error(guard.message);
+    process.exitCode = 1;
+    return;
+  }
+  if (guard.message) console.warn(guard.message);
+
   const jsonPath =
     process.argv[2] ??
     path.resolve(__dirname, 'output', 'omnes-programs-normalized.json');
@@ -297,14 +333,6 @@ async function main() {
   if (!rows.length) throw new Error('OMNES JSON is empty.');
 
   await ensureFranceCountry();
-
-  // Remove previous OMNES seed so re-runs stay idempotent.
-  await prisma.program.deleteMany({
-    where: { id: { startsWith: PROGRAM_ID_PREFIX } },
-  });
-  await prisma.institution.deleteMany({
-    where: { id: { startsWith: INSTITUTION_ID_PREFIX } },
-  });
 
   const institutions = new Map<string, InstitutionAcc>();
   const formations = new Map<string, FormationAcc>();
@@ -362,7 +390,12 @@ async function main() {
     formations.set(progId, formation);
   }
 
-  // --- write institutions (one per school) ---
+  // --- write schools that do not exist yet, each with its formations ---
+  const formationList = [...formations.values()];
+  let createdInstitutions = 0;
+  let createdPrograms = 0;
+  const keptInstitutions: string[] = [];
+
   for (const [instId, inst] of institutions.entries()) {
     const cities = [...inst.campuses].sort((a, b) => a.localeCompare(b, 'fr'));
     const tuitionLabel = inst.prices.length
@@ -376,70 +409,98 @@ async function main() {
         )
       : { fr: 'Voir programmes', en: 'See programs' };
 
-    await prisma.institution.create({
-      data: {
-        id: instId,
-        nameFr: inst.school,
-        nameEn: inst.school,
-        countryId: FRANCE_COUNTRY_ID,
-        locationFr: cities.join(' · '),
-        locationEn: cities.join(' · '),
-        overviewFr: `Réseau ${inst.school} (OMNES Education) — présent sur ${cities.length} campus en France : ${cities.join(', ')}. Partenaire KPB.`,
-        overviewEn: `${inst.school} network (OMNES Education) — ${cities.length} campuses in France: ${cities.join(', ')}. KPB partner.`,
-        studyLevels: [...inst.levels],
-        tuitionLabelFr: tuitionLabel.fr,
-        tuitionLabelEn: tuitionLabel.en,
-        languageRequirementsFr: 'Français ou Anglais selon programme',
-        languageRequirementsEn: 'French or English depending on program',
-        intakePeriods: [...inst.intakes],
-        programIds: [...inst.programIds],
-        isPartner: true,
-      },
-    });
-  }
+    const created = await prisma.$transaction(
+      async (tx) => {
+        const existing = await tx.institution.findUnique({
+          where: { id: instId },
+          select: { id: true },
+        });
+        if (existing) return null;
 
-  // --- write programs (one per campus-agnostic formation) ---
-  const formationList = [...formations.values()];
-  const batchSize = 50;
-  for (let i = 0; i < formationList.length; i += batchSize) {
-    const batch = formationList.slice(i, i + batchSize);
-    await prisma.$transaction(
-      batch.map((formation) => {
-        const offerings: CampusOffering[] = [...formation.offerings.entries()]
-          .sort(([a], [b]) => a.localeCompare(b, 'fr'))
-          .map(([campus, acc]) => ({
-            campus,
-            tuitionUpfront: acc.tuitionUpfront,
-            tuitionInstallments: acc.tuitionInstallments,
-            intake: [...acc.intakes].join(' · ') || null,
-          }));
-        const tuition = formatTuitionSummary(offerings);
-        const requirements = [...formation.requirements];
-        const language = [...formation.languages].join(' / ');
+        // --- programs (one per campus-agnostic formation) ---
+        const programs = await tx.program.createMany({
+          data: formationList
+            .filter((formation) => formation.instId === instId)
+            .map((formation) => {
+              const offerings: CampusOffering[] = [
+                ...formation.offerings.entries(),
+              ]
+                .sort(([a], [b]) => a.localeCompare(b, 'fr'))
+                .map(([campus, acc]) => ({
+                  campus,
+                  tuitionUpfront: acc.tuitionUpfront,
+                  tuitionInstallments: acc.tuitionInstallments,
+                  intake: [...acc.intakes].join(' · ') || null,
+                }));
+              const tuition = formatTuitionSummary(offerings);
+              const requirements = [...formation.requirements];
+              const language = [...formation.languages].join(' / ');
 
-        return prisma.program.create({
+              return {
+                id: formation.progId,
+                institutionId: formation.instId,
+                countryId: FRANCE_COUNTRY_ID,
+                fieldId: formation.fieldId,
+                nameFr: formation.name,
+                nameEn: formation.name,
+                levelFr: formation.level.fr,
+                levelEn: formation.level.en,
+                durationFr: formation.duration.fr,
+                durationEn: formation.duration.en,
+                tuitionFr: tuition.fr,
+                tuitionEn: tuition.en,
+                languageFr: language,
+                languageEn: language,
+                requirementsFr: requirements,
+                requirementsEn: requirements,
+                campusOfferings: offerings as unknown as Prisma.InputJsonValue,
+              };
+            }),
+          skipDuplicates: true,
+        });
+
+        const attached = await tx.program.findMany({
+          where: { institutionId: instId },
+          select: { id: true },
+        });
+
+        await tx.institution.create({
           data: {
-            id: formation.progId,
-            institutionId: formation.instId,
+            id: instId,
+            nameFr: inst.school,
+            nameEn: inst.school,
             countryId: FRANCE_COUNTRY_ID,
-            fieldId: formation.fieldId,
-            nameFr: formation.name,
-            nameEn: formation.name,
-            levelFr: formation.level.fr,
-            levelEn: formation.level.en,
-            durationFr: formation.duration.fr,
-            durationEn: formation.duration.en,
-            tuitionFr: tuition.fr,
-            tuitionEn: tuition.en,
-            languageFr: language,
-            languageEn: language,
-            requirementsFr: requirements,
-            requirementsEn: requirements,
-            campusOfferings: offerings as unknown as Prisma.InputJsonValue,
+            locationFr: cities.join(' · '),
+            locationEn: cities.join(' · '),
+            overviewFr: `Réseau ${inst.school} (OMNES Education) — présent sur ${cities.length} campus en France : ${cities.join(', ')}. Partenaire KPB.`,
+            overviewEn: `${inst.school} network (OMNES Education) — ${cities.length} campuses in France: ${cities.join(', ')}. KPB partner.`,
+            studyLevels: [...inst.levels],
+            tuitionLabelFr: tuitionLabel.fr,
+            tuitionLabelEn: tuitionLabel.en,
+            languageRequirementsFr: 'Français ou Anglais selon programme',
+            languageRequirementsEn: 'French or English depending on program',
+            intakePeriods: [...inst.intakes],
+            programIds: linkedProgramIds(
+              [...inst.programIds],
+              attached.map((program) => program.id),
+            ),
+            isPartner: true,
           },
         });
-      }),
+
+        return programs.count;
+      },
+      // Up to ~150 formations per school in one statement: leave a slow remote
+      // database more room than the 5 s interactive-transaction default.
+      { timeout: 60_000 },
     );
+
+    if (created === null) {
+      keptInstitutions.push(instId);
+    } else {
+      createdInstitutions += 1;
+      createdPrograms += created;
+    }
   }
 
   const programCount = await prisma.program.count({
@@ -451,8 +512,15 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    `OMNES seed complete: ${programCount} formations across ${institutionCount} schools (France / ${FRANCE_COUNTRY_ID}), from ${rows.length} source rows.`,
+    `OMNES seed complete: ${createdInstitutions} school(s) and ${createdPrograms} formation(s) created; ` +
+      `${programCount} formations across ${institutionCount} schools in base (France / ${FRANCE_COUNTRY_ID}), from ${rows.length} source rows.`,
   );
+  if (keptInstitutions.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `Already present, left untouched with their formations: ${keptInstitutions.join(', ')}.`,
+    );
+  }
 }
 
 main()
