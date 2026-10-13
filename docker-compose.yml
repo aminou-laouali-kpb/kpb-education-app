@@ -64,6 +64,9 @@ services:
       - LLM_REASONING_ENABLED=${LLM_REASONING_ENABLED:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GROQ_MODEL=${GROQ_MODEL:-}
+      # Push : FCM en direct (compte de service Firebase, JSON brut ou base64),
+      # OneSignal seulement pour les versions de l'app antérieures à FCM.
+      - FCM_SERVICE_ACCOUNT_JSON=${FCM_SERVICE_ACCOUNT_JSON:-}
       - ONESIGNAL_APP_ID=${ONESIGNAL_APP_ID:-}
       - ONESIGNAL_REST_API_KEY=${ONESIGNAL_REST_API_KEY:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}

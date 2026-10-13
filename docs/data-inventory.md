@@ -13,7 +13,8 @@ politiques : YouTube et le service de reconnaissance vocale nommés).
 | Destinataire | Hôte / preuve | Région | Ce qui part | Finalité |
 |---|---|---|---|---|
 | **Groq** | `https://api.groq.com/openai/v1/chat/completions` — `backend/src/modules/ai/llm.service.ts` | États-Unis | Texte libre du coach ; faits de profil (niveau, pays, tranche de budget, domaine). Le nom civil n'est plus recopié dans l'invite — mais le lot 11 n'avait couvert que `/tools` : l'orientation sérialisait l'objet `profile` ENTIER, `fullName` compris, jusqu'au correctif du 18/08 (`orientation.service.ts` envoie une projection close ; garde `orientation.prompt-privacy.spec.ts`). Les quatre outils IA restent masqués (`KPB_AI_TOOLS_ENABLED=false`) jusqu'au déploiement couplé avec la build 49. | Réponses IA |
-| **OneSignal** | `https://onesignal.com/api/v1/notifications` — `backend/src/modules/notifications/onesignal-sender.service.ts` ; SDK `lib/app/core/services/onesignal_service.dart` | États-Unis | Jeton push, `external id` = `UserProfile.id`, et 4 étiquettes de ciblage (`account_type`, `level`, `target_country`, `locale`). **L'adresse e-mail ne part plus** (correctif 2 du 18/08 ; garde `onesignal_no_email_test.dart`). | Notifications ciblées |
+| **Firebase Cloud Messaging (Google)** | `https://fcm.googleapis.com/v1/projects/<id>/messages:send` — `backend/src/modules/notifications/fcm-sender.service.ts` ; SDK `lib/app/core/services/push_service.dart` | États-Unis | Jeton d'appareil seul (le rattachement jeton → compte vit dans notre table `DeviceToken`). Titre, corps et charge `data` (route, `campaignId`, `notificationKey`) de chaque notification. | Notifications |
+| **OneSignal** (repli, anciennes versions) | `https://onesignal.com/api/v1/notifications` — `backend/src/modules/notifications/onesignal-sender.service.ts` | États-Unis | Pour les builds antérieures à FCM seulement : jeton push, `external id` = `UserProfile.id`, 4 étiquettes de ciblage envoyées par ces builds. L'app courante n'embarque plus le SDK. À retirer avec le repli de `PushSenderService`. | Notifications (transition) |
 | **Firebase** (Analytics + Crashlytics) | `https://karatoupostbac-178213.firebaseio.com` — `lib/firebase_options.dart` ; init `lib/main.dart` | Google | Événements d’usage, termes de recherche, piles de crash, modèle / OS / version | Analytique, stabilité |
 | **YouTube** (Google) | lecteur intégré `youtube_player_flutter` → WebView `flutter_inappwebview` sur youtube-nocookie.com ; vignettes `img.youtube.com` (`parcours.dart:80`, `catalog.dart:913`), rendues dès l'accueil, connexion ou pas | Google | Adresse IP, user-agent, identifiant de vidéo — dès l'affichage | Lecture des vidéos témoignages et bourses |
 | **Service de reconnaissance vocale de la plateforme** (Apple / Google) | `speech_input_service.dart:86-90` (reconnaissance locale demandée) ; repli sur accord explicite (`case_tunnel_flow.dart:881-888`) | Éditeur de l'OS | L'audio de la dictée, seulement si le local manque ET après accord — sur Android le système peut aussi replier de lui-même ; KPB ne reçoit que le texte | Dictée vocale |
@@ -43,7 +44,7 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Textes soumis au coach | In-app | Postgres + Groq (US) | Texte libre |
 | Dictée vocale | Demande d’accompagnement | Reconnaissance **locale demandée** (correctif 1 du 18/08) ; à défaut, l'app refuse la session et ne l'envoie au service du téléphone qu'après accord explicite | **Garantie inégale** : contrat dur sur iOS (le greffon refuse si le local manque) ; sur Android `onDevice` n'est qu'une préférence et le repli réseau est invisible depuis Dart. Ne pas écrire « jamais transmis ». `NSMicrophoneUsageDescription` + `RECORD_AUDIO` |
 | Profil académique, budget | Onboarding | Postgres + local | Budget → Groq en **tranche** seulement |
-| Jeton push | Runtime | OneSignal | |
+| Jeton push | Runtime | Backend KPB (`DeviceToken`), FCM | |
 | Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés |
 
 ## 3. Permissions (ce que l’OS affiche)
@@ -51,7 +52,7 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 ### Android (`android/app/src/main/AndroidManifest.xml`)
 
 - `INTERNET`, `ACCESS_NETWORK_STATE` — API, Firebase
-- `POST_NOTIFICATIONS` — OneSignal (Android 13+)
+- `POST_NOTIFICATIONS` — notifications FCM (Android 13+)
 - `USE_BIOMETRIC` — verrouillage local
 - `RECORD_AUDIO` — dictée
 
@@ -61,7 +62,7 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 - `NSPhotoLibraryUsageDescription` — même usages
 - `NSMicrophoneUsageDescription` / `NSSpeechRecognitionUsageDescription` — dictée
 - `NSFaceIDUsageDescription` — verrouillage
-- `NSLocationWhenInUseUsageDescription` — déclarée parce que le SDK OneSignal référence CoreLocation ; **jamais demandée ni utilisée**
+- `NSLocationWhenInUseUsageDescription` — déclarée à l'origine pour le SDK OneSignal (retiré), gardée par précaution tant qu'une archive n'a pas prouvé qu'aucune bibliothèque ne référence CoreLocation ; **jamais demandée ni utilisée**
 
 ## 4. Ce que ce fichier n’est pas
 

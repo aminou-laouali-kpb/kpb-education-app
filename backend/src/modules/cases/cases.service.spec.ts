@@ -2,7 +2,7 @@ import { ModuleRef } from '@nestjs/core';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { InternalRole } from '../../common/enums/internal-role.enum';
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CaseLeadMailService } from './case-lead-mail.service';
 import { CasesService } from './cases.service';
@@ -39,7 +39,7 @@ function makeService(): CasesService {
 
   const push = {
     sendToUser: async () => {},
-  } as unknown as OneSignalSenderService;
+  } as unknown as PushSenderService;
 
   const moduleRef = { get: () => null } as unknown as ModuleRef;
 
@@ -95,7 +95,7 @@ describe('CasesService — realtime case authorization', () => {
     return new CasesService(
       prisma,
       { get: () => null } as unknown as ModuleRef,
-      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
     );
   }
 
@@ -175,7 +175,7 @@ describe('CasesService — referral crediting is fire-and-forget (KPB-77)', () =
       // create() awaits this and treats the result as the persisted case.
       execute: async () => ({ id: 'case-1' }),
     } as unknown as PrismaService;
-    const push = { sendToUser: async () => {} } as unknown as OneSignalSenderService;
+    const push = { sendToUser: async () => {} } as unknown as PushSenderService;
     // The credits service blows up — the case path must not.
     const moduleRef = {
       get: () => ({
@@ -202,7 +202,7 @@ describe('CasesService — commercial lead email', () => {
       isEnabled: true,
       execute: async () => ({ id: 'case-1' }),
     } as unknown as PrismaService;
-    const push = { sendToUser: async () => {} } as unknown as OneSignalSenderService;
+    const push = { sendToUser: async () => {} } as unknown as PushSenderService;
     const moduleRef = {
       get: () => ({ creditReferrerForFirstCase: async () => undefined }),
     } as unknown as ModuleRef;
@@ -266,7 +266,7 @@ describe('CasesService — private document ownership', () => {
     const service = new CasesService(
       prisma,
       { get: () => null } as unknown as ModuleRef,
-      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
     );
 
     await expect(
@@ -300,7 +300,7 @@ describe('CasesService — private document ownership', () => {
     const service = new CasesService(
       prisma,
       { get: () => null } as unknown as ModuleRef,
-      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
     );
 
     await expect(
@@ -382,7 +382,7 @@ describe('CasesService — student projection never leaks internal data', () => 
     return new CasesService(
       prisma,
       moduleRef,
-      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
     );
   }
 
@@ -440,7 +440,7 @@ describe('CasesService — counselor scope on admin routes', () => {
     const service = new CasesService(
       prisma,
       { get: () => null } as unknown as ModuleRef,
-      { sendToUser: async () => {} } as unknown as OneSignalSenderService,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
     );
     return { service, calls };
   }

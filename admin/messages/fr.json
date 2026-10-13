@@ -958,10 +958,11 @@
     "campaignsEmpty": "Aucune campagne pour le moment.",
     "campaignsNote": "Sélectionnez une campagne pour consulter ses envois ci-dessous.",
     "deliveriesTitle": "Envois récents",
-    "deliveriesHint": "Suivi des envois pour la campagne sélectionnée.",
+    "deliveriesHint": "Suivi des envois pour la campagne sélectionnée. « Ouverte le » : tap sur la notification, signalé par les versions de l'app passées à FCM.",
     "colRecipient": "Destinataire",
     "colChannel": "Canal",
     "colDeliveredAt": "Remis le",
+    "colOpenedAt": "Ouverte le",
     "deliveriesEmpty": "Aucun envoi enregistré pour cette campagne pour le moment.",
     "loading": "Chargement…"
   },

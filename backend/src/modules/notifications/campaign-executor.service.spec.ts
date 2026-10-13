@@ -1,6 +1,6 @@
 import { CampaignExecutorService } from './campaign-executor.service';
 import { CampaignMailService } from './campaign-mail.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 /**
@@ -98,7 +98,7 @@ describe('CampaignExecutorService', () => {
         pushData.push(data);
         return options.pushOk ?? true;
       },
-    } as unknown as OneSignalSenderService;
+    } as unknown as PushSenderService;
     const mail = { isEnabled: false } as unknown as CampaignMailService;
 
     return {

@@ -99,6 +99,32 @@ les six faits suivants restent vrais sur le SHA final — l'un tombe, « inchang
 manifeste modifié. Preuves et commandes : pack §5 et §6. Restent à trancher **avant la
 soumission**, inchangés par la 56 : **XC-06** (finalité Marketing) et **D5** (prix FCFA affichés).
 
+## 0sexies. Migration push OneSignal → FCM — ce qui change à la build qui la porte
+
+À partir de la build qui embarque `firebase_messaging` à la place de `onesignal_flutter`
+(`lib/app/core/services/push_service.dart`), **l'app n'envoie plus rien à OneSignal** :
+
+| Ligne | Avant (OneSignal) | Avec FCM | Preuve |
+|---|---|---|---|
+| Infos perso — **ID utilisateur** | Partagé (OneSignal) | **Non partagé** : l'ID ne part que vers notre backend (`POST /device-tokens`) et PostHog (`identify`, collecte) | `PushService.login` → `registerDeviceToken(token, platform)` |
+| Activité — **Autres actions** (4 étiquettes) | Partagé (OneSignal) | **Ligne à retirer** : plus aucune étiquette ne part ; le ciblage se calcule côté serveur | `syncPushIdentity()` sans `tags` (`translations_build49_truth_test`) |
+| **Identifiants d'appareil** | Partagé (OneSignal) | Collecté (jeton FCM, Firebase = sous-traitant) — **non partagé** | `FirebaseMessaging.getToken()` |
+| Sous-traitants §5 | OneSignal : ID + 4 étiquettes | Firebase Cloud Messaging : jeton d'appareil seul | `fcm-sender.service.ts` |
+
+**Mais OneSignal ne disparaît pas des formulaires tout de suite.** Les builds antérieures
+restent installées et le backend leur envoie encore leurs notifications par OneSignal
+(`PushSenderService`, repli quand l'élève n'a pas de jeton FCM) ; leurs abonnements portent
+toujours l'ID et les 4 étiquettes. Tant que ce repli tourne (variables `ONESIGNAL_*` posées sur
+le serveur), garder les lignes « Partagé (OneSignal) » ci-dessous et la ligne OneSignal du §5 ;
+la politique de confidentialité le dit déjà (« uniquement pour les versions antérieures »).
+**Le jour où le repli est retiré** : appliquer le tableau ci-dessus, retirer la puce OneSignal
+des deux politiques (le test `translations_build49_truth_test` le réclame), et demander la
+suppression des données de l'application KPB Education chez OneSignal.
+
+Localisation iOS : `NSLocationWhenInUseUsageDescription` reste déclarée par précaution
+(`Info.plist`) jusqu'à preuve, sur l'archive, qu'aucune bibliothèque ne référence plus
+CoreLocation. Réponse inchangée : **ne pas cocher Localisation**.
+
 ---
 
 ## 1. Google Play — Data Safety
@@ -161,8 +187,8 @@ soumission**, inchangés par la 56 : **XC-06** (finalité Marketing) et **D5** (
 >
 > **Traitement éphémère : Non** partout (backend + consoles tierces persistent).
 >
-> **NE PAS cocher :** Localisation (aucun appel géo ; chaîne iOS = module OneSignal
-> lié jamais appelé) · Achats intégrés (CTA WhatsApp, aucun SDK) · aucun type
+> **NE PAS cocher :** Localisation (aucun appel géo ; chaîne iOS gardée par précaution,
+> jamais demandée — voir §0sexies) · Achats intégrés (CTA WhatsApp, aucun SDK) · aucun type
 > supplémentaire pour l'embed YouTube (l'IP n'est pas un type déclarable Play).
 
 ---

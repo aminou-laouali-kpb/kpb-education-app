@@ -99,6 +99,8 @@ interface NotificationDeliveryItem {
   channel: string;
   status: string;
   deliveredAt: string | null;
+  /** Tap de l'élève, signalé par l'app (push seulement). */
+  openedAt: string | null;
 }
 
 const panelCardStyle: CSSProperties = {
@@ -661,8 +663,9 @@ export default function NotificationsPage() {
             t('notifications.colChannel'),
             t('notifications.colStatus'),
             t('notifications.colDeliveredAt'),
+            t('notifications.colOpenedAt'),
           ]}
-          cols="1.6fr 0.8fr 0.8fr 1fr"
+          cols="1.6fr 0.8fr 0.8fr 1fr 1fr"
           footnote={t('notifications.deliveriesHint')}
         >
           {deliveries.length === 0 ? (
@@ -676,6 +679,7 @@ export default function NotificationsPage() {
                   <StatusBadge status={delivery.status} />
                 </div>
                 <CellText primary={formatDateTime(delivery.deliveredAt)} muted />
+                <CellText primary={formatDateTime(delivery.openedAt)} muted />
               </AdminTableRow>
             ))
           )}

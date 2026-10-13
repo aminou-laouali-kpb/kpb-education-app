@@ -207,19 +207,18 @@ void main() {
     // ── Push ──────────────────────────────────────────────────────────────
     //
     // Le push se désactive comme PostHog et comme l'IA : par une variable
-    // absente, sans un mot. `OneSignalSenderService` se dégrade en no-op
+    // absente, sans un mot. `PushSenderService` se dégrade en no-op
     // journalisé — le fil d'actualité s'écrit, la notification ne part pas, et
     // le dispatcher rend `push_unconfigured`. Personne ne le voyait.
     group('une panne de push ne peut plus être silencieuse', () {
       final health = _read('backend/src/modules/health/health.controller.ts');
       final opsScript = _read('.github/scripts/vps-ops.sh');
       final opsWorkflow = _read('.github/workflows/vps-ops.yml');
-      final appConfig = _read('lib/app/core/config/app_config.dart');
 
       test('/health annonce l\'état du push, comme celui de l\'IA', () {
         expect(
           health,
-          contains('push: { configured: this.pushSender.isConfigured }'),
+          contains('configured: this.pushSender.isConfigured'),
           reason:
               '/health exposait ai.configured et RIEN sur le push, alors que '
               'les deux s\'éteignent de la même façon.',
@@ -237,26 +236,37 @@ void main() {
         final code = health
             .replaceAll(RegExp(r'/\*[\s\S]*?\*/'), '')
             .replaceAll(RegExp(r'//.*'), '');
-        expect(
-          code.contains('ONESIGNAL'),
-          isFalse,
-          reason: 'le contrôleur ne doit jamais lire la variable lui-même',
-        );
+        for (final variable in ['ONESIGNAL', 'FCM_SERVICE_ACCOUNT']) {
+          expect(
+            code.contains(variable),
+            isFalse,
+            reason: 'le contrôleur ne doit jamais lire $variable lui-même',
+          );
+        }
         expect(code.contains('restApiKey'), isFalse);
-        // La seule chose qui sort est le booléen dérivé du service.
+        // Ne sortent que les booléens dérivés du service.
         expect(code, contains('this.pushSender.isConfigured'));
+        expect(code, contains('...this.pushSender.providers'));
       });
 
-      test('l\'outillage d\'ops rend compte des deux variables', () {
+      test('l\'outillage d\'ops rend compte des trois variables', () {
+        expect(
+            opsScript, contains('report_key FCM_SERVICE_ACCOUNT_JSON masked'));
         expect(opsScript, contains('report_key ONESIGNAL_APP_ID public'));
         expect(opsScript, contains('report_key ONESIGNAL_REST_API_KEY masked'));
         // `masked` est le mode qui n'imprime que « posée ». Un basculement en
-        // `public` ferait sortir un secret dans un journal de CI public.
-        expect(
-          opsScript.contains('report_key ONESIGNAL_REST_API_KEY public'),
-          isFalse,
-          reason: 'la clé REST ne doit JAMAIS être imprimée',
-        );
+        // `public` ferait sortir un secret dans un journal de CI public — la
+        // clé privée du compte de service Firebase en tête.
+        for (final secret in [
+          'FCM_SERVICE_ACCOUNT_JSON',
+          'ONESIGNAL_REST_API_KEY',
+        ]) {
+          expect(
+            opsScript.contains('report_key $secret public'),
+            isFalse,
+            reason: '$secret ne doit JAMAIS être imprimée',
+          );
+        }
       });
 
       // Le défaut le plus vicieux n'est pas l'absence de configuration : c'est
@@ -312,26 +322,22 @@ void main() {
         );
       });
 
-      test('l\'App ID du serveur est comparé à celui que l\'app embarque', () {
+      // L'app courante n'embarque plus OneSignal : l'App ID à comparer est
+      // celui des builds ANTÉRIEURES, figé comme ces artefacts. Il ne peut
+      // donc plus être extrait de la source — et ne doit pas y revenir.
+      test('l\'App ID est comparé à celui des anciennes builds', () {
         expect(opsScript, contains(r'EXPECTED_ONESIGNAL_APP_ID'));
-        expect(opsWorkflow, contains(r'EXPECTED_ONESIGNAL_APP_ID'));
-        // Extrait de la SOURCE, jamais recopié : une constante recopiée aurait
-        // fini par diverger de app_config.dart, et la comparaison aurait alors
-        // validé l'écart qu'elle est censée dénoncer.
-        expect(opsWorkflow, contains('app_config.dart'));
-      });
-
-      test('app_config.dart garde la forme que le workflow sait lire', () {
-        final match = RegExp(
-          "KPB_ONESIGNAL_APP_ID',\\s*defaultValue: '([^']+)'",
-        ).firstMatch(appConfig);
         expect(
-          match,
-          isNotNull,
-          reason: 'le workflow extrait l\'App ID avec un sed sur cette forme ; '
-              'la changer casserait la comparaison EN SILENCE.',
+          RegExp(r"EXPECTED_ONESIGNAL_APP_ID: '[0-9a-f-]{36}'")
+              .hasMatch(opsWorkflow),
+          isTrue,
+          reason: 'le workflow doit porter l\'App ID figé des anciennes builds',
         );
-        expect(match!.group(1)!.trim(), isNotEmpty);
+        expect(
+          _read('lib/app/core/config/app_config.dart'),
+          isNot(contains('ONESIGNAL')),
+          reason: 'OneSignal est retiré de l\'app',
+        );
       });
     });
 

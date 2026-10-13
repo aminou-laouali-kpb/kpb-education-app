@@ -1,7 +1,7 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 
 import { LlmService } from '../ai/llm.service';
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AntivirusService } from '../storage/antivirus.service';
 import { HealthController } from './health.controller';
@@ -9,7 +9,8 @@ import { HealthController } from './health.controller';
 function makeController(
   prisma: PrismaService,
   llm: Pick<LlmService, 'isConfigured'> = { isConfigured: false },
-  push: Pick<OneSignalSenderService, 'isConfigured'> = { isConfigured: false },
+  push: Pick<PushSenderService, 'isConfigured'> &
+    Partial<Pick<PushSenderService, 'providers'>> = { isConfigured: false },
   antivirus: Pick<AntivirusService, 'isEnabled' | 'selfTest'> = {
     isEnabled: false,
     selfTest: async () => false,
@@ -18,7 +19,10 @@ function makeController(
   return new HealthController(
     prisma,
     llm as LlmService,
-    push as OneSignalSenderService,
+    {
+      providers: { fcm: false, oneSignal: false },
+      ...push,
+    } as PushSenderService,
     antivirus as AntivirusService,
   );
 }
@@ -75,7 +79,7 @@ describe('HealthController', () => {
   });
 
   // Le push se désactive EXACTEMENT comme l'IA — par une variable absente — et
-  // rien ne le disait. `OneSignalSenderService` se dégrade en no-op journalisé :
+  // rien ne le disait. `PushSenderService` se dégrade en no-op journalisé :
   // le fil d'actualité s'écrit, le push ne part pas, et personne ne s'en aperçoit.
   // C'est la forme d'échec qui a envoyé la build 50 sans PostHog.
   it('expose push.configured, et jamais la clé REST', async () => {
@@ -84,25 +88,32 @@ describe('HealthController', () => {
     const on = await makeController(
       prisma,
       { isConfigured: false },
-      { isConfigured: true },
+      { isConfigured: true, providers: { fcm: true, oneSignal: false } },
     ).check();
-    expect(on.push).toEqual({ configured: true });
+    expect(on.push).toEqual({ configured: true, fcm: true, oneSignal: false });
 
     const off = await makeController(prisma).check();
-    expect(off.push).toEqual({ configured: false });
+    expect(off.push).toEqual({
+      configured: false,
+      fcm: false,
+      oneSignal: false,
+    });
 
-    // Booléen SEUL : ni la clé, ni sa longueur, ni l'App ID sur une route
-    // non authentifiée.
+    // Booléens SEULS : ni les clés, ni leur longueur, ni l'App ID sur une
+    // route non authentifiée.
     process.env.ONESIGNAL_REST_API_KEY = 'os_v2_supersecret_value';
+    process.env.FCM_SERVICE_ACCOUNT_JSON =
+      '{"project_id":"p","client_email":"svc@p.iam","private_key":"fcmsupersecret"}';
     const body = await makeController(
       prisma,
       { isConfigured: false },
-      { isConfigured: true },
+      { isConfigured: true, providers: { fcm: true, oneSignal: true } },
     ).check();
     expect(JSON.stringify(body)).not.toMatch(
-      /os_v2_|ONESIGNAL_REST_API_KEY|supersecret/i,
+      /os_v2_|ONESIGNAL_REST_API_KEY|supersecret|svc@p\.iam/i,
     );
     delete process.env.ONESIGNAL_REST_API_KEY;
+    delete process.env.FCM_SERVICE_ACCOUNT_JSON;
   });
 
   // L'IA et le push sont deux capacités indépendantes : les lire d'un seul
@@ -115,7 +126,11 @@ describe('HealthController', () => {
       { isConfigured: false },
     ).check();
     expect(body.ai).toEqual({ configured: true });
-    expect(body.push).toEqual({ configured: false });
+    expect(body.push).toEqual({
+      configured: false,
+      fcm: false,
+      oneSignal: false,
+    });
   });
 
   // ── L'écart qui a coûté vingt jours ──────────────────────────────────────

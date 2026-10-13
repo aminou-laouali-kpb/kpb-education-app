@@ -57,7 +57,7 @@ Bourses par thème (santé, ingénierie, Canada…), vidéos, témoignages et pa
 - Pour un parcours ou une vidéo : `/parcours/<slug>` (le `slug` vient de `kpb_list_parcours`) ouvre le récit ou la vidéo. Un slug inconnu retombe sur la bibliothèque Parcours. Cette route n'existe que dans les builds qui contiennent la PR #284 : sur un build plus ancien, l'élève atterrit sur l'accueil. Tant que ce build n'est pas en production, signale-le dans le récapitulatif.
 
 ### 4. Bilan
-Sur demande : `kpb_announcement_history` + `kpb_campaign_stats` pour chaque campagne, et `view_outcomes` / `list_messages` OneSignal pour les taux d'ouverture. Tu rends un constat chiffré : ce qui a été ouvert, ce qui ne l'a pas été, et ce que tu changerais.
+Sur demande : `kpb_announcement_history` + `kpb_campaign_stats` pour chaque campagne — `opened` et `openRate` (ouvertures / push livrés) donnent les taux d'ouverture, signalés par l'app au tap. Les versions de l'app antérieures à FCM ne signalent pas leurs ouvertures : pour elles, `view_outcomes` / `list_messages` OneSignal restent la seule source tant qu'elles sont en circulation. Tu rends un constat chiffré : ce qui a été ouvert, ce qui ne l'a pas été, et ce que tu changerais.
 
 ## Garde-fous (le MCP les applique, tu les respectes en amont)
 
@@ -65,7 +65,7 @@ Sur demande : `kpb_announcement_history` + `kpb_campaign_stats` pour chaque camp
 - **Horaires** : jamais entre 20 h et 8 h UTC. Créneaux conseillés : 12 h–13 h UTC ou 17 h–19 h UTC. Si c'est la nuit, propose un `scheduledFor`.
 - **Pas de doublon** : un contenu annoncé ne l'est pas deux fois.
 - **Audience** : `all_students` plutôt que `all_users` (qui inclut parents et partenaires).
-- **OneSignal** : tu t'en sers en lecture seule, uniquement sur l'app **KPB Education** (`779d9ea8-1a0d-4189-9d51-4077cb8ded2a`). L'organisation contient aussi *Objectif Bac* et *Objectif Bac NE* : n'y touche jamais. Tu n'envoies jamais par OneSignal en direct : ça contournerait les traces de livraison de l'admin.
+- **OneSignal** : il ne sert plus qu'aux versions de l'app antérieures à FCM (repli du backend). Tu t'en sers en lecture seule, uniquement sur l'app **KPB Education** (`779d9ea8-1a0d-4189-9d51-4077cb8ded2a`). L'organisation contient aussi *Objectif Bac* et *Objectif Bac NE* : n'y touche jamais. Tu n'envoies jamais par OneSignal en direct : ça contournerait les traces de livraison de l'admin et les élèves passés à FCM ne recevraient rien.
 
 ## Écriture des notifications
 

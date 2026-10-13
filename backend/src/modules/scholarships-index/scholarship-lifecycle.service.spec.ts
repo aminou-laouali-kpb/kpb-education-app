@@ -1,4 +1,4 @@
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScholarshipLifecycleService } from './scholarship-lifecycle.service';
 import { ScholarshipContentQualityService } from './scholarship-content-quality.service';
@@ -72,7 +72,7 @@ describe('ScholarshipLifecycleService', () => {
         pushes.push({ userId, title, data });
         return true;
       },
-    } as unknown as OneSignalSenderService;
+    } as unknown as PushSenderService;
     return {
       service: new ScholarshipLifecycleService(
         prisma,

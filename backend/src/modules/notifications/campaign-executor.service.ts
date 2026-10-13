@@ -10,7 +10,7 @@ import {
   resolveExcludedCountries,
 } from './campaign-audience';
 import { CampaignMailService } from './campaign-mail.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 
 interface ResolvedTemplate {
   titleFr: string;
@@ -53,7 +53,7 @@ export class CampaignExecutorService {
 
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly pushService: OneSignalSenderService,
+    private readonly pushService: PushSenderService,
     private readonly mailService: CampaignMailService,
   ) {}
 

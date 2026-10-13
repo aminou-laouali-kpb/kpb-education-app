@@ -6,7 +6,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/data/notification_opt_out.dart';
 import '../../core/models/app_models.dart';
 import '../../core/repositories/app_api_client.dart';
-import '../../core/services/onesignal_service.dart';
+import '../../core/services/push_service.dart';
 import '../cases/case_detail_screen.dart';
 import '../cases/case_timeline_definition.dart';
 import '../cases/post_decision_screen.dart';
@@ -35,7 +35,7 @@ import '../../core/ui/app_tokens.dart';
 //     shown (keyed by case id + kind + updatedAt) — no persistence is faked. If
 //     a case sees genuinely new activity (its updatedAt changes) it reappears.
 //   • Preferences render ONE real control: an "Enable push notifications" row
-//     wired to the real `OneSignalService.requestPermission()` capability, plus
+//     wired to the real `PushService.requestPermission()` capability, plus
 //     an honest note that delivery is governed by the OS. The design's four
 //     per-type toggles are DROPPED — they would persist nowhere.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -796,9 +796,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   Future<void> _requestPush() async {
     // Real capability: triggers the OS permission prompt (once). A no-op until
-    // OneSignal has been initialized (e.g. in widget tests), so it is always
+    // push has been initialized (e.g. in widget tests), so it is always
     // safe to call.
-    await OneSignalService.instance.requestPermission();
+    await PushService.instance.requestPermission();
     if (!mounted) return;
     Get.snackbar(
       'notifications_title'.tr,

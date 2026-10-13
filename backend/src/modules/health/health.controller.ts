@@ -1,7 +1,7 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 
 import { LlmService } from '../ai/llm.service';
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AntivirusService } from '../storage/antivirus.service';
 
@@ -14,7 +14,7 @@ export class HealthController {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly llmService: LlmService,
-    private readonly pushSender: OneSignalSenderService,
+    private readonly pushSender: PushSenderService,
     private readonly antivirus: AntivirusService,
   ) {}
 
@@ -29,9 +29,9 @@ export class HealthController {
       /**
        * Le push est-il seulement CAPABLE de partir ?
        *
-       * `OneSignalSenderService` se dégrade en silence : sans
-       * `ONESIGNAL_APP_ID` / `ONESIGNAL_REST_API_KEY`, chaque envoi devient un
-       * no-op journalisé, le fil d'actualité s'écrit quand même, et le
+       * `PushSenderService` se dégrade en silence : sans
+       * `FCM_SERVICE_ACCOUNT_JSON` ni `ONESIGNAL_APP_ID` /
+       * `ONESIGNAL_REST_API_KEY`, chaque envoi devient un no-op journalisé, le fil d'actualité s'écrit quand même, et le
        * dispatcher rend `push_unconfigured`. Personne ne s'en apercevait :
        * cette route annonçait l'état de l'IA et RIEN sur le push, alors que
        * les deux se désactivent de la même façon — par une variable absente.
@@ -40,10 +40,17 @@ export class HealthController {
        * PostHog : une capacité éteinte sans le moindre signal. Un booléen ici
        * coûte une ligne et rend la panne visible de l'extérieur.
        *
-       * Booléen SEUL, comme pour l'IA : la clé REST est un secret, et même sa
-       * longueur n'a rien à faire sur une route non authentifiée.
+       * Booléens SEULS, comme pour l'IA : les clés sont des secrets, et même
+       * leur longueur n'a rien à faire sur une route non authentifiée.
+       *
+       * `fcm` / `oneSignal` disent quel chemin est ouvert pendant la
+       * transition : FCM pour les nouvelles versions de l'application,
+       * OneSignal pour celles qui ne sont pas encore mises à jour.
        */
-      push: { configured: this.pushSender.isConfigured },
+      push: {
+        configured: this.pushSender.isConfigured,
+        ...this.pushSender.providers,
+      },
       /**
        * `configured` ET `scanning`, parce que l'écart entre les deux EST la
        * panne du 15/08/2026 : `CLAMAV_HOST` est resté valide vingt jours

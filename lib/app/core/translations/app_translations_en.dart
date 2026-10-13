@@ -625,6 +625,7 @@ const Map<String, String> appTranslationsEn = {
   'privacy_s10_title': '10. Changes',
   'privacy_transfers_title': 'Transfers outside your country',
   'last_updated_september_2026': 'Last updated: September 2026',
+  'last_updated_october_2026': 'Last updated: October 2026',
   'privacy_s1_body':
       'KPB Education (hereafter "we", "our", "KPB") is a service of KPB Global L.L.C-FZ, a free-zone limited liability company registered with the Meydan Free Zone (Meydan City Corporation, Emirate of Dubai) under licence no. 2537631.01. KPB Global L.L.C-FZ is the controller of personal data collected through the KPB Education mobile app.\n\n'
           'Registered office: Meydan Grandstand, 6th floor, Meydan Road, Nad Al Sheba, Dubai, United Arab Emirates\n'
@@ -642,7 +643,7 @@ const Map<String, String> appTranslationsEn = {
       '• Voice dictation: the microphone captures your voice, the app asks your phone to turn it into text on the device and keeps only that text; the audio recording is never sent to us. On iPhone, if on-device recognition is unavailable, dictation does not start. On Android, on-device recognition is only a preference: without a local model installed, your phone\'s recognition service (Google) may process your voice off the device\n'
       '• Documents (passport, transcripts, case files): in-app upload is masked. These files reach your advisor over WhatsApp, not through an in-app upload\n'
       '• Usage data: orientation results, saved items, search history\n'
-      '• Technical data: device identifier (notifications), local biometrics (app lock), location declared by the OneSignal SDK but never requested or used\n'
+      '• Technical data: device push token, local biometrics (app lock), location declared in the iOS configuration but never requested or used\n'
       '• Analytics: Firebase Analytics and PostHog; PostHog session recordings (text and images masked)\n'
       '• Diagnostics: Firebase Crashlytics; aggregated sync metrics',
   'privacy_s3_body': 'Your data is used to:\n\n'
@@ -663,8 +664,8 @@ const Map<String, String> appTranslationsEn = {
       '• Supabase (authentication: email, session, Google)\n'
       '• OpenRouter and Groq (United States): coach texts and a pseudonymised profile — OpenRouter routing is limited to AI services with zero data retention; never sold\n'
       // Voir le commentaire du bloc `fr`.
-      '• OneSignal (United States): push token, account identifier and four targeting tags (account type, study level, target country, language) — never your email address\n'
-      '• Firebase / Google (Analytics, Crashlytics) for analytics and stability\n'
+      '• Firebase / Google (Analytics, Crashlytics, Cloud Messaging) for analytics, stability and notification delivery — Cloud Messaging only receives the device push token, no account identifier or profile data\n'
+      '• OneSignal (United States): only for earlier versions of the app, being phased out — push token, account identifier and four targeting tags (account type, study level, target country, language); never your email address\n'
       // Voir le commentaire du bloc `fr` : un destinataire de données
       // techniques est un destinataire, il se nomme.
       '• YouTube (Google): testimonial and scholarship videos play through the embedded YouTube player (youtube-nocookie.com domain) and their thumbnails load from YouTube — as soon as they are displayed, Google receives your IP address and technical data, even without an account\n'

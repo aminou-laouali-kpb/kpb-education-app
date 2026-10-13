@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 
 /**
  * KPB-78 — salon RSVP reminders. Runs hourly so it can catch both the
@@ -23,7 +23,7 @@ export class SalonReminderCronService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly push: OneSignalSenderService,
+    private readonly push: PushSenderService,
   ) {}
 
   /// Hourly, on the hour.

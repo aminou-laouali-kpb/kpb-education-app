@@ -16,9 +16,10 @@
 // d'autorisation dans Claude Code : la demande de permission est le feu vert
 // humain.
 //
-// Envoi : on passe par les CAMPAGNES du backend (/admin/notifications), pas
-// par OneSignal en direct — traces de livraison par élève, FR/EN selon la
-// langue de chacun, visibles dans l'admin.
+// Envoi : on passe par les CAMPAGNES du backend (/admin/notifications) — traces
+// de livraison et d'ouverture par élève, FR/EN selon la langue de chacun,
+// visibles dans l'admin. Le backend livre par FCM (et par OneSignal pour les
+// versions de l'app antérieures à FCM).
 //
 // Identifiants : un compte AdminUser dédié (rôle ContentManager ou Admin), lu
 // dans l'environnement ou dans un `.env` git-ignoré à côté de ce script.
@@ -60,7 +61,7 @@ const QUIET_END_UTC = Number(process.env.KPB_AGENT_QUIET_END_UTC ?? 8);
 
 // ── Routes que l'app sait ouvrir au tap ─────────────────────────────────────
 // Miroir de `AppRoutes.normalizeExternalRoute` (lib/app/core/config/
-// app_routes.dart). Une route hors liste n'est pas refusée par OneSignal :
+// app_routes.dart). Une route hors liste n'est pas refusée par FCM :
 // l'app la rejette en silence et dépose l'élève sur l'accueil. On la refuse
 // donc ICI, au moment où l'agent peut encore la corriger.
 const KNOWN_ROUTES = new Set([
@@ -387,7 +388,7 @@ server.registerTool(
 
 server.registerTool(
   'kpb_campaign_stats',
-  { description: "Statistiques de livraison d'une campagne (envoyés, livrés, échoués, taux).",
+  { description: "Statistiques d'une campagne : envoyés, livrés, échoués, taux de livraison, et ouvertures (`opened`, `openRate` = ouvertures / push livrés, signalées par l'app au tap).",
     inputSchema: { campaignId: z.string() } },
   tool(async ({ campaignId }) => ok(await api('GET', `/admin/notifications/campaigns/${campaignId}/stats`))),
 );
@@ -583,7 +584,7 @@ server.registerTool(
     if (failed) {
       return fail(
         `Campagne ${campaign.id} créée mais ÉCHOUÉE : aucun appareil atteint. Contenu NON marqué comme annoncé, ` +
-          `brouillon ${draftId} conservé. Vérifier kpb_campaign_stats et les journaux du conteneur api (OneSignal) avant de réessayer.`,
+          `brouillon ${draftId} conservé. Vérifier kpb_campaign_stats et les journaux du conteneur api (FCM / OneSignal) avant de réessayer.`,
       );
     }
     return ok({

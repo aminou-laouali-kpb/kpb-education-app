@@ -9,7 +9,7 @@ import '../../core/i18n/app_locale.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/models/app_models.dart';
-import '../../core/services/onesignal_service.dart';
+import '../../core/services/push_service.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/currency_utils.dart';
 import '../legal/legal_pages.dart';
@@ -627,9 +627,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_submitting) return;
     setState(() => _submitting = true);
     try {
-      // Ask for push permission via OneSignal; identity is linked in
-      // completeOnboarding() → syncOneSignalIdentity().
-      await OneSignalService.instance.requestPermission();
+      // Ask for push permission; the device token is linked in
+      // completeOnboarding() → syncPushIdentity().
+      await PushService.instance.requestPermission();
       unawaited(AnalyticsService.instance
           .logOnboardingCompleted(accountType: _accountType.name));
       final profile = _buildProfile();

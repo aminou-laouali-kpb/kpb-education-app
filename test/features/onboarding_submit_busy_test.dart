@@ -185,11 +185,11 @@ void main() {
   // NOTE SUR CE QUI N'EST PAS ASSERTÉ ICI.
   //
   // Le plan demandait aussi de compter les appels à
-  // `OneSignalService.requestPermission()`. Vérifié : la méthode sort
-  // immédiatement quand le service n'est pas initialisé, ce qui est toujours le
-  // cas en test, et le singleton n'offre aucune couture d'injection. Une
-  // assertion « appelé une fois » serait donc satisfaite par un no-op et ne
-  // prouverait rien.
+  // `PushService.requestPermission()`. Vérifié : la méthode sort
+  // immédiatement quand le service n'est pas initialisé, ce qui est le cas dans
+  // ce test (le service se teste à part, avec un FCM simulé :
+  // `test/core/services/push_service_test.dart`). Une assertion « appelé une
+  // fois » serait donc satisfaite par un no-op et ne prouverait rien.
   //
   // Le compte de PATCH ci-dessus couvre la même propriété : les deux appels
   // vivent dans le même corps de `_submit`, protégé par le même drapeau. Un

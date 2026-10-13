@@ -11,7 +11,7 @@
   <header><div class="wrap"><a class="brand" href="/">KPB <span>Education</span></a></div></header>
   <main>
     <h1>Politique de Confidentialité</h1>
-    <p class="updated">Dernière mise à jour : septembre 2026</p>
+    <p class="updated">Dernière mise à jour : octobre 2026</p>
 
     <h2>1. Responsable du traitement</h2>
     <p>KPB Education (ci-après « nous », « notre », « KPB ») est un service de KPB Global L.L.C-FZ, société à responsabilité limitée de zone franche immatriculée auprès de la Meydan Free Zone (Meydan City Corporation, Émirat de Dubaï) sous la licence n° 2537631.01. KPB Global L.L.C-FZ est le responsable du traitement des données personnelles collectées via l'application mobile KPB Education.</p>
@@ -31,7 +31,7 @@
       <li>Dictée vocale : le micro capte votre voix, l'app demande à votre téléphone de la convertir en texte sur l'appareil et n'en garde que le texte ; l'enregistrement audio ne nous est jamais transmis. Sur iPhone, si la reconnaissance locale est indisponible, la dictée ne démarre pas. Sur Android, la reconnaissance locale n'est qu'une préférence : sans modèle local installé, le service de reconnaissance de votre téléphone (Google) peut traiter votre voix hors de l'appareil</li>
       <li>Documents (passeport, relevés, pièces de dossier) : l'envoi depuis l'application est masqué. Ces pièces passent par WhatsApp vers votre conseiller, pas par un téléversement in-app</li>
       <li>Données d'utilisation : résultats d'orientation, éléments sauvegardés, historique de recherche</li>
-      <li>Données techniques : identifiant de l'appareil (notifications), biométrie locale (verrouillage), localisation déclarée par le SDK OneSignal mais jamais demandée ni utilisée</li>
+      <li>Données techniques : jeton de notifications de l'appareil, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée</li>
       <li>Analytique : Firebase Analytics et PostHog ; enregistrements de session PostHog (textes et images masqués)</li>
       <li>Diagnostics : Firebase Crashlytics ; métriques agrégées de synchronisation</li>
     </ul>
@@ -62,8 +62,8 @@
       <li>Notre backend KPB (VPS Hostinger, api.kpbeducation.cloud) pour faire fonctionner l'application</li>
       <li>Supabase (authentification : e-mail, session, Google)</li>
       <li>OpenRouter et Groq (États-Unis) : textes du coach et profil pseudonymisé — le routage OpenRouter est limité à des services d'IA sans conservation des données ; jamais vendus</li>
-      <li>OneSignal (États-Unis) : jeton de notifications, identifiant de compte et quatre étiquettes de ciblage (type de compte, niveau d'études, pays visé, langue) — jamais votre adresse e-mail</li>
-      <li>Firebase / Google (Analytics, Crashlytics) pour l'analytique et la stabilité</li>
+      <li>Firebase / Google (Analytics, Crashlytics, Cloud Messaging) pour l'analytique, la stabilité et l'acheminement des notifications — Cloud Messaging ne reçoit que le jeton de notifications de l'appareil, aucun identifiant de compte ni donnée de profil</li>
+      <li>OneSignal (États-Unis) : uniquement pour les versions antérieures de l'application, en cours de retrait — jeton de notifications, identifiant de compte et quatre étiquettes de ciblage (type de compte, niveau d'études, pays visé, langue) ; jamais votre adresse e-mail</li>
       <li>YouTube (Google) : les vidéos de témoignages et de bourses sont lues par le lecteur YouTube intégré (domaine youtube-nocookie.com) et leurs vignettes sont chargées depuis YouTube — dès leur affichage, Google reçoit votre adresse IP et des données techniques, même sans compte</li>
       <li>Wikimedia Commons (Wikimedia Foundation, États-Unis) : les logos d'établissements du catalogue Études en France sont chargés depuis Wikimedia — dès leur affichage, la fondation reçoit votre adresse IP et des données techniques, même sans compte</li>
       <li>Le service de reconnaissance vocale de votre téléphone (Apple ou Google) : uniquement pour la dictée — l'app demande d'abord la reconnaissance locale, et ne sollicite ce service qu'avec votre accord ; sur Android, le système peut aussi y recourir de lui-même quand le modèle local manque (voir « Dictée vocale », section 2)</li>
