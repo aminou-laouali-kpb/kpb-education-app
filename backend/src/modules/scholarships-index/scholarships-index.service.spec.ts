@@ -395,14 +395,47 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
       };
       const { service } = makeService([partnerRow]);
 
-      const phd = await service.listForProfile({ lang: 'fr', level: 'PhD' });
-      const bachelor = await service.listForProfile({
-        lang: 'fr',
-        level: 'Bachelor',
-      });
+      for (const lang of ['fr', 'en'] as const) {
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
 
-      expect(scoreOf(phd.items, 'partner')).toBe(30);
-      expect(scoreOf(bachelor.items, 'partner')).toBe(60);
+        expect(scoreOf(phd.items, 'partner')).toBe(30);
+        expect(scoreOf(bachelor.items, 'partner')).toBe(60);
+      }
+    });
+
+    it('reads a doctorate from the labels when the level tags stop at master', async () => {
+      // Forme de gates_cambridge_2027 : le catalogue vérifié ne sait pas dire
+      // `doctorate`, la fiche n'a donc que le tag `master`, mais son libellé
+      // accepte le doctorat. L'ancien test en sous-chaîne lui donnait +30 pour
+      // « PhD » en anglais ; le tag seul ne le lui donnait plus.
+      const gatesRow = {
+        ...baseRow,
+        id: 'gates',
+        levelEligibleFr:
+          'Master de recherche ou d’un an à temps plein (MPhil, MRes, LLM, MLitt) ou doctorat — pas de MASt, MBA ni second BA',
+        levelEligibleEn:
+          'Full-time research or one-year Master (MPhil, MRes, LLM, MLitt) or PhD — no MASt, MBA or second BA',
+        tags: ['master', 'uk', 'cambridge', 'fully-funded'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([gatesRow]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const phd = await service.listForProfile({ lang, level: 'PhD' });
+        const master = await service.listForProfile({ lang, level: 'Master' });
+        const bachelor = await service.listForProfile({
+          lang,
+          level: 'Bachelor',
+        });
+
+        expect(scoreOf(phd.items, 'gates')).toBe(60);
+        expect(scoreOf(master.items, 'gates')).toBe(60);
+        expect(scoreOf(bachelor.items, 'gates')).toBe(30);
+      }
     });
 
     it('matches whole words only in the label fallback', async () => {

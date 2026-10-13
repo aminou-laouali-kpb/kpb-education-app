@@ -35,6 +35,11 @@ const LEVEL_TAGS: ReadonlyMap<string, CanonicalStudyLevel> = new Map<
  * un texte en minuscules et sans accents : « Mastercard » n'est pas un master,
  * « post-secondaire » n'est pas le lycée, « post-doctorat » n'est pas un
  * doctorat.
+ *
+ * Le doctorat ignore aussi une mention niée (« pas de doctorat », « no
+ * doctorate ») : c'est le seul niveau qu'on lit dans un libellé même quand la
+ * fiche a des tags de niveau (voir `scholarshipLevels`), et un libellé cite
+ * volontiers le doctorat qu'il exclut.
  */
 const LEVEL_PATTERNS: ReadonlyArray<readonly [CanonicalStudyLevel, RegExp]> = [
   [
@@ -45,7 +50,7 @@ const LEVEL_PATTERNS: ReadonlyArray<readonly [CanonicalStudyLevel, RegExp]> = [
   ['master', /\b(?:masters?|masteres?|msc|mba|mim)\b/],
   [
     'doctorate',
-    /(?<!post[\s-])\b(?:doctorats?|doctorates?|doctoral|ph\.?\s?d|dphil)\b/,
+    /(?<!\b(?:no|not|pas de|sans|hors|excluding|except)\s)(?<!post[\s-])\b(?:doctorats?|doctorates?|doctoral|ph\.?\s?d|dphil)\b/,
   ],
 ];
 
@@ -77,27 +82,34 @@ export function levelsInText(
  * Niveaux d'une bourse.
  *
  * Ses tags de niveau d'abord : c'est la donnée structurée, et sur chaque fiche
- * du catalogue vérifié ils reprennent exactement son `levels`. Un libellé ne
- * vaut pas mieux qu'eux — « Secondaire, Licence ou Master — pas de doctorat »
- * CITE le doctorat qu'il exclut.
+ * du catalogue vérifié ils reprennent exactement son `levels`. Pour le
+ * secondaire, la Licence et le Master, un libellé ne vaut pas mieux qu'eux.
+ *
+ * Le doctorat fait exception : le vocabulaire du catalogue vérifié s'arrête au
+ * master, donc ses tags ne le nomment jamais, et leur silence ne veut pas dire
+ * « pas de doctorat ». Quand les tags ne le portent pas, on le lit dans les
+ * libellés FR+EN : Gates Cambridge (tag `master`, « … ou doctorat ») accepte
+ * bien un doctorant. Une mention niée (« pas de doctorat ») ne compte pas.
  *
  * Sans tag de niveau (fiche collectée, saisie admin, seed héritée), repli sur
- * les DEUX libellés, FR et EN : le résultat ne dépend jamais de la langue de la
- * requête.
+ * les DEUX libellés, FR et EN, pour tous les niveaux : le résultat ne dépend
+ * jamais de la langue de la requête.
  */
 export function scholarshipLevels(row: {
   tags: readonly string[];
   levelEligibleFr: string;
   levelEligibleEn: string;
 }): Set<CanonicalStudyLevel> {
+  const fromLabels = new Set([
+    ...levelsInText(row.levelEligibleFr),
+    ...levelsInText(row.levelEligibleEn),
+  ]);
   const fromTags = new Set<CanonicalStudyLevel>();
   for (const tag of row.tags) {
     const level = LEVEL_TAGS.get(tag.trim().toLowerCase());
     if (level) fromTags.add(level);
   }
-  if (fromTags.size > 0) return fromTags;
-  return new Set([
-    ...levelsInText(row.levelEligibleFr),
-    ...levelsInText(row.levelEligibleEn),
-  ]);
+  if (fromTags.size === 0) return fromLabels;
+  if (fromLabels.has('doctorate')) fromTags.add('doctorate');
+  return fromTags;
 }
