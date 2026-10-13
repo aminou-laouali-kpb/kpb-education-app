@@ -4,10 +4,11 @@ Serveur MCP (stdio) qui expose l'API admin de KPB Education à l'agent
 notifications (`.claude/agents/kpb-notifications.md`) : contenu publié,
 détection des nouveautés, campagnes push et leurs statistiques.
 
-L'envoi passe par les **campagnes du backend** (`/admin/notifications`), pas
-par OneSignal en direct : chaque élève a sa trace de livraison, reçoit le texte
-dans sa langue, et la campagne apparaît dans l'admin. Le MCP OneSignal sert à
-lire les taux d'ouverture.
+L'envoi passe par les **campagnes du backend** (`/admin/notifications`) : chaque
+élève a sa trace de livraison, reçoit le texte dans sa langue, et la campagne
+apparaît dans l'admin. Le backend livre par FCM (OneSignal seulement pour les
+versions de l'app antérieures à FCM). Les taux d'ouverture sont dans
+`kpb_campaign_stats` (`opened`, `openRate`) : l'app signale chaque tap.
 
 ## Installation
 

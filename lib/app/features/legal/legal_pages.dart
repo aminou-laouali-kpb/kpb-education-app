@@ -7,7 +7,8 @@ import '../../core/ui/kpb_theme_ext.dart';
 import '../../core/utils/external_link.dart';
 
 // Destinataires dérivés du code (PRIV-T1 / PRIV-T4) : OpenRouter, Groq,
-// OneSignal, Firebase, PostHog, Supabase, Resend, Mautic, backend KPB
+// Firebase (dont Cloud Messaging), OneSignal (anciennes versions, repli
+// serveur), PostHog, Supabase, Resend, Mautic, backend KPB
 // (kpbeducation.cloud), PayDunya, CinetPay.
 // Permissions : caméra, photo, micro, notifications, biométrie, localisation.
 // Les corps vivent dans AppTranslations ; cette liste garde les noms dans CE
@@ -43,7 +44,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'last_updated_september_2026'.tr,
+              'last_updated_october_2026'.tr,
               style: TextStyle(fontSize: 13, color: context.kpb.textMuted),
             ),
             const SizedBox(height: KpbSpacing.lg),

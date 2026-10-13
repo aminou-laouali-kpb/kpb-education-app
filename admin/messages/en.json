@@ -958,10 +958,11 @@
     "campaignsEmpty": "No campaign yet.",
     "campaignsNote": "Select a campaign to inspect its deliveries below.",
     "deliveriesTitle": "Recent deliveries",
-    "deliveriesHint": "Delivery tracking for the selected campaign.",
+    "deliveriesHint": "Delivery tracking for the selected campaign. \"Opened at\": notification tap, reported by app versions using FCM.",
     "colRecipient": "Recipient",
     "colChannel": "Channel",
     "colDeliveredAt": "Delivered at",
+    "colOpenedAt": "Opened at",
     "deliveriesEmpty": "No delivery recorded for this campaign yet.",
     "loading": "Loading…"
   },

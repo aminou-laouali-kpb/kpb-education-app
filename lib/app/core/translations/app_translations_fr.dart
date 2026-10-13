@@ -667,6 +667,7 @@ const Map<String, String> appTranslationsFr = {
   'privacy_s10_title': '10. Modifications',
   'privacy_transfers_title': 'Transferts hors de votre pays',
   'last_updated_september_2026': 'Dernière mise à jour : septembre 2026',
+  'last_updated_october_2026': 'Dernière mise à jour : octobre 2026',
   // L'éditeur. « KPB Education » est un SERVICE, pas une personne
   // morale : le responsable du traitement est KPB Global L.L.C-FZ, et
   // la politique doit le dire, sinon l'utilisateur consent au profit
@@ -696,7 +697,7 @@ const Map<String, String> appTranslationsFr = {
       '• Dictée vocale : le micro capte votre voix, l\'app demande à votre téléphone de la convertir en texte sur l\'appareil et n\'en garde que le texte ; l\'enregistrement audio ne nous est jamais transmis. Sur iPhone, si la reconnaissance locale est indisponible, la dictée ne démarre pas. Sur Android, la reconnaissance locale n\'est qu\'une préférence : sans modèle local installé, le service de reconnaissance de votre téléphone (Google) peut traiter votre voix hors de l\'appareil\n'
       '• Documents (passeport, relevés, pièces de dossier) : l\'envoi depuis l\'application est masqué. Ces pièces passent par WhatsApp vers votre conseiller, pas par un téléversement in-app\n'
       '• Données d\'utilisation : résultats d\'orientation, éléments sauvegardés, historique de recherche\n'
-      '• Données techniques : identifiant de l\'appareil (notifications), biométrie locale (verrouillage), localisation déclarée par le SDK OneSignal mais jamais demandée ni utilisée\n'
+      '• Données techniques : jeton de notifications de l\'appareil, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée\n'
       '• Analytique : Firebase Analytics et PostHog ; enregistrements de session PostHog (textes et images masqués)\n'
       '• Diagnostics : Firebase Crashlytics ; métriques agrégées de synchronisation',
   'privacy_s3_body': 'Vos données sont utilisées pour :\n\n'
@@ -716,14 +717,17 @@ const Map<String, String> appTranslationsFr = {
       '• Notre backend KPB (VPS Hostinger, api.kpbeducation.cloud) pour faire fonctionner l\'application\n'
       '• Supabase (authentification : e-mail, session, Google)\n'
       '• OpenRouter et Groq (États-Unis) : textes du coach et profil pseudonymisé — le routage OpenRouter est limité à des services d\'IA sans conservation des données ; jamais vendus\n'
-      // Les quatre étiquettes partaient déjà sans être déclarées, et
-      // l'e-mail partait aussi — ce dernier a été retiré du code (voir
-      // `OneSignalService`), les étiquettes sont GARDÉES parce que le
-      // ciblage sert vraiment, donc elles sont nommées ici. Le « jamais
-      // votre adresse e-mail » est une promesse que le code tient
-      // maintenant, pas une intention.
-      '• OneSignal (États-Unis) : jeton de notifications, identifiant de compte et quatre étiquettes de ciblage (type de compte, niveau d\'études, pays visé, langue) — jamais votre adresse e-mail\n'
-      '• Firebase / Google (Analytics, Crashlytics) pour l\'analytique et la stabilité\n'
+      // Les notifications passent par Firebase Cloud Messaging en direct
+      // (`PushService`) : Google ne reçoit que le jeton de l'appareil, et
+      // c'est NOTRE backend qui sait à quel compte il appartient. Le ciblage
+      // (niveau, pays visé) se calcule sur le serveur — plus aucune étiquette
+      // ne part chez un tiers.
+      '• Firebase / Google (Analytics, Crashlytics, Cloud Messaging) pour l\'analytique, la stabilité et l\'acheminement des notifications — Cloud Messaging ne reçoit que le jeton de notifications de l\'appareil, aucun identifiant de compte ni donnée de profil\n'
+      // OneSignal reste nommé tant que les versions qui l'embarquent sont
+      // en circulation : le serveur leur envoie encore leurs notifications,
+      // et leurs abonnements (avec les quatre étiquettes qu'elles envoyaient)
+      // vivent chez OneSignal jusqu'au retrait.
+      '• OneSignal (États-Unis) : uniquement pour les versions antérieures de l\'application, en cours de retrait — jeton de notifications, identifiant de compte et quatre étiquettes de ciblage (type de compte, niveau d\'études, pays visé, langue) ; jamais votre adresse e-mail\n'
       // Le lecteur intégré et les vignettes chargent des contenus
       // YouTube dès leur affichage — accueil compris, connexion ou pas.
       // Google reçoit alors l'adresse IP et des données techniques :

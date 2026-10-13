@@ -890,6 +890,8 @@ model NotificationDelivery {
   channel       NotificationChannel
   status        String
   deliveredAt   DateTime?
+  /// Tap de l'élève sur la notification push (signalé par l'application).
+  openedAt      DateTime?
   createdAt     DateTime             @default(now())
   campaign      NotificationCampaign @relation(fields: [campaignId], references: [id])
   case          Case?                @relation(fields: [caseId], references: [id])

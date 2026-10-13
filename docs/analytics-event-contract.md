@@ -369,7 +369,7 @@ tout produit payant existant.
 
 | Event | Parameters | Purpose |
 |-------|------------|---------|
-| `sync_full_complete` | `success` (0/1), `elapsed_ms`, `catalog_hive_fallback_count` | Full sync outcome |
+| `sync_full_complete` | `success` (0/1), `elapsed_ms`, `catalog_hive_fallback_count` ; en échec seulement : `failure_stage` (`account` = profil/dossiers/favoris, `catalog` = catalogue ni serveur ni cache), `error_kind` (`timeout`/`connection`/`rate_limited`/`unauthorized`/`http_4xx`/`http_5xx`/`other`) | Full sync outcome. Depuis octobre 2026, un échec dit où et pourquoi (valeurs fermées, jamais un message brut). Les appels du compte (profil, dossiers, favoris) réessaient désormais 3 fois les pannes passagères (délai, coupure, 5xx), comme le catalogue ; jamais un 4xx. |
 | `sync_conflict_resolved` | `domain`, `resolution` | Merge / skip logic (profile, cases, saved_items) |
 | `sync_catalog_hive_fallback` | `resource`, `attempts` | Catalog API exhausted retries; Hive used |
 

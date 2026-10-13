@@ -16,7 +16,7 @@ import { Server, Socket } from 'socket.io';
 import { resolveCorsOrigins } from '../../common/cors-origins';
 import { InternalRole } from '../../common/enums/internal-role.enum';
 import { SupabaseAuthService } from '../auth/supabase-auth.service';
-import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import { PushSenderService } from '../notifications/push-sender.service';
 import { CasesService } from './cases.service';
 import type { CaseMessagingActor } from './cases.service';
 import {
@@ -72,7 +72,7 @@ export class CaseMessagingGateway
     private readonly supabaseAuthService: SupabaseAuthService,
     @Inject(forwardRef(() => CasesService))
     private readonly casesService: CasesService,
-    private readonly pushService: OneSignalSenderService,
+    private readonly pushService: PushSenderService,
   ) {}
 
   async handleConnection(client: Socket) {

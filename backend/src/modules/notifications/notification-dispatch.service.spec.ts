@@ -1,6 +1,6 @@
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationDispatchService } from './notification-dispatch.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 
 /**
  * Guards KPB-155: dispatch always records the durable feed entry, dedups on
@@ -63,7 +63,7 @@ describe('NotificationDispatchService', () => {
         sends.push({ userId, title, body });
         return true;
       },
-    } as unknown as OneSignalSenderService;
+    } as unknown as PushSenderService;
 
     return {
       service: new NotificationDispatchService(prisma, push),
@@ -154,7 +154,7 @@ describe('NotificationDispatchService', () => {
     const push = {
       isConfigured: true,
       sendToUser: async () => true,
-    } as unknown as OneSignalSenderService;
+    } as unknown as PushSenderService;
     const prisma = { isEnabled: false } as unknown as PrismaService;
     const service = new NotificationDispatchService(prisma, push);
     expect(await service.dispatch(baseInput(daytime))).toBe('skipped');

@@ -1168,25 +1168,44 @@ class AnalyticsService {
 
   // ── Sync telemetry (Phase 3 data reliability) ─────────────────────────────
 
+  /// Les propriétés de `sync_full_complete`. Sur un échec, `failure_stage`
+  /// (`account` : profil, dossiers ou favoris ; `catalog` : le catalogue n'a pu
+  /// venir ni du serveur ni du cache) et `error_kind` (valeur fermée de
+  /// [SyncErrorKind]) disent où et pourquoi. Jamais un message d'erreur brut :
+  /// il peut contenir une URL avec un identifiant.
+  @visibleForTesting
+  static Map<String, Object> fullSyncParams({
+    required bool success,
+    required int elapsedMs,
+    required int catalogHiveFallbackCount,
+    String? failureStage,
+    String? errorKind,
+  }) =>
+      <String, Object>{
+        AnalyticsParamKey.success: success ? 1 : 0,
+        AnalyticsParamKey.elapsedMs: elapsedMs,
+        AnalyticsParamKey.catalogHiveFallbackCount: catalogHiveFallbackCount,
+        if (failureStage != null) AnalyticsParamKey.failureStage: failureStage,
+        if (errorKind != null) AnalyticsParamKey.errorKind: errorKind,
+      };
+
   Future<void> logFullSyncResult({
     required bool success,
     required int elapsedMs,
     required int catalogHiveFallbackCount,
+    String? failureStage,
+    String? errorKind,
   }) async {
+    final params = fullSyncParams(
+      success: success,
+      elapsedMs: elapsedMs,
+      catalogHiveFallbackCount: catalogHiveFallbackCount,
+      failureStage: failureStage,
+      errorKind: errorKind,
+    );
     try {
-      await _analytics.logEvent(
-        name: AnalyticsEventName.syncFullComplete,
-        parameters: {
-          AnalyticsParamKey.success: success ? 1 : 0,
-          AnalyticsParamKey.elapsedMs: elapsedMs,
-          AnalyticsParamKey.catalogHiveFallbackCount: catalogHiveFallbackCount,
-        },
-      );
-      _mirror(AnalyticsEventName.syncFullComplete, {
-        AnalyticsParamKey.success: success ? 1 : 0,
-        AnalyticsParamKey.elapsedMs: elapsedMs,
-        AnalyticsParamKey.catalogHiveFallbackCount: catalogHiveFallbackCount,
-      });
+      await _logEvent(AnalyticsEventName.syncFullComplete, params);
+      _mirror(AnalyticsEventName.syncFullComplete, params);
     } catch (e, s) {
       _logError('logFullSyncResult', e, s);
     }

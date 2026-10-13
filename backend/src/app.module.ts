@@ -52,6 +52,9 @@ import { HealthController } from './modules/health/health.controller';
 import { NotificationsController } from './modules/notifications/notifications.controller';
 import { NotificationsService } from './modules/notifications/notifications.service';
 import { OneSignalSenderService } from './modules/notifications/onesignal-sender.service';
+import { FcmSenderService } from './modules/notifications/fcm-sender.service';
+import { PushSenderService } from './modules/notifications/push-sender.service';
+import { PushOpensController } from './modules/notifications/push-opens.controller';
 import { CampaignExecutorService } from './modules/notifications/campaign-executor.service';
 import { CampaignMailService } from './modules/notifications/campaign-mail.service';
 import { CampaignCronService } from './modules/notifications/campaign-cron.service';
@@ -199,6 +202,7 @@ import { SalonService } from './modules/salon/salon.service';
     ContentController,
     ParcoursController,
     DeviceTokensController,
+    PushOpensController,
     AdminPushController,
     DocumentReviewController,
     AppConfigController,
@@ -271,6 +275,8 @@ import { SalonService } from './modules/salon/salon.service';
     ParcoursService,
     ParcoursWeeklyService,
     OneSignalSenderService,
+    FcmSenderService,
+    PushSenderService,
     CampaignExecutorService,
     CampaignMailService,
     CampaignCronService,

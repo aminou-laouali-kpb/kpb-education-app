@@ -87,14 +87,15 @@
 	<string>KPB Education utilise le micro pour dicter votre message lors d'une demande d'accompagnement.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>KPB Education convertit votre voix en texte pour remplir le message de votre demande.</string>
-	<!-- Requis par Apple (ITMS-90683) : le SDK de notifications OneSignal embarque
-	     le module OneSignalLocation, qui référence CoreLocation. L'application ne
-	     demande jamais cette autorisation — elle n'appelle pas
-	     OneSignal.Location.requestPermission() — donc cette invite n'est jamais
-	     présentée à l'utilisateur. Le module ne peut pas être retiré : le plugin
-	     onesignal_flutter compile OSFlutterLocation.m sans condition. -->
+	<!-- Ajoutée pour Apple (ITMS-90683) quand le SDK OneSignal embarquait
+	     OneSignalLocation, qui référence CoreLocation. OneSignal est retiré de
+	     l'app (notifications par FCM), mais la clé est GARDÉE tant qu'une build
+	     n'a pas prouvé qu'aucune autre bibliothèque ne référence CoreLocation
+	     (`nm -u Runner.app/Frameworks/*.framework/* | grep CLLocationManager`) :
+	     sans elle, App Store Connect rejette l'envoi. L'invite n'est jamais
+	     présentée — l'application ne demande pas cette autorisation. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>KPB Education ne collecte pas votre position. Cette autorisation est déclarée parce que notre service de notifications peut y accéder ; elle n'est jamais demandée ni utilisée par l'application.</string>
+	<string>KPB Education ne collecte pas votre position. Cette autorisation est déclarée par précaution pour une bibliothèque intégrée ; elle n'est jamais demandée ni utilisée par l'application.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

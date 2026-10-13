@@ -36,9 +36,9 @@ Biometric / device PIN unlock after resume — see class doc on `[SecurityServic
 
 | Permission             | Purpose                                                                                         |
 | ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `INTERNET`             | API, Firebase, PostHog, OneSignal, Supabase                                                     |
+| `INTERNET`             | API, Firebase (incl. Cloud Messaging), PostHog, Supabase                                        |
 | `ACCESS_NETWORK_STATE` | Connectivity checks                                                                             |
-| `POST_NOTIFICATIONS`   | OneSignal (Android 13+); requested at runtime                                                   |
+| `POST_NOTIFICATIONS`   | FCM push (Android 13+); requested at runtime                                                    |
 | `USE_BIOMETRIC`        | Local auth for app lock                                                                         |
 | `RECORD_AUDIO`         | Voice dictation on a support / case request                                                     |
 
@@ -54,11 +54,11 @@ Usage descriptions currently declared (do **not** claim they were removed):
 | `NSMicrophoneUsageDescription` | Voice dictation |
 | `NSSpeechRecognitionUsageDescription` | Speech-to-text for the same message |
 | `NSFaceIDUsageDescription` | App lock |
-| `NSLocationWhenInUseUsageDescription` | Declared because the OneSignal SDK references CoreLocation. **Never requested, never used.** |
+| `NSLocationWhenInUseUsageDescription` | Originally declared for the OneSignal SDK (now removed); kept as a precaution until an archive proves no library references CoreLocation. **Never requested, never used.** |
 
 ## Privacy disclosure alignment
 
-In-app policy screens (`[legal_pages.dart](../lib/app/features/legal/legal_pages.dart)`) and `web/public/confidentialite.html` must name every processor that the code talks to: Groq, OneSignal, Firebase, PostHog, Supabase, Resend, Mautic, the KPB backend, plus PayDunya / CinetPay. A static guard (`test/core/privacy_disclosure_parity_test.dart`) derives hosts and permissions from the git-tracked tree and fails if a disclosure is missing.
+In-app policy screens (`[legal_pages.dart](../lib/app/features/legal/legal_pages.dart)`) and `web/public/confidentialite.html` must name every processor that the code talks to: Groq, Firebase (incl. Cloud Messaging), OneSignal (legacy app versions, server-side fallback), PostHog, Supabase, Resend, Mautic, the KPB backend, plus PayDunya / CinetPay. A static guard (`test/core/privacy_disclosure_parity_test.dart`) derives hosts and permissions from the git-tracked tree and fails if a disclosure is missing.
 
 ## Controller identity
 

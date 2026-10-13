@@ -221,7 +221,7 @@ mixin _SessionMixin on _AppControllerBase {
       await syncRemoteData(silent: true, force: profile == null);
     }
     maybeRestoreOnboardingFromProfile();
-    unawaited(syncOneSignalIdentity());
+    unawaited(syncPushIdentity());
     // Tie the PostHog session (and any replay) to the backend user id — a UUID,
     // not PII. No-op when PostHog is not configured. Runs on login and on
     // cold-start-while-signed-in (both call this).
@@ -304,7 +304,7 @@ mixin _SessionMixin on _AppControllerBase {
     _profileNeedsPush = true;
     _persist();
     update();
-    unawaited(syncOneSignalIdentity());
+    unawaited(syncPushIdentity());
     if (AppConfig.enableRemoteSync) {
       unawaited(syncRemoteData(silent: true));
     }
@@ -313,7 +313,7 @@ mixin _SessionMixin on _AppControllerBase {
 
   Future<void> logout() async {
     unawaited(AnalyticsService.instance.logLogout());
-    unawaited(OneSignalService.instance.logout());
+    unawaited(PushService.instance.logout());
     // Keep the historical logout contract: callers that do not await this
     // Future must still observe an anonymous in-memory state immediately.
     // Session/cache cleanup remains awaited below before the Future completes.
@@ -399,7 +399,7 @@ mixin _SessionMixin on _AppControllerBase {
     if (AppConfig.enableRemoteSync) {
       await _apiClient.deleteAccount();
     }
-    unawaited(OneSignalService.instance.logout());
+    unawaited(PushService.instance.logout());
     if (Get.isRegistered<AuthService>()) {
       await Get.find<AuthService>().clearSession();
     }
@@ -452,19 +452,14 @@ mixin _SessionMixin on _AppControllerBase {
     };
   }
 
-  /// Link the current profile to OneSignal (external id + targeting tags).
-  /// Safe to call repeatedly; a no-op when OneSignal isn't configured.
+  /// Rattache le jeton push de cet appareil au compte connecté. Seul
+  /// l'identifiant part, vers notre backend : le ciblage (niveau, pays visé)
+  /// se calcule côté serveur à partir du profil qu'il détient déjà. Sans effet
+  /// tant que le push n'est pas initialisé.
   @override
-  Future<void> syncOneSignalIdentity() async {
+  Future<void> syncPushIdentity() async {
     final current = profile;
     if (current == null) return;
-    await OneSignalService.instance.login(
-      // Pas d'`email:` — OneSignal ne recevait cette adresse que pour ses
-      // propres campagnes courriel, que nous n'utilisons pas (Resend et Mautic
-      // s'en chargent). Le service l'ignore désormais ; ne pas la lui donner
-      // non plus, sinon la prochaine lecture croira qu'elle part.
-      userId: current.id,
-      tags: oneSignalTargetingTags(current, localeCode: localeCode),
-    );
+    await PushService.instance.login(userId: current.id);
   }
 }

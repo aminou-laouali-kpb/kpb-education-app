@@ -5,7 +5,7 @@ import { InternalRole } from '../../common/enums/internal-role.enum';
 import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { MilestoneReminderService } from './milestone-reminder.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 
 interface TestPushDto {
   userId: string;
@@ -19,7 +19,7 @@ interface TestPushDto {
 @Roles(InternalRole.Admin, InternalRole.SuperAdmin)
 export class AdminPushController {
   constructor(
-    private readonly sender: OneSignalSenderService,
+    private readonly sender: PushSenderService,
     private readonly reminders: MilestoneReminderService,
   ) {}
 
@@ -35,8 +35,9 @@ export class AdminPushController {
   }
 
   /**
-   * Fire a test push to a single user (by KPB user id = OneSignal external id).
-   * Useful to verify the OneSignal pipeline without the dashboard.
+   * Fire a test push to a single user (by KPB user id). Goes through the same
+   * router as every other send: FCM when the user has a registered device,
+   * OneSignal otherwise (app versions not yet updated).
    *
    * KPB-173: intentionally direct — this is a diagnostic ping for one known
    * account, not a user-facing reminder. Routing it through the dispatcher
@@ -52,7 +53,8 @@ export class AdminPushController {
       return {
         ok: false,
         reason:
-          'OneSignal not configured — set ONESIGNAL_APP_ID and ONESIGNAL_REST_API_KEY.',
+          'Push not configured — set FCM_SERVICE_ACCOUNT_JSON (or, during the ' +
+          'transition, ONESIGNAL_APP_ID and ONESIGNAL_REST_API_KEY).',
       };
     }
 
@@ -61,26 +63,32 @@ export class AdminPushController {
     // envois refusés par OneSignal du 04/09/2026, ce bouton aurait répondu
     // « envoyé ✅ ». C'est le seul outil dont dispose l'exploitant pour tester
     // la chaîne — il doit dire la vérité, et dire où regarder quand il échoue.
-    const sent = await this.sender.sendToUser(
+    const outcome = await this.sender.send(
       dto.userId,
       dto.title?.trim() || 'Test KPB Education',
       dto.body?.trim() || 'Ceci est une notification de test 🎓',
       dto.route ? { route: dto.route } : undefined,
     );
 
-    if (!sent) {
+    if (!outcome.delivered) {
       return {
         ok: false,
         sentTo: dto.userId,
+        via: outcome.via,
         reason:
-          "OneSignal n'a livré à aucun appareil. Causes possibles : cet " +
-          "utilisateur n'a pas d'appareil abonné (notifications refusées, ou " +
-          "jamais connecté depuis l'installation), ou l'application OneSignal " +
-          "n'a aucune plateforme de livraison configurée (APNs / FCM). Le motif " +
-          'exact renvoyé par OneSignal est dans les journaux du conteneur api.',
+          outcome.via === 'fcm'
+            ? "FCM n'a livré à aucun appareil. Causes possibles : compte de " +
+              'service invalide, clé APNs absente du projet Firebase (iOS), ' +
+              'ou jeton refusé. Le motif exact est dans les journaux du ' +
+              'conteneur api.'
+            : "Aucun appareil joignable. Causes possibles : cet utilisateur " +
+              "n'a pas d'appareil enregistré (notifications refusées, ou " +
+              "jamais connecté depuis l'installation de la nouvelle version), " +
+              'ni d\'abonnement OneSignal actif. Le motif exact est dans les ' +
+              'journaux du conteneur api.',
       };
     }
 
-    return { ok: true, sentTo: dto.userId };
+    return { ok: true, sentTo: dto.userId, via: outcome.via };
   }
 }

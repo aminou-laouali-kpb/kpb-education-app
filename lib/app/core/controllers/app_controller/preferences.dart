@@ -92,9 +92,8 @@ mixin _PreferencesMixin on _AppControllerBase {
     _profileNeedsPush = true;
     _persist();
     update();
-    // Niveau ou pays visé modifié → les segments OneSignal doivent suivre
-    // maintenant, pas au prochain lancement.
-    unawaited(syncOneSignalIdentity());
+    // Plus rien à pousser côté push : le ciblage (niveau, pays visé) se calcule
+    // sur le serveur, à partir du profil que `_pushProfileUpdate` lui envoie.
     await _pushProfileUpdate();
   }
 

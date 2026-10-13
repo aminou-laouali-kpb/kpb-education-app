@@ -4,7 +4,7 @@ import type { Server, Socket } from 'socket.io';
 
 import { InternalRole } from '../../common/enums/internal-role.enum';
 import type { SupabaseAuthService } from '../auth/supabase-auth.service';
-import type { OneSignalSenderService } from '../notifications/onesignal-sender.service';
+import type { PushSenderService } from '../notifications/push-sender.service';
 import {
   CASE_SOCKET_RATE_LIMITS,
   CaseMessagingGateway,
@@ -56,7 +56,7 @@ function makeGateway() {
   const gateway = new CaseMessagingGateway(
     { verifyAndResolve } as unknown as SupabaseAuthService,
     casesService as unknown as CasesService,
-    pushService as unknown as OneSignalSenderService,
+    pushService as unknown as PushSenderService,
   );
   const serverEmit = jest.fn();
   gateway.server = {

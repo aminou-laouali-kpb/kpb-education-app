@@ -38,10 +38,10 @@ import '../services/app_search_service.dart';
 import '../data/content_api_codec.dart';
 import '../services/catalog_remote_sync.dart';
 import '../services/catalog_cache_service.dart';
-import '../services/onesignal_service.dart';
-import '../services/onesignal_tags.dart';
+import '../services/push_service.dart';
 import '../services/sync_conflict_merge.dart';
 import '../services/sync_telemetry.dart';
+import '../services/transient_retry.dart';
 import '../services/auth_service.dart';
 import '../services/success_lab_cache_service.dart';
 import '../services/success_lab_outbox.dart';
@@ -178,7 +178,7 @@ abstract class _AppControllerBase extends GetxController {
   Map<String, dynamic> _userProfilePayload(UserProfile profile);
   Future<void> flushPendingCaseMessages();
   bool isSaved(SavedItemType type, String itemId);
-  Future<void> syncOneSignalIdentity();
+  Future<void> syncPushIdentity();
   Future<void> syncRemoteData({bool silent = false, bool force = false});
 
   /// Expose the API client for feature screens that need direct calls.

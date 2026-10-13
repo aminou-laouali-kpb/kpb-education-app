@@ -25,14 +25,14 @@ import {
   utcOffsetHoursForCountry,
 } from '../../common/country-timezone';
 import { PrismaService } from '../prisma/prisma.service';
-import { OneSignalSenderService } from './onesignal-sender.service';
+import { PushSenderService } from './push-sender.service';
 
 export type DispatchOutcome =
   | 'pushed' // feed written + push delivered
   | 'deduped' // already recorded for this dedupeKey — nothing sent
   | 'quiet_hours' // feed written; push held back (local quiet window)
   | 'capped' // feed written; push held back (daily cap reached)
-  | 'push_unconfigured' // feed written; OneSignal not configured
+  | 'push_unconfigured' // feed written; no push provider configured
   | 'push_failed' // feed written; provider rejected the push
   | 'skipped'; // DB disabled or transient error — nothing recorded
 
@@ -64,7 +64,7 @@ export class NotificationDispatchService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly push: OneSignalSenderService,
+    private readonly push: PushSenderService,
   ) {}
 
   private get maxPushesPerDay(): number {
@@ -134,7 +134,14 @@ export class NotificationDispatchService {
         input.userId,
         isEnglish ? input.title.en : input.title.fr,
         isEnglish ? input.body.en : input.body.fr,
-        { ...(input.data ?? {}), route: input.route, type: input.kind },
+        {
+          ...(input.data ?? {}),
+          route: input.route,
+          type: input.kind,
+          // Rendu par l'application au tap (`POST /me/push-opens`) : le rappel
+          // passe en lu dans le fil sans que l'élève ait à le rouvrir.
+          notificationKey: input.dedupeKey,
+        },
       );
       if (!ok) return 'push_failed';
 

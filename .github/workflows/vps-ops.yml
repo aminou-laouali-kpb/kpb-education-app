@@ -172,22 +172,6 @@ jobs:
             ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           fi
 
-      # L'App ID OneSignal que l'APP embarque réellement, extrait de la source
-      # plutôt que recopié à la main. C'est une valeur publique — elle voyage
-      # dans le binaire, un `strings` sur l'IPA la donne — et c'est ce qui
-      # permet au script de dire si le serveur cible la MÊME application. Une
-      # constante recopiée aurait fini par diverger de `app_config.dart` sans
-      # que personne ne le voie, et la comparaison aurait alors validé un écart.
-      - name: Lire l'App ID OneSignal embarqué par l'app
-        id: onesignal
-        run: |
-          set -euo pipefail
-          app_id="$(sed -n "/KPB_ONESIGNAL_APP_ID/,/)/p" lib/app/core/config/app_config.dart \
-            | sed -n "s/.*defaultValue: '\\([^']*\\)'.*/\\1/p" | head -1)"
-          [ -n "$app_id" ] || { echo "::error::App ID OneSignal introuvable dans app_config.dart"; exit 1; }
-          echo "app_id=$app_id" >> "$GITHUB_OUTPUT"
-          echo "App ID embarqué par l'app : $app_id"
-
       # Le destinataire IA à déclarer aux stores est écrit dans la fiche
       # consoles, pas dans ce script. On le LIT donc, au lieu de le figer :
       # un nom en dur ici se désynchronise de la fiche à la première
@@ -269,7 +253,11 @@ jobs:
           VPS_PATH: ${{ secrets.VPS_PATH }}
           ACTION: ${{ inputs.action }}
           DRY_RUN: ${{ inputs.dry_run }}
-          EXPECTED_ONESIGNAL_APP_ID: ${{ steps.onesignal.outputs.app_id }}
+          # App ID OneSignal des builds ANTÉRIEURES à la migration FCM. Figé à
+          # dessein : l'app courante n'embarque plus OneSignal, et ces anciens
+          # artefacts ne changeront plus. Ne sert qu'à la comparaison indicative
+          # de `show_push_state`, tant que le serveur garde le repli OneSignal.
+          EXPECTED_ONESIGNAL_APP_ID: '779d9ea8-1a0d-4189-9d51-4077cb8ded2a'
           EXPECTED_LLM_PROVIDER: ${{ steps.llm.outputs.declared }}
           EEF_VERIFIER_EMAIL: ${{ inputs.verifier_email }}
           EEF_EXPECTED_PROGRAMS: ${{ inputs.expected_programs }}

@@ -3,6 +3,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../observability/crashlytics_observability.dart';
 import '../utils/app_logger.dart';
 import 'analytics_service.dart';
+import 'transient_retry.dart';
 
 /// Structured sync observability: debug logs, Analytics events, and Crashlytics custom keys.
 abstract final class SyncTelemetry {
@@ -20,10 +21,13 @@ abstract final class SyncTelemetry {
     required bool success,
     required Duration elapsed,
     int catalogHiveFallbackCount = 0,
+    String? failureStage,
+    SyncErrorKind? errorKind,
   }) {
     AppLogger.info(
       'full_sync_finished success=$success elapsedMs=${elapsed.inMilliseconds} '
-      'hiveFallbacks=$catalogHiveFallbackCount',
+      'hiveFallbacks=$catalogHiveFallbackCount stage=$failureStage '
+      'error=${errorKind?.wireValue}',
       tag: _tag,
     );
     _safeSetKeys(<String, Object>{
@@ -37,6 +41,8 @@ abstract final class SyncTelemetry {
       success: success,
       elapsedMs: elapsed.inMilliseconds,
       catalogHiveFallbackCount: catalogHiveFallbackCount,
+      failureStage: success ? null : failureStage,
+      errorKind: success ? null : errorKind?.wireValue,
     );
   }
 

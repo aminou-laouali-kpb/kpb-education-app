@@ -12,6 +12,7 @@ import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
+import '../services/push_service.dart' show PushBackend;
 import 'app_version_headers.dart';
 
 part 'app_api_client/eef.dart';
@@ -53,7 +54,8 @@ class AppApiClient extends _ApiClientBase
         _CommercialApi,
         _CatalogApi,
         _CasesApi,
-        _MarketplaceApi {
+        _MarketplaceApi
+    implements PushBackend {
   AppApiClient({Dio? dio, Duration? aiReceiveTimeout})
       : _aiReceiveTimeout = aiReceiveTimeout ??
             const Duration(seconds: AppConfig.aiRequestTimeoutInSeconds),
@@ -133,9 +135,29 @@ class AppApiClient extends _ApiClientBase
   /// Public app config (`/config/app`) — drives the force-update gate.
   Future<Map<String, dynamic>> getAppConfig() => get('/config/app');
 
-  // Legacy /device-tokens registration removed: push identity is now owned
-  // end-to-end by OneSignal (see OneSignalService), and these client methods
-  // were never called. The backend table is retained for now.
+  // ── Push (FCM) ─────────────────────────────────────────────────────────
+  // Le backend garde les jetons d'appareil et cible lui-même ; voir
+  // PushService.
+
+  @override
+  Future<void> registerDeviceToken(String token, String platform) async {
+    await _dio.post<void>(
+      '/device-tokens',
+      data: <String, dynamic>{'token': token, 'platform': platform},
+    );
+  }
+
+  @override
+  Future<void> unregisterDeviceToken(String token) async {
+    await _dio.delete<void>('/device-tokens/${Uri.encodeComponent(token)}');
+  }
+
+  /// Tap sur une notification : remplace les taux d'ouverture que donnait le
+  /// tableau de bord OneSignal.
+  @override
+  Future<void> reportPushOpened(Map<String, String> payload) async {
+    await _dio.post<void>('/me/push-opens', data: payload);
+  }
 
   Future<Map<String, dynamic>> getProfile() async {
     final response = await _dio.get<Map<String, dynamic>>('/profiles/me');

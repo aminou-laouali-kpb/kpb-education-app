@@ -128,6 +128,9 @@ dependencies:
   youtube_player_flutter: ^9.1.1
   firebase_analytics: ^12.3.0
   firebase_crashlytics: ^5.2.0
+  # Push : FCM en direct (gratuit), à la place du SDK OneSignal. Le backend
+  # garde les jetons d'appareil (`/device-tokens`) et cible lui-même.
+  firebase_messaging: ^16.2.0
   socket_io_client: ^3.0.2
   flutter_secure_storage: ^10.0.0
   hive: ^2.2.3
@@ -137,7 +140,6 @@ dependencies:
   collection: any
   syncfusion_flutter_pdfviewer: ^33.2.3
   local_auth: ^3.0.1
-  onesignal_flutter: ^5.0.0
   shimmer: ^3.0.0
   quick_actions: ^1.1.0
   pdf: ^3.12.0
