@@ -1,11 +1,24 @@
 'use client';
 
-import { CSSProperties, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { useLocale } from '../../components/locale-provider';
 import { apiFetch } from '../../lib/api-client';
+import {
+  announcedCell,
+  followersCell,
+} from '../../lib/scholarship-opening';
+import {
+  fetchOpeningOverview,
+  fetchOpeningTodo,
+} from '../../lib/scholarship-opening-api';
+import type {
+  OpeningOverviewItem,
+  OpeningTodoItem,
+  OpeningTodoResponse,
+} from '../../lib/scholarship-opening-types';
 import {
   AdminTable,
   AdminTableRow,
@@ -20,6 +33,8 @@ import {
   Textarea,
 } from '../../components/ui';
 import type { BadgeVariant } from '../../components/ui';
+import { CycleOpeningPanel } from '../../components/scholarships/CycleOpeningPanel';
+import { OpeningTodoCard } from '../../components/scholarships/OpeningTodoCard';
 import { ScholarshipContentEditor } from '../../components/scholarships/ScholarshipContentEditor';
 import { ScholarshipVideosEditor } from '../../components/scholarships/ScholarshipVideosEditor';
 import type {
@@ -46,30 +61,6 @@ const EMPTY_STEP_DRAFT: StepDraft = {
   descriptionEn: '',
   estimatedDurationDays: '',
 };
-
-interface ActivationDraft {
-  academicYear: string;
-  estimatedOpenAt: string;
-  estimatedCloseAt: string;
-  opensAt: string;
-  closesAt: string;
-  sourceUrl: string;
-}
-
-function defaultActivationDraft(entry: ScholarshipEntry): ActivationDraft {
-  const year = new Date().getFullYear();
-  return {
-    academicYear: entry.currentCycle?.academicYear ?? `${year}-${year + 1}`,
-    estimatedOpenAt: entry.currentCycle?.estimatedOpenAt?.slice(0, 10) ?? '',
-    estimatedCloseAt: entry.currentCycle?.estimatedCloseAt?.slice(0, 10) ?? '',
-    opensAt: entry.currentCycle?.opensAt?.slice(0, 10) ?? '',
-    closesAt:
-      entry.currentCycle?.closesAt?.slice(0, 10) ??
-      entry.deadlineAt?.slice(0, 10) ??
-      '',
-    sourceUrl: entry.sourceUrl ?? '',
-  };
-}
 
 interface ModerationResponse {
   items: ScholarshipEntry[];
@@ -139,15 +130,20 @@ export default function ScholarshipsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stepDrafts, setStepDrafts] = useState<Record<string, StepDraft>>({});
   const [stepPendingId, setStepPendingId] = useState<string | null>(null);
-  const [activationDrafts, setActivationDrafts] = useState<
-    Record<string, ActivationDraft>
-  >({});
-  const [activationPendingId, setActivationPendingId] = useState<string | null>(
+  // Colonnes « Abonnés » / « Annoncé » et carte « À faire » (annonce
+  // d'ouverture) : `null` tant que non chargées, ou si le chargement échoue —
+  // la liste reste utilisable, les colonnes affichent « — ».
+  const [openingOverview, setOpeningOverview] = useState<Map<
+    string,
+    OpeningOverviewItem
+  > | null>(null);
+  const [openingTodo, setOpeningTodo] = useState<OpeningTodoResponse | null>(
     null,
   );
-  const [forecastPendingId, setForecastPendingId] = useState<string | null>(
-    null,
-  );
+  const [autoOpen, setAutoOpen] = useState<{
+    scholarshipId: string;
+    academicYear: string;
+  } | null>(null);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -194,6 +190,48 @@ export default function ScholarshipsPage() {
     void loadScholarships(statusFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, statusFilter]);
+
+  const loadOpeningLists = useCallback(async () => {
+    const [overview, todo] = await Promise.allSettled([
+      fetchOpeningOverview(),
+      fetchOpeningTodo(),
+    ]);
+    setOpeningOverview(
+      overview.status === 'fulfilled'
+        ? new Map(
+            overview.value.items.map((item) => [item.scholarshipId, item]),
+          )
+        : null,
+    );
+    setOpeningTodo(todo.status === 'fulfilled' ? todo.value : null);
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    void loadOpeningLists();
+  }, [session, loadOpeningLists]);
+
+  /** « Préparer l'annonce » : filtre Approuvées, sélection, aperçu. */
+  function prepareAnnouncement(item: OpeningTodoItem) {
+    setStatusMessage(null);
+    setErrorMessage(null);
+    setAutoOpen({
+      scholarshipId: item.scholarshipId,
+      academicYear: item.academicYear,
+    });
+    setSelectedId(item.scholarshipId);
+    if (statusFilter !== 'approved') {
+      setStatusFilter('approved');
+    } else if (!items.some((entry) => entry.id === item.scholarshipId)) {
+      // Déjà sur « Approuvées » mais la bourse n'est pas dans la liste chargée
+      // (approuvée depuis) : on relit plutôt que d'afficher un panneau vide.
+      void loadScholarships('approved');
+    }
+  }
+
+  const handleAutoOpenHandled = useCallback(() => setAutoOpen(null), []);
 
   function changeFilter(next: ModerationStatus) {
     if (next === statusFilter) {
@@ -396,278 +434,6 @@ export default function ScholarshipsPage() {
     } finally {
       setStepPendingId(null);
     }
-  }
-
-  function updateActivationDraft(
-    entry: ScholarshipEntry,
-    patch: Partial<ActivationDraft>,
-  ) {
-    setActivationDrafts((current) => ({
-      ...current,
-      [entry.id]: {
-        ...defaultActivationDraft(entry),
-        ...current[entry.id],
-        ...patch,
-      },
-    }));
-  }
-
-  async function activateScholarship(entry: ScholarshipEntry) {
-    const draft = activationDrafts[entry.id] ?? defaultActivationDraft(entry);
-    if (!draft.academicYear || !draft.opensAt || !draft.closesAt) {
-      setErrorMessage(t('scholarships.activationValidationError'));
-      return;
-    }
-    if (new Date(draft.closesAt) <= new Date(draft.opensAt)) {
-      setErrorMessage(t('scholarships.activationDateError'));
-      return;
-    }
-
-    setActivationPendingId(entry.id);
-    setStatusMessage(null);
-    setErrorMessage(null);
-    try {
-      await apiFetch(`/admin/scholarships/${entry.id}/activate`, {
-        method: 'POST',
-        body: {
-          academicYear: draft.academicYear,
-          opensAt: `${draft.opensAt}T00:00:00.000Z`,
-          closesAt: `${draft.closesAt}T23:59:59.999Z`,
-          dateConfidence: 'confirmed',
-          sourceUrl: draft.sourceUrl || undefined,
-        },
-      });
-      setItems((current) =>
-        current.map((item) =>
-          item.id === entry.id
-            ? {
-                ...item,
-                deadlineAt: `${draft.closesAt}T23:59:59.999Z`,
-                currentCycle: {
-                  id: item.currentCycle?.id ?? '',
-                  academicYear: draft.academicYear,
-                  status: 'open',
-                  dateConfidence: 'confirmed',
-                  estimatedOpenAt: item.currentCycle?.estimatedOpenAt ?? null,
-                  estimatedCloseAt: item.currentCycle?.estimatedCloseAt ?? null,
-                  opensAt: `${draft.opensAt}T00:00:00.000Z`,
-                  closesAt: `${draft.closesAt}T23:59:59.999Z`,
-                },
-              }
-            : item,
-        ),
-      );
-      setStatusMessage(t('scholarships.activationSuccess'));
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : t('scholarships.activationError'),
-      );
-    } finally {
-      setActivationPendingId(null);
-    }
-  }
-
-  async function saveForecast(entry: ScholarshipEntry) {
-    const draft = activationDrafts[entry.id] ?? defaultActivationDraft(entry);
-    if (
-      !draft.academicYear ||
-      !draft.estimatedOpenAt ||
-      !draft.estimatedCloseAt
-    ) {
-      setErrorMessage(t('scholarships.forecastValidationError'));
-      return;
-    }
-    if (new Date(draft.estimatedCloseAt) <= new Date(draft.estimatedOpenAt)) {
-      setErrorMessage(t('scholarships.activationDateError'));
-      return;
-    }
-
-    setForecastPendingId(entry.id);
-    setStatusMessage(null);
-    setErrorMessage(null);
-    try {
-      await apiFetch(`/admin/scholarships/${entry.id}/forecast`, {
-        method: 'POST',
-        body: {
-          academicYear: draft.academicYear,
-          estimatedOpenAt: `${draft.estimatedOpenAt}T00:00:00.000Z`,
-          estimatedCloseAt: `${draft.estimatedCloseAt}T23:59:59.999Z`,
-          sourceUrl: draft.sourceUrl || undefined,
-        },
-      });
-      setItems((current) =>
-        current.map((item) =>
-          item.id === entry.id
-            ? {
-                ...item,
-                currentCycle: {
-                  id: item.currentCycle?.id ?? '',
-                  academicYear: draft.academicYear,
-                  status:
-                    item.currentCycle?.status === 'open' ? 'open' : 'forecast',
-                  dateConfidence:
-                    item.currentCycle?.status === 'open'
-                      ? 'confirmed'
-                      : 'estimated',
-                  estimatedOpenAt: `${draft.estimatedOpenAt}T00:00:00.000Z`,
-                  estimatedCloseAt: `${draft.estimatedCloseAt}T23:59:59.999Z`,
-                  opensAt: item.currentCycle?.opensAt ?? null,
-                  closesAt: item.currentCycle?.closesAt ?? null,
-                },
-              }
-            : item,
-        ),
-      );
-      setStatusMessage(t('scholarships.forecastSuccess'));
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : t('scholarships.forecastError'),
-      );
-    } finally {
-      setForecastPendingId(null);
-    }
-  }
-
-  function renderActivationEditor(entry: ScholarshipEntry) {
-    if (entry.moderationStatus !== 'approved') {
-      return (
-        <Alert variant="warning">
-          {t('scholarships.activationApprovalHint')}
-        </Alert>
-      );
-    }
-    const draft = activationDrafts[entry.id] ?? defaultActivationDraft(entry);
-    const busy = activationPendingId === entry.id;
-    const forecastBusy = forecastPendingId === entry.id;
-    return (
-      <div
-        style={{
-          display: 'grid',
-          gap: 10,
-          padding: 14,
-          borderRadius: 14,
-          border: '1px solid var(--border)',
-          background: 'var(--bg)',
-        }}
-      >
-        <span style={metaLabelStyle}>{t('scholarships.activationTitle')}</span>
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}
-        >
-          <Field label={t('scholarships.academicYearLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                value={draft.academicYear}
-                onChange={(event) =>
-                  updateActivationDraft(entry, {
-                    academicYear: event.target.value,
-                  })
-                }
-              />
-            )}
-          </Field>
-          <Field label={t('scholarships.sourceLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                type="url"
-                value={draft.sourceUrl}
-                onChange={(event) =>
-                  updateActivationDraft(entry, {
-                    sourceUrl: event.target.value,
-                  })
-                }
-              />
-            )}
-          </Field>
-          <Field label={t('scholarships.estimatedOpenAtLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                type="date"
-                value={draft.estimatedOpenAt}
-                onChange={(event) =>
-                  updateActivationDraft(entry, {
-                    estimatedOpenAt: event.target.value,
-                  })
-                }
-              />
-            )}
-          </Field>
-          <Field label={t('scholarships.estimatedCloseAtLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                type="date"
-                value={draft.estimatedCloseAt}
-                onChange={(event) =>
-                  updateActivationDraft(entry, {
-                    estimatedCloseAt: event.target.value,
-                  })
-                }
-              />
-            )}
-          </Field>
-        </div>
-        <Button
-          variant="secondary"
-          loading={forecastBusy}
-          onClick={() => saveForecast(entry)}
-        >
-          {t('scholarships.saveForecastCta')}
-        </Button>
-        <span
-          style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}
-        >
-          {t('scholarships.forecastHint')}
-        </span>
-        <div
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}
-        >
-          <Field label={t('scholarships.opensAtLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                type="date"
-                value={draft.opensAt}
-                onChange={(event) =>
-                  updateActivationDraft(entry, { opensAt: event.target.value })
-                }
-              />
-            )}
-          </Field>
-          <Field label={t('scholarships.closesAtLabel')}>
-            {({ id }) => (
-              <Input
-                id={id}
-                type="date"
-                value={draft.closesAt}
-                onChange={(event) =>
-                  updateActivationDraft(entry, { closesAt: event.target.value })
-                }
-              />
-            )}
-          </Field>
-        </div>
-        <Button
-          variant="success"
-          loading={busy}
-          onClick={() => activateScholarship(entry)}
-        >
-          {t('scholarships.activateCta')}
-        </Button>
-        <span
-          style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}
-        >
-          {t('scholarships.activationHint')}
-        </span>
-      </div>
-    );
   }
 
   function renderStepsEditor(entry: ScholarshipEntry) {
@@ -915,7 +681,17 @@ export default function ScholarshipsPage() {
           onChanged={(videos) => patchEntry(entry.id, { videos })}
         />
 
-        {renderActivationEditor(entry)}
+        <CycleOpeningPanel
+          key={entry.id}
+          entry={entry}
+          role={session?.user.role}
+          autoOpenYear={
+            autoOpen?.scholarshipId === entry.id ? autoOpen.academicYear : null
+          }
+          onAutoOpenHandled={handleAutoOpenHandled}
+          onEntryPatched={(patch) => patchEntry(entry.id, patch)}
+          onOpeningChanged={() => void loadOpeningLists()}
+        />
 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {entry.moderationStatus === 'pending' ||
@@ -950,6 +726,8 @@ export default function ScholarshipsPage() {
           <Alert variant="success">{statusMessage}</Alert>
         ) : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
+
+        <OpeningTodoCard todo={openingTodo} onPrepare={prepareAnnouncement} />
 
         <div
           style={{
@@ -993,9 +771,11 @@ export default function ScholarshipsPage() {
               t('scholarships.colName'),
               t('scholarships.colDeadline'),
               t('scholarships.colSteps'),
+              t('scholarships.opening.colFollowers'),
+              t('scholarships.opening.colAnnounced'),
               t('scholarships.colStatus'),
             ]}
-            cols="1.6fr 0.8fr 0.6fr 0.8fr"
+            cols="1.4fr 0.7fr 0.5fr 0.6fr 0.7fr 0.7fr"
             footnote={t('scholarships.tableNote')}
           >
             {loading ? (
@@ -1016,6 +796,21 @@ export default function ScholarshipsPage() {
                   <CellText primary={formatDeadline(entry.deadlineAt)} muted />
                   <CellText
                     primary={String(entry.applicationSteps.length)}
+                    muted
+                  />
+                  <CellText
+                    primary={followersCell(
+                      openingOverview?.get(entry.id),
+                      openingOverview !== null,
+                    )}
+                    muted
+                  />
+                  <CellText
+                    primary={announcedCell(
+                      openingOverview?.get(entry.id),
+                      openingOverview !== null,
+                      t,
+                    )}
                     muted
                   />
                   <div>
