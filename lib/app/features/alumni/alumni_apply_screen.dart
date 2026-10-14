@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/repositories/app_api_client.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 /// Alumni self-application form (Phase 3).
 ///
@@ -83,22 +84,12 @@ class _AlumniApplyScreenState extends State<AlumniApplyScreen> {
       );
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'application_sent_admin'.tr,
-          ),
-        ),
-      );
+      KpbToast.success('application_sent_admin'.tr, context: context);
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('alumni_apply_submit_failed'.tr),
-        ),
-      );
+      KpbToast.error('alumni_apply_submit_failed'.tr, context: context);
     }
   }
 

@@ -412,33 +412,15 @@ class _SavedGroupState extends State<_SavedGroup> {
                           onDismissed: (_) {
                             widget.controller
                                 .toggleSaved(item.type, item.itemId);
-                            Get.showSnackbar(GetSnackBar(
-                              messageText: Text(
-                                'item_deleted'.tr,
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 14),
-                              ),
-                              mainButton: TextButton(
-                                onPressed: () {
-                                  widget.controller
-                                      .toggleSaved(item.type, item.itemId);
-                                  Get.closeCurrentSnackbar();
-                                },
-                                child: Text(
-                                  'cancel'.tr,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
+                            KpbToast.info(
+                              'item_deleted'.tr,
                               duration: const Duration(seconds: 3),
-                              backgroundColor: KpbColors.gray700,
-                              borderRadius: KpbRadius.md,
-                              margin: const EdgeInsets.all(12),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 12),
-                            ));
+                              action: KpbToastAction(
+                                label: 'cancel'.tr,
+                                onPressed: () => widget.controller
+                                    .toggleSaved(item.type, item.itemId),
+                              ),
+                            );
                           },
                           child: widget.buildItem(item),
                         ),

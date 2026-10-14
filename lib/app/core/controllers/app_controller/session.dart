@@ -347,14 +347,9 @@ mixin _SessionMixin on _AppControllerBase {
     try {
       await logout();
       unawaited(Get.offAll(() => const AppBootScreen()));
-      Get.snackbar(
-        'api_client_session_expired_title'.tr,
+      KpbToast.error(
         'api_client_session_expired_message'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-        backgroundColor: KpbColors.errorLight,
-        colorText: KpbColors.error,
-        duration: const Duration(seconds: 4),
+        title: 'api_client_session_expired_title'.tr,
       );
     } finally {
       _sessionLossInProgress = false;

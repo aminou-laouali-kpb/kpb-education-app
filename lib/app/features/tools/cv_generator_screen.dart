@@ -228,9 +228,7 @@ class _CvGeneratorScreenState extends State<CvGeneratorScreen> {
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(aiErrorMessage(error))),
-        );
+        KpbToast.error(aiErrorMessage(error), context: context);
       }
     } finally {
       if (mounted) setState(() => _isGenerating = false);

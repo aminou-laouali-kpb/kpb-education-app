@@ -3453,4 +3453,7 @@ const Map<String, String> appTranslationsFr = {
       'Entraîne-toi aux entretiens visa et admission avec un retour IA',
   'case_ai_review_subtitle':
       'Fais relire un document par l\'IA avant de l\'envoyer',
+  // ── Bandeaux (KpbToast) ────────────────────────────────────────
+  'toast_offline_pending_default':
+      'C\'est gardé sur ton téléphone. On l\'envoie dès que tu es en ligne.',
 };

@@ -21,6 +21,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §10.2).
 // Couleurs catégorielles des avatars (séries distinctes — exception §14 de
@@ -425,15 +426,9 @@ class _CommercialLeadDetailScreenState
   late List<CommercialLeadDocument> _docs = List.of(widget.lead.documents);
   final Set<String> _reviewingDocIds = <String>{};
 
-  void _toast(String msg) {
+  void _toast(String msg, {KpbToastKind kind = KpbToastKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(msg),
-        backgroundColor: KpbColors.brandNavy,
-        behavior: SnackBarBehavior.floating,
-      ));
+    KpbToast.show(kind: kind, message: msg, context: context);
   }
 
   Future<void> _convert() async {
@@ -443,10 +438,12 @@ class _CommercialLeadDetailScreenState
       await _ctrl.updateCommercialLeadTag(widget.lead.id, leadTag: 'converted');
       if (!mounted) return;
       setState(() => _tag = 'converted');
-      _toast('commercial_converted_toast'
-          .trParams({'name': widget.lead.studentName}));
+      _toast(
+          'commercial_converted_toast'
+              .trParams({'name': widget.lead.studentName}),
+          kind: KpbToastKind.success);
     } catch (_) {
-      _toast('commercial_convert_error'.tr);
+      _toast('commercial_convert_error'.tr, kind: KpbToastKind.error);
     } finally {
       if (mounted) setState(() => _converting = false);
     }
@@ -468,7 +465,7 @@ class _CommercialLeadDetailScreenState
             .toList(growable: false);
       });
     } catch (_) {
-      _toast('commercial_doc_review_error'.tr);
+      _toast('commercial_doc_review_error'.tr, kind: KpbToastKind.error);
     } finally {
       if (mounted) setState(() => _reviewingDocIds.remove(doc.id));
     }

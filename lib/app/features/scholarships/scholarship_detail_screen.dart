@@ -116,15 +116,12 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     if (await kpbOpenExternalUrlString(value)) return;
     if (!mounted) return;
     final scholarshipTitle = _scholarship?.title ?? '';
-    Get.snackbar(
-      'external_link_failed_title'.tr,
+    KpbToast.error(
       'external_link_failed_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 6),
-      mainButton: TextButton(
+      title: 'external_link_failed_title'.tr,
+      action: KpbToastAction(
+        label: 'external_link_failed_cta'.tr,
         onPressed: () {
-          Get.closeCurrentSnackbar();
           openWhatsAppOrToast(
             prefill: kpbWhatsAppPrefill(
               custom: 'external_link_failed_prefill'
@@ -134,7 +131,6 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
             contextType: 'scholarship',
           );
         },
-        child: Text('external_link_failed_cta'.tr),
       ),
     );
   }
@@ -201,9 +197,9 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
             ? profileUserId
             : null;
     if (userId == null) {
-      Get.snackbar(
-        'success_lab_start_error_title'.tr,
+      KpbToast.error(
         'success_lab_missing_identity'.tr,
+        title: 'success_lab_start_error_title'.tr,
       );
       return;
     }
@@ -227,9 +223,9 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     } catch (error) {
       if (!mounted) return;
       final failure = SuccessLabRepository.normalizeFailure(error);
-      Get.snackbar(
-        'success_lab_start_error_title'.tr,
+      KpbToast.error(
         _startFailureMessage(failure),
+        title: 'success_lab_start_error_title'.tr,
       );
     } finally {
       if (mounted) setState(() => _startingWorkspace = false);

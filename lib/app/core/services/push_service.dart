@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../config/app_routes.dart';
+import '../ui/components/kpb_toast.dart';
 
 /// Ce que [PushService] attend du backend KPB. [AppApiClient] l'implémente ;
 /// les tests branchent un faux.
@@ -200,13 +201,12 @@ class PushService {
     final notification = message.notification;
     if (notification == null) return;
     try {
-      Get.snackbar(
-        notification.title ?? '',
+      KpbToast.info(
         notification.body ?? '',
-        snackPosition: SnackPosition.TOP,
+        title: notification.title,
+        atTop: true,
         duration: const Duration(seconds: 5),
-        margin: const EdgeInsets.all(12),
-        onTap: (_) => _onMessageOpened(message),
+        onTap: () => _onMessageOpened(message),
       );
     } catch (error) {
       debugPrint('[Push] foreground banner skipped: $error');

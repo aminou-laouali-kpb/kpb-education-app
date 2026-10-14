@@ -58,12 +58,9 @@ class _SearchScreenState extends State<SearchScreen> {
           final field = _ctrl.fieldById(result.id);
           _openFieldDetail(context, field, _ctrl);
         } catch (_) {
-          Get.snackbar(
-            'search_field_not_found_title'.tr,
+          KpbToast.info(
             'search_field_not_found_body'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12),
-            duration: const Duration(seconds: 2),
+            title: 'search_field_not_found_title'.tr,
           );
         }
       case SearchResultType.country:

@@ -45,6 +45,7 @@ import '../services/transient_retry.dart';
 import '../services/auth_service.dart';
 import '../services/success_lab_cache_service.dart';
 import '../services/success_lab_outbox.dart';
+import '../ui/components/kpb_toast.dart';
 
 part 'app_controller/search.dart';
 part 'app_controller/roadmap.dart';

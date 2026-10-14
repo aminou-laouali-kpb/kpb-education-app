@@ -306,9 +306,7 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('salon_rsvp_error'.tr)),
-      );
+      KpbToast.error('salon_rsvp_error'.tr, context: context);
     } finally {
       _togglingSessionIds.remove(id);
     }

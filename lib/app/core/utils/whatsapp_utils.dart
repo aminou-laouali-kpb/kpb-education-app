@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../config/app_config.dart';
 import '../services/analytics_service.dart';
 import 'external_link.dart';
+import '../ui/components/kpb_toast.dart';
 
 /// Builds a context-aware WhatsApp greeting for the KPB advisor line so the
 /// advisor immediately sees what the person is reaching out about. Each page
@@ -119,11 +119,8 @@ Future<void> openWhatsAppOrToast({
       success: false,
     ),
   );
-  Get.snackbar(
-    title ?? 'WhatsApp',
+  KpbToast.error(
     message ?? 'whatsapp_open_failed'.tr,
-    snackPosition: SnackPosition.BOTTOM,
-    margin: const EdgeInsets.all(12),
-    duration: const Duration(seconds: 3),
+    title: title ?? 'WhatsApp',
   );
 }

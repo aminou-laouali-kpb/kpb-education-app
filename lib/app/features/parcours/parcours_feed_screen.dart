@@ -189,11 +189,7 @@ class _FeedPageState extends State<_FeedPage> {
   void _play() {
     final id = widget.story.youtubeId ?? '';
     if (id.isEmpty) {
-      Get.snackbar(
-        'parcours_appbar_title'.tr,
-        'parcours_video_unavailable'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      KpbToast.error('parcours_video_unavailable'.tr);
       return;
     }
     final controller = YoutubePlayerController(

@@ -3,6 +3,7 @@ export 'kpb_theme_ext.dart';
 export 'kpb_haptics.dart';
 
 export 'components/kpb_pressable.dart';
+export 'components/kpb_toast.dart';
 export 'components/kpb_input_decoration.dart';
 export 'components/section_header.dart';
 export 'components/kpb_card.dart';

@@ -485,14 +485,9 @@ class _ProfileEditSheetState extends State<_ProfileEditSheet> {
     );
     unawaited(widget.controller.updateProfile(updated));
     Navigator.pop(context);
-    Get.snackbar(
-      'profile_updated_title'.tr,
+    KpbToast.success(
       'profile_updated_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: KpbColors.successLight,
-      colorText: KpbColors.success,
-      duration: const Duration(seconds: 2),
+      title: 'profile_updated_title'.tr,
     );
   }
 

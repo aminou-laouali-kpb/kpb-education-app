@@ -3195,4 +3195,7 @@ const Map<String, String> appTranslationsEn = {
       'Practice visa and admission interviews with AI feedback',
   'case_ai_review_subtitle':
       'Have the AI proofread a document before you send it',
+  // ── Toasts (KpbToast) ──────────────────────────────────────────
+  'toast_offline_pending_default':
+      'Saved on your phone. We\'ll send it as soon as you\'re online.',
 };

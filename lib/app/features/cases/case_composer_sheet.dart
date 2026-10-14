@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../core/models/app_models.dart';
 import 'case_tunnel_flow.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 class CaseComposerSheet extends StatelessWidget {
   const CaseComposerSheet({
@@ -45,11 +46,7 @@ class CaseComposerSheet extends StatelessWidget {
           onClose: () => Navigator.of(context).pop(),
           onSubmitted: () {
             Navigator.of(context).pop();
-            Get.snackbar(
-              'KPB Education',
-              'request_submitted'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-            );
+            KpbToast.success('request_submitted'.tr);
           },
         ),
       ),

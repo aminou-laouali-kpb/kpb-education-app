@@ -7,6 +7,7 @@ import '../../core/utils/ai_error_message.dart';
 import '../ai_advisor/ai_consent.dart';
 import '../ai_advisor/ai_disclosure_banner.dart';
 import '../etudes_en_france/eef_help_line.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
 const _cardShadow = <BoxShadow>[
@@ -133,9 +134,7 @@ class _InterviewSimulatorScreenState extends State<InterviewSimulatorScreen> {
       }
       if (mounted) {
         setState(() => _stage = _Stage.pickType);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(aiErrorMessage(error))),
-        );
+        KpbToast.error(aiErrorMessage(error), context: context);
       }
     }
   }
@@ -170,9 +169,7 @@ class _InterviewSimulatorScreenState extends State<InterviewSimulatorScreen> {
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(aiErrorMessage(error))),
-        );
+        KpbToast.error(aiErrorMessage(error), context: context);
       }
     } finally {
       if (mounted) setState(() => _evaluating = false);

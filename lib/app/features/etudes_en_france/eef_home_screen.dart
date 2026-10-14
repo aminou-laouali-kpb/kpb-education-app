@@ -205,10 +205,10 @@ class _EefHomeScreenState extends State<EefHomeScreen>
 
     final ok = await _interest.withdraw();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(ok ? 'eef_withdraw_done'.tr : 'eef_withdraw_failed'.tr),
-      ),
+    KpbToast.show(
+      kind: ok ? KpbToastKind.success : KpbToastKind.error,
+      message: ok ? 'eef_withdraw_done'.tr : 'eef_withdraw_failed'.tr,
+      context: context,
     );
   }
 

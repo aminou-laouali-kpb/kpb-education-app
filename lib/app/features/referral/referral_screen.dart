@@ -67,21 +67,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
       if (res['ok'] == true) {
         await _showVoucherDialog((res['voucherCode'] as String?) ?? '');
       } else {
-        Get.snackbar(
-          'referral_credits_title'.tr,
-          'referral_credits_none'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-        );
+        KpbToast.info('referral_credits_none'.tr);
       }
     } catch (_) {
       if (!mounted) return;
-      Get.snackbar(
-        'referral_credits_title'.tr,
-        'referral_voucher_error'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
+      KpbToast.error('referral_voucher_error'.tr);
     } finally {
       if (mounted) setState(() => _redeemingVoucher = false);
     }
@@ -166,25 +156,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
         unawaited(AnalyticsService.instance.logReferralRedeemed());
       }
       if (!mounted) return;
-      Get.snackbar(
-        'referral_title'.tr,
-        already
+      KpbToast.show(
+        kind: already
+            ? KpbToastKind.info
+            : (attributed ? KpbToastKind.success : KpbToastKind.error),
+        message: already
             ? 'referral_redeemed_already'.tr
             : (attributed
                 ? 'referral_redeemed_ok'.tr
                 : 'referral_redeem_error'.tr),
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
       );
       if (attributed && !already) _codeCtrl.clear();
     } catch (_) {
       if (!mounted) return;
-      Get.snackbar(
-        'referral_title'.tr,
-        'referral_redeem_error'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
+      KpbToast.error('referral_redeem_error'.tr);
     } finally {
       if (mounted) setState(() => _redeeming = false);
     }
@@ -230,12 +215,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                               tooltip: 'copy'.tr,
                               onPressed: () {
                                 Clipboard.setData(ClipboardData(text: _code));
-                                Get.snackbar(
-                                  'referral_title'.tr,
-                                  'referral_code_copied'.tr,
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  margin: const EdgeInsets.all(12),
-                                );
+                                KpbToast.success('referral_code_copied'.tr);
                               },
                             ),
                         ],

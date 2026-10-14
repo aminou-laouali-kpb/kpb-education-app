@@ -8,6 +8,7 @@ import '../../core/ui/components/kpb_guest_gate.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/ui/app_tokens.dart';
 import 'premium_waitlist_controller.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Karatou Premium — App-engagement handoff (navy/blue).
@@ -157,9 +158,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
         'premium_waitlist_error_unauthorized',
       _ => 'premium_waitlist_error_server',
     };
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(key.tr)),
-    );
+    KpbToast.error(key.tr, context: context);
   }
 
   Future<void> _loadQuota() async {

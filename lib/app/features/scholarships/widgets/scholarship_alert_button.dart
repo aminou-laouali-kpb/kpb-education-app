@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../core/ui/app_tokens.dart';
 import '../../../core/repositories/app_api_client.dart';
 import '../../../core/services/push_service.dart';
+import '../../../core/ui/components/kpb_toast.dart';
 
 class ScholarshipAlertButton extends StatefulWidget {
   const ScholarshipAlertButton({
@@ -59,12 +60,7 @@ class _ScholarshipAlertButtonState extends State<ScholarshipAlertButton> {
       if (!mounted) return;
       setState(() => _enabled = !next);
       widget.onChanged(!next);
-      Get.snackbar(
-        'scholarships_title'.tr,
-        'live_scholarships_alert_error'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
+      KpbToast.error('live_scholarships_alert_error'.tr);
     } finally {
       if (mounted) setState(() => _pending = false);
     }

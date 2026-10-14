@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../ui/app_tokens.dart';
+import '../ui/components/kpb_toast.dart';
 
 /// Lightweight connectivity checker — no extra package needed.
 /// Tries to resolve a DNS lookup to determine online/offline status.
@@ -73,25 +72,16 @@ class ConnectivityService {
     _controller.add(online);
 
     if (!online) {
-      Get.snackbar(
-        'offline_title'.tr,
+      KpbToast.offlinePending(
         'offline_body'.tr,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(12),
-        backgroundColor: KpbColors.warningLight,
-        colorText: KpbColors.warning,
-        icon: const Icon(Icons.wifi_off_rounded, color: KpbColors.warning),
-        duration: const Duration(seconds: 4),
+        title: 'offline_title'.tr,
+        atTop: true,
       );
     } else {
-      Get.snackbar(
-        'online_title'.tr,
+      KpbToast.success(
         'online_body'.tr,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(12),
-        backgroundColor: KpbColors.successLight,
-        colorText: KpbColors.success,
-        icon: const Icon(Icons.wifi_rounded, color: KpbColors.success),
+        title: 'online_title'.tr,
+        atTop: true,
         duration: const Duration(seconds: 2),
       );
     }

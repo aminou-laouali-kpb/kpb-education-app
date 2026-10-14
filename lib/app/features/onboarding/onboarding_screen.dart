@@ -464,27 +464,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       2 => () {
           if (_fieldIds.isEmpty) {
             _logValidationFailed(2, 'fields_missing');
-            Get.snackbar(
-              'onboarding_selection_required_title'.tr,
+            KpbToast.info(
               'onboarding_select_field_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: KpbColors.warning),
+              title: 'onboarding_selection_required_title'.tr,
             );
             return false;
           }
           if (_countryIds.isEmpty) {
             _logValidationFailed(2, 'countries_missing');
-            Get.snackbar(
-              'onboarding_selection_required_title'.tr,
+            KpbToast.info(
               'onboarding_select_country_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: KpbColors.warning),
+              title: 'onboarding_selection_required_title'.tr,
             );
             return false;
           }

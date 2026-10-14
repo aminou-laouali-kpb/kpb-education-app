@@ -78,11 +78,9 @@ class _EligibilitySimulatorScreenState
         studentName: _controller.profile?.fullName,
       );
     } catch (_) {
-      Get.snackbar(
-        'eligibility_export_failed_title'.tr,
+      KpbToast.error(
         'eligibility_export_failed_body'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(KpbSpacing.md),
+        title: 'eligibility_export_failed_title'.tr,
       );
     }
   }

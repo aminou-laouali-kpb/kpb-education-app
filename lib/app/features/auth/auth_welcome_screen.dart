@@ -12,6 +12,7 @@ import '../../core/ui/app_tokens.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../shell/app_root_shell.dart';
 import 'magic_link_email_screen.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 /// KPB Intelligence's acquisition entry point for Google or email sign-in.
 class AuthWelcomeScreen extends StatefulWidget {
@@ -63,9 +64,7 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
       unawaited(AnalyticsService.instance
           .logAuthFailed(method: 'google', reason: 'oauth_error'));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('auth_google_error'.tr)),
-        );
+        KpbToast.error('auth_google_error'.tr, context: context);
       }
     } finally {
       if (mounted) setState(() => _googleLoading = false);

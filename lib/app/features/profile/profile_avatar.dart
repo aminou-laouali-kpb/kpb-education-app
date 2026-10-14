@@ -11,6 +11,7 @@ import '../../core/models/app_models.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/app_tokens.dart';
 import 'profile_avatar_error.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 /// What we currently know about the server-side photo.
 enum AvatarPresence {
@@ -504,27 +505,17 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
   }
 
   void _showSuccess(String message) {
-    Get.snackbar(
-      'profile_avatar_sheet_title'.tr,
+    KpbToast.success(
       message,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: KpbColors.successLight,
-      colorText: KpbColors.success,
-      duration: const Duration(seconds: 2),
+      title: 'profile_avatar_sheet_title'.tr,
     );
   }
 
   void _showFailure(Object error) {
     final failure = classifyAvatarFailure(error);
-    Get.snackbar(
-      'profile_avatar_sheet_title'.tr,
+    KpbToast.error(
       avatarFailureMessageKey(failure).tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: KpbColors.errorLight,
-      colorText: KpbColors.error,
-      duration: const Duration(seconds: 4),
+      title: 'profile_avatar_sheet_title'.tr,
     );
   }
 }

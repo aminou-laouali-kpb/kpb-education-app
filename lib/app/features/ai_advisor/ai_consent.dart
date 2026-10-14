@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/ui/components/kpb_guest_gate.dart';
 import 'ai_chat_screen.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 /// Shared AI-processing consent gate (IA-T4).
 ///
@@ -112,10 +113,9 @@ Future<void> openAiToolIfConsented(
   // ni un invité ni un refus de consentement — le dire, plutôt que de rendre un
   // clic mort.
   if (controller.profile == null) {
-    Get.snackbar(
-      'profile_sync_pending_title'.tr,
+    KpbToast.offlinePending(
       'profile_sync_pending_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
+      title: 'profile_sync_pending_title'.tr,
     );
     return;
   }

@@ -11,6 +11,7 @@ import '../cases/case_detail_screen.dart';
 import '../cases/case_timeline_definition.dart';
 import '../cases/post_decision_screen.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Notifications center (App-engagement handoff · net-new).
@@ -800,16 +801,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     // safe to call.
     await PushService.instance.requestPermission();
     if (!mounted) return;
-    Get.snackbar(
-      'notifications_title'.tr,
-      'notifications_push_requested'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      borderRadius: 12,
-      backgroundColor: KpbColors.brandNavy,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
+    KpbToast.info('notifications_push_requested'.tr);
   }
 
   // ── Relative time (reuses the shared time_ago_* keys) ───────────────────────

@@ -213,11 +213,9 @@ class _CaseTunnelFlowState extends State<CaseTunnelFlow> {
       //
       // Depuis que la garde est posée en tête de `build`, ce chemin est
       // d'ailleurs devenu inatteignable dans l'app : un test l'exige.
-      Get.snackbar(
-        'case_tunnel_incomplete_profile_title'.tr,
+      KpbToast.error(
         'case_tunnel_incomplete_profile_body'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
+        title: 'case_tunnel_incomplete_profile_title'.tr,
       );
     }
   }
@@ -262,24 +260,17 @@ class _CaseTunnelFlowState extends State<CaseTunnelFlow> {
       }
     } on FileTooLargeException catch (error) {
       if (mounted) {
-        Get.snackbar(
-          'case_tunnel_file_too_large_title'.tr,
+        KpbToast.error(
           // `error.toString()` partait ici, en anglais brut, sous un titre
           // traduit — sur une app dont tout le public est francophone.
           error.localizedBody(),
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
+          title: 'case_tunnel_file_too_large_title'.tr,
         );
       }
       return;
     } catch (_) {
       if (mounted) {
-        Get.snackbar(
-          'common_error'.tr,
-          'case_tunnel_add_file_failed'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-        );
+        KpbToast.error('case_tunnel_add_file_failed'.tr);
       }
       return;
     }
@@ -849,11 +840,9 @@ class _MessageStepState extends State<_MessageStep> {
       final granted = await CaseDictationPlatform.requestMicrophonePermission();
       if (!granted) {
         if (mounted) {
-          Get.snackbar(
-            'case_message_mic_required_title'.tr,
+          KpbToast.error(
             'case_message_mic_required_body'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12),
+            title: 'case_message_mic_required_title'.tr,
           );
         }
         return;
@@ -927,11 +916,9 @@ class _MessageStepState extends State<_MessageStep> {
   /// n'est pas ici : c'est le dialogue.
   void _reportDictationUnavailable() {
     if (!mounted) return;
-    Get.snackbar(
-      'case_message_dictation_unavailable_title'.tr,
+    KpbToast.error(
       'case_message_dictation_unavailable_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
+      title: 'case_message_dictation_unavailable_title'.tr,
     );
   }
 
@@ -945,11 +932,9 @@ class _MessageStepState extends State<_MessageStep> {
   /// plateforme.
   void _reportDictationNotStarted() {
     if (!mounted) return;
-    Get.snackbar(
-      'case_message_dictation_not_started_title'.tr,
+    KpbToast.error(
       'case_message_dictation_not_started_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
+      title: 'case_message_dictation_not_started_title'.tr,
     );
   }
 
