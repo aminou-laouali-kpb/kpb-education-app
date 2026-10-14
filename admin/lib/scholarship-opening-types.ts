@@ -247,9 +247,11 @@ export interface OpeningRecentEvent {
   outcome?: OpeningEventOutcome;
   /**
    * Le motif d'un `skipped` (`not_public_at_fanout`, `cycle_closed_at_fanout`,
-   * `fanout_too_late`…) ou d'un `refused` (le code d'erreur, p. ex.
-   * `OPENING_CONFIRMATION_REQUIRED`). Vocabulaire ouvert : un motif inconnu
-   * de cet admin s'affiche tel quel.
+   * `fanout_too_late`…) ou d'un `refused` (le code d'erreur :
+   * `OPENING_REQUIRES_ADMIN`, `OPENING_AUDIENCE_CHANGED`,
+   * `OPENING_NOT_RETROACTIVE` — `OPENING_REFUSAL_AUDIT_CODES` du contrat
+   * backend). Vocabulaire ouvert : un motif inconnu de cet admin s'affiche
+   * tel quel.
    */
   reasonCode?: string | null;
 }
