@@ -959,7 +959,7 @@
       "stopConfirmCta": "Arrêter les envois",
       "stopped": "{n} envois arrêtés ({inFlight} déjà en cours chez le fournisseur). Les notifications restent dans l'app.",
       "stopError": "Impossible d'arrêter les envois.",
-      "legacyResult": "Cycle ouvert. {pushesSent} notifications acceptées par le fournisseur sur {subscribers} abonnés « M'avertir » (ancien mode).",
+      "legacyResult": "Cycle ouvert. {toNotify} abonnés « M'avertir » prévenus, {pushesSent} notifications acceptées par le fournisseur (ancien mode).",
       "datesOnlyResult": "Dates enregistrées. Aucune notification envoyée.",
       "todoTitle": "À faire : cycles ouverts jamais annoncés",
       "todoHint": "Ces cycles sont ouverts aux étudiants, mais personne n'a été prévenu.",

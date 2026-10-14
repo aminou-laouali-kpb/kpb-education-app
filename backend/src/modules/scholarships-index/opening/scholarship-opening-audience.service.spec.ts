@@ -95,6 +95,32 @@ describe('summarizeOpeningAudience', () => {
     expect(summary.pushEligible).toBe(3);
   });
 
+  it('envoi immédiat (legacy) : aucun report compté, mêmes destinataires', () => {
+    const rows = [
+      follower({ countryOfResidence: 'Chine' }), // 3 h 30 à Pékin
+      follower({ userId: 'paced' }),
+      follower({ optedOut: true }),
+      follower({ recentlyNotified: true, toNotify: false }),
+    ];
+    const at = {
+      ...options,
+      sendAt: new Date('2026-10-15T19:30:00Z'),
+      recentPushes: new Map([
+        ['paced', [{ pushedAt: new Date('2026-10-15T19:20:00Z'), batchId: 'b' }]],
+      ]),
+    };
+    const scheduled = summarizeOpeningAudience(rows, at);
+    const immediate = summarizeOpeningAudience(rows, { ...at, immediate: true });
+    expect(scheduled).toMatchObject({ deferredQuietHours: 1, deferredPacing: 1 });
+    expect(immediate).toEqual({ ...scheduled, deferredQuietHours: 0, deferredPacing: 0 });
+    expect(immediate).toMatchObject({
+      toNotify: 3,
+      recentlyNotified: 1,
+      optedOut: 1,
+      pushEligible: 2,
+    });
+  });
+
   it('renotifySince : N jours avant', () => {
     expect(renotifySince(new Date('2026-10-31T00:00:00Z'), 30).toISOString()).toBe(
       '2026-10-01T00:00:00.000Z',

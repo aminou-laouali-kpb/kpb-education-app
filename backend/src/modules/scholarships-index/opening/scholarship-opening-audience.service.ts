@@ -55,6 +55,11 @@ export interface OpeningAudienceSummaryOptions {
   maxOpeningPushesPerDay: number;
   /** Push d'ouverture acceptés récents, par élève. */
   recentPushes: ReadonlyMap<string, readonly RecentOpeningPush[]>;
+  /**
+   * Envoi immédiat, dans la requête (mode `legacy`) : ni heures calmes ni
+   * rythme, donc aucun report compté.
+   */
+  immediate?: boolean;
 }
 
 /**
@@ -63,7 +68,8 @@ export interface OpeningAudienceSummaryOptions {
  * Toutes les clés décrivent l'ensemble `toNotify`, sauf `followers`, `muted`,
  * `alreadyNotifiedThisCycle` et `recentlyNotified` (les exclusions, chacune
  * comptée une fois, dans cet ordre). Le report (heures calmes, puis rythme)
- * est évalué à `sendAt` avec les règles mêmes du worker.
+ * est évalué à `sendAt` avec les règles mêmes du worker, sauf en envoi
+ * immédiat (`immediate`).
  */
 export function summarizeOpeningAudience(
   rows: readonly FollowerRow[],
@@ -120,6 +126,7 @@ export function summarizeOpeningAudience(
     summary.pushEligible += 1;
     if (row.hasFcmDevice) summary.devices.fcm += 1;
     else summary.devices.oneSignalOnly += 1;
+    if (options.immediate) continue;
 
     const offset = utcOffsetHoursForCountry(row.countryOfResidence);
     if (

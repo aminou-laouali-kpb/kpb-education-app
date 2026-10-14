@@ -729,9 +729,11 @@ export function activateOutcome(
   if (notification.state === 'sent_legacy') {
     return {
       kind: 'message',
+      // `toNotify` : les destinataires confirmés à l'aperçu (déjà prévenus
+      // exclus) ; `subscribers` compte toutes les alertes actives.
       text: fill(t('scholarships.opening.legacyResult'), {
+        toNotify: notification.toNotify,
         pushesSent: response.pushesSent,
-        subscribers: response.subscribers,
       }),
     };
   }

@@ -4,7 +4,10 @@ import { InternalRole } from '../../common/enums/internal-role.enum';
 import type { PushSenderService } from '../notifications/push-sender.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import type { ActivateScholarshipDto } from './dto/activate-scholarship.dto';
-import type { FollowerAudienceCounts } from './opening/scholarship-follow.query';
+import type {
+  FollowerAudienceCounts,
+  FollowerRow,
+} from './opening/scholarship-follow.query';
 import type {
   OpeningAudienceQuery,
   ScholarshipOpeningAudienceService,
@@ -42,6 +45,9 @@ type Subscriber = {
   mutedAt: Date | null;
   user: { preferredLanguage: string };
 };
+
+/** Ce que le chemin legacy lit de `follow_rows`. */
+type Follower = Pick<FollowerRow, 'userId' | 'toNotify' | 'optedOut'>;
 
 type Write = { op: string; data?: unknown };
 
@@ -103,6 +109,8 @@ function makeService(
     cycles?: CycleRow[];
     counts?: FollowerAudienceCounts;
     subscribers?: Subscriber[];
+    /** `follow_rows` ; par défaut, chaque abonné non en sourdine est à prévenir. */
+    followers?: Follower[];
     failFirstUpsertWith?: unknown;
     lockError?: unknown;
   } = {},
@@ -114,6 +122,7 @@ function makeService(
   const transactionOptions: unknown[] = [];
   const pushes: Array<{ userId: string; title: string; data?: object }> = [];
   const audienceQueries: OpeningAudienceQuery[] = [];
+  const rowQueries: OpeningAudienceQuery[] = [];
   let upsertFailures = opts.failFirstUpsertWith ? 1 : 0;
   let nextId = cycles.size + 1;
   const subscribers = opts.subscribers ?? [
@@ -238,6 +247,21 @@ function makeService(
       audienceQueries.push(query);
       return opts.counts ?? counts();
     },
+    rows: async (query: OpeningAudienceQuery, db?: unknown): Promise<Follower[]> => {
+      // Lu dans la transaction d'activate, après le verrou du cycle.
+      expect(db).toBe(client);
+      rowQueries.push(query);
+      return (
+        opts.followers ??
+        subscribers
+          .filter((subscriber) => subscriber.mutedAt === null)
+          .map((subscriber) => ({
+            userId: subscriber.userId,
+            toNotify: true,
+            optedOut: false,
+          }))
+      );
+    },
   } as unknown as ScholarshipOpeningAudienceService;
 
   return {
@@ -253,6 +277,7 @@ function makeService(
     writes,
     pushes,
     audienceQueries,
+    rowQueries,
     transactionOptions,
   };
 }
@@ -371,6 +396,74 @@ describe('ScholarshipLifecycleService.activate', () => {
       const result = await service.activate('sch-1', input, admin, 'req');
       expect(pushes.map((p) => p.userId)).toEqual(['live']);
       expect(result.subscribers).toBe(1);
+    });
+
+    it('les destinataires de l’aperçu : prévenus récemment exclus, désinscrits sans push', async () => {
+      const live = (userId: string): Subscriber => ({
+        userId,
+        pushEnabled: true,
+        inAppEnabled: true,
+        mutedAt: null,
+        user: { preferredLanguage: 'fr' },
+      });
+      const { service, writes, pushes, audienceQueries, rowQueries } = makeService({
+        counts: counts({ audience: 4, toNotify: 2 }),
+        subscribers: [live('fresh'), live('opted-out'), live('recent'), live('already')],
+        followers: [
+          { userId: 'fresh', toNotify: true, optedOut: false },
+          { userId: 'opted-out', toNotify: true, optedOut: true },
+          // Prévenu il y a 3 jours pour un autre cycle de la bourse.
+          { userId: 'recent', toNotify: false, optedOut: false },
+          { userId: 'already', toNotify: false, optedOut: false },
+        ],
+      });
+
+      const result = await service.activate(
+        'sch-1',
+        { ...input, notify: true, expectedRecipients: 2 },
+        admin,
+        'req',
+      );
+
+      expect(rowQueries).toEqual(audienceQueries);
+      expect(result).toMatchObject({
+        subscribers: 4,
+        pushesSent: 1,
+        notification: { state: 'sent_legacy', toNotify: 2 },
+      });
+      expect(pushes.map((p) => p.userId)).toEqual(['fresh']);
+      const rows = writes.find((w) => w.op === 'userNotification.createMany')
+        ?.data as Array<Record<string, unknown>>;
+      expect(rows.map((row) => row.userId)).toEqual(['fresh', 'opted-out']);
+      expect(writes.find((w) => w.op === 'audit')?.data).toMatchObject({
+        action: 'scholarship_cycle.notified_legacy',
+        changes: expect.objectContaining({ toNotify: 2, expectedRecipients: 2 }),
+      });
+    });
+
+    it('mauvaise année corrigée : l’aperçu dit 0, « Ouvrir le cycle » passe sans 409 ni push', async () => {
+      const subscribers: Subscriber[] = Array.from({ length: 50 }, (_, i) => ({
+        userId: `u${i}`,
+        pushEnabled: true,
+        inAppEnabled: true,
+        mutedAt: null,
+        user: { preferredLanguage: 'fr' },
+      }));
+      const { service, pushes, writes } = makeService({
+        counts: counts({ audience: 50, toNotify: 0, viaFavoriteOnly: 0, viaBoth: 0 }),
+        subscribers,
+        followers: subscribers.map((s) => ({ userId: s.userId, toNotify: false, optedOut: false })),
+      });
+      const result = await service.activate(
+        'sch-1',
+        { ...input, academicYear: '2027-2028', notify: true, expectedRecipients: 0 },
+        admin,
+        'req',
+      );
+      expect(result.notification).toMatchObject({ state: 'sent_legacy', toNotify: 0 });
+      expect(result.pushesSent).toBe(0);
+      expect(pushes).toEqual([]);
+      expect(writes.some((w) => w.op === 'userNotification.createMany')).toBe(false);
     });
 
     it('cycle déjà activé : dates corrigées sans prévenir deux fois', async () => {
@@ -702,6 +795,31 @@ describe('ScholarshipLifecycleService.activate', () => {
       const { service, pushes } = makeService({ counts: counts({ audience: 501, toNotify: 501 }) });
       const error = await rejection(service.activate('sch-1', input, admin, 'req'));
       expect(body(error).code).toBe('OPENING_CONFIRMATION_REQUIRED');
+      expect(pushes).toHaveLength(0);
+    });
+
+    it('legacy lit le toNotify de l’aperçu, pas l’audience : 495 confirmés par un ContentManager passent', async () => {
+      setMode('legacy');
+      const { service } = makeService({ counts: counts({ audience: 501, toNotify: 495 }) });
+      const result = await service.activate(
+        'sch-1',
+        { ...input, notify: true, expectedRecipients: 495 },
+        contentManager,
+        'req',
+      );
+      expect(result.notification.state).toBe('sent_legacy');
+    });
+
+    it('legacy : une audience qui a trop grossi depuis l’aperçu → 409 sur toNotify', async () => {
+      setMode('legacy');
+      const { service, pushes } = makeService({ counts: counts({ audience: 60, toNotify: 30 }) });
+      const error = await rejection(
+        service.activate('sch-1', { ...input, notify: true, expectedRecipients: 10 }, admin, 'req'),
+      );
+      expect(body(error)).toMatchObject({
+        code: 'OPENING_AUDIENCE_CHANGED',
+        details: { toNotify: 30, expectedRecipients: 10 },
+      });
       expect(pushes).toHaveLength(0);
     });
   });

@@ -53,6 +53,8 @@ interface LegacyRecipient {
   userId: string;
   pushEnabled: boolean;
   inAppEnabled: boolean;
+  /** `followed_scholarship_updates` coupé : l'entrée d'inbox, pas le push. */
+  optedOut: boolean;
   user: { preferredLanguage: string };
 }
 
@@ -268,10 +270,11 @@ export class ScholarshipLifecycleService {
     if (outcome.kind === 'rejected') throw outcome.error;
 
     // Mode legacy (KPB-173) : sollicité et ponctuel, envoyé dans la requête
-    // comme avant ce chantier — aux seules alertes non mises en sourdine.
+    // comme avant ce chantier — aux destinataires de l'aperçu, sauf le push
+    // de ceux qui l'ont coupé (désinscription globale ou alerte sans push).
     let pushesSent = 0;
     for (const subscriber of outcome.legacyRecipients) {
-      if (!subscriber.pushEnabled) continue;
+      if (!subscriber.pushEnabled || subscriber.optedOut) continue;
       const isEnglish = subscriber.user.preferredLanguage === 'en';
       const delivered = await this.pushSender.sendToUser(
         subscriber.userId,
@@ -355,20 +358,23 @@ export class ScholarshipLifecycleService {
       input.notify ?? (firstActivationExpected && !preExisting);
     const alreadyScheduled = existing?.openingFanoutDueAt != null;
 
-    const counts = await this.audience.countToNotify(tx, {
+    const audienceQuery = {
       scholarshipId,
       scope,
       cycleId: existing?.id ?? null,
       now,
       followSince: existing?.openingNotifiedAt ?? null,
       renotifyDays: tunables.renotifyDays,
-    });
+    };
+    const counts = await this.audience.countToNotify(tx, audienceQuery);
 
-    // Ce que CET appel enverrait. En legacy : les alertes non mises en
-    // sourdine, à la première activation seulement (le chemin d'avant).
+    // Ce que CET appel enverrait : le `toNotify` de l'aperçu, dans tous les
+    // modes (déjà prévenus pour ce cycle, ou pour un autre cycle de la bourse
+    // depuis 30 jours, exclus). En legacy, à la première activation seulement
+    // (le chemin d'avant).
     const sends =
       shouldNotify && (legacy ? firstActivationExpected : !alreadyScheduled);
-    const toNotify = sends ? (legacy ? counts.audience : counts.toNotify) : 0;
+    const toNotify = sends ? counts.toNotify : 0;
 
     if (sends && isAboveOpeningThreshold(toNotify, tunables.confirmThreshold)) {
       const details = { toNotify, threshold: tunables.confirmThreshold };
@@ -478,9 +484,18 @@ export class ScholarshipLifecycleService {
     let fanoutAt: Date | null = null;
     let reportedToNotify = 0;
     let legacyRecipients: LegacyRecipient[] = [];
+    let legacySubscribers = 0;
 
     if (legacy && shouldNotify && firstActivation) {
-      legacyRecipients = await tx.scholarshipAlertSubscription.findMany({
+      // Les destinataires sont ceux de l'aperçu et du compte ci-dessus (le
+      // texte partagé `follow_rows`, `toNotify`) ; l'abonnement donne
+      // `inAppEnabled`, que ce texte ne lit pas.
+      const followers = new Map(
+        (await this.audience.rows(audienceQuery, tx))
+          .filter((row) => row.toNotify)
+          .map((row) => [row.userId, row]),
+      );
+      const subscriptions = await tx.scholarshipAlertSubscription.findMany({
         where: { scholarshipId, mutedAt: null },
         select: {
           userId: true,
@@ -488,6 +503,13 @@ export class ScholarshipLifecycleService {
           inAppEnabled: true,
           user: { select: { preferredLanguage: true } },
         },
+      });
+      legacySubscribers = subscriptions.length;
+      legacyRecipients = subscriptions.flatMap((subscription) => {
+        const follower = followers.get(subscription.userId);
+        return follower
+          ? [{ ...subscription, optedOut: follower.optedOut }]
+          : [];
       });
       const inAppSubscribers = legacyRecipients.filter(
         (subscriber) => subscriber.inAppEnabled,
@@ -525,7 +547,7 @@ export class ScholarshipLifecycleService {
         },
       });
       state = 'sent_legacy';
-      reportedToNotify = toNotify;
+      reportedToNotify = legacyRecipients.length;
     } else if (shouldNotify && !legacy && cycle.openingFanoutDueAt == null) {
       if (toNotify === 0) {
         await tx.scholarshipCycle.update({
@@ -619,8 +641,7 @@ export class ScholarshipLifecycleService {
       scholarship,
       cycle: { id: cycle.id, status: cycle.status },
       firstActivation,
-      subscribers:
-        state === 'sent_legacy' ? legacyRecipients.length : counts.audience,
+      subscribers: state === 'sent_legacy' ? legacySubscribers : counts.audience,
       toNotify: reportedToNotify,
       state,
       reason,

@@ -1391,6 +1391,11 @@ Réponse 200 — les six premières clés et leurs types sont ceux d'avant :
 `reason` ∈ `null | dates_only | already_announced | pre_existing_open | legacy_first_activation_only`.
 `subscribers` : en `legacy`, les alertes non en sourdine lues ; sinon l'audience
 de la portée avant déduplication. `pushesSent` : 0 hors `legacy`.
+`notification.toNotify` (et les gardes de seuil, de rôle et d'audience
+confirmée) : le `toNotify` de l'aperçu dans **tous** les modes, `legacy`
+compris — déjà prévenus pour ce cycle ou pour un autre cycle de la bourse depuis
+30 jours exclus. En `legacy`, la désinscription globale garde l'entrée d'inbox
+et coupe le push, et l'aperçu ne compte aucun report (envoi immédiat).
 
 Audit `AdminAuditEvent` (`entityType: 'ScholarshipCycle'`, `purposeCode: 'scholarship_opening'`) :
 `scholarship_cycle.opened | notify_scheduled | notified_legacy | dates_updated |

@@ -846,14 +846,16 @@ describe('résultat d’une ouverture', () => {
   it('ancien mode : « acceptées par le fournisseur », jamais « reçues »', () => {
     const outcome = activateOutcome(
       response(
-        { state: 'sent_legacy', fanoutAt: null },
-        { mode: 'legacy', pushesSent: 280, subscribers: 312 },
+        { state: 'sent_legacy', fanoutAt: null, toNotify: 290 },
+        { mode: 'legacy', pushesSent: 280, subscribers: 340 },
       ),
       t,
     );
+    // Les destinataires de l'aperçu, pas toutes les alertes actives : les
+    // élèves prévenus récemment pour un autre cycle n'ont rien reçu.
     expect(outcome).toEqual({
       kind: 'message',
-      text: "Cycle ouvert. 280 notifications acceptées par le fournisseur sur 312 abonnés « M'avertir » (ancien mode).",
+      text: "Cycle ouvert. 290 abonnés « M'avertir » prévenus, 280 notifications acceptées par le fournisseur (ancien mode).",
     });
   });
 

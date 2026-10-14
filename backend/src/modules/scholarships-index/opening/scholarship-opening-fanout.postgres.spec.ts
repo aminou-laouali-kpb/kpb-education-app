@@ -392,6 +392,73 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(after.recentEvents[1]).toMatchObject({ actorName: 'Aminata D.', academicYear: '2026-2027' });
   });
 
+  it('legacy : aperçu = activate = envoi, y compris après une mauvaise année', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'legacy';
+    const sid = await scholarship();
+    const u = {
+      first: await student(),
+      optOut: await student({ optOut: true }),
+      muted: await student(),
+      fav: await student(),
+    };
+    await alert(u.first, sid);
+    await alert(u.optOut, sid);
+    await alert(u.muted, sid, { mutedAt: new Date() });
+    await favorite(u.fav, sid);
+
+    // 1. L'équipe ouvre 2026-2027 par erreur : prévenus = l'aperçu ; le
+    //    désinscrit a son entrée d'inbox, pas de push.
+    const wrongPreview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(wrongPreview.mode).toBe('legacy');
+    expect(wrongPreview.audience).toMatchObject({
+      toNotify: 2,
+      optedOut: 1,
+      pushEligible: 1,
+      muted: 1,
+      // Envoi immédiat : ni heures calmes ni rythme, quelle que soit l'heure.
+      deferredQuietHours: 0,
+      deferredPacing: 0,
+    });
+    pushes.length = 0;
+    const wrong = await lifecycle.activate(
+      sid,
+      activation({ notify: true, expectedRecipients: wrongPreview.audience.toNotify }),
+      actor,
+      'legacy-wrong',
+    );
+    expect(wrong.notification).toMatchObject({ state: 'sent_legacy', toNotify: 2 });
+    expect(wrong.pushesSent).toBe(1);
+    expect(pushes).toEqual([u.first]);
+    expect((await rowsOf(wrong.cycleId)).map((row) => row.userId).sort()).toEqual(
+      [u.first, u.optOut].sort(),
+    );
+
+    // 2. Puis la bonne année : la garde des 30 jours vaut aussi en legacy,
+    //    seul l'abonné arrivé depuis est prévenu, et le nombre confirmé passe.
+    const late = await student();
+    await alert(late, sid);
+    const preview = await admin.preview(sid, { academicYear: '2027-2028' }, actor);
+    expect(preview.audience).toMatchObject({ toNotify: 1, recentlyNotified: 2 });
+    pushes.length = 0;
+    const right = await lifecycle.activate(
+      sid,
+      activation({
+        academicYear: '2027-2028',
+        notify: true,
+        expectedRecipients: preview.audience.toNotify,
+      }),
+      actor,
+      'legacy-right',
+    );
+    expect(right).toMatchObject({
+      subscribers: 3,
+      pushesSent: 1,
+      notification: { state: 'sent_legacy', toNotify: 1 },
+    });
+    expect(pushes).toEqual([late]);
+    expect((await rowsOf(right.cycleId)).map((row) => row.userId)).toEqual([late]);
+  });
+
   // ── 3. Activations concurrentes ───────────────────────────────────────────
 
   it('deux premiers clics simultanés : une première activation, une programmation, pas de 500', async () => {

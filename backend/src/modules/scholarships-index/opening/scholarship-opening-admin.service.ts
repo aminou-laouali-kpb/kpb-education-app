@@ -36,6 +36,7 @@ import {
   canSendAboveOpeningThreshold,
   CYCLE_OPENING_SKIP_REASONS,
   isOpeningAudienceScope,
+  isOutboxOpeningMode,
   isPushOutboxEnabled,
   OPENING_AUDIT_ACTIONS,
   OPENING_AUDIT_ENTITY_TYPE,
@@ -365,6 +366,10 @@ export class ScholarshipOpeningAdminService {
       coalesceMinutes: tunables.coalesceMinutes,
       maxOpeningPushesPerDay: tunables.maxOpeningPushesPerDay,
       recentPushes,
+      // Ancien mode : `activate` envoie dans la requête, sans heures calmes ni
+      // rythme. Les destinataires et le « seulement dans l'app » restent ceux
+      // d'`activate` (même texte `follow_rows`).
+      immediate: !isOutboxOpeningMode(mode),
     });
 
     const admins = await this.adminRefs([

@@ -959,7 +959,7 @@
       "stopConfirmCta": "Stop sends",
       "stopped": "{n} sends stopped ({inFlight} already in progress with the provider). Notifications stay in the app.",
       "stopError": "Unable to stop the sends.",
-      "legacyResult": "Cycle opened. {pushesSent} notifications accepted by the provider out of {subscribers} “Notify me” subscribers (legacy mode).",
+      "legacyResult": "Cycle opened. {toNotify} “Notify me” subscribers notified, {pushesSent} notifications accepted by the provider (legacy mode).",
       "datesOnlyResult": "Dates saved. No notification sent.",
       "todoTitle": "To do: open cycles never announced",
       "todoHint": "These cycles are open to students, but nobody has been notified.",
