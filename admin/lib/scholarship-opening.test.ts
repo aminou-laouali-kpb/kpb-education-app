@@ -26,6 +26,7 @@ import {
   isTypedConfirmationValid,
   localFanoutDeadline,
   needsTypedConfirmation,
+  openingErrorText,
   phoneCopy,
   phoneTabs,
   previewBanners,
@@ -478,6 +479,36 @@ describe('annulation refusée', () => {
     expect(cancelConflictMessageKey(conflict('2027-09-01T08:00:00.000Z'), fanoutAt, 120)).toBe(
       'scholarships.opening.notScheduled',
     );
+  });
+
+  it('409 envoi en préparation : le texte suit la langue de l’admin, pas celle du serveur', () => {
+    // Le serveur rédige ce message en français, quelle que soit la langue.
+    const busy = apiError(
+      409,
+      { code: 'OPENING_BUSY' },
+      'Un envoi est en cours de préparation pour ce cycle. Réessayez dans quelques secondes.',
+    );
+    expect(openingErrorText(busy, tEn, 'fallback')).toBe(
+      'A send is being prepared for this cycle. Try again in a few seconds.',
+    );
+    expect(openingErrorText(busy, t, 'secours')).toBe(
+      'Un envoi est en cours de préparation pour ce cycle. Réessayez dans quelques secondes.',
+    );
+  });
+
+  it('sans code d’annonce : le message du serveur, sinon le libellé de secours', () => {
+    expect(openingErrorText(apiError(404, { message: 'x' }, 'Introuvable'), t, 'secours')).toBe(
+      'Introuvable',
+    );
+    expect(openingErrorText(new Error(''), t, 'secours')).toBe('secours');
+    // OPENING_NOT_SCHEDULED a son propre texte (cancelConflictMessageKey).
+    expect(
+      openingErrorText(
+        apiError(409, { code: 'OPENING_NOT_SCHEDULED', details: { lastFanoutAt: null } }, 'brut'),
+        t,
+        'secours',
+      ),
+    ).toBe('brut');
   });
 });
 

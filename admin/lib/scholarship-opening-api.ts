@@ -85,7 +85,10 @@ export function saveScholarshipForecast(
   });
 }
 
-/** Annule une annonce programmée ; 409 `OPENING_NOT_SCHEDULED` sinon. */
+/**
+ * Annule une annonce programmée ; 409 `OPENING_NOT_SCHEDULED` sinon, ou 409
+ * `OPENING_BUSY` quand l'envoi tient le cycle depuis plus de 5 s.
+ */
 export function cancelOpening(
   scholarshipId: string,
   cycleId: string,

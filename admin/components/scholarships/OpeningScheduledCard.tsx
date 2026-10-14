@@ -9,6 +9,7 @@ import {
   formatCountdown,
   formatReportLine,
   formatTime,
+  openingErrorText,
   REPORT_POLL_INTERVAL_MS,
   reportDeferredDetail,
   reportProvidersLine,
@@ -165,9 +166,12 @@ export function OpeningScheduledCard({
         setPhase(key === 'scholarships.opening.tooLateToCancel' ? 'report' : 'gone');
         onChanged();
       } else {
+        // 409 OPENING_BUSY : le worker tient le cycle (envoi en préparation)
+        // depuis plus de 5 s. Réessayer quelques secondes plus tard répond
+        // OPENING_NOT_SCHEDULED, traité ci-dessus.
         setMessage({
-          variant: 'danger',
-          text: parsed.message || t('scholarships.opening.cancelError'),
+          variant: parsed.code === 'OPENING_BUSY' ? 'warning' : 'danger',
+          text: openingErrorText(error, t, t('scholarships.opening.cancelError')),
         });
       }
     } finally {

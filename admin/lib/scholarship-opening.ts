@@ -293,6 +293,26 @@ export function openingErrorMessageKey(code: OpeningErrorCode): string {
 }
 
 /**
+ * Le texte traduit d'une erreur d'annonce, sinon le message du serveur, sinon
+ * `fallback`. Le serveur rédige ses messages en français : sans cette
+ * traduction, l'admin en anglais les afficherait tels quels.
+ * `OPENING_NOT_SCHEDULED` n'est pas traduit ici : son texte dépend du moment
+ * de la programmation (`cancelConflictMessageKey`).
+ */
+export function openingErrorText(error: unknown, t: Translate, fallback: string): string {
+  const parsed = apiErrorCode(error);
+  if (parsed.code && parsed.code !== 'OPENING_NOT_SCHEDULED') {
+    const toNotify = detailNumber(parsed.details, 'toNotify');
+    const threshold = detailNumber(parsed.details, 'threshold');
+    return fill(t(openingErrorMessageKey(parsed.code)), {
+      ...(toNotify === null ? {} : { n: toNotify }),
+      ...(threshold === null ? {} : { threshold }),
+    });
+  }
+  return parsed.message || fallback;
+}
+
+/**
  * Le texte d'un refus d'`activate`, et s'il faut relire l'aperçu : quand
  * l'audience a changé (ou que le cycle s'avère pré-existant), les chiffres à
  * l'écran sont faux et doivent être recalculés avant toute nouvelle
@@ -303,22 +323,14 @@ export function activateErrorText(
   t: Translate,
   fallback: string,
 ): { text: string; refreshPreview: boolean } {
-  const parsed = apiErrorCode(error);
-  if (parsed.code && parsed.code !== 'OPENING_NOT_SCHEDULED') {
-    const toNotify = detailNumber(parsed.details, 'toNotify');
-    const threshold = detailNumber(parsed.details, 'threshold');
-    return {
-      text: fill(t(openingErrorMessageKey(parsed.code)), {
-        ...(toNotify === null ? {} : { n: toNotify }),
-        ...(threshold === null ? {} : { threshold }),
-      }),
-      refreshPreview:
-        parsed.code === 'OPENING_AUDIENCE_CHANGED' ||
-        parsed.code === 'OPENING_NOT_RETROACTIVE' ||
-        parsed.code === 'OPENING_CONFIRMATION_REQUIRED',
-    };
-  }
-  return { text: parsed.message || fallback, refreshPreview: false };
+  const { code } = apiErrorCode(error);
+  return {
+    text: openingErrorText(error, t, fallback),
+    refreshPreview:
+      code === 'OPENING_AUDIENCE_CHANGED' ||
+      code === 'OPENING_NOT_RETROACTIVE' ||
+      code === 'OPENING_CONFIRMATION_REQUIRED',
+  };
 }
 
 /**
