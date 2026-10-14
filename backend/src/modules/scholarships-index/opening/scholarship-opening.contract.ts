@@ -209,6 +209,11 @@ export type CycleOpeningSkipReason = (typeof CYCLE_OPENING_SKIP_REASONS)[number]
 export const OPENING_COPY_VARIANTS = ['alert', 'favorite', 'dates_confirmed'] as const;
 export type OpeningCopyVariant = (typeof OPENING_COPY_VARIANTS)[number];
 
+/** Lecture sûre de `data.variant` (un `Json` en base). */
+export function isOpeningCopyVariant(value: unknown): value is OpeningCopyVariant {
+  return OPENING_COPY_VARIANTS.some((variant) => variant === value);
+}
+
 // ── Réglages ────────────────────────────────────────────────────────────────
 
 /**

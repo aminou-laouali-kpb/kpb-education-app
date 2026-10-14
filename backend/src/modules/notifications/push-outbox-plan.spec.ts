@@ -36,6 +36,7 @@ function row(over: Partial<OutboxPlanRow> = {}): OutboxPlanRow {
     bodyEn: `Scholarship ${seq}: apply by 5 November.`,
     pushAttempts: 0,
     createdAt: new Date('2026-10-15T09:00:00Z'),
+    variant: 'favorite',
     favorite: true,
     alertActive: false,
     muted: false,
@@ -222,6 +223,59 @@ describe('planUserPush', () => {
       const key = rows.map((r) => r.id).sort().join(',');
       expect(plan.send?.idempotencyKey).toBe(key);
       expect(plan.send?.collapseKey).toBe(openingCollapseKey(key));
+    });
+
+    it('un « Dates confirmées » groupé avec une ouverture : le groupé ne dit pas « ouvertes »', () => {
+      // 20 h 30 : dates de Chevening confirmées (ouverture le 1er novembre) ;
+      // 20 h 40 : Eiffel ouvre. Heures calmes : les deux partent ensemble à 8 h.
+      const chevening = row({
+        variant: 'dates_confirmed',
+        titleFr: 'Dates confirmées',
+        titleEn: 'Dates confirmed',
+        scholarshipNameFr: 'Chevening',
+        scholarshipNameEn: 'Chevening',
+        createdAt: new Date('2026-10-15T20:30:00Z'),
+      });
+      const eiffel = row({
+        variant: 'alert',
+        scholarshipNameFr: 'Eiffel',
+        scholarshipNameEn: 'Eiffel',
+        createdAt: new Date('2026-10-15T20:40:00Z'),
+      });
+      const morning = new Date('2026-10-16T08:05:00Z');
+
+      const fr = planUserPush(user([chevening, eiffel]), morning, settings);
+      expect(fr.send).toMatchObject({
+        kind: 'bundle',
+        title: '2 bourses que tu suis ont du nouveau',
+        body: 'Eiffel et Chevening. Regarde les dates.',
+      });
+      expect(`${fr.send?.title} ${fr.send?.body}`).not.toMatch(/ouvert/i);
+
+      const en = planUserPush(
+        user([chevening, eiffel], { preferredLanguage: 'en' }),
+        morning,
+        settings,
+      );
+      expect(en.send).toMatchObject({
+        title: '2 scholarships you follow have updates',
+        body: 'Eiffel and Chevening. Check the dates.',
+      });
+      expect(`${en.send?.title} ${en.send?.body}`).not.toMatch(/open/i);
+    });
+
+    it('une variante absente ou illisible n’est jamais dite « ouverte »', () => {
+      const plan = planUserPush(user([row({ variant: null }), row()]), noon, settings);
+      expect(plan.send?.title).toBe('2 bourses que tu suis ont du nouveau');
+    });
+
+    it('des « Dates confirmées » seuls : groupé neutre aussi', () => {
+      const plan = planUserPush(
+        user([row({ variant: 'dates_confirmed' }), row({ variant: 'dates_confirmed' })]),
+        noon,
+        settings,
+      );
+      expect(plan.send?.title).toBe('2 bourses que tu suis ont du nouveau');
     });
 
     it('un groupé porte au plus 20 références, mais compte toutes les lignes', () => {

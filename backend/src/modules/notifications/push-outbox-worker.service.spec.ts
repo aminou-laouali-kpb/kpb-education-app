@@ -35,6 +35,7 @@ function claimed(id: string, userId = 'u1', over: Partial<ClaimedOutboxRow> = {}
     route: `/scholarships/s-${id}`,
     pushAttempts: 0,
     createdAt: new Date('2026-10-15T11:00:00.000Z'),
+    variant: 'favorite',
     ...over,
   };
 }
@@ -70,10 +71,12 @@ function makeWorker(
 ) {
   const updates: UpdateCall[] = [];
   const executes: Array<{ text: string; values: unknown[] }> = [];
+  const queries: string[] = [];
   const claims = [...(opts.claims ?? [])];
   const client = {
     $queryRaw: async (strings: TemplateStringsArray) => {
       const text = strings.join('?');
+      queries.push(text);
       if (text.includes('FOR UPDATE SKIP LOCKED')) return claims.shift() ?? [];
       if (text.includes('JOIN "UserProfile" pr')) {
         opts.onEnrich?.();
@@ -115,7 +118,7 @@ function makeWorker(
   }));
   const fanout = { runDue } as unknown as ScholarshipOpeningFanoutService;
   const worker = new PushOutboxWorkerService(prisma, push, fanout);
-  return { worker, updates, executes, sendWithStatus, runDue };
+  return { worker, updates, executes, queries, sendWithStatus, runDue };
 }
 
 function send(rows: Array<{ id: string; pushAttempts?: number }>): OutboxSend {
@@ -297,6 +300,31 @@ describe('PushOutboxWorkerService', () => {
       expect(logs).toHaveLength(1);
       expect(logs[0]).toMatch(/^Push outbox: fanout cycles=0 rows=0 \| accepted=2 pushes=2 /);
       expect(logs[0]).not.toContain('u1');
+    });
+
+    it('la variante de chaque ligne (data.variant) décide du titre du groupé', async () => {
+      const rows = [
+        claimed('a', 'u1', {
+          variant: 'dates_confirmed',
+          createdAt: new Date('2026-10-15T11:00:00.000Z'),
+        }),
+        claimed('b', 'u1', {
+          variant: 'alert',
+          createdAt: new Date('2026-10-15T11:10:00.000Z'),
+        }),
+      ];
+      const { worker, queries, sendWithStatus } = makeWorker({
+        claims: [rows, []],
+        details: rows.map((row) => detail(row.id)),
+      });
+      await worker.runOnce(NOON, () => NOON.getTime());
+      const claim = queries.find((text) => text.includes('FOR UPDATE SKIP LOCKED'));
+      expect(claim).toContain(`n."data"->>'variant' AS "variant"`);
+      expect(sendWithStatus).toHaveBeenCalledTimes(1);
+      expect(sendWithStatus.mock.calls[0].slice(1, 3)).toEqual([
+        '2 bourses que tu suis ont du nouveau',
+        'Bourse b et Bourse a. Regarde les dates.',
+      ]);
     });
 
     it('un report (heures calmes) ne compte pas comme tentative', async () => {

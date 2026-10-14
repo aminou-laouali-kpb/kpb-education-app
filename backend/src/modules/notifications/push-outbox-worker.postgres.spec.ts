@@ -46,6 +46,7 @@ function nextNoonUtc(after: number): Date {
 
 type SentPush = {
   userId: string;
+  title: string;
   data: Record<string, string>;
   options: { collapseKey?: string; idempotencyKey?: string };
 };
@@ -72,14 +73,14 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     sendToUser: async () => true,
     sendWithStatus: async (
       userId: string,
-      _title: string,
+      title: string,
       _body: string,
       data: Record<string, string>,
       options: { collapseKey?: string; idempotencyKey?: string } = {},
     ): Promise<PushDeliveryOutcome> => {
       const delay = latency();
       if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
-      sent.push({ userId, data, options });
+      sent.push({ userId, title, data, options });
       return outcome;
     },
   } as unknown as PushSenderService;
@@ -198,6 +199,7 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     userId: string,
     cycle: { sid: string; cid: string },
     notBefore: Date = at(-1),
+    variant: 'favorite' | 'dates_confirmed' = 'favorite',
   ): Promise<string> {
     await prisma.savedItem.upsert({
       where: {
@@ -218,7 +220,7 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
         bodyFr: `${cycle.sid} : candidatures ouvertes.`,
         bodyEn: `${cycle.sid}: applications are open.`,
         route: `/scholarships/${cycle.sid}`,
-        data: { scholarshipId: cycle.sid, cycleId: cycle.cid, variant: 'favorite' },
+        data: { scholarshipId: cycle.sid, cycleId: cycle.cid, variant },
         pushStatus: 'pending',
         pushNotBefore: notBefore,
       },
@@ -443,6 +445,22 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
         now: at(1),
       }),
     ).resolves.toBe('pushed');
+  });
+
+  it('un « Dates confirmées » groupé avec une ouverture : titre neutre, jamais « ouvertes »', async () => {
+    const uid = await student();
+    await pendingRow(uid, await openCycle(), at(-3), 'dates_confirmed');
+    await pendingRow(uid, await openCycle(), at(-2));
+    await worker().runOnce(anchor);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].data).toMatchObject({ kind: 'scholarship_opened_bundle', count: '2' });
+    expect(sent[0].title).toBe('2 bourses que tu suis ont du nouveau');
+
+    const other = await student();
+    await pendingRow(other, await openCycle(), at(-3));
+    await pendingRow(other, await openCycle(), at(-2));
+    await worker().runOnce(anchor);
+    expect(sent[1].title).toBe('2 bourses que tu suis sont ouvertes');
   });
 
   // ── 10. Heures calmes et rythme sur de vraies lignes ──────────────────────

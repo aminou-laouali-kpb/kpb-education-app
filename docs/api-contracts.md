@@ -1462,7 +1462,10 @@ permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`) :
 
 Push groupé — `count` compte toutes les lignes, `refs` et `scholarshipIds`
 portent les 20 plus récentes ; **pas** de `scholarshipId` (un lecteur ancien
-ouvrirait une bourse arbitraire) :
+ouvrirait une bourse arbitraire). Titre « {n} bourses que tu suis sont
+ouvertes » seulement si chaque ligne annonce une ouverture ; dès qu'une ligne
+est un « Dates confirmées » (`data.variant = dates_confirmed`, ouverture à
+venir), « {n} bourses que tu suis ont du nouveau » / « Regarde les dates. » :
 
 ```json
 { "route": "/deadlines", "type": "scholarship_opened_bundle", "kind": "scholarship_opened_bundle",

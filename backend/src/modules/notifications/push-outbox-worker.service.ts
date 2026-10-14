@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ScholarshipOpeningFanoutService } from '../scholarships-index/opening/scholarship-opening-fanout.service';
 import {
   FOLLOWED_SCHOLARSHIP_OPT_OUT,
+  isOpeningCopyVariant,
   isPushOutboxEnabled,
   readOpeningTunables,
   retryDelayMs,
@@ -49,6 +50,8 @@ export interface ClaimedOutboxRow {
   route: string;
   pushAttempts: number;
   createdAt: Date;
+  /** `data->>'variant'` : `alert`, `favorite` ou `dates_confirmed`. */
+  variant: string | null;
 }
 
 interface EnrichedRow {
@@ -343,7 +346,8 @@ export class PushOutboxWorkerService {
         WHERE n."id" = c."id"
         RETURNING n."id", n."userId", n."scholarshipId", n."cycleId", n."kind",
                   n."dedupeKey", n."titleFr", n."titleEn", n."bodyFr", n."bodyEn",
-                  n."route", n."pushAttempts", n."createdAt"
+                  n."route", n."pushAttempts", n."createdAt",
+                  n."data"->>'variant' AS "variant"
       `,
     );
     return rows ?? [];
@@ -464,6 +468,7 @@ export class PushOutboxWorkerService {
         bodyEn: row.bodyEn,
         pushAttempts: row.pushAttempts,
         createdAt: row.createdAt,
+        variant: isOpeningCopyVariant(row.variant) ? row.variant : null,
         favorite: detail.favorite,
         alertActive: detail.alertActive,
         muted: detail.muted,

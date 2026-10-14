@@ -181,13 +181,20 @@ export function buildOpeningCopy(
 /**
  * Le push groupé (jamais une ligne d'inbox) : `names` du plus récent au plus
  * ancien, un par ligne regroupée — sa longueur est le nombre annoncé.
+ *
+ * `variant` : `opened` seulement si TOUTES les lignes annoncent une ouverture.
+ * Dès qu'une ligne est un « Dates confirmées » (ouverture encore à venir), le
+ * titre reste neutre : un groupé ne dit jamais « ouvertes » pour une bourse
+ * qui ne l'est pas.
  */
 export function buildBundleCopy(
   names: readonly string[],
   lang: OpeningLanguage,
+  variant: OpeningPreviewCopyVariant,
 ): LocalizedPushCopy {
   const n = names.length;
   const [a = '', b = ''] = names;
+  const opened = variant === 'opened';
   if (lang === 'fr') {
     const list =
       n <= 1
@@ -197,15 +204,25 @@ export function buildBundleCopy(
           : n === 3
             ? `${a}, ${b} et 1 autre`
             : `${a}, ${b} et ${n - 2} autres`;
-    return {
-      title: `${n} bourses que tu suis sont ouvertes`,
-      body: `${list}. Regarde les dates limites.`,
-    };
+    return opened
+      ? {
+          title: `${n} bourses que tu suis sont ouvertes`,
+          body: `${list}. Regarde les dates limites.`,
+        }
+      : {
+          title: `${n} bourses que tu suis ont du nouveau`,
+          body: `${list}. Regarde les dates.`,
+        };
   }
   const list =
     n <= 1 ? a : n === 2 ? `${a} and ${b}` : `${a}, ${b} and ${n - 2} more`;
-  return {
-    title: `${n} scholarships you follow are open`,
-    body: `${list}. Check the deadlines.`,
-  };
+  return opened
+    ? {
+        title: `${n} scholarships you follow are open`,
+        body: `${list}. Check the deadlines.`,
+      }
+    : {
+        title: `${n} scholarships you follow have updates`,
+        body: `${list}. Check the dates.`,
+      };
 }

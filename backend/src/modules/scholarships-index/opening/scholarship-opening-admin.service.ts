@@ -430,11 +430,18 @@ export class ScholarshipOpeningAdminService {
         variant: copy.variant,
         fr: pick('fr'),
         en: pick('en'),
+        // Le groupé tel qu'il partirait avec cette ligne : neutre quand elle
+        // est un « Dates confirmées ».
         bundleExample: {
-          fr: buildBundleCopy([scholarship.nameFr, 'Bourse B', 'Bourse C'], 'fr'),
+          fr: buildBundleCopy(
+            [scholarship.nameFr, 'Bourse B', 'Bourse C'],
+            'fr',
+            copy.variant,
+          ),
           en: buildBundleCopy(
             [scholarship.nameEn, 'Scholarship B', 'Scholarship C'],
             'en',
+            copy.variant,
           ),
         },
       },

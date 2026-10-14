@@ -121,12 +121,29 @@ describe('scholarship-opening.copy', () => {
         'Chevening, Eiffel and 2 more. Check the deadlines.',
       ],
     ])('n = %#', (list, frTitle, frBody, enTitle, enBody) => {
-      expect(buildBundleCopy(list, 'fr')).toEqual({ title: frTitle, body: frBody });
-      expect(buildBundleCopy(list, 'en')).toEqual({ title: enTitle, body: enBody });
+      expect(buildBundleCopy(list, 'fr', 'opened')).toEqual({ title: frTitle, body: frBody });
+      expect(buildBundleCopy(list, 'en', 'opened')).toEqual({ title: enTitle, body: enBody });
     });
 
     it('n’écrit jamais « 0 autre »', () => {
-      expect(buildBundleCopy(['A', 'B'], 'fr').body).not.toContain('autre');
+      expect(buildBundleCopy(['A', 'B'], 'fr', 'opened').body).not.toContain('autre');
+    });
+
+    it('une ligne « Dates confirmées » dans le groupé : jamais « ouvertes »', () => {
+      expect(buildBundleCopy(['Chevening', 'Eiffel'], 'fr', 'dates_confirmed')).toEqual({
+        title: '2 bourses que tu suis ont du nouveau',
+        body: 'Chevening et Eiffel. Regarde les dates.',
+      });
+      expect(
+        buildBundleCopy(['Chevening', 'Eiffel', 'MEXT', 'DAAD'], 'en', 'dates_confirmed'),
+      ).toEqual({
+        title: '4 scholarships you follow have updates',
+        body: 'Chevening, Eiffel and 2 more. Check the dates.',
+      });
+      for (const lang of ['fr', 'en'] as const) {
+        const copy = buildBundleCopy(['A', 'B', 'C'], lang, 'dates_confirmed');
+        expect(`${copy.title} ${copy.body}`).not.toMatch(/ouvert|open|limite|deadline/i);
+      }
     });
   });
 });

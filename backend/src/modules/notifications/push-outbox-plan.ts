@@ -14,7 +14,8 @@
 //   2. aucun fournisseur configuré → `push_unconfigured` (pas d'arriéré) ;
 //   3. heures calmes → tout repoussé à 8 h locales + décalage stable ;
 //   4. rythme : 1 push par 30 min, 2 par jour local ;
-//   5. sinon un envoi : la ligne seule, ou un push groupé pour 2 lignes ou plus.
+//   5. sinon un envoi : la ligne seule, ou un push groupé pour 2 lignes ou plus
+//      (titre neutre si l'une d'elles est un « Dates confirmées »).
 //
 // Un report n'est jamais une tentative (`pushAttempts` inchangé).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ import {
 import {
   openingBundlePushData,
   openingPushData,
+  type OpeningCopyVariant,
   type PushDeferReason,
   type PushSkipReason,
 } from '../scholarships-index/opening/scholarship-opening.contract';
@@ -63,6 +65,11 @@ export interface OutboxPlanRow {
   bodyEn: string;
   pushAttempts: number;
   createdAt: Date;
+  /**
+   * `data.variant` de la ligne, posé à l'envoi : `dates_confirmed` quand
+   * l'ouverture était encore à venir. `null` si absent ou illisible.
+   */
+  variant: OpeningCopyVariant | null;
   /** Un favori existe. */
   favorite: boolean;
   /** Une alerte non mise en sourdine existe. */
@@ -272,7 +279,16 @@ function buildSend(
       ? (row.scholarshipNameEn ?? row.scholarshipNameFr ?? '')
       : (row.scholarshipNameFr ?? row.scholarshipNameEn ?? ''),
   );
-  const copy = buildBundleCopy(names, lang);
+  // Une ligne « Dates confirmées » (ou de variante inconnue) n'annonce pas
+  // une ouverture : le groupé ne dit alors pas « ouvertes ».
+  const allOpened = ordered.every(
+    (row) => row.variant === 'alert' || row.variant === 'favorite',
+  );
+  const copy = buildBundleCopy(
+    names,
+    lang,
+    allOpened ? 'opened' : 'dates_confirmed',
+  );
   const key = ordered
     .map((row) => row.id)
     .sort()
