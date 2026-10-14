@@ -68,19 +68,28 @@ describePostgres('Requête de suivi des bourses — intégration PostgreSQL', ()
     await prisma.$disconnect();
   });
 
+  /**
+   * `body` dans une transaction toujours annulée. Toute autre erreur
+   * (assertion ratée, requête refusée) est relancée telle quelle : son
+   * message et son diff, pas « attendu Rollback ».
+   */
   async function rolledBack(
     body: (tx: Prisma.TransactionClient) => Promise<void>,
   ): Promise<void> {
-    await expect(
-      prisma.$transaction(
+    try {
+      await prisma.$transaction(
         async (tx) => {
           await seed(tx);
           await body(tx);
           throw new Rollback();
         },
         { maxWait: 5_000, timeout: 30_000 },
-      ),
-    ).rejects.toBeInstanceOf(Rollback);
+      );
+    } catch (error) {
+      if (error instanceof Rollback) return;
+      throw error;
+    }
+    throw new Error('La transaction aurait dû être annulée.');
   }
 
   function scholarship(id: string) {

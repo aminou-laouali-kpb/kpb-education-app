@@ -20,7 +20,8 @@ import {
  *
  * 1. Même résultat que l'ancien texte (gardé ci-dessous, à l'octet près, comme
  *    référence) sur des données tirées au hasard, dans les deux portées, avec
- *    ou sans cycle, première annonce ou relance.
+ *    ou sans cycle, première annonce ou relance. Un échec écrit la graine
+ *    (`KPB_FOLLOW_QUERY_SEED`).
  * 2. Un plan qui ne dépend pas des statistiques : 5 000 puis 20 000 abonnés
  *    insérés dans la transaction même — donc JAMAIS analysés — et la requête
  *    reste sous 2 s, avec le plan naturel ET avec les seules boucles
@@ -175,16 +176,31 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
     await prisma.$disconnect();
   });
 
-  async function rolledBack(body: (tx: Prisma.TransactionClient) => Promise<void>) {
-    await expect(
-      prisma.$transaction(
+  /**
+   * `body` dans une transaction toujours annulée. Toute autre erreur
+   * (assertion ratée, requête refusée, délai dépassé) est relancée TELLE
+   * QUELLE — son message et son diff, pas « attendu Rollback » —, après avoir
+   * écrit `diagnostics()` (graine, mesures déjà prises) : sans eux, un échec
+   * sur des données tirées au hasard ne se rejoue pas.
+   */
+  async function rolledBack(
+    body: (tx: Prisma.TransactionClient) => Promise<void>,
+    diagnostics: () => string,
+  ): Promise<void> {
+    try {
+      await prisma.$transaction(
         async (tx) => {
           await body(tx);
           throw new Rollback();
         },
         { maxWait: 5_000, timeout: 170_000 },
-      ),
-    ).rejects.toBeInstanceOf(Rollback);
+      );
+    } catch (error) {
+      if (error instanceof Rollback) return;
+      console.error(`Échec dans la transaction annulée — ${diagnostics()}`);
+      throw error;
+    }
+    throw new Error(`La transaction aurait dû être annulée — ${diagnostics()}`);
   }
 
   function scholarship(id: string) {
@@ -320,7 +336,7 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
         }
       }
       expect(compared).toBeGreaterThan(1_000);
-    });
+    }, () => `graine ${seed} (KPB_FOLLOW_QUERY_SEED=${seed} pour rejouer)`);
   });
 
   // ── Échelle sans statistiques ──────────────────────────────────────────────
@@ -425,7 +441,7 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
             expect(rowsMs).toBeLessThan(2_000);
           }
         }
-      });
+      }, () => `portée ${scope} ; mesures déjà prises : ${timings.join(' ; ') || 'aucune'}`);
       console.log(`Requête de suivi (${scope}, sans ANALYZE) — ${timings.join(' ; ')}.`);
     },
   );
