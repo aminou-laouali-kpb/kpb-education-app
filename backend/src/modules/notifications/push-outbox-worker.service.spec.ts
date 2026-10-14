@@ -335,6 +335,23 @@ describe('PushOutboxWorkerService', () => {
       expect(tally.released).toBeGreaterThanOrEqual(2);
     });
 
+    it('une finalisation qui échoue laisse les lignes sous bail (pas de renvoi immédiat)', async () => {
+      const rows = [claimed('a', 'u1')];
+      const { worker, updates } = makeWorker({
+        claims: [rows, []],
+        details: [detail('a')],
+        updateCount: (call) => {
+          if ('pushStatus' in call.data) throw Object.assign(new Error('db'), { code: 'P1001' });
+          return call.where.id.in.length;
+        },
+      });
+      const tally = await worker.runOnce(NOON, () => NOON.getTime());
+      expect(tally.released).toBe(0);
+      expect(
+        updates.filter((u) => Object.keys(u.data).sort().join() === 'pushLockedBy,pushLockedUntil'),
+      ).toHaveLength(0);
+    });
+
     it('rien à faire : aucune ligne de journal', async () => {
       const { worker } = makeWorker({ claims: [[]] });
       await worker.runOnce(NOON, () => NOON.getTime());

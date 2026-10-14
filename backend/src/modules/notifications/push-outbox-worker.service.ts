@@ -249,7 +249,10 @@ export class PushOutboxWorkerService {
             );
             await this.finalize(plan.send, outcome, new Date(tick()), tunables, tally);
           } catch (error) {
-            // Lignes laissées sous bail : elles reviendront à son expiration.
+            // Le fournisseur a peut-être accepté avant l'erreur : ces lignes
+            // restent sous bail et ne reviennent qu'à son expiration, jamais
+            // par la libération de fin de passage (renvoi immédiat).
+            for (const rowId of ids) held.delete(rowId);
             this.logger.error(`Push outbox send failed (${safeErrorCode(error)}).`);
           }
         });

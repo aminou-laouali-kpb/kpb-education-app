@@ -47,8 +47,6 @@ interface LockedCycle {
   openingPreExisting: boolean;
   openingNotifiedAt: Date | null;
   openingFanoutDueAt: Date | null;
-  openingSkippedReason: string | null;
-  openingAudience: number | null;
 }
 
 interface LegacyRecipient {
@@ -338,7 +336,7 @@ export class ScholarshipLifecycleService {
 
     const [existing = null] = await tx.$queryRaw<LockedCycle[]>`
       SELECT "id", "activatedAt", "openingPreExisting", "openingNotifiedAt",
-             "openingFanoutDueAt", "openingSkippedReason", "openingAudience"
+             "openingFanoutDueAt"
       FROM "ScholarshipCycle"
       WHERE "scholarshipId" = ${scholarshipId}
         AND "academicYear" = ${input.academicYear}
