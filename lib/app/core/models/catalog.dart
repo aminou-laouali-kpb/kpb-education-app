@@ -825,6 +825,7 @@ class LiveScholarshipModel {
     this.applicationSteps = const [],
     this.videos = const [],
     this.isAlertEnabled,
+    this.follow,
   });
 
   final String id;
@@ -848,8 +849,40 @@ class LiveScholarshipModel {
   final List<ScholarshipVideoModel> videos;
   final bool? isAlertEnabled;
 
+  /// Bloc additif `follow` de la fiche (chantier C) ; null sur un backend qui
+  /// ne le sert pas encore — l'interrupteur d'ouverture se masque alors.
+  final ScholarshipFollowState? follow;
+
   bool get isFullyFunded => fundingType == 'fully_funded';
   bool get isPartiallyFunded => fundingType == 'partially_funded';
+
+  /// La ligne de statut de la fiche (« Ouverte · clôture le … », « Ouvre le … »,
+  /// « Ouverture estimée … », « Clôturée »), ou null quand on ne sait rien.
+  /// Même règle que « Mes suivis » ([resolveScholarshipStatusLine]) : jamais
+  /// « Ouverte » avant la date d'ouverture.
+  ScholarshipStatusLine? statusLine({DateTime? now}) {
+    final cycle = currentCycle;
+    if (cycle == null) {
+      // Fiche héritée sans cycle : seule la date limite parle.
+      if (deadlineAt == null) return null;
+      return resolveScholarshipStatusLine(
+        status: 'open',
+        dateConfidence: 'confirmed',
+        deadlineAt: deadlineAt,
+        now: now,
+      );
+    }
+    return resolveScholarshipStatusLine(
+      status: cycle.status,
+      dateConfidence: cycle.dateConfidence,
+      opensAt: cycle.opensAt,
+      closesAt: cycle.closesAt,
+      estimatedOpenAt: cycle.estimatedOpenAt,
+      deadlineAt: cycle.isEstimated ? null : deadlineAt,
+      now: now,
+    );
+  }
+
   bool get isAutomaticAdmission => applicationRequirement == 'automatic';
 
   factory LiveScholarshipModel.fromJson(Map<String, dynamic> json) {
@@ -916,6 +949,7 @@ class LiveScholarshipModel {
         return videos;
       })(),
       isAlertEnabled: isAlertEnabled,
+      follow: ScholarshipFollowState.tryParse(json['follow']),
     );
   }
 }

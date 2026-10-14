@@ -98,6 +98,9 @@ dialogues ne la changent pas (seules les `PageRoute` comptent).
 | `parcours_view` | `slug`, `item_type` (`video`/`text`), `source` (`feed`/`library`/`story_of_week`) | A story became the one on screen (KPB-169) |
 | `parcours_complete` | same as above | The story was consumed — video ended, or written interview scrolled to the last answer (KPB-169) |
 | `story_of_week_viewed` / `story_of_week_opened` | `slug` | Home "Récit de la semaine" card CTR (KPB-169) |
+| `push_opened` | `kind` (`scholarship_opened`, `scholarship_opened_bundle`, `deadline_reminder`, … ; `unknown` sinon) | Tap sur une notification push (chantier G) — la part des taps qui arrivent sur la bonne page se lit avec `view_item` |
+| `permission_primer_shown` | — | La feuille d'explication du premier « Suivre » s'est affichée (chantier G) |
+| `permission_primer_granted` | `result` (`granted` / `denied` / `dismissed`) | Issue de cette feuille : opt-in push des élèves qui suivent une bourse |
 
 ### Parcours completion rate (KPB-169)
 

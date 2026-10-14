@@ -5,8 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../config/app_routes.dart';
 import '../ui/components/kpb_toast.dart';
+import 'notification_router.dart';
+import 'push_permission.dart';
+
+export 'notification_router.dart'
+    show pushOpenedPayload, resolveNotificationRoute, resolvePushRoute;
+export 'push_permission.dart' show PushPermissionStatus;
 
 /// Ce que [PushService] attend du backend KPB. [AppApiClient] l'implémente ;
 /// les tests branchent un faux.
@@ -82,28 +87,46 @@ class PushService {
       _initialized = true;
 
       // Démarrage à froid depuis un tap : le navigateur GetX n'existe pas
-      // encore, on route après la première image.
+      // encore. Le routeur garde le tap en file jusqu'à la première image
+      // (`NotificationRouter.markReady`, posé par `main()` après `runApp`).
       final initial = await fcm.getInitialMessage();
-      if (initial != null) {
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _onMessageOpened(initial));
-      }
+      if (initial != null) _onMessageOpened(initial);
     } catch (error) {
       debugPrint('[Push] init skipped: $error');
     }
   }
 
   /// Demande l'autorisation au système (invite unique sur iOS), puis enregistre
-  /// le jeton si l'élève accepte.
-  Future<void> requestPermission() async {
+  /// le jeton si l'élève accepte. Rend la réponse ; `unavailable` tant que le
+  /// push n'est pas initialisé (tests de widgets, démarrage sans Firebase).
+  ///
+  /// Ne l'appeler que derrière une explication (la feuille du premier
+  /// « Suivre ») : la demande système ne se repose pas.
+  Future<PushPermissionStatus> requestPermission() async {
     final fcm = _messaging;
-    if (!_initialized || fcm == null) return;
+    if (!_initialized || fcm == null) return PushPermissionStatus.unavailable;
+    var status = PushPermissionStatus.unavailable;
     try {
-      await fcm.requestPermission();
+      final settings = await fcm.requestPermission();
+      status = pushPermissionStatusOf(settings.authorizationStatus);
     } catch (error) {
       debugPrint('[Push] requestPermission failed: $error');
     }
     await _syncToken();
+    return status;
+  }
+
+  /// L'autorisation actuelle, sans rien demander.
+  Future<PushPermissionStatus> permissionStatus() async {
+    final fcm = _messaging;
+    if (!_initialized || fcm == null) return PushPermissionStatus.unavailable;
+    try {
+      final settings = await fcm.getNotificationSettings();
+      return pushPermissionStatusOf(settings.authorizationStatus);
+    } catch (error) {
+      debugPrint('[Push] permissionStatus failed: $error');
+      return PushPermissionStatus.unavailable;
+    }
   }
 
   /// Rattache cet appareil au compte KPB connecté. Appelé à la connexion, à la
@@ -218,19 +241,10 @@ class PushService {
     if (opened.isNotEmpty) {
       unawaited(_reportOpened(opened));
     }
-    final route = resolvePushRoute(message.data);
-    try {
-      if (route == null) {
-        Get.offAllNamed(AppRoutes.home);
-      } else {
-        Get.toNamed(route);
-      }
-    } catch (error) {
-      debugPrint('[Push] route "$route" not navigable: $error');
-      try {
-        Get.offAllNamed(AppRoutes.home);
-      } catch (_) {}
-    }
+    // Destination, lecture par références et mesure : le routeur, neutre
+    // vis-à-vis du fournisseur, s'en charge — et garde le tap en file tant que
+    // l'app n'a pas rendu sa première image.
+    unawaited(NotificationRouter.instance.open(message.data));
   }
 
   Future<void> _reportOpened(Map<String, String> payload) async {
@@ -248,35 +262,13 @@ class PushService {
 String pushPlatformName() =>
     defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
 
-/// Destination d'un tap, depuis la charge `data` du message.
-///
-/// La charge est EXTERNE : on la normalise, et on rend `null` (→ accueil) quand
-/// elle ne désigne rien de navigable, pour qu'un tap ne meure jamais en
-/// silence. Les anciennes activations de bourse routaient vers la liste et
-/// portaient l'identifiant à part : on les promeut vers la fiche.
-String? resolvePushRoute(Map<String, dynamic> data) {
-  final raw = data['route'];
-  var route = raw is String ? AppRoutes.normalizeExternalRoute(raw) : null;
-  final scholarshipId = data['scholarshipId'];
-  if (route == AppRoutes.scholarships &&
-      scholarshipId is String &&
-      scholarshipId.trim().isNotEmpty) {
-    route = AppRoutes.normalizeExternalRoute(
-      AppRoutes.scholarshipDetailPath(scholarshipId.trim()),
-    );
-  }
-  return route;
-}
-
-/// Ce que l'app renvoie au backend quand l'élève ouvre une notification :
-/// l'identifiant de campagne et/ou la clé du rappel — rien d'autre.
-Map<String, String> pushOpenedPayload(Map<String, dynamic> data) {
-  final payload = <String, String>{};
-  for (final key in const ['campaignId', 'notificationKey']) {
-    final value = data[key];
-    if (value is String && value.trim().isNotEmpty) {
-      payload[key] = value.trim();
-    }
-  }
-  return payload;
-}
+/// Traduction de l'état FCM dans le vocabulaire neutre de l'app.
+@visibleForTesting
+PushPermissionStatus pushPermissionStatusOf(AuthorizationStatus status) =>
+    switch (status) {
+      AuthorizationStatus.authorized ||
+      AuthorizationStatus.provisional =>
+        PushPermissionStatus.granted,
+      AuthorizationStatus.denied => PushPermissionStatus.denied,
+      AuthorizationStatus.notDetermined => PushPermissionStatus.notDetermined,
+    };

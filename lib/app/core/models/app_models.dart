@@ -13,6 +13,7 @@ part 'services.dart';
 part 'content.dart';
 part 'roadmap.dart';
 part 'saved.dart';
+part 'scholarship_follow.dart';
 part 'orientation.dart';
 part 'commercial.dart';
 part 'parcours.dart';

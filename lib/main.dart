@@ -30,6 +30,7 @@ import 'app/core/services/auth_service.dart';
 import 'app/core/navigation/shell_tabs.dart';
 import 'app/core/services/remote_feature_flags.dart';
 import 'app/core/services/security_service.dart';
+import 'app/core/services/notification_router.dart';
 import 'app/core/services/push_service.dart';
 import 'app/core/services/deep_link_service.dart';
 import 'package:quick_actions/quick_actions.dart';
@@ -204,12 +205,15 @@ Future<void> main() async {
     // ── Push notifications (FCM) ─────────────────────────────────────────────
     // FCM vit dans Firebase : sans lui (démarrage hors ligne), le push reste
     // inerte et chaque appel du service est un no-op.
+    // Le routeur des taps est branché AVANT le push : un tap de démarrage à
+    // froid y entre en file, et n'est rejoué qu'après la première image.
+    NotificationRouter.instance.attach(apiClient);
     if (firebaseInitialized) {
       await PushService.instance.initialize(backend: apiClient);
     }
-    // NB: the OS permission prompt is requested contextually at the end of
-    // onboarding (onboarding_screen._submit), not at cold start — asking here
-    // would burn iOS's one-shot prompt for guests before any value is shown.
+    // NB : la demande système d'autorisation n'est faite NI au démarrage NI à
+    // l'onboarding, mais au premier « Suivre », derrière une feuille qui dit à
+    // quoi elles servent (FollowPushPrimer) — l'invite iOS ne se repose pas.
     // Re-register an already-signed-in user's device token on cold start.
     if (controller.profile != null) {
       unawaited(controller.syncPushIdentity());
@@ -270,6 +274,11 @@ Future<void> main() async {
     // screenshotting can observe it. Only mount it when PostHog is configured.
     const Widget app = KpbEducationApp();
     runApp(AppConfig.posthogEnabled ? const PostHogWidget(child: app) : app);
+    // Première image rendue : le navigateur existe, les taps de notification
+    // gardés en file (démarrage à froid) peuvent être rejoués.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => NotificationRouter.instance.markReady(),
+    );
   } catch (error, stack) {
     if (firebaseInitialized) {
       unawaited(
