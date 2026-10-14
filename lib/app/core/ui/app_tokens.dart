@@ -334,6 +334,39 @@ class KpbMotionSpec {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Échelle typographique : SEPT tailles, de 12 à 28 sp. Toute taille de
+/// texte de l'app en est issue (budget des `fontSize:` en dur dans
+/// test/core/ui/ui_debt_audit_test.dart). 12 sp est le plancher d'un texte
+/// porteur de sens (lisible sur un 360 × 640 d'entrée de gamme, en plein
+/// soleil) ; en dessous, réservé au décor.
+class KpbFontSize {
+  KpbFontSize._();
+
+  /// Légendes, badges, métadonnées, libellés de la barre de navigation.
+  static const double xs = 12;
+
+  /// Corps secondaire, puces, sous-titres de carte.
+  static const double sm = 13;
+
+  /// Corps de texte, boutons, titres de carte.
+  static const double md = 15;
+
+  /// Titres de section et de carte mise en avant.
+  static const double lg = 18;
+
+  /// Titres d'écran (AppBar), titres de feuille.
+  static const double xl = 20;
+
+  /// Titres de page.
+  static const double xxl = 24;
+
+  /// Heros et chiffres clés.
+  static const double display = 28;
+
+  /// Les sept tailles, de la plus petite à la plus grande.
+  static const List<double> scale = [xs, sm, md, lg, xl, xxl, display];
+}
+
 /// Nom canonique de la typographie (le plan parle de `KpbTypography`) ; la
 /// classe historique `KpbTextStyles` reste le nom concret pour ne pas churner
 /// les centaines de call-sites.
@@ -351,7 +384,7 @@ class KpbTextStyles {
 
   static const display = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 32,
+    fontSize: KpbFontSize.display,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.2,
@@ -360,7 +393,7 @@ class KpbTextStyles {
 
   static const displaySm = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 28,
+    fontSize: KpbFontSize.display,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.2,
@@ -369,7 +402,7 @@ class KpbTextStyles {
 
   static const displayXs = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 26,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -378,7 +411,7 @@ class KpbTextStyles {
 
   static const headlineLg = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 26,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -387,7 +420,7 @@ class KpbTextStyles {
 
   static const headline = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 24,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -396,7 +429,7 @@ class KpbTextStyles {
 
   static const headlineSm = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 20,
+    fontSize: KpbFontSize.xl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
@@ -404,7 +437,7 @@ class KpbTextStyles {
 
   static const titleLg = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 22,
+    fontSize: KpbFontSize.xl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
@@ -412,55 +445,55 @@ class KpbTextStyles {
 
   static const title = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 18,
+    fontSize: KpbFontSize.lg,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const titleMd = TextStyle(
-    fontSize: 16,
+    fontSize: KpbFontSize.md,
     fontWeight: FontWeight.w600,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const titleSm = TextStyle(
-    fontSize: 14,
+    fontSize: KpbFontSize.sm,
     fontWeight: FontWeight.w600,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const body = TextStyle(
-    fontSize: 15,
+    fontSize: KpbFontSize.md,
     fontWeight: FontWeight.w400,
     color: KpbColors.textPrimary,
     height: 1.5,
   );
 
   static const bodySm = TextStyle(
-    fontSize: 13,
+    fontSize: KpbFontSize.sm,
     fontWeight: FontWeight.w400,
     color: KpbColors.textSecondary,
     height: 1.4,
   );
 
   static const label = TextStyle(
-    fontSize: 12,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w600,
     color: KpbColors.textSecondary,
     letterSpacing: 0.4,
   );
 
   static const labelSm = TextStyle(
-    fontSize: 11,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.3,
   );
 
   static const caption = TextStyle(
-    fontSize: 12,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w400,
     color: KpbColors.textMuted,
     height: 1.4,

@@ -39,7 +39,7 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: KpbTextStyles.headingFamily,
-          fontSize: 20,
+          fontSize: KpbFontSize.xl,
           fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
@@ -71,7 +71,7 @@ class AppTheme {
         labelStyle: TextStyle(
           fontFamily: KpbTextStyles.bodyFamily,
           fontWeight: FontWeight.w600,
-          fontSize: 13,
+          fontSize: KpbFontSize.sm,
           color: WidgetStateColor.resolveWith((states) {
             if (states.contains(WidgetState.selected)) return Colors.white;
             if (states.contains(WidgetState.disabled)) {
@@ -121,7 +121,7 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 15,
+            fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w600,
           ),
           elevation: 0,
@@ -137,7 +137,7 @@ class AppTheme {
           side: const BorderSide(color: KpbColors.decorSky),
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 15,
+            fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -147,7 +147,7 @@ class AppTheme {
           foregroundColor: KpbColors.decorSky,
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 14,
+            fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w600,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -171,12 +171,12 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return const TextStyle(
                 color: KpbColors.decorSky,
-                fontSize: 11,
+                fontSize: KpbFontSize.xs,
                 fontWeight: FontWeight.w600);
           }
           return const TextStyle(
               color: KpbColorsDark.textMuted,
-              fontSize: 11,
+              fontSize: KpbFontSize.xs,
               fontWeight: FontWeight.w500);
         }),
       ),
@@ -289,7 +289,7 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: TextStyle(
           fontFamily: KpbTextStyles.headingFamily,
-          fontSize: 20,
+          fontSize: KpbFontSize.xl,
           fontWeight: FontWeight.w700,
           color: KpbColors.textPrimary,
         ),
@@ -339,7 +339,7 @@ class AppTheme {
         labelStyle: TextStyle(
           fontFamily: KpbTextStyles.bodyFamily,
           fontWeight: FontWeight.w600,
-          fontSize: 13,
+          fontSize: KpbFontSize.sm,
           color: WidgetStateColor.resolveWith((states) {
             if (states.contains(WidgetState.selected)) return Colors.white;
             // Désactivée : atténuée mais encore lisible (6,92:1) — textMuted
@@ -405,7 +405,7 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 15,
+            fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w600,
           ),
           elevation: 0,
@@ -427,7 +427,7 @@ class AppTheme {
           ),
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 15,
+            fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w600,
           ),
           elevation: 0,
@@ -446,7 +446,7 @@ class AppTheme {
           side: const BorderSide(color: KpbColors.borderStrong),
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 15,
+            fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -459,7 +459,7 @@ class AppTheme {
           foregroundColor: KpbColors.actionPrimary,
           textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 14,
+            fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w600,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -490,14 +490,14 @@ class AppTheme {
             return const TextStyle(
               fontFamily: KpbTextStyles.bodyFamily,
               color: KpbColors.actionPrimary,
-              fontSize: 11,
+              fontSize: KpbFontSize.xs,
               fontWeight: FontWeight.w600,
             );
           }
           return const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
             color: KpbColors.textMuted,
-            fontSize: 11,
+            fontSize: KpbFontSize.xs,
             fontWeight: FontWeight.w500,
           );
         }),
@@ -545,7 +545,7 @@ class AppTheme {
         backgroundColor: KpbColors.brandNavy,
         contentTextStyle: TextStyle(
           color: Colors.white,
-          fontSize: 14,
+          fontSize: KpbFontSize.sm,
           fontFamily: KpbTextStyles.bodyFamily,
         ),
         actionTextColor: KpbColors.actionOnDark,
@@ -561,11 +561,11 @@ class AppTheme {
         dividerColor: KpbColors.border,
         labelStyle: TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 14,
+            fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w600),
         unselectedLabelStyle: TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
-            fontSize: 14,
+            fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w500),
       ),
 
@@ -578,7 +578,7 @@ class AppTheme {
         textStyle: const TextStyle(
             fontFamily: KpbTextStyles.bodyFamily,
             color: Colors.white,
-            fontSize: 12),
+            fontSize: KpbFontSize.xs),
       ),
 
       // ── Menus ─────────────────────────────────────────────────────────────
@@ -673,7 +673,7 @@ class AppTheme {
 
       // ── Text ─────────────────────────────────────────────────────────────
       // Titres (display/headline/title L) en Plus Jakarta Sans ; le reste en
-      // Inter via le fontFamily global. Tailles historiques conservées.
+      // Inter via le fontFamily global. Tailles issues de KpbFontSize.
       textTheme: const TextTheme(
         displayLarge: KpbTextStyles.display,
         displayMedium: KpbTextStyles.displaySm,
