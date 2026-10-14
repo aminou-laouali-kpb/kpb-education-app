@@ -3504,4 +3504,22 @@ const Map<String, String> appTranslationsFr = {
   'followed_detail_unavailable': 'Fiche indisponible pour le moment',
   'followed_opening_muted': 'Alerte d\'ouverture coupée',
   'followed_remove_a11y': 'Ne plus suivre @title',
+  'notifications_group_today': 'Aujourd\'hui',
+  'notifications_group_week': 'Cette semaine',
+  'notifications_group_earlier': 'Plus tôt',
+  'notif_cta_open_scholarship': 'Voir la bourse',
+  'notif_cta_open_followed': 'Voir mes suivis',
+  'notif_cta_deadline': 'Voir l\'échéance',
+  'notif_cta_case': 'Ouvrir le dossier',
+  'notif_cta_message': 'Lire le message',
+  'notif_cta_open': 'Ouvrir',
+  'followed_scholarship_pref_title': 'Bourses que je suis : ouverture',
+  'followed_scholarship_pref_subtitle':
+      'Une notification quand une bourse que tu suis ouvre. Les rappels de date limite continuent.',
+  'notifications_push_granted_title': 'Notifications activées',
+  'notifications_push_granted_subtitle':
+      'Tu reçois les alertes sur ce téléphone.',
+  'notifications_push_denied_subtitle':
+      'Rallume-les dans les réglages de l\'app pour recevoir les alertes.',
+  'notifications_push_settings_action': 'Réglages',
 };

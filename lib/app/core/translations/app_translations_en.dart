@@ -3245,4 +3245,21 @@ const Map<String, String> appTranslationsEn = {
   'followed_detail_unavailable': 'Details unavailable for now',
   'followed_opening_muted': 'Opening alert off',
   'followed_remove_a11y': 'Unfollow @title',
+  'notifications_group_today': 'Today',
+  'notifications_group_week': 'This week',
+  'notifications_group_earlier': 'Earlier',
+  'notif_cta_open_scholarship': 'See the scholarship',
+  'notif_cta_open_followed': 'See followed scholarships',
+  'notif_cta_deadline': 'See the deadline',
+  'notif_cta_case': 'Open the case',
+  'notif_cta_message': 'Read the message',
+  'notif_cta_open': 'Open',
+  'followed_scholarship_pref_title': 'Scholarships I follow: opening',
+  'followed_scholarship_pref_subtitle':
+      'A notification when a scholarship you follow opens. Deadline reminders keep coming.',
+  'notifications_push_granted_title': 'Notifications are on',
+  'notifications_push_granted_subtitle': 'You get alerts on this phone.',
+  'notifications_push_denied_subtitle':
+      'Turn them back on in the app settings to get alerts.',
+  'notifications_push_settings_action': 'Settings',
 };

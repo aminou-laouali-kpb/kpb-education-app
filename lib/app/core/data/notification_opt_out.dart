@@ -18,10 +18,23 @@ abstract final class NotificationOptOutType {
   /// KPB-169 — Sunday 18h local "récit de la semaine".
   static const parcoursWeekly = 'parcours_weekly';
 
+  /// Chantier C/G — « une bourse que tu suis est ouverte » (`scholarship_opened`
+  /// et son push groupé). Une clé de FAMILLE, pas un `kind`. Coupe le push
+  /// seulement : l'entrée reste dans le centre de notifications, et les rappels
+  /// de date limite (transactionnels) continuent. Un backend antérieur au
+  /// chantier C ne la connaît pas et la retire à l'écriture : la ligne des
+  /// préférences ne s'affiche donc que si le serveur sert les routes du suivi.
+  static const followedScholarshipUpdates = 'followed_scholarship_updates';
+
   /// Every key this build understands. An unknown key coming back from a newer
   /// server is preserved as-is (see [applyOptOut]) rather than dropped, so an
   /// older app never silently re-enables a family it cannot render a row for.
-  static const all = [dailyScholarship, weeklyDigest, parcoursWeekly];
+  static const all = [
+    dailyScholarship,
+    weeklyDigest,
+    parcoursWeekly,
+    followedScholarshipUpdates,
+  ];
 }
 
 /// Returns [current] with [type] added or removed. Unknown keys are carried

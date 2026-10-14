@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/notification_opt_out.dart';
 import '../../core/models/app_models.dart';
 import '../../core/repositories/app_api_client.dart';
-import '../../core/services/push_service.dart';
+import '../../core/services/notification_router.dart';
+import '../../core/services/push_permission.dart';
+import '../../core/services/remote_feature_flags.dart';
+import '../../core/ui/components/kpb_refresh.dart';
+import '../scholarships/widgets/follow_push_primer.dart';
 import '../cases/case_detail_screen.dart';
 import '../cases/case_timeline_definition.dart';
 import '../cases/post_decision_screen.dart';
@@ -35,10 +40,13 @@ import '../../core/ui/components/kpb_toast.dart';
 //   • "Mark all read" is a session-local dismiss of the exact items currently
 //     shown (keyed by case id + kind + updatedAt) — no persistence is faked. If
 //     a case sees genuinely new activity (its updatedAt changes) it reappears.
-//   • Preferences render ONE real control: an "Enable push notifications" row
-//     wired to the real `PushService.requestPermission()` capability, plus
-//     an honest note that delivery is governed by the OS. The design's four
-//     per-type toggles are DROPPED — they would persist nowhere.
+//   • Preferences: the push row reflects the REAL permission state
+//     (`PushPermission`) — "Activer" when never asked, "Notifications
+//     coupées" + a link to the app settings when refused — plus one switch per
+//     persisted opt-out family.
+//   • Chantier G: one icon and one call to action per `kind`, rows grouped
+//     « Aujourd'hui / Cette semaine / Plus tôt », pull-to-refresh, and the
+//     server's unread count feeds the Home bell.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
@@ -76,6 +84,7 @@ class _StoredNotification {
     required this.body,
     required this.route,
     required this.scholarshipId,
+    required this.variant,
     required this.createdAt,
     required this.read,
   });
@@ -86,25 +95,36 @@ class _StoredNotification {
   final String body;
   final String route;
   final String? scholarshipId;
+
+  /// `data.variant` d'une annonce (`alert`, `favorite`, `dates_confirmed`).
+  final String? variant;
   final DateTime createdAt;
   final bool read;
 
   factory _StoredNotification.fromJson(Map<String, dynamic> json) {
+    final data = json['data'] is Map ? json['data'] as Map : const {};
+    final rawScholarshipId = json['scholarshipId'] ?? data['scholarshipId'];
+    final rawVariant = data['variant'];
     return _StoredNotification(
       id: json['id'] as String? ?? '',
       kind: json['kind'] as String? ?? '',
       title: json['title'] as String? ?? '',
       body: json['body'] as String? ?? '',
       route: json['route'] as String? ?? '',
-      scholarshipId: json['scholarshipId'] as String? ??
-          ((json['data'] is Map)
-              ? (json['data'] as Map)['scholarshipId'] as String?
-              : null),
+      scholarshipId: rawScholarshipId is String ? rawScholarshipId : null,
+      variant: rawVariant is String ? rawVariant : null,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
       read: json['readAt'] != null,
     );
   }
+
+  /// Où mène un tap : la fiche de la bourse, « Mes suivis » pour un groupé…
+  String? get destination => resolveNotificationRoute(<String, dynamic>{
+        'route': route,
+        'kind': kind,
+        if (scholarshipId != null) 'scholarshipId': scholarshipId,
+      });
 
   _StoredNotification markRead() => _StoredNotification(
         id: id,
@@ -113,9 +133,108 @@ class _StoredNotification {
         body: body,
         route: route,
         scholarshipId: scholarshipId,
+        variant: variant,
         createdAt: createdAt,
         read: true,
       );
+}
+
+/// Icône, couleurs et appel à l'action d'une notification, selon son `kind`.
+/// Un `kind` inconnu (famille ajoutée côté serveur après cette build) garde un
+/// rendu neutre plutôt que d'emprunter celui d'une autre famille.
+@visibleForTesting
+({IconData icon, Color color, Color background, String ctaKey})
+    notificationKindStyle(String kind, {String? variant}) {
+  final k = kind.toLowerCase();
+  if (k == scholarshipOpenedBundleKind) {
+    return (
+      icon: Icons.bookmarks_rounded,
+      color: KpbColors.success,
+      background: KpbColors.successLight,
+      ctaKey: 'notif_cta_open_followed',
+    );
+  }
+  if (k == 'scholarship_opened') {
+    final datesOnly = variant == 'dates_confirmed';
+    return (
+      icon: datesOnly ? Icons.event_available_rounded : Icons.lock_open_rounded,
+      color: datesOnly ? KpbColors.actionPrimary : KpbColors.success,
+      background:
+          datesOnly ? KpbColors.actionPrimarySoft : KpbColors.successLight,
+      ctaKey: 'notif_cta_open_scholarship',
+    );
+  }
+  if (k.contains('deadline') || k.contains('reminder')) {
+    return (
+      icon: Icons.alarm_rounded,
+      color: KpbColors.warning,
+      background: KpbColors.warningLight,
+      ctaKey: 'notif_cta_deadline',
+    );
+  }
+  if (k.contains('message') || k.contains('counsel')) {
+    return (
+      icon: Icons.chat_bubble_outline_rounded,
+      color: KpbColors.actionPrimary,
+      background: KpbColors.actionPrimarySoft,
+      ctaKey: 'notif_cta_message',
+    );
+  }
+  if (k.startsWith('case') || k.contains('milestone')) {
+    return (
+      icon: Icons.folder_open_rounded,
+      color: KpbColors.brandNavy,
+      background: KpbColors.surfaceMuted,
+      ctaKey: 'notif_cta_case',
+    );
+  }
+  if (k == NotificationOptOutType.dailyScholarship) {
+    return (
+      icon: Icons.school_rounded,
+      color: KpbColors.actionPrimary,
+      background: KpbColors.actionPrimarySoft,
+      ctaKey: 'notif_cta_open_scholarship',
+    );
+  }
+  if (k == NotificationOptOutType.weeklyDigest) {
+    return (
+      icon: Icons.calendar_month_rounded,
+      color: KpbColors.actionPrimary,
+      background: KpbColors.actionPrimarySoft,
+      ctaKey: 'notif_cta_open',
+    );
+  }
+  if (k == NotificationOptOutType.parcoursWeekly) {
+    return (
+      icon: Icons.auto_awesome_rounded,
+      color: KpbColors.lawPurple,
+      background: KpbColors.surfaceMuted,
+      ctaKey: 'notif_cta_open',
+    );
+  }
+  return (
+    icon: Icons.notifications_none_rounded,
+    color: KpbColors.actionPrimary,
+    background: KpbColors.actionPrimarySoft,
+    ctaKey: 'notif_cta_open',
+  );
+}
+
+/// Les trois groupes du fil.
+enum NotificationAgeGroup { today, thisWeek, earlier }
+
+/// « Aujourd'hui » = même jour local ; « Cette semaine » = les 6 jours d'avant ;
+/// « Plus tôt » sinon. Une date dans le futur (horloge décalée) compte pour
+/// aujourd'hui.
+@visibleForTesting
+NotificationAgeGroup notificationAgeGroup(DateTime at, {DateTime? now}) {
+  final ref = (now ?? DateTime.now()).toLocal();
+  final local = at.toLocal();
+  final today = DateTime(ref.year, ref.month, ref.day);
+  final day = DateTime(local.year, local.month, local.day);
+  if (!day.isBefore(today)) return NotificationAgeGroup.today;
+  if (today.difference(day).inDays < 7) return NotificationAgeGroup.thisWeek;
+  return NotificationAgeGroup.earlier;
 }
 
 /// Whether the current case list yields at least one derived notification.
@@ -150,16 +269,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   late final AppApiClient _apiClient;
   List<_StoredNotification> _stored = <_StoredNotification>[];
 
+  /// L'autorisation réelle des notifications sur ce téléphone.
+  PushPermissionStatus _pushStatus = PushPermissionStatus.unavailable;
+
   @override
   void initState() {
     super.initState();
     _apiClient = Get.find<AppController>().apiClient;
-    _loadStored();
+    unawaited(_loadStored());
+    unawaited(_refreshPushStatus());
+    // Le badge serveur prouve aussi que le backend sert les routes du suivi :
+    // c'est ce qui allume la ligne « Bourses que je suis : ouverture ».
+    unawaited(
+      Get.find<AppController>().refreshServerUnreadCount(force: true),
+    );
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait<void>(<Future<void>>[
+      _loadStored(),
+      _refreshPushStatus(),
+      Get.find<AppController>().refreshServerUnreadCount(force: true),
+    ]);
+  }
+
+  Future<void> _refreshPushStatus() async {
+    final status = await PushPermission.instance.status();
+    if (mounted && status != _pushStatus) {
+      setState(() => _pushStatus = status);
+    }
   }
 
   Future<void> _loadStored() async {
     try {
-      final profile = Get.find<AppController>().profile;
+      final controller = Get.find<AppController>();
+      final profile = controller.profile;
       final response = await _apiClient.fetchUserNotifications(
         profile?.preferredLanguage == 'en' ? 'en' : 'fr',
       );
@@ -168,6 +312,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .map(_StoredNotification.fromJson)
           .where((item) => item.id.isNotEmpty)
           .toList();
+      final unread = response['unreadCount'];
+      if (unread is num) {
+        controller.setServerUnreadNotifications(unread.toInt());
+      }
       if (mounted) setState(() => _stored = items);
     } catch (_) {
       // Dossier-derived rows stay available offline.
@@ -186,30 +334,74 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           builder: (_) {
             final items = _derive(ctrl);
             final hasItems = items.isNotEmpty || _stored.isNotEmpty;
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-              children: [
-                _header(items),
-                const SizedBox(height: 13),
-                if (!hasItems)
-                  _emptyState()
-                else ...[
-                  for (var i = 0; i < _stored.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
-                    _storedNotifCard(_stored[i]),
-                  ],
-                  if (_stored.isNotEmpty && items.isNotEmpty)
-                    const SizedBox(height: 8),
-                  for (var i = 0; i < items.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
-                    _notifCard(ctrl, items[i]),
-                  ],
+            return KpbRefresh(
+              onRefresh: _refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+                children: [
+                  _header(items),
+                  const SizedBox(height: 13),
+                  if (!hasItems)
+                    _emptyState()
+                  else
+                    ..._groupedFeed(ctrl, items),
+                  const SizedBox(height: 18),
+                  _prefsSection(ctrl),
                 ],
-                const SizedBox(height: 18),
-                _prefsSection(),
-              ],
+              ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  /// Le fil, du plus récent au plus ancien, sous « Aujourd'hui », « Cette
+  /// semaine » et « Plus tôt » (un groupe vide n'a pas d'en-tête).
+  List<Widget> _groupedFeed(
+    AppController ctrl,
+    List<_DerivedNotification> derived,
+  ) {
+    final entries = <({DateTime at, Widget card})>[
+      for (final item in _stored)
+        (at: item.createdAt, card: _storedNotifCard(item)),
+      for (final item in derived)
+        (at: item.updatedAt, card: _notifCard(ctrl, item)),
+    ]..sort((a, b) => b.at.compareTo(a.at));
+    final now = DateTime.now();
+    final widgets = <Widget>[];
+    NotificationAgeGroup? current;
+    for (final entry in entries) {
+      final group = notificationAgeGroup(entry.at, now: now);
+      if (group != current) {
+        current = group;
+        widgets.add(_groupHeader(group));
+      } else {
+        widgets.add(const SizedBox(height: 8));
+      }
+      widgets.add(entry.card);
+    }
+    return widgets;
+  }
+
+  Widget _groupHeader(NotificationAgeGroup group) {
+    final key = switch (group) {
+      NotificationAgeGroup.today => 'notifications_group_today',
+      NotificationAgeGroup.thisWeek => 'notifications_group_week',
+      NotificationAgeGroup.earlier => 'notifications_group_earlier',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(left: 2, top: 10, bottom: 8),
+      child: Semantics(
+        header: true,
+        child: Text(
+          key.tr,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: KpbColors.textMuted,
+          ),
         ),
       ),
     );
@@ -248,6 +440,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       }
       _stored = _stored.map((item) => item.markRead()).toList();
     });
+    Get.find<AppController>().setServerUnreadNotifications(0);
     try {
       await _apiClient.markAllUserNotificationsRead();
     } catch (_) {
@@ -461,6 +654,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _storedNotifCard(_StoredNotification item) {
+    final style = notificationKindStyle(item.kind, variant: item.variant);
+    final hasDestination = item.destination != null;
     return Semantics(
       button: true,
       label: item.title,
@@ -485,14 +680,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: KpbColors.actionPrimarySoft,
+                  color: style.background,
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  size: 18,
-                  color: KpbColors.actionPrimary,
-                ),
+                child: Icon(style.icon, size: 18, color: style.color),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -512,10 +703,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         item.body,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 12,
                           height: 1.5,
                           color: KpbColors.textMuted,
                         ),
+                      ),
+                    ],
+                    if (hasDestination) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            style.ctaKey.tr,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: KpbColors.actionPrimary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          const Icon(Icons.chevron_right_rounded,
+                              size: 16, color: KpbColors.actionPrimary),
+                        ],
                       ),
                     ],
                   ],
@@ -544,19 +754,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             .map((stored) => stored.id == item.id ? stored.markRead() : stored)
             .toList();
       });
+      final controller = Get.find<AppController>();
+      if (controller.serverUnreadNotifications > 0) {
+        controller.setServerUnreadNotifications(
+          controller.serverUnreadNotifications - 1,
+        );
+      }
       try {
         await _apiClient.markUserNotificationRead(item.id);
       } catch (_) {
         // Navigation remains useful even if read-state persistence is offline.
       }
     }
-    var rawRoute = item.route;
-    if (rawRoute == AppRoutes.scholarships &&
-        (item.scholarshipId?.trim().isNotEmpty ?? false)) {
-      rawRoute = AppRoutes.scholarshipDetailPath(item.scholarshipId!.trim());
-    }
-    final route = AppRoutes.normalizeExternalRoute(rawRoute);
-    if (route != null) await Get.toNamed(route);
+    // Même règle que le tap d'un push : la fiche de la bourse, « Mes suivis »
+    // pour un groupé — jamais une liste générique quand l'identifiant est là.
+    final route = item.destination;
+    if (route != null) await Get.toNamed<void>(route);
   }
 
   /// The concrete step for an "action needed" row: the case's real
@@ -572,7 +785,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   // ── Preferences (real push capability only) ─────────────────────────────────
 
-  Widget _prefsSection() {
+  Widget _prefsSection(AppController ctrl) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -620,6 +833,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 titleKey: 'parcours_weekly_pref_title',
                 subtitleKey: 'parcours_weekly_pref_subtitle',
               ),
+              // Un backend antérieur au chantier C retire cette clé à
+              // l'écriture : l'interrupteur reviendrait tout seul. Il ne
+              // s'affiche donc que si le serveur a prouvé qu'il la connaît.
+              if (RemoteFeatureFlags.instance.followedOptOutEnabled &&
+                  ctrl.serverSupportsFollow) ...[
+                const SizedBox(height: 12),
+                _optOutRow(
+                  icon: Icons.bookmarks_rounded,
+                  type: NotificationOptOutType.followedScholarshipUpdates,
+                  titleKey: 'followed_scholarship_pref_title',
+                  subtitleKey: 'followed_scholarship_pref_subtitle',
+                ),
+              ],
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
@@ -655,23 +881,48 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  /// La ligne d'autorisation, selon l'état RÉEL : accordée (rien à faire),
+  /// refusée (« Notifications coupées » + réglages de l'app), sinon « Activer ».
   Widget _enablePushRow() {
+    final granted = _pushStatus == PushPermissionStatus.granted;
+    final denied = _pushStatus == PushPermissionStatus.denied;
+    final title = granted
+        ? 'notifications_push_granted_title'.tr
+        : denied
+            ? 'push_denied_title'.tr
+            : 'notifications_enable_push_title'.tr;
+    final subtitle = granted
+        ? 'notifications_push_granted_subtitle'.tr
+        : denied
+            ? 'notifications_push_denied_subtitle'.tr
+            : 'notifications_enable_push_subtitle'.tr;
+    final VoidCallback? onTap = granted
+        ? null
+        : denied
+            ? () => unawaited(PushPermission.instance.openSettings())
+            : _requestPush;
     return Semantics(
-      button: true,
-      label: 'notifications_enable_push_title'.tr,
+      button: onTap != null,
+      label: title,
       child: GestureDetector(
-        onTap: _requestPush,
+        onTap: onTap,
         child: Row(
           children: [
             Container(
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: KpbColors.actionPrimarySoft,
+                color: denied
+                    ? KpbColors.warningLight
+                    : KpbColors.actionPrimarySoft,
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: const Icon(Icons.notifications_active_rounded,
-                  size: 18, color: KpbColors.actionPrimary),
+              child: Icon(
+                  denied
+                      ? Icons.notifications_off_outlined
+                      : Icons.notifications_active_rounded,
+                  size: 18,
+                  color: denied ? KpbColors.warning : KpbColors.actionPrimary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -679,7 +930,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'notifications_enable_push_title'.tr,
+                    title,
                     style: const TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
@@ -688,7 +939,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 1),
                   Text(
-                    'notifications_enable_push_subtitle'.tr,
+                    subtitle,
                     style: const TextStyle(
                       fontSize: 10,
                       height: 1.45,
@@ -698,22 +949,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
-              decoration: BoxDecoration(
-                color: KpbColors.actionPrimary,
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Text(
-                'notifications_push_enable_action'.tr,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+            if (onTap != null) ...[
+              const SizedBox(width: 10),
+              Container(
+                constraints: const BoxConstraints(minHeight: 36),
+                alignment: Alignment.center,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+                decoration: BoxDecoration(
+                  color: KpbColors.actionPrimary,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Text(
+                  denied
+                      ? 'notifications_push_settings_action'.tr
+                      : 'notifications_push_enable_action'.tr,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -796,12 +1054,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _requestPush() async {
-    // Real capability: triggers the OS permission prompt (once). A no-op until
-    // push has been initialized (e.g. in widget tests), so it is always
-    // safe to call.
-    await PushService.instance.requestPermission();
+    // La demande système, seulement sur geste explicite de l'élève. Inerte
+    // tant que le push n'est pas initialisé (tests de widgets).
+    final status = await PushPermission.instance.request();
     if (!mounted) return;
-    KpbToast.info('notifications_push_requested'.tr);
+    setState(() => _pushStatus = status);
+    if (status == PushPermissionStatus.denied) {
+      await showPushDeniedSheet(context);
+    }
   }
 
   // ── Relative time (reuses the shared time_ago_* keys) ───────────────────────

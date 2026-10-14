@@ -152,13 +152,33 @@ class _HomeProfileButton extends StatelessWidget {
 }
 
 /// Notifications bell (App-engagement handoff). The unread dot is HONEST: it is
-/// shown only when the real case list yields at least one live-derived
-/// notification (`hasDerivedNotifications`) — there is no stored feed, so it
-/// never signals fabricated activity.
-class _NotifBellChip extends StatelessWidget {
-  const _NotifBellChip({required this.hasUnread, required this.onTap});
+/// shown when the real case list yields at least one live-derived notification
+/// (`hasDerivedNotifications`) OR the server feed has unread entries (the
+/// `unread-count` badge — a « bourse ouverte » the student has not seen).
+class _NotifBellChip extends StatefulWidget {
+  const _NotifBellChip({
+    required this.hasUnread,
+    required this.onTap,
+    this.onMounted,
+  });
   final bool hasUnread;
   final VoidCallback onTap;
+
+  /// Appelé une fois au montage : rafraîchit le badge serveur (borné à une
+  /// requête par minute par le contrôleur).
+  final Future<void> Function()? onMounted;
+
+  @override
+  State<_NotifBellChip> createState() => _NotifBellChipState();
+}
+
+class _NotifBellChipState extends State<_NotifBellChip> {
+  @override
+  void initState() {
+    super.initState();
+    final onMounted = widget.onMounted;
+    if (onMounted != null) unawaited(onMounted());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +189,7 @@ class _NotifBellChip extends StatelessWidget {
         button: true,
         label: 'notifications_title'.tr,
         child: KpbPressable(
-          onTap: onTap,
+          onTap: widget.onTap,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -185,11 +205,12 @@ class _NotifBellChip extends StatelessWidget {
                 child: const Icon(Icons.notifications_none_rounded,
                     size: 20, color: KpbColors.textMuted),
               ),
-              if (hasUnread)
+              if (widget.hasUnread)
                 Positioned(
                   top: 8,
                   right: 9,
                   child: Container(
+                    key: const ValueKey<String>('home-bell-unread-dot'),
                     width: 9,
                     height: 9,
                     decoration: BoxDecoration(

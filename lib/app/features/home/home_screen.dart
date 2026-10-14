@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -177,8 +179,18 @@ class HomeScreen extends StatelessWidget {
                   title: _HomeGreetingHeader(firstName: firstName),
                   actions: [
                     _NotifBellChip(
-                      hasUnread: hasDerivedNotifications(controller),
-                      onTap: () => Get.to(() => const NotificationsScreen()),
+                      // Le point s'allume aussi pour les non-lus du fil
+                      // serveur (« bourse ouverte »), pas seulement pour
+                      // l'activité des dossiers.
+                      hasUnread: hasDerivedNotifications(controller) ||
+                          controller.serverUnreadNotifications > 0,
+                      onTap: () async {
+                        await Get.to<void>(() => const NotificationsScreen());
+                        unawaited(
+                          controller.refreshServerUnreadCount(force: true),
+                        );
+                      },
+                      onMounted: controller.refreshServerUnreadCount,
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),

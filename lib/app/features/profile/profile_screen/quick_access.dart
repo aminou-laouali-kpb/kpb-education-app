@@ -41,11 +41,15 @@ class _QuickAccessCard extends StatelessWidget {
           KpbColors.error,
           'profile_quick_journeys_testimonials'.tr,
           () => Get.to(() => const ParcoursScreen()));
-      add(
-          Icons.bookmark_outline_rounded,
-          KpbColors.decorSky,
-          'profile_quick_saved_items'.tr,
+      add(Icons.bookmarks_outlined, KpbColors.decorSky, 'followed_title'.tr,
           () => Get.to(() => const SavedScreen()));
+      // Les préférences de notification à deux taps du Profil : jusqu'ici, on
+      // ne les trouvait que par la cloche de l'accueil.
+      add(
+          Icons.notifications_none_rounded,
+          KpbColors.actionPrimary,
+          'notifications_title'.tr,
+          () => Get.to(() => const NotificationsScreen()));
       add(
           Icons.account_balance_wallet_outlined,
           KpbColors.success,
