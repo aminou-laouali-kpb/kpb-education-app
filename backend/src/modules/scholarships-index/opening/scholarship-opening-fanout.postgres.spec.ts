@@ -666,7 +666,43 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(todo.items.find((item) => item.cycleId === result.cycleId)).toMatchObject({
       source: 'admin',
       followers: 1,
+      notifiable: 1,
     });
+  });
+
+  it('« À faire » : un seul nombre, abonnés à prévenir = colonne « Abonnés » = aperçu', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_alerts';
+    const sid = await scholarship();
+    // Deux favoris seuls, une alerte, une alerte en sourdine sur un favori.
+    await favorite(await student(), sid);
+    await favorite(await student(), sid);
+    await alert(await student(), sid);
+    const muted = await student();
+    await favorite(muted, sid);
+    await alert(muted, sid, { mutedAt: new Date() });
+    // Ouvert par le catalogue après la mise en service : dans « À faire ».
+    const cycle = await prisma.scholarshipCycle.create({
+      data: {
+        scholarshipId: sid,
+        academicYear: '2026-2027',
+        status: 'open',
+        dateConfidence: 'confirmed',
+        opensAt: new Date(Date.now() - DAY),
+        closesAt: new Date(Date.now() + 60 * DAY),
+      },
+    });
+
+    const todo = await admin.todo();
+    const item = todo.items.find((row) => row.cycleId === cycle.id);
+    // Le favori en sourdine suit toujours (rappels) : 4 suivent, 1 à prévenir
+    // en portée « alertes ».
+    expect(item).toMatchObject({ source: 'catalogue', followers: 4, notifiable: 1 });
+    const overview = await admin.overview();
+    expect(overview.items.find((row) => row.scholarshipId === sid)?.notifiable).toBe(
+      item?.notifiable,
+    );
+    const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(preview.audience.toNotify).toBe(item?.notifiable);
   });
 
   // ── 6b. Pas d'annonce rétroactive ─────────────────────────────────────────

@@ -277,3 +277,63 @@ describe('buildOpeningRecentEvent', () => {
     expect(row).toMatchObject({ academicYear: '2026-2027', toNotify: null, outcome: 'sent' });
   });
 });
+
+// ── « À faire » : le même nombre que la colonne « Abonnés » ─────────────────
+
+describe('todo : abonnés à prévenir', () => {
+  const now = new Date('2026-10-15T12:00:00.000Z');
+  const previousMode = process.env.KPB_SCHOLARSHIP_OPENING_MODE;
+
+  afterEach(() => {
+    if (previousMode === undefined) delete process.env.KPB_SCHOLARSHIP_OPENING_MODE;
+    else process.env.KPB_SCHOLARSHIP_OPENING_MODE = previousMode;
+  });
+
+  function makeTodoAdmin(
+    counts: Array<{ scholarshipId: string; followers: number; notifiable: number }>,
+  ) {
+    const cycle = (scholarshipId: string, nameFr: string) => ({
+      id: `cycle-${scholarshipId}`,
+      scholarshipId,
+      academicYear: '2026-2027',
+      status: 'open',
+      opensAt: null,
+      closesAt: new Date('2026-12-01T00:00:00.000Z'),
+      estimatedCloseAt: null,
+      activatedAt: null,
+      scholarship: { nameFr },
+    });
+    const client = {
+      scholarshipCycle: {
+        findMany: async () => [cycle('a', 'Bourse A'), cycle('b', 'Bourse B')],
+      },
+      $queryRaw: async () => counts,
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async <T>(op: (p: unknown) => Promise<T>) => op(client),
+    } as unknown as PrismaService;
+    return new ScholarshipOpeningAdminService(
+      prisma,
+      {} as ScholarshipOpeningAudienceService,
+      {} as ScholarshipContentQualityService,
+      {} as PushSenderService,
+    );
+  }
+
+  it('chaque ligne porte `notifiable` (colonne « Abonnés ») et la file est triée dessus', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_alerts';
+    // A : beaucoup de favoris, peu d'alertes ; B : l'inverse. En portée
+    // « alertes », c'est B qu'il faut annoncer d'abord.
+    const admin = makeTodoAdmin([
+      { scholarshipId: 'a', followers: 300, notifiable: 12 },
+      { scholarshipId: 'b', followers: 80, notifiable: 80 },
+    ]);
+    const todo = await admin.todo(now);
+    expect(todo.scope).toBe('alerts');
+    expect(todo.items.map((item) => [item.scholarshipId, item.followers, item.notifiable])).toEqual([
+      ['b', 80, 80],
+      ['a', 300, 12],
+    ]);
+  });
+});

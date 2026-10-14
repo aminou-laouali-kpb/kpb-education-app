@@ -1426,7 +1426,7 @@ content_manager). `X-Request-Id` du client repris s'il est sûr
 | `POST /admin/scholarships/:id/cycles/:cycleId/opening/cancel` | Annule une annonce programmée (rien n'a été écrit pour les étudiants) → `{cycleId, cancelled: true}` ; sinon 409 `OPENING_NOT_SCHEDULED`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est annulé). |
 | `POST /admin/scholarships/:id/cycles/:cycleId/opening/stop` | Arrête les push restants : `pending` → `skipped/stopped_by_staff`, entrées d'inbox gardées → `{cycleId, stopped, inFlight}`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est arrêté ; à réessayer). |
 | `GET /admin/scholarships/:id/cycles/:cycleId/opening-report` | Rapport : inbox (total, lues), push par état et raison, par fournisseur. |
-| `GET /admin/scholarships/opening-todo` | Cycles servis ouverts jamais annoncés, ni sautés, ni programmés, ni pré-existants (100 au plus). |
+| `GET /admin/scholarships/opening-todo` | Cycles servis ouverts jamais annoncés, ni sautés, ni programmés, ni pré-existants (100 au plus), triés par `notifiable`. Chaque ligne porte `followers` (suivent, toute portée) et `notifiable` (« abonnés à prévenir » : l'audience de la portée, le même nombre que la colonne « Abonnés » de `opening-overview` et, pour ce cycle jamais annoncé, que le `toNotify` de l'aperçu hors prévenus depuis 30 jours pour un autre cycle). |
 | `GET /admin/scholarships/opening-overview` | Colonnes « Abonnés » (`followers`, `notifiable`) et « Annoncé » de la liste. |
 
 Chaque événement de `recentEvents` porte `outcome` ∈ `sent | skipped | refused`

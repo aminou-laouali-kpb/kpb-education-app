@@ -745,7 +745,8 @@ export class ScholarshipOpeningAdminService {
   /**
    * Cycles servis ouverts (ouverture passée ou inconnue), jamais annoncés, ni
    * sautés, ni programmés, ni ouverts avant la mise en service, d'une bourse
-   * publique. Triés par abonnés, 100 au plus.
+   * publique. Triés par abonnés à prévenir (`notifiable`, le nombre de la
+   * colonne « Abonnés »), 100 au plus.
    */
   async todo(now: Date = new Date()): Promise<OpeningTodoResponse> {
     this.assertDb();
@@ -794,9 +795,13 @@ export class ScholarshipOpeningAdminService {
         closesAt: iso(cycle.closesAt),
         source: cycle.activatedAt === null ? ('catalogue' as const) : ('admin' as const),
         followers: counts.get(cycle.scholarshipId)?.followers ?? 0,
+        // La même requête que la colonne « Abonnés » de la liste : un seul
+        // nombre, « abonnés à prévenir », partout dans l'admin.
+        notifiable: counts.get(cycle.scholarshipId)?.notifiable ?? 0,
       }))
       .sort(
         (a, b) =>
+          b.notifiable - a.notifiable ||
           b.followers - a.followers ||
           a.nameFr.localeCompare(b.nameFr, 'fr') ||
           compareAcademicYear(b.academicYear, a.academicYear),

@@ -892,7 +892,17 @@ export interface OpeningTodoItem {
   closesAt: IsoDateTime | null;
   /** `catalogue` quand `activatedAt IS NULL`, sinon `admin`. */
   source: 'catalogue' | 'admin';
+  /** Suivent la bourse (favori ou alerte non mise en sourdine), toute portée. */
   followers: number;
+  /**
+   * « Abonnés à prévenir » : l'audience de la portée — le MÊME nombre que la
+   * colonne « Abonnés » de la liste (`OpeningOverviewItem.notifiable`, même
+   * requête) et, pour ce cycle jamais annoncé, que le `toNotify` de l'aperçu
+   * (hors étudiants prévenus pour un autre cycle de la bourse depuis 30 jours).
+   * Portée `alerts` : alertes non mises en sourdine ; `followers` : suivent,
+   * hors sourdine. La file est triée sur ce nombre.
+   */
+  notifiable: number;
 }
 
 export interface OpeningTodoResponse {
