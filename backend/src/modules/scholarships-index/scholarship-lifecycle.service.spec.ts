@@ -113,6 +113,8 @@ function makeService(
     followers?: Follower[];
     failFirstUpsertWith?: unknown;
     lockError?: unknown;
+    /** Appelé après chaque push legacy (un élève change d'avis pendant l'envoi). */
+    onPush?: (userId: string, state: { subscribers: Subscriber[]; optedOut: Set<string> }) => void;
   } = {},
 ) {
   const cycles = new Map<string, CycleRow>(
@@ -144,6 +146,7 @@ function makeService(
 
   const byId = (id: string) =>
     [...cycles.values()].find((cycle) => cycle.id === id);
+  const optedOutNow = new Set<string>();
 
   const client = {
     $transaction: async (
@@ -212,6 +215,27 @@ function makeService(
         expect(args.where.mutedAt).toBeNull();
         return subscribers.filter((subscriber) => subscriber.mutedAt === null);
       },
+      // Relecture juste avant un push legacy : alerte non en sourdine, push
+      // permis, pas de désinscription globale — l'état de CET instant.
+      findFirst: async (args: {
+        where: {
+          scholarshipId: string;
+          userId: string;
+          mutedAt: null;
+          pushEnabled: true;
+          user: { NOT: { disabledNotificationTypes: { has: string } } };
+        };
+      }) => {
+        expect(args.where).toMatchObject({
+          mutedAt: null,
+          pushEnabled: true,
+          user: { NOT: { disabledNotificationTypes: { has: 'followed_scholarship_updates' } } },
+        });
+        const subscriber = subscribers.find((s) => s.userId === args.where.userId);
+        if (!subscriber || subscriber.mutedAt !== null || !subscriber.pushEnabled) return null;
+        if (optedOutNow.has(subscriber.userId)) return null;
+        return { id: `alert-${subscriber.userId}` };
+      },
     },
     userNotification: {
       createMany: async ({ data }: { data: Record<string, unknown>[] }) => {
@@ -239,6 +263,7 @@ function makeService(
       data?: object,
     ) => {
       pushes.push({ userId, title, data });
+      opts.onPush?.(userId, { subscribers, optedOut: optedOutNow });
       return true;
     },
   } as unknown as PushSenderService;
@@ -472,6 +497,58 @@ describe('ScholarshipLifecycleService.activate', () => {
         action: 'scholarship_cycle.notified_legacy',
         changes: expect.objectContaining({ toNotify: 2, expectedRecipients: 2 }),
       });
+    });
+
+    it.each([
+      [
+        'met la bourse en sourdine',
+        (userId: string, state: { subscribers: Subscriber[] }) => {
+          const subscriber = state.subscribers.find((s) => s.userId === userId);
+          if (subscriber) subscriber.mutedAt = new Date();
+        },
+      ],
+      [
+        'coupe followed_scholarship_updates',
+        (userId: string, state: { optedOut: Set<string> }) => {
+          state.optedOut.add(userId);
+        },
+      ],
+      [
+        'coupe la cloche (alerte supprimée)',
+        (userId: string, state: { subscribers: Subscriber[] }) => {
+          const index = state.subscribers.findIndex((s) => s.userId === userId);
+          if (index >= 0) state.subscribers.splice(index, 1);
+        },
+      ],
+    ])('un élève qui %s pendant l’envoi legacy ne reçoit pas de push', async (_label, change) => {
+      const live = (userId: string): Subscriber => ({
+        userId,
+        pushEnabled: true,
+        inAppEnabled: true,
+        mutedAt: null,
+        user: { preferredLanguage: 'fr' },
+      });
+      const { service, pushes, writes } = makeService({
+        counts: counts({ audience: 3, toNotify: 3 }),
+        subscribers: [live('first'), live('second'), live('third')],
+        // Après le push du premier, le deuxième change d'avis : l'envoi est
+        // synchrone et peut durer plusieurs minutes.
+        onPush: (userId, state) => {
+          if (userId === 'first') change('second', state);
+        },
+      });
+      const result = await service.activate(
+        'sch-1',
+        { ...input, notify: true, expectedRecipients: 3 },
+        admin,
+        'req',
+      );
+      expect(pushes.map((p) => p.userId)).toEqual(['first', 'third']);
+      expect(result.pushesSent).toBe(2);
+      // L'entrée d'inbox, écrite avant, reste (comme le worker : « sautée »).
+      const rows = writes.find((w) => w.op === 'userNotification.createMany')
+        ?.data as Array<Record<string, unknown>>;
+      expect(rows.map((row) => row.userId)).toEqual(['first', 'second', 'third']);
     });
 
     it('mauvaise année corrigée : l’aperçu dit 0, « Ouvrir le cycle » passe sans 409 ni push', async () => {

@@ -460,6 +460,54 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect((await rowsOf(right.cycleId)).map((row) => row.userId)).toEqual([late]);
   });
 
+  it('legacy : une désinscription ou une sourdine posée pendant l’envoi est respectée', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'legacy';
+    const sid = await scholarship();
+    const subscribers = [await student(), await student(), await student()];
+    for (const uid of subscribers) await alert(uid, sid);
+    const sent: string[] = [];
+    // Au premier push, les deux autres changent d'avis : l'un se désinscrit
+    // globalement, l'autre met la bourse en sourdine.
+    const changingPush = {
+      isConfigured: true,
+      providers: { fcm: false, oneSignal: true },
+      sendToUser: async (userId: string) => {
+        if (sent.length === 0) {
+          const others = subscribers.filter((uid) => uid !== userId);
+          await prisma.userProfile.update({
+            where: { id: others[0] },
+            data: { disabledNotificationTypes: ['followed_scholarship_updates'] },
+          });
+          await prisma.scholarshipAlertSubscription.update({
+            where: { userId_scholarshipId: { userId: others[1], scholarshipId: sid } },
+            data: { mutedAt: new Date() },
+          });
+        }
+        sent.push(userId);
+        return true;
+      },
+    } as unknown as PushSenderService;
+    const legacyLifecycle = new ScholarshipLifecycleService(
+      prismaService,
+      changingPush,
+      quality,
+      audience,
+    );
+    const result = await legacyLifecycle.activate(
+      sid,
+      activation({ notify: true, expectedRecipients: 3 }),
+      actor,
+      'legacy-change',
+    );
+    expect(result).toMatchObject({
+      pushesSent: 1,
+      notification: { state: 'sent_legacy', toNotify: 3 },
+    });
+    expect(sent).toHaveLength(1);
+    // Les trois entrées d'inbox, écrites dans la transaction, restent.
+    expect(await rowsOf(result.cycleId)).toHaveLength(3);
+  });
+
   // ── 3. Activations concurrentes ───────────────────────────────────────────
 
   it('deux premiers clics simultanés : une première activation, une programmation, pas de 500', async () => {

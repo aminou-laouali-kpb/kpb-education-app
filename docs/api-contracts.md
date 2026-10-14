@@ -1395,7 +1395,11 @@ de la portée avant déduplication. `pushesSent` : 0 hors `legacy`.
 confirmée) : le `toNotify` de l'aperçu dans **tous** les modes, `legacy`
 compris — déjà prévenus pour ce cycle ou pour un autre cycle de la bourse depuis
 30 jours exclus. En `legacy`, la désinscription globale garde l'entrée d'inbox
-et coupe le push, et l'aperçu ne compte aucun report (envoi immédiat).
+et coupe le push, et l'aperçu ne compte aucun report (envoi immédiat). L'envoi
+legacy étant synchrone (il peut durer plusieurs minutes), chaque push relit
+l'état de l'élève juste avant de partir — alerte non en sourdine, push permis,
+pas de `followed_scholarship_updates` — comme le worker à l'envoi ; l'entrée
+d'inbox déjà écrite reste.
 
 Audit `AdminAuditEvent` (`entityType: 'ScholarshipCycle'`, `purposeCode: 'scholarship_opening'`) :
 `scholarship_cycle.opened | notify_scheduled | notified_legacy | dates_updated |

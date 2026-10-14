@@ -16,6 +16,7 @@ import { ScholarshipOpeningAudienceService } from './opening/scholarship-opening
 import {
   audienceScopeForMode,
   canSendAboveOpeningThreshold,
+  FOLLOWED_SCHOLARSHIP_OPT_OUT,
   isAboveOpeningThreshold,
   isOpeningAudienceChangeRejected,
   isOpeningBusyError,
@@ -262,6 +263,13 @@ export class ScholarshipLifecycleService {
     let pushesSent = 0;
     for (const subscriber of outcome.legacyRecipients) {
       if (!subscriber.pushEnabled || subscriber.optedOut) continue;
+      // Relu juste avant SON push : cet envoi est synchrone et peut durer
+      // plusieurs minutes. Une sourdine, une désinscription globale ou une
+      // cloche coupée entre-temps est respectée, comme le worker le fait à
+      // l'envoi (l'entrée d'inbox, déjà écrite, reste).
+      if (!(await this.isLegacyPushStillWanted(scholarshipId, subscriber.userId))) {
+        continue;
+      }
       const isEnglish = subscriber.user.preferredLanguage === 'en';
       const delivered = await this.pushSender.sendToUser(
         subscriber.userId,
@@ -651,6 +659,33 @@ export class ScholarshipLifecycleService {
       fanoutAt,
       legacyRecipients: state === 'sent_legacy' ? legacyRecipients : [],
     };
+  }
+
+  /**
+   * Le push legacy est-il toujours voulu, À CET INSTANT ? Les règles du texte
+   * partagé (`scholarship-follow.query.ts`) pour la portée `alerts` : une
+   * alerte non mise en sourdine, push permis, et pas de désinscription
+   * globale `followed_scholarship_updates`.
+   */
+  private async isLegacyPushStillWanted(
+    scholarshipId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const alert = await this.prismaService.execute((prisma) =>
+      prisma.scholarshipAlertSubscription.findFirst({
+        where: {
+          scholarshipId,
+          userId,
+          mutedAt: null,
+          pushEnabled: true,
+          user: {
+            NOT: { disabledNotificationTypes: { has: FOLLOWED_SCHOLARSHIP_OPT_OUT } },
+          },
+        },
+        select: { id: true },
+      }),
+    );
+    return alert != null;
   }
 
   /**
