@@ -213,6 +213,74 @@ describe('FcmSenderService', () => {
     expect(oauthCalls).toHaveLength(1);
   });
 
+  // Un renvoi après un crash (bail perdu entre l'acceptation et l'écriture
+  // de l'état) doit remplacer la notification affichée, pas s'empiler.
+  it('pose tag et apns-collapse-id quand une clé de regroupement est donnée', async () => {
+    const { prisma } = makePrisma(['tok']);
+    mockFetch([() => jsonResponse({ name: 'm1' })]);
+    await new FcmSenderService(prisma).sendToUser('u1', 't', 'b', {}, {
+      collapseKey: 'kpb-0123456789abcdef',
+    });
+    const send = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes('/messages:send'),
+    );
+    const message = JSON.parse(send[1].body).message;
+    expect(message.android.notification).toEqual({
+      channel_id: 'kpb_default',
+      tag: 'kpb-0123456789abcdef',
+    });
+    expect(message.apns).toEqual({
+      headers: { 'apns-collapse-id': 'kpb-0123456789abcdef' },
+      payload: { aps: { sound: 'default' } },
+    });
+  });
+
+  it('garde la charge d’avant sans clé de regroupement', async () => {
+    const { prisma } = makePrisma(['tok']);
+    mockFetch([() => jsonResponse({ name: 'm1' })]);
+    await new FcmSenderService(prisma).sendToUser('u1', 't', 'b', { a: '1' });
+    const send = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
+      String(url).includes('/messages:send'),
+    );
+    expect(JSON.parse(send[1].body).message).toEqual({
+      token: 'tok',
+      notification: { title: 't', body: 'b' },
+      data: { a: '1' },
+      android: { priority: 'HIGH', notification: { channel_id: 'kpb_default' } },
+      apns: { payload: { aps: { sound: 'default' } } },
+    });
+  });
+
+  // La boîte d'envoi lance 8 envois en parallèle : un cache vide ne doit
+  // demander qu'un seul jeton à Google.
+  it('8 envois simultanés, cache vide : un seul échange OAuth', async () => {
+    const { prisma } = makePrisma(['tok']);
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    global.fetch = jest.fn(async (url: string) => {
+      if (String(url).startsWith('https://oauth2.googleapis.com/')) {
+        await gate;
+        return TOKEN_RESPONSE;
+      }
+      return jsonResponse({ name: 'm1' });
+    }) as unknown as typeof fetch;
+    const sender = new FcmSenderService(prisma);
+    const sends = Array.from({ length: 8 }, (_, i) =>
+      sender.sendToUser(`u${i}`, 't', 'b'),
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+    release();
+    await expect(Promise.all(sends)).resolves.toEqual(
+      Array(8).fill('delivered'),
+    );
+    const oauthCalls = (global.fetch as jest.Mock).mock.calls.filter(([url]) =>
+      String(url).startsWith('https://oauth2.googleapis.com/'),
+    );
+    expect(oauthCalls).toHaveLength(1);
+  });
+
   describe('isDeadTokenError', () => {
     it('reconnaît UNREGISTERED et SENDER_ID_MISMATCH', async () => {
       expect(isDeadTokenError(404, await unregistered().json())).toBe(true);

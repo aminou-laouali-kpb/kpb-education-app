@@ -29,6 +29,40 @@ export interface PushSendOutcome {
   via: PushProvider | null;
 }
 
+/**
+ * État d'un envoi pour un destinataire (`sendWithStatus`) :
+ * - `accepted` : le fournisseur a accepté — jamais « reçu » ni « délivré » ;
+ * - `no_device` : aucun appareil joignable ;
+ * - `transient_error` : à retenter (FCM `failed`, OneSignal 429/5xx/délai) ;
+ * - `permanent_error` : refus que retenter ne changera pas ;
+ * - `unconfigured` : aucun fournisseur configuré.
+ */
+export type PushDeliveryStatus =
+  | 'accepted'
+  | 'no_device'
+  | 'transient_error'
+  | 'permanent_error'
+  | 'unconfigured';
+
+/**
+ * Les deux clés sont tirées de l'ENVOI (sa `dedupeKey`, ou les identifiants
+ * triés des lignes d'un groupé), jamais d'un identifiant tiré à chaque
+ * tentative : un renvoi après un crash doit porter les mêmes.
+ */
+export interface PushSendOptions {
+  /** FCM `tag` / `apns-collapse-id`, OneSignal `collapse_id` (64 octets au plus). */
+  collapseKey?: string;
+  /** OneSignal `idempotency_key` (UUID dérivé), 30 jours côté fournisseur. */
+  idempotencyKey?: string;
+}
+
+export interface PushDeliveryOutcome {
+  status: PushDeliveryStatus;
+  via: PushProvider | null;
+  /** Code borné pour les comptes du bilan (jamais un texte du fournisseur). */
+  reason: string | null;
+}
+
 @Injectable()
 export class PushSenderService {
   constructor(
@@ -85,5 +119,62 @@ export class PushSenderService {
     }
 
     return { delivered: false, via: this.fcm.isConfigured ? 'fcm' : null };
+  }
+
+  /**
+   * Même routage que `send()`, avec un état par destinataire, pour la boîte
+   * d'envoi des annonces d'ouverture. `send()` et `sendToUser()` restent tels
+   * quels pour leurs appelants.
+   *
+   * Pas de repli OneSignal quand FCM échoue avec des jetons (en-tête du
+   * fichier) : l'échec est `transient_error`, borné par le nombre de
+   * tentatives de la boîte d'envoi.
+   */
+  async sendWithStatus(
+    userId: string,
+    title: string,
+    body: string,
+    data: Record<string, string>,
+    options: PushSendOptions = {},
+  ): Promise<PushDeliveryOutcome> {
+    if (!userId) {
+      return { status: 'permanent_error', via: null, reason: 'no_user' };
+    }
+
+    if (this.fcm.isConfigured) {
+      const result = await this.fcm.sendToUser(userId, title, body, data, {
+        collapseKey: options.collapseKey,
+      });
+      if (result === 'delivered') {
+        return { status: 'accepted', via: 'fcm', reason: null };
+      }
+      if (result === 'failed') {
+        return { status: 'transient_error', via: 'fcm', reason: 'fcm_failed' };
+      }
+      // 'no_device' / 'unconfigured' → peut-être une ancienne version de
+      // l'application, encore abonnée chez OneSignal.
+    }
+
+    if (this.oneSignal.isConfigured) {
+      const detailed = await this.oneSignal.sendToUserDetailed(
+        userId,
+        title,
+        body,
+        data,
+        {
+          idempotencyKey: options.idempotencyKey,
+          collapseKey: options.collapseKey,
+        },
+      );
+      return {
+        status: detailed.status,
+        via: 'onesignal',
+        reason: detailed.reason,
+      };
+    }
+
+    return this.fcm.isConfigured
+      ? { status: 'no_device', via: 'fcm', reason: 'fcm_no_device' }
+      : { status: 'unconfigured', via: null, reason: null };
   }
 }

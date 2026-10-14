@@ -42,6 +42,17 @@ export type FcmSendResult =
   | 'failed'
   | 'unconfigured';
 
+/**
+ * - `collapseKey` : `android.notification.tag` et `apns-collapse-id`. Un renvoi
+ *   après un crash (bail perdu entre l'acceptation et l'écriture de l'état)
+ *   REMPLACE alors la notification déjà affichée au lieu de s'empiler. Tiré de
+ *   la clé déterministe de l'envoi, jamais d'un identifiant tiré au hasard à
+ *   chaque tentative ; 64 octets au plus (limite APNs).
+ */
+export interface FcmSendOptions {
+  collapseKey?: string;
+}
+
 export interface ServiceAccount {
   projectId: string;
   clientEmail: string;
@@ -127,6 +138,9 @@ async function fetchWithTimeout(
 export class FcmSenderService {
   private readonly logger = new Logger(FcmSenderService.name);
   private cachedToken: { value: string; expiresAt: number } | null = null;
+  // Un seul échange OAuth à la fois : la boîte d'envoi lance 8 envois en
+  // parallèle, et un cache vide aurait demandé 8 jetons d'un coup.
+  private tokenInFlight: Promise<string | null> | null = null;
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -143,6 +157,7 @@ export class FcmSenderService {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<FcmSendResult> {
     const account = this.account;
     if (!account) return 'unconfigured';
@@ -162,7 +177,7 @@ export class FcmSenderService {
 
     const outcomes = await Promise.all(
       tokens.map(({ token }) =>
-        this.sendToToken(account, accessToken, token, title, body, data),
+        this.sendToToken(account, accessToken, token, title, body, data, options),
       ),
     );
 
@@ -192,7 +207,9 @@ export class FcmSenderService {
     title: string,
     body: string,
     data?: Record<string, string>,
+    options?: FcmSendOptions,
   ): Promise<'ok' | 'dead' | 'error'> {
+    const collapseKey = options?.collapseKey;
     try {
       const response = await fetchWithTimeout(
         `https://fcm.googleapis.com/v1/projects/${account.projectId}/messages:send`,
@@ -209,9 +226,17 @@ export class FcmSenderService {
               data: data ?? {},
               android: {
                 priority: 'HIGH',
-                notification: { channel_id: ANDROID_CHANNEL_ID },
+                notification: {
+                  channel_id: ANDROID_CHANNEL_ID,
+                  ...(collapseKey ? { tag: collapseKey } : {}),
+                },
               },
-              apns: { payload: { aps: { sound: 'default' } } },
+              apns: {
+                ...(collapseKey
+                  ? { headers: { 'apns-collapse-id': collapseKey } }
+                  : {}),
+                payload: { aps: { sound: 'default' } },
+              },
             },
           }),
         },
@@ -241,12 +266,27 @@ export class FcmSenderService {
     }
   }
 
-  /** Jeton OAuth2 du compte de service, gardé en cache jusqu'à 1 min avant expiration. */
+  /**
+   * Jeton OAuth2 du compte de service, gardé en cache jusqu'à 1 min avant
+   * expiration. Les appels concurrents sur un cache vide partagent le même
+   * échange.
+   */
   private async accessToken(account: ServiceAccount): Promise<string | null> {
-    const now = Date.now();
-    if (this.cachedToken && this.cachedToken.expiresAt - 60_000 > now) {
+    if (this.cachedToken && this.cachedToken.expiresAt - 60_000 > Date.now()) {
       return this.cachedToken.value;
     }
+    if (!this.tokenInFlight) {
+      this.tokenInFlight = this.fetchAccessToken(account).finally(() => {
+        this.tokenInFlight = null;
+      });
+    }
+    return this.tokenInFlight;
+  }
+
+  private async fetchAccessToken(
+    account: ServiceAccount,
+  ): Promise<string | null> {
+    const now = Date.now();
     try {
       const issuedAt = Math.floor(now / 1000);
       const assertion = jwt.sign(

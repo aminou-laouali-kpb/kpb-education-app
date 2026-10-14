@@ -1,5 +1,8 @@
 import type { FcmSendResult, FcmSenderService } from './fcm-sender.service';
-import type { OneSignalSenderService } from './onesignal-sender.service';
+import type {
+  OneSignalDetailedResult,
+  OneSignalSenderService,
+} from './onesignal-sender.service';
 import { PushSenderService } from './push-sender.service';
 
 function makeRouter(opts: {
@@ -7,6 +10,7 @@ function makeRouter(opts: {
   fcmResult?: FcmSendResult;
   oneSignalConfigured?: boolean;
   oneSignalResult?: boolean;
+  oneSignalDetailed?: OneSignalDetailedResult;
 }) {
   const fcm = {
     isConfigured: opts.fcmConfigured ?? true,
@@ -15,6 +19,10 @@ function makeRouter(opts: {
   const oneSignal = {
     isConfigured: opts.oneSignalConfigured ?? true,
     sendToUser: jest.fn(async () => opts.oneSignalResult ?? true),
+    sendToUserDetailed: jest.fn(
+      async (): Promise<OneSignalDetailedResult> =>
+        opts.oneSignalDetailed ?? { status: 'accepted', reason: null },
+    ),
   };
   const router = new PushSenderService(
     fcm as unknown as FcmSenderService,
@@ -91,5 +99,110 @@ describe('PushSenderService (transition OneSignal → FCM)', () => {
     await expect(makeRouter({}).router.sendToUser('', 't', 'b')).resolves.toBe(
       false,
     );
+  });
+});
+
+/**
+ * `sendWithStatus` : le même routage, un état par destinataire, pour la boîte
+ * d'envoi des annonces d'ouverture. `send()` et `sendToUser()` sont gardés à
+ * l'identique pour leurs sept appelants (tests ci-dessus inchangés).
+ */
+describe('PushSenderService.sendWithStatus', () => {
+  const data = { route: '/scholarships/s1' };
+
+  it('accepted via FCM, avec la clé de regroupement', async () => {
+    const { router, fcm, oneSignal } = makeRouter({ fcmResult: 'delivered' });
+    await expect(
+      router.sendWithStatus('u1', 't', 'b', data, {
+        collapseKey: 'kpb-abc',
+        idempotencyKey: 'k',
+      }),
+    ).resolves.toEqual({ status: 'accepted', via: 'fcm', reason: null });
+    expect(fcm.sendToUser).toHaveBeenCalledWith('u1', 't', 'b', data, {
+      collapseKey: 'kpb-abc',
+    });
+    expect(oneSignal.sendToUserDetailed).not.toHaveBeenCalled();
+  });
+
+  // Règle de l'en-tête : un élève passé à la build FCM n'a plus le SDK
+  // OneSignal ; un abonnement résiduel serait compté « accepté » sans rien
+  // afficher. L'échec est retenté par la boîte d'envoi, borné.
+  it('FCM failed → transient_error, SANS repli OneSignal', async () => {
+    const { router, oneSignal } = makeRouter({ fcmResult: 'failed' });
+    await expect(router.sendWithStatus('u1', 't', 'b', data)).resolves.toEqual(
+      { status: 'transient_error', via: 'fcm', reason: 'fcm_failed' },
+    );
+    expect(oneSignal.sendToUserDetailed).not.toHaveBeenCalled();
+    expect(oneSignal.sendToUser).not.toHaveBeenCalled();
+  });
+
+  it.each<[FcmSendResult]>([['no_device'], ['unconfigured']])(
+    'FCM %s → OneSignal, dont l’état passe tel quel',
+    async (fcmResult) => {
+      const { router, oneSignal } = makeRouter({
+        fcmResult,
+        oneSignalDetailed: { status: 'no_device', reason: 'invalid_aliases' },
+      });
+      await expect(
+        router.sendWithStatus('u1', 't', 'b', data, {
+          collapseKey: 'kpb-abc',
+          idempotencyKey: 'scholarship-opened:c1:u1',
+        }),
+      ).resolves.toEqual({
+        status: 'no_device',
+        via: 'onesignal',
+        reason: 'invalid_aliases',
+      });
+      expect(oneSignal.sendToUserDetailed).toHaveBeenCalledWith(
+        'u1',
+        't',
+        'b',
+        data,
+        { idempotencyKey: 'scholarship-opened:c1:u1', collapseKey: 'kpb-abc' },
+      );
+      // Le chemin bavard (une ligne de journal par élève) n'est jamais pris.
+      expect(oneSignal.sendToUser).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each<[OneSignalDetailedResult['status']]>([
+    ['accepted'],
+    ['transient_error'],
+    ['permanent_error'],
+  ])('OneSignal seul : %s passe tel quel', async (status) => {
+    const { router, fcm } = makeRouter({
+      fcmConfigured: false,
+      oneSignalDetailed: { status, reason: null },
+    });
+    await expect(router.sendWithStatus('u1', 't', 'b', data)).resolves.toEqual(
+      { status, via: 'onesignal', reason: null },
+    );
+    expect(fcm.sendToUser).not.toHaveBeenCalled();
+  });
+
+  it('FCM seul et aucun jeton → no_device via fcm', async () => {
+    const { router } = makeRouter({
+      fcmResult: 'no_device',
+      oneSignalConfigured: false,
+    });
+    await expect(router.sendWithStatus('u1', 't', 'b', data)).resolves.toEqual(
+      { status: 'no_device', via: 'fcm', reason: 'fcm_no_device' },
+    );
+  });
+
+  it('aucun fournisseur → unconfigured ; sans destinataire → permanent_error', async () => {
+    const { router } = makeRouter({
+      fcmConfigured: false,
+      oneSignalConfigured: false,
+    });
+    await expect(router.sendWithStatus('u1', 't', 'b', data)).resolves.toEqual(
+      { status: 'unconfigured', via: null, reason: null },
+    );
+    const { router: other } = makeRouter({});
+    await expect(other.sendWithStatus('', 't', 'b', data)).resolves.toEqual({
+      status: 'permanent_error',
+      via: null,
+      reason: 'no_user',
+    });
   });
 });
