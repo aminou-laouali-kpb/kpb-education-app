@@ -10,6 +10,8 @@ export { Alert } from './Alert';
 export type { AlertVariant } from './Alert';
 export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
+export { Modal } from './Modal';
+export type { ModalProps } from './Modal';
 export { EmptyState } from './EmptyState';
 export { Skeleton } from './Skeleton';
 export { AdminTable, AdminTableRow, CellText } from './Table';
