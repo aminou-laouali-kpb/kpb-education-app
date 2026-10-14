@@ -219,7 +219,7 @@ class _SavedScreenState extends State<SavedScreen> {
                                     'deadlines_title'.tr,
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 14,
+                                      fontSize: KpbFontSize.md,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -228,7 +228,7 @@ class _SavedScreenState extends State<SavedScreen> {
                                     'track_admission_deadlines'.tr,
                                     style: TextStyle(
                                       color: Colors.white70,
-                                      fontSize: 12,
+                                      fontSize: KpbFontSize.xs,
                                     ),
                                   ),
                                 ],
@@ -282,7 +282,8 @@ class _SavedScreenState extends State<SavedScreen> {
                             child: Center(
                               child: Text(
                                 countryFlag(scholarship.countryId),
-                                style: const TextStyle(fontSize: 22),
+                                style:
+                                    const TextStyle(fontSize: KpbFontSize.xl),
                               ),
                             ),
                           ),
@@ -359,7 +360,8 @@ class _SavedScreenState extends State<SavedScreen> {
                             child: Center(
                               child: Text(
                                 countryFlag(country.id),
-                                style: const TextStyle(fontSize: 22),
+                                style:
+                                    const TextStyle(fontSize: KpbFontSize.xl),
                               ),
                             ),
                           ),
@@ -522,7 +524,7 @@ class _SavedGroupState extends State<_SavedGroup> {
                   Text(
                     widget.label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: KpbFontSize.md,
                       fontWeight: FontWeight.w700,
                       color: context.kpb.textPrimary,
                     ),
@@ -538,7 +540,7 @@ class _SavedGroupState extends State<_SavedGroup> {
                     child: Text(
                       '${widget.items.length}',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: KpbFontSize.xs,
                         fontWeight: FontWeight.w700,
                         color: context.kpb.textMuted,
                       ),

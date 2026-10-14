@@ -550,7 +550,7 @@ class _HeaderCard extends StatelessWidget {
                     scholarship.title,
                     style: const TextStyle(
                       color: KpbColors.brandNavy,
-                      fontSize: 21,
+                      fontSize: KpbFontSize.xl,
                       height: 1.2,
                       fontWeight: FontWeight.w900,
                     ),
@@ -626,7 +626,7 @@ class _MetaTile extends StatelessWidget {
             Text(
               label.toUpperCase(),
               style: const TextStyle(
-                fontSize: 9.5,
+                fontSize: KpbFontSize.xs,
                 color: KpbColors.textFaint,
                 fontWeight: FontWeight.w800,
               ),
@@ -637,7 +637,7 @@ class _MetaTile extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: KpbFontSize.xs,
                 color: KpbColors.brandNavy,
                 fontWeight: FontWeight.w800,
               ),
@@ -670,7 +670,7 @@ class _SectionCard extends StatelessWidget {
                 title,
                 style: const TextStyle(
                   color: KpbColors.brandNavy,
-                  fontSize: 14,
+                  fontSize: KpbFontSize.md,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -695,7 +695,7 @@ class _TextSection extends StatelessWidget {
           body,
           style: const TextStyle(
             color: KpbColors.gray700,
-            fontSize: 13,
+            fontSize: KpbFontSize.sm,
             height: 1.55,
           ),
         ),
@@ -734,7 +734,7 @@ class _BulletSection extends StatelessWidget {
                         item,
                         style: const TextStyle(
                           color: KpbColors.gray700,
-                          fontSize: 12.5,
+                          fontSize: KpbFontSize.sm,
                           height: 1.45,
                         ),
                       ),
@@ -811,7 +811,7 @@ class _VideosSection extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: KpbFontSize.xs,
                                 height: 1.25,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -867,7 +867,7 @@ class _NotifyOpeningTile extends StatelessWidget {
             title: Text(
               'scholarship_notify_opening_title'.tr,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: KpbFontSize.md,
                 fontWeight: FontWeight.w800,
                 color: KpbColors.brandNavy,
               ),
@@ -875,7 +875,7 @@ class _NotifyOpeningTile extends StatelessWidget {
             subtitle: Text(
               'scholarship_notify_opening_subtitle'.tr,
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: KpbFontSize.xs,
                 height: 1.4,
                 color: KpbColors.textMuted,
               ),
@@ -887,7 +887,7 @@ class _NotifyOpeningTile extends StatelessWidget {
               child: Text(
                 'scholarship_notify_opening_global_off'.tr,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: KpbFontSize.xs,
                   height: 1.4,
                   color: KpbColors.warning,
                   fontWeight: FontWeight.w700,

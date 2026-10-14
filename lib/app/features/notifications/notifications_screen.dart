@@ -397,7 +397,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Text(
           key.tr,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: KpbFontSize.xs,
             fontWeight: FontWeight.w800,
             color: KpbColors.textMuted,
           ),
@@ -472,7 +472,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Text(
             'notifications_title'.tr,
             style: const TextStyle(
-              fontSize: 19,
+              fontSize: KpbFontSize.xl,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.4,
               color: KpbColors.brandNavy,
@@ -489,7 +489,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Text(
                   'notifications_mark_all_read'.tr,
                   style: const TextStyle(
-                    fontSize: 11.5,
+                    fontSize: KpbFontSize.xs,
                     fontWeight: FontWeight.w800,
                     color: KpbColors.actionPrimary,
                   ),
@@ -529,7 +529,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             'notifications_empty_title'.tr,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: KpbFontSize.md,
               fontWeight: FontWeight.w800,
               color: KpbColors.brandNavy,
             ),
@@ -539,7 +539,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             'notifications_empty_body'.tr,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 12.5,
+              fontSize: KpbFontSize.sm,
               height: 1.55,
               color: KpbColors.textMuted,
             ),
@@ -617,7 +617,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontSize: 12.5,
+                        fontSize: KpbFontSize.sm,
                         fontWeight: FontWeight.w800,
                         color: KpbColors.brandNavy,
                       ),
@@ -627,7 +627,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         description,
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: KpbFontSize.xs,
                           height: 1.5,
                           color: KpbColors.textMuted,
                         ),
@@ -640,7 +640,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Text(
                 _relativeTime(item.updatedAt),
                 style: const TextStyle(
-                  fontSize: 9.5,
+                  fontSize: KpbFontSize.xs,
                   fontWeight: FontWeight.w700,
                   color: KpbColors.textFaint,
                 ),
@@ -692,7 +692,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     Text(
                       item.title,
                       style: const TextStyle(
-                        fontSize: 12.5,
+                        fontSize: KpbFontSize.sm,
                         fontWeight: FontWeight.w800,
                         color: KpbColors.brandNavy,
                       ),
@@ -702,7 +702,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         item.body,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: KpbFontSize.xs,
                           height: 1.5,
                           color: KpbColors.textMuted,
                         ),
@@ -716,7 +716,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           Text(
                             style.ctaKey.tr,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: KpbFontSize.xs,
                               fontWeight: FontWeight.w800,
                               color: KpbColors.actionPrimary,
                             ),
@@ -734,7 +734,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Text(
                 _relativeTime(item.createdAt),
                 style: const TextStyle(
-                  fontSize: 9.5,
+                  fontSize: KpbFontSize.xs,
                   fontWeight: FontWeight.w700,
                   color: KpbColors.textFaint,
                 ),
@@ -793,7 +793,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Text(
             'notifications_push_section'.tr,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: KpbFontSize.xs,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.05 * 12,
               color: KpbColors.textFaint,
@@ -864,7 +864,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: Text(
                         'notifications_push_os_note'.tr,
                         style: const TextStyle(
-                          fontSize: 10.5,
+                          fontSize: KpbFontSize.xs,
                           height: 1.5,
                           color: KpbColors.textMuted,
                         ),
@@ -931,7 +931,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Text(
                     title,
                     style: const TextStyle(
-                      fontSize: 12.5,
+                      fontSize: KpbFontSize.sm,
                       fontWeight: FontWeight.w700,
                       color: KpbColors.brandNavy,
                     ),
@@ -940,7 +940,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Text(
                     subtitle,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: KpbFontSize.xs,
                       height: 1.45,
                       color: KpbColors.textFaint,
                     ),
@@ -964,7 +964,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ? 'notifications_push_settings_action'.tr
                       : 'notifications_push_enable_action'.tr,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: KpbFontSize.xs,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -1029,7 +1029,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Text(
                 titleKey.tr,
                 style: const TextStyle(
-                  fontSize: 12.5,
+                  fontSize: KpbFontSize.sm,
                   fontWeight: FontWeight.w700,
                   color: KpbColors.brandNavy,
                 ),
@@ -1038,7 +1038,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Text(
                 subtitleKey.tr,
                 style: const TextStyle(
-                  fontSize: 10,
+                  fontSize: KpbFontSize.xs,
                   height: 1.45,
                   color: KpbColors.textFaint,
                 ),

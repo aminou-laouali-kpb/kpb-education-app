@@ -180,7 +180,7 @@ class _FollowedScholarshipsSectionState
                       child: Text(
                         'followed_scholarships_section'.tr,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: KpbFontSize.md,
                           fontWeight: FontWeight.w800,
                           color: KpbColors.brandNavy,
                         ),
@@ -198,7 +198,7 @@ class _FollowedScholarshipsSectionState
                       child: Text(
                         '${items.length}',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: KpbFontSize.xs,
                           fontWeight: FontWeight.w800,
                           color: KpbColors.textMuted,
                         ),
@@ -219,7 +219,7 @@ class _FollowedScholarshipsSectionState
                           'date': formatScholarshipDay(widget.page.fetchedAt!),
                         }),
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: KpbFontSize.xs,
                           color: KpbColors.textMuted,
                         ),
                       ),
@@ -284,7 +284,8 @@ class _FollowedScholarshipsSectionState
           padding: const EdgeInsets.only(right: 8),
           child: ChoiceChip(
             key: ValueKey<String>('followed-sort-${sort.name}'),
-            label: Text(key.tr, style: const TextStyle(fontSize: 12)),
+            label:
+                Text(key.tr, style: const TextStyle(fontSize: KpbFontSize.xs)),
             selected: _sort == sort,
             onSelected: (_) => setState(() => _sort = sort),
           ),
@@ -335,7 +336,7 @@ class _FollowedTile extends StatelessWidget {
               child: Center(
                 child: Text(
                   countryFlag(item.countryId),
-                  style: const TextStyle(fontSize: 22),
+                  style: const TextStyle(fontSize: KpbFontSize.xl),
                 ),
               ),
             ),
@@ -349,7 +350,7 @@ class _FollowedTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: KpbFontSize.md,
                       fontWeight: FontWeight.w800,
                       color: KpbColors.brandNavy,
                       height: 1.25,
@@ -362,7 +363,7 @@ class _FollowedTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: KpbFontSize.xs,
                         color: KpbColors.textMuted,
                       ),
                     ),
@@ -383,7 +384,7 @@ class _FollowedTile extends StatelessWidget {
                     Text(
                       'followed_detail_unavailable'.tr,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: KpbFontSize.xs,
                         color: KpbColors.textMuted,
                       ),
                     ),
@@ -426,7 +427,7 @@ class _MutedPill extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: KpbFontSize.xs,
               fontWeight: FontWeight.w700,
               color: KpbColors.textMuted,
             ),
@@ -454,7 +455,7 @@ class _EmptyFollowed extends StatelessWidget {
             'followed_empty_title'.tr,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 15,
+              fontSize: KpbFontSize.md,
               fontWeight: FontWeight.w800,
               color: KpbColors.brandNavy,
             ),
@@ -464,7 +465,7 @@ class _EmptyFollowed extends StatelessWidget {
             'followed_empty_body'.tr,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 13,
+              fontSize: KpbFontSize.sm,
               height: 1.45,
               color: KpbColors.textMuted,
             ),

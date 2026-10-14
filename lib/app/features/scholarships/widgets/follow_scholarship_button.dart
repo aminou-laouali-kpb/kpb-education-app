@@ -141,7 +141,7 @@ class FollowScholarshipButton extends StatelessWidget {
                             Text(
                               label,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: KpbFontSize.xs,
                                 fontWeight: FontWeight.w800,
                                 color: foreground,
                               ),
@@ -162,7 +162,7 @@ class FollowScholarshipButton extends StatelessWidget {
                   label: Text(
                     label,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: KpbFontSize.md,
                       fontWeight: FontWeight.w800,
                       color: foreground,
                     ),

@@ -224,7 +224,7 @@ class _SheetBody extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: KpbFontSize.lg,
                   fontWeight: FontWeight.w800,
                   color: KpbColors.brandNavy,
                 ),
@@ -235,7 +235,7 @@ class _SheetBody extends StatelessWidget {
               body,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
+                fontSize: KpbFontSize.md,
                 height: 1.45,
                 color: KpbColors.textMuted,
               ),

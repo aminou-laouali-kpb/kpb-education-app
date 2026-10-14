@@ -107,7 +107,7 @@ class ScholarshipStatusChip extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: KpbFontSize.xs,
                 fontWeight: FontWeight.w800,
                 color: foreground,
               ),
