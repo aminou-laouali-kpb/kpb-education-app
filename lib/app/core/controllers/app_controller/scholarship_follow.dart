@@ -148,5 +148,6 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     _unreadEndpointAvailable = true;
     _lastUnreadFetchAt = null;
     serverSupportsFollow = false;
+    unawaited(FollowedScholarshipsStore.instance.clear());
   }
 }

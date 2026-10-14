@@ -5,6 +5,7 @@ import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/roadmap_engine.dart';
 import '../../core/models/app_models.dart';
+import '../../core/services/followed_scholarships_store.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/country_utils.dart';
 
@@ -289,16 +290,19 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
     DateTime now,
   ) {
     final entries = <_MilestoneEntry>[];
-    final savedScholarshipIds = controller.savedItems
-        .where((item) => item.type == SavedItemType.scholarship)
-        .map((item) => item.itemId)
-        .toSet();
+    final listed = <String>{};
 
+    // Le calendrier ne montre QUE ce que l'élève suit (bourses suivies,
+    // dossiers ouverts) : il listait tout le catalogue, et chaque ligne de
+    // bourse renvoyait vers… ce même calendrier (`/deadlines`), une boucle.
+    // Chaque ligne ouvre désormais la fiche de SA bourse.
     for (final scholarship in controller.scholarships) {
+      if (!controller.isFollowingScholarship(scholarship.id)) continue;
+      listed.add(scholarship.id);
       final title = controller.resolve(scholarship.name);
       final deadline = scholarship.deadlineAt ??
           _parseDeadline(controller.resolve(scholarship.deadlineLabel));
-      final isSaved = savedScholarshipIds.contains(scholarship.id);
+      final detailRoute = AppRoutes.scholarshipDetailPath(scholarship.id);
       entries.add(
         _MilestoneEntry(
           id: 'scholarship-${scholarship.id}',
@@ -308,12 +312,11 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
           kind: _MilestoneKind.scholarship,
           deadline: deadline,
           deadlineIsEstimated: scholarship.deadlineIsEstimated,
-          isSaved: isSaved,
-          route: AppRoutes.deadlines,
+          isSaved: true,
+          route: detailRoute,
         ),
       );
 
-      if (!isSaved) continue;
       final roadmapDeadline = deadline ?? now.add(const Duration(days: 90));
       for (final step in RoadmapEngine.getSteps()) {
         if (controller.isStepCompleted(scholarship.id, step.type)) continue;
@@ -327,11 +330,41 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
               roadmapDeadline,
               step.daysBeforeDeadline,
             ),
+            // Une étape calculée depuis une date ESTIMÉE est elle-même une
+            // projection : pas de compte à rebours au jour près.
+            deadlineIsEstimated: scholarship.deadlineIsEstimated,
             isSaved: true,
-            route: AppRoutes.deadlines,
+            route: detailRoute,
           ),
         );
       }
+    }
+
+    // Bourses suivies que le catalogue local ne connaît pas (fiche plus
+    // récente que la dernière synchro) : la page « Mes suivis » du serveur.
+    final followedPage = FollowedScholarshipsStore.instance.page;
+    for (final item in followedPage?.items ?? const <FollowedScholarship>[]) {
+      if (listed.contains(item.id) ||
+          !controller.isFollowingScholarship(item.id) ||
+          item.title.trim().isEmpty) {
+        continue;
+      }
+      listed.add(item.id);
+      final confirmed = item.confirmedCloseAt;
+      entries.add(
+        _MilestoneEntry(
+          id: 'scholarship-${item.id}',
+          title: item.title,
+          subtitle: '${countryFlag(item.countryId)} ${item.countryName}',
+          kind: _MilestoneKind.scholarship,
+          deadline: confirmed ?? item.estimatedCloseAt,
+          deadlineIsEstimated: confirmed == null,
+          isSaved: true,
+          route: item.detailAvailable
+              ? AppRoutes.scholarshipDetailPath(item.id)
+              : null,
+        ),
+      );
     }
 
     for (final item in controller.cases) {

@@ -93,6 +93,36 @@ class _HomeCopilotButton extends StatelessWidget {
   }
 }
 
+/// Accès direct à « Mes suivis » (bourses suivies, échéances).
+class _HomeFollowedButton extends StatelessWidget {
+  const _HomeFollowedButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'followed_title'.tr,
+      child: KpbPressable(
+        key: const ValueKey<String>('home-followed-entry'),
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: KpbColors.border),
+          ),
+          child: const Icon(Icons.bookmarks_outlined,
+              color: KpbColors.brandNavy, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
 class _HomeProfileButton extends StatelessWidget {
   const _HomeProfileButton({required this.onTap});
 

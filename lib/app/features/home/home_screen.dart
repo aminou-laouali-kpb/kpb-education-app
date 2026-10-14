@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../core/config/app_config.dart';
 import '../../core/config/app_routes.dart';
 import '../../core/navigation/shell_tabs.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
@@ -185,12 +186,20 @@ class HomeScreen extends StatelessWidget {
                         onTap: () => openAiChatIfConsented(context, controller),
                       ),
                     ),
+                    // « Mes suivis » prend la place du raccourci Profil (déjà
+                    // dans la barre d'onglets) : la largeur de la salutation
+                    // ne change pas. Drapeau coupé → l'ancien raccourci.
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: _HomeProfileButton(
-                        onTap: () =>
-                            controller.goToTab(StudentShellTab.profile),
-                      ),
+                      child: RemoteFeatureFlags
+                              .instance.homeFollowedEntryEnabled
+                          ? _HomeFollowedButton(
+                              onTap: () => Get.toNamed<void>(AppRoutes.saved),
+                            )
+                          : _HomeProfileButton(
+                              onTap: () =>
+                                  controller.goToTab(StudentShellTab.profile),
+                            ),
                     ),
                   ],
                 ),

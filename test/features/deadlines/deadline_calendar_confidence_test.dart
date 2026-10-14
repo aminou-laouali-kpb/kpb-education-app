@@ -79,6 +79,26 @@ void main() {
           localeCode: 'fr',
           hasCompletedOnboarding: true,
           profile: createTestProfile(),
+          // Les étapes de feuille de route des bourses suivies sont faites :
+          // ce test ne parle que des lignes de bourse.
+          completedRoadmapSteps: {
+            for (final id in [
+              'eiffel_excellence_master_2027',
+              'chevening_2027'
+            ])
+              id: [for (final step in RoadmapStepType.values) step.name],
+          },
+          // Le calendrier ne montre que les bourses SUIVIES (chantier G).
+          savedItems: const [
+            SavedItem(
+              type: SavedItemType.scholarship,
+              itemId: 'eiffel_excellence_master_2027',
+            ),
+            SavedItem(
+              type: SavedItemType.scholarship,
+              itemId: 'chevening_2027',
+            ),
+          ],
         ),
       ),
       apiClient: MockApiClient(),
