@@ -317,7 +317,9 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
         ),
       );
 
-      final roadmapDeadline = deadline ?? now.add(const Duration(days: 90));
+      // Horizon métier d'une feuille de route sans date limite connue.
+      final roadmapDeadline =
+          deadline ?? now.add(const Duration(days: 90)); // kpb-allow-duration
       for (final step in RoadmapEngine.getSteps()) {
         if (controller.isStepCompleted(scholarship.id, step.type)) continue;
         entries.add(
@@ -369,7 +371,9 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
 
     for (final item in controller.cases) {
       if (_isClosedCase(item.status)) continue;
-      final fallbackDue = item.updatedAt.add(const Duration(days: 7));
+      // Échéance métier d'un dossier sans prochaine date : une semaine.
+      final fallbackDue =
+          item.updatedAt.add(const Duration(days: 7)); // kpb-allow-duration
       entries.add(
         _MilestoneEntry(
           id: 'case-next-${item.id}',
@@ -532,7 +536,7 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: KpbMotion.of(context).base,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: active ? activeColor : context.kpb.cardBg,

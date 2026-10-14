@@ -10,7 +10,9 @@ import '../../core/repositories/app_api_client.dart';
 import '../../core/services/notification_router.dart';
 import '../../core/services/push_permission.dart';
 import '../../core/services/remote_feature_flags.dart';
+import '../../core/ui/components/kpb_async_view.dart';
 import '../../core/ui/components/kpb_refresh.dart';
+import '../../core/ui/skeleton.dart';
 import '../scholarships/widgets/follow_push_primer.dart';
 import '../cases/case_detail_screen.dart';
 import '../cases/case_timeline_definition.dart';
@@ -252,7 +254,8 @@ bool hasDerivedNotifications(AppController controller, {DateTime? now}) {
   return false;
 }
 
-const Duration _rejectedDotWindow = Duration(days: 7);
+const Duration _rejectedDotWindow =
+    Duration(days: 7); // kpb-allow-duration: fenêtre métier, pas un mouvement
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -267,6 +270,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   final Set<String> _dismissed = <String>{};
   late final AppApiClient _apiClient;
   List<_StoredNotification> _stored = <_StoredNotification>[];
+
+  /// Premier chargement du fil serveur en cours : un squelette plutôt qu'un
+  /// « Aucune notification » qui serait démenti une seconde plus tard.
+  bool _storedLoading = true;
 
   /// L'autorisation réelle des notifications sur ce téléphone.
   PushPermissionStatus _pushStatus = PushPermissionStatus.unavailable;
@@ -318,6 +325,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (mounted) setState(() => _stored = items);
     } catch (_) {
       // Dossier-derived rows stay available offline.
+    } finally {
+      if (mounted && _storedLoading) setState(() => _storedLoading = false);
     }
   }
 
@@ -341,10 +350,25 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 children: [
                   _header(items),
                   const SizedBox(height: 13),
-                  if (!hasItems)
-                    _emptyState()
-                  else
-                    ..._groupedFeed(ctrl, items),
+                  // Hors ligne, l'échec du fil serveur n'est pas une erreur :
+                  // les lignes tirées des dossiers restent, sinon l'état vide.
+                  KpbAsyncView(
+                    phase: KpbAsyncView.phaseOf(
+                      loading: _storedLoading,
+                      hasData: hasItems,
+                      isEmpty: !hasItems,
+                    ),
+                    skeleton: const KpbSkeletonList(
+                      itemCount: 3,
+                      itemHeight: 76,
+                      padding: EdgeInsets.zero,
+                    ),
+                    empty: _emptyState(),
+                    builder: (_) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: _groupedFeed(ctrl, items),
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   _prefsSection(ctrl),
                 ],

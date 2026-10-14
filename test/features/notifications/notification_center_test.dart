@@ -18,6 +18,7 @@ import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/push_permission.dart';
 import 'package:karatou/app/core/services/remote_feature_flags.dart';
+import 'package:karatou/app/core/ui/skeleton.dart';
 import 'package:karatou/app/features/notifications/notifications_screen.dart';
 
 import '../../widget_test_helpers.dart';
@@ -64,6 +65,7 @@ Future<MockApiClient> _pump(
   List<Map<String, dynamic>> rows = const [],
   int unread = 0,
   bool unreadRouteExists = false,
+  Future<Map<String, dynamic>> Function()? fetch,
 }) async {
   tester.view.physicalSize = const Size(1080, 3000);
   tester.view.devicePixelRatio = 1.0;
@@ -73,7 +75,9 @@ Future<MockApiClient> _pump(
   });
   final api = MockApiClient();
   when(() => api.fetchUserNotifications(any())).thenAnswer(
-    (_) async => <String, dynamic>{'items': rows, 'unreadCount': unread},
+    (_) =>
+        fetch?.call() ??
+        Future.value(<String, dynamic>{'items': rows, 'unreadCount': unread}),
   );
   if (unreadRouteExists) {
     when(() => api.fetchUnreadNotificationCount())
@@ -167,6 +171,29 @@ void main() {
 
     // Le compte du serveur fait foi pour la cloche de l'accueil.
     expect(Get.find<AppController>().serverUnreadNotifications, 2);
+  });
+
+  testWidgets(
+      'premier chargement : un squelette (KpbAsyncView), jamais un « Aucune '
+      'notification » prématuré', (tester) async {
+    // Animations coupées : le squelette ne pulse pas, `pumpAndSettle` rend la
+    // main pendant que le fil serveur est encore en route.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    final pending = Completer<Map<String, dynamic>>();
+    await _pump(tester, fetch: () => pending.future);
+
+    expect(find.byType(KpbSkeletonList), findsOneWidget);
+    expect(find.text('notifications_empty_title'), findsNothing);
+    // Les préférences restent accessibles pendant le chargement.
+    expect(find.text('notifications_push_section'), findsOneWidget);
+
+    pending.complete(<String, dynamic>{'items': <dynamic>[], 'unreadCount': 0});
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KpbSkeletonList), findsNothing);
+    expect(find.text('notifications_empty_title'), findsOneWidget);
   });
 
   testWidgets('« Tout marquer comme lu » éteint le badge serveur',
