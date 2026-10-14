@@ -1,4 +1,8 @@
-import type { FcmSendResult, FcmSenderService } from './fcm-sender.service';
+import type {
+  FcmDetailedResult,
+  FcmSendResult,
+  FcmSenderService,
+} from './fcm-sender.service';
 import type {
   OneSignalDetailedResult,
   OneSignalSenderService,
@@ -8,6 +12,7 @@ import { PushSenderService } from './push-sender.service';
 function makeRouter(opts: {
   fcmConfigured?: boolean;
   fcmResult?: FcmSendResult;
+  fcmReason?: FcmDetailedResult['reason'];
   oneSignalConfigured?: boolean;
   oneSignalResult?: boolean;
   oneSignalDetailed?: OneSignalDetailedResult;
@@ -15,6 +20,12 @@ function makeRouter(opts: {
   const fcm = {
     isConfigured: opts.fcmConfigured ?? true,
     sendToUser: jest.fn(async () => opts.fcmResult ?? 'delivered'),
+    sendToUserDetailed: jest.fn(
+      async (): Promise<FcmDetailedResult> => ({
+        result: opts.fcmResult ?? 'delivered',
+        reason: opts.fcmReason ?? null,
+      }),
+    ),
   };
   const oneSignal = {
     isConfigured: opts.oneSignalConfigured ?? true,
@@ -118,10 +129,23 @@ describe('PushSenderService.sendWithStatus', () => {
         idempotencyKey: 'k',
       }),
     ).resolves.toEqual({ status: 'accepted', via: 'fcm', reason: null });
-    expect(fcm.sendToUser).toHaveBeenCalledWith('u1', 't', 'b', data, {
+    // La variante silencieuse : aucune ligne de journal par élève côté FCM
+    // non plus (jeton révoqué, refus, coupure).
+    expect(fcm.sendToUserDetailed).toHaveBeenCalledWith('u1', 't', 'b', data, {
       collapseKey: 'kpb-abc',
     });
+    expect(fcm.sendToUser).not.toHaveBeenCalled();
     expect(oneSignal.sendToUserDetailed).not.toHaveBeenCalled();
+  });
+
+  it('FCM failed avec un motif → transient_error, motif borné préfixé', async () => {
+    const { router, fcm } = makeRouter({ fcmResult: 'failed', fcmReason: 'http_5xx' });
+    await expect(router.sendWithStatus('u1', 't', 'b', data)).resolves.toEqual({
+      status: 'transient_error',
+      via: 'fcm',
+      reason: 'fcm_http_5xx',
+    });
+    expect(fcm.sendToUser).not.toHaveBeenCalled();
   });
 
   // Règle de l'en-tête : un élève passé à la build FCM n'a plus le SDK

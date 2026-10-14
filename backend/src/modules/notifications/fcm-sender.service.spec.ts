@@ -281,6 +281,100 @@ describe('FcmSenderService', () => {
     expect(oauthCalls).toHaveLength(1);
   });
 
+  /**
+   * La boîte d'envoi des annonces : à 5 000 abonnés, `sendToUser` écrirait une
+   * ligne par jeton révoqué (avec l'identifiant de l'élève) et une par refus.
+   * La variante détaillée rend un état et un motif bornés, et n'écrit RIEN.
+   */
+  describe('sendToUserDetailed (boîte d’envoi) : aucune ligne par élève', () => {
+    let lines: string[];
+
+    beforeEach(() => {
+      lines = [];
+      const capture = (...args: unknown[]) => void lines.push(String(args[0]));
+      for (const level of ['log', 'warn', 'error', 'debug', 'verbose'] as const) {
+        jest.spyOn(Logger.prototype, level).mockImplementation(capture);
+      }
+    });
+
+    const sendsInOrder = (outcomes: Array<() => Response>) => {
+      let i = 0;
+      global.fetch = jest.fn(async (url: string) => {
+        if (String(url).startsWith('https://oauth2.googleapis.com/')) {
+          return TOKEN_RESPONSE;
+        }
+        const next = outcomes[i];
+        i += 1;
+        return next();
+      }) as unknown as typeof fetch;
+    };
+
+    it('jeton révoqué, refus 503 et coupure réseau : état, motif, ménage des jetons, aucune ligne', async () => {
+      const { prisma, deleteMany } = makePrisma(['dead', 'busy', 'cut']);
+      sendsInOrder([
+        unregistered,
+        () => jsonResponse({ error: { code: 503, message: 'unavailable' } }, false, 503),
+        () => {
+          throw Object.assign(new Error('socket hang up'), { name: 'TypeError' });
+        },
+      ]);
+      await expect(
+        new FcmSenderService(prisma).sendToUserDetailed('u-secret', 't', 'b', {}, {
+          collapseKey: 'kpb-x',
+        }),
+      ).resolves.toEqual({ result: 'failed', reason: 'http_5xx' });
+      expect(deleteMany).toHaveBeenCalledWith({ where: { token: { in: ['dead'] } } });
+      expect(lines).toEqual([]);
+    });
+
+    it.each([
+      ['429', () => jsonResponse({}, false, 429), 'http_429'],
+      ['403', () => jsonResponse({ error: { message: 'APNs' } }, false, 403), 'http_4xx'],
+      [
+        'délai',
+        () => {
+          throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+        },
+        'abort',
+      ],
+    ] as const)('refus %s → failed/%s, aucune ligne', async (_label, outcome, reason) => {
+      const { prisma } = makePrisma(['tok']);
+      sendsInOrder([outcome]);
+      await expect(
+        new FcmSenderService(prisma).sendToUserDetailed('u1', 't', 'b', {}),
+      ).resolves.toEqual({ result: 'failed', reason });
+      expect(lines).toEqual([]);
+    });
+
+    it('tous les jetons révoqués → no_device/tokens_revoked ; livré → delivered', async () => {
+      const { prisma } = makePrisma(['dead']);
+      sendsInOrder([unregistered]);
+      await expect(
+        new FcmSenderService(prisma).sendToUserDetailed('u1', 't', 'b', {}),
+      ).resolves.toEqual({ result: 'no_device', reason: 'tokens_revoked' });
+
+      const ok = makePrisma(['tok']);
+      sendsInOrder([() => jsonResponse({ name: 'm1' })]);
+      await expect(
+        new FcmSenderService(ok.prisma).sendToUserDetailed('u1', 't', 'b', {}),
+      ).resolves.toEqual({ result: 'delivered', reason: null });
+      expect(lines).toEqual([]);
+    });
+
+    it('sendToUser garde ses lignes d’avant (autres appelants)', async () => {
+      const { prisma } = makePrisma(['dead', 'busy']);
+      sendsInOrder([
+        unregistered,
+        () => jsonResponse({ error: { code: 503, message: 'unavailable' } }, false, 503),
+      ]);
+      await expect(
+        new FcmSenderService(prisma).sendToUser('u1', 't', 'b'),
+      ).resolves.toBe('failed');
+      expect(lines).toContain('FCM: 1 jeton(s) révoqué(s) supprimé(s) pour u1.');
+      expect(lines.join(' ')).toContain('FCM send failed with status 503');
+    });
+  });
+
   describe('isDeadTokenError', () => {
     it('reconnaît UNREGISTERED et SENDER_ID_MISMATCH', async () => {
       expect(isDeadTokenError(404, await unregistered().json())).toBe(true);

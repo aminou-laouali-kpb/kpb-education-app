@@ -142,14 +142,24 @@ export class PushSenderService {
     }
 
     if (this.fcm.isConfigured) {
-      const result = await this.fcm.sendToUser(userId, title, body, data, {
-        collapseKey: options.collapseKey,
-      });
+      // La variante silencieuse : aucune ligne de journal par élève (jeton
+      // révoqué, refus, coupure), comme `sendToUserDetailed` de OneSignal.
+      const { result, reason } = await this.fcm.sendToUserDetailed(
+        userId,
+        title,
+        body,
+        data,
+        { collapseKey: options.collapseKey },
+      );
       if (result === 'delivered') {
         return { status: 'accepted', via: 'fcm', reason: null };
       }
       if (result === 'failed') {
-        return { status: 'transient_error', via: 'fcm', reason: 'fcm_failed' };
+        return {
+          status: 'transient_error',
+          via: 'fcm',
+          reason: reason ? `fcm_${reason}` : 'fcm_failed',
+        };
       }
       // 'no_device' / 'unconfigured' → peut-être une ancienne version de
       // l'application, encore abonnée chez OneSignal.

@@ -43,6 +43,57 @@ export type FcmSendResult =
   | 'unconfigured';
 
 /**
+ * Motif borné d'un envoi qui n'a pas abouti (jamais un texte du fournisseur) :
+ * - `auth` : pas de jeton d'accès Google ;
+ * - `http_429`, `http_5xx`, `http_4xx` : refus de FCM ;
+ * - `abort` : délai de 10 s dépassé ; `network` : autre échec de `fetch` ;
+ * - `tokens_revoked` : tous les jetons de l'élève étaient révoqués.
+ */
+export type FcmFailureReason =
+  | 'auth'
+  | 'http_429'
+  | 'http_5xx'
+  | 'http_4xx'
+  | 'abort'
+  | 'network'
+  | 'tokens_revoked';
+
+export interface FcmDetailedResult {
+  result: FcmSendResult;
+  /** `null` quand `delivered`, ou `no_device` faute de jeton. */
+  reason: FcmFailureReason | null;
+}
+
+/** L'issue d'un envoi à UN jeton, sans journal : l'appelant décide. */
+type TokenAttempt =
+  | { kind: 'ok' }
+  | { kind: 'dead' }
+  | { kind: 'http_error'; status: number; text: string }
+  | { kind: 'thrown'; aborted: boolean; reason: string };
+
+/** L'issue d'un envoi à un élève, sans journal. */
+interface UserAttempt {
+  result: FcmSendResult;
+  reason: FcmFailureReason | null;
+  /** Jetons révoqués supprimés pendant l'envoi. */
+  revoked: number;
+  /** Les échecs par jeton, pour le journal de `sendToUser` seulement. */
+  failures: TokenAttempt[];
+}
+
+function failureReason(attempt: TokenAttempt): FcmFailureReason | null {
+  switch (attempt.kind) {
+    case 'http_error':
+      if (attempt.status === 429) return 'http_429';
+      return attempt.status >= 500 ? 'http_5xx' : 'http_4xx';
+    case 'thrown':
+      return attempt.aborted ? 'abort' : 'network';
+    default:
+      return null;
+  }
+}
+
+/**
  * - `collapseKey` : `android.notification.tag` et `apns-collapse-id`. Un renvoi
  *   après un crash (bail perdu entre l'acceptation et l'écriture de l'état)
  *   REMPLACE alors la notification déjà affichée au lieu de s'empiler. Tiré de
@@ -152,6 +203,11 @@ export class FcmSenderService {
     return this.account !== null;
   }
 
+  /**
+   * Chemin historique (rappels, campagnes, messagerie…) : même résultat et
+   * mêmes lignes de journal qu'avant — un jeton révoqué nommant l'élève, et
+   * chaque refus de FCM avec son corps tronqué.
+   */
   async sendToUser(
     userId: string,
     title: string,
@@ -159,9 +215,58 @@ export class FcmSenderService {
     data?: Record<string, string>,
     options?: FcmSendOptions,
   ): Promise<FcmSendResult> {
+    const attempt = await this.attempt(userId, title, body, data, options);
+    for (const failure of attempt.failures) {
+      if (failure.kind === 'http_error') {
+        this.logger.error(
+          `FCM send failed with status ${failure.status}: ` +
+            `${truncate(failure.text.trim()) || '(corps vide)'}`,
+        );
+      } else if (failure.kind === 'thrown') {
+        this.logger.error(`FCM push request failed — ${failure.reason}`);
+      }
+    }
+    if (attempt.revoked > 0) {
+      this.logger.log(
+        `FCM: ${attempt.revoked} jeton(s) révoqué(s) supprimé(s) pour ${userId}.`,
+      );
+    }
+    return attempt.result;
+  }
+
+  /**
+   * Le même envoi, avec un motif borné et SANS AUCUNE ligne de journal par
+   * élève : c'est le chemin de la boîte d'envoi des annonces d'ouverture (le
+   * pendant de `OneSignalSenderService.sendToUserDetailed`). À 5 000 abonnés,
+   * `sendToUser` écrirait une ligne par jeton révoqué — avec l'identifiant de
+   * l'élève — et une par refus ; le worker ne journalise que son bilan, avec
+   * les comptes par motif. Seul l'échec de l'échange OAuth du compte de
+   * service reste journalisé : il ne nomme personne et n'a lieu qu'une fois
+   * par échange, partagé entre envois.
+   */
+  async sendToUserDetailed(
+    userId: string,
+    title: string,
+    body: string,
+    data?: Record<string, string>,
+    options?: FcmSendOptions,
+  ): Promise<FcmDetailedResult> {
+    const attempt = await this.attempt(userId, title, body, data, options);
+    return { result: attempt.result, reason: attempt.reason };
+  }
+
+  /** Un envoi à tous les jetons de l'élève, sans journal par élève. */
+  private async attempt(
+    userId: string,
+    title: string,
+    body: string,
+    data: Record<string, string> | undefined,
+    options: FcmSendOptions | undefined,
+  ): Promise<UserAttempt> {
+    const none = { revoked: 0, failures: [] };
     const account = this.account;
-    if (!account) return 'unconfigured';
-    if (!userId) return 'no_device';
+    if (!account) return { result: 'unconfigured', reason: null, ...none };
+    if (!userId) return { result: 'no_device', reason: null, ...none };
 
     const tokens =
       (await this.prisma.execute((p) =>
@@ -170,10 +275,10 @@ export class FcmSenderService {
           select: { token: true },
         }),
       )) ?? [];
-    if (tokens.length === 0) return 'no_device';
+    if (tokens.length === 0) return { result: 'no_device', reason: null, ...none };
 
     const accessToken = await this.accessToken(account);
-    if (!accessToken) return 'failed';
+    if (!accessToken) return { result: 'failed', reason: 'auth', ...none };
 
     const outcomes = await Promise.all(
       tokens.map(({ token }) =>
@@ -182,22 +287,33 @@ export class FcmSenderService {
     );
 
     const dead = tokens
-      .filter((_, i) => outcomes[i] === 'dead')
+      .filter((_, i) => outcomes[i].kind === 'dead')
       .map(({ token }) => token);
     if (dead.length > 0) {
       await this.prisma.execute((p) =>
         p.deviceToken.deleteMany({ where: { token: { in: dead } } }),
       );
-      this.logger.log(
-        `FCM: ${dead.length} jeton(s) révoqué(s) supprimé(s) pour ${userId}.`,
-      );
     }
+    const failures = outcomes.filter(
+      (o) => o.kind === 'http_error' || o.kind === 'thrown',
+    );
+    const revoked = dead.length;
 
-    if (outcomes.includes('ok')) return 'delivered';
+    if (outcomes.some((o) => o.kind === 'ok')) {
+      return { result: 'delivered', reason: null, revoked, failures };
+    }
     // Tous les jetons étaient morts : l'utilisateur n'a plus d'appareil FCM
     // joignable, ce qui équivaut à n'en avoir aucun.
-    if (outcomes.every((o) => o === 'dead')) return 'no_device';
-    return 'failed';
+    if (outcomes.every((o) => o.kind === 'dead')) {
+      return { result: 'no_device', reason: 'tokens_revoked', revoked, failures };
+    }
+    const first = failures[0];
+    return {
+      result: 'failed',
+      reason: first ? failureReason(first) : 'network',
+      revoked,
+      failures,
+    };
   }
 
   private async sendToToken(
@@ -208,7 +324,7 @@ export class FcmSenderService {
     body: string,
     data?: Record<string, string>,
     options?: FcmSendOptions,
-  ): Promise<'ok' | 'dead' | 'error'> {
+  ): Promise<TokenAttempt> {
     const collapseKey = options?.collapseKey;
     try {
       const response = await fetchWithTimeout(
@@ -241,7 +357,7 @@ export class FcmSenderService {
           }),
         },
       );
-      if (response.ok) return 'ok';
+      if (response.ok) return { kind: 'ok' };
 
       let payload: unknown = null;
       let text = '';
@@ -249,20 +365,18 @@ export class FcmSenderService {
         text = await response.text();
         payload = JSON.parse(text);
       } catch {
-        // Corps illisible : on journalise ce qu'on a.
+        // Corps illisible : on garde ce qu'on a.
       }
       if (response.status === 401) this.cachedToken = null;
-      if (isDeadTokenError(response.status, payload)) return 'dead';
-      this.logger.error(
-        `FCM send failed with status ${response.status}: ` +
-          `${truncate(text.trim()) || '(corps vide)'}`,
-      );
-      return 'error';
+      if (isDeadTokenError(response.status, payload)) return { kind: 'dead' };
+      return { kind: 'http_error', status: response.status, text };
     } catch (error) {
-      const reason =
-        error instanceof Error ? `${error.name}: ${error.message}` : 'unknown';
-      this.logger.error(`FCM push request failed — ${reason}`);
-      return 'error';
+      return {
+        kind: 'thrown',
+        aborted: error instanceof Error && error.name === 'AbortError',
+        reason:
+          error instanceof Error ? `${error.name}: ${error.message}` : 'unknown',
+      };
     }
   }
 
