@@ -91,6 +91,16 @@ export const OPENING_AUDIT_ACTIONS = [
 ] as const;
 export type OpeningAuditAction = (typeof OPENING_AUDIT_ACTIONS)[number];
 
+/**
+ * Ce qu'un événement d'annonce a réellement produit (« Derniers
+ * événements ») : `sent` (fait), `skipped` (rien n'est parti, p. ex. bourse
+ * plus publique au moment de l'envoi), `refused` (demande refusée par le
+ * serveur, p. ex. confirmation requise). Ajouté par le backend avec
+ * `reasonCode` ; absent d'un backend antérieur.
+ */
+export const OPENING_EVENT_OUTCOMES = ['sent', 'skipped', 'refused'] as const;
+export type OpeningEventOutcome = (typeof OPENING_EVENT_OUTCOMES)[number];
+
 // ── Formes communes ─────────────────────────────────────────────────────────
 
 export interface LocalizedPushCopy {
@@ -233,6 +243,15 @@ export interface OpeningRecentEvent {
   actorName: string | null;
   academicYear: string | null;
   toNotify: number | null;
+  /** Absent d'un backend antérieur : l'événement se lit alors comme fait. */
+  outcome?: OpeningEventOutcome;
+  /**
+   * Le motif d'un `skipped` (`not_public_at_fanout`, `cycle_closed_at_fanout`,
+   * `fanout_too_late`…) ou d'un `refused` (le code d'erreur, p. ex.
+   * `OPENING_CONFIRMATION_REQUIRED`). Vocabulaire ouvert : un motif inconnu
+   * de cet admin s'affiche tel quel.
+   */
+  reasonCode?: string | null;
 }
 
 export interface OpeningPreviewResponse {
@@ -322,7 +341,14 @@ export interface OpeningTodoItem {
   opensAt: IsoDateTime | null;
   closesAt: IsoDateTime | null;
   source: 'catalogue' | 'admin';
+  /** Tous les abonnés de la bourse (sourdine comprise) ; sert au tri. */
   followers: number;
+  /**
+   * Les abonnés à prévenir : le même nombre que la colonne « Abonnés à
+   * prévenir » de la liste (`OpeningOverviewItem.notifiable`). Absent d'un
+   * backend antérieur : l'admin affiche alors `followers`, libellé « abonnés ».
+   */
+  notifiable?: number;
 }
 
 export interface OpeningTodoResponse {
@@ -334,7 +360,9 @@ export interface OpeningTodoResponse {
 
 export interface OpeningOverviewItem {
   scholarshipId: string;
+  /** Tous les abonnés (sourdine comprise). */
   followers: number;
+  /** Les abonnés à prévenir dans la portée en vigueur (colonne de la liste). */
   notifiable: number;
   lastAnnounced: {
     cycleId: string;

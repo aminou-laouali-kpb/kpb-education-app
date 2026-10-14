@@ -9,17 +9,22 @@ import {
   activateOutcome,
   activationDraftError,
   announcedCell,
+  announcementRequest,
   apiErrorCode,
   audienceLines,
   auditEventMessageKey,
   buildActivateBody,
   buildForecastBody,
+  canCancelScheduled,
   cancelConflictMessageKey,
   cycleOptionLabel,
   cycleOptions,
   draftForCycle,
+  eventReasonMessageKey,
+  EVENT_REASON_CODES,
   fill,
   followersCell,
+  followersTotalText,
   forecastDraftError,
   formatCountdown,
   formatReportLine,
@@ -32,14 +37,20 @@ import {
   previewBanners,
   previewQueryForDraft,
   previewQueryKey,
+  previewSummaryText,
   primaryAction,
   recentEventLabel,
+  recentEventTitle,
   reportDeferredDetail,
   reportProvidersLine,
   REPORT_POLL_MAX_MS,
+  scheduledCardAnnouncement,
+  scheduledCardChanged,
+  scheduledCardStatus,
   scheduledCycle,
   secondsUntil,
   shouldPollReport,
+  showDatesOnlyAction,
   todoRowText,
   type OpeningDraft,
   type Translate,
@@ -416,7 +427,7 @@ describe('erreurs du serveur', () => {
       'secours',
     );
     expect(result).toEqual({
-      text: "Le nombre d'abonnés a changé (340). Vérifiez avant de confirmer.",
+      text: "Le nombre d'abonnés à prévenir a changé (340). Vérifiez avant de confirmer.",
       refreshPreview: true,
     });
   });
@@ -644,7 +655,7 @@ describe('bouton principal', () => {
     expect(action.kind).toBe('announce');
   });
 
-  it('« Ouvrir le cycle » quand personne n’est à prévenir', () => {
+  it('« Ouvrir le cycle sans prévenir » quand personne n’est à prévenir', () => {
     const base = preview();
     expect(
       primaryAction(
@@ -652,7 +663,70 @@ describe('bouton principal', () => {
         { canSendAboveThreshold: false },
         t,
       ),
-    ).toMatchObject({ label: 'Ouvrir le cycle', kind: 'open_only' });
+    ).toEqual({
+      label: 'Ouvrir le cycle sans prévenir (aucun abonné à prévenir)',
+      kind: 'open_only',
+      disabledReason: null,
+    });
+    expect(
+      primaryAction(preview({ audience: { ...base.audience, toNotify: 0 } }), {
+        canSendAboveThreshold: false,
+      }, tEn).label,
+    ).toBe('Open the cycle without notifying (no followers to notify)');
+  });
+
+  it('« Ouvrir le cycle » n’envoie jamais notify:true : aucune annonce sans confirmation', () => {
+    // Avec notify:true et expectedRecipients:0, le serveur tolère +10
+    // destinataires : des abonnés arrivés depuis l'aperçu seraient prévenus
+    // sans que personne ait confirmé quoi que ce soit.
+    expect(announcementRequest('open_only', 0)).toEqual({ notify: false });
+    expect(announcementRequest('open_only', 12)).toEqual({ notify: false });
+    expect(buildActivateBody(DRAFT, announcementRequest('open_only', 0))).not.toHaveProperty(
+      'expectedRecipients',
+    );
+    expect(buildActivateBody(DRAFT, announcementRequest('open_only', 0)).notify).toBe(false);
+    expect(announcementRequest('announce', 312)).toEqual({
+      notify: true,
+      expectedRecipients: 312,
+    });
+  });
+
+  it('« Ouvrir le cycle sans prévenir » reste possible sur un cycle pré-existant ou au-delà du seuil', () => {
+    // notify:false est accepté par le serveur sur un cycle ouvert avant la
+    // mise en service ; seule la complétude de la fiche (ou un envoi déjà
+    // programmé) le bloque.
+    const base = preview();
+    const zero = { ...base.audience, toNotify: 0 };
+    expect(
+      primaryAction(
+        preview({ audience: zero, target: { ...base.target, preExistingOpen: true } }),
+        { canSendAboveThreshold: false },
+        t,
+      ).disabledReason,
+    ).toBeNull();
+    expect(
+      primaryAction(
+        preview({ audience: zero, readiness: { ...base.readiness, ready: false } }),
+        { canSendAboveThreshold: true },
+        t,
+      ).disabledReason,
+    ).toContain("La fiche n'est pas prête");
+  });
+
+  it('pas de second bouton identique « Enregistrer les dates sans prévenir »', () => {
+    const base = preview();
+    const openOnly = primaryAction(
+      preview({ audience: { ...base.audience, toNotify: 0 } }),
+      { canSendAboveThreshold: false },
+      t,
+    );
+    expect(showDatesOnlyAction(openOnly)).toBe(false);
+    // Désactivé (fiche incomplète, envoi programmé) : les dates restent corrigeables.
+    expect(showDatesOnlyAction({ ...openOnly, disabledReason: 'x' })).toBe(true);
+    expect(showDatesOnlyAction(primaryAction(base, { canSendAboveThreshold: false }, t))).toBe(
+      true,
+    );
+    expect(showDatesOnlyAction(null)).toBe(true);
   });
 
   it('désactivé, avec la raison, quand la fiche n’est pas prête', () => {
@@ -757,7 +831,7 @@ describe('bandeaux de l’aperçu', () => {
     ).toEqual([
       "Ce cycle a déjà été annoncé : seuls les étudiants qui le suivent depuis l'annonce seront prévenus.",
       "L'ouverture est à venir : le message annonce les dates confirmées, pas une ouverture.",
-      'Aucun étudiant à prévenir pour ce cycle.',
+      "Aucun abonné à prévenir pour ce cycle : l'ouverture n'enverra aucune notification. Si des étudiants suivent la bourse ensuite, vous pourrez les prévenir depuis ce panneau.",
     ]);
   });
 });
@@ -767,7 +841,7 @@ describe('lignes d’audience', () => {
     expect(audienceLines(preview().audience, t)).toEqual({
       audience:
         "312 étudiants seront prévenus : 240 favoris, 50 alertes « M'avertir », 22 les deux.",
-      exclusions: '22 en sourdine exclus',
+      exclusions: '334 abonnés au total · 22 en sourdine exclus',
       delivery: "298 push · 14 seulement dans l'app · 41 à 8 h · 3 plus tard (rythme)",
       devices: "12 appareils récents, 286 anciennes versions de l'app",
       languages: '280 en français, 32 en anglais',
@@ -781,13 +855,34 @@ describe('lignes d’audience', () => {
         { ...base, muted: 0, alreadyNotifiedThisCycle: 4, recentlyNotified: 2 },
         t,
       ).exclusions,
-    ).toBe('4 déjà prévenus pour ce cycle · 2 prévenus récemment pour un autre cycle');
+    ).toBe(
+      '334 abonnés au total · 4 déjà prévenus pour ce cycle · 2 prévenus récemment pour un autre cycle',
+    );
     expect(
       audienceLines(
-        { ...base, muted: 0, alreadyNotifiedThisCycle: 0, recentlyNotified: 0 },
+        {
+          ...base,
+          followers: base.toNotify,
+          muted: 0,
+          alreadyNotifiedThisCycle: 0,
+          recentlyNotified: 0,
+        },
         t,
       ).exclusions,
     ).toBeNull();
+  });
+
+  it('« abonnés à prévenir » dans le résumé du panneau, avec le total s’il diffère', () => {
+    const base = preview();
+    expect(previewSummaryText(base, t)).toBe(
+      '312 abonnés à prévenir pour 2027-2028 (sur 334 abonnés au total).',
+    );
+    expect(
+      previewSummaryText(
+        preview({ audience: { ...base.audience, followers: 312 } }),
+        tEn,
+      ),
+    ).toBe('312 followers to notify for 2027-2028.');
   });
 });
 
@@ -919,10 +1014,19 @@ describe('liste, « À faire » et historique', () => {
     scheduledAt: null,
   };
 
-  it('colonne Abonnés : « — » avant chargement, 0 pour une bourse absente', () => {
+  it('colonne Abonnés à prévenir : « — » avant chargement, 0 pour une bourse absente', () => {
     expect(followersCell(item, false)).toBe('—');
     expect(followersCell(undefined, true)).toBe('0');
     expect(followersCell(item, true)).toBe('312');
+    expect(t('scholarships.opening.colFollowers')).toBe('Abonnés à prévenir');
+  });
+
+  it('colonne Abonnés à prévenir : le total en second, seulement s’il diffère', () => {
+    expect(followersTotalText(item, true, t)).toBe('334 au total');
+    expect(followersTotalText(item, true, tEn)).toBe('334 in total');
+    expect(followersTotalText({ ...item, followers: 312 }, true, t)).toBeNull();
+    expect(followersTotalText(item, false, t)).toBeNull();
+    expect(followersTotalText(undefined, true, t)).toBeNull();
   });
 
   it('colonne Annoncé : date (audience), « programmé » ou « — »', () => {
@@ -949,22 +1053,35 @@ describe('liste, « À faire » et historique', () => {
     ).toBe('07/10/2027 (312)');
   });
 
-  it('ligne « À faire »', () => {
-    expect(
-      todoRowText(
-        {
-          scholarshipId: 'chevening',
-          nameFr: 'Chevening',
-          cycleId: 'cyc_2027',
-          academicYear: '2027-2028',
-          opensAt: null,
-          closesAt: '2027-11-05T23:59:59.999Z',
-          source: 'catalogue',
-          followers: 312,
-        },
-        t,
-      ),
-    ).toBe('Chevening · 2027-2028 · 312 abonnés · ouverte par le catalogue');
+  const todoItem = {
+    scholarshipId: 'chevening',
+    nameFr: 'Chevening',
+    cycleId: 'cyc_2027',
+    academicYear: '2027-2028',
+    opensAt: null,
+    closesAt: '2027-11-05T23:59:59.999Z',
+    source: 'catalogue' as const,
+    followers: 334,
+  };
+
+  it('ligne « À faire » : le nombre de la colonne, « abonnés à prévenir », et le total', () => {
+    expect(todoRowText({ ...todoItem, notifiable: 312 }, t)).toBe(
+      'Chevening · 2027-2028 · 312 abonnés à prévenir (334 au total) · ouverte par le catalogue',
+    );
+    expect(todoRowText({ ...todoItem, followers: 312, notifiable: 312 }, t)).toBe(
+      'Chevening · 2027-2028 · 312 abonnés à prévenir · ouverte par le catalogue',
+    );
+    expect(todoRowText({ ...todoItem, notifiable: 312, source: 'admin' }, tEn)).toBe(
+      'Chevening · 2027-2028 · 312 followers to notify (334 in total) · opened from the admin',
+    );
+  });
+
+  it('ligne « À faire » d’un backend antérieur (sans `notifiable`) : le total, libellé « abonnés »', () => {
+    // Le total compte aussi les abonnés en sourdine : le dire « à prévenir »
+    // serait faux.
+    expect(todoRowText(todoItem, t)).toBe(
+      'Chevening · 2027-2028 · 334 abonnés · ouverte par le catalogue',
+    );
   });
 
   it('historique : une clé par action, « système » pour le worker', () => {
@@ -984,5 +1101,166 @@ describe('liste, « À faire » et historique', () => {
     expect(label).toMatch(
       /^01\/10\/2027 \d{2}:\d{2} · Notifications écrites dans l'app · système · 2027-2028$/,
     );
+  });
+});
+
+describe('carte de programmation', () => {
+  const pendingReport = report(
+    { accepted: 0, acceptedPushes: 0, pending: 0, noDevice: 0 },
+    { scheduledAt: '2027-10-01T10:02:00.000Z', completedAt: null, lastFanoutAt: null },
+  );
+
+  it('avant l’heure : programmé, annulable', () => {
+    const status = scheduledCardStatus({ phase: 'countdown', scheduled: true, report: null });
+    expect(status).toBe('scheduled');
+    expect(canCancelScheduled(status)).toBe(true);
+  });
+
+  it('heure passée sur le poste, envoi pas encore lancé : « En attente d’envoi », toujours annulable', () => {
+    for (const current of [null, pendingReport]) {
+      const status = scheduledCardStatus({ phase: 'report', scheduled: true, report: current });
+      expect(status).toBe('awaiting');
+      expect(canCancelScheduled(status)).toBe(true);
+    }
+    expect(t('scholarships.opening.awaitingTitle')).toBe("En attente d'envoi");
+  });
+
+  it('envoi lancé côté serveur : plus d’annulation', () => {
+    const status = scheduledCardStatus({ phase: 'report', scheduled: true, report: report() });
+    expect(status).toBe('started');
+    expect(canCancelScheduled(status)).toBe(false);
+  });
+
+  it('annulation refusée « trop tard » : commencé, même sur un rapport encore périmé', () => {
+    expect(
+      scheduledCardStatus({
+        phase: 'report',
+        scheduled: true,
+        report: pendingReport,
+        fanoutStarted: true,
+      }),
+    ).toBe('started');
+  });
+
+  it('annulé, disparu, ou simple rapport : jamais annulable', () => {
+    for (const phase of ['cancelled', 'gone'] as const) {
+      expect(canCancelScheduled(scheduledCardStatus({ phase, scheduled: true, report: null }))).toBe(
+        false,
+      );
+    }
+    const status = scheduledCardStatus({ phase: 'report', scheduled: false, report: pendingReport });
+    expect(status).toBe('report');
+    expect(canCancelScheduled(status)).toBe(false);
+  });
+
+  it('la région aria-live n’annonce que les changements d’état, sans compte à rebours', () => {
+    const context = { toNotify: 312, fanoutAt: '2027-10-01T10:02:00.000Z' };
+    const scheduled = scheduledCardAnnouncement('scheduled', context, t);
+    expect(scheduled).toMatch(/^312 notifications programmées à \d{2}:\d{2}$/);
+    // Rien qui ressemble à « 1:58 » : le texte ne change pas d'une seconde à l'autre.
+    expect(scheduled).not.toMatch(/\d:\d{2}\)/);
+    expect(scheduledCardAnnouncement('awaiting', context, t)).toContain("En attente d'envoi");
+    expect(scheduledCardAnnouncement('cancelled', context, t)).toBe(
+      "Envoi annulé. Aucun étudiant n'a été prévenu.",
+    );
+    expect(scheduledCardAnnouncement('started', context, t)).toBe("L'envoi a commencé.");
+    expect(scheduledCardAnnouncement('report', context, t)).toBe('');
+    expect(scheduledCardAnnouncement('gone', context, t)).toBe('');
+  });
+
+  it('les listes sont relues quand le serveur lance l’envoi, pas à zéro sur le poste', () => {
+    expect(scheduledCardChanged('scheduled', 'awaiting')).toBe(false);
+    expect(scheduledCardChanged('awaiting', 'awaiting')).toBe(false);
+    expect(scheduledCardChanged('awaiting', 'started')).toBe(true);
+    expect(scheduledCardChanged('scheduled', 'started')).toBe(true);
+    expect(scheduledCardChanged('started', 'started')).toBe(false);
+    expect(scheduledCardChanged('report', 'report')).toBe(false);
+  });
+});
+
+describe('derniers événements : ce qui s’est réellement passé', () => {
+  const base = {
+    action: 'scholarship_cycle.fanout_completed' as const,
+    occurredAt: '2027-10-01T12:00:00.000Z',
+    actorName: null,
+    academicYear: '2027-2028',
+    toNotify: 0,
+  };
+
+  it('backend antérieur (sans `outcome`) ou `sent` : le libellé de l’action', () => {
+    expect(recentEventTitle(base, t)).toBe("Notifications écrites dans l'app");
+    expect(recentEventTitle({ ...base, outcome: 'sent', reasonCode: null }, t)).toBe(
+      "Notifications écrites dans l'app",
+    );
+  });
+
+  it('annonce non envoyée : le motif, jamais « notifications écrites »', () => {
+    expect(
+      recentEventTitle({ ...base, outcome: 'skipped', reasonCode: 'not_public_at_fanout' }, t),
+    ).toBe('Annonce non envoyée : bourse plus publique');
+    expect(
+      recentEventTitle({ ...base, outcome: 'skipped', reasonCode: 'cycle_closed_at_fanout' }, tEn),
+    ).toBe('Announcement not sent: cycle closed before sending');
+    const label = recentEventLabel(
+      { ...base, outcome: 'skipped', reasonCode: 'fanout_too_late' },
+      t,
+    );
+    // Pas de « · 0 » final : rien n'est parti.
+    expect(label).toMatch(
+      /^01\/10\/2027 \d{2}:\d{2} · Annonce non envoyée : envoi trop en retard · système · 2027-2028$/,
+    );
+  });
+
+  it('demande refusée : « Ouverture refusée : confirmation requise », avec le nombre refusé', () => {
+    const refused = {
+      ...base,
+      action: 'scholarship_cycle.opened' as const,
+      actorName: 'Aminata D.',
+      toNotify: 612,
+      outcome: 'refused' as const,
+      reasonCode: 'OPENING_CONFIRMATION_REQUIRED',
+    };
+    expect(recentEventTitle(refused, t)).toBe('Ouverture refusée : confirmation requise');
+    expect(recentEventLabel(refused, t)).toMatch(
+      / · Ouverture refusée : confirmation requise · Aminata D\. · 2027-2028 · 612$/,
+    );
+    expect(
+      recentEventTitle({ ...refused, reasonCode: 'OPENING_REQUIRES_ADMIN' }, tEn),
+    ).toBe('Opening refused: restricted to administrators above the threshold');
+    expect(
+      recentEventTitle(
+        { ...refused, action: 'scholarship_cycle.notify_cancelled', reasonCode: 'OPENING_BUSY' },
+        t,
+      ),
+    ).toBe('Annulation refusée : envoi en cours de préparation');
+  });
+
+  it('motif inconnu de cet admin : affiché tel quel ; motif absent : le constat seul', () => {
+    expect(
+      recentEventTitle({ ...base, outcome: 'skipped', reasonCode: 'quota_exceeded' }, t),
+    ).toBe('Annonce non envoyée : motif quota_exceeded');
+    expect(recentEventTitle({ ...base, outcome: 'refused' }, t)).toBe('Ouverture refusée');
+  });
+
+  it('issue ou action inconnues (backend plus récent) : jamais une clé brute', () => {
+    const unknownOutcome = { ...base, outcome: 'partial' } as unknown as Parameters<
+      typeof recentEventTitle
+    >[0];
+    expect(recentEventTitle(unknownOutcome, t)).toBe("Notifications écrites dans l'app");
+    const unknownAction = {
+      ...base,
+      action: 'scholarship_cycle.something_new',
+    } as unknown as Parameters<typeof recentEventTitle>[0];
+    expect(recentEventTitle(unknownAction, t)).toBe("Événement d'annonce");
+  });
+
+  it('chaque motif connu a un libellé dans les deux langues', () => {
+    for (const code of EVENT_REASON_CODES) {
+      const key = eventReasonMessageKey(code);
+      expect(key).not.toBeNull();
+      expect({ code, fr: t(key ?? '') }).not.toEqual({ code, fr: key });
+      expect({ code, en: tEn(key ?? '') }).not.toEqual({ code, en: key });
+    }
+    expect(eventReasonMessageKey('quota_exceeded')).toBeNull();
   });
 });

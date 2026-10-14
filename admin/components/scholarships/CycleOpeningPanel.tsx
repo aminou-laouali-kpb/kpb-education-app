@@ -10,22 +10,25 @@ import {
   activateErrorText,
   activateOutcome,
   activationDraftError,
+  announcementRequest,
   buildActivateBody,
   buildForecastBody,
   cycleForYear,
   cycleOptions,
   draftForCycle,
   endOfDayIso,
-  fill,
   forecastDraftError,
   localFanoutDeadline,
   PREVIEW_DEBOUNCE_MS,
   previewQueryForDraft,
   previewQueryKey,
+  previewSummaryText,
   primaryAction,
   recentEventLabel,
   scheduledCycle,
+  showDatesOnlyAction,
   startOfDayIso,
+  type AnnouncementRequest,
   type OpeningDraft,
 } from '../../lib/scholarship-opening';
 import {
@@ -57,6 +60,9 @@ import type { ScholarshipEntry } from './types';
  * serveur programme l'envoi 120 s plus tard : la carte de programmation
  * compte à rebours et permet d'annuler, puis affiche le rapport.
  * [Enregistrer les dates sans prévenir] corrige les dates sans rien envoyer.
+ * Quand l'aperçu ne compte personne à prévenir, le bouton principal devient
+ * [Ouvrir le cycle sans prévenir] : il envoie `notify: false`, jamais une
+ * annonce que personne n'aurait confirmée (`announcementRequest`).
  */
 
 const metaLabelStyle: CSSProperties = {
@@ -88,7 +94,7 @@ interface ScheduledState {
   toNotify: number | null;
 }
 
-type Pending = 'notify' | 'datesOnly' | 'forecast' | null;
+type Pending = 'notify' | 'openOnly' | 'datesOnly' | 'forecast' | null;
 
 /** La fiche après une ouverture, comme le reste de la page l'affiche. */
 function entryPatchAfterActivate(
@@ -356,9 +362,9 @@ function ApprovedCycleOpeningPanel({
   }
 
   async function activate(
-    notify: boolean,
-    expectedRecipients: number | undefined,
+    request: AnnouncementRequest,
     surface: 'panel' | 'modal',
+    pendingKind: Exclude<Pending, 'forecast' | null>,
   ): Promise<boolean> {
     if (!draft) return false;
     const showError = (text: string) =>
@@ -370,14 +376,14 @@ function ApprovedCycleOpeningPanel({
       showError(t(invalid));
       return false;
     }
-    setPending(notify ? 'notify' : 'datesOnly');
+    setPending(pendingKind);
     setNotice(null);
     setModalError(null);
     const requestStartedAt = Date.now();
     try {
       const response = await activateScholarshipCycle(
         entry.id,
-        buildActivateBody(draft, { notify, expectedRecipients }),
+        buildActivateBody(draft, request),
       );
       const outcome = activateOutcome(response, t);
       if (outcome.kind === 'scheduled') {
@@ -416,8 +422,8 @@ function ApprovedCycleOpeningPanel({
     }
   }
 
-  async function confirmFromModal(expectedRecipients: number): Promise<boolean> {
-    const ok = await activate(true, expectedRecipients, 'modal');
+  async function confirmFromModal(request: AnnouncementRequest): Promise<boolean> {
+    const ok = await activate(request, 'modal', request.notify ? 'notify' : 'openOnly');
     if (ok) setModalOpen(false);
     return ok;
   }
@@ -431,7 +437,8 @@ function ApprovedCycleOpeningPanel({
     }
     setNotice(null);
     if (action.kind === 'open_only') {
-      void activate(true, 0, 'panel');
+      // Personne à prévenir : ouverture sans prévenir (`notify: false`).
+      void activate(announcementRequest('open_only', 0), 'panel', 'openOnly');
       return;
     }
     setModalError(null);
@@ -527,10 +534,7 @@ function ApprovedCycleOpeningPanel({
           <span style={hintStyle} aria-live="polite">
             {stale
               ? t('scholarships.opening.previewLoading')
-              : fill(t('scholarships.opening.previewSummary'), {
-                  n: preview.audience.toNotify,
-                  year: preview.target.academicYear,
-                })}
+              : previewSummaryText(preview, t)}
           </span>
 
           <Field label={t('scholarships.sourceLabel')}>
@@ -605,7 +609,7 @@ function ApprovedCycleOpeningPanel({
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Button
               variant="success"
-              loading={pending === 'notify' && !modalOpen}
+              loading={(pending === 'notify' || pending === 'openOnly') && !modalOpen}
               disabled={
                 !action ||
                 stale ||
@@ -616,14 +620,16 @@ function ApprovedCycleOpeningPanel({
             >
               {action?.label ?? t('scholarships.opening.primaryCta')}
             </Button>
-            <Button
-              variant="secondary"
-              loading={pending === 'datesOnly'}
-              disabled={pending !== null && pending !== 'datesOnly'}
-              onClick={() => void activate(false, undefined, 'panel')}
-            >
-              {t('scholarships.opening.saveDatesOnlyCta')}
-            </Button>
+            {showDatesOnlyAction(action) ? (
+              <Button
+                variant="secondary"
+                loading={pending === 'datesOnly'}
+                disabled={pending !== null && pending !== 'datesOnly'}
+                onClick={() => void activate({ notify: false }, 'panel', 'datesOnly')}
+              >
+                {t('scholarships.opening.saveDatesOnlyCta')}
+              </Button>
+            ) : null}
           </div>
           {action?.disabledReason && !stale ? (
             <span style={{ ...hintStyle, color: 'var(--warning-fg)' }}>
@@ -706,7 +712,7 @@ function ApprovedCycleOpeningPanel({
         loading={stale}
         error={modalError}
         canSendAboveThreshold={canSendAboveThreshold}
-        submitting={pending === 'notify'}
+        submitting={pending === 'notify' || pending === 'openOnly'}
         onClose={() => setModalOpen(false)}
         onConfirm={confirmFromModal}
       />

@@ -3,12 +3,14 @@
 import { CSSProperties, useEffect, useState } from 'react';
 
 import {
+  announcementRequest,
   audienceLines,
   fill,
   isTypedConfirmationValid,
   needsTypedConfirmation,
   previewBanners,
   primaryAction,
+  type AnnouncementRequest,
 } from '../../lib/scholarship-opening';
 import type { OpeningPreviewResponse } from '../../lib/scholarship-opening-types';
 import { useLocale } from '../locale-provider';
@@ -24,7 +26,9 @@ import { PhonePreview } from './PhonePreview';
  * l'app), et le texte exact sur un téléphone. [Continuer] ouvre une
  * confirmation qui répète le nombre ; au-delà du seuil, il faut le saisir.
  * Le nombre confirmé part en `expectedRecipients` : si l'audience a grossi
- * depuis, le serveur refuse au lieu d'écrire à plus d'étudiants.
+ * depuis, le serveur refuse au lieu d'écrire à plus d'étudiants. Personne à
+ * prévenir : [Ouvrir le cycle sans prévenir] part en `notify: false`, sans
+ * confirmation puisque rien ne peut être envoyé.
  */
 
 const sectionTitleStyle: CSSProperties = {
@@ -59,8 +63,11 @@ export interface OpeningPreviewModalProps {
   canSendAboveThreshold: boolean;
   submitting: boolean;
   onClose: () => void;
-  /** Lance `activate {notify: true, expectedRecipients}` ; vrai si accepté. */
-  onConfirm: (expectedRecipients: number) => Promise<boolean>;
+  /**
+   * Lance `activate` avec `notify: true, expectedRecipients` (annonce
+   * confirmée) ou `notify: false` (personne à prévenir) ; vrai si accepté.
+   */
+  onConfirm: (request: AnnouncementRequest) => Promise<boolean>;
 }
 
 export function OpeningPreviewModal({
@@ -105,8 +112,10 @@ export function OpeningPreviewModal({
   function startConfirmation() {
     if (!preview || !action) return;
     if (action.kind === 'open_only') {
-      // Personne à prévenir : rien à confirmer, l'ouverture part telle quelle.
-      void onConfirm(0);
+      // Personne à prévenir : rien à confirmer, l'ouverture part SANS
+      // prévenir (`notify: false`) — des abonnés arrivés depuis l'aperçu ne
+      // sont pas prévenus sans confirmation.
+      void onConfirm(announcementRequest('open_only', 0));
       return;
     }
     setConfirmCount(preview.audience.toNotify);
@@ -115,7 +124,7 @@ export function OpeningPreviewModal({
   }
 
   async function confirm() {
-    await onConfirm(confirmCount);
+    await onConfirm(announcementRequest('announce', confirmCount));
     setConfirmOpen(false);
   }
 

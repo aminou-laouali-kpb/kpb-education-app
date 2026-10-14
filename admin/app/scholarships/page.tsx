@@ -9,6 +9,7 @@ import { apiFetch } from '../../lib/api-client';
 import {
   announcedCell,
   followersCell,
+  followersTotalText,
 } from '../../lib/scholarship-opening';
 import {
   fetchOpeningOverview,
@@ -803,6 +804,13 @@ export default function ScholarshipsPage() {
                       openingOverview?.get(entry.id),
                       openingOverview !== null,
                     )}
+                    sub={
+                      followersTotalText(
+                        openingOverview?.get(entry.id),
+                        openingOverview !== null,
+                        t,
+                      ) ?? undefined
+                    }
                     muted
                   />
                   <CellText

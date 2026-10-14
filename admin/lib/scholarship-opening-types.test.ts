@@ -8,6 +8,7 @@ import {
   OPENING_AUDIENCE_SCOPES,
   OPENING_AUDIT_ACTIONS,
   OPENING_ERROR_CODES,
+  OPENING_EVENT_OUTCOMES,
   OPENING_NOTIFICATION_REASONS,
   OPENING_NOTIFICATION_STATES,
   SCHOLARSHIP_OPENING_MODES,
@@ -34,13 +35,18 @@ const contract = readFileSync(
   'utf8',
 );
 
-/** Les chaînes de `export const NAME = [ … ] as const;` dans le contrat backend. */
-function backendList(name: string): string[] {
+/** Les chaînes de `export const NAME = [ … ] as const;` dans le contrat backend, ou `null`. */
+function backendListOrNull(name: string): string[] | null {
   const match = new RegExp(
     `export const ${name} = \\[([\\s\\S]*?)\\] as const;`,
   ).exec(contract);
-  if (!match) throw new Error(`${name} introuvable dans le contrat backend`);
-  return [...match[1].matchAll(/'([^']+)'/g)].map(([, value]) => value);
+  return match ? [...match[1].matchAll(/'([^']+)'/g)].map(([, value]) => value) : null;
+}
+
+function backendList(name: string): string[] {
+  const list = backendListOrNull(name);
+  if (!list) throw new Error(`${name} introuvable dans le contrat backend`);
+  return list;
 }
 
 describe('scholarship-opening-types — aligné sur le contrat backend', () => {
@@ -55,4 +61,17 @@ describe('scholarship-opening-types — aligné sur le contrat backend', () => {
   ] as const)('%s', (name, mirror) => {
     expect([...mirror]).toEqual(backendList(name));
   });
+});
+
+// Vocabulaire ajouté en même temps des deux côtés (issue des événements) : le
+// lot backend le déclare dans le contrat sous ce nom. Tant qu'il n'y est pas
+// (branche admin seule), la comparaison est SAUTÉE, et se voit comme telle ;
+// dès qu'il y est, elle s'applique comme les autres.
+describe('scholarship-opening-types — vocabulaires ajoutés avec le backend', () => {
+  it.skipIf(backendListOrNull('OPENING_EVENT_OUTCOMES') === null)(
+    'OPENING_EVENT_OUTCOMES',
+    () => {
+      expect([...OPENING_EVENT_OUTCOMES]).toEqual(backendList('OPENING_EVENT_OUTCOMES'));
+    },
+  );
 });

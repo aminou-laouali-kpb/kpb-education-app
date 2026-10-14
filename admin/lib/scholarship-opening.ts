@@ -16,7 +16,9 @@
 
 import type { ApiError } from './api-client';
 import {
+  OPENING_AUDIT_ACTIONS,
   OPENING_ERROR_CODES,
+  OPENING_EVENT_OUTCOMES,
   type ActivateScholarshipBody,
   type ActivateScholarshipResponse,
   type CycleOpeningSkipReason,
@@ -25,6 +27,7 @@ import {
   type OpeningAudienceSummary,
   type OpeningAuditAction,
   type OpeningErrorCode,
+  type OpeningEventOutcome,
   type OpeningOverviewItem,
   type OpeningPreviewCopy,
   type OpeningPreviewCycle,
@@ -521,7 +524,11 @@ export function scheduledCycle(
 
 export interface PrimaryAction {
   label: string;
-  /** `open_only` : personne à prévenir, l'ouverture part sans confirmation. */
+  /**
+   * `announce` : prévenir les abonnés, après l'aperçu et la confirmation.
+   * `open_only` : l'aperçu ne compte personne à prévenir ; l'ouverture part
+   * SANS PRÉVENIR (`notify: false`), voir `announcementRequest`.
+   */
   kind: 'announce' | 'open_only';
   /** Pourquoi le bouton est désactivé, ou `null`. */
   disabledReason: string | null;
@@ -530,11 +537,12 @@ export interface PrimaryAction {
 /**
  * Le bouton principal du panneau, d'après l'aperçu.
  *
- * Désactivé, avec son explication, quand la fiche n'est pas prête, quand le
- * cycle était ouvert avant la mise en service (pas d'annonce rétroactive : le
- * serveur répondrait 409), quand l'audience dépasse le seuil et que l'équipier
- * n'a pas le droit d'y envoyer (le serveur répondrait 403), ou quand un envoi
- * est déjà programmé. Les dates restent enregistrables sans prévenir.
+ * Désactivé, avec son explication, quand un envoi est déjà programmé, quand la
+ * fiche n'est pas prête (le serveur refuserait toute ouverture), et, pour une
+ * annonce seulement : quand le cycle était ouvert avant la mise en service
+ * (pas d'annonce rétroactive : le serveur répondrait 409) ou quand l'audience
+ * dépasse le seuil et que l'équipier n'a pas le droit d'y envoyer (403). Les
+ * dates restent enregistrables sans prévenir.
  */
 export function primaryAction(
   preview: OpeningPreviewResponse,
@@ -542,8 +550,9 @@ export function primaryAction(
   t: Translate,
 ): PrimaryAction {
   const toNotify = preview.audience.toNotify;
+  const kind: PrimaryAction['kind'] = toNotify === 0 ? 'open_only' : 'announce';
   const label =
-    toNotify === 0
+    kind === 'open_only'
       ? t('scholarships.opening.openOnlyCta')
       : preview.target.alreadyAnnounced
         ? fill(t('scholarships.opening.notifyNewCta'), { n: toNotify })
@@ -553,9 +562,10 @@ export function primaryAction(
     disabledReason = t('scholarships.opening.alreadyScheduled');
   } else if (!preview.readiness.ready) {
     disabledReason = t('scholarships.opening.notReady');
-  } else if (preview.target.preExistingOpen) {
+  } else if (kind === 'announce' && preview.target.preExistingOpen) {
     disabledReason = t('scholarships.opening.preExistingOpen');
   } else if (
+    kind === 'announce' &&
     needsTypedConfirmation(toNotify, preview.confirmThreshold) &&
     !options.canSendAboveThreshold
   ) {
@@ -563,7 +573,55 @@ export function primaryAction(
       threshold: preview.confirmThreshold,
     });
   }
-  return { label, kind: toNotify === 0 ? 'open_only' : 'announce', disabledReason };
+  return { label, kind, disabledReason };
+}
+
+/** Ce que le bouton principal demande au serveur (`notify`, `expectedRecipients`). */
+export interface AnnouncementRequest {
+  notify: boolean;
+  expectedRecipients?: number;
+}
+
+/**
+ * Le corps de l'action principale.
+ *
+ * « Ouvrir le cycle » (personne à prévenir d'après l'aperçu) n'envoie JAMAIS
+ * `notify: true` : avec `expectedRecipients: 0`, le serveur tolère une hausse
+ * de 10 destinataires (et l'envoi recalcule l'audience à l'heure dite), si
+ * bien que des abonnés arrivés entre l'aperçu et le clic seraient prévenus
+ * sans que personne ait rien confirmé. `notify: false` ouvre le cycle sans
+ * prévenir ; s'il y a plus tard des abonnés, le panneau propose de les
+ * prévenir, avec l'aperçu et la confirmation habituels.
+ */
+export function announcementRequest(
+  kind: PrimaryAction['kind'],
+  confirmedCount: number,
+): AnnouncementRequest {
+  return kind === 'open_only'
+    ? { notify: false }
+    : { notify: true, expectedRecipients: confirmedCount };
+}
+
+/**
+ * Le bouton secondaire « Enregistrer les dates sans prévenir » fait la même
+ * requête que « Ouvrir le cycle sans prévenir » : inutile de proposer deux
+ * boutons identiques côte à côte. Il reste affiché quand le bouton principal
+ * est désactivé (corriger les dates d'une annonce programmée, p. ex.).
+ */
+export function showDatesOnlyAction(action: PrimaryAction | null): boolean {
+  return !(action?.kind === 'open_only' && action.disabledReason === null);
+}
+
+/**
+ * « 312 abonnés à prévenir pour 2027-2028 (334 abonnés au total). » — le
+ * nombre de l'aperçu, avec le total quand il diffère (sourdine, déjà prévenus).
+ */
+export function previewSummaryText(preview: OpeningPreviewResponse, t: Translate): string {
+  const { toNotify, followers } = preview.audience;
+  const values = { n: toNotify, year: preview.target.academicYear, total: followers };
+  return followers > toNotify
+    ? fill(t('scholarships.opening.previewSummaryWithTotal'), values)
+    : fill(t('scholarships.opening.previewSummary'), values);
 }
 
 // ── Bandeaux de l'aperçu ───────────────────────────────────────────────────
@@ -618,6 +676,9 @@ export interface AudienceLines {
  */
 export function audienceLines(audience: OpeningAudienceSummary, t: Translate): AudienceLines {
   const exclusions = [
+    audience.followers > audience.toNotify
+      ? fill(t('scholarships.opening.followersTotal'), { n: audience.followers })
+      : null,
     audience.muted > 0
       ? fill(t('scholarships.opening.mutedExcluded'), { n: audience.muted })
       : null,
@@ -796,16 +857,130 @@ export function shouldPollReport(
   return report === null || report.fanout.scheduledAt !== null || report.push.pending > 0;
 }
 
+// ── Carte de programmation ─────────────────────────────────────────────────
+
+/**
+ * Où en est une annonce programmée, du point de vue de l'équipe :
+ * - `scheduled` : avant l'heure d'envoi (compte à rebours) ;
+ * - `awaiting` : l'heure est passée sur le poste, mais le serveur n'a pas
+ *   encore lancé l'envoi (worker en file, interrupteur coupé, horloge du
+ *   poste en avance) — ou on ne le sait pas encore (rapport pas encore lu).
+ *   Le serveur accepte l'annulation jusqu'à ce que le worker la prenne ;
+ * - `started` : le serveur rapporte l'envoi commencé (plus de `scheduledAt`) ;
+ * - `cancelled`, `gone` : annulé, ou plus rien de programmé ;
+ * - `report` : simple rapport d'un envoi passé (carte ouverte sans programmation).
+ */
+export type ScheduledCardStatus =
+  | 'scheduled'
+  | 'awaiting'
+  | 'started'
+  | 'cancelled'
+  | 'gone'
+  | 'report';
+
+export type ScheduledCardPhase = 'countdown' | 'cancelled' | 'gone' | 'report';
+
+export function scheduledCardStatus(input: {
+  phase: ScheduledCardPhase;
+  /** La carte suit une programmation (`fanoutAt` connu), pas un envoi passé. */
+  scheduled: boolean;
+  report: OpeningReportResponse | null;
+  /**
+   * Le serveur a refusé l'annulation parce que l'envoi a commencé : vrai même
+   * si le dernier rapport lu, plus ancien, le montre encore programmé.
+   */
+  fanoutStarted?: boolean;
+}): ScheduledCardStatus {
+  switch (input.phase) {
+    case 'countdown':
+      return 'scheduled';
+    case 'cancelled':
+    case 'gone':
+      return input.phase;
+    case 'report':
+    default:
+      if (!input.scheduled) return 'report';
+      if (input.fanoutStarted) return 'started';
+      return input.report === null || input.report.fanout.scheduledAt !== null
+        ? 'awaiting'
+        : 'started';
+  }
+}
+
+/** [Annuler l'envoi] reste proposé tant que le serveur n'a pas lancé l'envoi. */
+export function canCancelScheduled(status: ScheduledCardStatus): boolean {
+  return status === 'scheduled' || status === 'awaiting';
+}
+
+/**
+ * Ce que la région `aria-live` de la carte annonce : les changements d'état
+ * seulement (programmé, en attente d'envoi, annulé, commencé), jamais le
+ * compte à rebours de chaque seconde ni les chiffres du rapport relu toutes
+ * les 5 s. `''` = rien à annoncer (les refus ont leur propre alerte).
+ */
+export function scheduledCardAnnouncement(
+  status: ScheduledCardStatus,
+  context: { toNotify: number | null; fanoutAt: string | null },
+  t: Translate,
+): string {
+  switch (status) {
+    case 'scheduled':
+      return context.toNotify === null
+        ? fill(t('scholarships.opening.scheduledLineNoCount'), {
+            time: formatTime(context.fanoutAt),
+          })
+        : fill(t('scholarships.opening.scheduledLine'), {
+            n: context.toNotify,
+            time: formatTime(context.fanoutAt),
+          });
+    case 'awaiting':
+      return t('scholarships.opening.awaitingLive');
+    case 'cancelled':
+      return t('scholarships.opening.cancelled');
+    case 'started':
+      return t('scholarships.opening.startedLive');
+    case 'gone':
+    case 'report':
+    default:
+      return '';
+  }
+}
+
+/**
+ * Faut-il relire les listes (« Annoncé », « À faire ») ? Quand le serveur
+ * rapporte l'envoi commencé, pas quand le compte à rebours du poste arrive à
+ * zéro : à ce moment-là, l'envoi peut encore attendre (et rester annulable).
+ */
+export function scheduledCardChanged(
+  before: ScheduledCardStatus,
+  after: ScheduledCardStatus,
+): boolean {
+  return after === 'started' && (before === 'scheduled' || before === 'awaiting');
+}
+
 // ── Liste, « À faire », historique ─────────────────────────────────────────
 
 /**
- * Colonne « Abonnés » : l'audience notifiable de la portée en vigueur.
- * L'aperçu global ne liste que les bourses suivies ou annoncées : absente, une
- * bourse a 0 abonné. `—` tant que l'aperçu n'est pas chargé.
+ * Colonne « Abonnés à prévenir » : l'audience notifiable de la portée en
+ * vigueur. L'aperçu global ne liste que les bourses suivies ou annoncées :
+ * absente, une bourse a 0 abonné. `—` tant que l'aperçu n'est pas chargé.
  */
 export function followersCell(item: OpeningOverviewItem | undefined, loaded: boolean): string {
   if (!loaded) return '—';
   return String(item?.notifiable ?? 0);
+}
+
+/**
+ * Sous la colonne « Abonnés à prévenir » : « 334 au total » quand des abonnés
+ * ne seront pas prévenus (sourdine, portée « M'avertir » seulement), sinon rien.
+ */
+export function followersTotalText(
+  item: OpeningOverviewItem | undefined,
+  loaded: boolean,
+  t: Translate,
+): string | null {
+  if (!loaded || !item || item.followers <= item.notifiable) return null;
+  return fill(t('scholarships.opening.colFollowersTotal'), { n: item.followers });
 }
 
 /** Colonne « Annoncé » : `dd/mm/yyyy (n)`, « programmé » ou `—`. */
@@ -825,29 +1000,126 @@ export function announcedCell(
   return '—';
 }
 
-/** « Chevening · 2027-2028 · 312 abonnés · ouverte par le catalogue ». */
+/**
+ * « Chevening · 2027-2028 · 312 abonnés à prévenir (334 au total) · ouverte
+ * par le catalogue ». Le nombre est celui de la colonne de la liste
+ * (`notifiable`) ; un backend antérieur ne le donne pas : la ligne montre alors
+ * le total, libellé « abonnés » et non « à prévenir ».
+ */
 export function todoRowText(item: OpeningTodoItem, t: Translate): string {
-  return fill(t('scholarships.opening.todoRow'), {
+  const notifiable =
+    typeof item.notifiable === 'number' && Number.isFinite(item.notifiable)
+      ? item.notifiable
+      : null;
+  const values = {
     name: item.nameFr,
     year: item.academicYear,
-    n: item.followers,
     source: t(`scholarships.opening.todoSource_${item.source}`),
-  });
+  };
+  if (notifiable === null) {
+    return fill(t('scholarships.opening.todoRowFollowers'), { ...values, n: item.followers });
+  }
+  return item.followers > notifiable
+    ? fill(t('scholarships.opening.todoRowWithTotal'), {
+        ...values,
+        n: notifiable,
+        total: item.followers,
+      })
+    : fill(t('scholarships.opening.todoRow'), { ...values, n: notifiable });
 }
 
-/** `scholarship_cycle.notify_scheduled` → `scholarships.opening.event_notify_scheduled`. */
-export function auditEventMessageKey(action: OpeningAuditAction): string {
-  return `scholarships.opening.event_${action.replace(/^scholarship_cycle\./, '')}`;
+function isKnownAuditAction(action: string): action is OpeningAuditAction {
+  return (OPENING_AUDIT_ACTIONS as readonly string[]).includes(action);
+}
+
+/**
+ * `scholarship_cycle.notify_scheduled` → `scholarships.opening.event_notify_scheduled`.
+ * Une action inconnue de cet admin (backend plus récent) a un libellé générique
+ * plutôt que sa clé brute.
+ */
+export function auditEventMessageKey(action: string): string {
+  return isKnownAuditAction(action)
+    ? `scholarships.opening.event_${action.replace(/^scholarship_cycle\./, '')}`
+    : 'scholarships.opening.event_unknown';
+}
+
+/** Les motifs (`reasonCode`) qui ont un libellé ; tout autre s'affiche brut. */
+export const EVENT_REASON_CODES = [
+  // Annonce non envoyée (`skipped`).
+  'not_public_at_fanout',
+  'cycle_closed_at_fanout',
+  'fanout_too_late',
+  'dates_only',
+  'pre_existing_open',
+  'already_announced',
+  'nothing_to_send',
+  'legacy_first_activation_only',
+  // Demande refusée (`refused`) : les codes d'erreur du serveur.
+  ...OPENING_ERROR_CODES,
+  'SCHOLARSHIP_NOT_READY',
+] as const;
+
+/** `OPENING_CONFIRMATION_REQUIRED` → `scholarships.opening.eventReason_opening_confirmation_required`. */
+export function eventReasonMessageKey(code: string): string | null {
+  return (EVENT_REASON_CODES as readonly string[]).includes(code)
+    ? `scholarships.opening.eventReason_${code.toLowerCase()}`
+    : null;
+}
+
+function isEventOutcome(value: unknown): value is OpeningEventOutcome {
+  return (
+    typeof value === 'string' && (OPENING_EVENT_OUTCOMES as readonly string[]).includes(value)
+  );
+}
+
+function refusedMessageKey(action: string): string {
+  switch (action) {
+    case 'scholarship_cycle.notify_cancelled':
+      return 'scholarships.opening.eventRefused_cancel';
+    case 'scholarship_cycle.notify_stopped':
+      return 'scholarships.opening.eventRefused_stop';
+    default:
+      return 'scholarships.opening.eventRefused_opening';
+  }
+}
+
+/**
+ * Le libellé d'un événement, selon ce qu'il a réellement produit :
+ * « Annonce non envoyée : bourse plus publique », « Ouverture refusée :
+ * confirmation requise »… Sans `outcome` (backend antérieur) ou avec
+ * `sent`, le libellé de l'action.
+ */
+export function recentEventTitle(event: OpeningRecentEvent, t: Translate): string {
+  const outcome = isEventOutcome(event.outcome) ? event.outcome : 'sent';
+  if (outcome === 'sent') return t(auditEventMessageKey(event.action));
+  const code = typeof event.reasonCode === 'string' ? event.reasonCode.trim() : '';
+  const reasonKey = code ? eventReasonMessageKey(code) : null;
+  const reason = reasonKey
+    ? t(reasonKey)
+    : code
+      ? fill(t('scholarships.opening.eventReasonUnknown'), { code })
+      : null;
+  const prefix =
+    outcome === 'skipped' ? t('scholarships.opening.eventSkipped') : t(refusedMessageKey(event.action));
+  return reason === null
+    ? prefix
+    : fill(t('scholarships.opening.eventWithReason'), { event: prefix, reason });
 }
 
 /** « 07/10/2026 14:32 · Annonce programmée · Aminata D. · 2027-2028 · 312 ». */
 export function recentEventLabel(event: OpeningRecentEvent, t: Translate): string {
+  // Un « 0 » après « Annonce non envoyée » se lirait comme un envoi à zéro
+  // étudiant : rien n'est parti, le nombre n'apporte rien.
+  const count =
+    event.toNotify === null || (event.outcome === 'skipped' && event.toNotify === 0)
+      ? null
+      : String(event.toNotify);
   return [
     formatDateTime(event.occurredAt),
-    t(auditEventMessageKey(event.action)),
+    recentEventTitle(event, t),
     event.actorName ?? t('scholarships.opening.eventSystem'),
     event.academicYear,
-    event.toNotify === null ? null : String(event.toNotify),
+    count,
   ]
     .filter((part): part is string => part !== null && part !== '')
     .join(' · ');
