@@ -19,6 +19,7 @@ import {
   OPENING_AUDIT_ACTIONS,
   OPENING_ERROR_CODES,
   OPENING_EVENT_OUTCOMES,
+  OPENING_SCHEDULE_END_ACTIONS,
   type ActivateScholarshipBody,
   type ActivateScholarshipResponse,
   type CycleOpeningSkipReason,
@@ -351,7 +352,7 @@ export function cancelConflictMessageKey(
 ): string {
   const lastFanoutAt = detailString(apiErrorCode(error).details, 'lastFanoutAt');
   const last = lastFanoutAt ? Date.parse(lastFanoutAt) : Number.NaN;
-  const scheduledAt = Date.parse(fanoutAt) - holdSeconds * 1000;
+  const scheduledAt = fanoutScheduledAtMs(fanoutAt, holdSeconds);
   return Number.isFinite(last) && Number.isFinite(scheduledAt) && last > scheduledAt
     ? 'scholarships.opening.tooLateToCancel'
     : 'scholarships.opening.notScheduled';
@@ -860,51 +861,158 @@ export function shouldPollReport(
 // ── Carte de programmation ─────────────────────────────────────────────────
 
 /**
+ * L'instant où l'envoi suivi a été programmé, en ms sur l'horloge du serveur :
+ * `fanoutAt − holdSeconds`. `NaN` si `fanoutAt` manque ou est illisible.
+ */
+export function fanoutScheduledAtMs(fanoutAt: string | null, holdSeconds: number): number {
+  return fanoutAt ? Date.parse(fanoutAt) - holdSeconds * 1000 : Number.NaN;
+}
+
+function isScheduleEndAction(action: string): boolean {
+  return (OPENING_SCHEDULE_END_ACTIONS as readonly string[]).includes(action);
+}
+
+/**
+ * Comment la programmation suivie par la carte a pris fin, selon le serveur :
+ * - `started` : les notifications sont écrites (`lastFanoutAt` postérieur à la
+ *   programmation — la règle de `cancelConflictMessageKey` —, ou l'événement
+ *   `fanout_completed` fait) ;
+ * - `dropped` : le worker l'a abandonnée (`skipped` : bourse plus publique,
+ *   cycle clos, trop en retard) — l'événement porte le motif ;
+ * - `cancelled` : un équipier l'a annulée, ici ou ailleurs (l'événement dit qui) ;
+ * - `unscheduled` : plus rien de programmé, rien n'est parti, motif encore
+ *   inconnu.
+ *
+ * `null` tant que le serveur la rapporte programmée, ou que le rapport n'est
+ * pas lu. Le motif vient de `report.fanout.lastScheduleEnd` ; à défaut
+ * (backend antérieur), des « Derniers événements » de l'aperçu pour la même
+ * année. Seul compte un événement postérieur à la programmation : l'annulation
+ * d'une programmation précédente ne dit rien de celle-ci.
+ */
+export type ScheduleEnd =
+  | { kind: 'started'; event: OpeningRecentEvent | null }
+  | { kind: 'dropped'; event: OpeningRecentEvent }
+  | { kind: 'cancelled'; event: OpeningRecentEvent }
+  | { kind: 'unscheduled'; event: null };
+
+export function scheduleEnd(input: {
+  report: OpeningReportResponse | null;
+  fanoutAt: string | null;
+  holdSeconds: number;
+  academicYear: string;
+  recentEvents?: readonly OpeningRecentEvent[];
+}): ScheduleEnd | null {
+  const { report } = input;
+  if (report === null || report.fanout.scheduledAt !== null) return null;
+  const scheduledAt = fanoutScheduledAtMs(input.fanoutAt, input.holdSeconds);
+  const since = (iso: string | null | undefined, strict: boolean): boolean => {
+    const at = iso ? Date.parse(iso) : Number.NaN;
+    if (!Number.isFinite(at)) return false;
+    if (!Number.isFinite(scheduledAt)) return true;
+    return strict ? at > scheduledAt : at >= scheduledAt;
+  };
+
+  if (since(report.fanout.lastFanoutAt, true)) return { kind: 'started', event: null };
+
+  const event = [
+    report.fanout.lastScheduleEnd ?? null,
+    ...(input.recentEvents ?? []).filter((e) => e.academicYear === input.academicYear),
+  ].find(
+    (candidate): candidate is OpeningRecentEvent =>
+      candidate !== null &&
+      isScheduleEndAction(candidate.action) &&
+      candidate.outcome !== 'refused' &&
+      since(candidate.occurredAt, false),
+  );
+  if (!event) return { kind: 'unscheduled', event: null };
+  // Sans `outcome` (backend antérieur), un événement se lit comme fait.
+  if (event.outcome === 'skipped') return { kind: 'dropped', event };
+  if (event.action === 'scholarship_cycle.notify_cancelled') return { kind: 'cancelled', event };
+  return { kind: 'started', event };
+}
+
+/**
  * Où en est une annonce programmée, du point de vue de l'équipe :
  * - `scheduled` : avant l'heure d'envoi (compte à rebours) ;
  * - `awaiting` : l'heure est passée sur le poste, mais le serveur n'a pas
  *   encore lancé l'envoi (worker en file, interrupteur coupé, horloge du
  *   poste en avance) — ou on ne le sait pas encore (rapport pas encore lu).
  *   Le serveur accepte l'annulation jusqu'à ce que le worker la prenne ;
- * - `started` : le serveur rapporte l'envoi commencé (plus de `scheduledAt`) ;
- * - `cancelled`, `gone` : annulé, ou plus rien de programmé ;
+ * - `started` : le serveur rapporte les notifications écrites ;
+ * - `dropped` : le worker a abandonné l'envoi (motif dans l'événement) ;
+ * - `cancelled` : annulé, par cette carte ou ailleurs ;
+ * - `unscheduled` : plus rien de programmé, rien n'est parti, motif inconnu ;
  * - `report` : simple rapport d'un envoi passé (carte ouverte sans programmation).
+ *
+ * Plus de `scheduledAt` ne veut donc PAS dire « commencé » : le worker qui
+ * abandonne l'envoi et l'annulation l'effacent aussi.
  */
 export type ScheduledCardStatus =
   | 'scheduled'
   | 'awaiting'
   | 'started'
+  | 'dropped'
   | 'cancelled'
-  | 'gone'
+  | 'unscheduled'
   | 'report';
 
-export type ScheduledCardPhase = 'countdown' | 'cancelled' | 'gone' | 'report';
+export type ScheduledCardPhase = 'countdown' | 'cancelled' | 'report';
 
-export function scheduledCardStatus(input: {
+/**
+ * Le serveur a refusé l'annulation (409 `OPENING_NOT_SCHEDULED`) : `too_late`
+ * (l'envoi a commencé) ou `not_scheduled` (plus rien de programmé, rien n'est
+ * parti). Vrai même si le dernier rapport lu, plus ancien, la montre encore
+ * programmée.
+ */
+export type CancelRefusal = 'too_late' | 'not_scheduled';
+
+export interface ScheduledCardInput {
   phase: ScheduledCardPhase;
   /** La carte suit une programmation (`fanoutAt` connu), pas un envoi passé. */
   scheduled: boolean;
   report: OpeningReportResponse | null;
-  /**
-   * Le serveur a refusé l'annulation parce que l'envoi a commencé : vrai même
-   * si le dernier rapport lu, plus ancien, le montre encore programmé.
-   */
-  fanoutStarted?: boolean;
-}): ScheduledCardStatus {
+  fanoutAt?: string | null;
+  holdSeconds?: number;
+  academicYear?: string;
+  /** Les « Derniers événements » de l'aperçu (backend sans `lastScheduleEnd`). */
+  recentEvents?: readonly OpeningRecentEvent[];
+  cancelRefusal?: CancelRefusal | null;
+}
+
+export interface ScheduledCardState {
+  status: ScheduledCardStatus;
+  /** L'événement qui a mis fin à la programmation, s'il est connu (motif, auteur). */
+  event: OpeningRecentEvent | null;
+}
+
+export function scheduledCardState(input: ScheduledCardInput): ScheduledCardState {
   switch (input.phase) {
     case 'countdown':
-      return 'scheduled';
+      return { status: 'scheduled', event: null };
     case 'cancelled':
-    case 'gone':
-      return input.phase;
+      return { status: 'cancelled', event: null };
     case 'report':
-    default:
-      if (!input.scheduled) return 'report';
-      if (input.fanoutStarted) return 'started';
-      return input.report === null || input.report.fanout.scheduledAt !== null
-        ? 'awaiting'
-        : 'started';
+    default: {
+      if (!input.scheduled) return { status: 'report', event: null };
+      const end = scheduleEnd({
+        report: input.report,
+        fanoutAt: input.fanoutAt ?? null,
+        holdSeconds: input.holdSeconds ?? 0,
+        academicYear: input.academicYear ?? '',
+        recentEvents: input.recentEvents,
+      });
+      if (end) return { status: end.kind, event: end.event };
+      if (input.cancelRefusal === 'too_late') return { status: 'started', event: null };
+      if (input.cancelRefusal === 'not_scheduled') {
+        return { status: 'unscheduled', event: null };
+      }
+      return { status: 'awaiting', event: null };
+    }
   }
+}
+
+export function scheduledCardStatus(input: ScheduledCardInput): ScheduledCardStatus {
+  return scheduledCardState(input).status;
 }
 
 /** [Annuler l'envoi] reste proposé tant que le serveur n'a pas lancé l'envoi. */
@@ -913,14 +1021,45 @@ export function canCancelScheduled(status: ScheduledCardStatus): boolean {
 }
 
 /**
+ * Le texte d'une programmation terminée sans envoi : « Annonce non envoyée :
+ * bourse plus publique. Aucun étudiant n'a été prévenu. », « Moussa K. a
+ * annulé l'envoi… », « L'envoi n'est plus programmé… ». `null` sinon.
+ */
+export function scheduledCardEndText(
+  status: ScheduledCardStatus,
+  event: OpeningRecentEvent | null,
+  t: Translate,
+): string | null {
+  switch (status) {
+    case 'dropped':
+      return fill(t('scholarships.opening.droppedLine'), {
+        reason: event ? recentEventTitle(event, t) : t('scholarships.opening.eventSkipped'),
+      });
+    case 'cancelled':
+      return event?.actorName
+        ? fill(t('scholarships.opening.cancelledBy'), { name: event.actorName })
+        : t('scholarships.opening.cancelled');
+    case 'unscheduled':
+      return t('scholarships.opening.unscheduledLine');
+    default:
+      return null;
+  }
+}
+
+/**
  * Ce que la région `aria-live` de la carte annonce : les changements d'état
- * seulement (programmé, en attente d'envoi, annulé, commencé), jamais le
- * compte à rebours de chaque seconde ni les chiffres du rapport relu toutes
- * les 5 s. `''` = rien à annoncer (les refus ont leur propre alerte).
+ * seulement (programmé, en attente d'envoi, commencé, abandonné et pourquoi,
+ * annulé et par qui, plus programmé), jamais le compte à rebours de chaque
+ * seconde ni les chiffres du rapport relu toutes les 5 s. `''` = rien à
+ * annoncer (les refus ont leur propre alerte).
  */
 export function scheduledCardAnnouncement(
   status: ScheduledCardStatus,
-  context: { toNotify: number | null; fanoutAt: string | null },
+  context: {
+    toNotify: number | null;
+    fanoutAt: string | null;
+    event?: OpeningRecentEvent | null;
+  },
   t: Translate,
 ): string {
   switch (status) {
@@ -935,27 +1074,37 @@ export function scheduledCardAnnouncement(
           });
     case 'awaiting':
       return t('scholarships.opening.awaitingLive');
-    case 'cancelled':
-      return t('scholarships.opening.cancelled');
     case 'started':
       return t('scholarships.opening.startedLive');
-    case 'gone':
+    case 'dropped':
+    case 'cancelled':
+    case 'unscheduled':
+      return scheduledCardEndText(status, context.event ?? null, t) ?? '';
     case 'report':
     default:
       return '';
   }
 }
 
+const PENDING_CARD_STATUSES: readonly ScheduledCardStatus[] = ['scheduled', 'awaiting'];
+const ENDED_CARD_STATUSES: readonly ScheduledCardStatus[] = [
+  'started',
+  'dropped',
+  'cancelled',
+  'unscheduled',
+];
+
 /**
- * Faut-il relire les listes (« Annoncé », « À faire ») ? Quand le serveur
- * rapporte l'envoi commencé, pas quand le compte à rebours du poste arrive à
- * zéro : à ce moment-là, l'envoi peut encore attendre (et rester annulable).
+ * Faut-il relire l'aperçu et les listes (« Annoncé », « À faire ») ? Quand la
+ * programmation prend fin côté serveur — envoi lancé, abandonné, annulé ici
+ * ou ailleurs —, pas quand le compte à rebours du poste arrive à zéro : à ce
+ * moment-là, l'envoi peut encore attendre (et rester annulable).
  */
 export function scheduledCardChanged(
   before: ScheduledCardStatus,
   after: ScheduledCardStatus,
 ): boolean {
-  return after === 'started' && (before === 'scheduled' || before === 'awaiting');
+  return PENDING_CARD_STATUSES.includes(before) && ENDED_CARD_STATUSES.includes(after);
 }
 
 // ── Liste, « À faire », historique ─────────────────────────────────────────

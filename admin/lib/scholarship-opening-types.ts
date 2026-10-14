@@ -92,6 +92,17 @@ export const OPENING_AUDIT_ACTIONS = [
 export type OpeningAuditAction = (typeof OPENING_AUDIT_ACTIONS)[number];
 
 /**
+ * Les actions qui mettent fin à une programmation : annulée, envoi fait, ou
+ * abandonnée par le worker (`skipped` et son motif). Le rapport en donne la
+ * dernière (`fanout.lastScheduleEnd`).
+ */
+export const OPENING_SCHEDULE_END_ACTIONS = [
+  'scholarship_cycle.notify_cancelled',
+  'scholarship_cycle.fanout_completed',
+  'scholarship_cycle.fanout_expired',
+] as const satisfies readonly OpeningAuditAction[];
+
+/**
  * Ce qu'un événement d'annonce a réellement produit (« Derniers
  * événements ») : `sent` (fait), `skipped` (rien n'est parti, p. ex. bourse
  * plus publique au moment de l'envoi), `refused` (demande refusée par le
@@ -312,6 +323,14 @@ export interface OpeningReportResponse {
     stoppedAt: IsoDateTime | null;
     notifiedBy: OpeningAdminRef | null;
     scope: OpeningAudienceScope | null;
+    /**
+     * Le dernier événement qui a mis fin à une programmation de ce cycle
+     * (`OPENING_SCHEDULE_END_ACTIONS`), `null` s'il n'y en a pas : quand
+     * `scheduledAt` redevient `null`, il dit si l'envoi est parti, a été
+     * annulé (par qui) ou abandonné par le worker (motif). Absent d'un
+     * backend antérieur.
+     */
+    lastScheduleEnd?: OpeningRecentEvent | null;
   };
   inbox: { total: number; read: number };
   push: {

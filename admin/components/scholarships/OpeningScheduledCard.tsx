@@ -16,9 +16,11 @@ import {
   reportProvidersLine,
   scheduledCardAnnouncement,
   scheduledCardChanged,
-  scheduledCardStatus,
+  scheduledCardEndText,
+  scheduledCardState,
   secondsUntil,
   shouldPollReport,
+  type CancelRefusal,
   type ScheduledCardPhase,
 } from '../../lib/scholarship-opening';
 import {
@@ -26,7 +28,10 @@ import {
   fetchOpeningReport,
   stopOpening,
 } from '../../lib/scholarship-opening-api';
-import type { OpeningReportResponse } from '../../lib/scholarship-opening-types';
+import type {
+  OpeningRecentEvent,
+  OpeningReportResponse,
+} from '../../lib/scholarship-opening-types';
 import { useLocale } from '../locale-provider';
 import { Alert, Button, ConfirmDialog } from '../ui';
 import type { AlertVariant } from '../ui';
@@ -38,15 +43,19 @@ import type { AlertVariant } from '../ui';
  * n'est encore écrit pour les étudiants, annuler ne laisse aucune trace chez
  * eux. À l'heure dite sur le poste, l'envoi n'est pas forcément parti (file du
  * worker, interrupteur coupé, horloge du poste en avance) : la carte affiche
- * « En attente d'envoi » et garde [Annuler l'envoi] tant que le serveur ne
- * rapporte pas l'envoi commencé — il accepte l'annulation jusque-là. Ensuite :
- * le rapport, relu toutes les 5 s tant que des push attendent (10 min au
- * plus), et [Arrêter les envois restants], qui garde les entrées d'inbox et
- * ne retient que les push pas encore partis.
+ * « En attente d'envoi » et garde [Annuler l'envoi] tant que le serveur la
+ * rapporte programmée — il accepte l'annulation jusque-là. Quand elle ne
+ * l'est plus, le rapport dit pourquoi (`lastScheduleEnd`) : envoi parti
+ * (le rapport, relu toutes les 5 s tant que des push attendent, 10 min au
+ * plus, et [Arrêter les envois restants], qui garde les entrées d'inbox et
+ * ne retient que les push pas encore partis), envoi abandonné par le worker
+ * (bourse plus publique, cycle clos, trop en retard), ou annulé — ici ou par
+ * un autre équipier. Jamais « commencé » pour un envoi qui n'est pas parti.
  *
  * Lecteurs d'écran : seule une région dédiée annonce les CHANGEMENTS d'état
- * (programmé, en attente d'envoi, annulé, commencé) ; ni le compte à rebours
- * de chaque seconde ni les chiffres relus du rapport n'y passent.
+ * (programmé, en attente d'envoi, commencé, abandonné et pourquoi, annulé) ;
+ * ni le compte à rebours de chaque seconde ni les chiffres relus du rapport
+ * n'y passent.
  */
 
 const srOnlyStyle: CSSProperties = {
@@ -87,7 +96,12 @@ export interface OpeningScheduledCardProps {
   holdSeconds: number;
   /** Le nombre annoncé à la programmation, s'il est connu. */
   toNotify: number | null;
-  /** Annulé, arrêté ou parti : la page relit l'aperçu et les listes. */
+  /**
+   * Les « Derniers événements » de l'aperçu : le motif d'une fin de
+   * programmation quand le rapport ne le donne pas (backend antérieur).
+   */
+  recentEvents?: readonly OpeningRecentEvent[];
+  /** Annulé, abandonné, arrêté ou parti : la page relit l'aperçu et les listes. */
   onChanged: () => void;
   onHide?: () => void;
 }
@@ -100,6 +114,7 @@ export function OpeningScheduledCard({
   deadlineMs,
   holdSeconds,
   toNotify,
+  recentEvents,
   onChanged,
   onHide,
 }: OpeningScheduledCardProps) {
@@ -120,9 +135,9 @@ export function OpeningScheduledCard({
     variant: AlertVariant;
     text: string;
   } | null>(null);
-  // Annulation refusée « trop tard » : l'envoi a commencé, même si le
-  // dernier rapport lu le montrait encore programmé.
-  const [fanoutStarted, setFanoutStarted] = useState(false);
+  // Annulation refusée : l'envoi a commencé (« trop tard ») ou plus rien
+  // n'est programmé, même si le dernier rapport lu le montrait encore.
+  const [cancelRefusal, setCancelRefusal] = useState<CancelRefusal | null>(null);
 
   // Compte à rebours : une seconde à la fois, puis bascule sur le rapport,
   // qui dit si l'envoi a réellement commencé (« En attente d'envoi » sinon).
@@ -136,15 +151,20 @@ export function OpeningScheduledCard({
     return () => clearInterval(timer);
   }, [phase, deadlineMs]);
 
-  const status = scheduledCardStatus({
+  const { status, event } = scheduledCardState({
     phase,
     scheduled: fanoutAt !== null,
     report,
-    fanoutStarted,
+    fanoutAt,
+    holdSeconds,
+    academicYear,
+    recentEvents,
+    cancelRefusal,
   });
 
-  // L'envoi a commencé côté serveur : la colonne « Annoncé » et « À faire »
-  // changent. Pas avant : à zéro sur le poste, l'envoi peut encore attendre.
+  // La programmation a pris fin côté serveur (partie, abandonnée, annulée) :
+  // l'aperçu, la colonne « Annoncé » et « À faire » changent. Pas avant : à
+  // zéro sur le poste, l'envoi peut encore attendre.
   const previousStatus = useRef(status);
   useEffect(() => {
     const before = previousStatus.current;
@@ -154,7 +174,7 @@ export function OpeningScheduledCard({
 
   // La région `aria-live` est rendue vide, puis remplie : un texte présent
   // dès l'insertion n'est pas lu par tous les lecteurs d'écran.
-  const announcement = scheduledCardAnnouncement(status, { toNotify, fanoutAt }, t);
+  const announcement = scheduledCardAnnouncement(status, { toNotify, fanoutAt, event }, t);
   const [liveText, setLiveText] = useState('');
   useEffect(() => {
     setLiveText(announcement);
@@ -203,23 +223,26 @@ export function OpeningScheduledCard({
     setMessage(null);
     try {
       await cancelOpening(scholarshipId, cycleId);
+      // Le statut passe à « annulé » : l'aperçu et les listes sont relus à
+      // ce moment-là (`scheduledCardChanged`).
       setPhase('cancelled');
-      onChanged();
     } catch (error) {
       const parsed = apiErrorCode(error);
       if (parsed.code === 'OPENING_NOT_SCHEDULED' && fanoutAt) {
         const key = cancelConflictMessageKey(error, fanoutAt, holdSeconds);
-        setMessage({ variant: 'warning', text: t(key) });
         if (key === 'scholarships.opening.tooLateToCancel') {
-          // L'envoi a commencé : le statut passe à « commencé » (les listes
-          // sont relues à ce moment-là) et le rapport est relu tout de suite.
-          setFanoutStarted(true);
-          setPhase('report');
-          setPollToken((value) => value + 1);
+          // L'envoi a commencé : le statut passe à « commencé ».
+          setMessage({ variant: 'warning', text: t(key) });
+          setCancelRefusal('too_late');
         } else {
-          setPhase('gone');
-          onChanged();
+          // Plus rien de programmé et rien n'est parti : abandonné par le
+          // worker ou annulé ailleurs. Le rapport relu dit lequel.
+          setCancelRefusal('not_scheduled');
         }
+        // Dans les deux cas, les listes sont relues au changement de statut
+        // et le rapport tout de suite.
+        setPhase('report');
+        setPollToken((value) => value + 1);
       } else {
         // 409 OPENING_BUSY : le worker tient le cycle (envoi en préparation)
         // depuis plus de 5 s. Réessayer quelques secondes plus tard répond
@@ -261,8 +284,10 @@ export function OpeningScheduledCard({
 
   const remaining = deadlineMs === null ? 0 : secondsUntil(deadlineMs, now);
   const cancellable = canCancelScheduled(status);
-  // Annulé ou introuvable : seule l'alerte parle, la ligne « programmées à »
-  // serait démentie juste en dessous.
+  // Annulé, abandonné, plus programmé : rien n'est parti, seule l'alerte
+  // parle (le titre « Rapport d'envoi » et ses zéros diraient le contraire).
+  const endText = scheduledCardEndText(status, event, t);
+  const showReport = status === 'awaiting' || status === 'started' || status === 'report';
   const heading =
     status === 'scheduled'
       ? toNotify === null
@@ -333,13 +358,26 @@ export function OpeningScheduledCard({
         </>
       ) : null}
 
-      {phase === 'cancelled' ? (
-        <Alert variant="success">{t('scholarships.opening.cancelled')}</Alert>
+      {endText ? (
+        // Sans rôle live : la région d'état de la carte l'annonce déjà, une
+        // seule fois.
+        <Alert
+          live={false}
+          variant={
+            status === 'dropped' || status === 'unscheduled'
+              ? 'warning'
+              : phase === 'cancelled'
+                ? 'success'
+                : 'info'
+          }
+        >
+          {endText}
+        </Alert>
       ) : null}
 
       {message ? <Alert variant={message.variant}>{message.text}</Alert> : null}
 
-      {phase === 'report' ? (
+      {phase === 'report' && showReport ? (
         <div style={{ display: 'grid', gap: 6 }}>
           {reportError ? <Alert variant="warning">{reportError}</Alert> : null}
           {status === 'awaiting' ? null : report === null ? (

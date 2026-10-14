@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import { LocaleProvider } from '../locale-provider';
-import { ConfirmDialog, Modal } from '../ui';
+import { Alert, ConfirmDialog, Modal } from '../ui';
 import { OpeningScheduledCard } from './OpeningScheduledCard';
 import { OpeningTodoCard } from './OpeningTodoCard';
 
@@ -103,6 +103,20 @@ describe('OpeningScheduledCard (rendu serveur)', () => {
     const html = render(<OpeningScheduledCard {...base} fanoutAt={null} deadlineMs={null} />);
     expect(html).toContain('Rapport d&#x27;envoi · 2027-2028');
     expect(html).not.toContain('Annuler l&#x27;envoi');
+  });
+});
+
+describe('Alert (rendu serveur)', () => {
+  it('rôle live selon la gravité ; aucun quand un parent annonce déjà le texte', () => {
+    expect(render(<Alert variant="warning">x</Alert>)).toContain('role="alert"');
+    expect(render(<Alert variant="success">x</Alert>)).toContain('role="status"');
+    const silent = render(
+      <Alert variant="warning" live={false}>
+        x
+      </Alert>,
+    );
+    expect(silent).not.toContain('role=');
+    expect(liveRegions(silent)).toEqual([]);
   });
 });
 

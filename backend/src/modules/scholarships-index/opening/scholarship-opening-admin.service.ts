@@ -47,6 +47,7 @@ import {
   OPENING_AUDIT_ENTITY_TYPE,
   OPENING_AUDIT_PURPOSE,
   OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE,
+  OPENING_SCHEDULE_END_ACTIONS,
   OPENING_TODO_LIMIT,
   openingError,
   openingEventOutcome,
@@ -731,7 +732,7 @@ export class ScholarshipOpeningAdminService {
       throw new NotFoundException(`Cycle ${cycleId} not found for this scholarship.`);
     }
 
-    const [groups, [extra], lastFanout] = await Promise.all([
+    const [groups, [extra], lastFanout, lastEnd] = await Promise.all([
       this.run((p) =>
         p.$queryRaw<OpeningReportGroup[]>`
           SELECT "pushStatus", "pushLastError", "pushProvider",
@@ -769,10 +770,34 @@ export class ScholarshipOpeningAdminService {
           select: { changes: true },
         }),
       ),
+      // Pourquoi la programmation a pris fin : relu APRÈS le cycle, il voit
+      // l'événement écrit dans la même transaction que l'effacement de
+      // `openingFanoutDueAt` (worker, annulation).
+      this.run(
+        (p): Promise<OpeningAuditEventRow | null> =>
+          p.adminAuditEvent.findFirst({
+            where: {
+              entityType: OPENING_AUDIT_ENTITY_TYPE,
+              entityId: cycleId,
+              action: { in: [...OPENING_SCHEDULE_END_ACTIONS] },
+              result: { in: ['success', 'skipped'] },
+            },
+            orderBy: { occurredAt: 'desc' },
+            select: {
+              action: true,
+              occurredAt: true,
+              actorAdminId: true,
+              entityId: true,
+              result: true,
+              reasonCode: true,
+              changes: true,
+            },
+          }),
+      ),
     ]);
 
     const scope = cycle.openingFanoutScope ?? jsonField(lastFanout?.changes ?? null, 'scope');
-    const admins = await this.adminRefs([cycle.openingNotifiedById]);
+    const admins = await this.adminRefs([cycle.openingNotifiedById, lastEnd?.actorAdminId ?? null]);
     const counts = buildOpeningReportCounts(groups, extra?.acceptedPushes ?? 0);
     return {
       scholarshipId,
@@ -787,6 +812,9 @@ export class ScholarshipOpeningAdminService {
           ? (admins.get(cycle.openingNotifiedById) ?? null)
           : null,
         scope: isOpeningAudienceScope(scope) ? scope : null,
+        lastScheduleEnd: lastEnd
+          ? buildOpeningRecentEvent(lastEnd, admins, new Map([[cycleId, cycle.academicYear]]))
+          : null,
       },
       ...counts,
       oldestDuePendingAt: iso(extra?.oldestDuePendingAt),

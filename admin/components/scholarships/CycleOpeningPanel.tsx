@@ -649,6 +649,7 @@ function ApprovedCycleOpeningPanel({
               deadlineMs={scheduled.deadlineMs}
               holdSeconds={preview.holdSeconds}
               toNotify={scheduled.toNotify}
+              recentEvents={preview.recentEvents}
               onChanged={handleOpeningChanged}
               onHide={() => setScheduled(null)}
             />

@@ -521,6 +521,19 @@ export const OPENING_AUDIT_ACTIONS = [
 export type OpeningAuditAction = (typeof OPENING_AUDIT_ACTIONS)[number];
 
 /**
+ * Les actions qui mettent fin à une programmation d'annonce : annulée par
+ * l'équipe (`notify_cancelled`), envoi fait (`fanout_completed`, `success`)
+ * ou abandonné par le worker (`fanout_completed` ou `fanout_expired`,
+ * `skipped`, avec son motif). Le rapport en donne la dernière
+ * (`fanout.lastScheduleEnd`).
+ */
+export const OPENING_SCHEDULE_END_ACTIONS = [
+  'scholarship_cycle.notify_cancelled',
+  'scholarship_cycle.fanout_completed',
+  'scholarship_cycle.fanout_expired',
+] as const satisfies readonly OpeningAuditAction[];
+
+/**
  * L'issue d'un événement d'annonce, telle que le fil de l'équipe doit la dire
  * (`AdminAuditEvent.result`) :
  * - `sent` : le geste a eu lieu tel que l'action le nomme (`success`) ;
@@ -857,6 +870,16 @@ export interface OpeningReportResponse {
     stoppedAt: IsoDateTime | null;
     notifiedBy: OpeningAdminRef | null;
     scope: OpeningAudienceScope | null;
+    /**
+     * Additif. Le dernier événement qui a mis fin à une programmation de ce
+     * cycle (`OPENING_SCHEDULE_END_ACTIONS`, refus exclus), `null` s'il n'y
+     * en a pas. Quand `scheduledAt` redevient `null`, il dit POURQUOI : envoi
+     * fait, annulé par l'équipe (`actorName`), ou abandonné par le worker
+     * (`outcome: 'skipped'` et son `reasonCode` : `not_public_at_fanout`,
+     * `cycle_closed_at_fanout`, `fanout_too_late`) — jamais « l'envoi a
+     * commencé » sur une annonce qui n'est pas partie.
+     */
+    lastScheduleEnd: OpeningRecentEvent | null;
   };
   inbox: { total: number; read: number };
   push: {

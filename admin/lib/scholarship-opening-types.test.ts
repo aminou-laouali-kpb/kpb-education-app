@@ -11,6 +11,7 @@ import {
   OPENING_EVENT_OUTCOMES,
   OPENING_NOTIFICATION_REASONS,
   OPENING_NOTIFICATION_STATES,
+  OPENING_SCHEDULE_END_ACTIONS,
   SCHOLARSHIP_OPENING_MODES,
 } from './scholarship-opening-types';
 
@@ -35,10 +36,13 @@ const contract = readFileSync(
   'utf8',
 );
 
-/** Les chaînes de `export const NAME = [ … ] as const;` dans le contrat backend. */
+/**
+ * Les chaînes de `export const NAME = [ … ] as const;` dans le contrat backend
+ * (`as const satisfies …;` compris).
+ */
 function backendList(name: string): string[] {
   const match = new RegExp(
-    `export const ${name} = \\[([\\s\\S]*?)\\] as const;`,
+    `export const ${name} = \\[([\\s\\S]*?)\\] as const(?: satisfies [^;\\n]+)?;`,
   ).exec(contract);
   if (!match) throw new Error(`${name} introuvable dans le contrat backend`);
   return [...match[1].matchAll(/'([^']+)'/g)].map(([, value]) => value);
@@ -54,6 +58,7 @@ describe('scholarship-opening-types — aligné sur le contrat backend', () => {
     ['CYCLE_OPENING_SKIP_REASONS', CYCLE_OPENING_SKIP_REASONS],
     ['OPENING_AUDIT_ACTIONS', OPENING_AUDIT_ACTIONS],
     ['OPENING_EVENT_OUTCOMES', OPENING_EVENT_OUTCOMES],
+    ['OPENING_SCHEDULE_END_ACTIONS', OPENING_SCHEDULE_END_ACTIONS],
   ] as const)('%s', (name, mirror) => {
     expect([...mirror]).toEqual(backendList(name));
   });

@@ -513,3 +513,113 @@ describe('overview : abonnés à prévenir d’une bourse déjà annoncée', () 
     expect(overview.items[0]).toMatchObject({ scholarshipId: 'announced', announcedTarget: null });
   });
 });
+
+// ── Rapport : pourquoi la programmation a pris fin ──────────────────────────
+
+describe('report : la fin de la programmation (`lastScheduleEnd`)', () => {
+  const at = new Date('2026-10-15T12:02:05.000Z');
+
+  function makeReportAdmin(lastEnd: OpeningAuditEventRow | null) {
+    const auditQueries: unknown[] = [];
+    const client = {
+      scholarshipCycle: {
+        findFirst: async () => ({
+          academicYear: '2026-2027',
+          openingFanoutDueAt: null,
+          openingFanoutScope: null,
+          openingNotifiedAt: null,
+          openingNotifiedById: null,
+          openingLastFanoutAt: null,
+          openingStoppedAt: null,
+        }),
+      },
+      $queryRaw: async (strings: TemplateStringsArray) =>
+        strings.join('?').includes('GROUP BY')
+          ? []
+          : [{ acceptedPushes: 0, oldestDuePendingAt: null }],
+      adminAuditEvent: {
+        findFirst: async (args: { where: { action: unknown } }) => {
+          auditQueries.push(args.where);
+          // La portée de la dernière annonce faite : aucune ici.
+          return typeof args.where.action === 'string' ? null : lastEnd;
+        },
+      },
+      adminUser: {
+        findMany: async () => [{ id: 'adm-2', fullName: 'Moussa K.' }],
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async <T>(op: (p: unknown) => Promise<T>) => op(client),
+    } as unknown as PrismaService;
+    const admin = new ScholarshipOpeningAdminService(
+      prisma,
+      {} as ScholarshipOpeningAudienceService,
+      {} as ScholarshipContentQualityService,
+      {} as PushSenderService,
+    );
+    return { admin, auditQueries };
+  }
+
+  it('abandonnée par le worker : `skipped` et son motif, rien d’« envoyé »', async () => {
+    const { admin, auditQueries } = makeReportAdmin({
+      action: 'scholarship_cycle.fanout_completed',
+      occurredAt: at,
+      actorAdminId: null,
+      entityId: 'cycle-1',
+      result: 'skipped',
+      reasonCode: 'not_public_at_fanout',
+      changes: { academicYear: '2026-2027', inserted: 0 },
+    });
+    const report = await admin.report('sch-1', 'cycle-1', at);
+    expect(report.fanout.scheduledAt).toBeNull();
+    expect(report.fanout.lastScheduleEnd).toEqual({
+      action: 'scholarship_cycle.fanout_completed',
+      occurredAt: at.toISOString(),
+      actorName: null,
+      academicYear: '2026-2027',
+      toNotify: 0,
+      outcome: 'skipped',
+      reasonCode: 'not_public_at_fanout',
+    });
+    // Les seules actions qui mettent fin à une programmation, refus exclus.
+    expect(auditQueries).toContainEqual({
+      entityType: 'ScholarshipCycle',
+      entityId: 'cycle-1',
+      action: {
+        in: [
+          'scholarship_cycle.notify_cancelled',
+          'scholarship_cycle.fanout_completed',
+          'scholarship_cycle.fanout_expired',
+        ],
+      },
+      result: { in: ['success', 'skipped'] },
+    });
+  });
+
+  it('annulée par un équipier : son nom, l’année du cycle à défaut des changements', async () => {
+    const { admin } = makeReportAdmin({
+      action: 'scholarship_cycle.notify_cancelled',
+      occurredAt: at,
+      actorAdminId: 'adm-2',
+      entityId: 'cycle-1',
+      result: 'success',
+      reasonCode: null,
+      changes: null,
+    });
+    const report = await admin.report('sch-1', 'cycle-1', at);
+    expect(report.fanout.lastScheduleEnd).toEqual({
+      action: 'scholarship_cycle.notify_cancelled',
+      occurredAt: at.toISOString(),
+      actorName: 'Moussa K.',
+      academicYear: '2026-2027',
+      toNotify: null,
+      outcome: 'sent',
+    });
+  });
+
+  it('jamais programmée ni terminée : `null`', async () => {
+    const { admin } = makeReportAdmin(null);
+    expect((await admin.report('sch-1', 'cycle-1', at)).fanout.lastScheduleEnd).toBeNull();
+  });
+});

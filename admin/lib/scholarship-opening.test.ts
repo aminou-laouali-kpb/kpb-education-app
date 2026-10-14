@@ -46,6 +46,8 @@ import {
   REPORT_POLL_MAX_MS,
   scheduledCardAnnouncement,
   scheduledCardChanged,
+  scheduledCardEndText,
+  scheduledCardState,
   scheduledCardStatus,
   scheduledCycle,
   secondsUntil,
@@ -53,12 +55,14 @@ import {
   showDatesOnlyAction,
   todoRowText,
   type OpeningDraft,
+  type ScheduledCardState,
   type Translate,
 } from './scholarship-opening';
 import type {
   ActivateScholarshipResponse,
   OpeningPreviewCycle,
   OpeningPreviewResponse,
+  OpeningRecentEvent,
   OpeningReportResponse,
 } from './scholarship-opening-types';
 
@@ -1147,56 +1151,206 @@ describe('liste, « À faire » et historique', () => {
 });
 
 describe('carte de programmation', () => {
+  // Programmée à 10:00:00 (serveur) pour 10:02:00 : `fanoutAt − holdSeconds`.
+  const fanoutAt = '2027-10-01T10:02:00.000Z';
+  const card = { scheduled: true, fanoutAt, holdSeconds: 120, academicYear: '2027-2028' };
   const pendingReport = report(
     { accepted: 0, acceptedPushes: 0, pending: 0, noDevice: 0 },
-    { scheduledAt: '2027-10-01T10:02:00.000Z', completedAt: null, lastFanoutAt: null },
+    { scheduledAt: fanoutAt, completedAt: null, lastFanoutAt: null },
   );
+  /** Plus rien de programmé, aucune ligne écrite par CETTE programmation. */
+  const unscheduledReport = (
+    lastScheduleEnd: OpeningRecentEvent | null | undefined,
+    lastFanoutAt: string | null = null,
+  ) =>
+    report(
+      { accepted: 0, acceptedPushes: 0, pending: 0, noDevice: 0, skipped: { ...report().push.skipped, total: 0 } },
+      {
+        scheduledAt: null,
+        completedAt: lastFanoutAt,
+        lastFanoutAt,
+        ...(lastScheduleEnd === undefined ? {} : { lastScheduleEnd }),
+      },
+    );
+  const end = (over: Partial<OpeningRecentEvent>): OpeningRecentEvent => ({
+    action: 'scholarship_cycle.fanout_completed',
+    occurredAt: '2027-10-01T10:02:05.000Z',
+    actorName: null,
+    academicYear: '2027-2028',
+    toNotify: 0,
+    outcome: 'skipped',
+    reasonCode: 'not_public_at_fanout',
+    ...over,
+  });
+  const announce = (state: ScheduledCardState) =>
+    scheduledCardAnnouncement(state.status, { toNotify: 312, fanoutAt, event: state.event }, t);
 
   it('avant l’heure : programmé, annulable', () => {
-    const status = scheduledCardStatus({ phase: 'countdown', scheduled: true, report: null });
+    const status = scheduledCardStatus({ ...card, phase: 'countdown', report: null });
     expect(status).toBe('scheduled');
     expect(canCancelScheduled(status)).toBe(true);
   });
 
-  it('heure passée sur le poste, envoi pas encore lancé : « En attente d’envoi », toujours annulable', () => {
+  it('heure passée, envoi pas encore lancé : « En attente d’envoi », toujours annulable', () => {
     for (const current of [null, pendingReport]) {
-      const status = scheduledCardStatus({ phase: 'report', scheduled: true, report: current });
+      const status = scheduledCardStatus({ ...card, phase: 'report', report: current });
       expect(status).toBe('awaiting');
       expect(canCancelScheduled(status)).toBe(true);
     }
     expect(t('scholarships.opening.awaitingTitle')).toBe("En attente d'envoi");
   });
 
-  it('envoi lancé côté serveur : plus d’annulation', () => {
-    const status = scheduledCardStatus({ phase: 'report', scheduled: true, report: report() });
-    expect(status).toBe('started');
-    expect(canCancelScheduled(status)).toBe(false);
+  it('notifications écrites après la programmation : commencé, plus d’annulation', () => {
+    const state = scheduledCardState({ ...card, phase: 'report', report: report() });
+    expect(state).toEqual({ status: 'started', event: null });
+    expect(canCancelScheduled(state.status)).toBe(false);
+    expect(announce(state)).toBe("L'envoi a commencé.");
+    expect(scheduledCardEndText(state.status, state.event, t)).toBeNull();
+    // Sans `lastFanoutAt` lisible, l'événement « fait » le dit aussi.
+    const byEvent = scheduledCardState({
+      ...card,
+      phase: 'report',
+      report: unscheduledReport(end({ outcome: 'sent', reasonCode: undefined, toNotify: 312 })),
+    });
+    expect(byEvent.status).toBe('started');
   });
 
-  it('annulation refusée « trop tard » : commencé, même sur un rapport encore périmé', () => {
+  it.each([
+    ['not_public_at_fanout', 'scholarship_cycle.fanout_completed', 'bourse plus publique'],
+    ['cycle_closed_at_fanout', 'scholarship_cycle.fanout_completed', "cycle clôturé avant l'envoi"],
+    ['fanout_too_late', 'scholarship_cycle.fanout_expired', 'envoi trop en retard'],
+  ] as const)(
+    'abandonnée par le worker (%s) : « non envoyée » et le motif, jamais « commencé »',
+    (reasonCode, action, reason) => {
+      const state = scheduledCardState({
+        ...card,
+        phase: 'report',
+        report: unscheduledReport(end({ action, reasonCode })),
+      });
+      expect(state.status).toBe('dropped');
+      expect(state.event).toMatchObject({ action, reasonCode });
+      expect(canCancelScheduled(state.status)).toBe(false);
+      const text = `Annonce non envoyée : ${reason}. Aucun étudiant n'a été prévenu.`;
+      expect(scheduledCardEndText(state.status, state.event, t)).toBe(text);
+      // La région live annonce la même chose, pas « L'envoi a commencé ».
+      expect(announce(state)).toBe(text);
+    },
+  );
+
+  it('relance abandonnée : l’envoi d’une annonce PRÉCÉDENTE ne la fait pas passer pour commencée', () => {
+    const state = scheduledCardState({
+      ...card,
+      phase: 'report',
+      report: unscheduledReport(end({ reasonCode: 'cycle_closed_at_fanout' }), '2027-09-01T08:00:00.000Z'),
+    });
+    expect(state.status).toBe('dropped');
+    expect(scheduledCardAnnouncement(state.status, { toNotify: 3, fanoutAt, event: state.event }, tEn)).toBe(
+      'Announcement not sent: cycle closed before sending. No student was notified.',
+    );
+  });
+
+  it('annulée par un autre équipier : annulé, et par qui', () => {
+    const state = scheduledCardState({
+      ...card,
+      phase: 'report',
+      report: unscheduledReport(
+        end({
+          action: 'scholarship_cycle.notify_cancelled',
+          outcome: 'sent',
+          reasonCode: undefined,
+          actorName: 'Moussa K.',
+          toNotify: null,
+        }),
+      ),
+    });
+    expect(state.status).toBe('cancelled');
+    expect(canCancelScheduled(state.status)).toBe(false);
+    expect(announce(state)).toBe("Moussa K. a annulé l'envoi : aucun étudiant n'a été prévenu.");
+    expect(scheduledCardEndText(state.status, state.event, tEn)).toBe(
+      'Moussa K. cancelled the send: no student was notified.',
+    );
+  });
+
+  it('annulée par cette carte : annulé', () => {
+    const state = scheduledCardState({ ...card, phase: 'cancelled', report: pendingReport });
+    expect(state).toEqual({ status: 'cancelled', event: null });
+    expect(canCancelScheduled(state.status)).toBe(false);
+    expect(announce(state)).toBe("Envoi annulé. Aucun étudiant n'a été prévenu.");
+  });
+
+  it('plus programmée, motif inconnu : « plus programmé, rien n’est parti »', () => {
+    const state = scheduledCardState({ ...card, phase: 'report', report: unscheduledReport(null) });
+    expect(state).toEqual({ status: 'unscheduled', event: null });
+    expect(canCancelScheduled(state.status)).toBe(false);
+    expect(announce(state)).toBe(
+      "L'envoi n'est plus programmé et rien n'est parti : aucun étudiant n'a été prévenu.",
+    );
+  });
+
+  it('un événement antérieur à la programmation (programmation précédente) ne dit rien de celle-ci', () => {
+    const previous = end({
+      action: 'scholarship_cycle.notify_cancelled',
+      outcome: 'sent',
+      occurredAt: '2027-10-01T09:30:00.000Z',
+      actorName: 'Moussa K.',
+    });
+    expect(scheduledCardStatus({ ...card, phase: 'report', report: unscheduledReport(previous) })).toBe(
+      'unscheduled',
+    );
+  });
+
+  it('backend sans `lastScheduleEnd` : le motif des « Derniers événements » de la même année', () => {
+    const recentEvents = [
+      // Une autre année, et un refus : ignorés.
+      end({ academicYear: '2026-2027', occurredAt: '2027-10-01T10:05:00.000Z' }),
+      end({
+        action: 'scholarship_cycle.notify_cancelled',
+        outcome: 'refused',
+        reasonCode: 'OPENING_BUSY',
+        occurredAt: '2027-10-01T10:04:00.000Z',
+      }),
+      end({ action: 'scholarship_cycle.fanout_expired', reasonCode: 'fanout_too_late' }),
+    ];
+    const legacyReport = unscheduledReport(undefined);
+    expect(legacyReport.fanout).not.toHaveProperty('lastScheduleEnd');
+    const state = scheduledCardState({ ...card, phase: 'report', report: legacyReport, recentEvents });
+    expect(state.status).toBe('dropped');
+    expect(state.event).toMatchObject({ reasonCode: 'fanout_too_late' });
+    // Pas encore relus : plus programmé, motif inconnu.
+    expect(scheduledCardStatus({ ...card, phase: 'report', report: legacyReport })).toBe('unscheduled');
+  });
+
+  it('annulation refusée : « trop tard » vaut commencé, « plus programmé » vaut plus programmé, même sur un rapport périmé', () => {
+    expect(
+      scheduledCardStatus({ ...card, phase: 'report', report: pendingReport, cancelRefusal: 'too_late' }),
+    ).toBe('started');
+    expect(
+      scheduledCardStatus({ ...card, phase: 'report', report: pendingReport, cancelRefusal: 'not_scheduled' }),
+    ).toBe('unscheduled');
+    // Le rapport relu dit ensuite pourquoi.
     expect(
       scheduledCardStatus({
+        ...card,
         phase: 'report',
-        scheduled: true,
-        report: pendingReport,
-        fanoutStarted: true,
+        report: unscheduledReport(end({})),
+        cancelRefusal: 'not_scheduled',
       }),
-    ).toBe('started');
+    ).toBe('dropped');
   });
 
-  it('annulé, disparu, ou simple rapport : jamais annulable', () => {
-    for (const phase of ['cancelled', 'gone'] as const) {
-      expect(canCancelScheduled(scheduledCardStatus({ phase, scheduled: true, report: null }))).toBe(
-        false,
-      );
-    }
-    const status = scheduledCardStatus({ phase: 'report', scheduled: false, report: pendingReport });
+  it('simple rapport d’un envoi passé : jamais annulable, rien à annoncer', () => {
+    const status = scheduledCardStatus({
+      phase: 'report',
+      scheduled: false,
+      report: unscheduledReport(end({})),
+    });
     expect(status).toBe('report');
     expect(canCancelScheduled(status)).toBe(false);
+    expect(scheduledCardAnnouncement('report', { toNotify: null, fanoutAt: null }, t)).toBe('');
   });
 
   it('la région aria-live n’annonce que les changements d’état, sans compte à rebours', () => {
-    const context = { toNotify: 312, fanoutAt: '2027-10-01T10:02:00.000Z' };
+    const context = { toNotify: 312, fanoutAt };
     const scheduled = scheduledCardAnnouncement('scheduled', context, t);
     expect(scheduled).toMatch(/^312 notifications programmées à \d{2}:\d{2}$/);
     // Rien qui ressemble à « 1:58 » : le texte ne change pas d'une seconde à l'autre.
@@ -1206,16 +1360,28 @@ describe('carte de programmation', () => {
       "Envoi annulé. Aucun étudiant n'a été prévenu.",
     );
     expect(scheduledCardAnnouncement('started', context, t)).toBe("L'envoi a commencé.");
+    expect(scheduledCardAnnouncement('dropped', context, t)).toBe(
+      "Annonce non envoyée. Aucun étudiant n'a été prévenu.",
+    );
     expect(scheduledCardAnnouncement('report', context, t)).toBe('');
-    expect(scheduledCardAnnouncement('gone', context, t)).toBe('');
   });
 
-  it('les listes sont relues quand le serveur lance l’envoi, pas à zéro sur le poste', () => {
+  it('aperçu et listes relus quand la programmation prend fin côté serveur, pas à zéro sur le poste', () => {
     expect(scheduledCardChanged('scheduled', 'awaiting')).toBe(false);
     expect(scheduledCardChanged('awaiting', 'awaiting')).toBe(false);
-    expect(scheduledCardChanged('awaiting', 'started')).toBe(true);
-    expect(scheduledCardChanged('scheduled', 'started')).toBe(true);
-    expect(scheduledCardChanged('started', 'started')).toBe(false);
+    for (const ended of ['started', 'dropped', 'cancelled', 'unscheduled'] as const) {
+      expect({ ended, fromAwaiting: scheduledCardChanged('awaiting', ended) }).toEqual({
+        ended,
+        fromAwaiting: true,
+      });
+      expect({ ended, fromScheduled: scheduledCardChanged('scheduled', ended) }).toEqual({
+        ended,
+        fromScheduled: true,
+      });
+      expect(scheduledCardChanged(ended, ended)).toBe(false);
+    }
+    // Le motif arrive avec l'aperçu relu : pas de seconde relecture.
+    expect(scheduledCardChanged('unscheduled', 'dropped')).toBe(false);
     expect(scheduledCardChanged('report', 'report')).toBe(false);
   });
 });

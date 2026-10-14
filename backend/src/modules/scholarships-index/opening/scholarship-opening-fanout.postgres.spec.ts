@@ -378,6 +378,13 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(report.fanout).toMatchObject({
       scope: 'followers',
       notifiedBy: { id: actor.id, name: 'Aminata D.' },
+      scheduledAt: null,
+      lastScheduleEnd: {
+        action: 'scholarship_cycle.fanout_completed',
+        outcome: 'sent',
+        academicYear: '2026-2027',
+        toNotify: rows.length,
+      },
     });
     const after = await admin.preview(sid, {}, actor);
     expect(after.target).toMatchObject({
@@ -560,10 +567,18 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
         where: { id: result.cycleId },
       });
       expect(cycle.openingFanoutDueAt).toBeNull();
+      // Le rapport dit lequel a gagné : l'annulation (par qui) ou l'envoi.
+      const { fanout: ended } = await admin.report(sid, result.cycleId);
+      expect(ended.scheduledAt).toBeNull();
       if (cancelled) {
         cancelWins += 1;
         expect(rows).toHaveLength(0);
         expect(cycle.openingLastFanoutAt).toBeNull();
+        expect(ended.lastScheduleEnd).toMatchObject({
+          action: 'scholarship_cycle.notify_cancelled',
+          outcome: 'sent',
+          actorName: 'Aminata D.',
+        });
         // Plus tard, l'équipe annonce pour de bon.
         const again = await announce(sid, { notify: true });
         expect(again.notification.state).toBe('scheduled');
@@ -571,6 +586,11 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       } else {
         fanoutWins += 1;
         expect(rows).toHaveLength(2);
+        expect(ended.lastScheduleEnd).toMatchObject({
+          action: 'scholarship_cycle.fanout_completed',
+          outcome: 'sent',
+        });
+        expect(ended.lastFanoutAt).not.toBeNull();
       }
     }
     expect(cancelWins + fanoutWins).toBe(30);
@@ -662,6 +682,17 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       outcome: 'sent',
     });
     expect(preview.recentEvents[1]).not.toHaveProperty('reasonCode');
+    // La carte de programmation lit la même chose dans le rapport, au moment
+    // où `scheduledAt` disparaît : abandonnée, pas « commencée ».
+    expect((await admin.report(sid, result.cycleId)).fanout).toMatchObject({
+      scheduledAt: null,
+      lastFanoutAt: null,
+      lastScheduleEnd: {
+        action: 'scholarship_cycle.fanout_completed',
+        outcome: 'skipped',
+        reasonCode: 'not_public_at_fanout',
+      },
+    });
   });
 
   it('clôture passée pendant l’attente → cycle_closed_at_fanout, aucune ligne', async () => {
@@ -681,6 +712,10 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     ).toMatchObject({ openingSkippedReason: 'cycle_closed_at_fanout' });
     const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
     expect(preview.recentEvents[0]).toMatchObject({
+      outcome: 'skipped',
+      reasonCode: 'cycle_closed_at_fanout',
+    });
+    expect((await admin.report(sid, result.cycleId)).fanout.lastScheduleEnd).toMatchObject({
       outcome: 'skipped',
       reasonCode: 'cycle_closed_at_fanout',
     });
@@ -708,6 +743,14 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       action: 'scholarship_cycle.fanout_expired',
       outcome: 'skipped',
       reasonCode: 'fanout_too_late',
+    });
+    expect((await admin.report(sid, result.cycleId)).fanout).toMatchObject({
+      scheduledAt: null,
+      lastScheduleEnd: {
+        action: 'scholarship_cycle.fanout_expired',
+        outcome: 'skipped',
+        reasonCode: 'fanout_too_late',
+      },
     });
     const todo = await admin.todo();
     expect(todo.items.map((item) => item.cycleId)).toContain(result.cycleId);
