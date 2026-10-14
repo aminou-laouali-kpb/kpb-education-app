@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  isFollowUnified,
+  SCHOLARSHIP_SAVED_ITEM_TYPE,
+} from '../scholarships-index/scholarship-follow-state';
 import { CreateSavedItemDto } from './dto/create-saved-item.dto';
 
 /** Borne de lecture : une liste de favoris n'a pas de raison d'être illimitée. */
@@ -44,8 +48,8 @@ export class SavedItemsService {
     this.assertDb();
     // Upsert atomique : la séquence lecture puis création renvoyait un 409
     // (contrainte unique) sur un double tap, au lieu d'être idempotente.
-    const created = await this.prismaService.execute((prisma) =>
-      prisma.savedItem.upsert({
+    const created = await this.prismaService.execute(async (prisma) => {
+      const upsert = prisma.savedItem.upsert({
         where: {
           userId_itemType_itemId: {
             userId,
@@ -55,8 +59,21 @@ export class SavedItemsService {
         },
         create: { userId, itemType: input.type, itemId: input.itemId },
         update: {},
-      }),
-    );
+      });
+      if (input.type !== SCHOLARSHIP_SAVED_ITEM_TYPE) return upsert;
+      // Chantier C : le favori devient celui de l'étudiant. Sans cela,
+      // « cloche allumée » (favori posé par la cloche), puis ce favori
+      // explicite, puis « cloche éteinte » retirait le favori qu'il venait de
+      // demander.
+      const [row] = await prisma.$transaction([
+        upsert,
+        prisma.scholarshipAlertSubscription.updateMany({
+          where: { userId, scholarshipId: input.itemId, impliedFollow: true },
+          data: { impliedFollow: false },
+        }),
+      ]);
+      return row;
+    });
     if (!created) {
       throw new ServiceUnavailableException('Failed to persist saved item.');
     }
@@ -71,12 +88,35 @@ export class SavedItemsService {
 
   async remove(id: string, userId: string) {
     this.assertDb();
+    const unified = isFollowUnified();
     // Scope deletion to the owner: a missing item and another user's item
     // are both reported as not found (IDOR protection).
-    const result = await this.prismaService.execute((prisma) =>
-      prisma.savedItem.deleteMany({ where: { id, userId } }),
+    const removed = await this.prismaService.execute((prisma) =>
+      prisma.$transaction(async (tx) => {
+        const item = await tx.savedItem.findFirst({
+          where: { id, userId },
+          select: { itemType: true, itemId: true },
+        });
+        if (!item) return false;
+        const result = await tx.savedItem.deleteMany({ where: { id, userId } });
+        if (result.count === 0) return false;
+        if (item.itemType === SCHOLARSHIP_SAVED_ITEM_TYPE) {
+          // Chantier C. Une alerte en sourdine n'existait que pour couper
+          // l'annonce de ce favori : elle part avec lui, dans tous les modes.
+          // En `outbox_followers`, « Suivre » est un seul geste : retirer le
+          // favori retire aussi l'alerte.
+          await tx.scholarshipAlertSubscription.deleteMany({
+            where: {
+              userId,
+              scholarshipId: item.itemId,
+              ...(unified ? {} : { mutedAt: { not: null } }),
+            },
+          });
+        }
+        return true;
+      }),
     );
-    if (!result || result.count === 0) {
+    if (!removed) {
       throw new NotFoundException(`Saved item ${id} not found.`);
     }
     return { id };
