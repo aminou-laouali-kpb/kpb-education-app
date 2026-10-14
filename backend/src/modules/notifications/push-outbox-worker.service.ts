@@ -164,7 +164,9 @@ export interface PacingGuardRow {
 /**
  * La garde par élève en UNE instruction (un seul instantané) : la contention
  * et les push récents (une ligne par push : `pushedAt` n'est posé que sur la
- * ligne de tête d'un groupé). Voir `enrich`.
+ * ligne de tête d'un groupé). Chaque réservation est validée avant
+ * l'enrichissement de son worker : de deux workers qui tiennent le même
+ * élève, au moins un voit l'autre ici — tenu, ou déjà servi. Voir `enrich`.
  */
 export function pacingGuardSql(
   userIds: readonly string[],
@@ -354,7 +356,7 @@ export class PushOutboxWorkerService {
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([code, n]) => `${code}:${n}`)
           .join(',');
-        this.logger.error(`Push outbox: ${total} send(s) failed (${codes}).`);
+        this.logger.error(`Push outbox: ${total} lane error(s) (${codes}).`);
       }
     }
 
