@@ -753,6 +753,43 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(preview.audience.toNotify).toBe(item?.notifiable);
   });
 
+  it('colonne « Abonnés à prévenir » d’un cycle annoncé : les nouveaux abonnés, = toNotify de l’aperçu', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
+    const sid = await scholarship();
+    await favorite(await student(), sid);
+    await alert(await student(), sid);
+    const first = await announce(sid);
+    const row = async () =>
+      (await admin.overview()).items.find((item) => item.scholarshipId === sid);
+
+    // Juste annoncée : tout le monde est prévenu. `notifiable` (2) dirait le
+    // contraire ; la colonne lit `announcedTarget.newFollowers`.
+    expect(await row()).toMatchObject({
+      followers: 2,
+      notifiable: 2,
+      announcedTarget: { cycleId: first.cycleId, academicYear: '2026-2027', newFollowers: 0 },
+    });
+
+    // Deux nouveaux abonnés, dont un en sourdine : un seul à prévenir.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await favorite(await student(), sid);
+    const muted = await student();
+    await favorite(muted, sid);
+    await alert(muted, sid, { mutedAt: new Date() });
+    const preview = await admin.preview(sid, {}, actor);
+    expect(preview.target).toMatchObject({ cycleId: first.cycleId, alreadyAnnounced: true });
+    const after = await row();
+    expect(after).toMatchObject({ followers: 4, notifiable: 3 });
+    expect(after?.announcedTarget?.newFollowers).toBe(1);
+    expect(after?.announcedTarget?.newFollowers).toBe(preview.audience.toNotify);
+
+    // La relance part : plus personne de nouveau à prévenir.
+    const again = await announce(sid, { notify: true });
+    expect(again.notification).toMatchObject({ state: 'scheduled', toNotify: 1 });
+    expect((await row())?.announcedTarget?.newFollowers).toBe(0);
+    expect((await admin.preview(sid, {}, actor)).audience.toNotify).toBe(0);
+  });
+
   // ── 6b. Pas d'annonce rétroactive ─────────────────────────────────────────
 
   it('après la bascule et la CLI, une relance ne touche que les abonnés postérieurs', async () => {

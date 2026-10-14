@@ -979,6 +979,8 @@
       "todoMore": "… et {n} autres cycles.",
       "colFollowers": "Abonnés à prévenir",
       "colFollowersTotal": "{n} au total",
+      "colFollowersNew": "nouveaux depuis l'annonce {year}",
+      "colFollowersNewWithTotal": "nouveaux depuis l'annonce {year} · {n} au total",
       "colAnnounced": "Annoncé",
       "announcedScheduled": "programmé",
       "recentEventsTitle": "Derniers événements",

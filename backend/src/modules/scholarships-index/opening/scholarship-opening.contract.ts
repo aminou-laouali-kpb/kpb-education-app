@@ -912,6 +912,24 @@ export interface OpeningTodoResponse {
   total: number;
 }
 
+/**
+ * Le cycle que l'aperçu propose par défaut (`defaultOpeningAcademicYear`)
+ * quand il est DÉJÀ annoncé.
+ */
+export interface OpeningOverviewAnnouncedTarget {
+  cycleId: string;
+  academicYear: string;
+  /** `openingNotifiedAt` : la première annonce du cycle. */
+  announcedAt: IsoDateTime;
+  /**
+   * Les abonnés arrivés depuis l'annonce et pas encore prévenus pour ce
+   * cycle : ceux qu'une relance préviendrait — le `toNotify` de l'aperçu de
+   * ce cycle, hors étudiants prévenus pour un autre cycle de la bourse depuis
+   * 30 jours (comme `notifiable`). Même règle que `followerRowsCte`.
+   */
+  newFollowers: number;
+}
+
 /** `GET /admin/scholarships/opening-overview` — colonnes « Abonnés » et « Annoncé ». */
 export interface OpeningOverviewItem {
   scholarshipId: string;
@@ -919,6 +937,12 @@ export interface OpeningOverviewItem {
   followers: number;
   /** L'audience de la portée (portée `alerts` : alertes non mises en sourdine). */
   notifiable: number;
+  /**
+   * Additif. Non `null` quand le cycle proposé par défaut est déjà annoncé :
+   * la colonne « Abonnés à prévenir » montre alors `newFollowers` —
+   * `notifiable` y compterait des abonnés déjà prévenus.
+   */
+  announcedTarget: OpeningOverviewAnnouncedTarget | null;
   lastAnnounced: {
     cycleId: string;
     academicYear: string;

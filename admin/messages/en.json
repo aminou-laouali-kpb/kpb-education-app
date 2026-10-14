@@ -979,6 +979,8 @@
       "todoMore": "… and {n} more cycles.",
       "colFollowers": "Followers to notify",
       "colFollowersTotal": "{n} in total",
+      "colFollowersNew": "new since the {year} announcement",
+      "colFollowersNewWithTotal": "new since the {year} announcement · {n} in total",
       "colAnnounced": "Announced",
       "announcedScheduled": "scheduled",
       "recentEventsTitle": "Recent events",

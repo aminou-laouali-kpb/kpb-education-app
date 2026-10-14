@@ -5,8 +5,10 @@ import { AccountType, Prisma, PrismaClient } from '@prisma/client';
 import {
   followerAudienceCountsSql,
   followerRowsSql,
+  newFollowerCountsSql,
   type FollowerAudienceCounts,
   type FollowerRow,
+  type NewFollowerCountRow,
 } from './scholarship-follow.query';
 import {
   FOLLOWED_SCHOLARSHIP_OPT_OUT,
@@ -20,10 +22,12 @@ import {
  *
  * 1. Même résultat que l'ancien texte (gardé ci-dessous, à l'octet près, comme
  *    référence) sur des données tirées au hasard, dans les deux portées, avec
- *    ou sans cycle, première annonce ou relance. Un échec écrit la graine
- *    (`KPB_FOLLOW_QUERY_SEED`).
+ *    ou sans cycle, première annonce ou relance ; et, sur les mêmes données,
+ *    les nouveaux abonnés d'un cycle annoncé (`newFollowerCountsSql`) = les
+ *    lignes de la relance. Un échec écrit la graine (`KPB_FOLLOW_QUERY_SEED`).
  * 2. Un plan qui ne dépend pas des statistiques : 5 000 puis 20 000 abonnés
  *    insérés dans la transaction même — donc JAMAIS analysés — et la requête
+ *    (et le compte des nouveaux abonnés de la colonne « Abonnés à prévenir »)
  *    reste sous 2 s, avec le plan naturel ET avec les seules boucles
  *    imbriquées (`enable_hashjoin` / `enable_mergejoin` coupés : ce que choisit
  *    le planificateur quand des statistiques périmées estiment les favoris à
@@ -336,6 +340,39 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
         }
       }
       expect(compared).toBeGreaterThan(1_000);
+
+      // La colonne « Abonnés à prévenir » d'un cycle annoncé, plusieurs cibles
+      // en une requête : les lignes de la relance (`followSince` = l'annonce)
+      // ni en sourdine, ni déjà prévenues pour ce cycle, ni anciennes — les
+      // prévenus récents d'un autre cycle restent comptés, comme `notifiable`.
+      const targets = [
+        { scholarshipId: sid, cycleId, since: announcedAt },
+        { scholarshipId: otherSid, cycleId: `fq-eq-othercycle-${sfx}`, since: announcedAt },
+        { scholarshipId: missingSid, cycleId: `fq-eq-nocycle-${sfx}`, since: announcedAt },
+      ];
+      const byId = (a: NewFollowerCountRow, b: NewFollowerCountRow) =>
+        a.scholarshipId < b.scholarshipId ? -1 : a.scholarshipId > b.scholarshipId ? 1 : 0;
+      for (const scope of ['alerts', 'followers'] as const) {
+        const counted = await tx.$queryRaw<NewFollowerCountRow[]>(
+          newFollowerCountsSql(scope, targets),
+        );
+        const expected: NewFollowerCountRow[] = [];
+        for (const target of targets) {
+          const relaunch = await tx.$queryRaw<FollowerRow[]>(
+            followerRowsSql(target.scholarshipId, scope, target.cycleId, renotifySince, target.since),
+          );
+          const newFollowers = relaunch.filter(
+            (row) => !row.muted && !row.alreadyNotified && !row.followedBeforeAnnouncement,
+          ).length;
+          if (newFollowers > 0) expected.push({ scholarshipId: target.scholarshipId, newFollowers });
+        }
+        expect({ seed, scope, counted: [...counted].sort(byId) }).toEqual({
+          seed,
+          scope,
+          counted: expected.sort(byId),
+        });
+        expect(expected.find((row) => row.scholarshipId === sid)?.newFollowers).toBeGreaterThan(0);
+      }
     }, () => `graine ${seed} (KPB_FOLLOW_QUERY_SEED=${seed} pour rejouer)`);
   });
 
@@ -432,13 +469,25 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
             const [rows, rowsMs] = await timed(() =>
               tx.$queryRaw<FollowerRow[]>(followerRowsSql(...args)),
             );
-            timings.push(`${to} abonnés, plan ${plan} : comptes ${countMs} ms, lignes ${rowsMs} ms`);
+            // Colonne « Abonnés à prévenir » d'un cycle annoncé avant tout
+            // suivi : chacun est nouveau, et personne n'est prévenu pour ce
+            // cycle.
+            const [[fresh], newMs] = await timed(() =>
+              tx.$queryRaw<NewFollowerCountRow[]>(
+                newFollowerCountsSql(scope, [{ scholarshipId: sid, cycleId, since: new Date(0) }]),
+              ),
+            );
+            timings.push(
+              `${to} abonnés, plan ${plan} : comptes ${countMs} ms, lignes ${rowsMs} ms, nouveaux ${newMs} ms`,
+            );
             expect(counts).toMatchObject(expected(to));
             expect(rows.filter((row) => row.toNotify)).toHaveLength(expected(to).toNotify);
+            expect(fresh).toEqual({ scholarshipId: sid, newFollowers: expected(to).audience });
             // Borne large pour une machine de CI (mesuré : ~0,1 à 0,3 s à
             // 20 000) ; l'ancien texte : ~25 s à 20 000.
             expect(countMs).toBeLessThan(2_000);
             expect(rowsMs).toBeLessThan(2_000);
+            expect(newMs).toBeLessThan(2_000);
           }
         }
       }, () => `portée ${scope} ; mesures déjà prises : ${timings.join(' ; ') || 'aucune'}`);

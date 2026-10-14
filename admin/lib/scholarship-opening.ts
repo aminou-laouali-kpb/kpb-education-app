@@ -961,25 +961,39 @@ export function scheduledCardChanged(
 // ── Liste, « À faire », historique ─────────────────────────────────────────
 
 /**
- * Colonne « Abonnés à prévenir » : l'audience notifiable de la portée en
- * vigueur. L'aperçu global ne liste que les bourses suivies ou annoncées :
- * absente, une bourse a 0 abonné. `—` tant que l'aperçu n'est pas chargé.
+ * Colonne « Abonnés à prévenir » : ceux que le bouton de l'aperçu
+ * préviendrait. Cycle proposé déjà annoncé : les nouveaux abonnés depuis
+ * l'annonce (`announcedTarget.newFollowers`) — l'audience de la portée
+ * (`notifiable`) compterait des étudiants déjà prévenus. Sinon `notifiable`.
+ * L'aperçu global ne liste que les bourses suivies ou annoncées : absente,
+ * une bourse a 0 abonné. `—` tant que l'aperçu n'est pas chargé.
  */
 export function followersCell(item: OpeningOverviewItem | undefined, loaded: boolean): string {
   if (!loaded) return '—';
+  if (item?.announcedTarget) return String(item.announcedTarget.newFollowers);
   return String(item?.notifiable ?? 0);
 }
 
 /**
- * Sous la colonne « Abonnés à prévenir » : « 334 au total » quand des abonnés
- * ne seront pas prévenus (sourdine, portée « M'avertir » seulement), sinon rien.
+ * Sous la colonne « Abonnés à prévenir » : « nouveaux depuis l'annonce
+ * 2027-2028 » pour un cycle déjà annoncé, et « 334 au total » quand des
+ * abonnés ne seront pas prévenus (déjà prévenus, sourdine, portée
+ * « M'avertir » seulement) ; sinon rien.
  */
-export function followersTotalText(
+export function followersSubText(
   item: OpeningOverviewItem | undefined,
   loaded: boolean,
   t: Translate,
 ): string | null {
-  if (!loaded || !item || item.followers <= item.notifiable) return null;
+  if (!loaded || !item) return null;
+  const target = item.announcedTarget;
+  if (target) {
+    const values = { year: target.academicYear, n: item.followers };
+    return item.followers > target.newFollowers
+      ? fill(t('scholarships.opening.colFollowersNewWithTotal'), values)
+      : fill(t('scholarships.opening.colFollowersNew'), values);
+  }
+  if (item.followers <= item.notifiable) return null;
   return fill(t('scholarships.opening.colFollowersTotal'), { n: item.followers });
 }
 

@@ -7,6 +7,7 @@ import {
   followerRowsCte,
   followerRowsSql,
   followingPairsSql,
+  newFollowerCountsSql,
 } from './scholarship-follow.query';
 
 /**
@@ -54,6 +55,7 @@ describe('scholarship-follow.query', () => {
       followedScholarshipIdsSql('u1'),
       followerCountsSql('alerts'),
       followerCountsSql('followers', ['s1']),
+      newFollowerCountsSql('alerts', [{ scholarshipId: 's1', cycleId: 'c1', since: ANNOUNCED }]),
     ];
     for (const sql of all) {
       expect(sql.values).not.toContain(null);
@@ -117,6 +119,7 @@ describe('scholarship-follow.query', () => {
       followingPairsSql(['s1']),
       followedScholarshipIdsSql('u1'),
       followerCountsSql('followers'),
+      newFollowerCountsSql('followers', [{ scholarshipId: 's1', cycleId: 'c1', since: ANNOUNCED }]),
     ]) {
       expect(flat(sql)).toContain('JOIN "Scholarship" s ON s."id" = si."itemId"');
       expect(flat(sql)).toContain('si."itemType" = \'scholarship\'');
@@ -142,5 +145,44 @@ describe('scholarship-follow.query', () => {
       'count(*) FILTER (WHERE NOT "muted")::int AS "notifiable"',
     );
     expect(flat(followerCountsSql('followers'))).not.toContain('ANY(');
+  });
+
+  describe('nouveaux abonnés d’un cycle annoncé (colonne « Abonnés à prévenir »)', () => {
+    const targets = [
+      { scholarshipId: 's1', cycleId: 'c1', since: ANNOUNCED },
+      { scholarshipId: 's2', cycleId: 'c2', since: SINCE },
+    ];
+
+    it('une ligne VALUES par cible : bourse, préfixe de déduplication du cycle, date de l’annonce', () => {
+      const sql = newFollowerCountsSql('followers', targets);
+      expect(sql.values).toEqual([
+        's1',
+        'scholarship-opened:c1:',
+        ANNOUNCED,
+        's2',
+        'scholarship-opened:c2:',
+        SINCE,
+      ]);
+      expect(flat(sql)).toContain('n."dedupeKey" = u."dedupePrefix" || u."userId"');
+    });
+
+    it('la règle `toNotify` d’une relance : hors sourdine, suivi commencé après l’annonce', () => {
+      const followers = flat(newFollowerCountsSql('followers', targets));
+      expect(followers).toContain('u."mutedAt" IS NULL');
+      expect(followers).toContain(
+        'LEAST(u."favAt", CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END) > u."since"',
+      );
+      // Portée alertes : seule l'alerte date le suivi, comme `followerRowsCte`.
+      const alerts = flat(newFollowerCountsSql('alerts', targets));
+      expect(alerts).toContain('CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END > u."since"');
+      expect(alerts).not.toContain('LEAST(');
+    });
+
+    it('aucune jointure entre ensembles dérivés : sources bout à bout, une ligne par étudiant et par cible', () => {
+      const text = flat(newFollowerCountsSql('followers', targets));
+      expect(text).not.toMatch(/JOIN new_/);
+      expect(text).toContain('UNION ALL');
+      expect(text).toContain('GROUP BY 1, 2, 3, 4');
+    });
   });
 });

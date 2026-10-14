@@ -24,7 +24,7 @@ import {
   EVENT_REASON_CODES,
   fill,
   followersCell,
-  followersTotalText,
+  followersSubText,
   forecastDraftError,
   formatCountdown,
   formatReportLine,
@@ -1022,11 +1022,53 @@ describe('liste, « À faire » et historique', () => {
   });
 
   it('colonne Abonnés à prévenir : le total en second, seulement s’il diffère', () => {
-    expect(followersTotalText(item, true, t)).toBe('334 au total');
-    expect(followersTotalText(item, true, tEn)).toBe('334 in total');
-    expect(followersTotalText({ ...item, followers: 312 }, true, t)).toBeNull();
-    expect(followersTotalText(item, false, t)).toBeNull();
-    expect(followersTotalText(undefined, true, t)).toBeNull();
+    expect(followersSubText(item, true, t)).toBe('334 au total');
+    expect(followersSubText(item, true, tEn)).toBe('334 in total');
+    expect(followersSubText({ ...item, followers: 312 }, true, t)).toBeNull();
+    expect(followersSubText({ ...item, announcedTarget: null }, true, t)).toBe('334 au total');
+    expect(followersSubText(item, false, t)).toBeNull();
+    expect(followersSubText(undefined, true, t)).toBeNull();
+  });
+
+  describe('colonne Abonnés à prévenir d’une bourse dont le cycle proposé est déjà annoncé', () => {
+    const announced = {
+      ...item,
+      announcedTarget: {
+        cycleId: 'cyc_2027',
+        academicYear: '2027-2028',
+        announcedAt: '2027-10-07T12:00:00.000Z',
+        newFollowers: 12,
+      },
+    };
+
+    it('les nouveaux abonnés depuis l’annonce, pas l’audience de la portée (déjà prévenue)', () => {
+      expect(followersCell(announced, true)).toBe('12');
+      expect(followersCell(announced, false)).toBe('—');
+      expect(followersSubText(announced, true, t)).toBe(
+        "nouveaux depuis l'annonce 2027-2028 · 334 au total",
+      );
+      expect(followersSubText(announced, true, tEn)).toBe(
+        'new since the 2027-2028 announcement · 334 in total',
+      );
+    });
+
+    it('personne de nouveau : 0, jamais l’audience de la portée', () => {
+      const none = { ...announced, announcedTarget: { ...announced.announcedTarget, newFollowers: 0 } };
+      expect(followersCell(none, true)).toBe('0');
+      expect(followersSubText(none, true, t)).toBe(
+        "nouveaux depuis l'annonce 2027-2028 · 334 au total",
+      );
+    });
+
+    it('tous les abonnés sont nouveaux : pas de total redondant', () => {
+      const all = {
+        ...announced,
+        followers: 12,
+        notifiable: 12,
+      };
+      expect(followersSubText(all, true, t)).toBe("nouveaux depuis l'annonce 2027-2028");
+      expect(followersSubText(all, true, tEn)).toBe('new since the 2027-2028 announcement');
+    });
   });
 
   it('colonne Annoncé : date (audience), « programmé » ou « — »', () => {

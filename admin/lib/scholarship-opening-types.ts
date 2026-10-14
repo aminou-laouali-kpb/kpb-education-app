@@ -360,12 +360,33 @@ export interface OpeningTodoResponse {
   total: number;
 }
 
+/** Le cycle que l'aperçu propose par défaut, quand il est DÉJÀ annoncé. */
+export interface OpeningOverviewAnnouncedTarget {
+  cycleId: string;
+  academicYear: string;
+  /** La première annonce du cycle. */
+  announcedAt: IsoDateTime;
+  /**
+   * Les abonnés arrivés depuis l'annonce et pas encore prévenus pour ce
+   * cycle : ceux qu'une relance préviendrait (le `toNotify` de l'aperçu, hors
+   * étudiants prévenus pour un autre cycle depuis 30 jours, comme
+   * `notifiable`).
+   */
+  newFollowers: number;
+}
+
 export interface OpeningOverviewItem {
   scholarshipId: string;
   /** Tous les abonnés (sourdine comprise). */
   followers: number;
   /** Les abonnés à prévenir dans la portée en vigueur (colonne de la liste). */
   notifiable: number;
+  /**
+   * Non `null` quand le cycle proposé par défaut est déjà annoncé : la colonne
+   * montre alors `newFollowers`, `notifiable` y compterait des abonnés déjà
+   * prévenus. Absent d'un backend antérieur.
+   */
+  announcedTarget?: OpeningOverviewAnnouncedTarget | null;
   lastAnnounced: {
     cycleId: string;
     academicYear: string;

@@ -9,11 +9,13 @@ import {
   followerRowsCte,
   followerRowsSql,
   followingPairsSql,
+  newFollowerCountsSql,
   type FollowedScholarshipRow,
   type FollowerAudienceCounts,
   type FollowerCountRow,
   type FollowerRow,
   type FollowingPair,
+  type NewFollowerCountRow,
 } from './scholarship-follow.query';
 
 /**
@@ -416,6 +418,52 @@ describePostgres('Requête de suivi des bourses — intégration PostgreSQL', ()
       // Suivent : 6 favoris + 4 alertes seules (alert, pushOff, notified, device).
       expect(alerts).toEqual([{ scholarshipId: sid, followers: 10, notifiable: 5 }]);
       expect(followers).toEqual([{ scholarshipId: sid, followers: 10, notifiable: 9 }]);
+    });
+  });
+
+  it('nouveaux abonnés d’un cycle annoncé : la relance, prévenus récents d’un autre cycle compris', async () => {
+    await rolledBack(async (tx) => {
+      const target = { scholarshipId: sid, cycleId, since: announcedAt };
+      for (const scope of ['alerts', 'followers'] as const) {
+        const [row] = await tx.$queryRaw<NewFollowerCountRow[]>(
+          newFollowerCountsSql(scope, [target]),
+        );
+        const [relaunch] = await tx.$queryRaw<FollowerAudienceCounts[]>(
+          followerAudienceCountsSql(sid, scope, cycleId, renotifySince, announcedAt),
+        );
+        // `recent` (prévenu il y a 5 jours pour l'ANCIEN cycle) n'a qu'un
+        // favori : compté en portée abonnés, comme dans `notifiable`, mais
+        // exclu du `toNotify` de l'aperçu par la garde des 30 jours.
+        const recentOnly = scope === 'followers' ? 1 : 0;
+        expect({ scope, row }).toEqual({
+          scope,
+          row: { scholarshipId: sid, newFollowers: relaunch.toNotify + recentOnly },
+        });
+      }
+      // Abonnés : fav, both, optOut, pushOff, device, alert et recent ; ni
+      // oldFollower (avant l'annonce), ni notified (déjà prévenu pour ce
+      // cycle), ni les sourdines. Alertes : alert, both, pushOff, device.
+      const [followers] = await tx.$queryRaw<NewFollowerCountRow[]>(
+        newFollowerCountsSql('followers', [target]),
+      );
+      const [alerts] = await tx.$queryRaw<NewFollowerCountRow[]>(
+        newFollowerCountsSql('alerts', [target]),
+      );
+      expect(followers.newFollowers).toBe(7);
+      expect(alerts.newFollowers).toBe(4);
+
+      // Une annonce postérieure à tous les suivis : personne de nouveau, pas
+      // de ligne ; une autre bourse dans la même requête garde son compte (son
+      // favori, daté par la base, est postérieur à l'origine des temps).
+      const later = new Date(now.getTime() + DAY);
+      expect(
+        await tx.$queryRaw<NewFollowerCountRow[]>(
+          newFollowerCountsSql('followers', [
+            { scholarshipId: sid, cycleId, since: later },
+            { scholarshipId: otherSid, cycleId: `follow-q-othercycle-${suffix}`, since: new Date(0) },
+          ]),
+        ),
+      ).toEqual([{ scholarshipId: otherSid, newFollowers: 1 }]);
     });
   });
 });

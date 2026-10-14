@@ -12,6 +12,7 @@ import {
   defaultOpeningAcademicYear,
   isConsecutiveAcademicYear,
   nextAcademicYear,
+  type OpeningYearCycle,
 } from '../../../common/academic-year';
 import {
   publicScholarshipWhere,
@@ -29,7 +30,9 @@ import {
 } from './scholarship-opening-audience.service';
 import {
   followerCountsSql,
+  newFollowerCountsSql,
   type FollowerCountRow,
+  type NewFollowerCountRow,
 } from './scholarship-follow.query';
 import {
   audienceScopeForMode,
@@ -228,6 +231,57 @@ export function buildOpeningRecentEvent(
     outcome,
     ...(outcome !== 'sent' && event.reasonCode ? { reasonCode: event.reasonCode } : {}),
   };
+}
+
+/** Un cycle d'une bourse déjà annoncée ou programmée, tel que la vue d'ensemble le lit. */
+export interface OverviewCycleRow extends OpeningYearCycle {
+  id: string;
+  scholarshipId: string;
+  openingNotifiedAt: Date | null;
+  openingLastFanoutAt: Date | null;
+  openingAudience: number | null;
+  openingFanoutDueAt: Date | null;
+}
+
+/** Le cycle proposé par défaut d'une bourse, déjà annoncé. */
+export interface AnnouncedOpeningTarget {
+  scholarshipId: string;
+  cycleId: string;
+  academicYear: string;
+  /** `openingNotifiedAt` : la première annonce. */
+  since: Date;
+}
+
+/**
+ * Par bourse, le cycle que l'aperçu proposerait sans année choisie
+ * (`defaultOpeningAcademicYear`, la même règle), quand il est DÉJÀ annoncé.
+ * Pur. Une bourse dont le cycle proposé est nouveau (dernier cycle clos) ou
+ * pas encore annoncé n'a pas de cible : sa colonne garde `notifiable`.
+ */
+export function announcedOpeningTargets(
+  cycles: readonly OverviewCycleRow[],
+  now: Date,
+): AnnouncedOpeningTarget[] {
+  const byScholarship = new Map<string, OverviewCycleRow[]>();
+  for (const cycle of cycles) {
+    const list = byScholarship.get(cycle.scholarshipId);
+    if (list) list.push(cycle);
+    else byScholarship.set(cycle.scholarshipId, [cycle]);
+  }
+  const targets: AnnouncedOpeningTarget[] = [];
+  for (const [scholarshipId, list] of byScholarship) {
+    const year = defaultOpeningAcademicYear(list, now);
+    const target = list.find((cycle) => cycle.academicYear === year);
+    if (target?.openingNotifiedAt) {
+      targets.push({
+        scholarshipId,
+        cycleId: target.id,
+        academicYear: target.academicYear,
+        since: target.openingNotifiedAt,
+      });
+    }
+  }
+  return targets.sort((a, b) => a.scholarshipId.localeCompare(b.scholarshipId));
 }
 
 const PREVIEW_CYCLE_SELECT = {
@@ -809,33 +863,53 @@ export class ScholarshipOpeningAdminService {
     return { mode, scope, items: items.slice(0, OPENING_TODO_LIMIT), total: items.length };
   }
 
-  /** « Abonnés » (`notifiable`) et « Annoncé » de la liste admin, fusionnés par id. */
-  async overview(): Promise<OpeningOverviewResponse> {
+  /**
+   * « Abonnés à prévenir » et « Annoncé » de la liste admin, fusionnés par
+   * id. La colonne « Abonnés à prévenir » d'une bourse dont le cycle proposé
+   * est déjà annoncé compte les nouveaux abonnés (`announcedTarget`), pas
+   * `notifiable` : ceux-là ont déjà été prévenus.
+   */
+  async overview(now: Date = new Date()): Promise<OpeningOverviewResponse> {
     this.assertDb();
     const mode = readScholarshipOpeningMode();
     const scope = audienceScopeForMode(mode);
     const [counts, cycles] = await Promise.all([
       this.followerCounts(scope),
-      this.run((p) =>
-        p.scholarshipCycle.findMany({
-          where: {
-            OR: [
-              { openingNotifiedAt: { not: null } },
-              { openingFanoutDueAt: { not: null } },
-            ],
-          },
-          select: {
-            id: true,
-            scholarshipId: true,
-            academicYear: true,
-            openingNotifiedAt: true,
-            openingLastFanoutAt: true,
-            openingAudience: true,
-            openingFanoutDueAt: true,
-          },
-        }),
+      this.run(
+        (p): Promise<OverviewCycleRow[]> =>
+          p.scholarshipCycle.findMany({
+            // TOUS les cycles des bourses annoncées ou programmées : le cycle
+            // proposé par défaut se choisit parmi eux.
+            where: {
+              scholarship: {
+                cycles: {
+                  some: {
+                    OR: [
+                      { openingNotifiedAt: { not: null } },
+                      { openingFanoutDueAt: { not: null } },
+                    ],
+                  },
+                },
+              },
+            },
+            select: {
+              id: true,
+              scholarshipId: true,
+              academicYear: true,
+              status: true,
+              activatedAt: true,
+              closesAt: true,
+              estimatedCloseAt: true,
+              openingNotifiedAt: true,
+              openingLastFanoutAt: true,
+              openingAudience: true,
+              openingFanoutDueAt: true,
+            },
+          }),
       ),
     ]);
+    const targets = announcedOpeningTargets(cycles, now);
+    const newFollowers = await this.newFollowerCounts(scope, targets);
 
     const items = new Map<string, OpeningOverviewItem>();
     const itemFor = (scholarshipId: string): OpeningOverviewItem => {
@@ -846,6 +920,7 @@ export class ScholarshipOpeningAdminService {
           scholarshipId,
           followers: count?.followers ?? 0,
           notifiable: count?.notifiable ?? 0,
+          announcedTarget: null,
           lastAnnounced: null,
           scheduledAt: null,
         };
@@ -854,6 +929,14 @@ export class ScholarshipOpeningAdminService {
       return item;
     };
     for (const scholarshipId of counts.keys()) itemFor(scholarshipId);
+    for (const target of targets) {
+      itemFor(target.scholarshipId).announcedTarget = {
+        cycleId: target.cycleId,
+        academicYear: target.academicYear,
+        announcedAt: target.since.toISOString(),
+        newFollowers: newFollowers.get(target.scholarshipId) ?? 0,
+      };
+    }
     for (const cycle of cycles) {
       const item = itemFor(cycle.scholarshipId);
       const at = cycle.openingLastFanoutAt ?? cycle.openingNotifiedAt;
@@ -975,6 +1058,18 @@ export class ScholarshipOpeningAdminService {
       p.$queryRaw<FollowerCountRow[]>(followerCountsSql(scope, scholarshipIds)),
     );
     return new Map(rows.map((row) => [row.scholarshipId, row]));
+  }
+
+  /** Les nouveaux abonnés de chaque cycle annoncé ; une cible absente en a 0. */
+  private async newFollowerCounts(
+    scope: OpeningAudienceScope,
+    targets: readonly AnnouncedOpeningTarget[],
+  ): Promise<Map<string, number>> {
+    if (targets.length === 0) return new Map();
+    const rows = await this.run((p) =>
+      p.$queryRaw<NewFollowerCountRow[]>(newFollowerCountsSql(scope, targets)),
+    );
+    return new Map(rows.map((row) => [row.scholarshipId, row.newFollowers]));
   }
 
   private async adminRefs(

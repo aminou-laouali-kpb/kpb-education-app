@@ -9,7 +9,7 @@ import { apiFetch } from '../../lib/api-client';
 import {
   announcedCell,
   followersCell,
-  followersTotalText,
+  followersSubText,
 } from '../../lib/scholarship-opening';
 import {
   fetchOpeningOverview,
@@ -805,7 +805,7 @@ export default function ScholarshipsPage() {
                       openingOverview !== null,
                     )}
                     sub={
-                      followersTotalText(
+                      followersSubText(
                         openingOverview?.get(entry.id),
                         openingOverview !== null,
                         t,

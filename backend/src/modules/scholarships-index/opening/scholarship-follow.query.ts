@@ -363,6 +363,92 @@ export interface FollowerCountRow {
   notifiable: number;
 }
 
+/** Un cycle déjà annoncé : la colonne « Abonnés à prévenir » de sa bourse. */
+export interface NewFollowerTarget {
+  scholarshipId: string;
+  cycleId: string;
+  /** `openingNotifiedAt` du cycle (première annonce). */
+  since: Date;
+}
+
+/** Par cycle annoncé : les abonnés arrivés depuis l'annonce, pas encore prévenus. */
+export interface NewFollowerCountRow {
+  scholarshipId: string;
+  newFollowers: number;
+}
+
+/**
+ * La colonne « Abonnés à prévenir » d'une bourse dont le cycle proposé par
+ * l'aperçu est DÉJÀ annoncé : `notifiable` y compterait des abonnés déjà
+ * prévenus. Ici, par cible, les étudiants que la relance préviendrait — la
+ * règle `toNotify` de `followerRowsCte` avec `followSince` = l'annonce :
+ * dans la portée, hors sourdine, suivi commencé APRÈS l'annonce (un début
+ * inconnu compte comme ancien), aucune ligne pour ce cycle (`dedupeKey`).
+ * Seule différence, comme pour `notifiable` : les étudiants prévenus pour un
+ * AUTRE cycle de la bourse depuis 30 jours restent comptés.
+ *
+ * Même forme que `followerRowsCte` (sources bout à bout, puis une ligne par
+ * étudiant et par cible, puis des recherches par clé) : aucune jointure entre
+ * deux ensembles dérivés. Le profil n'est pas relu : favoris et alertes ont
+ * une clé étrangère vers `UserProfile`. Une cible sans nouvel abonné n'a pas
+ * de ligne (0). `targets` ne doit pas être vide.
+ */
+export function newFollowerCountsSql(
+  scope: OpeningAudienceScope,
+  targets: readonly NewFollowerTarget[],
+): Prisma.Sql {
+  // Le texte de `followerRowsCte` : en portée `alerts`, seule l'alerte date le
+  // suivi (un favori seul n'y est pas candidat : son début reste inconnu).
+  const followSinceExpr =
+    scope === 'followers'
+      ? Prisma.sql`LEAST(u."favAt", CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END)`
+      : Prisma.sql`CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END`;
+  const rows = Prisma.join(
+    targets.map(
+      (target) =>
+        Prisma.sql`(${target.scholarshipId}::text, ${openingDedupeKey(target.cycleId, '')}::text, ${target.since}::timestamp(3))`,
+    ),
+  );
+  return Prisma.sql`
+    WITH new_target ("scholarshipId", "dedupePrefix", "since") AS (
+      VALUES ${rows}
+    ),
+    new_src AS (
+      SELECT t."scholarshipId", t."dedupePrefix", t."since", si."userId",
+             si."createdAt" AS "favAt", NULL::timestamp(3) AS "alertAt",
+             NULL::timestamp(3) AS "mutedAt"
+      FROM new_target t
+      JOIN "SavedItem" si
+        ON si."itemType" = 'scholarship' AND si."itemId" = t."scholarshipId"
+      JOIN "Scholarship" s ON s."id" = si."itemId"
+      UNION ALL
+      SELECT t."scholarshipId", t."dedupePrefix", t."since", a."userId",
+             NULL, a."createdAt", a."mutedAt"
+      FROM new_target t
+      JOIN "ScholarshipAlertSubscription" a ON a."scholarshipId" = t."scholarshipId"
+    ),
+    new_user AS (
+      SELECT
+        src."scholarshipId", src."dedupePrefix", src."since", src."userId",
+        max(src."favAt") AS "favAt",
+        max(src."alertAt") AS "alertAt",
+        max(src."mutedAt") AS "mutedAt"
+      FROM new_src src
+      GROUP BY 1, 2, 3, 4
+    )
+    SELECT u."scholarshipId", count(*)::int AS "newFollowers"
+    FROM new_user u
+    WHERE u."mutedAt" IS NULL
+      AND ${followSinceExpr} > u."since"
+      AND NOT EXISTS (
+        SELECT 1 FROM "UserNotification" n
+        WHERE n."dedupeKey" = u."dedupePrefix" || u."userId"
+      )
+    GROUP BY u."scholarshipId"
+    ORDER BY u."scholarshipId"
+  `;
+}
+
 /**
  * Les colonnes « Abonnés » de la liste admin et la file « À faire ».
  * `scholarshipIds` absent = toutes les bourses (bornées par le catalogue).

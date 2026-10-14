@@ -5,11 +5,13 @@ import type { PushSenderService } from '../../notifications/push-sender.service'
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { ScholarshipContentQualityService } from '../scholarship-content-quality.service';
 import {
+  announcedOpeningTargets,
   buildOpeningRecentEvent,
   buildOpeningReportCounts,
   ScholarshipOpeningAdminService,
   type OpeningAuditEventRow,
   type OpeningReportGroup,
+  type OverviewCycleRow,
 } from './scholarship-opening-admin.service';
 import type { ScholarshipOpeningAudienceService } from './scholarship-opening-audience.service';
 
@@ -335,5 +337,179 @@ describe('todo : abonnés à prévenir', () => {
       ['b', 80, 80],
       ['a', 300, 12],
     ]);
+  });
+});
+
+// ── Colonne « Abonnés à prévenir » d'un cycle déjà annoncé ──────────────────
+
+describe('announcedOpeningTargets : le cycle proposé par défaut, s’il est déjà annoncé', () => {
+  const now = new Date('2026-10-15T12:00:00.000Z');
+  const announcedAt = new Date('2026-10-01T12:00:00.000Z');
+  const cycle = (over: Partial<OverviewCycleRow> & Pick<OverviewCycleRow, 'scholarshipId'>): OverviewCycleRow => ({
+    id: `${over.scholarshipId}-${over.academicYear ?? '2026-2027'}`,
+    academicYear: '2026-2027',
+    status: 'open',
+    activatedAt: announcedAt,
+    closesAt: new Date('2026-12-01T00:00:00.000Z'),
+    estimatedCloseAt: null,
+    openingNotifiedAt: announcedAt,
+    openingLastFanoutAt: announcedAt,
+    openingAudience: 12,
+    openingFanoutDueAt: null,
+    ...over,
+  });
+
+  it('cycle ouvert annoncé → cible (l’aperçu le propose, une relance ne vise que les nouveaux)', () => {
+    expect(announcedOpeningTargets([cycle({ scholarshipId: 'a' })], now)).toEqual([
+      { scholarshipId: 'a', cycleId: 'a-2026-2027', academicYear: '2026-2027', since: announcedAt },
+    ]);
+  });
+
+  it('dernier cycle annoncé mais clos → l’aperçu propose l’année suivante : pas de cible', () => {
+    expect(
+      announcedOpeningTargets(
+        [cycle({ scholarshipId: 'b', closesAt: new Date('2026-10-10T00:00:00.000Z') })],
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it('cycle proposé pas encore annoncé (programmé, ou plus récent qu’un cycle annoncé) : pas de cible', () => {
+    expect(
+      announcedOpeningTargets(
+        [
+          cycle({
+            scholarshipId: 'c',
+            openingNotifiedAt: null,
+            openingLastFanoutAt: null,
+            openingFanoutDueAt: new Date('2026-10-15T12:02:00.000Z'),
+          }),
+          cycle({ scholarshipId: 'd', academicYear: '2025-2026', closesAt: new Date('2026-06-01T00:00:00.000Z') }),
+          cycle({
+            scholarshipId: 'd',
+            academicYear: '2026-2027',
+            activatedAt: null,
+            openingNotifiedAt: null,
+          }),
+        ],
+        now,
+      ),
+    ).toEqual([]);
+  });
+
+  it('une cible par bourse, triées par id ; l’année la plus récente l’emporte', () => {
+    const targets = announcedOpeningTargets(
+      [
+        cycle({ scholarshipId: 'z' }),
+        cycle({ scholarshipId: 'e', academicYear: '2025-2026', closesAt: new Date('2026-06-01T00:00:00.000Z') }),
+        cycle({ scholarshipId: 'e', academicYear: '2026-2027' }),
+      ],
+      now,
+    );
+    expect(targets.map((target) => [target.scholarshipId, target.academicYear])).toEqual([
+      ['e', '2026-2027'],
+      ['z', '2026-2027'],
+    ]);
+  });
+});
+
+describe('overview : abonnés à prévenir d’une bourse déjà annoncée', () => {
+  const now = new Date('2026-10-15T12:00:00.000Z');
+  const announcedAt = new Date('2026-10-01T12:00:00.000Z');
+  const previousMode = process.env.KPB_SCHOLARSHIP_OPENING_MODE;
+
+  afterEach(() => {
+    if (previousMode === undefined) delete process.env.KPB_SCHOLARSHIP_OPENING_MODE;
+    else process.env.KPB_SCHOLARSHIP_OPENING_MODE = previousMode;
+  });
+
+  function makeOverviewAdmin(cycles: OverviewCycleRow[], newFollowers: Array<{ scholarshipId: string; newFollowers: number }>) {
+    const queries: string[] = [];
+    const client = {
+      scholarshipCycle: { findMany: async () => cycles },
+      $queryRaw: async (sql: { text: string }) => {
+        queries.push(sql.text);
+        if (sql.text.includes('new_target')) return newFollowers;
+        return [
+          { scholarshipId: 'announced', followers: 334, notifiable: 312 },
+          { scholarshipId: 'fresh', followers: 40, notifiable: 38 },
+        ];
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async <T>(op: (p: unknown) => Promise<T>) => op(client),
+    } as unknown as PrismaService;
+    const admin = new ScholarshipOpeningAdminService(
+      prisma,
+      {} as ScholarshipOpeningAudienceService,
+      {} as ScholarshipContentQualityService,
+      {} as PushSenderService,
+    );
+    return { admin, queries };
+  }
+
+  const announced: OverviewCycleRow = {
+    id: 'cycle-announced',
+    scholarshipId: 'announced',
+    academicYear: '2026-2027',
+    status: 'open',
+    activatedAt: announcedAt,
+    closesAt: new Date('2026-12-01T00:00:00.000Z'),
+    estimatedCloseAt: null,
+    openingNotifiedAt: announcedAt,
+    openingLastFanoutAt: announcedAt,
+    openingAudience: 300,
+    openingFanoutDueAt: null,
+  };
+
+  it('le cycle proposé est annoncé : les nouveaux abonnés à côté de `notifiable`, inchangé', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
+    const { admin } = makeOverviewAdmin([announced], [{ scholarshipId: 'announced', newFollowers: 9 }]);
+    const overview = await admin.overview(now);
+    expect(overview.items).toEqual([
+      {
+        scholarshipId: 'announced',
+        followers: 334,
+        notifiable: 312,
+        announcedTarget: {
+          cycleId: 'cycle-announced',
+          academicYear: '2026-2027',
+          announcedAt: announcedAt.toISOString(),
+          newFollowers: 9,
+        },
+        lastAnnounced: {
+          cycleId: 'cycle-announced',
+          academicYear: '2026-2027',
+          at: announcedAt.toISOString(),
+          audience: 300,
+        },
+        scheduledAt: null,
+      },
+      {
+        scholarshipId: 'fresh',
+        followers: 40,
+        notifiable: 38,
+        announcedTarget: null,
+        lastAnnounced: null,
+        scheduledAt: null,
+      },
+    ]);
+  });
+
+  it('aucun nouvel abonné : 0, pas l’audience de la portée', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
+    const { admin } = makeOverviewAdmin([announced], []);
+    const overview = await admin.overview(now);
+    expect(overview.items[0]?.announcedTarget?.newFollowers).toBe(0);
+  });
+
+  it('aucun cycle proposé déjà annoncé : la requête des nouveaux abonnés n’est pas lancée', async () => {
+    process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
+    const closed = { ...announced, closesAt: new Date('2026-10-10T00:00:00.000Z') };
+    const { admin, queries } = makeOverviewAdmin([closed], []);
+    const overview = await admin.overview(now);
+    expect(queries.some((text) => text.includes('new_target'))).toBe(false);
+    expect(overview.items[0]).toMatchObject({ scholarshipId: 'announced', announcedTarget: null });
   });
 });
