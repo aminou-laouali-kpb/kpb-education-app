@@ -17,6 +17,7 @@ import 'package:karatou/app/core/navigation/shell_tabs.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/services/followed_scholarships_store.dart';
+import 'package:karatou/app/core/ui/components/kpb_toast.dart';
 import 'package:karatou/app/features/saved/followed_scholarships_section.dart';
 import 'package:karatou/app/features/saved/saved_screen.dart';
 
@@ -183,6 +184,9 @@ void main() {
     expect(find.text('Chevening'), findsNothing);
     expect(controller.isFollowingScholarship('chevening'), isFalse);
     verify(() => api.unsubscribeScholarshipAlert('chevening')).called(1);
+    // Le bandeau commun KpbToast (information), avec son action « Annuler ».
+    final toast = tester.widget<KpbToastBody>(find.byType(KpbToastBody));
+    expect(toast.kind, KpbToastKind.info);
     expect(find.text('followed_undo'), findsOneWidget);
 
     await tester.tap(find.text('followed_undo'));
@@ -190,8 +194,8 @@ void main() {
     expect(controller.isFollowingScholarship('chevening'), isTrue);
     expect(find.text('Chevening'), findsOneWidget);
 
-    // Laisse le message se fermer (minuterie de 4 s).
-    await tester.pump(const Duration(seconds: 5));
+    // Laisse le bandeau se fermer (6 s par défaut pour un bandeau à action).
+    await tester.pump(const Duration(seconds: 7));
     await tester.pumpAndSettle();
   });
 

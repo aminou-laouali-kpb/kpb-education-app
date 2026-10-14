@@ -454,33 +454,13 @@ class _SavedScreenState extends State<SavedScreen> {
 }
 
 /// « Retiré » + « Annuler » : le seul message de cet écran, pour toutes ses
-/// listes. Un seul point d'appel, que la migration vers le toast commun du
-/// design system remplacera d'un coup.
+/// listes. Un bandeau KpbToast d'information, avec l'action « Annuler » ; la
+/// durée par défaut d'un bandeau à action laisse le temps d'appuyer.
 void showSavedUndoSnackbar(String message, VoidCallback onUndo) {
-  Get.showSnackbar(GetSnackBar(
-    messageText: Text(
-      message,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
-    ),
-    mainButton: TextButton(
-      onPressed: () {
-        onUndo();
-        Get.closeCurrentSnackbar();
-      },
-      child: Text(
-        'followed_undo'.tr,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    ),
-    duration: const Duration(seconds: 4),
-    backgroundColor: KpbColors.gray700,
-    borderRadius: KpbRadius.md,
-    margin: const EdgeInsets.all(12),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-  ));
+  KpbToast.info(
+    message,
+    action: KpbToastAction(label: 'followed_undo'.tr, onPressed: onUndo),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -140,7 +140,6 @@ const durationBudget = <String, int>{
   'lib/app/features/orientation/orientation_roadmap_screen.dart': 1,
   'lib/app/features/orientation/orientation_screen.dart': 5,
   'lib/app/features/parcours/parcours_link_screen.dart': 2,
-  'lib/app/features/saved/saved_screen.dart': 1,
   'lib/app/features/scholarships/live_scholarships_screen.dart': 3,
   'lib/app/features/scholarships/scholarship_eligibility_screen.dart': 1,
   'lib/app/features/search/search_screen.dart': 1,

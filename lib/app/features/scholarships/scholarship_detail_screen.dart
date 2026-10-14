@@ -173,6 +173,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   Future<void> _setNotifyOpening(bool value) async {
     if (_notifyOpeningSaving) return;
     final previous = _notifyOpening;
+    unawaited(KpbHaptics.selection());
     setState(() {
       _notifyOpeningOverride = value;
       _notifyOpeningSaving = true;
@@ -202,8 +203,14 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         if (isEndpointUnavailable(error)) _notifyOpeningUnavailable = true;
       });
       if (!isEndpointUnavailable(error)) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text('scholarship_notify_opening_error'.tr)),
+        unawaited(KpbHaptics.error());
+        KpbToast.error(
+          'scholarship_notify_opening_error'.tr,
+          context: context,
+          action: KpbToastAction(
+            label: 'retry'.tr,
+            onPressed: () => unawaited(_setNotifyOpening(value)),
+          ),
         );
       }
     } finally {

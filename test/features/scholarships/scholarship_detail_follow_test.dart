@@ -16,6 +16,7 @@ import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
+import 'package:karatou/app/core/ui/components/kpb_toast.dart';
 import 'package:karatou/app/features/scholarships/scholarship_detail_screen.dart';
 
 import '../../widget_test_helpers.dart';
@@ -192,6 +193,49 @@ void main() {
 
     expect(notify, findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'PATCH en échec réseau : l\'interrupteur revient, KpbToast d\'erreur '
+      'avec « Réessayer »', (tester) async {
+    final scholarship = LiveScholarshipModel.fromJson(_json(
+      follow: <String, dynamic>{'following': true, 'notifyOpening': true},
+    ));
+    final mock = await _pump(tester, scholarship, saved: true);
+    when(() => mock.updateScholarshipOpeningAlert(
+          any(),
+          notifyOpening: any(named: 'notifyOpening'),
+        )).thenThrow(DioException(
+      requestOptions: RequestOptions(path: '/me/scholarship-alerts/chevening'),
+      type: DioExceptionType.connectionError,
+    ));
+
+    await tester.tap(notify);
+    await tester.pumpAndSettle();
+
+    // Le choix n'a pas été enregistré : l'interrupteur dit la vérité.
+    expect(tester.widget<SwitchListTile>(notify).value, isTrue);
+    final toast = tester.widget<KpbToastBody>(find.byType(KpbToastBody));
+    expect(toast.kind, KpbToastKind.error);
+    expect(find.text('Réessayer'), findsOneWidget);
+
+    when(() => mock.updateScholarshipOpeningAlert(
+          any(),
+          notifyOpening: any(named: 'notifyOpening'),
+        )).thenAnswer((_) async => <String, dynamic>{
+          'scholarshipId': 'chevening',
+          'following': true,
+          'notifyOpening': false,
+        });
+    await tester.tap(find.text('Réessayer'));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<SwitchListTile>(notify).value, isFalse);
+    expect(tester.takeException(), isNull);
+
+    // Laisse le bandeau se fermer.
+    await tester.pump(const Duration(seconds: 7));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('cycle `open` dont l\'ouverture est à venir : « Ouvre le … »',
