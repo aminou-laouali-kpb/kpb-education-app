@@ -3456,4 +3456,8 @@ const Map<String, String> appTranslationsFr = {
   // ── Bandeaux (KpbToast) ────────────────────────────────────────
   'toast_offline_pending_default':
       'C\'est gardé sur ton téléphone. On l\'envoie dès que tu es en ligne.',
+  // ── États asynchrones (KpbAsyncView) ───────────────────────────
+  'async_loading': 'Chargement…',
+  'async_empty_title': 'Rien à afficher pour l\'instant',
+  'async_updated_ago': 'Mis à jour @ago',
 };

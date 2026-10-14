@@ -3198,4 +3198,8 @@ const Map<String, String> appTranslationsEn = {
   // ── Toasts (KpbToast) ──────────────────────────────────────────
   'toast_offline_pending_default':
       'Saved on your phone. We\'ll send it as soon as you\'re online.',
+  // ── Async states (KpbAsyncView) ────────────────────────────────
+  'async_loading': 'Loading…',
+  'async_empty_title': 'Nothing to show yet',
+  'async_updated_ago': 'Updated @ago',
 };

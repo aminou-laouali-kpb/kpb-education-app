@@ -17,6 +17,7 @@ export 'components/kpb_empty_state.dart';
 export 'components/kpb_divider.dart';
 export 'components/kpb_refresh.dart';
 export 'components/kpb_error_state.dart';
+export 'components/kpb_async_view.dart';
 export 'components/kpb_sync_error_banner.dart';
 export 'components/kpb_offline_banner.dart';
 export 'components/kpb_network_image.dart';
