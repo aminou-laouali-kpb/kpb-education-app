@@ -465,6 +465,37 @@ export function openingError<C extends OpeningErrorCode>(
   }
 }
 
+/**
+ * Transaction interactive d'annuler et d'arrêter. Chaque geste de l'équipe sur
+ * un cycle (`activate`, annuler, arrêter) commence par `SET LOCAL lock_timeout
+ * = '5s'` : le worker tient la ligne du cycle `FOR UPDATE` pendant tout un
+ * envoi (jusqu'à 120 s). Délais EXPLICITES : le défaut de Prisma (5 s)
+ * expirerait pendant l'attente du verrou et rendrait une 500 ; `timeout` >
+ * `lock_timeout`, c'est donc le verrou qui cède le premier (409).
+ */
+export const OPENING_ADMIN_TRANSACTION = { maxWait: 5_000, timeout: 15_000 } as const;
+
+/**
+ * Le cycle est occupé : attente de verrou au-delà de `lock_timeout` (`55P03`,
+ * que Prisma 6 transmet en `P2010` sur une requête brute) ou transaction
+ * interactive expirée / impossible à ouvrir à temps (`P2028`). Les deux se
+ * réessaient dans quelques secondes : 409 `OPENING_BUSY`, jamais une 500.
+ */
+export function isOpeningBusyError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as {
+    code?: unknown;
+    meta?: { code?: unknown } | null;
+    message?: unknown;
+  };
+  if (candidate.code === '55P03' || candidate.code === 'P2028') return true;
+  if (candidate.code === 'P2010' && candidate.meta?.code === '55P03') return true;
+  return (
+    typeof candidate.message === 'string' &&
+    /55P03|lock timeout/i.test(candidate.message)
+  );
+}
+
 // ── Audit ───────────────────────────────────────────────────────────────────
 
 export const OPENING_AUDIT_ENTITY_TYPE = 'ScholarshipCycle';

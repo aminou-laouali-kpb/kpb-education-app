@@ -1,7 +1,15 @@
+import { HttpException } from '@nestjs/common';
+
+import { InternalRole } from '../../../common/enums/internal-role.enum';
+import type { PushSenderService } from '../../notifications/push-sender.service';
+import type { PrismaService } from '../../prisma/prisma.service';
+import type { ScholarshipContentQualityService } from '../scholarship-content-quality.service';
 import {
   buildOpeningReportCounts,
+  ScholarshipOpeningAdminService,
   type OpeningReportGroup,
 } from './scholarship-opening-admin.service';
+import type { ScholarshipOpeningAudienceService } from './scholarship-opening-audience.service';
 
 const group = (over: Partial<OpeningReportGroup>): OpeningReportGroup => ({
   pushStatus: 'accepted',
@@ -67,5 +75,128 @@ describe('buildOpeningReportCounts', () => {
     expect(report.inbox).toEqual({ total: 0, read: 0 });
     expect(report.push.accepted).toBe(0);
     expect(report.byProvider).toEqual({ fcm: 0, onesignal: 0 });
+  });
+});
+
+// ── Annuler / arrêter quand le cycle est tenu par un envoi ──────────────────
+
+type TxOptions = { maxWait?: number; timeout?: number } | undefined;
+
+function makeAdmin(opts: {
+  /** Erreur levée par l'UPDATE du cycle (attente de verrou). */
+  cycleUpdateError?: unknown;
+  /** Erreur levée par `$transaction` elle-même (délai de la transaction). */
+  transactionError?: unknown;
+}) {
+  const statements: string[] = [];
+  const txOptions: TxOptions[] = [];
+  const audits: unknown[] = [];
+  const lockedUpdate = () => {
+    if (opts.cycleUpdateError) throw opts.cycleUpdateError;
+  };
+  const tx = {
+    $executeRaw: async (strings: TemplateStringsArray) => {
+      const text = strings.join('?');
+      statements.push(text);
+      if (text.includes('UPDATE "ScholarshipCycle"')) lockedUpdate();
+      return 0;
+    },
+    scholarshipCycle: {
+      findFirst: async () => ({
+        academicYear: '2026-2027',
+        openingFanoutDueAt: new Date('2026-10-15T12:02:00.000Z'),
+        openingFanoutScope: 'alerts',
+      }),
+      updateMany: async () => {
+        statements.push('updateMany ScholarshipCycle');
+        lockedUpdate();
+        return { count: 1 };
+      },
+      findUnique: async () => ({ openingLastFanoutAt: null }),
+    },
+    userNotification: { count: async () => 0 },
+    adminAuditEvent: {
+      create: async (args: unknown) => {
+        audits.push(args);
+        return {};
+      },
+    },
+  };
+  const client = {
+    scholarshipCycle: { findFirst: async () => ({ academicYear: '2026-2027' }) },
+    $transaction: async (fn: (t: typeof tx) => Promise<unknown>, options?: TxOptions) => {
+      txOptions.push(options);
+      if (opts.transactionError) throw opts.transactionError;
+      return fn(tx);
+    },
+  };
+  const prisma = {
+    isEnabled: true,
+    execute: async <T>(op: (p: unknown) => Promise<T>) => op(client),
+  } as unknown as PrismaService;
+  const admin = new ScholarshipOpeningAdminService(
+    prisma,
+    {} as ScholarshipOpeningAudienceService,
+    {} as ScholarshipContentQualityService,
+    {} as PushSenderService,
+  );
+  return { admin, statements, txOptions, audits };
+}
+
+const actor = { id: 'adm-1', role: InternalRole.Admin };
+/** Prisma 6 : un 55P03 (`lock_timeout`) sur une requête brute. */
+const lockTimeout = Object.assign(new Error('lock timeout'), {
+  code: 'P2010',
+  meta: { code: '55P03' },
+});
+/** Prisma : la transaction interactive a dépassé son délai. */
+const transactionExpired = Object.assign(
+  new Error('Transaction already closed: the timeout for this transaction was 15000 ms.'),
+  { code: 'P2028' },
+);
+
+async function rejection(promise: Promise<unknown>): Promise<HttpException> {
+  try {
+    await promise;
+  } catch (error) {
+    if (error instanceof HttpException) return error;
+    throw error;
+  }
+  throw new Error('expected an HttpException');
+}
+
+describe.each(['stop', 'cancel'] as const)('%s : cycle tenu par un envoi en préparation', (op) => {
+  const call = (admin: ScholarshipOpeningAdminService) =>
+    op === 'stop'
+      ? admin.stop('sch-1', 'cycle-1', actor, 'req-1')
+      : admin.cancel('sch-1', 'cycle-1', actor, 'req-1');
+
+  it('attend 5 s au plus (lock_timeout en tête), dans une transaction au délai explicite', async () => {
+    const { admin, statements, txOptions } = makeAdmin({});
+    await call(admin);
+    expect(statements[0]).toContain(`SET LOCAL lock_timeout = '5s'`);
+    expect(txOptions).toEqual([{ maxWait: 5_000, timeout: 15_000 }]);
+  });
+
+  it.each([
+    ['lock_timeout (55P03)', lockTimeout, 'cycleUpdateError'],
+    ['transaction expirée (P2028)', transactionExpired, 'transactionError'],
+  ] as const)('%s → 409 OPENING_BUSY, message complet, rien d’audité', async (_label, error, where) => {
+    const { admin, audits } = makeAdmin({ [where]: error });
+    const conflict = await rejection(call(admin));
+    expect(conflict.getStatus()).toBe(409);
+    expect(conflict.getResponse()).toMatchObject({
+      code: 'OPENING_BUSY',
+      message:
+        'Un envoi est en cours de préparation pour ce cycle. Réessayez dans quelques secondes.',
+    });
+    expect(audits).toHaveLength(0);
+  });
+
+  it('une autre panne reste une panne (pas un faux 409)', async () => {
+    const { admin } = makeAdmin({
+      cycleUpdateError: Object.assign(new Error('connection lost'), { code: 'P1001' }),
+    });
+    await expect(call(admin)).rejects.toMatchObject({ code: 'P1001' });
   });
 });

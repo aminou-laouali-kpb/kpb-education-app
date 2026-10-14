@@ -18,6 +18,7 @@ import {
   canSendAboveOpeningThreshold,
   isAboveOpeningThreshold,
   isOpeningAudienceChangeRejected,
+  isOpeningBusyError,
   openingDedupeKey,
   openingError,
   OPENING_AUDIT_ENTITY_TYPE,
@@ -72,24 +73,6 @@ type ActivationOutcome =
       fanoutAt: Date | null;
       legacyRecipients: LegacyRecipient[];
     };
-
-/** Prisma 6 transmet un 55P03 (`lock_timeout`) en P2010 sur une requête brute. */
-function isLockTimeout(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const candidate = error as {
-    code?: unknown;
-    meta?: { code?: unknown } | null;
-    message?: unknown;
-  };
-  if (candidate.code === '55P03') return true;
-  if (candidate.code === 'P2010' && candidate.meta?.code === '55P03') {
-    return true;
-  }
-  return (
-    typeof candidate.message === 'string' &&
-    /55P03|lock timeout/i.test(candidate.message)
-  );
-}
 
 function isUniqueConflict(error: unknown): boolean {
   return (
@@ -261,7 +244,7 @@ export class ScholarshipLifecycleService {
         outcome = await runOnce();
       }
     } catch (error) {
-      if (isLockTimeout(error)) throw openingError('OPENING_BUSY');
+      if (isOpeningBusyError(error)) throw openingError('OPENING_BUSY');
       throw error;
     }
 

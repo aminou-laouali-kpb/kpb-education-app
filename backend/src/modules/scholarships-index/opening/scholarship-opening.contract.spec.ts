@@ -13,6 +13,7 @@ import {
   isAboveOpeningThreshold,
   isOpeningAudienceChangeRejected,
   isOpeningAudienceScope,
+  isOpeningBusyError,
   isOutboxOpeningMode,
   isPushOutboxEnabled,
   notificationKeyForRef,
@@ -295,6 +296,25 @@ describe('scholarship-opening.contract', () => {
         expect(action).toMatch(/^scholarship_cycle\.[a-z_]+$/);
       }
       expect(OPENING_AUDIT_ACTIONS).toContain('scholarship_cycle.fanout_expired');
+    });
+  });
+
+  describe('isOpeningBusyError', () => {
+    it.each([
+      ['55P03 brut', { code: '55P03' }],
+      ['P2010 portant 55P03', { code: 'P2010', meta: { code: '55P03' } }],
+      ['transaction expirée P2028', { code: 'P2028' }],
+      ['message de lock_timeout', new Error('canceling statement due to lock timeout')],
+    ])('%s → occupé (409)', (_label, error) => {
+      expect(isOpeningBusyError(error)).toBe(true);
+    });
+
+    it.each([
+      ['P2010 sans 55P03', { code: 'P2010', meta: { code: '23505' } }],
+      ['panne de connexion', { code: 'P1001' }],
+      ['rien', null],
+    ])('%s → pas occupé', (_label, error) => {
+      expect(isOpeningBusyError(error)).toBe(false);
     });
   });
 });

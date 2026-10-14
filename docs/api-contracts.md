@@ -1355,7 +1355,7 @@ n'affiche que lui).
 
 | Statut | `code` | `details` | Quand |
 |---|---|---|---|
-| 409 | `OPENING_BUSY` | — | le cycle est verrouillé par un envoi en cours de préparation (> 5 s) |
+| 409 | `OPENING_BUSY` | — | `activate`, annulation ou arrêt : le cycle est verrouillé par un envoi en cours de préparation (> 5 s d'attente, `lock_timeout`), ou la transaction a expiré ; à réessayer |
 | 409 | `OPENING_NOT_RETROACTIVE` | — | `notify: true` sur un cycle `openingPreExisting` |
 | 400 | `OPENING_CONFIRMATION_REQUIRED` | `{toNotify, threshold}` | `toNotify > seuil` sans `expectedRecipients` |
 | 403 | `OPENING_REQUIRES_ADMIN` | `{toNotify, threshold}` | `toNotify > seuil` et rôle ni `admin` ni `super_admin` |
@@ -1410,8 +1410,8 @@ content_manager). `X-Request-Id` du client repris s'il est sûr
 | Route | Rôle |
 |---|---|
 | `GET /admin/scholarships/:id/opening-preview?academicYear=&opensAt=&closesAt=` | Aperçu : cycles, cible, complétude (`readiness`), audience et répartition des envois, copie FR/EN, 5 derniers événements. Lecture seule. |
-| `POST /admin/scholarships/:id/cycles/:cycleId/opening/cancel` | Annule une annonce programmée (rien n'a été écrit pour les étudiants) → `{cycleId, cancelled: true}` ; sinon 409 `OPENING_NOT_SCHEDULED`. |
-| `POST /admin/scholarships/:id/cycles/:cycleId/opening/stop` | Arrête les push restants : `pending` → `skipped/stopped_by_staff`, entrées d'inbox gardées → `{cycleId, stopped, inFlight}`. |
+| `POST /admin/scholarships/:id/cycles/:cycleId/opening/cancel` | Annule une annonce programmée (rien n'a été écrit pour les étudiants) → `{cycleId, cancelled: true}` ; sinon 409 `OPENING_NOT_SCHEDULED`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est annulé). |
+| `POST /admin/scholarships/:id/cycles/:cycleId/opening/stop` | Arrête les push restants : `pending` → `skipped/stopped_by_staff`, entrées d'inbox gardées → `{cycleId, stopped, inFlight}`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est arrêté ; à réessayer). |
 | `GET /admin/scholarships/:id/cycles/:cycleId/opening-report` | Rapport : inbox (total, lues), push par état et raison, par fournisseur. |
 | `GET /admin/scholarships/opening-todo` | Cycles servis ouverts jamais annoncés, ni sautés, ni programmés, ni pré-existants (100 au plus). |
 | `GET /admin/scholarships/opening-overview` | Colonnes « Abonnés » (`followers`, `notifiable`) et « Annoncé » de la liste. |

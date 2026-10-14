@@ -759,6 +759,57 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     ).toMatchObject({ openingFanoutDueAt: null });
   });
 
+  it.each(['stop', 'cancel'] as const)(
+    '%s sur un cycle tenu par un envoi au-delà de 5 s → 409 OPENING_BUSY, rien d’écrit',
+    async (op) => {
+      process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_alerts';
+      const sid = await scholarship();
+      await alert(await student(), sid);
+      const result = await lifecycle.activate(sid, activation(), actor, 'r');
+      expect(result.notification.state).toBe('scheduled');
+      const auditsBefore = await prisma.adminAuditEvent.count({
+        where: { entityId: result.cycleId },
+      });
+
+      let locked: () => void = () => undefined;
+      const lockTaken = new Promise<void>((resolve) => {
+        locked = resolve;
+      });
+      const holder = prisma.$transaction(
+        async (tx) => {
+          await tx.$queryRaw`SELECT "id" FROM "ScholarshipCycle" WHERE "id" = ${result.cycleId} FOR UPDATE`;
+          locked();
+          await new Promise((resolve) => setTimeout(resolve, 7_000));
+        },
+        { timeout: 20_000 },
+      );
+      await lockTaken;
+      const started = Date.now();
+      const error = await httpError(
+        op === 'stop'
+          ? admin.stop(sid, result.cycleId, actor, 'busy')
+          : admin.cancel(sid, result.cycleId, actor, 'busy'),
+      );
+      const waited = Date.now() - started;
+      await holder;
+
+      expect(error.getStatus()).toBe(409);
+      expect(error.getResponse()).toMatchObject({
+        code: 'OPENING_BUSY',
+        message:
+          'Un envoi est en cours de préparation pour ce cycle. Réessayez dans quelques secondes.',
+      });
+      expect(waited).toBeGreaterThanOrEqual(4_500);
+      expect(waited).toBeLessThan(7_000);
+      expect(
+        await prisma.adminAuditEvent.count({ where: { entityId: result.cycleId } }),
+      ).toBe(auditsBefore);
+      expect(
+        await prisma.scholarshipCycle.findUniqueOrThrow({ where: { id: result.cycleId } }),
+      ).toMatchObject({ openingStoppedAt: null, openingFanoutDueAt: expect.any(Date) });
+    },
+  );
+
   // ── Seuil (vrai compte) et vue d'ensemble ─────────────────────────────────
 
   it('au-delà du seuil : 400 sans confirmation, 403 pour un ContentManager', async () => {

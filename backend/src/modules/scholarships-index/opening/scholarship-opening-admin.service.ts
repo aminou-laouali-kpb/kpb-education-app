@@ -36,8 +36,10 @@ import {
   canSendAboveOpeningThreshold,
   CYCLE_OPENING_SKIP_REASONS,
   isOpeningAudienceScope,
+  isOpeningBusyError,
   isOutboxOpeningMode,
   isPushOutboxEnabled,
+  OPENING_ADMIN_TRANSACTION,
   OPENING_AUDIT_ACTIONS,
   OPENING_AUDIT_ENTITY_TYPE,
   OPENING_AUDIT_PURPOSE,
@@ -185,22 +187,6 @@ function iso(date: Date | null | undefined): string | null {
 
 function skipReason(value: string | null): CycleOpeningSkipReason | null {
   return CYCLE_OPENING_SKIP_REASONS.find((reason) => reason === value) ?? null;
-}
-
-/** `55P03` (`lock_timeout`), quelle que soit la forme que Prisma lui donne. */
-function isLockTimeout(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const candidate = error as {
-    code?: unknown;
-    meta?: { code?: unknown } | null;
-    message?: unknown;
-  };
-  if (candidate.code === '55P03') return true;
-  if (candidate.code === 'P2010' && candidate.meta?.code === '55P03') return true;
-  return (
-    typeof candidate.message === 'string' &&
-    /55P03|lock timeout/i.test(candidate.message)
-  );
 }
 
 const PREVIEW_CYCLE_SELECT = {
@@ -549,11 +535,11 @@ export class ScholarshipOpeningAdminService {
             });
             return { cancelled: true };
           },
-          { maxWait: 5_000, timeout: 15_000 },
+          OPENING_ADMIN_TRANSACTION,
         ),
       );
     } catch (error) {
-      if (isLockTimeout(error)) throw openingError('OPENING_BUSY');
+      if (isOpeningBusyError(error)) throw openingError('OPENING_BUSY');
       throw error;
     }
     if (!outcome.cancelled) {
@@ -580,34 +566,44 @@ export class ScholarshipOpeningAdminService {
   ): Promise<StopOpeningResponse> {
     this.assertDb();
     const cycle = await this.assertCycle(scholarshipId, cycleId);
-    const result = await this.run((p) =>
-      p.$transaction(async (tx) => {
-        await tx.$executeRaw`
-          UPDATE "ScholarshipCycle"
-          SET "openingStoppedAt" = now(), "updatedAt" = now()
-          WHERE "id" = ${cycleId} AND "scholarshipId" = ${scholarshipId}
-        `;
-        const stopped = await tx.$executeRaw`
-          UPDATE "UserNotification"
-          SET "pushStatus" = 'skipped', "pushLastError" = 'stopped_by_staff'
-          WHERE "cycleId" = ${cycleId}
-            AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
-            AND "pushStatus" = 'pending'
-            AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < now())
-        `;
-        const inFlight = await tx.userNotification.count({
-          where: { cycleId, kind: SCHOLARSHIP_OPENED_KIND, pushStatus: 'pending' },
-        });
-        await this.audit(tx, {
-          action: 'scholarship_cycle.notify_stopped',
-          cycleId,
-          actor,
-          requestId,
-          changes: { academicYear: cycle.academicYear, stopped, inFlight },
-        });
-        return { stopped, inFlight };
-      }),
-    );
+    let result: { stopped: number; inFlight: number };
+    try {
+      result = await this.run((p) =>
+        p.$transaction(async (tx) => {
+          // Le worker tient la ligne du cycle pendant un envoi (jusqu'à
+          // 120 s) : 5 s d'attente au plus, puis 409 OPENING_BUSY — comme
+          // activate et l'annulation —, jamais une requête pendue puis 500.
+          await tx.$executeRaw`SET LOCAL lock_timeout = '5s'`;
+          await tx.$executeRaw`
+            UPDATE "ScholarshipCycle"
+            SET "openingStoppedAt" = now(), "updatedAt" = now()
+            WHERE "id" = ${cycleId} AND "scholarshipId" = ${scholarshipId}
+          `;
+          const stopped = await tx.$executeRaw`
+            UPDATE "UserNotification"
+            SET "pushStatus" = 'skipped', "pushLastError" = 'stopped_by_staff'
+            WHERE "cycleId" = ${cycleId}
+              AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
+              AND "pushStatus" = 'pending'
+              AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < now())
+          `;
+          const inFlight = await tx.userNotification.count({
+            where: { cycleId, kind: SCHOLARSHIP_OPENED_KIND, pushStatus: 'pending' },
+          });
+          await this.audit(tx, {
+            action: 'scholarship_cycle.notify_stopped',
+            cycleId,
+            actor,
+            requestId,
+            changes: { academicYear: cycle.academicYear, stopped, inFlight },
+          });
+          return { stopped, inFlight };
+        }, OPENING_ADMIN_TRANSACTION),
+      );
+    } catch (error) {
+      if (isOpeningBusyError(error)) throw openingError('OPENING_BUSY');
+      throw error;
+    }
     return { cycleId, stopped: result.stopped, inFlight: result.inFlight };
   }
 
