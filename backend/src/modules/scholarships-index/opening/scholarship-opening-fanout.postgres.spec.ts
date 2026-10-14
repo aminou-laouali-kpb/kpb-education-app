@@ -121,7 +121,8 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       select: { id: true },
     });
     await prisma.adminAuditEvent.deleteMany({
-      where: { entityId: { in: cycles.map((cycle) => cycle.id) } },
+      // Les refus sur une année sans cycle portent sur la bourse.
+      where: { entityId: { in: [...cycles.map((cycle) => cycle.id), ...scholarships] } },
     });
     await prisma.userNotification.deleteMany({ where: { userId: { in: users } } });
     await prisma.savedItem.deleteMany({ where: { userId: { in: users } } });
@@ -600,6 +601,19 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(
       await prisma.scholarshipCycle.findUniqueOrThrow({ where: { id: result.cycleId } }),
     ).toMatchObject({ openingFanoutDueAt: null, openingSkippedReason: 'not_public_at_fanout' });
+    // Le fil de l'équipe dit « abandonné », jamais « envoyé ».
+    const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(preview.recentEvents[0]).toMatchObject({
+      action: 'scholarship_cycle.fanout_completed',
+      outcome: 'skipped',
+      reasonCode: 'not_public_at_fanout',
+      toNotify: 0,
+    });
+    expect(preview.recentEvents[1]).toMatchObject({
+      action: 'scholarship_cycle.notify_scheduled',
+      outcome: 'sent',
+    });
+    expect(preview.recentEvents[1]).not.toHaveProperty('reasonCode');
   });
 
   it('clôture passée pendant l’attente → cycle_closed_at_fanout, aucune ligne', async () => {
@@ -617,6 +631,11 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(
       await prisma.scholarshipCycle.findUniqueOrThrow({ where: { id: result.cycleId } }),
     ).toMatchObject({ openingSkippedReason: 'cycle_closed_at_fanout' });
+    const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(preview.recentEvents[0]).toMatchObject({
+      outcome: 'skipped',
+      reasonCode: 'cycle_closed_at_fanout',
+    });
   });
 
   it('échue depuis 25 h → fanout_expired, aucune ligne, le cycle revient dans « À faire »', async () => {
@@ -636,6 +655,12 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       select: { action: true },
     });
     expect(events.map((event) => event.action)).toContain('scholarship_cycle.fanout_expired');
+    const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(preview.recentEvents[0]).toMatchObject({
+      action: 'scholarship_cycle.fanout_expired',
+      outcome: 'skipped',
+      reasonCode: 'fanout_too_late',
+    });
     const todo = await admin.todo();
     expect(todo.items.map((item) => item.cycleId)).toContain(result.cycleId);
     expect(todo.items.find((item) => item.cycleId === result.cycleId)).toMatchObject({
@@ -690,7 +715,7 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     );
   });
 
-  it('cycle pré-existant (reprise) : notify:true → 409, rien d’écrit', async () => {
+  it('cycle pré-existant (reprise) : notify:true → 409, seul le refus à l’audit', async () => {
     process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
     const sid = await scholarship();
     await favorite(await student(), sid);
@@ -711,9 +736,22 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     expect(error.getStatus()).toBe(409);
     expect(error.getResponse()).toMatchObject({ code: 'OPENING_NOT_RETROACTIVE' });
     expect(
-      await prisma.adminAuditEvent.count({ where: { entityId: cycle.id } }),
-    ).toBe(0);
+      await prisma.adminAuditEvent.findMany({
+        where: { entityId: cycle.id },
+        select: { result: true, reasonCode: true, actorAdminId: true },
+      }),
+    ).toEqual([{ result: 'refused', reasonCode: 'OPENING_NOT_RETROACTIVE', actorAdminId: actor.id }]);
     expect(await rowsOf(cycle.id)).toHaveLength(0);
+    expect(
+      await prisma.scholarshipCycle.findUniqueOrThrow({ where: { id: cycle.id } }),
+    ).toMatchObject({ openingFanoutDueAt: null, openingSkippedAt: null });
+    const preview = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(preview.recentEvents[0]).toMatchObject({
+      outcome: 'refused',
+      reasonCode: 'OPENING_NOT_RETROACTIVE',
+      actorName: 'Aminata D.',
+      academicYear: '2026-2027',
+    });
   });
 
   // ── 6c. activate attend un envoi en cours ─────────────────────────────────
@@ -831,8 +869,24 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
       ),
     );
     expect(cm.getStatus()).toBe(403);
-    // Rien d'écrit : le cycle n'existe toujours pas.
+    // Rien d'écrit pour les étudiants : le cycle n'existe toujours pas. Le
+    // refus est à l'audit, sur la bourse, et dans le fil de l'aperçu.
     expect(await prisma.scholarshipCycle.count({ where: { scholarshipId: sid } })).toBe(0);
+    expect(
+      await prisma.adminAuditEvent.findMany({
+        where: { entityType: 'Scholarship', entityId: sid },
+        select: { result: true, reasonCode: true },
+      }),
+    ).toEqual([{ result: 'refused', reasonCode: 'OPENING_REQUIRES_ADMIN' }]);
+    const refused = await admin.preview(sid, { academicYear: '2026-2027' }, actor);
+    expect(refused.recentEvents).toEqual([
+      expect.objectContaining({
+        outcome: 'refused',
+        reasonCode: 'OPENING_REQUIRES_ADMIN',
+        academicYear: '2026-2027',
+        toNotify: 3,
+      }),
+    ]);
     const ok = await lifecycle.activate(sid, activation({ expectedRecipients: 3 }), actor, 'r');
     expect(ok.notification).toMatchObject({ state: 'scheduled', toNotify: 3 });
 

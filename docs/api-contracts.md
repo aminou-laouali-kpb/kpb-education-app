@@ -1400,6 +1400,19 @@ et coupe le push, et l'aperçu ne compte aucun report (envoi immédiat).
 Audit `AdminAuditEvent` (`entityType: 'ScholarshipCycle'`, `purposeCode: 'scholarship_opening'`) :
 `scholarship_cycle.opened | notify_scheduled | notified_legacy | dates_updated |
 notify_cancelled | notify_stopped | fanout_completed | fanout_expired`.
+`result` dit ce qui s'est réellement passé :
+- `success` — le geste a eu lieu ;
+- `skipped` — une annonce programmée abandonnée par le worker sans rien
+  écrire pour les étudiants, `reasonCode` ∈ `not_public_at_fanout |
+  cycle_closed_at_fanout | fanout_too_late` ;
+- `refused` — une activation refusée (403 `OPENING_REQUIRES_ADMIN`, 409
+  `OPENING_AUDIENCE_CHANGED`, 409 `OPENING_NOT_RETROACTIVE`), `reasonCode` = le
+  code d'erreur, `action` = l'annonce tentée (`notify_scheduled`, ou
+  `notified_legacy` en `legacy`). C'est la seule écriture d'un refus ; sans
+  donnée personnelle (`changes` : `academicYear, notify, mode, scope, toNotify,
+  expectedRecipients, threshold, actorRole`). Sur une année dont le cycle
+  n'existe pas encore, l'événement porte sur la bourse (`entityType:
+  'Scholarship'`, `entityId` = la bourse).
 
 ### Routes de l'équipe (nouvelles)
 
@@ -1409,12 +1422,18 @@ content_manager). `X-Request-Id` du client repris s'il est sûr
 
 | Route | Rôle |
 |---|---|
-| `GET /admin/scholarships/:id/opening-preview?academicYear=&opensAt=&closesAt=` | Aperçu : cycles, cible, complétude (`readiness`), audience et répartition des envois, copie FR/EN, 5 derniers événements. Lecture seule. |
+| `GET /admin/scholarships/:id/opening-preview?academicYear=&opensAt=&closesAt=` | Aperçu : cycles, cible, complétude (`readiness`), audience et répartition des envois, copie FR/EN, 5 derniers événements (`recentEvents`, ceux des cycles et les refus portés par la bourse). Lecture seule. |
 | `POST /admin/scholarships/:id/cycles/:cycleId/opening/cancel` | Annule une annonce programmée (rien n'a été écrit pour les étudiants) → `{cycleId, cancelled: true}` ; sinon 409 `OPENING_NOT_SCHEDULED`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est annulé). |
 | `POST /admin/scholarships/:id/cycles/:cycleId/opening/stop` | Arrête les push restants : `pending` → `skipped/stopped_by_staff`, entrées d'inbox gardées → `{cycleId, stopped, inFlight}`. 409 `OPENING_BUSY` si le cycle reste tenu plus de 5 s par un envoi en préparation (rien n'est arrêté ; à réessayer). |
 | `GET /admin/scholarships/:id/cycles/:cycleId/opening-report` | Rapport : inbox (total, lues), push par état et raison, par fournisseur. |
 | `GET /admin/scholarships/opening-todo` | Cycles servis ouverts jamais annoncés, ni sautés, ni programmés, ni pré-existants (100 au plus). |
 | `GET /admin/scholarships/opening-overview` | Colonnes « Abonnés » (`followers`, `notifiable`) et « Annoncé » de la liste. |
+
+Chaque événement de `recentEvents` porte `outcome` ∈ `sent | skipped | refused`
+(tiré de `result` : `success` → `sent`) et, pour `skipped` et `refused`,
+`reasonCode?: string` (le motif ou le code d'erreur ci-dessus) : un envoi
+abandonné ou une activation refusée ne se lisent jamais comme un envoi fait,
+quelle que soit l'action affichée.
 
 Les formes exactes sont les interfaces `OpeningPreviewResponse`,
 `CancelOpeningResponse`, `StopOpeningResponse`, `OpeningReportResponse`,

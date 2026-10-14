@@ -302,6 +302,39 @@ function body(error: HttpException): { code?: string; details?: unknown; message
   return error.getResponse() as { code?: string; details?: unknown; message?: string };
 }
 
+/**
+ * Un refus laisse UNE écriture : son événement d'audit (`refused`, le code en
+ * `reasonCode`), sans donnée personnelle — et rien d'autre.
+ */
+function expectOnlyRefusalAudit(
+  writes: Write[],
+  code: string,
+  entity: { entityType: string; entityId: string },
+): Record<string, unknown> {
+  expect(writes.map((write) => write.op)).toEqual(['audit']);
+  const audit = writes[0].data as Record<string, unknown>;
+  expect(audit).toMatchObject({
+    ...entity,
+    result: 'refused',
+    reasonCode: code,
+    purposeCode: 'scholarship_opening',
+  });
+  expect(Object.keys(audit.changes as object).sort()).toEqual(
+    [
+      'academicYear',
+      'actorRole',
+      'expectedRecipients',
+      'mode',
+      'notify',
+      'scope',
+      'threshold',
+      'toNotify',
+    ].sort(),
+  );
+  expect(JSON.stringify(audit.changes)).not.toMatch(/user-/);
+  return audit;
+}
+
 describe('ScholarshipLifecycleService.activate', () => {
   const previousMode = process.env.KPB_SCHOLARSHIP_OPENING_MODE;
   const previousThreshold = process.env.KPB_OPENING_CONFIRM_THRESHOLD;
@@ -610,7 +643,7 @@ describe('ScholarshipLifecycleService.activate', () => {
           openingNotifiedAt: new Date('2026-09-01'),
         }),
       ],
-    ])('cycle pré-existant (%s) : notify:true → 409 sans écriture ; absent → pas d’annonce', async (_label, preExisting) => {
+    ])('cycle pré-existant (%s) : notify:true → 409, seul le refus à l’audit ; absent → pas d’annonce', async (_label, preExisting) => {
       const { service, writes } = makeService({ cycles: [{ ...preExisting }] });
       const error = await rejection(
         service.activate('sch-1', { ...input, notify: true }, admin, 'req'),
@@ -618,7 +651,16 @@ describe('ScholarshipLifecycleService.activate', () => {
       expect(error.getStatus()).toBe(409);
       expect(body(error).code).toBe('OPENING_NOT_RETROACTIVE');
       expect(body(error).message).toContain('déjà ouvert');
-      expect(writes).toEqual([]);
+      const audit = expectOnlyRefusalAudit(writes, 'OPENING_NOT_RETROACTIVE', {
+        entityType: 'ScholarshipCycle',
+        entityId: preExisting.id,
+      });
+      expect(audit).toMatchObject({
+        actorAdminId: admin.id,
+        requestId: 'req',
+        changes: { notify: true, toNotify: null },
+      });
+      writes.length = 0;
 
       const result = await service.activate('sch-1', input, admin, 'req');
       expect(result.notification).toMatchObject({
@@ -745,14 +787,29 @@ describe('ScholarshipLifecycleService.activate', () => {
       expect(writes).toEqual([]);
     });
 
-    it('501 confirmés par un ContentManager → 403', async () => {
+    it('501 confirmés par un ContentManager → 403, seul le refus à l’audit', async () => {
       const { service, writes } = makeService({ counts: counts({ toNotify: 501 }) });
       const error = await rejection(
         service.activate('sch-1', { ...input, expectedRecipients: 501 }, contentManager, 'req'),
       );
       expect(error.getStatus()).toBe(403);
       expect(body(error).code).toBe('OPENING_REQUIRES_ADMIN');
-      expect(writes).toEqual([]);
+      // Le cycle de cette année n'existe pas encore : l'événement porte sur
+      // la bourse, et le cycle n'est pas créé.
+      const audit = expectOnlyRefusalAudit(writes, 'OPENING_REQUIRES_ADMIN', {
+        entityType: 'Scholarship',
+        entityId: 'sch-1',
+      });
+      expect(audit).toMatchObject({
+        action: 'scholarship_cycle.notify_scheduled',
+        actorAdminId: contentManager.id,
+        changes: {
+          toNotify: 501,
+          threshold: 500,
+          expectedRecipients: 501,
+          actorRole: InternalRole.ContentManager,
+        },
+      });
     });
 
     it('501 confirmés par un admin → programmé', async () => {
@@ -766,7 +823,7 @@ describe('ScholarshipLifecycleService.activate', () => {
       expect(result.notification).toMatchObject({ state: 'scheduled', toNotify: 501 });
     });
 
-    it('audience qui a trop grossi depuis l’aperçu → 409 et rien d’écrit', async () => {
+    it('audience qui a trop grossi depuis l’aperçu → 409, seul le refus à l’audit', async () => {
       const { service, writes } = makeService({ counts: counts({ toNotify: 130 }) });
       const error = await rejection(
         service.activate('sch-1', { ...input, expectedRecipients: 100 }, admin, 'req'),
@@ -776,7 +833,10 @@ describe('ScholarshipLifecycleService.activate', () => {
         code: 'OPENING_AUDIENCE_CHANGED',
         details: { toNotify: 130, expectedRecipients: 100 },
       });
-      expect(writes).toEqual([]);
+      expectOnlyRefusalAudit(writes, 'OPENING_AUDIENCE_CHANGED', {
+        entityType: 'Scholarship',
+        entityId: 'sch-1',
+      });
     });
 
     it('une baisse est acceptée', async () => {
@@ -812,7 +872,7 @@ describe('ScholarshipLifecycleService.activate', () => {
 
     it('legacy : une audience qui a trop grossi depuis l’aperçu → 409 sur toNotify', async () => {
       setMode('legacy');
-      const { service, pushes } = makeService({ counts: counts({ audience: 60, toNotify: 30 }) });
+      const { service, pushes, writes } = makeService({ counts: counts({ audience: 60, toNotify: 30 }) });
       const error = await rejection(
         service.activate('sch-1', { ...input, notify: true, expectedRecipients: 10 }, admin, 'req'),
       );
@@ -821,6 +881,12 @@ describe('ScholarshipLifecycleService.activate', () => {
         details: { toNotify: 30, expectedRecipients: 10 },
       });
       expect(pushes).toHaveLength(0);
+      // En legacy, l'action tentée est l'envoi immédiat.
+      const audit = expectOnlyRefusalAudit(writes, 'OPENING_AUDIENCE_CHANGED', {
+        entityType: 'Scholarship',
+        entityId: 'sch-1',
+      });
+      expect(audit.action).toBe('scholarship_cycle.notified_legacy');
     });
   });
 

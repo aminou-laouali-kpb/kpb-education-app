@@ -43,8 +43,10 @@ import {
   OPENING_AUDIT_ACTIONS,
   OPENING_AUDIT_ENTITY_TYPE,
   OPENING_AUDIT_PURPOSE,
+  OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE,
   OPENING_TODO_LIMIT,
   openingError,
+  openingEventOutcome,
   PUSH_SKIP_REASON_REPORT_KEY,
   PUSH_SKIP_REASONS,
   readOpeningTunables,
@@ -187,6 +189,45 @@ function iso(date: Date | null | undefined): string | null {
 
 function skipReason(value: string | null): CycleOpeningSkipReason | null {
   return CYCLE_OPENING_SKIP_REASONS.find((reason) => reason === value) ?? null;
+}
+
+/** Un `AdminAuditEvent` d'annonce, tel que le fil de l'aperçu le lit. */
+export interface OpeningAuditEventRow {
+  action: string;
+  occurredAt: Date;
+  actorAdminId: string | null;
+  entityId: string;
+  result: string;
+  reasonCode: string | null;
+  changes: Prisma.JsonValue | null;
+}
+
+/**
+ * Une ligne de « Derniers événements ». Pur. `outcome` dit ce qui s'est
+ * réellement passé : un envoi abandonné (bourse retirée, clôture passée, trop
+ * tard) est `skipped` et une activation refusée `refused`, avec leur
+ * `reasonCode` — jamais lus comme un envoi fait.
+ */
+export function buildOpeningRecentEvent(
+  event: OpeningAuditEventRow,
+  admins: ReadonlyMap<string, OpeningAdminRef>,
+  yearById: ReadonlyMap<string, string>,
+): OpeningRecentEvent {
+  const year = jsonField(event.changes, 'academicYear');
+  const toNotify =
+    jsonField(event.changes, 'toNotify') ?? jsonField(event.changes, 'inserted');
+  const outcome = openingEventOutcome(event.result);
+  return {
+    action: OPENING_AUDIT_ACTIONS.find((a) => a === event.action) ?? 'scholarship_cycle.opened',
+    occurredAt: event.occurredAt.toISOString(),
+    actorName: event.actorAdminId
+      ? (admins.get(event.actorAdminId)?.name ?? null)
+      : null,
+    academicYear: typeof year === 'string' ? year : (yearById.get(event.entityId) ?? null),
+    toNotify: typeof toNotify === 'number' ? toNotify : null,
+    outcome,
+    ...(outcome !== 'sent' && event.reasonCode ? { reasonCode: event.reasonCode } : {}),
+  };
 }
 
 const PREVIEW_CYCLE_SELECT = {
@@ -339,7 +380,10 @@ export class ScholarshipOpeningAdminService {
           select: { pushNotBefore: true },
         }),
       ),
-      this.recentEventRows(cycles.map((cycle) => cycle.id)),
+      this.recentEventRows(
+        scholarshipId,
+        cycles.map((cycle) => cycle.id),
+      ),
     ]);
 
     const recentPushes = await this.audience.recentPushes(
@@ -437,7 +481,7 @@ export class ScholarshipOpeningAdminService {
         },
       },
       recentEvents: events.map((event) =>
-        this.recentEvent(event, admins, yearById),
+        buildOpeningRecentEvent(event, admins, yearById),
       ),
     };
   }
@@ -830,21 +874,34 @@ export class ScholarshipOpeningAdminService {
 
   // ── Audit ─────────────────────────────────────────────────────────────────
 
-  /** Les 5 derniers événements d'annonce des cycles d'une bourse. */
-  async recentEvents(cycleIds: readonly string[]): Promise<OpeningRecentEvent[]> {
+  /**
+   * Les 5 derniers événements d'annonce d'une bourse : ceux de ses cycles, et
+   * les refus d'activation sur une année dont le cycle n'existait pas encore
+   * (portés par la bourse).
+   */
+  async recentEvents(
+    scholarshipId: string,
+    cycleIds: readonly string[],
+  ): Promise<OpeningRecentEvent[]> {
     this.assertDb();
-    const events = await this.recentEventRows(cycleIds);
+    const events = await this.recentEventRows(scholarshipId, cycleIds);
     const admins = await this.adminRefs(events.map((event) => event.actorAdminId));
-    return events.map((event) => this.recentEvent(event, admins, new Map()));
+    return events.map((event) => buildOpeningRecentEvent(event, admins, new Map()));
   }
 
-  private async recentEventRows(cycleIds: readonly string[]) {
-    if (cycleIds.length === 0) return [];
+  private async recentEventRows(
+    scholarshipId: string,
+    cycleIds: readonly string[],
+  ): Promise<OpeningAuditEventRow[]> {
     return this.run((p) =>
       p.adminAuditEvent.findMany({
         where: {
-          entityType: OPENING_AUDIT_ENTITY_TYPE,
-          entityId: { in: [...cycleIds] },
+          OR: [
+            ...(cycleIds.length > 0
+              ? [{ entityType: OPENING_AUDIT_ENTITY_TYPE, entityId: { in: [...cycleIds] } }]
+              : []),
+            { entityType: OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE, entityId: scholarshipId },
+          ],
           action: { in: [...OPENING_AUDIT_ACTIONS] },
         },
         orderBy: { occurredAt: 'desc' },
@@ -854,34 +911,12 @@ export class ScholarshipOpeningAdminService {
           occurredAt: true,
           actorAdminId: true,
           entityId: true,
+          result: true,
+          reasonCode: true,
           changes: true,
         },
       }),
     );
-  }
-
-  private recentEvent(
-    event: {
-      action: string;
-      occurredAt: Date;
-      actorAdminId: string | null;
-      entityId: string;
-      changes: Prisma.JsonValue | null;
-    },
-    admins: ReadonlyMap<string, OpeningAdminRef>,
-    yearById: ReadonlyMap<string, string>,
-  ): OpeningRecentEvent {
-    const year = jsonField(event.changes, 'academicYear');
-    const toNotify = jsonField(event.changes, 'toNotify') ?? jsonField(event.changes, 'inserted');
-    return {
-      action: OPENING_AUDIT_ACTIONS.find((a) => a === event.action) ?? 'scholarship_cycle.opened',
-      occurredAt: event.occurredAt.toISOString(),
-      actorName: event.actorAdminId
-        ? (admins.get(event.actorAdminId)?.name ?? null)
-        : null,
-      academicYear: typeof year === 'string' ? year : (yearById.get(event.entityId) ?? null),
-      toNotify: typeof toNotify === 'number' ? toNotify : null,
-    };
   }
 
   private async audit(

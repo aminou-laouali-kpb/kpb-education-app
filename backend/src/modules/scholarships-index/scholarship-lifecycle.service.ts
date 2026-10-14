@@ -23,6 +23,7 @@ import {
   openingError,
   OPENING_AUDIT_ENTITY_TYPE,
   OPENING_AUDIT_PURPOSE,
+  OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE,
   readOpeningTunables,
   readScholarshipOpeningMode,
   SCHOLARSHIP_OPENED_KIND,
@@ -33,6 +34,8 @@ import {
   type OpeningAuditAction,
   type OpeningNotificationReason,
   type OpeningNotificationState,
+  type OpeningRefusalAuditChanges,
+  type OpeningRefusalAuditCode,
   type OpeningTunables,
   type ScholarshipOpeningMode,
 } from './opening/scholarship-opening.contract';
@@ -333,8 +336,22 @@ export class ScholarshipLifecycleService {
     // ── Décider, avant toute écriture ───────────────────────────────────────
     const firstActivationExpected = existing?.activatedAt == null;
     const preExisting = existing?.openingPreExisting ?? false;
+    // Un refus laisse UNE trace — son événement d'audit, rien d'autre : la
+    // transaction n'a encore rien écrit.
+    const refuse = async (
+      code: OpeningRefusalAuditCode,
+      error: HttpException,
+      toNotify: number | null,
+    ): Promise<ActivationOutcome> => {
+      await this.auditRefusal(tx, ctx, existing?.id ?? null, code, toNotify);
+      return { kind: 'rejected', error };
+    };
     if (input.notify === true && preExisting) {
-      return { kind: 'rejected', error: openingError('OPENING_NOT_RETROACTIVE') };
+      return refuse(
+        'OPENING_NOT_RETROACTIVE',
+        openingError('OPENING_NOT_RETROACTIVE'),
+        null,
+      );
     }
     // `notify` absent (admin déjà déployé) : la règle d'avant, annonce à la
     // première activation seulement.
@@ -369,10 +386,11 @@ export class ScholarshipLifecycleService {
         };
       }
       if (!canSendAboveOpeningThreshold(actor.role)) {
-        return {
-          kind: 'rejected',
-          error: openingError('OPENING_REQUIRES_ADMIN', details),
-        };
+        return refuse(
+          'OPENING_REQUIRES_ADMIN',
+          openingError('OPENING_REQUIRES_ADMIN', details),
+          toNotify,
+        );
       }
     }
     if (
@@ -384,13 +402,14 @@ export class ScholarshipLifecycleService {
         tunables.confirmThreshold,
       )
     ) {
-      return {
-        kind: 'rejected',
-        error: openingError('OPENING_AUDIENCE_CHANGED', {
+      return refuse(
+        'OPENING_AUDIENCE_CHANGED',
+        openingError('OPENING_AUDIENCE_CHANGED', {
           toNotify,
           expectedRecipients: input.expectedRecipients,
         }),
-      };
+        toNotify,
+      );
     }
 
     // ── Écrire ──────────────────────────────────────────────────────────────
@@ -632,5 +651,59 @@ export class ScholarshipLifecycleService {
       fanoutAt,
       legacyRecipients: state === 'sent_legacy' ? legacyRecipients : [],
     };
+  }
+
+  /**
+   * L'activation refusée, à l'audit (`result: 'refused'`, `reasonCode` = le
+   * code d'erreur) : l'équipe la voit dans « Derniers événements ». L'action
+   * est celle tentée (une annonce). Aucune donnée personnelle : des comptes,
+   * le mode, la portée, le rôle de l'auteur. Sur une année dont le cycle
+   * n'existe pas encore, l'événement porte sur la bourse.
+   */
+  private async auditRefusal(
+    tx: Prisma.TransactionClient,
+    ctx: {
+      scholarshipId: string;
+      input: ActivateScholarshipDto;
+      actor: OpeningActor;
+      requestId: string;
+      mode: ScholarshipOpeningMode;
+      scope: OpeningAudienceScope;
+      tunables: OpeningTunables;
+    },
+    cycleId: string | null,
+    code: OpeningRefusalAuditCode,
+    toNotify: number | null,
+  ): Promise<void> {
+    const changes = {
+      academicYear: ctx.input.academicYear,
+      notify: ctx.input.notify ?? null,
+      mode: ctx.mode,
+      scope: ctx.scope,
+      toNotify,
+      expectedRecipients: ctx.input.expectedRecipients ?? null,
+      threshold: ctx.tunables.confirmThreshold,
+      actorRole: ctx.actor.role,
+    } satisfies OpeningRefusalAuditChanges;
+    const action: OpeningAuditAction =
+      ctx.mode === 'legacy'
+        ? 'scholarship_cycle.notified_legacy'
+        : 'scholarship_cycle.notify_scheduled';
+    await tx.adminAuditEvent.create({
+      data: {
+        actorAdminId: ctx.actor.id,
+        action,
+        purposeCode: OPENING_AUDIT_PURPOSE,
+        entityType:
+          cycleId === null
+            ? OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE
+            : OPENING_AUDIT_ENTITY_TYPE,
+        entityId: cycleId ?? ctx.scholarshipId,
+        requestId: ctx.requestId,
+        reasonCode: code,
+        result: 'refused',
+        changes,
+      },
+    });
   }
 }

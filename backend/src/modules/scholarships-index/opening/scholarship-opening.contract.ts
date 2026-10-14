@@ -499,6 +499,11 @@ export function isOpeningBusyError(error: unknown): boolean {
 // ── Audit ───────────────────────────────────────────────────────────────────
 
 export const OPENING_AUDIT_ENTITY_TYPE = 'ScholarshipCycle';
+/**
+ * Un refus d'activation sur une année dont le cycle n'existe pas encore (rien
+ * n'est écrit avant les vérifications) : l'événement porte sur la bourse.
+ */
+export const OPENING_AUDIT_SCHOLARSHIP_ENTITY_TYPE = 'Scholarship';
 export const OPENING_AUDIT_PURPOSE = 'scholarship_opening';
 /** `requestId` des événements écrits par le worker (pas de requête HTTP). */
 export const PUSH_OUTBOX_REQUEST_ID_PREFIX = 'push-outbox:';
@@ -514,6 +519,50 @@ export const OPENING_AUDIT_ACTIONS = [
   'scholarship_cycle.fanout_expired',
 ] as const;
 export type OpeningAuditAction = (typeof OPENING_AUDIT_ACTIONS)[number];
+
+/**
+ * L'issue d'un événement d'annonce, telle que le fil de l'équipe doit la dire
+ * (`AdminAuditEvent.result`) :
+ * - `sent` : le geste a eu lieu tel que l'action le nomme (`success`) ;
+ * - `skipped` : une annonce programmée abandonnée sans rien écrire pour les
+ *   étudiants — `reasonCode` : `not_public_at_fanout`, `cycle_closed_at_fanout`
+ *   ou `fanout_too_late` ;
+ * - `refused` : une activation refusée par le serveur — `reasonCode` : le code
+ *   d'erreur (`OPENING_REFUSAL_AUDIT_CODES`), l'action étant celle tentée.
+ */
+export const OPENING_EVENT_OUTCOMES = ['sent', 'skipped', 'refused'] as const;
+export type OpeningEventOutcome = (typeof OPENING_EVENT_OUTCOMES)[number];
+
+/** `AdminAuditEvent.result` → issue du fil ; un résultat inconnu reste `sent`. */
+export function openingEventOutcome(result: string): OpeningEventOutcome {
+  if (result === 'skipped') return 'skipped';
+  if (result === 'refused') return 'refused';
+  return 'sent';
+}
+
+/** Les refus d'activation écrits à l'audit (`result: 'refused'`). */
+export const OPENING_REFUSAL_AUDIT_CODES = [
+  'OPENING_REQUIRES_ADMIN',
+  'OPENING_AUDIENCE_CHANGED',
+  'OPENING_NOT_RETROACTIVE',
+] as const satisfies readonly OpeningErrorCode[];
+export type OpeningRefusalAuditCode = (typeof OPENING_REFUSAL_AUDIT_CODES)[number];
+
+/**
+ * `AdminAuditEvent.changes` d'une activation refusée : des comptes et des
+ * réglages, aucune donnée personnelle (l'auteur est `actorAdminId`).
+ * `toNotify` est `null` quand le refus précède le compte (rétroactivité).
+ */
+export interface OpeningRefusalAuditChanges {
+  academicYear: string;
+  notify: boolean | null;
+  mode: ScholarshipOpeningMode;
+  scope: OpeningAudienceScope;
+  toNotify: number | null;
+  expectedRecipients: number | null;
+  threshold: number;
+  actorRole: string;
+}
 
 /** `AdminAuditEvent.changes` d'une activation. */
 export interface OpeningActivationAuditChanges {
@@ -725,6 +774,14 @@ export interface OpeningRecentEvent {
   actorName: string | null;
   academicYear: string | null;
   toNotify: number | null;
+  /**
+   * Ce qui s'est réellement passé (`OPENING_EVENT_OUTCOMES`) : un envoi
+   * abandonné (`skipped`) ou une activation refusée (`refused`) ne se lit pas
+   * comme un envoi fait, quelle que soit l'action.
+   */
+  outcome: OpeningEventOutcome;
+  /** Pourquoi, pour `skipped` et `refused` ; absent pour `sent`. */
+  reasonCode?: string;
 }
 
 export interface OpeningPreviewResponse {

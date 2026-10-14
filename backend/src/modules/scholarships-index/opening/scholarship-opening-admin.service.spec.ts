@@ -5,8 +5,10 @@ import type { PushSenderService } from '../../notifications/push-sender.service'
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { ScholarshipContentQualityService } from '../scholarship-content-quality.service';
 import {
+  buildOpeningRecentEvent,
   buildOpeningReportCounts,
   ScholarshipOpeningAdminService,
+  type OpeningAuditEventRow,
   type OpeningReportGroup,
 } from './scholarship-opening-admin.service';
 import type { ScholarshipOpeningAudienceService } from './scholarship-opening-audience.service';
@@ -198,5 +200,80 @@ describe.each(['stop', 'cancel'] as const)('%s : cycle tenu par un envoi en pré
       cycleUpdateError: Object.assign(new Error('connection lost'), { code: 'P1001' }),
     });
     await expect(call(admin)).rejects.toMatchObject({ code: 'P1001' });
+  });
+});
+
+// ── « Derniers événements » : ce qui s'est réellement passé ─────────────────
+
+describe('buildOpeningRecentEvent', () => {
+  const at = new Date('2026-10-15T12:00:00.000Z');
+  const admins = new Map([['adm-1', { id: 'adm-1', name: 'Aminata D.' }]]);
+  const event = (over: Partial<OpeningAuditEventRow>): OpeningAuditEventRow => ({
+    action: 'scholarship_cycle.notify_scheduled',
+    occurredAt: at,
+    actorAdminId: 'adm-1',
+    entityId: 'cycle-1',
+    result: 'success',
+    reasonCode: null,
+    changes: { academicYear: '2027-2028', toNotify: 312 },
+    ...over,
+  });
+
+  it('un geste fait : outcome sent, sans reasonCode', () => {
+    expect(buildOpeningRecentEvent(event({}), admins, new Map())).toEqual({
+      action: 'scholarship_cycle.notify_scheduled',
+      occurredAt: at.toISOString(),
+      actorName: 'Aminata D.',
+      academicYear: '2027-2028',
+      toNotify: 312,
+      outcome: 'sent',
+    });
+  });
+
+  it.each([
+    ['not_public_at_fanout', 'scholarship_cycle.fanout_completed'],
+    ['cycle_closed_at_fanout', 'scholarship_cycle.fanout_completed'],
+    ['fanout_too_late', 'scholarship_cycle.fanout_expired'],
+  ])('un envoi abandonné (%s) : outcome skipped, jamais lu comme un envoi fait', (reasonCode, action) => {
+    const row = buildOpeningRecentEvent(
+      event({
+        action,
+        actorAdminId: null,
+        result: 'skipped',
+        reasonCode,
+        changes: { academicYear: '2027-2028', inserted: 0 },
+      }),
+      admins,
+      new Map(),
+    );
+    expect(row).toMatchObject({ action, outcome: 'skipped', reasonCode, toNotify: 0, actorName: null });
+  });
+
+  it('une activation refusée : outcome refused, le code en reasonCode', () => {
+    const row = buildOpeningRecentEvent(
+      event({
+        entityId: 'sch-1',
+        result: 'refused',
+        reasonCode: 'OPENING_AUDIENCE_CHANGED',
+        changes: { academicYear: '2027-2028', toNotify: 130, expectedRecipients: 100 },
+      }),
+      admins,
+      new Map(),
+    );
+    expect(row).toMatchObject({
+      outcome: 'refused',
+      reasonCode: 'OPENING_AUDIENCE_CHANGED',
+      academicYear: '2027-2028',
+      toNotify: 130,
+    });
+  });
+
+  it('année absente des changements : celle du cycle', () => {
+    const row = buildOpeningRecentEvent(
+      event({ changes: null }),
+      admins,
+      new Map([['cycle-1', '2026-2027']]),
+    );
+    expect(row).toMatchObject({ academicYear: '2026-2027', toNotify: null, outcome: 'sent' });
   });
 });

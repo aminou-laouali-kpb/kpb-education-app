@@ -27,6 +27,7 @@ import {
   openingDedupeKey,
   openingError,
   openingErrorMessage,
+  openingEventOutcome,
   openingPushData,
   openingRef,
   PUSH_DEFER_REASONS,
@@ -315,6 +316,15 @@ describe('scholarship-opening.contract', () => {
       ['rien', null],
     ])('%s → pas occupé', (_label, error) => {
       expect(isOpeningBusyError(error)).toBe(false);
+    });
+  });
+
+  describe('openingEventOutcome', () => {
+    it('lit AdminAuditEvent.result', () => {
+      expect(openingEventOutcome('success')).toBe('sent');
+      expect(openingEventOutcome('skipped')).toBe('skipped');
+      expect(openingEventOutcome('refused')).toBe('refused');
+      expect(openingEventOutcome('applied')).toBe('sent');
     });
   });
 });
