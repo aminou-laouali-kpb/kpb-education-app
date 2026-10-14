@@ -5,6 +5,11 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  notificationKeyForRef,
+  type ReadNotificationsByRefResponse,
+  type UnreadNotificationsCountResponse,
+} from './opening/scholarship-opening.contract';
 
 @Injectable()
 export class UserNotificationsService {
@@ -63,6 +68,41 @@ export class UserNotificationsService {
     const result = await this.prismaService.execute((prisma) =>
       prisma.userNotification.updateMany({
         where: { userId, readAt: null },
+        data: { readAt: new Date() },
+      }),
+    );
+    return { updated: result?.count ?? 0 };
+  }
+
+  /**
+   * Le badge de la cloche, sans rapatrier le fil : `list` ne compte que ses
+   * 100 dernières entrées. Index `UserNotification(userId, readAt)`.
+   */
+  async unreadCount(userId: string): Promise<UnreadNotificationsCountResponse> {
+    this.assertDb();
+    const unreadCount = await this.prismaService.execute((prisma) =>
+      prisma.userNotification.count({ where: { userId, readAt: null } }),
+    );
+    return { unreadCount: unreadCount ?? 0 };
+  }
+
+  /**
+   * Marque lues les entrées qu'un push groupé a annoncées (chantier C). Une
+   * référence est une `dedupeKey` sans son `:<userId>` : le suffixe est
+   * TOUJOURS celui de l'étudiant connecté, donc une référence ne peut désigner
+   * que ses propres entrées, quoi que le client envoie.
+   */
+  async markReadByRefs(
+    userId: string,
+    refs: readonly string[],
+  ): Promise<ReadNotificationsByRefResponse> {
+    this.assertDb();
+    const dedupeKeys = [...new Set(refs)].map((ref) =>
+      notificationKeyForRef(ref, userId),
+    );
+    const result = await this.prismaService.execute((prisma) =>
+      prisma.userNotification.updateMany({
+        where: { userId, readAt: null, dedupeKey: { in: dedupeKeys } },
         data: { readAt: new Date() },
       }),
     );
