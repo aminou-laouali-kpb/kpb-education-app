@@ -23,6 +23,7 @@ import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../parcours/parcours_screen.dart';
 import '../parcours/parcours_story_screen.dart';
+import '../scholarships/widgets/follow_scholarship_button.dart';
 import '../tools/student_tools_screen.dart';
 import 'counsellor_testimonials_carousel.dart';
 import 'daily_scholarship_card.dart';
@@ -403,6 +404,7 @@ class HomeScreen extends StatelessWidget {
                       itemBuilder: (ctx, i) {
                         final s = scholarships[i];
                         return _ScholarshipCard(
+                          scholarshipId: s.id,
                           name: controller.resolve(s.name),
                           flag: _flag(s.countryId),
                           funding: controller.resolve(s.typeOfFunding),

@@ -39,6 +39,7 @@ import '../data/content_api_codec.dart';
 import '../services/catalog_remote_sync.dart';
 import '../services/catalog_cache_service.dart';
 import '../services/push_service.dart';
+import '../services/remote_feature_flags.dart';
 import '../services/sync_conflict_merge.dart';
 import '../services/sync_telemetry.dart';
 import '../services/transient_retry.dart';
@@ -56,6 +57,7 @@ part 'app_controller/referral_credits.dart';
 part 'app_controller/session.dart';
 part 'app_controller/preferences.dart';
 part 'app_controller/saved_items.dart';
+part 'app_controller/scholarship_follow.dart';
 part 'app_controller/orientation.dart';
 part 'app_controller/cases.dart';
 part 'app_controller/catalog_sync.dart';
@@ -131,6 +133,7 @@ class AppController extends _AppControllerBase
         _SessionMixin,
         _PreferencesMixin,
         _SavedItemsMixin,
+        _ScholarshipFollowMixin,
         _OrientationMixin,
         _CasesMixin,
         _CatalogSyncMixin {
@@ -183,6 +186,9 @@ abstract class _AppControllerBase extends GetxController {
   Map<String, dynamic> _userProfilePayload(UserProfile profile);
   Future<void> flushPendingCaseMessages();
   bool isSaved(SavedItemType type, String itemId);
+  Future<void> ensureSaved(SavedItemType type, String itemId);
+  Future<void> ensureUnsaved(SavedItemType type, String itemId);
+  void _resetScholarshipFollowState();
   Future<void> syncPushIdentity();
   Future<void> syncRemoteData({bool silent = false, bool force = false});
 

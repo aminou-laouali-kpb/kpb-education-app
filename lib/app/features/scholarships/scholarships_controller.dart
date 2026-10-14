@@ -246,13 +246,6 @@ class ScholarshipsController extends ChangeNotifier {
     await loadInitial();
   }
 
-  void setAlertState(String scholarshipId, bool enabled) {
-    final changed = enabled
-        ? _alertedScholarshipIds.add(scholarshipId)
-        : _alertedScholarshipIds.remove(scholarshipId);
-    if (changed) notifyListeners();
-  }
-
   List<LiveScholarshipModel> _parse(List<dynamic> raw) => raw
       .whereType<Map>()
       .map((item) =>

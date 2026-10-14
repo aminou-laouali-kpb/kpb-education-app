@@ -11,11 +11,13 @@ import '../../core/repositories/app_api_client.dart';
 import '../../core/repositories/success_lab_repository.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../cases/case_composer_sheet.dart';
 import 'scholarship_video_player_screen.dart';
 import 'widgets/how_to_apply_sheet.dart';
-import 'widgets/scholarship_alert_button.dart';
+import 'widgets/follow_scholarship_button.dart';
+import 'widgets/scholarship_status_line.dart';
 import '../../core/utils/external_link.dart';
 import '../../core/utils/whatsapp_utils.dart';
 
@@ -24,16 +26,12 @@ class ScholarshipDetailScreen extends StatefulWidget {
     super.key,
     required this.scholarshipId,
     this.initialScholarship,
-    this.initialAlertEnabled = false,
     this.apiClient,
-    this.onAlertChanged,
   });
 
   final String scholarshipId;
   final LiveScholarshipModel? initialScholarship;
-  final bool initialAlertEnabled;
   final AppApiClient? apiClient;
-  final ValueChanged<bool>? onAlertChanged;
 
   @override
   State<ScholarshipDetailScreen> createState() =>
@@ -43,7 +41,17 @@ class ScholarshipDetailScreen extends StatefulWidget {
 class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   late final AppApiClient _apiClient;
   LiveScholarshipModel? _scholarship;
-  late bool _alertEnabled;
+
+  /// Bloc `follow` du serveur (chantier C) ; null sur un backend plus ancien.
+  ScholarshipFollowState? _follow;
+
+  /// Choix « Me prévenir à l'ouverture » posé dans cette page, en attendant
+  /// que le serveur le confirme.
+  bool? _notifyOpeningOverride;
+  bool _notifyOpeningSaving = false;
+
+  /// Le serveur a répondu 404 au PATCH : l'interrupteur se masque.
+  bool _notifyOpeningUnavailable = false;
   bool _loading = false;
   bool _startingWorkspace = false;
   bool _successLabEnabled = false;
@@ -54,8 +62,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     super.initState();
     _apiClient = widget.apiClient ?? Get.find<AppController>().apiClient;
     _scholarship = widget.initialScholarship;
-    _alertEnabled =
-        widget.initialScholarship?.isAlertEnabled ?? widget.initialAlertEnabled;
+    _follow = widget.initialScholarship?.follow;
     unawaited(
         AnalyticsService.instance.logViewScholarship(widget.scholarshipId));
     unawaited(_load());
@@ -80,18 +87,25 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
       if (mounted) {
         setState(() {
           _scholarship = detail;
-          if (detail?.isAlertEnabled != null) {
-            _alertEnabled = detail!.isAlertEnabled!;
-          }
+          _follow = detail?.follow ?? _follow;
+          _notifyOpeningOverride = null;
         });
+        if ((detail?.follow?.following ?? false) ||
+            detail?.isAlertEnabled == true) {
+          Get.find<AppController>().rememberServerFollowedScholarships(
+              <String>[widget.scholarshipId]);
+        }
       }
       try {
+        // Les alertes posées par la cloche des builds précédentes valent
+        // « Suivie » : sans elles, le bouton proposerait de suivre une bourse
+        // dont l'élève reçoit déjà les annonces.
         final alerts = await _apiClient.fetchScholarshipAlerts();
         if (mounted) {
-          setState(() => _alertEnabled = alerts.contains(widget.scholarshipId));
+          Get.find<AppController>().rememberServerFollowedScholarships(alerts);
         }
       } catch (_) {
-        // Keep the initial state if alert reconciliation is temporarily offline.
+        // Keep the local follow state if alert reconciliation is offline.
       }
     } catch (exception) {
       if (mounted && _scholarship == null) {
@@ -135,9 +149,66 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     );
   }
 
-  void _setAlert(bool enabled) {
-    setState(() => _alertEnabled = enabled);
-    widget.onAlertChanged?.call(enabled);
+  /// L'interrupteur « Me prévenir à l'ouverture » est-il pertinent ici ?
+  /// Seulement si le serveur sert le bloc `follow` (backend du chantier C), si
+  /// l'élève suit la bourse, et tant qu'elle n'est pas close.
+  bool _showNotifyOpening(AppController controller, LiveScholarshipModel s) {
+    if (!RemoteFeatureFlags.instance.openingAlertToggleEnabled) return false;
+    if (_follow == null || _notifyOpeningUnavailable) return false;
+    if (controller.isGuestMode || controller.profile == null) return false;
+    if (!controller.isFollowingScholarship(s.id)) return false;
+    return s.statusLine()?.kind != ScholarshipStatusKind.closed;
+  }
+
+  /// Un « Suivre » tout neuf pose l'alerte : prévenu par défaut, tant que le
+  /// serveur n'a pas dit autre chose.
+  bool get _notifyOpening {
+    final override = _notifyOpeningOverride;
+    if (override != null) return override;
+    final follow = _follow;
+    if (follow == null || !follow.following) return true;
+    return follow.notifyOpening;
+  }
+
+  Future<void> _setNotifyOpening(bool value) async {
+    if (_notifyOpeningSaving) return;
+    final previous = _notifyOpening;
+    setState(() {
+      _notifyOpeningOverride = value;
+      _notifyOpeningSaving = true;
+    });
+    try {
+      final response = await _apiClient.updateScholarshipOpeningAlert(
+        widget.scholarshipId,
+        notifyOpening: value,
+      );
+      if (!mounted) return;
+      final confirmed = response['notifyOpening'];
+      setState(() {
+        _notifyOpeningOverride = confirmed is bool ? confirmed : value;
+        _follow = _follow?.copyWith(
+          following: response['following'] is bool
+              ? response['following'] as bool
+              : true,
+          notifyOpening: _notifyOpeningOverride,
+        );
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _notifyOpeningOverride = previous;
+        // 404 : la route manque (backend antérieur) ou la bourse n'est plus
+        // servie — dans les deux cas l'interrupteur n'a plus rien à piloter.
+        if (isEndpointUnavailable(error)) _notifyOpeningUnavailable = true;
+      });
+      if (!isEndpointUnavailable(error)) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('scholarship_notify_opening_error'.tr)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _notifyOpeningSaving = false);
+    }
   }
 
   void _openVideo(int index) {
@@ -270,12 +341,26 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                 children: [
                   _HeaderCard(scholarship: scholarship),
                   const SizedBox(height: 12),
-                  ScholarshipAlertButton(
+                  FollowScholarshipButton(
                     scholarshipId: scholarship.id,
                     scholarshipTitle: scholarship.title,
-                    initialEnabled: _alertEnabled,
-                    apiClient: _apiClient,
-                    onChanged: _setAlert,
+                    variant: FollowButtonVariant.full,
+                  ),
+                  GetBuilder<AppController>(
+                    builder: (controller) {
+                      if (!_showNotifyOpening(controller, scholarship)) {
+                        return const SizedBox.shrink();
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: _NotifyOpeningTile(
+                          value: _notifyOpening,
+                          saving: _notifyOpeningSaving,
+                          globalOptOut: _follow?.globalOptOut ?? false,
+                          onChanged: _setNotifyOpening,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
@@ -428,6 +513,9 @@ class _HeaderCard extends StatelessWidget {
     // plutôt que « équivalent » : c'est leur divergence qui faisait dire deux
     // choses aux deux écrans.
     final isEstimated = cycle?.isEstimated ?? false;
+    // « Ouverte » seulement si elle l'est VRAIMENT : un cycle `open` dont la
+    // date d'ouverture est à venir se lit « Ouvre le … ».
+    final statusLine = scholarship.statusLine();
     final deadline =
         isEstimated ? null : (cycle?.closesAt ?? scholarship.deadlineAt);
     final funding = scholarship.isFullyFunded
@@ -462,27 +550,6 @@ class _HeaderCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              GetBuilder<AppController>(
-                builder: (controller) {
-                  final saved = controller.isSaved(
-                    SavedItemType.scholarship,
-                    scholarship.id,
-                  );
-                  return IconButton.filledTonal(
-                    tooltip: 'a11y_save'.tr,
-                    onPressed: () => controller.toggleSaved(
-                      SavedItemType.scholarship,
-                      scholarship.id,
-                    ),
-                    icon: Icon(
-                      saved
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_outline_rounded,
-                    ),
-                  );
-                },
-              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -492,6 +559,13 @@ class _HeaderCard extends StatelessWidget {
                 .join(' · '),
             style: const TextStyle(color: KpbColors.textMuted),
           ),
+          if (statusLine != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ScholarshipStatusChip(line: statusLine),
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
@@ -746,4 +820,75 @@ class _VideosSection extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// « Me prévenir à l'ouverture » : met en sourdine (ou rallume) l'annonce
+/// d'ouverture de cette bourse, sans cesser de la suivre — les rappels de date
+/// limite continuent.
+class _NotifyOpeningTile extends StatelessWidget {
+  const _NotifyOpeningTile({
+    required this.value,
+    required this.saving,
+    required this.globalOptOut,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final bool saving;
+  final bool globalOptOut;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    // Un Material (et non un Container décoré) : la tuile peint son effet de
+    // tap sur le Material le plus proche.
+    return Material(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: KpbColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SwitchListTile(
+            key: const ValueKey<String>('scholarship-notify-opening'),
+            value: value,
+            onChanged: saving ? null : onChanged,
+            contentPadding: const EdgeInsets.fromLTRB(16, 4, 10, 4),
+            title: Text(
+              'scholarship_notify_opening_title'.tr,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: KpbColors.brandNavy,
+              ),
+            ),
+            subtitle: Text(
+              'scholarship_notify_opening_subtitle'.tr,
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: KpbColors.textMuted,
+              ),
+            ),
+          ),
+          if (globalOptOut && value)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Text(
+                'scholarship_notify_opening_global_off'.tr,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  color: KpbColors.warning,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

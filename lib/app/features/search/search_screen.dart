@@ -10,6 +10,7 @@ import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
 import '../explore/country_detail_screen.dart';
 import '../explore/program_detail_screen.dart';
+import '../scholarships/widgets/follow_scholarship_button.dart';
 import 'match_explanation_sheet.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -507,6 +508,12 @@ class _SearchResultTile extends StatelessWidget {
                   controller,
                 ),
                 child: ProfileFitBadge(fit: fit, fontSize: 10.5),
+              ),
+            if (result.type == SearchResultType.scholarship)
+              FollowScholarshipButton(
+                scholarshipId: result.id,
+                scholarshipTitle: result.title,
+                variant: FollowButtonVariant.icon,
               ),
             const SizedBox(width: 4),
             Icon(Icons.chevron_right_rounded,

@@ -382,6 +382,7 @@ mixin _SessionMixin on _AppControllerBase {
     _commercialLeads.clear();
     _lastSyncAttemptAt = null;
     _syncBackoffUntil = null;
+    _resetScholarshipFollowState();
   }
 
   /// GDPR / store-required account deletion (KPB-67). When remote sync is on we

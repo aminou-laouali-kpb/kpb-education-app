@@ -3460,4 +3460,24 @@ const Map<String, String> appTranslationsFr = {
   'async_loading': 'Chargement…',
   'async_empty_title': 'Rien à afficher pour l\'instant',
   'async_updated_ago': 'Mis à jour @ago',
+  // ── Suivre une bourse, Mes suivis, notifications (chantier G) ──────
+  'follow_scholarship_follow': 'Suivre',
+  'follow_scholarship_following': 'Suivie',
+  'follow_scholarship_a11y_follow': 'Suivre la bourse @title',
+  'follow_scholarship_a11y_following':
+      'Bourse suivie : @title. Touche pour ne plus la suivre',
+  'scholarship_notify_opening_title': 'Me prévenir à l\'ouverture',
+  'scholarship_notify_opening_subtitle':
+      'Une notification le jour où les candidatures ouvrent. Les rappels de date limite continuent.',
+  'scholarship_notify_opening_global_off':
+      'Tu as coupé les alertes d\'ouverture dans tes préférences de notification.',
+  'scholarship_notify_opening_error':
+      'Ton choix n\'a pas été enregistré. Réessaie quand tu es en ligne.',
+  'scholarship_status_open': 'Ouverte · clôture le @date',
+  'scholarship_status_open_no_date': 'Ouverte · date de clôture à confirmer',
+  'scholarship_status_opens_on': 'Ouvre le @date',
+  'scholarship_status_opening_estimated': 'Ouverture estimée : @date',
+  'scholarship_status_opening_unknown': 'Date d\'ouverture à confirmer',
+  'scholarship_status_closed': 'Clôturée',
+  'followed_title': 'Mes suivis',
 };

@@ -3202,4 +3202,23 @@ const Map<String, String> appTranslationsEn = {
   'async_loading': 'Loading…',
   'async_empty_title': 'Nothing to show yet',
   'async_updated_ago': 'Updated @ago',
+  // ── Follow a scholarship, Followed, notifications (chantier G) ──────
+  'follow_scholarship_follow': 'Follow',
+  'follow_scholarship_following': 'Following',
+  'follow_scholarship_a11y_follow': 'Follow the @title scholarship',
+  'follow_scholarship_a11y_following': 'Following @title. Tap to unfollow',
+  'scholarship_notify_opening_title': 'Notify me when it opens',
+  'scholarship_notify_opening_subtitle':
+      'One notification the day applications open. Deadline reminders keep coming.',
+  'scholarship_notify_opening_global_off':
+      'You turned off opening alerts in your notification preferences.',
+  'scholarship_notify_opening_error':
+      'Your choice wasn\'t saved. Try again when you\'re online.',
+  'scholarship_status_open': 'Open · closes @date',
+  'scholarship_status_open_no_date': 'Open · closing date to be confirmed',
+  'scholarship_status_opens_on': 'Opens @date',
+  'scholarship_status_opening_estimated': 'Expected to open: @date',
+  'scholarship_status_opening_unknown': 'Opening date to be confirmed',
+  'scholarship_status_closed': 'Closed',
+  'followed_title': 'Followed',
 };

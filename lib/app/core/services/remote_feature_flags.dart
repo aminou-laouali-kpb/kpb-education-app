@@ -349,6 +349,48 @@ class RemoteFeatureFlags {
   bool get eefPrivateSchoolsEnabled =>
       _flag('eefPrivateSchools', AppConfig.eefPrivateSchoolsEnabled);
 
+  // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
+  //
+  // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne
+  // la sert pas, parce que chacune de ces fonctions se dégrade déjà toute seule
+  // face à un backend sans les routes du chantier C (404 → section masquée,
+  // interrupteur caché, badge serveur ignoré). La build est gelée deux à trois
+  // mois : servir `false` sous `features` dans `/config/app` coupe la fonction
+  // sur les téléphones déjà installés, sans soumission.
+
+  /// Feuille d'explication avant la demande système, au premier « Suivre ».
+  /// Coupé : le premier « Suivre » demande directement (jamais l'onboarding).
+  bool get followPushPrimerEnabled => _flag('followPushPrimer', true);
+
+  /// « Suivre » pose aussi l'alerte d'ouverture (`POST /me/scholarship-alerts`)
+  /// — indispensable tant que le serveur tourne en mode `legacy`, où seul un
+  /// abonné à l'alerte reçoit le push d'ouverture.
+  bool get followSetsOpeningAlert => _flag('followOpeningAlert', true);
+
+  /// Interrupteur « Me prévenir à l'ouverture » sur la fiche (PATCH).
+  bool get openingAlertToggleEnabled => _flag('openingAlertToggle', true);
+
+  /// Section « Bourses suivies » de Mes suivis (GET /me/followed-scholarships).
+  bool get followedScholarshipsEnabled => _flag('followedScholarships', true);
+
+  /// Point de la cloche de l'accueil allumé aussi par les non-lus serveur.
+  bool get serverUnreadBadgeEnabled => _flag('notificationsUnreadCount', true);
+
+  /// Ligne « Bourses que je suis : ouverture » des préférences.
+  bool get followedOptOutEnabled => _flag('followedScholarshipOptOut', true);
+
+  /// Bouton « Mes suivis » de l'en-tête de l'accueil (à la place du raccourci
+  /// Profil, déjà présent dans la barre d'onglets).
+  bool get homeFollowedEntryEnabled => _flag('homeFollowedEntry', true);
+
+  /// Pose des drapeaux servis, pour qu'un test d'écran n'ait pas besoin de
+  /// simuler tout `/config/app`.
+  @visibleForTesting
+  void debugSetFeaturesForTest(Map<String, bool> features) {
+    _features = Map<String, bool>.unmodifiable(features);
+    flagsVersion.value++;
+  }
+
   /// La valeur servie, ou le repli de compilation quand elle est absente.
   bool _flag(String key, bool fallback) => _features[key] ?? fallback;
 
