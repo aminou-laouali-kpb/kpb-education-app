@@ -326,6 +326,9 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
+.dialog:focus {
+  outline: none;
+}
 .dialogTitle {
   margin: 0;
   font-size: var(--text-lg);

@@ -1,8 +1,10 @@
 'use client';
 
-import { ReactNode, useEffect, useId, useRef } from 'react';
+import { ReactNode, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Button } from './Button';
+import { useCanPortal, useModalLayer } from './modal-layer';
 import styles from './ui.module.css';
 
 export interface ConfirmDialogProps {
@@ -11,8 +13,10 @@ export interface ConfirmDialogProps {
   description?: string;
   /**
    * Extra content between the description and the actions (e.g. a typed
-   * confirmation field). Give its input `autoFocus` when the confirm button
-   * starts disabled: a disabled button cannot take the initial focus.
+   * confirmation field). When the confirm button starts disabled, the first
+   * field takes the initial focus (a disabled button cannot): no `autoFocus`
+   * needed, and none wanted — it would move the focus before the dialog can
+   * remember where to give it back.
    */
   children?: ReactNode;
   confirmLabel: string;
@@ -25,10 +29,15 @@ export interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
+const FIELD_SELECTOR = 'input:not([disabled]), select:not([disabled]), textarea:not([disabled])';
+
 /**
  * Accessible confirmation modal for destructive/irreversible actions
- * (role=dialog + aria-modal, Escape to cancel, overlay click to cancel,
- * focus moves to the confirm button on open).
+ * (role=dialog + aria-modal), rendered in a portal on `<body>` with the rest
+ * of the page — including a Modal it was opened from — made `inert` while it
+ * is open. Focus moves to the confirm button on open (to the first field when
+ * the button starts disabled), Tab cycles inside, Escape and an overlay click
+ * cancel, and the focus returns where it was on close.
  */
 export function ConfirmDialog({
   open,
@@ -43,39 +52,44 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
+  const canPortal = useCanPortal();
 
-  // Initial focus on open only: re-running it on every render (a new
-  // `onCancel` identity, a keystroke in `children`) would pull the focus out
-  // of a field the user is typing in as soon as the button becomes enabled.
-  useEffect(() => {
-    if (open) confirmRef.current?.focus();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !loading) onCancel();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, loading, onCancel]);
+  // Initial focus on open only (the hook reads it once): re-running it on a
+  // later render (a keystroke in `children`) would pull the focus out of a
+  // field the user is typing in as soon as the button becomes enabled.
+  useModalLayer({
+    open,
+    layerRef: overlayRef,
+    dialogRef,
+    initialFocus: () =>
+      confirmRef.current && !confirmRef.current.disabled
+        ? confirmRef.current
+        : (dialogRef.current?.querySelector<HTMLElement>(FIELD_SELECTOR) ?? null),
+    onEscape: loading ? undefined : onCancel,
+    mountKey: canPortal,
+  });
 
   if (!open) return null;
 
-  return (
+  const overlay = (
     <div
+      ref={overlayRef}
       className={styles.overlay}
       onClick={() => {
         if (!loading) onCancel();
       }}
     >
       <div
+        ref={dialogRef}
         className={styles.dialog}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id={titleId} className={styles.dialogTitle}>
@@ -100,4 +114,6 @@ export function ConfirmDialog({
       </div>
     </div>
   );
+
+  return canPortal ? createPortal(overlay, document.body) : overlay;
 }

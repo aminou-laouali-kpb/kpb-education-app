@@ -1,19 +1,11 @@
 'use client';
 
-import { ReactNode, useEffect, useId, useRef } from 'react';
+import { ReactNode, useId, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 import { cx } from './cx';
+import { useCanPortal, useModalLayer } from './modal-layer';
 import styles from './ui.module.css';
-
-/** What can take keyboard focus inside the dialog, in DOM order. */
-const FOCUSABLE = [
-  'button:not([disabled])',
-  '[href]',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
 
 export interface ModalProps {
   open: boolean;
@@ -27,21 +19,26 @@ export interface ModalProps {
   /** While true, neither Escape nor an overlay click closes the dialog. */
   busy?: boolean;
   /**
-   * Pass `false` while a ConfirmDialog is open on top: both listen to Escape,
-   * and one key press must only close the topmost dialog.
+   * `false` keeps Escape from closing this dialog. Escape only ever acts on
+   * the topmost dialog, so a ConfirmDialog opened on top no longer needs it.
    */
   closeOnEscape?: boolean;
 }
 
 /**
  * General-purpose accessible modal (role=dialog + aria-modal, labelled by its
- * title). Focus moves to the first focusable element on open and returns to
- * the previously focused element on close; Escape and an overlay click close
- * it unless `busy`. The body scrolls, the title and footer stay visible.
+ * title), rendered in a portal on `<body>`.
+ *
+ * While open, the rest of the page is `inert`: nothing behind the overlay can
+ * be clicked, focused or read (e.g. the panel buttons that opened it). Focus
+ * moves to the first focusable element, Tab and Shift+Tab cycle inside the
+ * dialog, Escape and an overlay click close it unless `busy`, and the focus
+ * returns to the previously focused element on close. The body scrolls, the
+ * title and footer stay visible.
  *
  * A ConfirmDialog opened from inside should be rendered as a sibling, not a
- * child: React events bubble through the component tree, so a click on the
- * confirm overlay would otherwise also reach this overlay.
+ * child: React events bubble through the component tree (portals included),
+ * so a click on the confirm overlay would otherwise also reach this overlay.
  */
 export function Modal({
   open,
@@ -53,37 +50,27 @@ export function Modal({
   busy = false,
   closeOnEscape = true,
 }: ModalProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   // An overlay click only counts when the press also started on the overlay:
   // a text selection dragged out of the dialog must not close it.
   const pressedOnOverlay = useRef(false);
   const titleId = useId();
+  const canPortal = useCanPortal();
 
-  useEffect(() => {
-    if (!open) return;
-    const previous =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const dialog = dialogRef.current;
-    const first = dialog?.querySelector<HTMLElement>(FOCUSABLE);
-    (first ?? dialog)?.focus();
-    return () => previous?.focus();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !closeOnEscape) return;
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !busy) onClose();
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, closeOnEscape, busy, onClose]);
+  useModalLayer({
+    open,
+    layerRef: overlayRef,
+    dialogRef,
+    onEscape: closeOnEscape && !busy ? onClose : undefined,
+    mountKey: canPortal,
+  });
 
   if (!open) return null;
 
-  return (
+  const overlay = (
     <div
+      ref={overlayRef}
       className={styles.modalOverlay}
       onMouseDown={(event) => {
         pressedOnOverlay.current = event.target === event.currentTarget;
@@ -116,4 +103,6 @@ export function Modal({
       </div>
     </div>
   );
+
+  return canPortal ? createPortal(overlay, document.body) : overlay;
 }

@@ -253,8 +253,9 @@ export function OpeningPreviewModal({
                 <Input
                   id={id}
                   // Le bouton de confirmation est désactivé à l'ouverture et ne
-                  // peut donc pas prendre le focus : le champ le prend.
-                  autoFocus
+                  // peut donc pas prendre le focus : ConfirmDialog le donne à
+                  // ce champ (sans `autoFocus`, qui le prendrait avant que la
+                  // fenêtre ait noté où le rendre à la fermeture).
                   inputMode="numeric"
                   autoComplete="off"
                   value={typed}
