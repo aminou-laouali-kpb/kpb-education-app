@@ -150,9 +150,10 @@ class AppTheme {
             fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w600,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          minimumSize:
+              const Size(kMinInteractiveDimension, kMinInteractiveDimension),
+          tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -452,8 +453,10 @@ class AppTheme {
         ),
       ),
 
-      // `shrinkWrap` : réservé aux liens inline dans un contexte dense —
-      // jamais pour une action isolée (cible tactile < 48 dp).
+      // Cible tactile d'au moins 48 × 48 dp (WCAG 2.5.5 / Material) : un
+      // TextButton isolé était à 22 dp de haut. Un lien inline dans un
+      // contexte dense peut encore passer `minimumSize`/`tapTargetSize` en
+      // local — jamais pour une action isolée.
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: KpbColors.actionPrimary,
@@ -462,9 +465,10 @@ class AppTheme {
             fontSize: KpbFontSize.sm,
             fontWeight: FontWeight.w600,
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          minimumSize:
+              const Size(kMinInteractiveDimension, kMinInteractiveDimension),
+          tapTargetSize: MaterialTapTargetSize.padded,
         ),
       ),
 

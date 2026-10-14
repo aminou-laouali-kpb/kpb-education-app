@@ -142,7 +142,7 @@ void main() {
       await tester.tap(
         find.descendant(
           of: bar,
-          matching: find.byIcon(Icons.notifications_none_rounded),
+          matching: find.byIcon(Icons.workspace_premium_outlined),
         ),
       );
       await tester.pumpAndSettle();

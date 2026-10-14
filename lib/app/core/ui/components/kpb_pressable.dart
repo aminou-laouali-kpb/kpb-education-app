@@ -4,7 +4,8 @@ import '../app_tokens.dart';
 import '../kpb_haptics.dart';
 
 // ── KpbPressable ──────────────────────────────────────────────────────────────
-// Surface tappable avec un léger enfoncement (press-scale).
+// Surface tappable avec un léger enfoncement (press-scale). Annoncée comme un
+// BOUTON aux lecteurs d'écran dès qu'elle a une action.
 //
 // Pas de vibration par défaut : vibrer à chaque tap banalise le retour tactile
 // et coûte sur les téléphones d'entrée de gamme. Un appelant qui confirme une
@@ -18,6 +19,7 @@ class KpbPressable extends StatefulWidget {
     this.onTap,
     this.scale = 0.97,
     this.haptic = false,
+    this.semanticLabel,
   });
 
   final Widget child;
@@ -26,6 +28,9 @@ class KpbPressable extends StatefulWidget {
 
   /// Vrai : [KpbHaptics.confirm] à l'appui. Faux par défaut.
   final bool haptic;
+
+  /// Libellé lu par le lecteur d'écran. Nul : le texte de [child] est lu.
+  final String? semanticLabel;
 
   @override
   State<KpbPressable> createState() => _KpbPressableState();
@@ -42,7 +47,7 @@ class _KpbPressableState extends State<KpbPressable> {
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
     final motion = KpbMotion.of(context);
-    return GestureDetector(
+    final pressable = GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: enabled ? (_) => _set(true) : null,
       onTapUp: enabled ? (_) => _set(false) : null,
@@ -59,6 +64,14 @@ class _KpbPressableState extends State<KpbPressable> {
         curve: Curves.easeOut,
         child: widget.child,
       ),
+    );
+    if (!enabled) return pressable;
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: true,
+      label: widget.semanticLabel,
+      child: pressable,
     );
   }
 }
