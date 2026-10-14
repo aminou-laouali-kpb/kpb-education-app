@@ -63,10 +63,12 @@ export interface MirrorResult {
   flagged: number;
   /** Pourquoi `--apply` n'a rien écrit ; `null` sinon. */
   refused: string | null;
+  /** Statistiques des tables de suivi recalculées après l'insertion. */
+  analyzed: boolean;
 }
 
-/** Le client dont la bascule a besoin : un `$queryRaw`. */
-export type MirrorClient = Pick<PrismaClient, '$queryRaw'>;
+/** Le client dont la bascule a besoin. */
+export type MirrorClient = Pick<PrismaClient, '$queryRaw' | '$executeRaw'>;
 
 export async function runMirror(
   prisma: MirrorClient,
@@ -96,6 +98,7 @@ export async function runMirror(
     inserted: 0,
     flagged: 0,
     refused: null,
+    analyzed: false,
   };
   if (!options.apply) return result;
 
@@ -130,6 +133,20 @@ export async function runMirror(
   `;
   result.inserted = counts?.inserted ?? 0;
   result.flagged = counts?.flagged ?? 0;
+
+  if (result.inserted > 0) {
+    // Des milliers de favoris neufs, juste avant les annonces : sans
+    // statistiques à jour, le planificateur estime une ligne par bourse et
+    // choisit pour la requête « qui suit » une boucle imbriquée quadratique
+    // (2,8 s à 5 000 abonnés au lieu de 23 ms mesurées). L'autovacuum finirait
+    // par les recalculer ; on n'attend pas. Un échec (droits) n'annule rien.
+    try {
+      await prisma.$executeRaw`ANALYZE "SavedItem", "ScholarshipAlertSubscription"`;
+      result.analyzed = true;
+    } catch {
+      result.analyzed = false;
+    }
+  }
   return result;
 }
 
