@@ -6,6 +6,7 @@ import type { OutboxSend } from './push-outbox-plan';
 import {
   emptyPushOutboxTally,
   PushOutboxWorkerService,
+  runPool,
   type ClaimedOutboxRow,
 } from './push-outbox-worker.service';
 import type {
@@ -74,16 +75,16 @@ function makeWorker(
   const queries: string[] = [];
   const claims = [...(opts.claims ?? [])];
   const client = {
-    $queryRaw: async (strings: TemplateStringsArray) => {
-      const text = strings.join('?');
+    $queryRaw: async (query: TemplateStringsArray | { strings: readonly string[] }) => {
+      const text = (Array.isArray(query) ? query : (query as { strings: readonly string[] }).strings).join('?');
       queries.push(text);
       if (text.includes('FOR UPDATE SKIP LOCKED')) return claims.shift() ?? [];
       if (text.includes('JOIN "UserProfile" pr')) {
         opts.onEnrich?.();
         return opts.details ?? [];
       }
-      if (text.includes('SELECT DISTINCT "userId"')) return [];
-      if (text.includes('"pushBatchId"')) return [];
+      // La garde (rythme + contention) : personne, aucun push récent.
+      if (text.includes('"pushLockedBy" <>')) return [];
       throw new Error(`unexpected query: ${text.slice(0, 80)}`);
     },
     $executeRaw: async (strings: TemplateStringsArray, ...values: unknown[]) => {
@@ -380,10 +381,78 @@ describe('PushOutboxWorkerService', () => {
       ).toHaveLength(0);
     });
 
+    it('une voie qui échoue (libération hors budget) ne rend pas les lignes en vol des autres voies', async () => {
+      let t = NOON.getTime();
+      const rows = [claimed('a', 'u1'), claimed('b', 'u2')];
+      let openGate: () => void = () => undefined;
+      const gate = new Promise<void>((resolve) => {
+        openGate = resolve;
+      });
+      const isRelease = (call: UpdateCall) =>
+        Object.keys(call.data).sort().join() === 'pushLockedBy,pushLockedUntil';
+      const { worker, updates, sendWithStatus } = makeWorker({
+        claims: [rows, []],
+        details: rows.map((row) => detail(row.id)),
+        updateCount: (call) => {
+          // La base tombe au moment où la voie 2, hors budget, rend la ligne
+          // de u2 ; l'envoi de u1 est encore chez le fournisseur.
+          if (isRelease(call) && call.where.id.in.includes('b')) {
+            setTimeout(openGate, 20);
+            throw Object.assign(new Error('db down'), { code: 'P1001' });
+          }
+          return call.where.id.in.length;
+        },
+      });
+      sendWithStatus.mockImplementation(async (): Promise<PushDeliveryOutcome> => {
+        // L'appel au fournisseur de u1 consomme le budget du passage.
+        t += 61_000;
+        await gate;
+        return { status: 'accepted', via: 'fcm', reason: null };
+      });
+
+      const result = await worker.runOnce(NOON, () => t).catch((error: unknown) => error);
+      // Laisser l'envoi de u1 se terminer s'il tournait encore.
+      await gate;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      expect(sendWithStatus).toHaveBeenCalledTimes(1);
+      // La ligne en vol n'est jamais rendue par ce passage : sa finalisation
+      // (fencée par le bail) l'aurait sinon ratée, et elle repartirait.
+      const releasedIds = updates.filter(isRelease).flatMap((call) => call.where.id.in);
+      expect(releasedIds).not.toContain('a');
+      const accepted = updates.find(
+        (call) => call.data.pushStatus === 'accepted' && call.where.id.in.includes('a'),
+      );
+      expect(accepted).toBeDefined();
+      // Le passage se termine normalement, sans rejeter.
+      expect(result).toMatchObject({ accepted: 1 });
+    });
+
     it('rien à faire : aucune ligne de journal', async () => {
       const { worker } = makeWorker({ claims: [[]] });
       await worker.runOnce(NOON, () => NOON.getTime());
       expect(logs).toEqual([]);
+    });
+  });
+
+  describe('runPool', () => {
+    it('une erreur passe à onError, la voie continue et le pool ne rejette pas', async () => {
+      const done: number[] = [];
+      const errors: unknown[] = [];
+      await expect(
+        runPool(
+          [1, 2, 3, 4, 5],
+          2,
+          async (n) => {
+            await new Promise((resolve) => setTimeout(resolve, n));
+            if (n === 2) throw new Error('boom');
+            done.push(n);
+          },
+          (error) => errors.push(error),
+        ),
+      ).resolves.toBeUndefined();
+      expect(done.sort()).toEqual([1, 3, 4, 5]);
+      expect(errors).toHaveLength(1);
     });
   });
 

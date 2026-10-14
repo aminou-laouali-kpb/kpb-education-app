@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { AccountType, PrismaClient } from '@prisma/client';
+import { AccountType, Prisma, PrismaClient } from '@prisma/client';
 
 import { InternalRole } from '../../common/enums/internal-role.enum';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -12,6 +12,7 @@ import { ScholarshipLifecycleService } from '../scholarships-index/scholarship-l
 import { ScholarshipOpeningAdminService } from '../scholarships-index/opening/scholarship-opening-admin.service';
 import { ScholarshipOpeningAudienceService } from '../scholarships-index/opening/scholarship-opening-audience.service';
 import { ScholarshipOpeningFanoutService } from '../scholarships-index/opening/scholarship-opening-fanout.service';
+import { readOpeningTunables } from '../scholarships-index/opening/scholarship-opening.contract';
 import { NotificationDispatchService } from './notification-dispatch.service';
 import type { OutboxSend } from './push-outbox-plan';
 import { PushOutboxWorkerService } from './push-outbox-worker.service';
@@ -25,9 +26,15 @@ import type {
  * réservation, l'arrêt par l'équipe, le plafond du dispatcher après un
  * groupé, heures calmes et rythme sur de vraies lignes, et 5 000 abonnés.
  *
- * L'heure des passages est un midi UTC À VENIR (`anchor`) : les élèves
- * (Sénégal, UTC+0) ne sont jamais en heures calmes, quelle que soit l'heure
- * où la CI tourne. Les lignes sont rendues échues à cette heure-là.
+ * Une seule horloge : un midi UTC À VENIR (`anchor`). Les élèves (Sénégal,
+ * UTC+0) n'y sont jamais en heures calmes, quelle que soit l'heure où la CI
+ * tourne. TOUT instant du fichier en dérive (`at(minutes)`) — dates des
+ * cycles, `activate`, échéance de l'envoi, passages du worker — et jamais de
+ * `Date.now()` : mêler les deux horloges faisait échouer l'échelle 5 000
+ * quand la suite démarrait entre 11 h 50 et 12 h UTC (l'ancre passait au
+ * lendemain, l'échéance réelle tombait à plus de 24 h avant elle, et l'envoi
+ * était abandonné comme « trop en retard »). Seules les DURÉES mesurées
+ * lisent l'horloge réelle.
  */
 const describePostgres =
   process.env.KPB_RUN_POSTGRES_INTEGRATION === 'true'
@@ -63,6 +70,8 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
 
   const anchor = nextNoonUtc(Date.now() + 10 * MIN);
   const at = (minutes: number) => new Date(anchor.getTime() + minutes * MIN);
+  /** Avant l'ancre de plus de 24 h 10 : toujours dans le passé réel aussi. */
+  const longAgo = at(-3 * 24 * 60);
 
   let sent: SentPush[] = [];
   let outcome: PushDeliveryOutcome = { status: 'accepted', via: 'fcm', reason: null };
@@ -176,7 +185,7 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
         relatedFieldIds: [],
         isActive: true,
         moderationStatus: 'approved',
-        lastVerifiedAt: new Date(),
+        lastVerifiedAt: longAgo,
       },
     });
     const cycle = await prisma.scholarshipCycle.create({
@@ -185,10 +194,10 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
         academicYear: '2026-2027',
         status: 'open',
         dateConfidence: 'confirmed',
-        opensAt: new Date(Date.now() - DAY),
+        opensAt: longAgo,
         closesAt: new Date(anchor.getTime() + 60 * DAY),
-        activatedAt: new Date(),
-        openingNotifiedAt: new Date(),
+        activatedAt: longAgo,
+        openingNotifiedAt: longAgo,
       },
     });
     return { sid, cid: cycle.id };
@@ -323,6 +332,154 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     expect(
       (second.pushedAt?.getTime() ?? 0) - (first.pushedAt?.getTime() ?? 0),
     ).toBeGreaterThanOrEqual(30 * MIN);
+  });
+
+  /**
+   * Un client dont la lecture de garde (rythme + contention, reconnue à
+   * `"pushLockedBy" <>`) attend `gate` — après la fin de toutes les autres
+   * lectures déjà lancées par le même worker. Force l'entrelacement : « le
+   * rythme est lu AVANT la finalisation de l'autre worker, la contention
+   * APRÈS ».
+   */
+  function guardGatedPrisma(gate: Promise<void>, onGuard: () => void): PrismaService {
+    const inFlight: Promise<unknown>[] = [];
+    const client = new Proxy(prisma, {
+      get(target, prop) {
+        if (prop === '$queryRaw') {
+          return (query: TemplateStringsArray | Prisma.Sql, ...values: unknown[]) => {
+            const text = Array.isArray(query)
+              ? query.join('?')
+              : (query as Prisma.Sql).strings.join('?');
+            const runQuery = () =>
+              Array.isArray(query)
+                ? target.$queryRaw(query as TemplateStringsArray, ...values)
+                : target.$queryRaw(query as Prisma.Sql);
+            if (text.includes('"pushLockedBy" <>')) {
+              const before = [...inFlight];
+              return (async () => {
+                await Promise.allSettled(before);
+                onGuard();
+                await gate;
+                return runQuery();
+              })();
+            }
+            const started = Promise.resolve(runQuery());
+            inFlight.push(started.catch(() => undefined));
+            return started;
+          };
+        }
+        const value: unknown = Reflect.get(target, prop);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+    });
+    return {
+      isEnabled: true,
+      execute: async <T>(operation: (client: PrismaClient) => Promise<T>) =>
+        operation(client),
+    } as unknown as PrismaService;
+  }
+
+  it('même élève : une finalisation entre deux lectures de la garde ne fait jamais deux push', async () => {
+    const uid = await student();
+    const row1 = await pendingRow(uid, await openCycle(), at(-2));
+    // Échue seulement après la réservation de A : B la prendra seul.
+    const row2 = await pendingRow(uid, await openCycle(), at(1));
+
+    let aSending: () => void = () => undefined;
+    const aEntered = new Promise<void>((resolve) => {
+      aSending = resolve;
+    });
+    let openA: () => void = () => undefined;
+    const aGate = new Promise<void>((resolve) => {
+      openA = resolve;
+    });
+    const pushA = {
+      ...push,
+      sendWithStatus: async (
+        userId: string,
+        title: string,
+        body: string,
+        data: Record<string, string>,
+        options: { collapseKey?: string; idempotencyKey?: string } = {},
+      ): Promise<PushDeliveryOutcome> => {
+        if (userId === uid) {
+          aSending();
+          await aGate;
+        }
+        return push.sendWithStatus(userId, title, body, data, options);
+      },
+    } as unknown as PushSenderService;
+    const a = new PushOutboxWorkerService(prismaService, pushA, fanout);
+
+    let bAtGuard: () => void = () => undefined;
+    const bReachedGuard = new Promise<void>((resolve) => {
+      bAtGuard = resolve;
+    });
+    let openB: () => void = () => undefined;
+    const bGate = new Promise<void>((resolve) => {
+      openB = resolve;
+    });
+    const b = new PushOutboxWorkerService(guardGatedPrisma(bGate, bAtGuard), push, fanout);
+
+    // A réserve la ligne 1, ne voit personne, et part chez le fournisseur.
+    const aRun = a.runOnce(anchor);
+    await aEntered;
+    // B réserve la ligne 2 (la 1 est sous le bail de A) et lit tout sauf sa garde.
+    const bRun = b.runOnce(at(2));
+    await bReachedGuard;
+    // A est accepté et finalise : bail levé, `pushedAt` posé.
+    openA();
+    await aRun;
+    expect((await rowState(row1)).pushStatus).toBe('accepted');
+    // B lit sa garde maintenant.
+    openB();
+    await bRun;
+
+    expect(sent.filter((p) => p.userId === uid)).toHaveLength(1);
+    const deferred = await rowState(row2);
+    expect(deferred).toMatchObject({
+      pushStatus: 'pending',
+      pushLastError: 'deferred_pacing',
+      pushLockedBy: null,
+      pushAttempts: 0,
+    });
+    const first = await rowState(row1);
+    expect(deferred.pushNotBefore?.getTime()).toBeGreaterThanOrEqual(
+      (first.pushedAt?.getTime() ?? 0) + 30 * MIN,
+    );
+    // La ligne reportée ne doit pas partir dans les cas suivants.
+    await prisma.userNotification.delete({ where: { id: row2 } });
+  });
+
+  it('même élève, deux workers en parallèle (×12) : au plus un push par élève et par passage', async () => {
+    const students: string[] = [];
+    for (let i = 0; i < 12; i += 1) {
+      const uid = await student();
+      students.push(uid);
+      await pendingRow(uid, await openCycle(), at(-2));
+      await pendingRow(uid, await openCycle(), at(-1));
+    }
+    await Promise.all([worker().runOnce(anchor), worker().runOnce(anchor)]);
+    for (const uid of students) {
+      expect(sent.filter((p) => p.userId === uid).length).toBeLessThanOrEqual(1);
+    }
+    // Ce qui n'est pas parti est reporté, jamais perdu.
+    const rows = await prisma.userNotification.findMany({
+      where: { userId: { in: students } },
+      select: { pushStatus: true, pushLastError: true, pushLockedBy: true },
+    });
+    for (const row of rows) {
+      expect(row.pushLockedBy).toBeNull();
+      if (row.pushStatus === 'pending') {
+        expect(['deferred_busy', 'deferred_pacing']).toContain(row.pushLastError);
+      } else {
+        expect(row.pushStatus).toBe('accepted');
+      }
+    }
+    // Les lignes reportées ne doivent pas partir dans les cas suivants.
+    await prisma.userNotification.deleteMany({
+      where: { userId: { in: students }, pushStatus: 'pending' },
+    });
   });
 
   // ── 8. Crash après réservation ────────────────────────────────────────────
@@ -541,20 +698,25 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
       sid,
       {
         academicYear: '2027-2028',
-        opensAt: new Date(Date.now() - DAY).toISOString(),
+        opensAt: longAgo.toISOString(),
         closesAt: new Date(anchor.getTime() + 60 * DAY).toISOString(),
         sourceUrl: 'https://example.org/official',
         expectedRecipients: 5000,
       },
       actor,
       'scale',
+      anchor,
     );
     const activateMs = Date.now() - started;
     expect(result.notification).toMatchObject({ state: 'scheduled', toNotify: 5000 });
+    // Programmé sur la même horloge que l'envoi.
+    expect(result.notification.fanoutAt).toBe(
+      new Date(anchor.getTime() + readOpeningTunables().holdSeconds * 1000).toISOString(),
+    );
 
     await prisma.scholarshipCycle.update({
       where: { id: result.cycleId },
-      data: { openingFanoutDueAt: new Date(Date.now() - 1_000) },
+      data: { openingFanoutDueAt: at(-1) },
     });
     started = Date.now();
     const fanned = await fanout.runDue(anchor);

@@ -200,6 +200,8 @@ export class ScholarshipLifecycleService {
     input: ActivateScholarshipDto,
     actor: OpeningActor,
     requestId: string,
+    /** L'horloge de la décision ; les tests d'intégration la fixent. */
+    now: Date = new Date(),
   ): Promise<ActivateScholarshipResponse> {
     this.assertDb();
     const opensAt = new Date(input.opensAt);
@@ -208,7 +210,6 @@ export class ScholarshipLifecycleService {
       throw new BadRequestException('closesAt must be after opensAt.');
     }
 
-    const now = new Date();
     await this.contentQuality.assertReady(
       scholarshipId,
       {

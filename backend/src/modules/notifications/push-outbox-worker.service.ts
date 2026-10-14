@@ -116,11 +116,18 @@ function countReason(tally: PushOutboxTally, reason: string | null, n = 1): void
   tally.reasons[reason] = (tally.reasons[reason] ?? 0) + n;
 }
 
-/** Au plus `concurrency` appels en vol ; une erreur n'arrête pas les autres. */
-async function runPool<T>(
+/**
+ * Au plus `concurrency` appels en vol. Une voie ne rejette JAMAIS : l'erreur
+ * d'un élément passe à `onError` et la voie continue. Le pool ne se termine
+ * donc qu'une fois chaque envoi commencé terminé — rien après lui (la
+ * libération de fin de passage) ne court pendant qu'un envoi est chez le
+ * fournisseur.
+ */
+export async function runPool<T>(
   items: readonly T[],
   concurrency: number,
   worker: (item: T) => Promise<void>,
+  onError: (error: unknown) => void,
 ): Promise<void> {
   let next = 0;
   const lanes = Array.from(
@@ -129,11 +136,64 @@ async function runPool<T>(
       while (next < items.length) {
         const item = items[next];
         next += 1;
-        await worker(item);
+        try {
+          await worker(item);
+        } catch (error) {
+          try {
+            onError(error);
+          } catch {
+            // Le journal lui-même ne doit pas faire tomber la voie.
+          }
+        }
       }
     },
   );
   await Promise.all(lanes);
+}
+
+/** Une ligne de la garde : un élève, et l'un de ses push récents (ou aucun). */
+export interface PacingGuardRow {
+  userId: string;
+  /** Un autre worker vivant tient une ligne `pending` de cet élève. */
+  contended: boolean;
+  /** `null` : aucun push d'ouverture accepté dans la fenêtre. */
+  pushedAt: Date | null;
+  pushBatchId: string | null;
+}
+
+/**
+ * La garde par élève en UNE instruction (un seul instantané) : la contention
+ * et les push récents (une ligne par push : `pushedAt` n'est posé que sur la
+ * ligne de tête d'un groupé). Voir `enrich`.
+ */
+export function pacingGuardSql(
+  userIds: readonly string[],
+  now: Date,
+  workerId: string,
+): Prisma.Sql {
+  return Prisma.sql`
+    SELECT
+      u."userId",
+      EXISTS (
+        SELECT 1 FROM "UserNotification" o
+        WHERE o."userId" = u."userId"
+          AND o."kind" = ${SCHOLARSHIP_OPENED_KIND}
+          AND o."pushStatus" = 'pending'
+          AND o."pushLockedBy" <> ${workerId}
+          AND o."pushLockedUntil" > ${now}
+      ) AS "contended",
+      r."pushedAt",
+      r."pushBatchId"
+    FROM unnest(${[...userIds]}::text[]) AS u("userId")
+    LEFT JOIN LATERAL (
+      SELECT a."pushedAt", a."pushBatchId"
+      FROM "UserNotification" a
+      WHERE a."userId" = u."userId"
+        AND a."kind" = ${SCHOLARSHIP_OPENED_KIND}
+        AND a."pushStatus" = 'accepted'
+        AND a."pushedAt" >= ${new Date(now.getTime() - PACING_LOOKBACK_MS)}
+    ) r ON true
+  `;
 }
 
 function hasSend(plan: UserPushPlan): plan is UserPushPlan & { send: OutboxSend } {
@@ -204,7 +264,17 @@ export class PushOutboxWorkerService {
     const tally = emptyPushOutboxTally();
     const start = tick();
     const outOfBudget = () => tick() - start >= tunables.tickBudgetMs;
+    // Les lignes réservées et JAMAIS tentées : seules celles-ci sont rendues
+    // en fin de passage. Une ligne quitte cet ensemble au moment où son envoi
+    // commence — même si l'envoi ou sa finalisation échoue ensuite, elle reste
+    // sous bail jusqu'à son expiration (le fournisseur a peut-être accepté).
     const held = new Set<string>();
+    // Erreurs par code, une seule ligne de journal par passage.
+    const errors = new Map<string, number>();
+    const noteError = (error: unknown) => {
+      const code = safeErrorCode(error);
+      errors.set(code, (errors.get(code) ?? 0) + 1);
+    };
 
     try {
       while (!outOfBudget()) {
@@ -233,13 +303,23 @@ export class PushOutboxWorkerService {
         });
         await this.applyWithoutSend(plans, tally);
 
-        await runPool(plans.filter(hasSend), tunables.concurrency, async (plan) => {
-          const ids = plan.send.rows.map((row) => row.id);
-          if (outOfBudget()) {
-            tally.released += await this.release(ids);
-            return;
-          }
-          try {
+        await runPool(
+          plans.filter(hasSend),
+          tunables.concurrency,
+          async (plan) => {
+            const ids = plan.send.rows.map((row) => row.id);
+            if (outOfBudget()) {
+              // Jamais tentées : rendues tout de suite. Si la base refuse,
+              // elles restent dans `held` et la libération finale réessaie.
+              // Lu APRÈS l'attente : `tally.released += await …` relirait le
+              // compte d'avant l'attente et perdrait celui des autres voies.
+              const released = await this.release(ids);
+              tally.released += released;
+              for (const rowId of ids) held.delete(rowId);
+              return;
+            }
+            // Tentée à partir d'ici : plus jamais rendue par ce passage.
+            for (const rowId of ids) held.delete(rowId);
             const outcome = await this.push.sendWithStatus(
               plan.userId,
               plan.send.title,
@@ -251,14 +331,9 @@ export class PushOutboxWorkerService {
               },
             );
             await this.finalize(plan.send, outcome, new Date(tick()), tunables, tally);
-          } catch (error) {
-            // Le fournisseur a peut-être accepté avant l'erreur : ces lignes
-            // restent sous bail et ne reviennent qu'à son expiration, jamais
-            // par la libération de fin de passage (renvoi immédiat).
-            for (const rowId of ids) held.delete(rowId);
-            this.logger.error(`Push outbox send failed (${safeErrorCode(error)}).`);
-          }
-        });
+          },
+          noteError,
+        );
 
         if (claimed.length < tunables.batchSize) break;
       }
@@ -267,10 +342,19 @@ export class PushOutboxWorkerService {
       // prochain passage au lieu d'attendre la fin du bail.
       if (held.size > 0) {
         try {
-          tally.released += await this.release([...held]);
+          const released = await this.release([...held]);
+          tally.released += released;
         } catch (error) {
           this.logger.error(`Push outbox release failed (${safeErrorCode(error)}).`);
         }
+      }
+      if (errors.size > 0) {
+        const total = [...errors.values()].reduce((sum, n) => sum + n, 0);
+        const codes = [...errors.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([code, n]) => `${code}:${n}`)
+          .join(',');
+        this.logger.error(`Push outbox: ${total} send(s) failed (${codes}).`);
       }
     }
 
@@ -354,9 +438,18 @@ export class PushOutboxWorkerService {
   }
 
   /**
-   * Trois lectures par lot : l'état de chaque ligne (profil, favori, alerte,
-   * bourse publique, cycle), les push d'ouverture récents (rythme) et les
-   * élèves qu'un autre worker vivant tient (contention).
+   * Deux lectures par lot : l'état de chaque ligne (profil, favori, alerte,
+   * bourse publique, cycle), puis la GARDE par élève — push d'ouverture
+   * récents (rythme) et lignes qu'un autre worker vivant tient (contention) —
+   * en UNE instruction, donc sur UN instantané.
+   *
+   * Pourquoi une seule : un autre worker qui finalise un push de cet élève
+   * pose `pushedAt` et lève son bail dans la même écriture. Lues en deux
+   * instructions (deux instantanés), la lecture du rythme pouvait précéder
+   * cette écriture et celle de la contention la suivre : ni push récent, ni
+   * bail vivant, et un second push partait quelques secondes après le
+   * premier (règle « 1 par 30 min » violée avec deux replicas). Sur un même
+   * instantané, l'élève est vu soit tenu (bail), soit déjà servi (`pushedAt`).
    */
   private async enrich(
     rows: readonly ClaimedOutboxRow[],
@@ -366,7 +459,7 @@ export class PushOutboxWorkerService {
     const ids = rows.map((row) => row.id);
     const userIds = [...new Set(rows.map((row) => row.userId))];
 
-    const [details, recent, contended] =
+    const [details, guard] =
       (await this.prisma.execute((p) =>
         Promise.all([
           p.$queryRaw<EnrichedRow[]>`
@@ -404,39 +497,20 @@ export class PushOutboxWorkerService {
             LEFT JOIN "ScholarshipCycle" c ON c."id" = n."cycleId"
             WHERE n."id" = ANY(${ids}::text[])
           `,
-          // Une ligne = un push : `pushedAt` n'est posé que sur la ligne de
-          // tête d'un groupé.
-          p.$queryRaw<{ userId: string; pushedAt: Date; pushBatchId: string | null }[]>`
-            SELECT "userId", "pushedAt", "pushBatchId"
-            FROM "UserNotification"
-            WHERE "userId" = ANY(${userIds}::text[])
-              AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
-              AND "pushStatus" = 'accepted'
-              AND "pushedAt" >= ${new Date(now.getTime() - PACING_LOOKBACK_MS)}
-          `,
-          // Chaque réservation est validée avant l'enrichissement de son
-          // worker : de deux workers qui tiennent le même élève, au moins un
-          // voit l'autre ici.
-          p.$queryRaw<{ userId: string }[]>`
-            SELECT DISTINCT "userId"
-            FROM "UserNotification"
-            WHERE "userId" = ANY(${userIds}::text[])
-              AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
-              AND "pushStatus" = 'pending'
-              AND "pushLockedBy" <> ${this.workerId}
-              AND "pushLockedUntil" > ${now}
-          `,
+          p.$queryRaw<PacingGuardRow[]>(pacingGuardSql(userIds, now, this.workerId)),
         ]),
-      )) ?? [[], [], []];
+      )) ?? [[], []];
 
-    const detailById = new Map(details.map((detail) => [detail.id, detail]));
     const recentByUser = new Map<string, RecentOpeningPush[]>();
-    for (const push of recent) {
-      const list = recentByUser.get(push.userId) ?? [];
-      list.push({ pushedAt: push.pushedAt, batchId: push.pushBatchId });
-      recentByUser.set(push.userId, list);
+    const contendedUsers = new Set<string>();
+    for (const row of guard) {
+      if (row.contended) contendedUsers.add(row.userId);
+      if (row.pushedAt === null) continue;
+      const list = recentByUser.get(row.userId) ?? [];
+      list.push({ pushedAt: row.pushedAt, batchId: row.pushBatchId });
+      recentByUser.set(row.userId, list);
     }
-    const contendedUsers = new Set(contended.map((row) => row.userId));
+    const detailById = new Map(details.map((detail) => [detail.id, detail]));
 
     const users = new Map<string, OutboxPlanUser & { rows: OutboxPlanRow[] }>();
     for (const row of rows) {
