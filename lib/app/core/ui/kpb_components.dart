@@ -1,5 +1,6 @@
 export 'app_tokens.dart';
 export 'kpb_theme_ext.dart';
+export 'kpb_haptics.dart';
 
 export 'components/kpb_pressable.dart';
 export 'components/kpb_input_decoration.dart';

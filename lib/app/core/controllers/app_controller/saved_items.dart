@@ -19,7 +19,7 @@ mixin _SavedItemsMixin on _AppControllerBase {
       unawaited(_deleteRemoteSavedItem(existing));
       AnalyticsService.instance
           .logUnsaveItem(itemId: itemId, itemType: type.name);
-      HapticFeedback.lightImpact();
+      KpbHaptics.selection();
     } else {
       final savedItem = SavedItem(type: type, itemId: itemId);
       _savedItems.add(savedItem);
@@ -31,7 +31,7 @@ mixin _SavedItemsMixin on _AppControllerBase {
       unawaited(_createRemoteSavedItem(savedItem));
       AnalyticsService.instance
           .logSaveItem(itemId: itemId, itemType: type.name);
-      HapticFeedback.mediumImpact();
+      KpbHaptics.confirm();
     }
     _persist();
     update();

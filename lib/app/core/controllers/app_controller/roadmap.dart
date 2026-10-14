@@ -6,7 +6,7 @@ mixin _RoadmapMixin on _AppControllerBase {
   }
 
   void toggleRoadmapStep(String scholarshipId, RoadmapStepType type) {
-    HapticFeedback.selectionClick();
+    KpbHaptics.selection();
     final steps = _completedRoadmapSteps[scholarshipId] ?? [];
     if (steps.contains(type.name)) {
       steps.remove(type.name);

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_routes.dart';
@@ -494,7 +493,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _ => true,
     };
     if (!valid) return;
-    HapticFeedback.lightImpact();
+    KpbHaptics.confirm();
     if (_page < _totalPages - 1) {
       final nextPage = _page + 1;
       // Persist progress so the user can resume mid-onboarding.
@@ -553,7 +552,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     GlobalKey? section,
   }) {
     setState(() => _attemptedPages.add(page));
-    HapticFeedback.mediumImpact();
+    KpbHaptics.error();
     _logValidationFailed(page, reason);
     // Après la trame : les erreurs qu'on vient d'allumer doivent être montées
     // pour qu'on puisse les atteindre.

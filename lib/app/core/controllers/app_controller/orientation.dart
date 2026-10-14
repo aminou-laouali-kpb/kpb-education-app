@@ -69,7 +69,7 @@ mixin _OrientationMixin on _AppControllerBase {
     clearOrientationProgress();
     _persist();
     update();
-    unawaited(HapticFeedback.heavyImpact());
+    unawaited(KpbHaptics.success());
     unawaited(AnalyticsService.instance.logOrientationComplete(
       totalQuestions: orientationQuestions.length,
       matchCount: session.recommendations.length,

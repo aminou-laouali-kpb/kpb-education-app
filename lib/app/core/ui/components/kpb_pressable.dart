@@ -1,21 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../app_tokens.dart';
+import '../kpb_haptics.dart';
 
 // ── KpbPressable ──────────────────────────────────────────────────────────────
-// Wraps any tappable surface with a subtle press-scale + haptic tick. Gives the
-// whole app a tactile, "alive" feel without each call site reimplementing it.
+// Surface tappable avec un léger enfoncement (press-scale).
+//
+// Pas de vibration par défaut : vibrer à chaque tap banalise le retour tactile
+// et coûte sur les téléphones d'entrée de gamme. Un appelant qui confirme une
+// action volontaire passe `haptic: true` (→ [KpbHaptics.confirm]).
+// L'enfoncement suit [KpbMotion.of] : instantané si les animations sont
+// coupées ou si le mode données réduites est actif.
 class KpbPressable extends StatefulWidget {
   const KpbPressable({
     super.key,
     required this.child,
     this.onTap,
     this.scale = 0.97,
-    this.haptic = true,
+    this.haptic = false,
   });
 
   final Widget child;
   final VoidCallback? onTap;
   final double scale;
+
+  /// Vrai : [KpbHaptics.confirm] à l'appui. Faux par défaut.
   final bool haptic;
 
   @override
@@ -32,6 +41,7 @@ class _KpbPressableState extends State<KpbPressable> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
+    final motion = KpbMotion.of(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: enabled ? (_) => _set(true) : null,
@@ -39,13 +49,13 @@ class _KpbPressableState extends State<KpbPressable> {
       onTapCancel: enabled ? () => _set(false) : null,
       onTap: enabled
           ? () {
-              if (widget.haptic) HapticFeedback.lightImpact();
+              if (widget.haptic) KpbHaptics.confirm();
               widget.onTap!();
             }
           : null,
       child: AnimatedScale(
-        scale: _down ? widget.scale : 1.0,
-        duration: const Duration(milliseconds: 120),
+        scale: _down && motion.enabled ? widget.scale : 1.0,
+        duration: motion.fast,
         curve: Curves.easeOut,
         child: widget.child,
       ),

@@ -89,7 +89,7 @@ mixin _CasesMixin on _AppControllerBase {
     _cases.insert(0, created);
     _persist();
     update();
-    HapticFeedback.heavyImpact();
+    KpbHaptics.success();
     AnalyticsService.instance.logCaseCreated(caseType: type.name);
     Get.snackbar(
       'case_created_title'.tr,

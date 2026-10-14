@@ -4,13 +4,13 @@ import 'dart:isolate';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../navigation/shell_tabs.dart';
 import '../services/analytics_service.dart';
 import '../navigation/app_boot_screen.dart';
 import '../ui/app_tokens.dart';
+import '../ui/kpb_haptics.dart';
 import '../services/case_message_outbox.dart';
 import '../services/case_socket_service.dart';
 import '../services/safe_crashlytics.dart';

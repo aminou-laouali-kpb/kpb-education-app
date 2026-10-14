@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
@@ -8,6 +7,7 @@ import '../../core/services/connectivity_service.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/kpb_offline_banner.dart';
 import '../../core/ui/components/kpb_sample_data_banner.dart';
+import '../../core/ui/kpb_haptics.dart';
 import '../../core/ui/kpb_theme_ext.dart';
 import '../../core/ui/shell_chrome.dart';
 import '../cases/cases_screen.dart';
@@ -294,7 +294,7 @@ class _NavItem extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (!isSelected) HapticFeedback.selectionClick();
+              if (!isSelected) KpbHaptics.selection();
               onTap();
             },
             child: Padding(
