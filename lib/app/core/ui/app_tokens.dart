@@ -255,6 +255,12 @@ class KpbShadow {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mouvement : durées et courbe communes. Pas de durées ad hoc dans les écrans.
+//
+// Les constantes ci-dessous sont les valeurs NOMINALES. Un widget qui anime
+// lit `KpbMotion.of(context)` : il reçoit des durées nulles quand l'utilisateur
+// a coupé les animations (réglage d'accessibilité du système, reflété par
+// `MediaQuery.disableAnimations`) ou a activé le « Mode données réduites » de
+// l'app — sur un Android d'entrée de gamme, chaque animation coûte des trames.
 
 class KpbMotion {
   KpbMotion._();
@@ -263,6 +269,67 @@ class KpbMotion {
   static const base = Duration(milliseconds: 200);
   static const page = Duration(milliseconds: 280); // = transition GetX
   static const curve = Curves.easeOutCubic;
+
+  /// Apparition d'un élément de liste ou d'un bandeau (fondu + glissé).
+  static const reveal = Duration(milliseconds: 550);
+
+  /// Décalage entre deux éléments successifs d'une liste animée.
+  static const staggerStep = Duration(milliseconds: 70);
+
+  /// Seuls les N premiers éléments d'une liste sont animés : au-delà, ils
+  /// apparaissent tout de suite (pas de délai index × pas sans limite).
+  static const staggerMaxItems = 6;
+
+  /// Sonde de l'économiseur de données de l'app, branchée par AppController.
+  /// Les tokens ne dépendent ainsi d'aucun contrôleur ; sans sonde (tests de
+  /// widget isolés), l'économiseur est considéré comme coupé.
+  static ValueGetter<bool>? dataSaverProbe;
+
+  static bool get _dataSaverOn {
+    try {
+      return dataSaverProbe?.call() ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Durées effectives pour [context] : nominales, ou nulles si les
+  /// animations sont désactivées (système) ou l'économiseur de données actif.
+  static KpbMotionSpec of(BuildContext context) {
+    final systemOff = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return (systemOff || _dataSaverOn) ? KpbMotionSpec.off : KpbMotionSpec.on;
+  }
+
+  /// Variante sans contexte (bandeaux posés depuis un contrôleur) : ne voit
+  /// que l'économiseur de données, plus le réglage système si [context] est
+  /// fourni.
+  static KpbMotionSpec resolve([BuildContext? context]) {
+    if (context != null) return of(context);
+    return _dataSaverOn ? KpbMotionSpec.off : KpbMotionSpec.on;
+  }
+}
+
+/// Jeu de durées résolu par [KpbMotion.of].
+@immutable
+class KpbMotionSpec {
+  const KpbMotionSpec._(this.enabled);
+
+  static const on = KpbMotionSpec._(true);
+  static const off = KpbMotionSpec._(false);
+
+  /// Faux quand toute animation doit sauter directement à son état final.
+  final bool enabled;
+
+  Duration get fast => enabled ? KpbMotion.fast : Duration.zero;
+  Duration get base => enabled ? KpbMotion.base : Duration.zero;
+  Duration get page => enabled ? KpbMotion.page : Duration.zero;
+  Duration get reveal => enabled ? KpbMotion.reveal : Duration.zero;
+  Duration get staggerStep => enabled ? KpbMotion.staggerStep : Duration.zero;
+  Curve get curve => KpbMotion.curve;
+
+  /// Une durée propre à un composant, annulée elle aussi quand le mouvement
+  /// est coupé.
+  Duration scale(Duration nominal) => enabled ? nominal : Duration.zero;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

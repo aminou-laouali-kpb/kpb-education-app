@@ -133,7 +133,11 @@ class AppController extends _AppControllerBase
         _OrientationMixin,
         _CasesMixin,
         _CatalogSyncMixin {
-  AppController({required super.repository, super.apiClient});
+  AppController({required super.repository, super.apiClient}) {
+    // Le « Mode données réduites » coupe aussi les animations
+    // (KpbMotion.of) : les tokens lisent ce réglage par cette sonde.
+    KpbMotion.dataSaverProbe = () => dataSaverEnabled;
+  }
 
   static const int shellTabCount = StudentShellTab.count;
 
