@@ -682,17 +682,10 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
       SELECT gen_random_uuid()::text, ${userPrefix} || g, 'scholarship', ${sid}
       FROM generate_series(1, 5000) AS g
     `;
-    // Une base en service a ses statistiques. Sans elles, le planificateur
-    // estime UNE ligne pour ces 5 000 favoris tout neufs et choisit une boucle
-    // imbriquée quadratique (la CLI de bascule analyse aussi après ses
-    // insertions) ; et une table d'inbox « vide » selon ses statistiques, mais
-    // pleine de lignes mortes des cas précédents, serait relue en entier pour
-    // chaque abonné. Toutes les tables que lit la requête « qui suit ».
-    await prisma.$executeRaw`
-      ANALYZE "SavedItem", "UserProfile", "UserNotification",
-              "ScholarshipAlertSubscription", "DeviceToken", "Scholarship"
-    `;
-
+    // Pas d'ANALYZE : la requête « qui suit » ne dépend pas des statistiques
+    // (aucune jointure entre ensembles dérivés). Ces 5 000 favoris tout neufs
+    // sont donc lus comme en production juste après une vague d'abonnements
+    // (voir aussi `scholarship-follow.query.scale.postgres.spec.ts`).
     let started = Date.now();
     const result = await lifecycle.activate(
       sid,

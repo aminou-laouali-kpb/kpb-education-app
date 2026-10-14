@@ -62,12 +62,27 @@ describe('scholarship-follow.query', () => {
   });
 
   it('portée alertes : les favoris ne sont pas des candidats', () => {
-    expect(flat(followerRowsCte('s1', 'alerts', 'c1', SINCE, null))).not.toContain(
-      'UNION SELECT "userId" FROM follow_fav',
+    expect(flat(followerRowsCte('s1', 'alerts', 'c1', SINCE, null))).toContain(
+      `HAVING bool_or(src."kind" = 'alert')`,
     );
     expect(flat(followerRowsCte('s1', 'followers', 'c1', SINCE, null))).toContain(
-      'UNION SELECT "userId" FROM follow_fav',
+      `HAVING bool_or(src."kind" IN ('fav', 'alert'))`,
     );
+  });
+
+  it('aucune jointure entre ensembles dérivés : sources bout à bout, puis une ligne par étudiant', () => {
+    for (const scope of ['alerts', 'followers'] as const) {
+      const text = flat(followerRowsCte('s1', scope, 'c1', SINCE, ANNOUNCED));
+      // Le plan ne doit pas dépendre d'une estimation : pas de jointure sur
+      // une CTE (matérialisée, donc sans index).
+      expect(text).not.toMatch(/JOIN follow_/);
+      expect(text).toContain('UNION ALL');
+      expect(text).toContain('GROUP BY src."userId"');
+      expect(text).toContain('follow_base AS MATERIALIZED');
+      // Le profil, par sa clé primaire, une fois par étudiant.
+      expect(text).toContain('CROSS JOIN LATERAL');
+      expect(text).toContain('WHERE pr."id" = u."userId"');
+    }
   });
 
   it('sans cycle : personne n’est déjà prévenu, toute annonce de la bourse est « récente »', () => {

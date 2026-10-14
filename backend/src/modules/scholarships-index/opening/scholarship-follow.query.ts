@@ -64,6 +64,25 @@ export interface FollowerRow {
  * Candidats : toutes les alertes de la bourse (en sourdine comprises, pour les
  * compter) et, en portée `followers`, tous ses favoris.
  *
+ * Forme choisie pour que le plan NE DÉPENDE PAS des estimations du
+ * planificateur (statistiques périmées juste après une vague de favoris, base
+ * jamais analysée) : aucune jointure entre deux ensembles dérivés. La version
+ * précédente joignait l'union des candidats à la CTE des favoris, matérialisée
+ * donc sans index : estimée à 1 ligne, elle devenait la boucle interne d'une
+ * boucle imbriquée — n × n comparaisons (2,8 s à 5 000 abonnés, plus que les
+ * 30 s d'`activate` vers 20 000). Ici :
+ *   1. `follow_src` : favoris, alertes et annonces récentes de la bourse, mis
+ *      bout à bout (`UNION ALL`, une lecture chacun) ;
+ *   2. `follow_user` : une ligne par étudiant (`GROUP BY`, linéaire quel que
+ *      soit le plan : hachage ou tri) — unicités (étudiant, bourse) du favori
+ *      et de l'alerte, donc au plus une valeur de chaque ;
+ *   3. `follow_base` : par étudiant, des recherches PAR CLÉ seulement (profil
+ *      par sa clé primaire en `LATERAL`, `dedupeKey` unique, jeton FCM par son
+ *      index) — calculée une fois (`MATERIALIZED`), les filtres de
+ *      `follow_rows` la relisent sans recalculer les sous-requêtes.
+ * Sémantique inchangée, prouvée contre l'ancien texte sur des données tirées
+ * au hasard (`scholarship-follow.query.postgres.spec.ts`).
+ *
  * @param scholarshipId bourse annoncée
  * @param scope portée figée de l'annonce
  * @param cycleId cycle annoncé ; `null` = cycle pas encore créé (aperçu d'une
@@ -81,23 +100,26 @@ export function followerRowsCte(
   renotifySince: Date,
   followSince: Date | null,
 ): Prisma.Sql {
-  const favoritesInScope =
+  // Candidats : en portée `alerts`, les seuls porteurs d'une alerte (le favori
+  // ne sert qu'à `viaFavorite`) ; en portée `followers`, favoris et alertes.
+  // Un étudiant seulement « prévenu récemment » n'est jamais candidat.
+  const candidates =
     scope === 'followers'
-      ? Prisma.sql`UNION SELECT "userId" FROM follow_fav`
-      : Prisma.empty;
+      ? Prisma.sql`bool_or(src."kind" IN ('fav', 'alert'))`
+      : Prisma.sql`bool_or(src."kind" = 'alert')`;
   // En portée `alerts`, seule l'alerte date le suivi : un favori ancien ne doit
   // pas faire passer pour « ancien abonné » quelqu'un qui vient d'activer la
   // cloche.
   const followSinceExpr =
     scope === 'followers'
-      ? Prisma.sql`LEAST(f."createdAt", CASE WHEN a."mutedAt" IS NULL THEN a."createdAt" END)`
-      : Prisma.sql`CASE WHEN a."mutedAt" IS NULL THEN a."createdAt" END`;
+      ? Prisma.sql`LEAST(u."favAt", CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END)`
+      : Prisma.sql`CASE WHEN u."mutedAt" IS NULL THEN u."alertAt" END`;
   const alreadyNotifiedExpr =
     cycleId === null
       ? Prisma.sql`false`
       : Prisma.sql`EXISTS (
           SELECT 1 FROM "UserNotification" n
-          WHERE n."dedupeKey" = ${openingDedupeKey(cycleId, '')} || c."userId"
+          WHERE n."dedupeKey" = ${openingDedupeKey(cycleId, '')} || u."userId"
         )`;
   const otherCycleClause =
     cycleId === null
@@ -111,48 +133,61 @@ export function followerRowsCte(
       : Prisma.sql`(b."followSince" IS NULL OR b."followSince" <= ${followSince})`;
 
   return Prisma.sql`
-    WITH follow_fav AS (
-      SELECT si."userId", si."createdAt"
+    WITH follow_src AS (
+      SELECT si."userId", 'fav'::text AS "kind", si."createdAt" AS "favAt",
+             NULL::timestamp(3) AS "alertAt", NULL::timestamp(3) AS "mutedAt",
+             NULL::boolean AS "alertPushEnabled"
       FROM "SavedItem" si
       JOIN "Scholarship" s ON s."id" = si."itemId"
       WHERE si."itemType" = 'scholarship' AND si."itemId" = ${scholarshipId}
-    ),
-    follow_alert AS (
-      SELECT a."userId", a."mutedAt", a."pushEnabled", a."createdAt"
+      UNION ALL
+      SELECT a."userId", 'alert'::text, NULL, a."createdAt", a."mutedAt", a."pushEnabled"
       FROM "ScholarshipAlertSubscription" a
       WHERE a."scholarshipId" = ${scholarshipId}
+      UNION ALL
+      SELECT r."userId", 'recent'::text, NULL, NULL, NULL, NULL
+      FROM "UserNotification" r
+      WHERE r."kind" = ${SCHOLARSHIP_OPENED_KIND}
+        AND r."scholarshipId" = ${scholarshipId}
+        ${otherCycleClause}
+        AND r."createdAt" > ${renotifySince}
     ),
-    follow_candidates AS (
-      SELECT "userId" FROM follow_alert
-      ${favoritesInScope}
-    ),
-    follow_base AS (
+    follow_user AS (
       SELECT
-        c."userId" AS "userId",
-        (f."userId" IS NOT NULL) AS "viaFavorite",
-        (a."userId" IS NOT NULL AND a."mutedAt" IS NULL) AS "viaAlert",
-        (a."mutedAt" IS NOT NULL) AS "muted",
-        COALESCE(a."pushEnabled", true) AS "pushEnabled",
+        src."userId",
+        bool_or(src."kind" = 'fav') AS "hasFavorite",
+        bool_or(src."kind" = 'alert') AS "hasAlert",
+        bool_or(src."kind" = 'recent') AS "recentlyNotified",
+        max(src."favAt") AS "favAt",
+        max(src."alertAt") AS "alertAt",
+        max(src."mutedAt") AS "mutedAt",
+        bool_and(src."alertPushEnabled") AS "alertPushEnabled"
+      FROM follow_src src
+      GROUP BY src."userId"
+      HAVING ${candidates}
+    ),
+    follow_base AS MATERIALIZED (
+      SELECT
+        u."userId" AS "userId",
+        u."hasFavorite" AS "viaFavorite",
+        (u."hasAlert" AND u."mutedAt" IS NULL) AS "viaAlert",
+        (u."mutedAt" IS NOT NULL) AS "muted",
+        COALESCE(u."alertPushEnabled", true) AS "pushEnabled",
         (${FOLLOWED_SCHOLARSHIP_OPT_OUT} = ANY(p."disabledNotificationTypes")) AS "optedOut",
         ${followSinceExpr} AS "followSince",
         ${alreadyNotifiedExpr} AS "alreadyNotified",
+        u."recentlyNotified" AS "recentlyNotified",
         EXISTS (
-          SELECT 1 FROM "UserNotification" r
-          WHERE r."userId" = c."userId"
-            AND r."kind" = ${SCHOLARSHIP_OPENED_KIND}
-            AND r."scholarshipId" = ${scholarshipId}
-            ${otherCycleClause}
-            AND r."createdAt" > ${renotifySince}
-        ) AS "recentlyNotified",
-        EXISTS (
-          SELECT 1 FROM "DeviceToken" d WHERE d."userProfileId" = c."userId"
+          SELECT 1 FROM "DeviceToken" d WHERE d."userProfileId" = u."userId"
         ) AS "hasFcmDevice",
         p."preferredLanguage" AS "preferredLanguage",
         p."countryOfResidence" AS "countryOfResidence"
-      FROM follow_candidates c
-      JOIN "UserProfile" p ON p."id" = c."userId"
-      LEFT JOIN follow_fav f ON f."userId" = c."userId"
-      LEFT JOIN follow_alert a ON a."userId" = c."userId"
+      FROM follow_user u
+      CROSS JOIN LATERAL (
+        SELECT pr."disabledNotificationTypes", pr."preferredLanguage", pr."countryOfResidence"
+        FROM "UserProfile" pr
+        WHERE pr."id" = u."userId"
+      ) p
     ),
     follow_rows AS (
       SELECT
