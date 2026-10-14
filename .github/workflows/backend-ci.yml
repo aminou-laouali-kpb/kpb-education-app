@@ -144,6 +144,16 @@ jobs:
           KPB_RUN_POSTGRES_INTEGRATION: 'true'
         run: npm run test:integration:eef-provenance
 
+      # Annonce d'ouverture d'une bourse : la boîte d'envoi vit dans des
+      # verrous PostgreSQL (FOR UPDATE SKIP LOCKED, bail fencé) — seule une base
+      # réelle dit si deux workers, une annulation et un crash se comportent.
+      # Les reprises de la migration et la requête « qui suit cette bourse »
+      # (aperçu = activate = envoi) y sont prouvées aussi.
+      - name: PostgreSQL scholarship opening fan-out integration
+        env:
+          KPB_RUN_POSTGRES_INTEGRATION: 'true'
+        run: npm run test:integration:opening-fanout
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5

@@ -1296,3 +1296,219 @@ changer de fournisseur de push. Que des comptages, aucune ligne par compte ;
 Les parts sont des ratios 0–1 arrondis à 4 décimales ; `byBuild` + `unknownBuild`
 somment à `activeProfiles`. Un compte multi-appareils compte pour la dernière
 build enregistrée.
+
+## Annonce d'ouverture des bourses suivies (chantier C)
+
+« Suivre » une bourse = favori + alerte d'ouverture + rappels de date limite
+(décision propriétaire). Ce contrat est figé par le lot « schema » du chantier
+(migration, DTO, types partagés `backend/src/modules/scholarships-index/opening/scholarship-opening.contract.ts`,
+miroir admin `admin/lib/scholarship-opening-types.ts`) ; les routes nouvelles
+arrivent avec les lots « fanout » et « student-api ». Toute modification passe
+par ce fichier et par le contrat partagé.
+
+**Compatibilité.** Aucune route existante ne change de méthode, de chemin, de
+gardes ni de clés de réponse ; les clés nouvelles sont additives. La
+`ValidationPipe` globale refuse les champs inconnus (`forbidNonWhitelisted`) :
+l'admin se déploie **strictement après** le backend, et un retour arrière du
+backend après l'admin impose celui de l'admin.
+
+### Qui suit, qui est prévenu
+
+- **suit(u, s)** = un `SavedItem(u, 'scholarship', s)` OU une
+  `ScholarshipAlertSubscription(u, s)` avec `mutedAt IS NULL`.
+- **prévenu à l'ouverture(u, s)** = suit(u, s) ET aucune alerte (u, s) en
+  sourdine (`mutedAt IS NOT NULL`) : la sourdine prime sur le favori.
+- Favoris orphelins ignorés (chaque requête joint `Scholarship`). Un invité ne
+  suit rien : toutes les routes de suivi exigent `StudentAuthGuard`.
+- **Désinscription globale** `followed_scholarship_updates`
+  (`UserProfile.disabledNotificationTypes`) : coupe le push seulement, l'entrée
+  d'inbox est écrite (`skipped / opt_out`). Ne coupe jamais les rappels de date
+  limite (transactionnels). Les builds 53/56 conservent cette clé inconnue.
+
+### Modes (`KPB_SCHOLARSHIP_OPENING_MODE`, lu à chaque appel)
+
+| Mode | `activate` | Audience | Miroir cloche ↔ favori | Audience des rappels |
+|---|---|---|---|---|
+| `legacy` (défaut, et valeur illisible) | envoi immédiat dans la requête, première activation seulement | alertes non en sourdine | non | favoris |
+| `outbox_alerts` | annonce programmée (`KPB_OPENING_HOLD_SECONDS`, 120 s), annulable, puis worker | alertes non en sourdine | non | favoris |
+| `outbox_followers` | idem | favoris ∪ alertes, moins sourdines | oui | favoris ∪ alertes |
+
+La portée (`alerts` / `followers`) est figée sur le cycle à la programmation.
+`KPB_PUSH_OUTBOX_ENABLED=false` arrête le worker (programmations et push en
+attente patientent ; une annonce en retard de plus de 24 h est abandonnée, un
+push en attente depuis plus de 72 h expire). Réglages et bornes :
+`OPENING_TUNABLE_ENV` dans le contrat partagé, relayés par `docker-compose.yml`
+(vide = défaut du code).
+
+Règles d'envoi : rien entre 21 h et 8 h locales (`KPB_PUSH_QUIET_START`/`END`,
+décalage tiré du pays de résidence, UTC+0 par défaut — Africa/Abidjan) ; au plus
+1 push d'ouverture par 30 min et 2 par jour local et par étudiant ; deux lignes
+ou plus envoyables ensemble partent en un push groupé. Pas d'annonce
+rétroactive : tout cycle ouvert ou activé avant la migration porte
+`openingPreExisting = true`.
+
+### Erreurs
+
+Corps de `GlobalExceptionFilter` : `{statusCode, message, requestId, code?, details?, timestamp}`.
+Chaque erreur nouvelle porte un `message` français complet (l'admin déjà déployé
+n'affiche que lui).
+
+| Statut | `code` | `details` | Quand |
+|---|---|---|---|
+| 409 | `OPENING_BUSY` | — | le cycle est verrouillé par un envoi en cours de préparation (> 5 s) |
+| 409 | `OPENING_NOT_RETROACTIVE` | — | `notify: true` sur un cycle `openingPreExisting` |
+| 400 | `OPENING_CONFIRMATION_REQUIRED` | `{toNotify, threshold}` | `toNotify > seuil` sans `expectedRecipients` |
+| 403 | `OPENING_REQUIRES_ADMIN` | `{toNotify, threshold}` | `toNotify > seuil` et rôle ni `admin` ni `super_admin` |
+| 409 | `OPENING_AUDIENCE_CHANGED` | `{toNotify, expectedRecipients}` | hausse au-delà de max(10, 10 %) ou franchissement du seuil non confirmé ; rien n'est écrit |
+| 409 | `OPENING_NOT_SCHEDULED` | `{lastFanoutAt}` | annulation sans annonce programmée |
+
+Le seuil (`KPB_OPENING_CONFIRM_THRESHOLD`, 500) se compare en `toNotify > seuil` :
+500 exactement ne demande pas de confirmation.
+
+### `POST /admin/scholarships/:id/activate` (existante, étendue)
+
+Corps : les champs d'avant, inchangés, plus
+- `academicYear` : même forme (`2027` ou `2027-2028`, même message d'erreur) ;
+  deux années non consécutives (`2027-2029`) sont désormais refusées (400) ;
+- `notify?: boolean` — `false` = « Enregistrer les dates sans prévenir » ;
+  absent = comportement d'avant (annonce à la première activation seulement) ;
+- `expectedRecipients?: integer` (0 – 1 000 000) — le `toNotify` confirmé à
+  l'aperçu ; exigé au-delà du seuil.
+
+Réponse 200 — les six premières clés et leurs types sont ceux d'avant :
+
+```json
+{
+  "scholarshipId": "chevening", "cycleId": "clx…", "status": "open",
+  "firstActivation": true, "subscribers": 312, "pushesSent": 0,
+  "academicYear": "2027-2028", "mode": "outbox_followers",
+  "notification": { "state": "scheduled", "toNotify": 312,
+                    "fanoutAt": "2026-10-15T14:34:00.000Z", "reason": null }
+}
+```
+
+`notification.state` ∈ `scheduled | already_scheduled | nothing_to_send | sent_legacy | none` ;
+`reason` ∈ `null | dates_only | already_announced | pre_existing_open | legacy_first_activation_only`.
+`subscribers` : en `legacy`, les alertes non en sourdine lues ; sinon l'audience
+de la portée avant déduplication. `pushesSent` : 0 hors `legacy`.
+
+Audit `AdminAuditEvent` (`entityType: 'ScholarshipCycle'`, `purposeCode: 'scholarship_opening'`) :
+`scholarship_cycle.opened | notify_scheduled | notified_legacy | dates_updated |
+notify_cancelled | notify_stopped | fanout_completed | fanout_expired`.
+
+### Routes de l'équipe (nouvelles)
+
+Mêmes gardes et rôles que `/admin/scholarships` (admin, super_admin,
+content_manager). `X-Request-Id` du client repris s'il est sûr
+(`^[A-Za-z0-9._:-]{1,128}$`), sinon généré, et renvoyé en en-tête.
+
+| Route | Rôle |
+|---|---|
+| `GET /admin/scholarships/:id/opening-preview?academicYear=&opensAt=&closesAt=` | Aperçu : cycles, cible, complétude (`readiness`), audience et répartition des envois, copie FR/EN, 5 derniers événements. Lecture seule. |
+| `POST /admin/scholarships/:id/cycles/:cycleId/opening/cancel` | Annule une annonce programmée (rien n'a été écrit pour les étudiants) → `{cycleId, cancelled: true}` ; sinon 409 `OPENING_NOT_SCHEDULED`. |
+| `POST /admin/scholarships/:id/cycles/:cycleId/opening/stop` | Arrête les push restants : `pending` → `skipped/stopped_by_staff`, entrées d'inbox gardées → `{cycleId, stopped, inFlight}`. |
+| `GET /admin/scholarships/:id/cycles/:cycleId/opening-report` | Rapport : inbox (total, lues), push par état et raison, par fournisseur. |
+| `GET /admin/scholarships/opening-todo` | Cycles servis ouverts jamais annoncés, ni sautés, ni programmés, ni pré-existants (100 au plus). |
+| `GET /admin/scholarships/opening-overview` | Colonnes « Abonnés » (`followers`, `notifiable`) et « Annoncé » de la liste. |
+
+Les formes exactes sont les interfaces `OpeningPreviewResponse`,
+`CancelOpeningResponse`, `StopOpeningResponse`, `OpeningReportResponse`,
+`OpeningTodoResponse` et `OpeningOverviewResponse` du contrat partagé.
+**Vocabulaire du rapport :** « acceptées par le fournisseur », jamais « reçues »
+ni « délivrées » — un 200 de FCM ou de OneSignal ne dit pas que le téléphone a
+affiché la notification. `push.accepted` compte des lignes,
+`push.acceptedPushes` des push (un groupé = 1).
+
+### Routes étudiant
+
+Nouvelles (builds récentes) :
+
+- `PATCH /me/scholarship-alerts/:scholarshipId` — corps `{notifyOpening: boolean}`.
+  `false` met l'annonce en sourdine (la bourse reste suivie : rappels, liste) ;
+  `true` vaut la cloche allumée. 404 si la bourse n'est pas approuvée et active.
+  → `{scholarshipId, following, notifyOpening}`, `following` relu après écriture.
+- `GET /me/followed-scholarships?lang=fr|en` — bourses suivies, closes
+  comprises (200 au plus) → `{items, total, globalOptOut}` ;
+  `displayStatus` ∈ `open | opening_confirmed | forecast | closed` (cycle choisi
+  par `selectCurrentCycle`) ; `detailAvailable: false` quand la fiche
+  répondrait 404.
+- `GET /me/notifications/unread-count` → `{unreadCount}`.
+- `POST /me/notifications/read-by-ref` — corps `{refs: string[]}` (1 à 20,
+  `^[A-Za-z0-9:_-]+$`, 200 caractères au plus) ; une référence est une
+  `dedupeKey` sans son `:<userId>` (ex. `scholarship-opened:<cycleId>`) ;
+  limité à l'étudiant connecté → `{updated}`.
+
+Existantes, mêmes formes, sémantique ajustée :
+
+| Route | Changement |
+|---|---|
+| `GET /me/scholarship-alerts` | les alertes en sourdine sont masquées |
+| `POST /me/scholarship-alerts/:id` | efface la sourdine ; en `outbox_followers`, pose aussi le favori (`impliedFollow` si c'est cet appel qui l'a créé) |
+| `DELETE /me/scholarship-alerts/:id` | favori créé par la cloche → supprime alerte et favori ; favori de l'étudiant → sourdine ; sinon suppression comme avant |
+| `DELETE /saved-items/:id` (bourse) | supprime l'alerte en sourdine (tous modes) ; en `outbox_followers`, toute alerte |
+| `POST /saved-items` (bourse) | le favori devient celui de l'étudiant (`impliedFollow = false`) |
+| `GET /scholarships`, `GET /scholarships/:id` | `isAlertEnabled` / `alert.*` ne lisent que l'alerte non en sourdine ; bloc additif `follow: {following, viaFavorite, viaAlert, notifyOpening, globalOptOut}` sur la fiche |
+
+### Charge utile push v1 (données, toutes des chaînes)
+
+Annonce seule — route que les builds ≤ 56 savent ouvrir ; `notificationKey`
+permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`) :
+
+```json
+{ "route": "/scholarships/<sid>", "scholarshipId": "<sid>", "cycleId": "<cid>",
+  "type": "scholarship_opened", "kind": "scholarship_opened",
+  "notificationKey": "scholarship-opened:<cid>:<uid>", "ref": "scholarship-opened:<cid>" }
+```
+
+Push groupé — `count` compte toutes les lignes, `refs` et `scholarshipIds`
+portent les 20 plus récentes ; **pas** de `scholarshipId` (un lecteur ancien
+ouvrirait une bourse arbitraire) :
+
+```json
+{ "route": "/deadlines", "type": "scholarship_opened_bundle", "kind": "scholarship_opened_bundle",
+  "count": "3", "refs": "scholarship-opened:<c1>,scholarship-opened:<c2>,…",
+  "scholarshipIds": "<s1>,<s2>,…" }
+```
+
+### Migrations `20261015120000…120200_scholarship_follow_*` — exploitation
+
+Trois fichiers, additifs seulement (colonnes nullables ou à défaut constant,
+index, reprises idempotentes), parce que `prisma migrate deploy` exécute chaque
+fichier dans une transaction implicite :
+
+1. `…120000_scholarship_follow_fanout` — colonnes, index de `ScholarshipCycle`,
+   reprises de `ScholarshipCycle` (`openingPreExisting`, `openingNotifiedAt =
+   activatedAt`, `pre_existing_open`). `SET LOCAL lock_timeout = '5s'` : en cas
+   d'échec, `npx prisma migrate resolve --rolled-back 20261015120000_scholarship_follow_fanout`
+   puis relancer à une heure creuse.
+2. `…120100_scholarship_follow_indexes` — `CREATE INDEX IF NOT EXISTS` sur
+   `SavedItem` et `UserNotification`. Lancer `db-info.yml` d'abord ; au-delà
+   d'environ un million de lignes, construire les index **avant** le déploiement :
+
+   ```sql
+   CREATE INDEX CONCURRENTLY IF NOT EXISTS "SavedItem_itemType_itemId_idx" ON "SavedItem"("itemType", "itemId");
+   CREATE INDEX CONCURRENTLY IF NOT EXISTS "UserNotification_pushStatus_pushNotBefore_idx" ON "UserNotification"("pushStatus", "pushNotBefore");
+   CREATE INDEX CONCURRENTLY IF NOT EXISTS "UserNotification_cycleId_kind_idx" ON "UserNotification"("cycleId", "kind");
+   -- doit être vide (un CONCURRENTLY raté laisse un index INVALID) :
+   SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;
+   ```
+3. `…120200_scholarship_follow_notification_backfill` — `UserNotification.cycleId`
+   recopié depuis `data`, `ScholarshipCycle.openingAudience` compté.
+
+Avant le déploiement, cette requête doit être vide (sinon ces cycles ne
+pourraient plus être réactivés, `academicYear` exigeant deux années consécutives) :
+
+```sql
+SELECT "scholarshipId", "academicYear" FROM "ScholarshipCycle"
+WHERE NOT CASE
+  WHEN "academicYear" ~ '^\d{4}$' THEN true
+  WHEN "academicYear" ~ '^\d{4}-\d{4}$'
+    THEN split_part("academicYear", '-', 2)::int = split_part("academicYear", '-', 1)::int + 1
+  ELSE false
+END;
+```
+
+Geler les activations admin pendant le déploiement du backend : un cycle activé
+par l'ancien code entre la migration et la nouvelle image échapperait à
+`openingPreExisting`. Pas de migration descendante : un backend plus ancien
+ignore les colonnes.
