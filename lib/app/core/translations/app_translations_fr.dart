@@ -3466,6 +3466,15 @@ const Map<String, String> appTranslationsFr = {
   'follow_scholarship_a11y_follow': 'Suivre la bourse @title',
   'follow_scholarship_a11y_following':
       'Bourse suivie : @title. Touche pour ne plus la suivre',
+  'push_primer_title': 'On te prévient dès qu\'elle ouvre',
+  'push_primer_body':
+      'Active les notifications pour savoir à temps quand une bourse que tu suis ouvre, et avant sa date limite. Tu peux les régler quand tu veux.',
+  'push_primer_enable': 'Activer les notifications',
+  'push_primer_later': 'Plus tard',
+  'push_denied_title': 'Notifications coupées',
+  'push_denied_body':
+      'Tu ne recevras pas les alertes sur ton téléphone. Tu les retrouveras quand même dans l\'app, dans Notifications. Pour les rallumer, ouvre les réglages de l\'app.',
+  'push_denied_open_settings': 'Ouvrir les réglages',
   'scholarship_notify_opening_title': 'Me prévenir à l\'ouverture',
   'scholarship_notify_opening_subtitle':
       'Une notification le jour où les candidatures ouvrent. Les rappels de date limite continuent.',

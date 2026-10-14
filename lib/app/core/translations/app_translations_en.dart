@@ -3207,6 +3207,15 @@ const Map<String, String> appTranslationsEn = {
   'follow_scholarship_following': 'Following',
   'follow_scholarship_a11y_follow': 'Follow the @title scholarship',
   'follow_scholarship_a11y_following': 'Following @title. Tap to unfollow',
+  'push_primer_title': 'We\'ll tell you as soon as it opens',
+  'push_primer_body':
+      'Turn on notifications to know in time when a scholarship you follow opens, and before its deadline. You can change this anytime.',
+  'push_primer_enable': 'Turn on notifications',
+  'push_primer_later': 'Not now',
+  'push_denied_title': 'Notifications are off',
+  'push_denied_body':
+      'You won\'t get alerts on your phone. You\'ll still find them in the app, under Notifications. To turn them back on, open the app settings.',
+  'push_denied_open_settings': 'Open settings',
   'scholarship_notify_opening_title': 'Notify me when it opens',
   'scholarship_notify_opening_subtitle':
       'One notification the day applications open. Deadline reminders keep coming.',

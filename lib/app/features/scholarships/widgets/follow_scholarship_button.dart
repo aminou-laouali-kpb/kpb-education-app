@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../core/controllers/app_controller.dart';
 import '../../../core/ui/app_tokens.dart';
+import 'follow_push_primer.dart';
 
 /// Les trois formes du bouton.
 enum FollowButtonVariant {
@@ -27,6 +28,8 @@ enum FollowButtonVariant {
 ///   resynchronise comme tous les favoris.
 /// - Il remplace le marque-page de la fiche et la cloche « M'avertir » de la
 ///   liste : la cloche ne veut plus dire que « notifications ».
+/// - Au premier « Suivre », la feuille d'explication précède la demande
+///   système d'autorisation ([FollowPushPrimer]).
 /// - Cible tactile ≥ 48 dp dans toutes ses formes.
 class FollowScholarshipButton extends StatelessWidget {
   const FollowScholarshipButton({
@@ -47,6 +50,7 @@ class FollowScholarshipButton extends StatelessWidget {
   Future<void> _toggle(BuildContext context, AppController controller) async {
     final following = controller.toggleScholarshipFollow(scholarshipId);
     onChanged?.call(following);
+    if (following) await FollowPushPrimer.maybePrime(context);
   }
 
   @override
