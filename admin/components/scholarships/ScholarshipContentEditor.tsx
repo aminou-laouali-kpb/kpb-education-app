@@ -5,6 +5,7 @@ import { CSSProperties, useEffect, useMemo, useState } from 'react';
 import { apiFetch } from '../../lib/api-client';
 import { useLocale } from '../locale-provider';
 import { Alert, Button, Field, Input, Textarea } from '../ui';
+import { ScholarshipEligibilityEditor } from './ScholarshipEligibilityEditor';
 import type { ScholarshipEntry } from './types';
 
 type EditableKey =
@@ -93,12 +94,17 @@ export function ScholarshipContentEditor({
     [entry],
   );
 
+  // Réinitialise le brouillon quand la fiche ou SES champs changent — pas
+  // quand une autre partie de la fiche est modifiée (éligibilité structurée,
+  // vidéos…) : une saisie en cours ne doit pas disparaître pour autant.
+  const draftKey = JSON.stringify([entry.id, draftFrom(entry)]);
   useEffect(() => {
     setDraft(draftFrom(entry));
     setDirty(new Set());
     setMessage(null);
     setError(null);
-  }, [entry]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftKey]);
 
   function patch(key: EditableKey, value: string) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -161,6 +167,13 @@ export function ScholarshipContentEditor({
         <LongField label={t('scholarships.descriptionEnLabel')} value={draft.descriptionEn} onChange={(v) => patch('descriptionEn', v)} />
         <LongField label={t('scholarships.eligibilityFrLabel')} value={draft.eligibilityFr} onChange={(v) => patch('eligibilityFr', v)} hint={t('scholarships.onePerLineHint')} />
         <LongField label={t('scholarships.eligibilityEnLabel')} value={draft.eligibilityEn} onChange={(v) => patch('eligibilityEn', v)} hint={t('scholarships.onePerLineHint')} />
+      </div>
+
+      {/* L'éligibilité structurée vit à côté de sa version en texte libre :
+          le test « Mes 10 bourses » lit celle-ci, l'élève lit celle-là. */}
+      <ScholarshipEligibilityEditor entry={entry} onSaved={onSaved} />
+
+      <div style={twoColumns}>
         <LongField label={t('scholarships.advantagesFrLabel')} value={draft.advantagesFr} onChange={(v) => patch('advantagesFr', v)} hint={t('scholarships.onePerLineHint')} />
         <LongField label={t('scholarships.advantagesEnLabel')} value={draft.advantagesEn} onChange={(v) => patch('advantagesEn', v)} hint={t('scholarships.onePerLineHint')} />
       </div>

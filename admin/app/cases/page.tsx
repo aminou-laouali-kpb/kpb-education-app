@@ -5,7 +5,13 @@ import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { useLocale } from '../../components/locale-provider';
+import { AdminCapability, hasAdminCapability } from '../../lib/admin-capabilities';
 import { apiFetch } from '../../lib/api-client';
+import {
+  linkedScholarshipView,
+  type CaseScholarshipFields,
+  type LinkedScholarshipView,
+} from '../../lib/case-scholarship';
 import {
   AdminTable,
   AdminTableRow,
@@ -44,7 +50,7 @@ interface CaseTimelineItem {
   createdAt: string;
 }
 
-interface AdminCaseItem {
+interface AdminCaseItem extends CaseScholarshipFields {
   id: string;
   referenceCode: string;
   studentName: string;
@@ -84,7 +90,15 @@ const panelTitleStyle: CSSProperties = {
 
 export default function CasesPage() {
   const { session } = useAdminAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
+  // La file des bourses n'est ouverte qu'aux éditeurs de contenu : un
+  // conseiller suit plutôt le lien vers la page officielle (s'il est servi).
+  const canOpenScholarship = hasAdminCapability(
+    session?.user.role,
+    AdminCapability.ManageScholarshipContent,
+  );
+  const linkedScholarship = (item: AdminCaseItem): LinkedScholarshipView | null =>
+    linkedScholarshipView(item, locale, canOpenScholarship);
   const [cases, setCases] = useState<AdminCaseItem[]>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -125,6 +139,37 @@ export default function CasesPage() {
         error instanceof Error ? error.message : t('cases.loadError'),
       );
     }
+  }
+
+  function renderLinkedScholarship(view: LinkedScholarshipView | null) {
+    if (!view) {
+      return null;
+    }
+    return (
+      <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>
+        <strong style={{ color: 'var(--ink)' }}>
+          {t('cases.linkedScholarshipLabel')}
+        </strong>{' '}
+        {view.href ? (
+          <a
+            href={view.href}
+            style={{ color: 'var(--brand)' }}
+            {...(view.external ? { target: '_blank', rel: 'noreferrer' } : {})}
+          >
+            {view.label}
+            {view.external ? ' ↗' : ''}
+          </a>
+        ) : (
+          <span>{view.label}</span>
+        )}
+        {view.nameMissing ? (
+          <span style={{ color: 'var(--text-muted)' }}>
+            {' '}
+            ({t('cases.linkedScholarshipNameMissing')})
+          </span>
+        ) : null}
+      </p>
+    );
   }
 
   useEffect(() => {
@@ -307,7 +352,11 @@ export default function CasesPage() {
                   sub={item.preferredLanguage.toUpperCase()}
                 />
                 <CellText primary={item.studentName} sub={item.studentEmail} />
-                <CellText primary={item.type} sub={item.contextLabel} muted />
+                <CellText
+                  primary={item.type}
+                  sub={linkedScholarship(item)?.label ?? item.contextLabel}
+                  muted
+                />
                 <div>
                   <StatusBadge status={item.status} />
                 </div>
@@ -335,6 +384,7 @@ export default function CasesPage() {
                 <div>
                   <StatusBadge status={selectedCase.status} />
                 </div>
+                {renderLinkedScholarship(linkedScholarship(selectedCase))}
               </div>
               <div>
                 <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>
