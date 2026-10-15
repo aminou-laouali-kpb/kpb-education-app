@@ -808,6 +808,7 @@ class LiveScholarshipModel {
     required this.id,
     required this.title,
     required this.countryName,
+    this.countryId = '',
     required this.fundingType,
     this.applicationRequirement = 'separate_application',
     required this.description,
@@ -831,6 +832,10 @@ class LiveScholarshipModel {
   final String id;
   final String title;
   final String countryName;
+
+  /// Identifiant pays du serveur (alpha-3, `fra`) : source du drapeau. Vide
+  /// sur un backend qui ne le sert pas.
+  final String countryId;
   final String fundingType; // 'fully_funded' | 'partially_funded' | 'unknown'
   final String applicationRequirement; // 'automatic' | 'separate_application'
   final String description;
@@ -897,6 +902,7 @@ class LiveScholarshipModel {
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       countryName: json['countryName'] as String? ?? '',
+      countryId: json['countryId'] as String? ?? '',
       fundingType: json['fundingType'] as String? ?? 'unknown',
       applicationRequirement:
           json['applicationRequirement'] as String? ?? 'separate_application',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_routes.dart';
+import '../../core/navigation/scholarship_navigation.dart';
 import '../../core/utils/country_utils.dart';
 import 'data/budget_data.dart';
 import '../../core/ui/app_tokens.dart';
@@ -376,7 +376,8 @@ class _BudgetCalculatorScreenState extends State<BudgetCalculatorScreen> {
   // ── Generic scholarships CTA (routes to the MVP-gated scholarships screen) ─
   Widget _scholarshipsCta() {
     return InkWell(
-      onTap: () => Get.toNamed(AppRoutes.scholarships),
+      // L'onglet Bourses de la coquille, pas une seconde liste empilée.
+      onTap: openScholarshipOrTab,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         height: 48,

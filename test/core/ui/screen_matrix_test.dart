@@ -49,6 +49,7 @@ import 'package:karatou/app/features/universities/universities_screen.dart';
 
 import '../../support/raw_key_guard.dart';
 import '../../support/screen_harness.dart';
+import '../../features/scholarships/scholarships_test_support.dart';
 import '../../widget_test_helpers.dart';
 import 'screen_overflow_budget.dart';
 
@@ -74,17 +75,11 @@ const _shellTabs = {
 /// chargement au lieu d'être mesuré en shimmer.
 MockApiClient _scholarshipApi() {
   final api = MockApiClient();
-  when(() => api.fetchLiveScholarships(
-        lang: any(named: 'lang'),
-        level: any(named: 'level'),
-        fieldIds: any(named: 'fieldIds'),
-        // `fundingType` est TOUJOURS passé par ScholarshipsController
-        // (scholarships_controller.dart:84). Sans ce matcher, le `when` ne
-        // correspond pas, mocktail rend `null`, et le `Future<List>` explose en
-        // `TypeError` — attrapé par le `catch`, donc l'écran s'afficherait vide
-        // et le test le mesurerait sans rien dire.
-        fundingType: any(named: 'fundingType'),
-      )).thenAnswer((_) async => <dynamic>[]);
+  // TOUS les critères passent par `whenScholarshipsPage` : un argument nommé
+  // oublié et le `when` ne correspond plus, mocktail rend `null`, et l'écran
+  // s'afficherait vide sans que le test le dise.
+  whenScholarshipsPage(api)
+      .thenAnswer((_) async => scholarshipsPage(<dynamic>[]));
   when(() => api.fetchScholarshipAlerts()).thenAnswer((_) async => <String>{});
   return api;
 }
@@ -183,6 +178,7 @@ void main() {
   final specs = buildScreenSpecs();
 
   setUpAll(() async {
+    registerScholarshipListFallbacks();
     TestWidgetsFlutterBinding.ensureInitialized();
     // CasesScreen formate ses dates avec `DateFormat(..., 'fr')`
     // (cases_screen.dart:299) et lèverait une LocaleDataException sans ceci.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../app_tokens.dart';
 import '../kpb_theme_ext.dart';
@@ -187,6 +188,27 @@ String kpbUpdatedAgoLabel(DateTime updatedAt, {DateTime? now}) {
   return 'async_updated_ago'.trParams({'ago': ago});
 }
 
+/// Libellé « Hors ligne — données du 12 oct. à 14:30 ».
+///
+/// `try`/`catch` : hors `MaterialApp` (tests), les données de locale de
+/// `DateFormat` ne sont pas chargées ; le repli numérique reste exact.
+String kpbOfflineDataLabel(DateTime updatedAt) {
+  final local = updatedAt.toLocal();
+  final locale = Get.locale?.languageCode == 'en' ? 'en' : 'fr';
+  String date;
+  String time;
+  try {
+    date = DateFormat('d MMM', locale).format(local);
+    time = DateFormat.Hm(locale).format(local);
+  } catch (_) {
+    date = '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}';
+    time = '${local.hour.toString().padLeft(2, '0')}:'
+        '${local.minute.toString().padLeft(2, '0')}';
+  }
+  return 'async_offline_data_from'.trParams({'date': date, 'time': time});
+}
+
 /// Bandeau discret « Mis à jour il y a X » pour un contenu servi depuis le
 /// cache. Utilisable seul (en tête d'une liste) ou via
 /// [KpbAsyncView.updatedAt].
@@ -196,9 +218,15 @@ class KpbCacheStamp extends StatelessWidget {
     required this.updatedAt,
     this.onRetry,
     this.now,
+    this.offline = false,
   });
 
   final DateTime updatedAt;
+
+  /// Vrai : le contenu est servi depuis le cache FAUTE DE RÉSEAU. Le bandeau
+  /// dit alors « Hors ligne — données du … » (date absolue : « il y a 3 j »
+  /// se lit mal quand on ne sait pas si l'app a réessayé depuis).
+  final bool offline;
 
   /// Non nul : un lien « Réessayer » relance le chargement.
   final VoidCallback? onRetry;
@@ -209,7 +237,9 @@ class KpbCacheStamp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.kpb;
-    final label = kpbUpdatedAgoLabel(updatedAt.toLocal(), now: now);
+    final label = offline
+        ? kpbOfflineDataLabel(updatedAt)
+        : kpbUpdatedAgoLabel(updatedAt.toLocal(), now: now);
     return Container(
       key: const ValueKey<String>('kpb-cache-stamp'),
       color: c.mutedBg,
@@ -219,7 +249,11 @@ class KpbCacheStamp extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.history_rounded, size: 16, color: c.textSecondary),
+          Icon(
+            offline ? Icons.cloud_off_rounded : Icons.history_rounded,
+            size: 16,
+            color: c.textSecondary,
+          ),
           const SizedBox(width: KpbSpacing.sm),
           Expanded(
             child: Semantics(

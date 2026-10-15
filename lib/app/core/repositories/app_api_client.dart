@@ -12,9 +12,11 @@ import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
+import '../models/live_scholarships_query.dart';
 import '../models/scholarship_match.dart';
 import '../services/notification_router.dart' show NotificationRouterBackend;
 import '../services/push_service.dart' show PushBackend;
+import '../services/scholarships_offline_cache.dart';
 import 'app_version_headers.dart';
 
 part 'app_api_client/eef.dart';

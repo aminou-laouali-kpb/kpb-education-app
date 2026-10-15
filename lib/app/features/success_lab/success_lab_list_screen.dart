@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_routes.dart';
+import '../../core/navigation/scholarship_navigation.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/controllers/success_lab_list_controller.dart';
 import '../../core/models/success_lab.dart';
@@ -182,7 +183,8 @@ class _SuccessLabListScreenState extends State<SuccessLabListScreen> {
           subtitle: 'success_lab_empty_body'.tr,
           action: KpbButton(
             label: 'success_lab_empty_action'.tr,
-            onPressed: () => Get.toNamed(AppRoutes.scholarships),
+            // L'onglet Bourses de la coquille, pas une seconde liste.
+            onPressed: openScholarshipOrTab,
           ),
         ),
     };

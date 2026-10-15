@@ -1802,3 +1802,30 @@ des clés explicites).
 (clés présentes même vides) ; les colonnes du profil y sont déjà par construction. La
 suppression du compte les emporte par cascade (prouvé contre PostgreSQL :
 `scholarship-match-api.postgres.spec.ts`).
+
+## Liste des bourses : recherche, statut et tri (chantier I)
+
+`GET /scholarships` (élève connecté, `StudentAuthGuard`) garde ses paramètres d'avant
+(`lang`, `level`, `fields`, `countryId`, `fundingType`, `limit` 1–100, `offset`) et
+accepte trois paramètres **optionnels**. Les builds en store ne les envoient pas : sans
+eux, la réponse est exactement celle d'avant (tri par pertinence, total lu en base).
+
+| Paramètre | Valeurs | Effet |
+|---|---|---|
+| `q` | texte libre, espaces repliés, 100 caractères au plus ; vide = absent | Recherche insensible à la casse dans `nameFr`, `nameEn`, `countryNameFr`, `countryNameEn`. Ajoutée en `AND` : la clause publique (`publicScholarshipWhere`, dont l'`OR` sur `deadlineAt`) reste intacte. |
+| `status` | `open`, `upcoming`, `forecast`, séparés par des virgules (`open,upcoming`) ; vide = absent | Filtre sur le statut du cycle SERVI, avec la règle de la ligne de statut de l'app (`resolveScholarshipStatusLine`) : `closed` ou clôture confirmée passée → jamais listée par ce filtre ; cycle `open` dont `opensAt` est à venir → `upcoming` ; `open` sinon ; ouverture confirmée à venir (cycle non estimé) → `upcoming` ; le reste (estimé, à confirmer) → `forecast`. Sans cycle : une date limite → `open`, rien → `forecast`. |
+| `sort` | `relevance` (défaut), `deadline`, `verified`, `title` | `relevance` : `matchScore` décroissant puis date limite (l'ordre d'avant). `deadline` : clôture la plus proche (`closesAt`, sinon `estimatedCloseAt`, sinon `deadlineAt`), dates inconnues en dernier. `verified` : `lastVerifiedAt` décroissant. `title` : titre dans la langue demandée, A→Z, sans tenir compte des accents ni de la casse. |
+
+Une valeur inconnue (`status=closed`, `sort=random`, `q` de 101 caractères, paramètre
+répété) → **400**, jamais un filtre ignoré en silence.
+
+Réponse : `{items, total, limit, offset, hasMore, fieldFilterRelaxed, databaseUnavailable, query}`.
+
+- `total` : nombre réel de bourses correspondantes (`count` en base, indépendant du
+  plafond de 500 candidates). Avec `status`, filtre calculé en mémoire, c'est le nombre
+  de la liste filtrée.
+- `query` (**additif**) : `{q: string|null, status: string[]|null, sort}`, ce que le
+  serveur a APPLIQUÉ. Un client qui ne trouve pas cette clé parle à un backend plus
+  ancien, qui a ignoré `q`, `status` et `sort` ; l'app filtre alors le statut elle-même
+  sur la page reçue.
+- Chaque item porte déjà `countryId` (alpha-3, sert au drapeau) et `lastVerifiedAt`.

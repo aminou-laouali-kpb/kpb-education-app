@@ -159,6 +159,11 @@ export class ScholarshipsController {
     @Query('fundingType') fundingType?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    // Chantier I — OPTIONNELS (les builds en store ne les envoient pas) ;
+    // validés par le service : une valeur inconnue → 400.
+    @Query('q') q?: string,
+    @Query('status') status?: string,
+    @Query('sort') sort?: string,
   ) {
     return this.scholarshipsIndexService.listForProfile({
       lang: lang === 'en' ? 'en' : 'fr',
@@ -169,6 +174,9 @@ export class ScholarshipsController {
       fundingType,
       limit: limit ? parseInt(limit, 10) : 20,
       offset: offset ? parseInt(offset, 10) : 0,
+      q,
+      status,
+      sort,
     });
   }
 

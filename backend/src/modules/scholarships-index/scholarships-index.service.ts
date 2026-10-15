@@ -27,6 +27,13 @@ import {
   SCHOLARSHIP_SAVED_ITEM_TYPE,
 } from './scholarship-follow-state';
 import { levelsInText, scholarshipLevels } from './scholarship-level';
+import {
+  parseScholarshipListQuery,
+  parseScholarshipListSort,
+  parseScholarshipListStatuses,
+  scholarshipServedStatus,
+  sortScholarshipList,
+} from './scholarship-list-query';
 import { GreatYopScraper } from './scrapers/greatyop.scraper';
 import { MastereTnScraper } from './scrapers/mastereTn.scraper';
 
@@ -241,10 +248,19 @@ export class ScholarshipsIndexService {
     fundingType?: string;
     limit?: number;
     offset?: number;
+    /** Chantier I, optionnels : recherche, statut(s), tri. */
+    q?: string;
+    status?: string;
+    sort?: string;
   }) {
     const lang = params.lang;
     const limit = this.boundedInt(params.limit, 20, 1, 100);
     const offset = this.boundedInt(params.offset, 0, 0, 10000);
+    // Validés AVANT toute lecture : une valeur inconnue est un 400, jamais un
+    // filtre ignoré en silence.
+    const q = parseScholarshipListQuery(params.q);
+    const statuses = parseScholarshipListStatuses(params.status);
+    const sort = parseScholarshipListSort(params.sort);
     const validFundingTypes = [
       'fully_funded',
       'partially_funded',
@@ -271,6 +287,26 @@ export class ScholarshipsIndexService {
           }
         : {}),
       ...(params.countryId ? { countryId: params.countryId } : {}),
+      // `publicScholarshipWhere` porte déjà un `OR` (date limite) : la
+      // recherche passe donc par `AND`, pour ne jamais l'écraser.
+      ...(q
+        ? {
+            AND: [
+              {
+                OR: [
+                  { nameFr: { contains: q, mode: 'insensitive' as const } },
+                  { nameEn: { contains: q, mode: 'insensitive' as const } },
+                  {
+                    countryNameFr: { contains: q, mode: 'insensitive' as const },
+                  },
+                  {
+                    countryNameEn: { contains: q, mode: 'insensitive' as const },
+                  },
+                ],
+              },
+            ],
+          }
+        : {}),
     };
     // `fieldIds` n'apparaît DÉLIBÉRÉMENT pas dans le `where`.
     //
@@ -351,6 +387,7 @@ export class ScholarshipsIndexService {
         hasMore: false,
         fieldFilterRelaxed: false,
         databaseUnavailable: true,
+        query: { q: q ?? null, status: statuses ?? null, sort },
       };
     }
     if (items.length === MAX_CANDIDATES) {
@@ -418,22 +455,28 @@ export class ScholarshipsIndexService {
       };
     });
 
-    // Sort by matchScore desc, then by deadline asc
-    mapped.sort((a, b) => {
-      if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
-      if (a.deadlineAt && b.deadlineAt) {
-        return new Date(a.deadlineAt).getTime() - new Date(b.deadlineAt).getTime();
-      }
-      return 0;
-    });
+    // Statut : calculé sur le cycle SERVI, avec la même règle que la ligne de
+    // statut de l'app — d'où un filtre en mémoire et non dans le `where`.
+    const now = new Date();
+    const listed = statuses
+      ? mapped.filter((item) =>
+          (statuses as string[]).includes(scholarshipServedStatus(item, now)),
+        )
+      : mapped;
+
+    // Sans `sort` : pertinence décroissante puis date limite (l'ordre d'avant).
+    sortScholarshipList(listed, sort, lang);
 
     // Real total of matching scholarships, independent of the candidate cap.
-    const total =
-      (await this.prismaService.execute((prisma) =>
-        prisma.scholarship.count({ where }),
-      )) ?? mapped.length;
+    // Avec un filtre de statut (calculé en mémoire), le total est celui de la
+    // liste filtrée.
+    const total = statuses
+      ? listed.length
+      : ((await this.prismaService.execute((prisma) =>
+          prisma.scholarship.count({ where }),
+        )) ?? listed.length);
 
-    const page = mapped.slice(offset, offset + limit);
+    const page = listed.slice(offset, offset + limit);
     return {
       items: page,
       total,
@@ -442,12 +485,16 @@ export class ScholarshipsIndexService {
       // Sur la liste réellement chargée (plafonnée à MAX_CANDIDATES), pas
       // sur `total` : au-delà du plafond, des pages vides s'annonçaient
       // « hasMore ».
-      hasMore: offset + page.length < mapped.length,
+      hasMore: offset + page.length < listed.length,
       // True when the student's profile fields matched nothing and the listing
       // fell back to the unfiltered catalog. The client must disclose it rather
       // than presenting the result as a profile-matched list.
       fieldFilterRelaxed,
       databaseUnavailable: false,
+      // Chantier I, additif : ce que le serveur a APPLIQUÉ. Un client qui ne
+      // trouve pas cette clé parle à un backend plus ancien, qui a ignoré
+      // `q`, `status` et `sort`.
+      query: { q: q ?? null, status: statuses ?? null, sort },
     };
   }
 

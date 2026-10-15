@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
@@ -12,6 +11,8 @@ import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/components/kpb_guest_gate.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/ui/shell_chrome.dart';
+import '../../core/ui/skeleton.dart';
+import '../../core/utils/country_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarship_match/scholarship_match_entry_card.dart';
@@ -19,7 +20,8 @@ import 'scholarship_detail_screen.dart';
 import 'scholarship_guide_info_screen.dart';
 import 'scholarships_controller.dart';
 import 'widgets/follow_scholarship_button.dart';
-import 'widgets/scholarship_status_line.dart';
+import 'widgets/scholarship_filter_sheet.dart';
+import 'widgets/scholarship_list_status.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture
 // §6/§10.2). L'ancienne _Palette locale du handoff a été absorbée au lot 5 ;
@@ -28,249 +30,37 @@ const _cardShadow = <BoxShadow>[
   BoxShadow(color: KpbShadow.softNavy, blurRadius: 2, offset: Offset(0, 1)),
 ];
 
-const _flagMap = <String, String>{
-  'Japan': '🇯🇵',
-  'Japon': '🇯🇵',
-  'France': '🇫🇷',
-  'Germany': '🇩🇪',
-  'Allemagne': '🇩🇪',
-  'United States': '🇺🇸',
-  'États-Unis': '🇺🇸',
-  'USA': '🇺🇸',
-  'Canada': '🇨🇦',
-  'United Kingdom': '🇬🇧',
-  'Royaume-Uni': '🇬🇧',
-  'UK': '🇬🇧',
-  'Australia': '🇦🇺',
-  'Australie': '🇦🇺',
-  'China': '🇨🇳',
-  'Chine': '🇨🇳',
-  'South Korea': '🇰🇷',
-  'Corée du Sud': '🇰🇷',
-  'Turkey': '🇹🇷',
-  'Turquie': '🇹🇷',
-  'Italy': '🇮🇹',
-  'Italie': '🇮🇹',
-  'Spain': '🇪🇸',
-  'Espagne': '🇪🇸',
-  'Morocco': '🇲🇦',
-  'Maroc': '🇲🇦',
-  'Tunisia': '🇹🇳',
-  'Tunisie': '🇹🇳',
-  'Switzerland': '🇨🇭',
-  'Suisse': '🇨🇭',
-  'Belgium': '🇧🇪',
-  'Belgique': '🇧🇪',
-  'Netherlands': '🇳🇱',
-  'Pays-Bas': '🇳🇱',
-  'Sweden': '🇸🇪',
-  'Suède': '🇸🇪',
-  'Senegal': '🇸🇳',
-  'Sénégal': '🇸🇳',
-  'International': '🌍',
-};
-
-String _flag(String country) => _flagMap[country] ?? '🌍';
-
-String _shortDate(DateTime date) {
-  final local = date.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  return '$day/$month/${local.year}';
+/// Le drapeau d'une carte : tiré de `countryId` (alpha-3 du serveur), et non
+/// plus du nom du pays — une quinzaine de noms seulement étaient reconnus, et
+/// « Royaume-Uni — University of Cambridge » retombait sur 🌍. Repli : le nom
+/// tel quel (fiches d'un backend qui ne sert pas encore `countryId`), puis 🌍.
+String scholarshipFlag(LiveScholarshipModel scholarship) {
+  final byId = countryFlag(scholarship.countryId);
+  if (scholarship.countryId.isNotEmpty || byId != '🌍') return byId;
+  return countryFlag(scholarship.countryName);
 }
 
-/// La fenêtre couvre-t-elle des MOIS ENTIERS (1er → dernier jour) ?
-///
-/// C'est la convention de saisie pour « on connaît la saison, pas la date » :
-/// l'opérateur borne au mois, et la phrase affichée doit alors parler en mois.
-/// Toute autre fenêtre a été saisie au jour près et est rendue telle quelle.
-///
-/// ## Tout se compare en UTC, et c'est le cœur du sujet
-///
-/// Ces bornes sont des dates SANS heure, écrites en UTC par le catalogue :
-/// `2027-03-01T00:00:00.000Z` et `2027-04-30T23:59:59.000Z`. Les convertir en
-/// heure locale les fait changer de jour calendaire pour presque tout le monde :
-/// à l'ouest d'UTC, le 1er mars devient le 28 février ; à l'est — donc au Niger,
-/// au Sénégal, en Côte d'Ivoire, c'est-à-dire notre public — le 30 avril à
-/// 23 h 59 UTC devient le 1er mai. Dans les deux cas le test échouait pour la
-/// convention même qu'il doit reconnaître, et la carte retombait sur des dates
-/// précises trompeuses : exactement ce que ce lot corrige.
-/// Le prédicat de [_isWholeMonthWindow], exposé aux tests.
-///
-/// Il vaut la peine d'être testé directement : sa première version comparait
-/// en heure LOCALE et échouait, hors UTC, pour la convention même qu'elle doit
-/// reconnaître. Un test qui passerait par l'écran entier n'aurait pas pu isoler
-/// ce cas — et il aurait été vert sur une machine à UTC+0.
-@visibleForTesting
-bool isWholeMonthWindowForTest(DateTime open, DateTime close) =>
-    _isWholeMonthWindow(open, close);
-
-bool _isWholeMonthWindow(DateTime open, DateTime close) {
-  final from = open.toUtc();
-  final to = close.toUtc();
-  // Dernier jour de `to` : le jour 0 du mois SUIVANT, calculé en UTC.
-  final lastDayOfCloseMonth = DateTime.utc(to.year, to.month + 1, 0).day;
-  return from.day == 1 && to.day == lastDayOfCloseMonth && !to.isBefore(from);
-}
-
-/// Le nom du mois dans la langue active (« mars », « March »).
-///
-/// En UTC, pour la raison écrite dans [_isWholeMonthWindow] : une borne de mois
-/// convertie en local peut basculer sur le mois voisin, et on afficherait
-/// « février » pour une fenêtre qui commence le 1er mars.
-///
-/// `try`/`catch` obligatoire, et ce n'est pas de la superstition : `DateFormat`
-/// avec une locale explicite lève `LocaleDataException` si les données de cette
-/// locale ne sont pas chargées — ce qui arrive hors d'un `MaterialApp`, donc
-/// dans les tests. Le repli numérique ne peut pas lever et reste exact. C'est
-/// exactement le patron déjà documenté et éprouvé dans `EefCalendar.dayLabel`.
-String _monthName(DateTime date) {
-  final utc = date.toUtc();
-  final locale = Get.locale?.languageCode == 'en' ? 'en' : 'fr';
-  try {
-    return DateFormat('MMMM', locale).format(utc);
-  } catch (_) {
-    return utc.month.toString().padLeft(2, '0');
-  }
-}
-
-(String, Color, Color)? _cyclePill(LiveScholarshipModel scholarship) {
-  final cycle = scholarship.currentCycle;
-  if (cycle == null) return null;
-  if (cycle.isOpen) {
-    // Jamais « Candidatures ouvertes » avant la date d'ouverture confirmée :
-    // c'est ce que dira le push d'ouverture, la carte ne doit pas le devancer.
-    final opensAt = cycle.opensAt;
-    if (opensAt != null && opensAt.isAfter(DateTime.now())) {
-      return (
-        'scholarship_status_opens_on'
-            .trParams({'date': formatScholarshipDay(opensAt)}),
-        KpbColors.actionPrimarySoft,
-        KpbColors.actionPrimary,
-      );
-    }
-    final closing = cycle.closesAt ?? cycle.estimatedCloseAt;
-    if (closing != null && closing.isBefore(DateTime.now())) {
-      return (
-        'live_scholarships_deadline_closed'.tr,
-        KpbColors.surfaceMuted,
-        KpbColors.textMuted,
-      );
-    }
-    return (
-      'live_scholarships_open_now'.tr,
-      KpbColors.successLight,
-      KpbColors.success,
-    );
-  }
-  final estimatedOpen = cycle.estimatedOpenAt ?? cycle.opensAt;
-  final estimatedClose = cycle.estimatedCloseAt ?? cycle.closesAt;
-  if (estimatedOpen != null && estimatedClose != null) {
-    // ── « À venir, généralement aux mois de mars – avril » ────────────────
-    //
-    // Quand la fenêtre couvre des MOIS ENTIERS (1er du mois → dernier jour du
-    // mois), c'est la convention de saisie pour « on connaît la saison, pas la
-    // date ». L'afficher en « 01/03/2027 – 30/04/2027 » revenait à annoncer au
-    // jour près une campagne dont personne n'a publié le calendrier : deux
-    // dates exactes qui ne sont que les bornes d'un mois. La granularité de la
-    // phrase doit être celle de ce qu'on sait.
-    if (_isWholeMonthWindow(estimatedOpen, estimatedClose)) {
-      final from = _monthName(estimatedOpen);
-      final to = _monthName(estimatedClose);
-      return (
-        from == to
-            ? 'live_scholarships_upcoming_month'.trParams({'from': from})
-            : 'live_scholarships_upcoming_months'
-                .trParams({'from': from, 'to': to}),
-        KpbColors.warningLight,
-        KpbColors.warning,
-      );
-    }
-    // Fenêtre estimée qui NE tombe pas sur des bornes de mois : l'opérateur a
-    // saisi des dates précises, on les rend telles quelles.
-    return (
-      'live_scholarships_period_estimated'.trParams({
-        'open': _shortDate(estimatedOpen),
-        'close': _shortDate(estimatedClose),
-      }),
-      KpbColors.warningLight,
-      KpbColors.warning,
-    );
-  }
-  if (estimatedOpen != null) {
-    return (
-      'live_scholarships_open_estimated'
-          .trParams({'date': _shortDate(estimatedOpen)}),
-      KpbColors.warningLight,
-      KpbColors.warning,
-    );
-  }
-  return null;
-}
-
-// ── Real-data helpers ──────────────────────────────────────────────────────
-
-/// Countdown badge derived from the REAL [LiveScholarshipModel.deadlineAt].
-/// Returns null when the scholarship has no parsed date — the UI then shows a
-/// neutral label rather than a fabricated countdown.
-class _DeadlineBadge {
-  const _DeadlineBadge(this.text, this.bg, this.fg, {this.soon = false});
-  final String text;
-  final Color bg;
-  final Color fg;
-  final bool soon;
-}
-
-_DeadlineBadge? _deadlineBadge(LiveScholarshipModel s) {
-  final at = s.deadlineAt;
-  if (at == null) return null;
-  // Un compte à rebours au jour près sur une date ESTIMÉE serait un mensonge.
-  // L'importeur remplit `deadlineAt` depuis `estimatedCloseAt` quand le cycle
-  // n'est pas confirmé (import-scholarship-catalog.ts) — utile pour classer les
-  // bourses par échéance, mais pas pour l'affirmer à l'étudiant. La plupart des
-  // institutions africaines et des consortiums Erasmus ne publient AUCUNE date
-  // pour la campagne suivante : la fenêtre estimée est alors la seule vérité
-  // disponible, et `_cyclePill` l'affiche déjà comme telle (« Période estimée
-  // du … au … », en ambre). On laisse donc la pastille de cycle parler seule.
-  if (s.currentCycle?.isEstimated ?? false) return null;
-  final days = at.difference(DateTime.now()).inDays;
-  if (days < 0) {
-    return _DeadlineBadge('live_scholarships_deadline_closed'.tr,
-        KpbColors.surfaceMuted, KpbColors.textMuted);
-  }
-  final text = 'live_scholarships_deadline_days'.trParams({'count': '$days'});
-  if (days <= 7) {
-    return _DeadlineBadge(text, KpbColors.errorLight, KpbColors.error,
-        soon: true);
-  }
-  if (days <= 30) {
-    return _DeadlineBadge(text, KpbColors.warningLight, KpbColors.warning,
-        soon: days <= 14);
-  }
-  return _DeadlineBadge(
-      text, KpbColors.actionPrimarySoft, KpbColors.actionPrimary);
-}
-
-/// Color-coded funding chip — bound to the real [fundingType].
-(Color, Color, String) _fundingChip(LiveScholarshipModel s) {
+/// Funding tag colours — bound to the real [fundingType]. Texte foncé sur fond
+/// clair, 12 sp au moins.
+(Color, Color, String) _fundingTag(LiveScholarshipModel s) {
   if (s.isFullyFunded) {
     return (
       KpbColors.successLight,
       KpbColors.success,
-      'live_scholarships_fully_funded'.tr
+      'live_scholarships_fully_funded'.tr,
     );
   }
   if (s.isPartiallyFunded) {
     return (
       KpbColors.warningLight,
       KpbColors.warning,
-      'live_scholarships_partially_funded'.tr
+      'live_scholarships_partially_funded'.tr,
     );
   }
   return (
     KpbColors.surfaceMuted,
-    KpbColors.textMuted,
-    'live_scholarships_funding_unknown'.tr
+    KpbColors.textSecondary,
+    'live_scholarships_funding_unknown'.tr,
   );
 }
 
@@ -300,7 +90,6 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
   /// comptes. Ce n'est PAS une panne de réseau, et le dire l'était.
   bool get _authRequired =>
       _scholarshipsController.failure == ScholarshipsFailure.authRequired;
-  String get _fundingFilter => _scholarshipsController.fundingFilter;
 
   @override
   void initState() {
@@ -365,6 +154,31 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
     await Get.toNamed(AppRoutes.successLab);
   }
 
+  Future<void> _openFilters() async {
+    final controller = _scholarshipsController;
+    final choice = await showScholarshipFilterSheet(
+      context,
+      statuses: controller.statusFilter,
+      funding: controller.fundingFilter,
+    );
+    // `null` = fermée sans valider ; écran disparu entre-temps : on ne touche
+    // plus à un contrôleur détruit.
+    if (choice == null || !mounted) return;
+    await controller.applyFilters(
+      statuses: choice.statuses,
+      funding: choice.funding,
+    );
+  }
+
+  Future<void> _openSort() async {
+    final chosen = await showScholarshipSortSheet(
+      context,
+      current: _scholarshipsController.sort,
+    );
+    if (chosen == null || !mounted) return;
+    await _scholarshipsController.changeSort(chosen);
+  }
+
   @override
   void dispose() {
     _paginationController
@@ -378,6 +192,8 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = _scholarshipsController;
+    final offlineSince = controller.offlineSince;
     return Scaffold(
       backgroundColor: KpbColors.canvas,
       body: SafeArea(
@@ -397,15 +213,18 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                 leading: Navigator.canPop(context)
                     ? IconButton(
                         tooltip: 'a11y_back'.tr,
-                        icon: const Icon(Icons.arrow_back_rounded,
-                            size: 20, color: KpbColors.brandNavy),
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          size: 20,
+                          color: KpbColors.brandNavy,
+                        ),
                         onPressed: () => Navigator.pop(context),
                       )
                     : null,
                 title: Text(
                   'scholarships_title'.tr,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: KpbFontSize.xl,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
                     color: KpbColors.brandNavy,
@@ -427,20 +246,24 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                   IconButton(
                     key: const ValueKey<String>('scholarships-followed-entry'),
                     tooltip: 'followed_title'.tr,
-                    icon: const Icon(Icons.bookmarks_outlined,
-                        color: KpbColors.brandNavy),
+                    icon: const Icon(
+                      Icons.bookmarks_outlined,
+                      color: KpbColors.brandNavy,
+                    ),
                     onPressed: () => Get.toNamed<void>(AppRoutes.saved),
                   ),
                   IconButton(
                     tooltip: 'a11y_refresh'.tr,
-                    icon: const Icon(Icons.refresh_rounded,
-                        color: KpbColors.textMuted),
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: KpbColors.textMuted,
+                    ),
                     onPressed: _load,
                   ),
                 ],
               ),
 
-              // ── Sub-header + filters ─────────────────────────────────────────
+              // ── Sub-header + « Filtrer » / tri ─────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -450,35 +273,43 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                       Text(
                         'scholarships_sorted_hint'.tr,
                         style: const TextStyle(
-                            fontSize: 11.5,
-                            color: KpbColors.textMuted,
-                            height: 1.4),
-                      ),
-                      const SizedBox(height: 14),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _FilterChip(
-                              label: 'live_scholarships_filter_all'.tr,
-                              active: _fundingFilter == 'all',
-                              onTap: () => _applyFilter('all'),
-                            ),
-                            const SizedBox(width: 8),
-                            _FilterChip(
-                              label: 'live_scholarships_filter_fully_funded'.tr,
-                              active: _fundingFilter == 'fully_funded',
-                              onTap: () => _applyFilter('fully_funded'),
-                            ),
-                            const SizedBox(width: 8),
-                            _FilterChip(
-                              label: 'live_scholarships_filter_partially_funded'
-                                  .tr,
-                              active: _fundingFilter == 'partially_funded',
-                              onTap: () => _applyFilter('partially_funded'),
-                            ),
-                          ],
+                          fontSize: KpbFontSize.xs,
+                          color: KpbColors.textSecondary,
+                          height: 1.4,
                         ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Un `Wrap` et non une rangée qui défile : à l'échelle de
+                      // texte 1,3 d'un 360 dp, « Trier : Clôture la plus
+                      // proche » passe à la ligne au lieu d'être coupé.
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _ToolbarButton(
+                            key: const ValueKey<String>(
+                              'scholarships-filter-button',
+                            ),
+                            icon: Icons.tune_rounded,
+                            label: controller.activeFilterCount == 0
+                                ? 'scholarships_filter_button'.tr
+                                : 'scholarships_filter_button_count'.trParams({
+                                    'count': '${controller.activeFilterCount}',
+                                  }),
+                            active: controller.activeFilterCount > 0,
+                            onTap: _openFilters,
+                          ),
+                          _ToolbarButton(
+                            key: const ValueKey<String>(
+                              'scholarships-sort-button',
+                            ),
+                            icon: Icons.sort_rounded,
+                            label: 'scholarships_sort_button'.trParams({
+                              'sort': scholarshipSortLabel(controller.sort),
+                            }),
+                            onTap: _openSort,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -500,13 +331,38 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                 ),
               ),
 
+              // ── Hors ligne : la dernière liste reçue, datée ─────────────────
+              // À la place de l'ancien écran plein « Erreur de connexion » :
+              // l'élève garde ce qu'il avait, et sait de quand ça date.
+              if (offlineSince != null && !_loading)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: KpbCacheStamp(
+                      key: const ValueKey<String>('scholarships-offline-stamp'),
+                      updatedAt: offlineSince,
+                      offline: true,
+                      onRetry: _load,
+                    ),
+                  ),
+                ),
+
               // ── Content ──────────────────────────────────────────────────────
               if (_loading)
-                const SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      _buildShimmerCard,
+                      (context, index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Semantics(
+                          label: index == 0 ? 'async_loading'.tr : null,
+                          child: const KpbSkeletonBox(
+                            height: 108,
+                            radius: KpbRadius.md,
+                          ),
+                        ),
+                      ),
                       childCount: 5,
                     ),
                   ),
@@ -529,6 +385,8 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                     ctaKey: 'scholarships_auth_required_cta',
                   ),
                 )
+              // Plus rien sur le disque pour ces filtres (premier lancement
+              // hors ligne) : seul cas où l'erreur occupe encore l'écran.
               else if (_error != null)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -552,38 +410,37 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                   child: Center(child: _buildEmptyState()),
                 )
               else ...[
-                if (_scholarshipsController.profileFiltersRelaxed)
+                if (controller.profileFiltersRelaxed && offlineSince == null)
                   const SliverToBoxAdapter(child: _UnfilteredNotice()),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
                     child: Text(
-                      'live_scholarships_result_count'
-                          .trParams({'count': '${_items.length}'}),
+                      _countLabel(),
+                      key: const ValueKey<String>('scholarships-count'),
                       style: const TextStyle(
-                          fontSize: 11, color: KpbColors.textFaint),
+                        fontSize: KpbFontSize.xs,
+                        color: KpbColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final s = _items[index];
-                        return StaggeredSlide(
-                          index: index,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _LiveScholarshipCard(
-                              scholarship: s,
-                              onTap: () => _openDetail(context, s),
-                            ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final s = _items[index];
+                      return StaggeredSlide(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: LiveScholarshipCard(
+                            scholarship: s,
+                            onTap: () => _openDetail(context, s),
                           ),
-                        );
-                      },
-                      childCount: _items.length,
-                    ),
+                        ),
+                      );
+                    }, childCount: _items.length),
                   ),
                 ),
                 // Carte du test visible : le guide descend sous la première
@@ -603,7 +460,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                           ),
                   ),
                 ),
-                if (_scholarshipsController.loadingMore)
+                if (controller.loadingMore)
                   const SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 18),
@@ -622,8 +479,19 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
     );
   }
 
-  void _applyFilter(String value) {
-    _scholarshipsController.changeFundingFilter(value);
+  /// « 42 bourse(s) trouvée(s) » : le total RÉEL du serveur, pas la taille de
+  /// la page chargée (20). Hors ligne : ce qui est gardé sur le téléphone.
+  String _countLabel() {
+    final controller = _scholarshipsController;
+    if (controller.offlineSince != null) {
+      return 'scholarships_offline_count'.trParams({
+        'count': '${_items.length}',
+      });
+    }
+    final total = controller.total;
+    final count =
+        total != null && total >= _items.length ? total : _items.length;
+    return 'live_scholarships_result_count'.trParams({'count': '$count'});
   }
 
   /// Empty state that names the real reason instead of implying a breakdown.
@@ -637,10 +505,10 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
   /// their own profile.
   Widget _buildEmptyState() {
     final controller = _scholarshipsController;
-    final fundingFilterActive = controller.fundingFilter != 'all';
+    final chosenFilterActive = controller.activeFilterCount > 0;
     final profileFilterActive =
         controller.hasProfileFilters && !controller.profileFiltersRelaxed;
-    final anyFilterActive = fundingFilterActive || profileFilterActive;
+    final anyFilterActive = chosenFilterActive || profileFilterActive;
 
     if (anyFilterActive) {
       return KpbEmptyState(
@@ -670,13 +538,6 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
     );
   }
 
-  static Widget _buildShimmerCard(BuildContext context, int index) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: _ShimmerCard(delay: index * 70),
-    );
-  }
-
   void _openDetail(BuildContext context, LiveScholarshipModel s) {
     Get.to(
       () => ScholarshipDetailScreen(
@@ -690,23 +551,30 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// List row (handoff "Scholarships")
+// List row
 // ─────────────────────────────────────────────────────────────────────────────
-class _LiveScholarshipCard extends StatelessWidget {
-  const _LiveScholarshipCard({
+
+/// Une carte de la liste : drapeau, titre, pays · niveau, la ligne de statut
+/// (« Ouverte · clôture 6 janv. »), le financement, et « Suivre ».
+class LiveScholarshipCard extends StatelessWidget {
+  const LiveScholarshipCard({
+    super.key,
     required this.scholarship,
     required this.onTap,
+    this.now,
   });
 
   final LiveScholarshipModel scholarship;
   final VoidCallback onTap;
 
+  /// Horloge injectée (tests).
+  final DateTime? now;
+
   @override
   Widget build(BuildContext context) {
     final s = scholarship;
-    final deadline = _deadlineBadge(s);
-    final (fundBg, fundFg, fundLabel) = _fundingChip(s);
-    final cycle = _cyclePill(s);
+    final (fundBg, fundFg, fundLabel) = _fundingTag(s);
+    final line = scholarshipListLine(s, now: now);
     final subtitle =
         s.level.isEmpty ? s.countryName : '${s.countryName} · ${s.level}';
 
@@ -725,9 +593,16 @@ class _LiveScholarshipCard extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(14),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_flag(s.countryName), style: const TextStyle(fontSize: 24)),
+              // Le pays est lu dans le sous-titre : le drapeau est décoratif.
+              ExcludeSemantics(
+                child: Text(
+                  scholarshipFlag(s),
+                  key: const ValueKey<String>('scholarship-card-flag'),
+                  style: const TextStyle(fontSize: KpbFontSize.xxl),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -736,10 +611,10 @@ class _LiveScholarshipCard extends StatelessWidget {
                     Text(
                       s.title,
                       style: const TextStyle(
-                        fontSize: 13.5,
+                        fontSize: KpbFontSize.md,
                         fontWeight: FontWeight.w800,
                         color: KpbColors.brandNavy,
-                        height: 1.2,
+                        height: 1.25,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -748,32 +623,32 @@ class _LiveScholarshipCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: const TextStyle(
-                          fontSize: 11, color: KpbColors.textMuted),
+                        fontSize: KpbFontSize.sm,
+                        color: KpbColors.textSecondary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 7),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        if (deadline != null)
-                          _pill(deadline.text, deadline.bg, deadline.fg)
-                        else
-                          _pill(
-                            s.deadlineLabel.isEmpty
-                                ? 'live_scholarships_no_deadline'.tr
-                                : s.deadlineLabel,
-                            KpbColors.surfaceMuted,
-                            KpbColors.textMuted,
-                          ),
-                        if (deadline?.soon ?? false)
-                          _pill('live_scholarships_deadline_soon'.tr,
-                              KpbColors.gold, Colors.white),
-                        _pill(fundLabel, fundBg, fundFg),
-                        if (cycle != null) _pill(cycle.$1, cycle.$2, cycle.$3),
-                      ],
+                    const SizedBox(height: 8),
+                    ScholarshipListStatusRow(line: line, now: now),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: fundBg,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        fundLabel,
+                        style: TextStyle(
+                          fontSize: KpbFontSize.xs,
+                          fontWeight: FontWeight.w700,
+                          color: fundFg,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -795,53 +670,63 @@ class _LiveScholarshipCard extends StatelessWidget {
 
 // ── Shared small widgets ─────────────────────────────────────────────────────
 
-Widget _pill(String text, Color bg, Color fg, {bool big = false}) {
-  return Container(
-    padding:
-        EdgeInsets.symmetric(horizontal: big ? 10 : 8, vertical: big ? 3 : 2),
-    decoration:
-        BoxDecoration(color: bg, borderRadius: BorderRadius.circular(100)),
-    child: Text(
-      text,
-      style: TextStyle(
-        fontSize: big ? 10.5 : 9.5,
-        fontWeight: FontWeight.w800,
-        color: fg,
-      ),
-    ),
-  );
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
+/// « Filtrer » / « Trier : … » : 48 dp de haut, libellé entier (jamais coupé),
+/// plein quand un filtre est actif.
+class _ToolbarButton extends StatelessWidget {
+  const _ToolbarButton({
+    super.key,
+    required this.icon,
     required this.label,
-    required this.active,
     required this.onTap,
+    this.active = false,
   });
+
+  final IconData icon;
   final String label;
-  final bool active;
   final VoidCallback onTap;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? KpbColors.actionPrimary : KpbColors.surface,
+    final foreground = active ? Colors.white : KpbColors.textPrimary;
+    return Semantics(
+      button: true,
+      child: Material(
+        color: active ? KpbColors.actionPrimary : KpbColors.surface,
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(100),
-          border: Border.all(
-              color: active ? KpbColors.actionPrimary : KpbColors.border),
+          side: BorderSide(
+            color: active ? KpbColors.actionPrimary : KpbColors.borderStrong,
+          ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-            // textSecondary (7,58:1) : textMuted frôle le seuil AA à 12,5 px.
-            color: active ? Colors.white : KpbColors.textSecondary,
+        child: InkWell(
+          onTap: () {
+            KpbHaptics.selection();
+            onTap();
+          },
+          customBorder: const StadiumBorder(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: 18, color: foreground),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: KpbFontSize.sm,
+                        fontWeight: FontWeight.w700,
+                        color: foreground,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -869,14 +754,17 @@ class _UnfilteredNotice extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 16, color: KpbColors.warning),
+            const Icon(
+              Icons.info_outline_rounded,
+              size: 16,
+              color: KpbColors.warning,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'live_scholarships_unfiltered_notice'.tr,
                 style: const TextStyle(
-                  fontSize: 11.5,
+                  fontSize: KpbFontSize.xs,
                   height: 1.4,
                   fontWeight: FontWeight.w600,
                   color: KpbColors.warning,
@@ -904,8 +792,9 @@ class _GuidePromoCard extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [KpbColors.actionPrimarySoft, KpbColors.surface],
         ),
-        border:
-            Border.all(color: KpbColors.actionPrimary.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: KpbColors.actionPrimary.withValues(alpha: 0.3),
+        ),
         borderRadius: BorderRadius.circular(17),
       ),
       child: Column(
@@ -920,8 +809,11 @@ class _GuidePromoCard extends StatelessWidget {
                   color: KpbColors.actionPrimary,
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: const Icon(Icons.auto_stories_rounded,
-                    color: Colors.white, size: 23),
+                child: const Icon(
+                  Icons.auto_stories_rounded,
+                  color: Colors.white,
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -931,7 +823,7 @@ class _GuidePromoCard extends StatelessWidget {
                     Text(
                       'scholarship_guide_short_title'.tr,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: KpbFontSize.sm,
                         fontWeight: FontWeight.w900,
                         color: KpbColors.brandNavy,
                       ),
@@ -942,152 +834,52 @@ class _GuidePromoCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 10.5,
+                        fontSize: KpbFontSize.xs,
                         height: 1.4,
-                        color: KpbColors.textMuted,
+                        color: KpbColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+            ],
+          ),
+          // Les deux actions passent SOUS le texte, dans un `Wrap` : à côté
+          // du titre, « En savoir plus » écrasait la colonne à l'échelle de
+          // texte 1,3 d'un 360 dp (débordement de 46 px, chantier I).
+          Wrap(
+            spacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
               TextButton(
                 onPressed: onTap,
                 child: Text('scholarship_guide_learn_more'.tr),
               ),
-            ],
-          ),
-          // Secondary, labelled shortcut for students already sold on the
-          // guide — "En savoir plus" above still opens the editorial screen
-          // (owner video review, 08/2026: the card led nowhere actionable).
-          TextButton.icon(
-            key: const ValueKey('scholarship_guide_promo_whatsapp'),
-            onPressed: () => openWhatsAppOrToast(
-              prefill: 'scholarship_guide_whatsapp_prefill'.tr,
-              source: 'live_scholarships_guide_promo',
-              contextType: 'scholarship_guide',
-            ),
-            icon: const Icon(Icons.chat_rounded, size: 18),
-            label: Text('scholarship_guide_whatsapp_cta'.tr),
-            style: TextButton.styleFrom(
-              foregroundColor: KpbColors.success,
-              textStyle: const TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
+              // Secondary, labelled shortcut for students already sold on the
+              // guide — "En savoir plus" still opens the editorial screen
+              // (owner video review, 08/2026: the card led nowhere
+              // actionable).
+              TextButton.icon(
+                key: const ValueKey('scholarship_guide_promo_whatsapp'),
+                onPressed: () => openWhatsAppOrToast(
+                  prefill: 'scholarship_guide_whatsapp_prefill'.tr,
+                  source: 'live_scholarships_guide_promo',
+                  contextType: 'scholarship_guide',
+                ),
+                icon: const Icon(Icons.chat_rounded, size: 18),
+                label: Text('scholarship_guide_whatsapp_cta'.tr),
+                style: TextButton.styleFrom(
+                  foregroundColor: KpbColors.success,
+                  textStyle: const TextStyle(
+                    fontSize: KpbFontSize.sm,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Shimmer skeleton card shown while scholarships are loading
-// ─────────────────────────────────────────────────────────────────────────────
-class _ShimmerCard extends StatefulWidget {
-  const _ShimmerCard({this.delay = 0});
-  final int delay;
-
-  @override
-  State<_ShimmerCard> createState() => _ShimmerCardState();
-}
-
-class _ShimmerCardState extends State<_ShimmerCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1100),
-    );
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    Future.delayed(Duration(milliseconds: widget.delay), () {
-      if (mounted) _ctrl.repeat(reverse: true);
-    });
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _anim,
-      builder: (_, __) {
-        final block =
-            Color.lerp(KpbColors.canvas, KpbColors.border, _anim.value)!;
-        return Container(
-          height: 92,
-          decoration: BoxDecoration(
-            color: KpbColors.surface,
-            border: Border.all(color: KpbColors.border),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: _cardShadow,
-          ),
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  color: block,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: block,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 10,
-                      width: 140,
-                      decoration: BoxDecoration(
-                        color: block,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      height: 14,
-                      width: 90,
-                      decoration: BoxDecoration(
-                        color: block,
-                        borderRadius: BorderRadius.circular(100),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(color: block, shape: BoxShape.circle),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

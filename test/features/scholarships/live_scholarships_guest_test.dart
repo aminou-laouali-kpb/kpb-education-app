@@ -36,6 +36,7 @@ import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 
 import '../../widget_test_helpers.dart';
+import 'scholarships_test_support.dart';
 
 class _MockAuthService extends Mock implements AuthService {}
 
@@ -65,12 +66,7 @@ Future<AppController> _seedGuest(MockApiClient apiClient) async {
 }
 
 void _stubFailure(MockApiClient mock, Object error) {
-  when(() => mock.fetchLiveScholarships(
-        lang: any(named: 'lang'),
-        level: any(named: 'level'),
-        fieldIds: any(named: 'fieldIds'),
-        fundingType: any(named: 'fundingType'),
-      )).thenThrow(error);
+  whenScholarshipsPage(mock).thenThrow(error);
   when(() => mock.fetchScholarshipAlerts()).thenAnswer((_) async => <String>{});
   when(() => mock.getSuccessLabAccess()).thenAnswer(
     (_) async => <String, dynamic>{'enabled': false, 'reasons': <String>[]},
@@ -112,6 +108,8 @@ Widget _wrap(Widget home) => GetMaterialApp(
     );
 
 void main() {
+  setUpAll(registerScholarshipListFallbacks);
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     resetGetxSingleton();

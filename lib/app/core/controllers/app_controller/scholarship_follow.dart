@@ -196,5 +196,8 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     unawaited(FollowedScholarshipsStore.instance.clear());
     // « Mes 10 bourses » : runs et brouillons appartiennent au compte.
     unawaited(ScholarshipMatchStore.instance.clear());
+    // Bourses hors ligne (chantier I) : la liste porte l'état « suivie » et le
+    // score du compte, les fiches son suivi.
+    unawaited(ScholarshipsOfflineCache.instance.clear());
   }
 }

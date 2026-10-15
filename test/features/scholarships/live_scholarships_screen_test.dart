@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -6,12 +7,15 @@ import 'package:mocktail/mocktail.dart';
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/models/app_models.dart';
+import 'package:karatou/app/core/models/live_scholarships_query.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/services/scholarships_offline_cache.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 import 'package:karatou/app/features/scholarships/scholarship_detail_screen.dart';
 
 import '../../widget_test_helpers.dart';
+import 'scholarships_test_support.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Smoke tests for the App-engagement restyle (PR4): the live scholarships list
@@ -27,6 +31,7 @@ Map<String, dynamic> _scholarshipJson({bool withCycle = false}) =>
       'id': 'mext-2027',
       'title': 'MEXT Japan Scholarship',
       'countryName': 'Japan',
+      'countryId': 'jpn',
       'fundingType': 'fully_funded',
       'applicationRequirement': 'separate_application',
       'description':
@@ -84,12 +89,7 @@ void _stubFetch(
   List<dynamic> items, {
   Map<String, dynamic>? successLabAccess,
 }) {
-  when(() => mock.fetchLiveScholarships(
-        lang: any(named: 'lang'),
-        level: any(named: 'level'),
-        fieldIds: any(named: 'fieldIds'),
-        fundingType: any(named: 'fundingType'),
-      )).thenAnswer((_) async => items);
+  whenScholarshipsPage(mock).thenAnswer((_) async => scholarshipsPage(items));
   when(() => mock.fetchScholarshipAlerts()).thenAnswer((_) async => <String>{});
   when(() => mock.getSuccessLabAccess()).thenAnswer(
     (_) async => successLabAccess ?? _access(false, reason: 'feature_disabled'),
@@ -117,6 +117,8 @@ Widget _wrap(Widget home) => GetMaterialApp(
     );
 
 void main() {
+  setUpAll(registerScholarshipListFallbacks);
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     resetGetxSingleton();
@@ -136,11 +138,15 @@ void main() {
     // Real data bound from the model.
     expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
     expect(find.text('Entièrement financée'), findsWidgets); // fundingType chip
-    // J-<days> (localized "days until") is computed from the real deadlineAt
-    // (~5 days out); FR locale renders "J-", EN renders "D-".
-    expect(find.textContaining('J-'), findsWidgets);
-    // Near deadline (<= 14 days) surfaces the amber "soon" chip.
-    expect(find.text('Deadline imminente'), findsOneWidget);
+    // Chantier I : une ligne de statut tirée de la date limite CONFIRMÉE
+    // (~5 jours) — « Ouverte · clôture … » — et, à 14 jours ou moins,
+    // l'étiquette « Clôture proche · J-5 » (texte foncé sur ambre).
+    expect(find.textContaining('Ouverte · clôture'), findsOneWidget);
+    expect(find.textContaining('Clôture proche · J-'), findsOneWidget);
+    // Le drapeau vient de `countryId` (`jpn`), plus du nom du pays.
+    expect(find.text('🇯🇵'), findsOneWidget);
+    // Le total réel du serveur.
+    expect(find.text('1 bourse(s) trouvée(s)'), findsOneWidget);
     // The trailing action is the single « Suivre » control (chantier G): the
     // bell « M'avertir » is gone — the bell now means notifications only.
     expect(find.text('Suivre'), findsOneWidget);
@@ -304,22 +310,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final mock = MockApiClient();
-    when(() => mock.fetchLiveScholarships(
-          lang: any(named: 'lang'),
-          level: any(named: 'level'),
-          fieldIds: any(named: 'fieldIds'),
-          fundingType: 'partially_funded',
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => <dynamic>[]);
-    when(() => mock.fetchLiveScholarships(
-          lang: any(named: 'lang'),
-          level: any(named: 'level'),
-          fieldIds: any(named: 'fieldIds'),
-          fundingType: null,
-          limit: any(named: 'limit'),
-          offset: any(named: 'offset'),
-        )).thenAnswer((_) async => <dynamic>[_scholarshipJson()]);
+    whenScholarshipsPage(mock, fundingType: 'partially_funded')
+        .thenAnswer((_) async => scholarshipsPage(<dynamic>[]));
+    whenScholarshipsPage(mock, fundingType: null).thenAnswer(
+        (_) async => scholarshipsPage(<dynamic>[_scholarshipJson()]));
     when(() => mock.fetchScholarshipAlerts())
         .thenAnswer((_) async => <String>{});
     when(() => mock.getSuccessLabAccess())
@@ -330,20 +324,27 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
 
-    // `ensureVisible` avant chaque tap, et ce n'est pas une commodité de test :
-    // à 393 pt la puce « Partiellement financées » dépasse à droite de sa liste
-    // horizontale — c'est visible sur la capture de la revue vidéo, où le mot
-    // est coupé au bord. Taper sans défiler viserait le vide et le test
-    // passerait pour de mauvaises raisons.
-    await tester.ensureVisible(find.text('Partiellement financées'));
+    // Chantier I : le financement se choisit dans la feuille « Filtrer », et
+    // rien ne part avant « Voir les bourses ».
+    await tester.tap(
+      find.byKey(const ValueKey<String>('scholarships-filter-button')),
+    );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Partiellement financées'));
+    await tester.tap(find.byKey(
+      const ValueKey<String>('scholarships-filter-funding-partially_funded'),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('scholarships-filter-apply')),
+    );
     await tester.pumpAndSettle();
 
     expect(
       find.byKey(const ValueKey<String>('scholarships-empty-filtered')),
       findsOneWidget,
     );
+    // Le bouton dit qu'un filtre est actif.
+    expect(find.text('Filtrer · 1'), findsOneWidget);
 
     // The escape hatch actually clears the filter and brings the list back.
     final showAll = find.byKey(const ValueKey<String>('scholarships-show-all'));
@@ -525,9 +526,223 @@ void main() {
     expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
     // Aucun compte à rebours au jour près, aucune urgence fabriquée.
     expect(find.textContaining('J-'), findsNothing);
-    expect(find.text('Deadline imminente'), findsNothing);
-    // Mais la fenêtre estimée, elle, est annoncée comme telle.
-    expect(find.textContaining('Période estimée'), findsWidgets);
+    expect(find.textContaining('Clôture proche'), findsNothing);
+    // Mais la fenêtre estimée, elle, est annoncée comme telle — au mois près.
+    expect(find.textContaining('Clôture estimée'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  // ── Chantier I : hors ligne, tri, petit écran ────────────────────────────
+  group('chantier I', () {
+    late MemoryScholarshipsOfflineStore store;
+
+    setUp(() {
+      store = MemoryScholarshipsOfflineStore();
+      ScholarshipsOfflineCache.debugUse(store);
+    });
+    tearDown(() => ScholarshipsOfflineCache.debugUse(
+          MemoryScholarshipsOfflineStore(),
+        ));
+
+    testWidgets(
+        'hors ligne : la dernière liste reçue, avec « Hors ligne — données '
+        'du … », à la place de l\'écran d\'erreur', (tester) async {
+      final mock = MockApiClient();
+      var online = true;
+      whenScholarshipsPage(mock).thenAnswer((_) async {
+        if (!online) {
+          throw DioException(
+            requestOptions: RequestOptions(path: '/scholarships'),
+            type: DioExceptionType.connectionError,
+          );
+        }
+        return scholarshipsPage(<dynamic>[_scholarshipJson(withCycle: true)]);
+      });
+      when(() => mock.fetchScholarshipAlerts())
+          .thenAnswer((_) async => <String>{});
+      when(() => mock.getSuccessLabAccess())
+          .thenAnswer((_) async => _access(false, reason: 'feature_disabled'));
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+      expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-offline-stamp')),
+        findsNothing,
+      );
+
+      online = false;
+      await tester.tap(find.byTooltip('a11y_refresh'.tr));
+      await tester.pumpAndSettle();
+
+      // La liste reste, datée ; pas d'écran « Erreur de connexion ».
+      expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-offline-stamp')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Hors ligne — données du'), findsOneWidget);
+      expect(
+          find.text('1 bourse(s) gardée(s) sur ton téléphone'), findsOneWidget);
+      expect(find.text('Erreur de connexion'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'premier lancement hors ligne (rien sur le disque) : l\'erreur '
+        'reste, avec « Réessayer »', (tester) async {
+      final mock = MockApiClient();
+      whenScholarshipsPage(mock).thenThrow(Exception('offline'));
+      when(() => mock.fetchScholarshipAlerts())
+          .thenAnswer((_) async => <String>{});
+      when(() => mock.getSuccessLabAccess())
+          .thenAnswer((_) async => _access(false, reason: 'feature_disabled'));
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Erreur de connexion'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-offline-stamp')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('le tri se choisit dans sa feuille et part au serveur',
+        (tester) async {
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+      expect(find.text('Trier : Pertinence pour ton profil'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const ValueKey<String>('scholarships-sort-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Trier par'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey<String>('scholarships-sort-deadline')),
+      );
+      await tester.pumpAndSettle();
+
+      verify(
+        () => mock.fetchLiveScholarshipsPage(
+          lang: any(named: 'lang'),
+          level: any(named: 'level'),
+          fieldIds: any(named: 'fieldIds'),
+          fundingType: any(named: 'fundingType'),
+          statuses: any(named: 'statuses'),
+          sort: ScholarshipListSort.deadline,
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).called(1);
+      expect(find.text('Trier : Clôture la plus proche'), findsOneWidget);
+    });
+
+    testWidgets(
+        '« Filtrer » : statut coché, une requête, fermer sans valider '
+        'ne change rien', (tester) async {
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+      clearInteractions(mock);
+
+      final filter =
+          find.byKey(const ValueKey<String>('scholarships-filter-button'));
+      // Fermée sans valider : rien ne part.
+      await tester.tap(filter);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(
+        const ValueKey<String>('scholarships-filter-status-open'),
+      ));
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(
+        find.byKey(const ValueKey<String>('scholarships-filter-sheet')),
+      )).pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Filtrer'), findsOneWidget);
+
+      await tester.tap(filter);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(
+        const ValueKey<String>('scholarships-filter-status-open'),
+      ));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey<String>('scholarships-filter-apply')),
+      );
+      await tester.pumpAndSettle();
+
+      final captured = verify(
+        () => mock.fetchLiveScholarshipsPage(
+          lang: any(named: 'lang'),
+          level: any(named: 'level'),
+          fieldIds: any(named: 'fieldIds'),
+          fundingType: any(named: 'fundingType'),
+          statuses: captureAny(named: 'statuses'),
+          sort: any(named: 'sort'),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).captured;
+      expect(captured, hasLength(1));
+      expect(captured.single, <ScholarshipListStatus>{
+        ScholarshipListStatus.open,
+      });
+      expect(find.text('Filtrer · 1'), findsOneWidget);
+    });
+
+    testWidgets('360×640 à l\'échelle de texte 1,3 : rien ne déborde',
+        (tester) async {
+      tester.view.physicalSize = const Size(360 * 2, 640 * 2);
+      tester.view.devicePixelRatio = 2.0;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[
+        _scholarshipJson(withCycle: true),
+        <String, dynamic>{
+          ..._scholarshipJson(),
+          'id': 'uk',
+          'title': 'Royaume-Uni — University of Cambridge Gates Scholarship '
+              'for international students',
+          'countryName': 'Royaume-Uni — University of Cambridge',
+          'countryId': 'gbr',
+          'fundingType': 'unknown',
+          'currentCycle': <String, dynamic>{
+            'id': 'uk-c',
+            'academicYear': '2027-2028',
+            'status': 'forecast',
+            'dateConfidence': 'estimated',
+            'estimatedOpenAt': DateTime.utc(2027, 2, 1).toIso8601String(),
+          },
+        },
+      ]);
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(
+        find.text('🇬🇧'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.textContaining('Ouverture estimée'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 }

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/config/app_routes.dart';
+import '../../core/navigation/scholarship_navigation.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
