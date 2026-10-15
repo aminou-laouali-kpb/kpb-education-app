@@ -234,7 +234,10 @@ void main() {
       // Le catalogue a sa propre route, pour la même raison : une notification
       // peut viser la recherche elle-même plutôt que l'accueil de l'espace.
       expect(names, contains(AppRoutes.etudesEnFranceCatalog));
-      expect(names.length, equals(24));
+      // « Mes 10 bourses » : enregistrée MÊME drapeau fermé (l'écran retombe
+      // sur l'onglet Bourses), pour la même raison.
+      expect(names, contains(AppRoutes.scholarshipMatch));
+      expect(names.length, equals(25));
     });
   });
 }

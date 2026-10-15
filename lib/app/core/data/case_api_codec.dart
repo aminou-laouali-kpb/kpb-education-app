@@ -150,6 +150,15 @@ abstract final class CaseApiCodec {
       counsellorId: json['counsellorId'] as String?,
       scheduledAt: DateTime.tryParse(json['scheduledAt'] as String? ?? ''),
       parentCanView: json['parentCanView'] as bool? ?? false,
+      scholarshipId: _optionalId(json['scholarshipId']),
     );
+  }
+
+  /// `scholarshipId` : chaîne non vide, sinon `null` (backend plus ancien,
+  /// dossier non lié, fiche supprimée).
+  static String? _optionalId(Object? value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 }

@@ -89,6 +89,51 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     }
   }
 
+  /// « Suivre les N compatibles » (test « Mes 10 bourses ») : suit chaque
+  /// bourse comme le bouton « Suivre » — favori local par `ensureSaved`,
+  /// JAMAIS une bascule, donc une bourse déjà suivie reste suivie — puis pose
+  /// les alertes en UNE requête groupée (`POST /me/scholarship-alerts`).
+  ///
+  /// Rend les identifiants NOUVELLEMENT suivis : « Annuler » ne retire que
+  /// ceux-là, jamais un suivi antérieur.
+  List<String> followScholarships(Iterable<String> scholarshipIds) {
+    final ids = <String>[];
+    for (final raw in scholarshipIds) {
+      final id = raw.trim();
+      if (id.isNotEmpty && !ids.contains(id)) ids.add(id);
+    }
+    final newlyFollowed =
+        ids.where((id) => !isFollowingScholarship(id)).toList();
+    final saves = <Future<void>>[];
+    for (final id in ids) {
+      _unfollowedScholarshipIds.remove(id);
+      saves.add(ensureSaved(SavedItemType.scholarship, id));
+    }
+    update();
+    // Les alertes APRÈS les favoris : deux écritures concurrentes du même
+    // favori se marcheraient dessus côté serveur (mode `outbox_followers`).
+    unawaited(Future.wait(saves).then((_) => _mirrorOpeningAlerts(ids)));
+    return newlyFollowed;
+  }
+
+  Future<void> _mirrorOpeningAlerts(List<String> ids) async {
+    if (ids.isEmpty) return;
+    if (!RemoteFeatureFlags.instance.followSetsOpeningAlert) return;
+    if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) return;
+    try {
+      await _apiClient.subscribeScholarshipAlertsBulk(ids);
+    } catch (error) {
+      // Route groupée absente (backend plus ancien) : une alerte par bourse,
+      // comme le bouton « Suivre ». Hors ligne : le favori se resynchronise.
+      if (error is ScholarshipMatchException &&
+          error.failure == ScholarshipMatchFailure.disabled) {
+        for (final id in ids) {
+          await _mirrorOpeningAlert(id, true);
+        }
+      }
+    }
+  }
+
   Future<void> _mirrorOpeningAlert(String scholarshipId, bool follow) async {
     if (!RemoteFeatureFlags.instance.followSetsOpeningAlert) return;
     if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) return;
@@ -149,5 +194,7 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     _lastUnreadFetchAt = null;
     serverSupportsFollow = false;
     unawaited(FollowedScholarshipsStore.instance.clear());
+    // « Mes 10 bourses » : runs et brouillons appartiennent au compte.
+    unawaited(ScholarshipMatchStore.instance.clear());
   }
 }

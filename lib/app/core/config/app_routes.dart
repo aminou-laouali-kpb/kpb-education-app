@@ -14,6 +14,7 @@ import '../../features/parcours/parcours_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/salon/salon_screen.dart';
 import '../../features/saved/saved_screen.dart';
+import '../../features/scholarship_match/scholarship_match_results_screen.dart';
 import '../../features/scholarships/live_scholarships_screen.dart';
 import '../../features/scholarships/scholarship_detail_screen.dart';
 import '../../features/search/search_screen.dart';
@@ -38,6 +39,12 @@ class AppRoutes {
   static const String scholarships = '/scholarships';
   static const String scholarshipDetail = '/scholarships/:id';
   static const String _scholarshipPrefix = '/scholarships/';
+
+  /// Le test « Mes 10 bourses » (résultats, et l'assistant s'il n'y a pas
+  /// encore de run). Volontairement HORS de `/scholarships/` : sous ce
+  /// préfixe, `match` serait lu comme l'identifiant d'une bourse. Le push
+  /// hebdomadaire « nouvelles bourses compatibles » (opt-in) y atterrit.
+  static const String scholarshipMatch = '/scholarship-match';
   static const String successLab = '/success-lab';
   static const String successLabWorkspace = '/success-lab/:workspaceId';
   static const String successLabDiagnostic =
@@ -176,6 +183,7 @@ class AppRoutes {
       profile,
       // Scholarship-opening push notifications land on this acquisition screen.
       scholarships,
+      scholarshipMatch,
       successLab,
     };
     if (known.contains(route)) return route;
@@ -197,6 +205,12 @@ class AppRoutes {
     GetPage(
       name: scholarships,
       page: () => const LiveScholarshipsScreen(),
+    ),
+    // Drapeau fermé, invité ou compte non élève : le lien profond retombe
+    // sur l'onglet Bourses (l'écran décide, il lit le drapeau à l'ouverture).
+    GetPage(
+      name: scholarshipMatch,
+      page: () => const ScholarshipMatchResultsScreen(source: 'deep_link'),
     ),
     GetPage(
       name: scholarshipDetail,

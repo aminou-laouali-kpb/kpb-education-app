@@ -14,6 +14,7 @@ class CaseComposerSheet extends StatelessWidget {
     this.countryId,
     this.institutionId,
     this.programId,
+    this.scholarshipId,
   });
 
   final CaseType caseType;
@@ -22,6 +23,9 @@ class CaseComposerSheet extends StatelessWidget {
   final String? countryId;
   final String? institutionId;
   final String? programId;
+
+  /// La bourse liée, transmise au dossier (`POST /cases`).
+  final String? scholarshipId;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +46,7 @@ class CaseComposerSheet extends StatelessWidget {
             countryId: countryId,
             institutionId: institutionId,
             programId: programId,
+            scholarshipId: scholarshipId,
           ),
           onClose: () => Navigator.of(context).pop(),
           onSubmitted: () {

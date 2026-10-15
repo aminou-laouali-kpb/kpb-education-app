@@ -196,6 +196,45 @@ abstract final class AnalyticsEventName {
   static const permissionPrimerShown = 'permission_primer_shown';
   static const permissionPrimerGranted = 'permission_primer_granted';
 
+  /// Test « Mes 10 bourses » (chantier H). L'entonnoir : carte vue → test
+  /// commencé → étapes → terminé (ou abandonné / échoué) → résultats ouverts,
+  /// suivis, dossiers. Propriétés FERMÉES (comptes, rangs, identifiants de
+  /// bourse, étapes) : JAMAIS la nationalité, l'âge, la date de naissance, la
+  /// moyenne ni le niveau de langue — ni ici, ni dans les tags push.
+  static const scholarshipMatchEntryViewed = 'scholarship_match_entry_viewed';
+  static const scholarshipMatchStarted = 'scholarship_match_started';
+  static const scholarshipMatchStepViewed = 'scholarship_match_step_viewed';
+  static const scholarshipMatchStepCompleted =
+      'scholarship_match_step_completed';
+  static const scholarshipMatchAbandoned = 'scholarship_match_abandoned';
+  static const scholarshipMatchCompleted = 'scholarship_match_completed';
+  static const scholarshipMatchFailed = 'scholarship_match_failed';
+  static const scholarshipMatchResultOpened = 'scholarship_match_result_opened';
+  static const scholarshipMatchFollow = 'scholarship_match_follow';
+  static const scholarshipMatchCaseStarted = 'scholarship_match_case_started';
+  static const scholarshipMatchBroadenTapped =
+      'scholarship_match_broaden_tapped';
+  static const scholarshipMatchRerun = 'scholarship_match_rerun';
+  static const scholarshipMatchAlertsToggled =
+      'scholarship_match_alerts_toggled';
+
+  /// Les treize, pour les gardes (noms ≤ 40 caractères, contrat publié).
+  static const scholarshipMatchEvents = <String>[
+    scholarshipMatchEntryViewed,
+    scholarshipMatchStarted,
+    scholarshipMatchStepViewed,
+    scholarshipMatchStepCompleted,
+    scholarshipMatchAbandoned,
+    scholarshipMatchCompleted,
+    scholarshipMatchFailed,
+    scholarshipMatchResultOpened,
+    scholarshipMatchFollow,
+    scholarshipMatchCaseStarted,
+    scholarshipMatchBroadenTapped,
+    scholarshipMatchRerun,
+    scholarshipMatchAlertsToggled,
+  ];
+
   /// Sync / catalog observability (paired with [AnalyticsService] helpers).
   static const syncFullComplete = 'sync_full_complete';
   static const syncConflictResolved = 'sync_conflict_resolved';
@@ -298,6 +337,29 @@ abstract final class AnalyticsParamKey {
 
   /// `push_opened` : le `kind` de la charge push (identifiant fermé).
   static const kind = 'kind';
+
+  /// Test « Mes 10 bourses » : des comptes, des rangs, des drapeaux 0/1 et
+  /// des identifiants fermés. `step` y est le NOM de l'étape (`birth_date`…),
+  /// pas un entier : la clé `match_step` évite de mélanger les deux types sous
+  /// la clé `step` de l'onboarding.
+  static const matchStep = 'match_step';
+  static const index = 'index';
+  static const total = 'total';
+  static const missingCount = 'missing_count';
+  static const isRerun = 'is_rerun';
+  static const changedPrefill = 'changed_prefill';
+  static const lastStep = 'last_step';
+  static const eligibleCount = 'eligible_count';
+  static const toVerifyCount = 'to_verify_count';
+  static const excludedCount = 'excluded_count';
+  static const durationS = 'duration_s';
+  static const algorithmVersion = 'algorithm_version';
+  static const rank = 'rank';
+  static const status = 'status';
+  static const bulk = 'bulk';
+  static const reusedExisting = 'reused_existing';
+  static const suggestion = 'suggestion';
+  static const enabled = 'enabled';
 
   /// `view_item` : la famille du contenu consulté (`scholarship`, `program`,
   /// `country`, `institution`). Clé GA4 standard, distincte d'`item_type`.

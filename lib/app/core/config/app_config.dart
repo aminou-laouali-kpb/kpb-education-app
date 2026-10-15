@@ -321,6 +321,21 @@ class AppConfig {
   static set eefPrivateSchoolsEnabledOverride(bool? value) =>
       _eefPrivateSchoolsEnabledOverride = value;
 
+  /// Repli local du test « Mes 10 bourses » (`features.scholarshipMatch`).
+  ///
+  /// FERMÉ par défaut : la collecte de la nationalité attend une validation
+  /// juridique, et un binaire livré ne doit jamais porter le test allumé de
+  /// naissance. Seul le serveur l'ouvre — volontairement AUCUNE variable de
+  /// compilation : une build ne peut pas être livrée avec le test ouvert.
+  static bool get scholarshipMatchEnabled =>
+      _scholarshipMatchEnabledOverride ?? false;
+
+  static bool? _scholarshipMatchEnabledOverride;
+
+  @visibleForTesting
+  static set scholarshipMatchEnabledOverride(bool? value) =>
+      _scholarshipMatchEnabledOverride = value;
+
   // ── Supabase Auth ──────────────────────────────────────────────────────
   /// Supabase project URL (auth only — business data stays in Prisma/Postgres).
   static const supabaseUrl = String.fromEnvironment(

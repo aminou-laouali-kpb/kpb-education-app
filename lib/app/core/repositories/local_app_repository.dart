@@ -334,6 +334,8 @@ class LocalAppRepository implements AppRepository {
       'counsellorId': caseItem.counsellorId,
       'scheduledAt': caseItem.scheduledAt?.toIso8601String(),
       'parentCanView': caseItem.parentCanView,
+      if (caseItem.scholarshipId != null)
+        'scholarshipId': caseItem.scholarshipId,
     };
   }
 
@@ -379,7 +381,14 @@ class LocalAppRepository implements AppRepository {
       counsellorId: json['counsellorId'] as String?,
       scheduledAt: DateTime.tryParse(json['scheduledAt'] as String? ?? ''),
       parentCanView: json['parentCanView'] as bool? ?? false,
+      scholarshipId: _optionalId(json['scholarshipId']),
     );
+  }
+
+  static String? _optionalId(Object? value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   Map<String, dynamic> _orientationRecommendationToJson(

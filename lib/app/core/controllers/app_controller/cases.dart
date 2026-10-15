@@ -8,6 +8,7 @@ mixin _CasesMixin on _AppControllerBase {
     required String description,
     required String contextLabel,
     required ContactMethod contactMethod,
+    String? scholarshipId,
   }) {
     if (!hasCompletedOnboarding || profile == null) {
       throw StateError(
@@ -85,6 +86,9 @@ mixin _CasesMixin on _AppControllerBase {
               ),
             ]
           : const <DocumentRequest>[],
+      scholarshipId: (scholarshipId?.trim().isEmpty ?? true)
+          ? null
+          : scholarshipId!.trim(),
     );
     _cases.insert(0, created);
     _persist();
@@ -105,6 +109,48 @@ mixin _CasesMixin on _AppControllerBase {
     );
     unawaited(_createRemoteCase(created));
     return created;
+  }
+
+  /// Le dossier d'accompagnement OUVERT déjà lié à [scholarshipId] : d'abord
+  /// parmi les dossiers locaux, puis `GET /cases?scholarshipId=` (un dossier
+  /// créé sur un autre appareil). `null` : aucun, on peut en créer un.
+  ///
+  /// Ne lève jamais : hors ligne, seul le local fait foi.
+  Future<StudentCase?> findOpenScholarshipCase(String scholarshipId) async {
+    final id = scholarshipId.trim();
+    if (id.isEmpty) return null;
+    for (final item in _cases) {
+      if (item.scholarshipId == id &&
+          item.type == CaseType.scholarshipSupport &&
+          item.isOpen) {
+        return item;
+      }
+    }
+    if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) {
+      return null;
+    }
+    try {
+      final raw = await _apiClient.listCasesForScholarship(id);
+      for (final entry in raw) {
+        final remote = CaseApiCodec.studentCaseFromApi(entry);
+        // Un serveur plus ancien ignore le filtre et rend TOUTE la liste :
+        // seule une ligne qui porte le bon lien compte.
+        if (remote.id.isEmpty ||
+            remote.scholarshipId != id ||
+            remote.type != CaseType.scholarshipSupport ||
+            !remote.isOpen) {
+          continue;
+        }
+        _upsertCase(remote);
+        _persist();
+        update();
+        return remote;
+      }
+    } catch (_) {
+      // Hors ligne ou route absente : on n'invente pas de doublon pour autant,
+      // le serveur dédoublonnera à la synchronisation suivante.
+    }
+    return null;
   }
 
   /// Toggle whether a linked parent can view a given case. Optimistically flips
@@ -366,6 +412,9 @@ mixin _CasesMixin on _AppControllerBase {
         'preferredContactMethod': CaseApiCodec.encodeContactMethod(
           localCase.preferredContactMethod,
         ),
+        // Gardé par le serveur seulement si la fiche existe (jamais un 400).
+        if (localCase.scholarshipId != null)
+          'scholarshipId': localCase.scholarshipId,
       });
       _cases.removeWhere((item) => item.id == localCase.id);
       _upsertCase(CaseApiCodec.studentCaseFromApi(response));
