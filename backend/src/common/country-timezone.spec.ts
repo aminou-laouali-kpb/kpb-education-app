@@ -16,6 +16,23 @@ describe('country-timezone', () => {
     expect(utcOffsetHoursForCountry('FRA')).toBe(1);
   });
 
+  // Les alias de l'ancienne table groupée par fuseau, recopiés tels quels :
+  // la résolution passe désormais par la table ISO partagée et ne doit
+  // perdre aucune graphie que les profils existants portent peut-être.
+  it.each<[number, string[]]>([
+    [0, ['SN', 'SEN', 'Senegal', 'Sénégal', 'ML', 'MLI', 'Mali', 'CI', 'CIV', "Côte d'Ivoire", 'Cote d Ivoire', 'Ivory Coast', 'BF', 'BFA', 'Burkina Faso', 'GN', 'GIN', 'Guinea', 'Guinée', 'TG', 'TGO', 'Togo', 'MR', 'MRT', 'Mauritania', 'Mauritanie', 'GM', 'GMB', 'Gambia', 'GH', 'GHA', 'Ghana', 'GB', 'GBR', 'United Kingdom', 'Royaume-Uni', 'UK', 'PT', 'PRT', 'Portugal']],
+    [1, ['NE', 'NER', 'Niger', 'NG', 'NGA', 'Nigeria', 'BJ', 'BEN', 'Benin', 'Bénin', 'CM', 'CMR', 'Cameroon', 'Cameroun', 'TD', 'TCD', 'Chad', 'Tchad', 'GA', 'GAB', 'Gabon', 'CG', 'COG', 'Congo', 'Republic of the Congo', 'CD', 'COD', 'DR Congo', 'RDC', 'République Démocratique du Congo', 'CF', 'CAF', 'Central African Republic', 'Centrafrique', 'DZ', 'DZA', 'Algeria', 'Algérie', 'TN', 'TUN', 'Tunisia', 'Tunisie', 'MA', 'MAR', 'Morocco', 'Maroc', 'FR', 'FRA', 'France', 'BE', 'BEL', 'Belgium', 'Belgique', 'DE', 'DEU', 'Germany', 'Allemagne', 'ES', 'ESP', 'Spain', 'Espagne', 'IT', 'ITA', 'Italy', 'Italie', 'CH', 'CHE', 'Switzerland', 'Suisse']],
+    [2, ['EG', 'EGY', 'Egypt', 'Égypte', 'ZA', 'ZAF', 'South Africa', 'Afrique du Sud', 'RW', 'RWA', 'Rwanda', 'BI', 'BDI', 'Burundi']],
+    [3, ['TR', 'TUR', 'Turkey', 'Turquie', 'Türkiye', 'MG', 'MDG', 'Madagascar', 'KE', 'KEN', 'Kenya', 'SA', 'SAU', 'Saudi Arabia', 'Arabie Saoudite', 'QA', 'QAT', 'Qatar']],
+    [4, ['AE', 'ARE', 'United Arab Emirates', 'Émirats Arabes Unis', 'Emirats', 'UAE', 'MU', 'MUS', 'Mauritius', 'Maurice']],
+    [8, ['CN', 'CHN', 'China', 'Chine']],
+    [-5, ['CA', 'CAN', 'Canada', 'US', 'USA', 'United States', 'États-Unis', 'Etats Unis']],
+  ])('garde chaque alias historique de UTC%+d', (offset, aliases) => {
+    for (const alias of aliases) {
+      expect([alias, utcOffsetHoursForCountry(alias)]).toEqual([alias, offset]);
+    }
+  });
+
   it('falls back to UTC+0 for unknown or empty residences', () => {
     expect(utcOffsetHoursForCountry(undefined)).toBe(0);
     expect(utcOffsetHoursForCountry('')).toBe(0);

@@ -84,6 +84,8 @@ import { AppBuildInterceptor } from './modules/app-builds/app-build.interceptor'
 import { AppBuildTrackerService } from './modules/app-builds/app-build-tracker.service';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
 import { AdminCatalogService } from './modules/admin-catalog/admin-catalog.service';
+import { AdminScholarshipEligibilityController } from './modules/admin-catalog/admin-scholarship-eligibility.controller';
+import { ScholarshipEligibilityAdminService } from './modules/admin-catalog/scholarship-eligibility-admin.service';
 import { ImpactController } from './modules/impact/impact.controller';
 import { ImpactService } from './modules/impact/impact.service';
 import { ToolsController } from './modules/tools/tools.controller';
@@ -149,6 +151,10 @@ import { AdminScholarshipOpeningController } from './modules/scholarships-index/
 import { ScholarshipOpeningAdminService } from './modules/scholarships-index/opening/scholarship-opening-admin.service';
 import { ScholarshipOpeningAudienceService } from './modules/scholarships-index/opening/scholarship-opening-audience.service';
 import { ScholarshipOpeningFanoutService } from './modules/scholarships-index/opening/scholarship-opening-fanout.service';
+import { CandidateSnapshotService } from './modules/scholarship-match/candidate-snapshot';
+import { ScholarshipMatchController } from './modules/scholarship-match/scholarship-match.controller';
+import { ScholarshipMatchEnabledGuard } from './modules/scholarship-match/scholarship-match.feature';
+import { ScholarshipMatchService } from './modules/scholarship-match/scholarship-match.service';
 import { GreatYopScraper } from './modules/scholarships-index/scrapers/greatyop.scraper';
 import { MastereTnScraper } from './modules/scholarships-index/scrapers/mastereTn.scraper';
 import { VisaAvailabilityController } from './modules/visa-availability/visa-availability.controller';
@@ -246,11 +252,18 @@ import { SalonService } from './modules/salon/salon.service';
     // ses routes à segment fixe (`opening-todo`, `opening-overview`) ne doivent
     // jamais être lues comme un `:id` de bourse.
     AdminScholarshipOpeningController,
+    // Éligibilité structurée (chantier D4) : routes à segment fixe
+    // (`eligibility-coverage`, `eligibility-options`, `match-preview`),
+    // déclarées elles aussi AVANT AdminScholarshipsController.
+    AdminScholarshipEligibilityController,
     AdminScholarshipsController,
     ScholarshipsController,
     ScholarshipAlertsController,
     UserNotificationsController,
     FollowedScholarshipsController,
+    // « Mes 10 bourses » (chantier D) : `scholarships/match/*`, deux segments
+    // au moins, jamais capturés par `GET /scholarships/:id`.
+    ScholarshipMatchController,
     VisaAvailabilityController,
     ServicePackagesController,
     MyPurchasesController,
@@ -315,6 +328,7 @@ import { SalonService } from './modules/salon/salon.service';
     AdminAppBuildsService,
     AppBuildTrackerService,
     AdminCatalogService,
+    ScholarshipEligibilityAdminService,
     ImpactService,
     ToolsService,
     YoutubeService,
@@ -357,6 +371,10 @@ import { SalonService } from './modules/salon/salon.service';
     ScholarshipOpeningFanoutService,
     PushOutboxWorkerService,
     FollowedScholarshipsService,
+    // « Mes 10 bourses » (chantier D).
+    CandidateSnapshotService,
+    ScholarshipMatchService,
+    ScholarshipMatchEnabledGuard,
     GreatYopScraper,
     MastereTnScraper,
     VisaAvailabilityService,

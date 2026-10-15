@@ -10,6 +10,13 @@ import {
   publicPartnerInstitutionWhere,
   renderCatalogConsistencyReport,
 } from '../src/modules/catalog/catalog-consistency-checks';
+import { publicScholarshipWhere } from '../src/common/public-scholarship-where';
+import { SCHOLARSHIP_CATALOG_V1 } from '../src/modules/scholarships-index/data/scholarship-catalog.v1';
+import { eligibilityCoverage } from '../src/modules/scholarships-index/data/scholarship-catalog.validator';
+import {
+  renderEligibilityCoverage,
+  summariseServedEligibility,
+} from '../src/modules/scholarships-index/data/scholarship-eligibility-coverage';
 
 // Compose supplies DATABASE_URL to the production verification container. Keep
 // local CLI convenience without requiring a .env file in the runtime image.
@@ -140,6 +147,36 @@ async function verifyCatalogConsistency(strict: boolean) {
   if (report.exitCode !== 0) process.exitCode = report.exitCode;
 }
 
+/**
+ * Couverture de l'éligibilité structurée (chantier D, catalogue 1.5.0) : le
+ * catalogue du dépôt (fiches structurées / brouillons / tamponnées) et les
+ * fiches servies au public. Un RAPPORT, jamais une porte, même avec
+ * `--strict` : des brouillons honnêtement non tamponnés n'excluent aucun élève
+ * et ne doivent bloquer ni la CI ni un déploiement. La porte éditoriale est
+ * `STRUCTURED_ELIGIBILITY_GATE` (validateur du catalogue).
+ */
+async function reportEligibilityCoverage() {
+  const now = new Date();
+  const rows = await prisma.scholarship.findMany({
+    where: publicScholarshipWhere(now),
+    select: {
+      id: true,
+      eligibleLevels: true,
+      eligibilityCriteria: true,
+      eligibilityStructuredAt: true,
+    },
+  });
+  const report = renderEligibilityCoverage(
+    eligibilityCoverage(SCHOLARSHIP_CATALOG_V1, now),
+    summariseServedEligibility(rows, now),
+    SCHOLARSHIP_CATALOG_V1.catalogVersion,
+  );
+  for (const line of report.lines) {
+    // eslint-disable-next-line no-console
+    (line.startsWith('::warning::') ? console.error : console.log)(line);
+  }
+}
+
 async function main() {
   // Parsed first: a mistyped flag must fail before any database work.
   const { strict } = parseVerifyCatalogArgs(process.argv.slice(2));
@@ -156,6 +193,13 @@ async function main() {
     );
     // eslint-disable-next-line no-console
     console.error(error);
+  }
+  try {
+    await reportEligibilityCoverage();
+  } catch (error) {
+    // Un rapport : son échec avertit, ne bloque rien (même avec --strict).
+    // eslint-disable-next-line no-console
+    console.error('::warning::Eligibility coverage report could not run:', error);
   }
 }
 

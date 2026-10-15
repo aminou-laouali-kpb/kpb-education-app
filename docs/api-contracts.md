@@ -945,6 +945,20 @@ lit une clé absente comme `true`.
 Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
 `test/release/config_env_relay_test.dart` (relais compose).
 
+### Interrupteur « Mes 10 bourses » dans `features` : `scholarshipMatch`
+
+Un booléen **strict**, toujours présent, **`false` par défaut** (seule la valeur `true`, casse
+et espaces tolérés, l'ouvre). Un backend plus ancien ne le sert pas : l'app lit une clé absente
+comme `false`.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | La carte du test « Mes 10 bourses » et ses résultats. La MÊME variable coupe les routes `/scholarships/match/*` (404 `{disabled: true}`). |
+
+Indépendant de tout autre drapeau. Gardé par `backend/src/modules/config/app-config.controller.spec.ts`
+et `test/release/config_env_relay_test.dart` (relais compose, défaut `false`). Contrat des routes :
+section « Mes 10 bourses » plus bas.
+
 ### Ce que `GET /config/app` sert d'autre que des drapeaux (build 54)
 
 Route publique, sans authentification. Quatre ajouts, tous **absents sur un
@@ -1199,6 +1213,45 @@ l'import encore en attente (voir plus bas).
   de bord. Un test fait tourner les trois sur une horloge figée et exige les
   mêmes clauses, catégorie par catégorie. Le SLA compte sur la file COMPLÈTE,
   jamais sur la version plafonnée.
+
+## Admin — éligibilité structurée des bourses (« Mes 10 bourses », chantier D4)
+
+Gardes `AdminAuthGuard` + `RolesGuard`, rôles admin, super_admin,
+content_manager (comme l'édition du contenu des bourses). Le moteur est celui de
+`backend/src/modules/scholarship-match/` (assess, rank, reasons), réutilisé tel
+quel. Les routes à segment fixe sont déclarées AVANT `AdminScholarshipsController`.
+
+### Écriture : `POST /admin/catalog/scholarships` et `PATCH /admin/catalog/scholarships/:id` (étendues)
+
+Champs additionnels, lus STRICTEMENT (une valeur présente mais invalide → 400,
+rien n'est écrit) ; une clé absente laisse la colonne intacte :
+
+| Champ | Forme |
+| --- | --- |
+| `eligibleLevels` | `('secondary'\|'bachelor'\|'master'\|'doctorate')[]` ; `null` = vide. 400 `INVALID_ELIGIBLE_LEVELS`. |
+| `fieldsScope` | `'unknown'\|'all'\|'listed'` ; `null` = `unknown`. 400 `INVALID_FIELDS_SCOPE`. |
+| `eligibilityCriteria` | Critères v1 (`eligibility-criteria.ts`), vérifiés par `validateEligibilityCriteria` ; la copie normalisée est stockée. 400 `INVALID_ELIGIBILITY_CRITERIA` avec `message: string[]` et `issues: [{path, code, message}]` (`path` = `[2].countries[0]`). |
+| `markStructured` | `true` : « Conditions vérifiées » — tamponne `eligibilityStructuredAt` (maintenant) et `eligibilityStructuredBy` (nom de l'admin, sinon e-mail) sur le contenu FINAL ; 400 `ELIGIBILITY_LEVELS_REQUIRED` sans niveau, 400 `INVALID_ELIGIBILITY_CRITERIA` si les critères stockés sont illisibles. `false` : retire le tampon. |
+
+Un contenu d'éligibilité MODIFIÉ sans `markStructured: true` retire le tampon
+(la fiche redevient un brouillon : ses règles n'excluent plus). Rien de changé,
+rien de demandé : aucune écriture. Chaque écriture d'éligibilité écrit, dans la
+même transaction, un `AdminAuditEvent` : `purposeCode: 'scholarship_eligibility'`,
+`entityType: 'Scholarship'`, `action` ∈ `scholarship.eligibility_updated |
+scholarship.eligibility_structured | scholarship.eligibility_unstamped`,
+`changes` = `{changedFields, eligibleLevels, fieldsScope, criteriaCount,
+criteriaKeys, stamped, stampCleared, previousStructuredAt}` (aucune donnée
+personnelle, aucune citation). `GET /admin/scholarships/moderation` sert
+désormais `eligibleLevels`, `fieldsScope`, `eligibilityCriteria`,
+`eligibilityStructuredAt` et `eligibilityStructuredBy`.
+
+### Routes
+
+| Route | Rôle |
+| --- | --- |
+| `GET /admin/scholarships/eligibility-coverage` | Porte de lancement, sur les bourses PUBLIQUES (`publicScholarshipWhere`) : `{generatedAt, freshnessDays: 400, launchGatePercent: 90, total, structuredFresh, stale, unstructured, notAnalyzed, invalidCriteria, coveragePercent, launchReady, toStructure: [{id, nameFr, nameEn, state, structuredAt, structuredBy}], toStructureIds, truncated}`. `state` ∈ `not_analyzed` (aucun niveau) `\| unstructured` (jamais tamponnée) `\| stale` (tampon ≥ 400 j) ; liste triée dans cet ordre puis par nom, 500 au plus. `coveragePercent` est arrondi PAR DÉFAUT à 0,1 ; `launchReady` = `structuredFresh / total ≥ 90 %` (faux sur un catalogue vide). |
+| `GET /admin/scholarships/eligibility-options` | Table ISO 3166-1 du serveur (`common/iso-countries.ts`) pour l'éditeur : `{countries: [{code, nameFr, nameEn, priority, selectable}], freshnessDays, launchGatePercent, maxResults}`. `selectable: false` pour un territoire inhabité (valide dans un critère, jamais proposé à un élève). |
+| `POST /admin/scholarships/match-preview` | « Tester un profil », SANS RIEN PERSISTER. Corps `MatchPreviewDto` : les champs du test (`nationalityCode`, `secondNationalityCode`, `countryOfResidence`, `birthDate` AAAA-MM-JJ, `guardianConsented`, `highestDiploma`, `scholarshipTargetLevel`, `fieldIds[]`, `targetCountryIds[]`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests[]`, `workExperienceBand`), plus `lang`, `confirmed` (défaut `true`) et `focusScholarshipId` (une fiche évaluée à part, publique ou non). Jetons tolérants : un jeton inconnu est abandonné et nommé dans `dropped`, jamais une 400 ; un champ non déclaré → 400. Réponse 200 : `{persisted: false, algorithmVersion, generatedAt, lang, profile, dropped, readiness, counts, items (≤ 10, rang, section), beyondLimitCount, excluded, excludedSummary, notAnalyzed, focus}` ; chaque point porte `code`, `label` (rendu serveur), `criterionKey?`, `officialText?`, `sourceUrl?`. Candidates : exactement celles du test élève (`CandidateSnapshotService` : bourses publiques, 500 au plus, même ordre de coupe, même cycle servi — ouvert, sinon prévision, sinon le plus récent), relues à chaque appel au lieu du cache de 60 s ; aucune écriture. |
 
 ## Admin content operations
 
@@ -1564,3 +1617,188 @@ Geler les activations admin pendant le déploiement du backend : un cycle activ�
 par l'ancien code entre la migration et la nouvelle image échapperait à
 `openingPreExisting`. Pas de migration descendante : un backend plus ancien
 ignore les colonnes.
+
+## « Mes 10 bourses » — API élève (chantier D)
+
+Le test d'éligibilité : l'élève répond à ce qui manque, le serveur rend **jusqu'à 10** bourses
+(« Compatibles avec ton profil », puis « À vérifier avant de postuler »), jamais une bourse
+exclue, jamais de pourcentage. Moteur : `backend/src/modules/scholarship-match/`.
+
+### Portes communes (`/scholarships/match/*`)
+
+Dans cet ordre :
+
+1. drapeau `KPB_SCHOLARSHIP_MATCH_ENABLED` coupé → **404** `{statusCode: 404, disabled: true, code: "scholarship_match_disabled", message}`, avant toute authentification ;
+2. `StudentAuthGuard` (jeton Supabase) → **401** sans jeton valide ;
+3. compte `parent` ou `partner` → **403** (le test est caché pour eux en v1).
+
+Chaque chemin a au moins deux segments : `GET /scholarships/:id` ne peut pas les capturer.
+503 sans base de données.
+
+### `GET /scholarships/match/state?lang=fr|en`
+
+`lang` inconnu → `fr`. Réponse :
+
+```jsonc
+{
+  "algorithmVersion": "sm-1",
+  "readiness": {
+    "ready": false,                 // rien ne manque ET récapitulatif validé
+    "required": ["nationalityCode"],// clés obligatoires vides
+    "toConfirm": ["englishLevel"],  // valeurs utilisées, pas encore confirmées
+    "optional": ["languageTests"],  // « améliore la précision »
+    "targetLevelOptions": ["bachelor", "master", "doctorate"] // + "secondary" si ≤ 19 ans et catalogue lycée
+  },
+  "prefill": [{ "key": "nationalityCode", "value": "ner", "source": "countryOfResidence", "ambiguous": true }],
+  "answers": {                      // valeurs actuelles, jetons connus seulement (récapitulatif)
+    "nationalityCode": "ner", "secondNationalityCode": null, "residence": "ner",
+    "birthDate": "2006-05-10", "guardianConsented": false, "highestDiploma": "bac",
+    "scholarshipTargetLevel": "bachelor", "fieldIds": ["d01"], "targetCountryIds": [],
+    "gradeBandOn20": "12_14", "englishLevel": "b1", "frenchLevel": null, "languageTests": [],
+    "workExperienceBand": null, "confirmedAt": null
+  },
+  "options": {
+    "version": "3f1c…",            // 16 hex : change quand une liste change (cache app 24 h)
+    "countries": [{ "code": "ner", "name": "Niger", "priority": true }],   // ISO 3166-1 alpha-3
+    "destinations": [{ "id": "fra", "name": "France" }],                  // pays du catalogue public, `int` compris
+    "fields": [{ "id": "d01", "name": "Informatique & Intelligence Artificielle" }]
+  },
+  "latestRun": null,                // ou un run rendu (forme ci-dessous)
+  "isStale": false,
+  "staleReasons": [],               // "profile" | "catalog" | "algorithm"
+  "catalogSize": 29,                // bourses analysées (« On analyse 29 bourses… »)
+  "alertsOptIn": false
+}
+```
+
+Clés de `readiness` : `nationalityCode`, `residence`, `birthDate`, `guardianConsent` (mineur
+sans accord), `highestDiploma`, `scholarshipTargetLevel`, `fields`, `gradeBandOn20`,
+`englishLevel`, `workExperienceBand` (Master/Doctorat) ; facultatives : `targetCountryIds`,
+`frenchLevel`, `languageTests`, `secondNationalityCode`. **Le serveur possède ces listes ;
+l'app ignore les clés qu'elle ne connaît pas.**
+
+Les candidates sont lues au plus une fois par minute (cache mémoire de 60 s, 500 fiches au
+plus, fiches publiques seulement — `publicScholarshipWhere`).
+
+### `POST /scholarships/match/runs` — limité à 10 par minute (429 au-delà)
+
+Corps (tous facultatifs) : `{lang?: string, trigger?: string, answers?: object, confirm?: boolean}`.
+Seules ces quatre clés sont admises au premier niveau (`forbidNonWhitelisted`). `trigger` ∈
+`wizard | rerun | stale_refresh | edit`, toute autre valeur est enregistrée `other`.
+
+`answers` est **tolérant** : une clé inconnue, un jeton inconnu ou une valeur du mauvais type
+sont **abandonnés** (jamais un 400). Clés comprises :
+
+| Clé | Valeurs |
+|---|---|
+| `nationalityCode`, `secondNationalityCode` | code ISO alpha-3 (ou alpha-2 / nom, normalisés) ; `secondNationalityCode: null` efface |
+| `residence` | idem ; écrit `countryOfResidence` (nom français) seulement s'il change de pays |
+| `birthDate` | `AAAA-MM-JJ`, 16 ans au moins |
+| `guardianConsent` (`true`), `guardianName`, `guardianContact` | accord du représentant légal, horodaté par le serveur une seule fois |
+| `highestDiploma` | `none bac bac_plus_2 licence master doctorat` |
+| `scholarshipTargetLevel` | `secondary bachelor master doctorate` (jamais écrit dans `targetLevel`) |
+| `fieldIds` | ≤ 3 parmi `d01…d12` ; `[]` = « Pas encore décidé » |
+| `targetCountryIds` | alpha-3 ou `int` ; `[]` efface |
+| `gradeBandOn20` | `lt10 10_12 12_14 14_16 16_plus` |
+| `englishLevel`, `frenchLevel` | `none a1_a2 b1 b2 c1_c2` ; `frenchLevel: null` efface |
+| `languageTests` | `[{type: ielts|toefl_ibt|duolingo|tcf|tef, score, takenAt?}]` ; entrée invalide abandonnée |
+| `workExperienceBand` | `none lt12 12_24 24_36 36_60 60_plus` |
+
+Dans **une transaction** : réponses écrites sur le profil, `scholarshipProfileConfirmedAt` posé
+par le serveur si `confirm: true`, anciens champs réécrits quand la correspondance est univoque
+(`b1` → `languageLevel: "Intermediate"`, `12_14` → `gradeRange: "12 - 14/20"`…), calcul, run
+enregistré, runs élagués aux 5 derniers. Un échec n'importe où annule tout, réponses comprises.
+Une valeur **changée sans** `confirm: true` retire la confirmation.
+
+Réponses (toujours **200**) :
+
+- `{status: "profile_incomplete", readiness}` — **rien n'est écrit** (ni réponses, ni run) ;
+- `{status: "ok", run, diff}` :
+
+```jsonc
+{
+  "run": {
+    "id": "…", "createdAt": "2026-10-13T12:00:00.000Z", "algorithmVersion": "sm-1", "trigger": "wizard",
+    "counts": { "eligible": 6, "toVerify": 4, "excluded": 12, "notAnalyzed": 3, "candidates": 25 }, // sur TOUTES les candidates
+    "items": [{                     // ≤ 10, compatibles d'abord, jamais `not_eligible`
+      "scholarshipId": "…", "cycleId": "…", "rank": 1,
+      "section": "compatible",      // | "to_verify"
+      "status": "eligible",         // | "to_verify"
+      "isNew": false,               // absente du run précédent (faux au premier run)
+      "available": true,            // faux : la fiche n'est plus publique (« Plus disponible »)
+      "name": "Bourse Eiffel",
+      "scholarship": { "countryId": "fra", "countryName": "France", "fundingType": "partially_funded",
+                       "fundingLabel": "…", "levelLabel": "…", "deadlineAt": null, "deadlineLabel": "…",
+                       "applicationUrl": "…", "sourceUrl": "…" },        // null si indisponible
+      "window": { "cycleId": "…", "academicYear": "2027-2028", "status": "open|forecast|closed|suspended",
+                  "dateConfidence": "confirmed|estimated", "opensAt": null, "closesAt": "…",
+                  "estimatedOpenAt": null, "estimatedCloseAt": null }, // statut recalculé à l'horloge ; null si indisponible
+      "reasons": [{ "code": "level_accepted", "label": "Niveau Master accepté" }],       // ≤ 3
+      "toVerify": [{ "code": "language_missing", "label": "IELTS 6.5 en anglais demandé — tu n’as pas indiqué de score",
+                     "official": { "text": "<citation exacte>", "sourceUrl": "https://…" } }] // official: null sans critère source
+    }],
+    "excludedSummary": {            // « Pourquoi certaines bourses n'apparaissent pas »
+      "groups": [{ "group": "level", "count": 12, "label": "12 visent un autre niveau",
+                   "scholarships": [{ "id": "…", "name": "…" }] }],      // ≤ 20 noms ; groupes level|nationality|age|experience|suspended
+      "notAnalyzedCount": 3, "notAnalyzedLabel": "3 bourses récentes pas encore analysées par KPB"
+    },
+    "levelCatalog": { "level": "doctorate", "count": 1,
+                      "label": "1 bourse doctorale dans notre catalogue pour l’instant" }, // label null si ≥ 10
+    "precisionLimitedBy": null      // "kpb" | "answers" quand ≥ la moitié est « à vérifier »
+  },
+  "diff": { "previousRunId": "…", "addedIds": ["…"], "removedIds": ["…"] } // vides au premier run
+}
+```
+
+Les libellés (`label`) sont rendus par le serveur dans la langue demandée ; aucun libellé KPB ne
+contient « % » ni « chance(s) ». Les citations officielles (`official.text`) en sont exemptées.
+Le run stocké garde un `inputsSummary` minimisé (niveau visé, nombre de domaines, compléments
+présents, confirmation) : ni nationalité, ni date de naissance, ni moyenne.
+
+### `PUT /scholarships/match/alerts`
+
+Corps `{enabled: boolean}` (booléen strict, 400 sinon) → `{enabled, optedInAt: string|null}`.
+Pose `scholarshipMatchAlertsOptInAt` (une date déjà posée est gardée) ou l'efface. Opt-in
+EXPLICITE du futur push hebdomadaire « nouvelles bourses compatibles ».
+
+### `POST /me/scholarship-alerts` — « Suivre les N compatibles »
+
+Corps `{scholarshipIds: string[]}` (≤ 10, chaque id ≤ 64 caractères) → **200**
+`{subscribedIds: string[], skippedIds: string[]}`. Même porte que
+`POST /me/scholarship-alerts/:scholarshipId` (bourse approuvée et active), même effet par bourse
+(cloche allumée, sourdine levée, favori posé en `outbox_followers`), dans une transaction.
+Un identifiant qui ne passe pas la porte est ignoré (`skippedIds`), jamais une erreur pour le lot.
+Idempotent : un favori déjà présent n'est jamais retiré. Route sans paramètre : aucun conflit
+avec `:scholarshipId`.
+
+### Dossiers liés à une bourse
+
+- `POST /cases` accepte `scholarshipId?: string` (≤ 64). Gardé seulement si la fiche existe ;
+  sinon le dossier est créé sans lien (jamais un 400 pour une fiche inconnue).
+- `GET /cases?scholarshipId=…` → les dossiers DE L'ÉLÈVE liés à cette bourse (déduplication
+  de « Être accompagné ») ; sans le paramètre, la liste d'avant.
+- Chaque dossier rendu (élève, `GET /admin/cases`, conseiller) porte `scholarshipId: string|null` ;
+  la liste commerciale des leads aussi. Lecture seule côté équipe.
+- Les lectures STAFF (`GET /admin/cases` admin et conseiller, et les réponses des écritures
+  `/admin/cases/:id…`) portent en plus `scholarship: {id, nameFr, nameEn, sourceUrl|null,
+  applicationUrl|null} | null`, lu par la relation dans la même requête (pas de N+1) ; `null`
+  quand le dossier n'est pas lié ou que la fiche a été supprimée (SET NULL). La réponse élève et
+  la diffusion Socket.IO `caseUpdated` ne le portent pas. Un admin plus ancien l'ignore ; l'admin
+  courant affiche l'identifiant seul si la clé manque (backend plus ancien).
+
+### `GET /profiles/me` (lecture seule)
+
+Clés ajoutées : `nationalityCode`, `secondNationalityCode`, `highestDiploma`,
+`scholarshipTargetLevel`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests`
+(relu par la garde), `workExperienceBand`, `scholarshipProfileConfirmedAt`,
+`scholarshipMatchAlertsOptIn` (booléen). Elles ne s'écrivent QUE par
+`POST /scholarships/match/runs` : `PATCH /profiles/me` ne les connaît pas (un 400 y bloquerait la
+synchronisation du profil). Les builds plus anciennes les ignorent (`profile_api_codec.dart` lit
+des clés explicites).
+
+### RGPD
+
+`GET /profiles/me/export` contient `scholarshipMatchRuns` et `scholarshipAlertSubscriptions`
+(clés présentes même vides) ; les colonnes du profil y sont déjà par construction. La
+suppression du compte les emporte par cascade (prouvé contre PostgreSQL :
+`scholarship-match-api.postgres.spec.ts`).

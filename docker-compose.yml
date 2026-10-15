@@ -181,6 +181,10 @@ services:
       - KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED=${KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED:-true}
       - KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED=${KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED:-true}
       - KPB_HOME_FOLLOWED_ENTRY_ENABLED=${KPB_HOME_FOLLOWED_ENTRY_ENABLED:-true}
+      # « Mes 10 bourses » (chantier D) : `features.scholarshipMatch` ET les
+      # routes /scholarships/match/* (404 `{ disabled: true }` tant qu'il est
+      # coupé). FERMÉ par défaut : livré éteint, ouvert à la bascule.
+      - KPB_SCHOLARSHIP_MATCH_ENABLED=${KPB_SCHOLARSHIP_MATCH_ENABLED:-false}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.

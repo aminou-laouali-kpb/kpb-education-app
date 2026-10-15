@@ -30,12 +30,16 @@
  * | 11 | Un cycle absent n'est plus créé | « crée un cycle absent … » |
  * | 12 | `sourceUrl` retiré de `VERIFICATION_PROVENANCE_FIELDS` | « garde la source consultée par le relecteur » |
  * | 13 | La règle de révocation rendue inopérante (`null` lu comme « jamais posé ») | « ne repose pas un tampon qu'un relecteur a révoqué » |
+ * | 14 | `eligibilityKeptReason` toujours `undefined` (le dépôt écrase tout) | « n'écrase jamais une structuration relue plus récente » ; « un brouillon du dépôt ne remplace pas » |
+ * | 15 | `sameValue` compare les objets par identité (`===`) | « ne voit aucun écart sur des critères rangés autrement » |
+ * | 16 | Un champ d'éligibilité retiré de `ELIGIBILITY_PROVENANCE_FIELDS` | inventaire gelé ; « n'écrase jamais … » |
  *
  * La mutation n° 9 mérite un mot : elle vérifie la CONTRE-ÉPREUVE. Un détecteur
  * qui crie sur tout passerait les tests « il voit l'écart » et rendrait pourtant
  * le rapport inutilisable. Sans elle, la garde n'aurait qu'un sens sur deux.
  */
 import {
+  ELIGIBILITY_PROVENANCE_FIELDS,
   NEVER_RECONCILED_FIELDS,
   VERIFICATION_PROVENANCE_FIELDS,
   planIsEmpty,
@@ -280,8 +284,21 @@ describe('planScholarshipReconciliation', () => {
       );
 
       expect([...produced].sort()).toEqual(
-        [...RECONCILED_SCHOLARSHIP_FIELDS, ...NEVER_RECONCILED_FIELDS].sort(),
+        [
+          ...RECONCILED_SCHOLARSHIP_FIELDS,
+          ...NEVER_RECONCILED_FIELDS,
+          ...ELIGIBILITY_PROVENANCE_FIELDS,
+        ].sort(),
       );
+      // Écrite à la main, elle aussi : la liste du code ne se contrôle pas
+      // elle-même.
+      expect([...ELIGIBILITY_PROVENANCE_FIELDS].sort()).toEqual([
+        'eligibilityCriteria',
+        'eligibilityStructuredAt',
+        'eligibilityStructuredBy',
+        'eligibleLevels',
+        'fieldsScope',
+      ]);
     });
 
     it('réaligne effectivement TOUS les champs de cette liste', () => {
@@ -509,6 +526,135 @@ describe('planScholarshipReconciliation', () => {
   });
 });
 
+describe("l'éligibilité structurée (catalogue 1.5.0)", () => {
+  const STAMP_IN_DB = new Date('2026-10-01T09:00:00.000Z');
+
+  /** Ce qu'un éditeur écrit dans l'admin : un bloc relu et tamponné. */
+  function stampedInAdmin(row: ReconcilableScholarshipRow, at = STAMP_IN_DB) {
+    // Chaque champ du bloc diffère de la fiche Eiffel du dépôt (master seul).
+    row.eligibleLevels = ['master', 'doctorate'];
+    row.fieldsScope = 'all';
+    row.eligibilityCriteria = [
+      {
+        key: 'relu-dans-l-admin',
+        type: 'other',
+        impact: 'soft',
+        officialTextFr: 'x',
+        officialTextEn: 'x',
+        sourceUrl: 'https://example.org',
+      },
+    ];
+    row.eligibilityStructuredAt = at;
+    row.eligibilityStructuredBy = 'Éditrice KPB';
+  }
+
+  /** La même fiche, mais relue et tamponnée DANS LE DÉPÔT à `at`. */
+  function stampedInRepo(
+    record: VerifiedScholarshipCatalogRecord,
+    at: string,
+  ): VerifiedScholarshipCatalogRecord {
+    return {
+      ...record,
+      eligibility: { ...record.eligibility!, structuredAt: at, structuredBy: 'Relecteur dépôt' },
+    };
+  }
+
+  it('écrit les champs du chantier D sur une ligne importée avant eux', () => {
+    // L'état laissé par la migration : niveaux repris des tags 1.4.0 (Gates
+    // n'avait que `master`), aucun critère, aucun tampon.
+    const record = recordById('gates_cambridge_2027');
+    const row = rowAsCreatedFrom(record);
+    row.eligibleLevels = ['master'];
+    row.fieldsScope = 'unknown';
+    row.eligibilityCriteria = [];
+    row.eligibilityStructuredAt = null;
+    row.eligibilityStructuredBy = null;
+    row.tags = (row.tags as string[]).filter(
+      (tag) => tag !== 'doctorate' && tag !== `catalog:${VERSION}`,
+    );
+
+    const plan = planScholarshipReconciliation(record, VERSION, row);
+
+    expect(plan.scholarshipUpdate.eligibleLevels).toEqual(['master', 'doctorate']);
+    expect(plan.scholarshipUpdate.eligibilityCriteria).toEqual(record.eligibility!.criteria);
+    expect(plan.scholarshipUpdate.eligibilityStructuredBy).toBe('draft');
+    // Un brouillon reste un brouillon : aucun tampon n'est inventé.
+    expect(Object.keys(plan.scholarshipUpdate)).not.toContain('eligibilityStructuredAt');
+    expect(plan.scholarshipUpdate.tags).toEqual(
+      expect.arrayContaining(['doctorate', `catalog:${VERSION}`]),
+    );
+  });
+
+  it("n'écrase jamais une structuration relue en base plus récente que celle du dépôt", () => {
+    const record = stampedInRepo(recordById('eiffel_excellence_master_2027'), '2026-09-15T00:00:00.000Z');
+    const row = rowAsCreatedFrom(record);
+    stampedInAdmin(row);
+
+    const plan = planScholarshipReconciliation(record, VERSION, row);
+
+    for (const field of ELIGIBILITY_PROVENANCE_FIELDS) {
+      expect(Object.keys(plan.scholarshipUpdate)).not.toContain(field);
+    }
+    const kept = plan.drifts.filter((drift) =>
+      (ELIGIBILITY_PROVENANCE_FIELDS as readonly string[]).includes(drift.field),
+    );
+    // Conservé n'est pas tu : chaque champ divergent reste dans le rapport.
+    expect(kept.map((drift) => drift.field).sort()).toEqual(
+      [...ELIGIBILITY_PROVENANCE_FIELDS].sort(),
+    );
+    expect(kept.every((drift) => !drift.reconciled)).toBe(true);
+    expect(kept[0].keptReason).toContain('plus récente');
+  });
+
+  it('un brouillon du dépôt ne remplace pas des critères tamponnés, même anciens', () => {
+    const record = recordById('eiffel_excellence_master_2027');
+    expect(record.eligibility!.structuredAt).toBeNull();
+    const row = rowAsCreatedFrom(record);
+    stampedInAdmin(row, new Date('2025-01-01T00:00:00.000Z'));
+
+    const plan = planScholarshipReconciliation(record, VERSION, row);
+
+    for (const field of ELIGIBILITY_PROVENANCE_FIELDS) {
+      expect(Object.keys(plan.scholarshipUpdate)).not.toContain(field);
+    }
+    expect(
+      plan.drifts.find((drift) => drift.field === 'eligibilityCriteria')?.keptReason,
+    ).toContain('un brouillon du dépôt ne les remplace pas');
+  });
+
+  it('une relecture du dépôt plus récente remplace le bloc entier', () => {
+    // La contre-épreuve : une règle qui refuserait toujours d'écrire passerait
+    // les deux tests précédents.
+    const record = stampedInRepo(recordById('eiffel_excellence_master_2027'), '2026-10-10T00:00:00.000Z');
+    const row = rowAsCreatedFrom(record);
+    stampedInAdmin(row);
+
+    const plan = planScholarshipReconciliation(record, VERSION, row);
+
+    expect(Object.keys(plan.scholarshipUpdate).sort()).toEqual(
+      [...ELIGIBILITY_PROVENANCE_FIELDS].sort(),
+    );
+    expect(plan.scholarshipUpdate.eligibilityStructuredAt).toEqual(
+      new Date('2026-10-10T00:00:00.000Z'),
+    );
+    expect(plan.scholarshipUpdate.eligibilityStructuredBy).toBe('Relecteur dépôt');
+  });
+
+  it('ne voit aucun écart sur des critères rangés autrement par PostgreSQL', () => {
+    // `jsonb` réordonne les clés ; une clé `undefined` n'existe pas en JSON.
+    const record = recordById('turkiye_scholarships_2027_forecast');
+    const row = rowAsCreatedFrom(record);
+    row.eligibilityCriteria = record.eligibility!.criteria.map((criterion) =>
+      Object.fromEntries(Object.entries(criterion).reverse()),
+    );
+
+    const plan = planScholarshipReconciliation(record, VERSION, row);
+
+    expect(plan.drifts).toEqual([]);
+    expect(planIsEmpty(plan)).toBe(true);
+  });
+});
+
 describe('sameValue', () => {
   it('traite ∅ et absent comme le même vide, et une Date comme son instant', () => {
     expect(sameValue(null, undefined)).toBe(true);
@@ -522,5 +668,13 @@ describe('sameValue', () => {
   it("ne confond pas deux listes de même contenu et d'ordre différent", () => {
     expect(sameValue(['a', 'b'], ['b', 'a'])).toBe(false);
     expect(sameValue(['a', 'b'], ['a', 'b'])).toBe(true);
+  });
+
+  it('compare deux objets JSON clé par clé, sans tenir compte de leur ordre', () => {
+    expect(sameValue({ a: 1, b: ['x'] }, { b: ['x'], a: 1 })).toBe(true);
+    expect(sameValue({ a: 1, b: undefined }, { a: 1 })).toBe(true);
+    expect(sameValue({ a: 1 }, { a: 2 })).toBe(false);
+    expect(sameValue({ a: 1 }, ['a'])).toBe(false);
+    expect(sameValue([{ a: 1 }], [{ a: 1 }])).toBe(true);
   });
 });

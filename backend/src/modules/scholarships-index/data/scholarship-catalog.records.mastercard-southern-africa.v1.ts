@@ -92,7 +92,10 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
   }),
   record({
     id: 'uct_international_refugee_2027',
-    levels: ['master'],
+    // Catalogue 1.5.0 : le libellé dit « Honours, Master ou Doctorat » et
+    // l'éligibilité cite la « 4e année de Doctorat » — le niveau doctoral
+    // manquait à la liste structurée.
+    levels: ['master', 'doctorate'],
     name: ['Bourses UCT pour étudiants internationaux et réfugiés 2027', 'UCT International and Refugee Scholarships 2027'],
     country: ['zaf', 'Afrique du Sud — University of Cape Town', 'South Africa — University of Cape Town'],
     levelLabel: ['Postgrade uniquement : Honours, Master ou Doctorat', 'Postgraduate only: Honours, Master’s or Doctoral'],
@@ -151,7 +154,7 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
       application: 'https://uct.ac.za/students/fees-funding-postgraduate-degree-funding/applications-and-requirements',
       cycle: 'https://uct.ac.za/students/fees-funding-postgraduate-degree-funding-bursaries-scholarships/international-and-refugee-scholarships',
     },
-    tags: ['master', 'south-africa', 'uct', 'international-students', 'refugees', 'no-published-call', 'partially-funded'],
+    tags: ['master', 'doctorate', 'south-africa', 'uct', 'international-students', 'refugees', 'no-published-call', 'partially-funded'],
     relatedFieldIds: ['d01', 'd02', 'd03', 'd04', 'd05', 'd06', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12'],
     baseMatch: 70,
     checkedAt: '2026-09-29T12:00:00.000Z',

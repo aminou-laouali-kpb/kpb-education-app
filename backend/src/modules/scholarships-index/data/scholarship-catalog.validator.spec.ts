@@ -14,6 +14,7 @@ import {
   CATALOG_STALENESS_CODES,
   CATALOG_UP_TO_DATE,
   buildCatalogDiagnosis,
+  eligibilityCoverage,
   validateScholarshipCatalog,
 } from './scholarship-catalog.validator';
 
@@ -69,7 +70,8 @@ function validRecord(): VerifiedScholarshipCatalogRecord {
       baseMatch: 30,
       applicationUrl: 'https://official.example/application',
       sourceUrl: 'https://official.example/overview',
-      tags: ['test-only'],
+      // Les tags de niveau reprennent `levels` (règle `level_tags_mismatch`).
+      tags: ['secondary', 'bachelor', 'master', 'test-only'],
     },
     applicationSteps: [
       {
@@ -120,25 +122,30 @@ describe('versioned scholarship catalog', () => {
     expect(report.valid).toBe(true);
     expect(report.uniqueRecordCount).toBe(36);
     expect(report.uniqueRecordDeficit).toBe(0);
+    // Doctorat (1.5.0) : Gates Cambridge et UCT, dont les textes le disent.
     expect(report.verifiedCounts).toEqual({
       secondary: 4,
       bachelor: 17,
       master: 27,
+      doctorate: 2,
     });
     expect(report.backlogCounts).toEqual({
       secondary: 0,
       bachelor: 4,
       master: 11,
+      doctorate: 0,
     });
     expect(report.volumeDeficits).toEqual({
       secondary: 0,
       bachelor: 0,
       master: 0,
+      doctorate: 0,
     });
     expect(report.backlogDeficits).toEqual({
       secondary: 3,
       bachelor: 11,
       master: 4,
+      doctorate: 0,
     });
     expect(report.issues.filter((issue) => issue.code === 'volume_target_not_met')).toHaveLength(0);
   });
@@ -408,10 +415,15 @@ describe('versioned scholarship catalog', () => {
         catalogVersion: '1.3.0',
         uniqueRecordCount: 0,
         uniqueRecordDeficit: 0,
-        verifiedCounts: { secondary: 0, bachelor: 0, master: 0 },
-        backlogCounts: { secondary: 0, bachelor: 0, master: 0 },
-        volumeDeficits: { secondary: 0, bachelor: 0, master: 0 },
-        backlogDeficits: { secondary: 0, bachelor: 0, master: 0 },
+        verifiedCounts: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        backlogCounts: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        volumeDeficits: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        backlogDeficits: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        warnings: [],
+        eligibilityCoverage: eligibilityCoverage({
+          ...SCHOLARSHIP_CATALOG_V1,
+          records: [],
+        }),
         issues: [
           {
             code: 'open_cycle_already_closed',
@@ -453,5 +465,255 @@ describe('versioned scholarship catalog', () => {
         codes: CATALOG_STALENESS_CODES,
       }),
     ).toContain('mccall_macbain_2027');
+  });
+});
+
+/**
+ * Éligibilité structurée (catalogue 1.5.0).
+ *
+ * | Mutation appliquée au validateur | Test qui tombe |
+ * |---|---|
+ * | `validateEligibility` n'est plus appelé | « refuse un critère mal formé » et suivants |
+ * | La porte passe en `error` sans relecture des 36 fiches | « avertit sans bloquer » (et la CI) |
+ * | Le contrôle de citation est retiré | « refuse une citation absente de la fiche » |
+ * | `level_tags_mismatch` retiré | « exige que les tags de niveau disent levels » |
+ */
+describe('éligibilité structurée (1.5.0)', () => {
+  const quote = {
+    officialTextFr: 'Critère vérifié',
+    officialTextEn: 'Verified criterion',
+    sourceUrl: 'https://official.example/eligibility',
+  };
+
+  function catalogOf(record: VerifiedScholarshipCatalogRecord): VersionedScholarshipCatalog {
+    return {
+      schemaVersion: 1,
+      catalogVersion: '1.5.0',
+      volumeTargets: { uniqueRecords: 1, secondary: 0, bachelor: 0, master: 0 },
+      records: [record],
+      backlog: [],
+    };
+  }
+
+  function structured(
+    overrides: Partial<NonNullable<VerifiedScholarshipCatalogRecord['eligibility']>> = {},
+  ): VerifiedScholarshipCatalogRecord {
+    return {
+      ...validRecord(),
+      eligibility: {
+        fieldsScope: 'unknown',
+        criteria: [
+          {
+            key: 'pas-canadien',
+            type: 'nationality',
+            impact: 'hard',
+            appliesTo: 'nationality',
+            mode: 'exclude',
+            countries: ['can'],
+            ...quote,
+          },
+        ],
+        structuredAt: null,
+        structuredBy: 'draft',
+        ...overrides,
+      },
+    };
+  }
+
+  function codes(record: VerifiedScholarshipCatalogRecord, gate?: 'warning' | 'error') {
+    const report = validateScholarshipCatalog(catalogOf(record), {
+      now: NOW,
+      includeVolumeTargets: false,
+      ...(gate ? { structuredEligibilityGate: gate } : {}),
+    });
+    return {
+      report,
+      issues: report.issues.map((issue) => issue.code),
+      warnings: report.warnings.map((issue) => issue.code),
+    };
+  }
+
+  it('le catalogue réel : 36 brouillons bien formés, qui avertissent sans bloquer', () => {
+    const report = validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, { now: CATALOG_NOW });
+
+    expect(report.valid).toBe(true);
+    expect(report.validIgnoringClock).toBe(true);
+    expect(report.issues).toEqual([]);
+    expect(report.warnings).toHaveLength(36);
+    expect(new Set(report.warnings.map((warning) => warning.code))).toEqual(
+      new Set(['missing_structured_eligibility']),
+    );
+    expect(report.eligibilityCoverage).toMatchObject({
+      records: 36,
+      missing: 0,
+      drafts: 36,
+      stamped: 0,
+      stale: 0,
+    });
+    expect(report.eligibilityCoverage.criteria).toBeGreaterThanOrEqual(
+      SCHOLARSHIP_CATALOG_V1.records.length,
+    );
+  });
+
+  it('avertit sans bloquer tant que la porte est en avertissement, bloque en erreur', () => {
+    const draft = codes(structured());
+    expect(draft.report.valid).toBe(true);
+    expect(draft.warnings).toEqual(['missing_structured_eligibility']);
+    expect(draft.report.warnings[0].message).toContain('awaiting human review');
+
+    const gated = codes(structured(), 'error');
+    expect(gated.report.valid).toBe(false);
+    expect(gated.report.validIgnoringClock).toBe(false);
+    expect(gated.issues).toEqual(['missing_structured_eligibility']);
+
+    // Une fiche SANS bloc est signalée de la même façon.
+    const bare = codes(validRecord(), 'error');
+    expect(bare.issues).toEqual(['missing_structured_eligibility']);
+    expect(bare.report.eligibilityCoverage.missing).toBe(1);
+  });
+
+  it('une fiche relue et tamponnée ne signale plus rien, et compte comme tamponnée', () => {
+    const stamped = codes(
+      structured({ structuredAt: '2026-08-01T10:00:00.000Z', structuredBy: 'Éditrice KPB' }),
+      'error',
+    );
+    expect(stamped.issues).toEqual([]);
+    expect(stamped.warnings).toEqual([]);
+    expect(stamped.report.eligibilityCoverage).toMatchObject({ stamped: 1, drafts: 0 });
+  });
+
+  it('signale un tampon de plus de 400 jours, sans bloquer', () => {
+    const stale = codes(
+      structured({ structuredAt: '2025-06-01T10:00:00.000Z', structuredBy: 'Éditrice KPB' }),
+      'error',
+    );
+    expect(stale.issues).toEqual([]);
+    expect(stale.warnings).toEqual(['stale_structured_eligibility']);
+    expect(stale.report.eligibilityCoverage.stale).toBe(1);
+  });
+
+  it('refuse un tampon incohérent : brouillon signé, tampon sans éditeur ou dans le futur', () => {
+    expect(codes(structured({ structuredBy: 'Quelqu’un' })).issues).toContain(
+      'invalid_structured_by',
+    );
+    expect(
+      codes(structured({ structuredAt: '2026-08-01T10:00:00.000Z', structuredBy: 'draft' })).issues,
+    ).toContain('invalid_structured_by');
+    expect(
+      codes(structured({ structuredAt: '2027-01-01T00:00:00.000Z', structuredBy: 'Éditrice' }))
+        .issues,
+    ).toContain('invalid_structured_at');
+  });
+
+  it('refuse un critère mal formé (validateur du moteur, sans repli)', () => {
+    const record = structured();
+    record.eligibility!.criteria = [
+      {
+        key: 'pays-inconnu',
+        type: 'nationality',
+        impact: 'hard',
+        appliesTo: 'nationality',
+        mode: 'exclude',
+        countries: ['xxx'],
+        ...quote,
+      },
+      { key: 'besoin', type: 'financial_need', impact: 'soft', ...quote } as never,
+    ];
+    const result = codes(record);
+    expect(result.issues).toEqual(['invalid_eligibility_criterion', 'invalid_eligibility_criterion']);
+    expect(result.report.issues[0].path).toBe('records[0].eligibility.criteria[0].countries[0]');
+    expect(result.report.valid).toBe(false);
+  });
+
+  it('refuse une citation absente de la fiche, ou une source non déclarée', () => {
+    const record = structured();
+    record.eligibility!.criteria = [
+      {
+        key: 'invente',
+        type: 'other',
+        impact: 'soft',
+        officialTextFr: 'Une condition que la fiche ne dit pas',
+        officialTextEn: 'A condition the record does not state',
+        sourceUrl: 'https://ailleurs.example/blog',
+      },
+      // FR et EN de deux lignes différentes : pas une citation.
+      {
+        key: 'paire-melangee',
+        type: 'other',
+        impact: 'soft',
+        officialTextFr: 'Critère vérifié',
+        officialTextEn: 'Verified document',
+        sourceUrl: 'https://official.example/eligibility',
+      },
+    ];
+    expect(codes(record).issues).toEqual([
+      'criterion_quote_not_in_record',
+      'criterion_source_not_official',
+      'criterion_quote_not_in_record',
+    ]);
+  });
+
+  it('accepte une citation tirée des pièces demandées', () => {
+    const record = structured();
+    record.eligibility!.criteria = [
+      {
+        key: 'piece',
+        type: 'other',
+        impact: 'informational',
+        officialTextFr: 'Document vérifié',
+        officialTextEn: 'Verified document',
+        sourceUrl: 'https://official.example/application',
+      },
+    ];
+    expect(codes(record).issues).toEqual([]);
+  });
+
+  it('refuse un portée de domaines inconnue et un critère d’un niveau absent de la fiche', () => {
+    const record = structured({ fieldsScope: 'some' as never });
+    record.levels = ['master'];
+    record.scholarship.tags = ['master'];
+    record.eligibility!.criteria = [
+      {
+        key: 'age-licence',
+        type: 'age',
+        impact: 'hard',
+        level: 'bachelor',
+        max: 21,
+        maxInclusive: false,
+        asOf: { kind: 'unspecified' },
+        ...quote,
+      },
+    ];
+    expect(codes(record).issues).toEqual(['invalid_fields_scope', 'criterion_level_not_in_record']);
+  });
+
+  it('accepte le niveau doctorate', () => {
+    const record = structured();
+    record.levels = ['master', 'doctorate'];
+    record.scholarship.tags = ['master', 'doctorate'];
+    const result = codes(record);
+    expect(result.issues).toEqual([]);
+    expect(result.report.verifiedCounts.doctorate).toBe(1);
+  });
+
+  it('exige que les tags de niveau disent exactement levels', () => {
+    // La reprise SQL de `eligibleLevels` lit les tags : Gates Cambridge en
+    // 1.4.0 (tag `master` seul) aurait été reprise sans le doctorat.
+    const gates = SCHOLARSHIP_CATALOG_V1.records.find(
+      (record) => record.scholarship.id === 'gates_cambridge_2027',
+    )!;
+    expect(gates.levels).toEqual(['master', 'doctorate']);
+    const regressed: VerifiedScholarshipCatalogRecord = {
+      ...gates,
+      scholarship: {
+        ...gates.scholarship,
+        tags: gates.scholarship.tags.filter((tag) => tag !== 'doctorate'),
+      },
+    };
+    const report = validateScholarshipCatalog(
+      { ...SCHOLARSHIP_CATALOG_V1, records: [regressed] },
+      { now: CATALOG_NOW, includeVolumeTargets: false },
+    );
+    expect(report.issues.map((issue) => issue.code)).toEqual(['level_tags_mismatch']);
   });
 });

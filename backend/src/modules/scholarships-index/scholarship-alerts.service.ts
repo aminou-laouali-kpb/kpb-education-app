@@ -84,6 +84,46 @@ export class ScholarshipAlertsService {
     return { scholarshipId, subscribed: true };
   }
 
+  /**
+   * `POST /me/scholarship-alerts` : la cloche sur plusieurs bourses, dans UNE
+   * transaction. Même porte que `subscribe` (approuvée et active) ; un
+   * identifiant qui ne la passe pas est ignoré, jamais une erreur pour tout le
+   * lot. Idempotent : une cloche déjà allumée le reste, un favori déjà là
+   * n'est jamais retiré (contrairement à un `toggle`).
+   */
+  async subscribeMany(
+    userId: string,
+    scholarshipIds: readonly string[],
+  ): Promise<{ subscribedIds: string[]; skippedIds: string[] }> {
+    this.assertDb();
+    const unified = isFollowUnified();
+    const requested = [...new Set(scholarshipIds)];
+    if (requested.length === 0) return { subscribedIds: [], skippedIds: [] };
+    const subscribed = await this.prismaService.execute((prisma) =>
+      prisma.$transaction(async (tx) => {
+        const followable = await tx.scholarship.findMany({
+          where: {
+            id: { in: requested },
+            moderationStatus: 'approved',
+            isActive: true,
+          },
+          select: { id: true },
+        });
+        const allowed = new Set(followable.map((row) => row.id));
+        const ids = requested.filter((id) => allowed.has(id));
+        for (const scholarshipId of ids) {
+          await this.turnBellOn(tx, userId, scholarshipId, unified);
+        }
+        return ids;
+      }),
+    );
+    const subscribedIds = subscribed ?? [];
+    return {
+      subscribedIds,
+      skippedIds: requested.filter((id) => !subscribedIds.includes(id)),
+    };
+  }
+
   async unsubscribe(userId: string, scholarshipId: string) {
     this.assertDb();
     const now = new Date();

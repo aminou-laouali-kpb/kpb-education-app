@@ -7,6 +7,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import type { Prisma } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import { CaseStatus } from '../../common/enums/case-status.enum';
@@ -25,8 +26,23 @@ import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { UploadCaseDocumentDto } from './dto/upload-case-document.dto';
 
+/**
+ * Le résumé de la bourse accompagnée (« Mes 10 bourses » → « Être
+ * accompagné »), lu avec le dossier par la relation : une requête groupée par
+ * lecture, jamais une par dossier. Servi aux seules lectures staff (admin,
+ * conseiller) : nom pour la file, lien officiel pour le conseiller.
+ */
+const CASE_SCHOLARSHIP_SELECT = {
+  id: true,
+  nameFr: true,
+  nameEn: true,
+  sourceUrl: true,
+  applicationUrl: true,
+} as const;
+
 const CASE_INCLUDE = {
   user: true,
+  scholarship: { select: CASE_SCHOLARSHIP_SELECT },
   messages: { orderBy: { createdAt: 'desc' as const } },
   timelineEvents: { orderBy: { createdAt: 'desc' as const } },
   tasks: { orderBy: { createdAt: 'desc' as const } },
@@ -107,11 +123,20 @@ export class CasesService {
     return dbCase;
   }
 
-  async findAll(userId?: string) {
+  /**
+   * `filters.scholarshipId` : la vérification « un dossier existe-t-il déjà pour
+   * cette bourse ? » de « Être accompagné ». Toujours DANS la portée de
+   * l'appelant : un étudiant ne voit que ses dossiers, filtre ou pas.
+   */
+  async findAll(userId?: string, filters: { scholarshipId?: string } = {}) {
     this.assertDb();
+    const where: Prisma.CaseWhereInput = {
+      ...(userId ? { userId } : {}),
+      ...(filters.scholarshipId ? { scholarshipId: filters.scholarshipId } : {}),
+    };
     const items = await this.prismaService.execute((prisma) =>
       prisma.case.findMany({
-        where: userId ? { userId } : undefined,
+        where: Object.keys(where).length > 0 ? where : undefined,
         include: CASE_INCLUDE,
         orderBy: { createdAt: 'desc' },
       }),
@@ -207,6 +232,16 @@ export class CasesService {
           orderBy: { createdAt: 'asc' },
         });
 
+        // Le lien vers la bourse n'est gardé que si la fiche existe : un
+        // identifiant inconnu (fiche retirée, app plus récente) crée le dossier
+        // sans lien plutôt que d'échouer sur la clé étrangère.
+        const linkedScholarship = input.scholarshipId
+          ? await tx.scholarship.findUnique({
+              where: { id: input.scholarshipId },
+              select: { id: true },
+            })
+          : null;
+
         // Insert with a temporary unique placeholder, then derive the real
         // referenceCode from the DB-assigned `seq`. This is collision-free by
         // construction (no count()+1 race). The same monotonic `seq` is used to
@@ -221,6 +256,7 @@ export class CasesService {
             description: input.description,
             contextLabel: input.contextLabel,
             preferredContactMethod: input.preferredContactMethod ?? 'in_app',
+            scholarshipId: linkedScholarship?.id ?? null,
             source: 'mobile_app',
             nextStepTitle: 'Your case is under review',
             nextStepDescription:
@@ -827,6 +863,25 @@ export class CasesService {
       preferredLanguage: c.user?.preferredLanguage ?? 'fr',
       source: c.source ?? 'mobile_app',
       requestedCountryId: c.requestedCountryId ?? null,
+      // « Mes 10 bourses » : la bourse accompagnée (lecture seule, élève,
+      // conseiller et admin).
+      scholarshipId: c.scholarshipId ?? null,
+      // Son nom et ses liens officiels, pour la file staff seulement (l'app
+      // affiche le nom tiré de son propre run). Absent de la réponse élève et
+      // de la diffusion Socket.IO `caseUpdated`.
+      ...(includeInternal
+        ? {
+            scholarship: c.scholarship
+              ? {
+                  id: c.scholarship.id,
+                  nameFr: c.scholarship.nameFr,
+                  nameEn: c.scholarship.nameEn,
+                  sourceUrl: c.scholarship.sourceUrl ?? null,
+                  applicationUrl: c.scholarship.applicationUrl ?? null,
+                }
+              : null,
+          }
+        : {}),
       type: c.type,
       title: c.title,
       status: c.status as CaseStatus,

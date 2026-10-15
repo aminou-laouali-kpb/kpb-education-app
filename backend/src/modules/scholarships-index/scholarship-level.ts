@@ -4,10 +4,10 @@ import type { ScholarshipStudyLevel } from './data/scholarship-catalog.types';
  * Niveau d'études canonique, indépendant de la locale.
  *
  * C'est le vocabulaire du catalogue vérifié (`secondary`, `bachelor`,
- * `master`), plus `doctorate`, que l'app propose (« PhD ») sans que le
- * catalogue sache encore l'exprimer.
+ * `master`, et `doctorate` depuis la version 1.5.0), que l'app propose aussi
+ * (« PhD »).
  */
-export type CanonicalStudyLevel = ScholarshipStudyLevel | 'doctorate';
+export type CanonicalStudyLevel = ScholarshipStudyLevel;
 
 /**
  * Tags de niveau reconnus, comparés EXACTEMENT et non en sous-chaîne : le tag
@@ -85,11 +85,12 @@ export function levelsInText(
  * du catalogue vérifié ils reprennent exactement son `levels`. Pour le
  * secondaire, la Licence et le Master, un libellé ne vaut pas mieux qu'eux.
  *
- * Le doctorat fait exception : le vocabulaire du catalogue vérifié s'arrête au
- * master, donc ses tags ne le nomment jamais, et leur silence ne veut pas dire
- * « pas de doctorat ». Quand les tags ne le portent pas, on le lit dans les
- * libellés FR+EN : Gates Cambridge (tag `master`, « … ou doctorat ») accepte
- * bien un doctorant. Une mention niée (« pas de doctorat ») ne compte pas.
+ * Le doctorat fait exception : jusqu'à la version 1.5.0 le vocabulaire du
+ * catalogue vérifié s'arrêtait au master, et des lignes importées avant elle
+ * portent encore des tags muets sur le doctorat — leur silence ne veut pas dire
+ * « pas de doctorat ». Quand les tags ne le portent pas, on le lit donc dans
+ * les libellés FR+EN : Gates Cambridge (« … ou doctorat ») accepte bien un
+ * doctorant. Une mention niée (« pas de doctorat ») ne compte pas.
  *
  * Sans tag de niveau (fiche collectée, saisie admin, seed héritée), repli sur
  * les DEUX libellés, FR et EN, pour tous les niveaux : le résultat ne dépend

@@ -97,6 +97,20 @@ for (const soon of report.closingSoon) {
   );
 }
 
+// L'éligibilité structurée non relue AVERTIT sans bloquer (voir
+// STRUCTURED_ELIGIBILITY_GATE dans le validateur) : une annotation unique, pas
+// une par fiche, pour qu'elle reste lisible dans le résumé du run. Le détail
+// fiche par fiche est dans `warnings` du rapport JSON.
+const coverage = report.eligibilityCoverage;
+if (coverage.missing + coverage.drafts + coverage.stale > 0) {
+  console.error(
+    `::warning::Éligibilité structurée : ${coverage.stamped}/${coverage.records} fiche(s) ` +
+      `relue(s) et tamponnée(s) (${coverage.stale} périmée(s)), ${coverage.drafts} brouillon(s), ` +
+      `${coverage.missing} sans critères. Un brouillon n'exclut aucun élève : ` +
+      'relire chaque fiche contre sa source puis la tamponner (docs/catalog-verification-sop.md).',
+  );
+}
+
 const passed = ignoreClock ? report.validIgnoringClock : report.valid;
 if (!passed) {
   process.exitCode = 1;

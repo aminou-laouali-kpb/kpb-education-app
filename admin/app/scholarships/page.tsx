@@ -1,6 +1,6 @@
 'use client';
 
-import { CSSProperties, useCallback, useEffect, useMemo, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
@@ -35,6 +35,9 @@ import {
 } from '../../components/ui';
 import type { BadgeVariant } from '../../components/ui';
 import { CycleOpeningPanel } from '../../components/scholarships/CycleOpeningPanel';
+import { EligibilityCoverageCard } from '../../components/scholarships/EligibilityCoverageCard';
+import { MatchPreviewDrawer } from '../../components/scholarships/MatchPreviewDrawer';
+import { ELIGIBILITY_STATE_VARIANT } from '../../components/scholarships/ScholarshipEligibilityEditor';
 import { OpeningTodoCard } from '../../components/scholarships/OpeningTodoCard';
 import { ScholarshipContentEditor } from '../../components/scholarships/ScholarshipContentEditor';
 import { ScholarshipVideosEditor } from '../../components/scholarships/ScholarshipVideosEditor';
@@ -44,6 +47,13 @@ import type {
   ScholarshipEntry,
   ScholarshipStepEntry,
 } from '../../components/scholarships/types';
+import {
+  eligibilityStateOf,
+  needsStructuring,
+  SCHOLARSHIP_QUERY_PARAM,
+} from '../../lib/scholarship-eligibility';
+import { fetchEligibilityCoverage } from '../../lib/scholarship-eligibility-api';
+import type { EligibilityCoverageResponse } from '../../lib/scholarship-eligibility-types';
 
 interface StepDraft {
   stepNumber: string;
@@ -141,6 +151,17 @@ export default function ScholarshipsPage() {
   const [openingTodo, setOpeningTodo] = useState<OpeningTodoResponse | null>(
     null,
   );
+  // Éligibilité structurée (« Mes 10 bourses ») : compteur de couverture —
+  // la porte de lancement —, filtre « À structurer » et aperçu du moteur.
+  const [coverage, setCoverage] = useState<EligibilityCoverageResponse | null>(
+    null,
+  );
+  const [coverageFailed, setCoverageFailed] = useState(false);
+  const [toStructureOnly, setToStructureOnly] = useState(false);
+  const [preview, setPreview] = useState<{
+    focusId: string | null;
+    focusName: string | null;
+  } | null>(null);
   const [autoOpen, setAutoOpen] = useState<{
     scholarshipId: string;
     academicYear: string;
@@ -150,6 +171,13 @@ export default function ScholarshipsPage() {
     () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
+
+  const freshnessDays = coverage?.freshnessDays;
+  const visibleItems = useMemo(() => {
+    if (!toStructureOnly) return items;
+    const now = new Date();
+    return items.filter((item) => needsStructuring(item, now, freshnessDays));
+  }, [items, toStructureOnly, freshnessDays]);
 
   function statusLabel(status: ModerationStatus) {
     return t(`scholarships.status_${status}`);
@@ -161,13 +189,22 @@ export default function ScholarshipsPage() {
       : t('scholarships.requirementSeparate');
   }
 
+  // Seule la DERNIÈRE lecture demandée s'applique : un changement de filtre
+  // (ou le lien profond `?scholarshipId=`) ne doit pas être écrasé par une
+  // réponse plus ancienne arrivée après.
+  const loadSeq = useRef(0);
+
   async function loadScholarships(status: ModerationStatus) {
+    const seq = ++loadSeq.current;
     setLoading(true);
     setErrorMessage(null);
     try {
       const response = await apiFetch<ModerationResponse>(
         `/admin/scholarships/moderation?status=${status}`,
       );
+      if (seq !== loadSeq.current) {
+        return;
+      }
       const nextItems = response?.items ?? [];
       setItems(nextItems);
       setSelectedId((current) =>
@@ -176,11 +213,16 @@ export default function ScholarshipsPage() {
           : (nextItems[0]?.id ?? null),
       );
     } catch (error) {
+      if (seq !== loadSeq.current) {
+        return;
+      }
       setErrorMessage(
         error instanceof Error ? error.message : t('scholarships.loadError'),
       );
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) {
+        setLoading(false);
+      }
     }
   }
 
@@ -191,6 +233,36 @@ export default function ScholarshipsPage() {
     void loadScholarships(statusFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, statusFilter]);
+
+  const loadCoverage = useCallback(async () => {
+    try {
+      setCoverage(await fetchEligibilityCoverage());
+      setCoverageFailed(false);
+    } catch {
+      // Le compteur est un repère : la file reste utilisable sans lui.
+      setCoverageFailed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    void loadCoverage();
+  }, [session, loadCoverage]);
+
+  // Lien profond depuis un dossier : `/scholarships?scholarshipId=…` ouvre la
+  // fiche (elle est en général approuvée). Lu une fois, au montage.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get(
+      SCHOLARSHIP_QUERY_PARAM,
+    );
+    if (!id) {
+      return;
+    }
+    setSelectedId(id);
+    setStatusFilter('approved');
+  }, []);
 
   const loadOpeningLists = useCallback(async () => {
     const [overview, todo] = await Promise.allSettled([
@@ -290,6 +362,9 @@ export default function ScholarshipsPage() {
           ? t('scholarships.approveSuccess')
           : t('scholarships.rejectSuccess'),
       );
+      // Une bourse approuvée entre dans le compteur (et y reste « à
+      // structurer » tant que ses conditions ne sont pas vérifiées).
+      void loadCoverage();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('scholarships.updateError'),
@@ -435,6 +510,15 @@ export default function ScholarshipsPage() {
     } finally {
       setStepPendingId(null);
     }
+  }
+
+  function renderEligibilityBadge(entry: ScholarshipEntry) {
+    const state = eligibilityStateOf(entry, new Date(), freshnessDays);
+    return (
+      <Badge variant={ELIGIBILITY_STATE_VARIANT[state]}>
+        {t(`scholarships.eligibility.cell_${state}`)}
+      </Badge>
+    );
   }
 
   function renderStepsEditor(entry: ScholarshipEntry) {
@@ -652,8 +736,23 @@ export default function ScholarshipsPage() {
 
         <ScholarshipContentEditor
           entry={entry}
-          onSaved={(patch) => patchEntry(entry.id, patch)}
+          onSaved={(patch) => {
+            patchEntry(entry.id, patch);
+            void loadCoverage();
+          }}
         />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() =>
+              setPreview({ focusId: entry.id, focusName: entry.nameFr })
+            }
+          >
+            {t('scholarships.eligibility.preview.openForEntryCta')}
+          </Button>
+        </div>
 
         <Field label={t('scholarships.requirementLabel')}>
           {({ id }) => (
@@ -728,6 +827,14 @@ export default function ScholarshipsPage() {
         ) : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
+        <EligibilityCoverageCard
+          coverage={coverage}
+          failed={coverageFailed}
+          filterActive={toStructureOnly}
+          onToggleFilter={() => setToStructureOnly((current) => !current)}
+          onOpenPreview={() => setPreview({ focusId: null, focusName: null })}
+        />
+
         <OpeningTodoCard todo={openingTodo} onPrepare={prepareAnnouncement} />
 
         <div
@@ -774,17 +881,24 @@ export default function ScholarshipsPage() {
               t('scholarships.colSteps'),
               t('scholarships.opening.colFollowers'),
               t('scholarships.opening.colAnnounced'),
+              t('scholarships.eligibility.colEligibility'),
               t('scholarships.colStatus'),
             ]}
-            cols="1.4fr 0.7fr 0.5fr 0.6fr 0.7fr 0.7fr"
+            cols="1.4fr 0.7fr 0.5fr 0.6fr 0.7fr 0.7fr 0.7fr"
             footnote={t('scholarships.tableNote')}
           >
             {loading ? (
               <EmptyState title={t('scholarships.loading')} />
-            ) : items.length === 0 ? (
-              <EmptyState title={t('scholarships.empty')} />
+            ) : visibleItems.length === 0 ? (
+              <EmptyState
+                title={
+                  toStructureOnly && items.length > 0
+                    ? t('scholarships.eligibility.coverage.filterEmpty')
+                    : t('scholarships.empty')
+                }
+              />
             ) : (
-              items.map((entry) => (
+              visibleItems.map((entry) => (
                 <AdminTableRow
                   key={entry.id}
                   selected={selectedId === entry.id}
@@ -822,6 +936,9 @@ export default function ScholarshipsPage() {
                     muted
                   />
                   <div>
+                    {renderEligibilityBadge(entry)}
+                  </div>
+                  <div>
                     <Badge variant={STATUS_VARIANT[entry.moderationStatus]}>
                       {statusLabel(entry.moderationStatus)}
                     </Badge>
@@ -840,6 +957,12 @@ export default function ScholarshipsPage() {
           )}
         </div>
       </div>
+      <MatchPreviewDrawer
+        open={preview !== null}
+        onClose={() => setPreview(null)}
+        focusScholarshipId={preview?.focusId}
+        focusName={preview?.focusName}
+      />
     </DashboardShell>
   );
 }

@@ -57,6 +57,13 @@ export interface ScholarshipEntry {
   lastVerifiedAt: string | null;
   tags: string[];
   isActive?: boolean;
+  // Éligibilité structurée (« Mes 10 bourses », chantier D4). Facultatifs :
+  // un backend antérieur ne les sert pas (la fiche est alors « non analysée »).
+  eligibleLevels?: string[];
+  fieldsScope?: 'unknown' | 'all' | 'listed';
+  eligibilityCriteria?: unknown;
+  eligibilityStructuredAt?: string | null;
+  eligibilityStructuredBy?: string | null;
   applicationRequirement: ApplicationRequirement;
   applicationSteps: ScholarshipStepEntry[];
   videos?: ScholarshipVideoEntry[];

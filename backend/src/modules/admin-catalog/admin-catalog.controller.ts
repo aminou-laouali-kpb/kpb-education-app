@@ -10,17 +10,20 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import type { IncomingHttpHeaders } from 'node:http';
+
 import { Roles } from '../../common/decorators/roles.decorator';
 import { InternalRole } from '../../common/enums/internal-role.enum';
 import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { resolveRequestId } from '../../common/request-id';
 import type { AdminSessionUser } from '../auth/auth.service';
 import { CreateScholarshipVideoDto } from '../scholarships-index/dto/create-scholarship-video.dto';
 import { UpdateScholarshipVideoDto } from '../scholarships-index/dto/update-scholarship-video.dto';
 import { ScholarshipVideosService } from '../scholarships-index/scholarship-videos.service';
 import { AdminCatalogService } from './admin-catalog.service';
 
-type AdminRequest = { adminUser?: AdminSessionUser };
+type AdminRequest = { adminUser?: AdminSessionUser; headers?: IncomingHttpHeaders };
 
 /// Catalogue write API for the back-office. Read access stays on the public
 /// `/catalog/*` controller; these mutations are admin-only.
@@ -107,19 +110,36 @@ export class AdminCatalogController {
   }
 
   // ── Scholarships (bourses) ────────────────────────────────────────────────
+  // L'éligibilité structurée (`eligibleLevels`, `fieldsScope`,
+  // `eligibilityCriteria`, `markStructured`) passe par ces deux routes : elle
+  // est lue STRICTEMENT par le service (400 avec la liste des erreurs) et
+  // chaque écriture est auditée au nom de l'admin connecté.
   @Post('scholarships')
-  // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
-  createScholarship(@Body() input: Record<string, unknown>) {
-    return this.service.createScholarship(input);
+  createScholarship(
+    @Req() req: AdminRequest,
+    // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
+    @Body() input: Record<string, unknown>,
+  ) {
+    return this.service.createScholarship(
+      input,
+      req.adminUser,
+      resolveRequestId(req.headers?.['x-request-id']),
+    );
   }
 
   @Patch('scholarships/:id')
   updateScholarship(
+    @Req() req: AdminRequest,
     @Param('id') id: string,
     // eslint-disable-next-line no-restricted-syntax -- corps hérité non validé, à migrer vers un DTO class-validator
     @Body() input: Record<string, unknown>,
   ) {
-    return this.service.updateScholarship(id, input);
+    return this.service.updateScholarship(
+      id,
+      input,
+      req.adminUser,
+      resolveRequestId(req.headers?.['x-request-id']),
+    );
   }
 
   @Delete('scholarships/:id')

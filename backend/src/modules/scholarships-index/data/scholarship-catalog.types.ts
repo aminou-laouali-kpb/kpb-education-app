@@ -1,7 +1,16 @@
+import type { EligibilityCriterion } from '../../scholarship-match/eligibility-criteria';
+
+/**
+ * Niveaux d'études du catalogue vérifié. `doctorate` est entré avec la
+ * version 1.5.0 : Gates Cambridge finance « un doctorat, un MLitt ou une
+ * formation d'un an » — la limite au master excluait à tort un doctorant.
+ * Même vocabulaire que l'enum Prisma `ScholarshipEligibleLevel`.
+ */
 export const SCHOLARSHIP_STUDY_LEVELS = [
   'secondary',
   'bachelor',
   'master',
+  'doctorate',
 ] as const;
 
 export type ScholarshipStudyLevel =
@@ -98,6 +107,34 @@ export interface LegacyScholarshipCatalogPayload {
   tags: string[];
 }
 
+/** Même vocabulaire que l'enum Prisma `ScholarshipFieldsScope`. */
+export const SCHOLARSHIP_FIELDS_SCOPES = ['unknown', 'all', 'listed'] as const;
+export type ScholarshipFieldsScope = (typeof SCHOLARSHIP_FIELDS_SCOPES)[number];
+
+/**
+ * Valeur de `structuredBy` d'un brouillon : critères RÉDIGÉS depuis le texte
+ * de la fiche, que personne n'a encore relus contre la source officielle.
+ */
+export const DRAFT_STRUCTURED_BY = 'draft';
+
+/**
+ * L'éligibilité structurée d'une fiche (chantier D, catalogue 1.5.0).
+ *
+ * `structuredAt` est propre à la fiche et distinct de `verifiedAt` : le second
+ * certifie que les pages officielles ont été relues, le premier qu'un éditeur
+ * a confronté CES critères à ces pages. Tant qu'il est nul (brouillon), le
+ * moteur n'exclut personne sur cette fiche (règle des 400 jours,
+ * `scholarship-match/assess.ts`) : tout écart devient « à vérifier ».
+ */
+export interface ScholarshipCatalogEligibility {
+  fieldsScope: ScholarshipFieldsScope;
+  criteria: EligibilityCriterion[];
+  /** ISO 8601 de la relecture humaine, ou `null` pour un brouillon. */
+  structuredAt: string | null;
+  /** Nom de l'éditeur, ou {@link DRAFT_STRUCTURED_BY} pour un brouillon. */
+  structuredBy: string;
+}
+
 export interface VerifiedScholarshipCatalogRecord {
   catalogId: string;
   levels: ScholarshipStudyLevel[];
@@ -107,6 +144,8 @@ export interface VerifiedScholarshipCatalogRecord {
   officialSources: ScholarshipOfficialSource[];
   verifiedAt: string;
   verifiedBy: string;
+  /** Facultatif : une fiche sans bloc est « non structurée » (avertissement). */
+  eligibility?: ScholarshipCatalogEligibility;
 }
 
 export type ScholarshipBacklogReason =
@@ -124,6 +163,8 @@ export interface ScholarshipCatalogVolumeTargets {
   secondary: number;
   bachelor: number;
   master: number;
+  /** Facultatif (plancher 0) : une seule fiche doctorale à ce jour. */
+  doctorate?: number;
 }
 
 export interface VersionedScholarshipCatalog {
