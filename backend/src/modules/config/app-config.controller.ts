@@ -359,6 +359,11 @@ export class AppConfigController {
         // même variable coupe les routes `/scholarships/match/*` (404
         // `{ disabled: true }`) : la carte et l'API s'allument ensemble.
         scholarshipMatch: enabled(process.env.KPB_SCHOLARSHIP_MATCH_ENABLED),
+        // Onboarding « la valeur d'abord » (chantier I3) : aucun champ
+        // pré-rempli sans choix de l'élève, « Passer » dès la page 1, erreurs
+        // dans le champ. FERMÉ par défaut : l'ancien parcours reste le repli,
+        // et seule `true` ouvre le nouveau.
+        onboardingV2: enabled(process.env.KPB_ONBOARDING_V2_ENABLED),
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse

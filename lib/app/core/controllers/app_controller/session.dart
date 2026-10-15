@@ -251,7 +251,17 @@ mixin _SessionMixin on _AppControllerBase {
     unawaited(_pushProfileUpdate());
   }
 
-  void skipOnboarding() {
+  /// « Passer » l'onboarding.
+  ///
+  /// [ageDeclaration] (onboarding V2, où « Passer » existe dès la page 1) :
+  /// la date de naissance et, pour un mineur, l'accord du représentant légal
+  /// que l'élève a DÉJÀ saisis avant de passer. Ils entrent dans le profil
+  /// local, marqué « à pousser », AVANT toute synchro : sans ça, un mineur qui
+  /// passait en page 1 perdait sa date de naissance, et le profil vide poussé
+  /// puis rapatrié n'avait plus d'âge — ni la porte de l'IA ni l'étape tuteur
+  /// de « Mes 10 bourses » ne savaient plus qu'il était mineur.
+  /// Absent (ancien parcours) : comportement inchangé.
+  void skipOnboarding({OnboardingAgeDeclaration? ageDeclaration}) {
     onboardingSkipped = true;
     onboardingStep = 0;
     hasCompletedOnboarding = true;
@@ -266,8 +276,23 @@ mixin _SessionMixin on _AppControllerBase {
       countryOfResidence: '',
       preferredLanguage: localeCode,
     );
+    final birthDate = ageDeclaration?.birthDate;
+    if (ageDeclaration != null && birthDate != null) {
+      final current = profile!;
+      final withAge = current.copyWith(birthDate: birthDate);
+      profile = withAge.isMinor && ageDeclaration.guardianConsented
+          ? withAge.copyWith(
+              guardianName: ageDeclaration.guardianName,
+              guardianContact: ageDeclaration.guardianContact,
+              guardianConsentedAt:
+                  current.guardianConsentedAt ?? DateTime.now(),
+            )
+          : withAge;
+      _profileNeedsPush = true;
+    }
     _persist();
     update();
+    if (birthDate != null) unawaited(_pushProfileUpdate());
     Get.offAllNamed(AppRoutes.home);
   }
 

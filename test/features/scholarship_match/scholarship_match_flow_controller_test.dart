@@ -83,6 +83,57 @@ void main() {
     expect(flow.buildAnswers()['guardianName'], 'Awa');
   });
 
+  // Onboarding V2 : « Passer » garde la date de naissance d'un mineur. Le
+  // serveur sait donc son âge et réclame l'accord : l'étape tuteur doit être
+  // posée SANS redemander la date — et pas du tout si l'accord est venu avec.
+  test(
+      'mineur qui a passé l\'onboarding V2 avec sa date : l\'étape tuteur '
+      'est posée, la date n\'est pas redemandée', () {
+    final flow = ScholarshipMatchFlowController(
+      state: _state(matchStateJson(
+        required: ['nationalityCode', 'guardianConsent', 'englishLevel'],
+        answers: <String, dynamic>{
+          'nationalityCode': null,
+          'residence': 'ner',
+          'birthDate': '2009-05-10',
+          'guardianConsented': false,
+          'fieldIds': <String>[],
+          'targetCountryIds': <String>[],
+          'languageTests': <dynamic>[],
+          'confirmedAt': null,
+        },
+      )),
+      now: () => now,
+    );
+    expect(flow.needsGuardian, isTrue);
+    expect(flow.steps, contains('guardianConsent'));
+    expect(flow.steps, isNot(contains('birthDate')));
+    expect(flow.isAnswered('birthDate'), isTrue);
+    expect(flow.isAnswered('guardianConsent'), isFalse);
+  });
+
+  test('mineur qui a passé AVEC l\'accord du tuteur : aucune étape tuteur', () {
+    final flow = ScholarshipMatchFlowController(
+      state: _state(matchStateJson(
+        required: ['nationalityCode', 'englishLevel'],
+        answers: <String, dynamic>{
+          'nationalityCode': null,
+          'residence': 'ner',
+          'birthDate': '2009-05-10',
+          'guardianConsented': true,
+          'fieldIds': <String>[],
+          'targetCountryIds': <String>[],
+          'languageTests': <dynamic>[],
+          'confirmedAt': null,
+        },
+      )),
+      now: () => now,
+    );
+    expect(flow.needsGuardian, isFalse);
+    expect(flow.steps, isNot(contains('guardianConsent')));
+    expect(flow.steps, isNot(contains('birthDate')));
+  });
+
   test('majeur : jamais d\'étape tuteur', () {
     final flow = ScholarshipMatchFlowController(
       state: _state(matchStateJson()),

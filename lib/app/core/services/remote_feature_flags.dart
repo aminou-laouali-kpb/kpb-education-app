@@ -359,6 +359,16 @@ class RemoteFeatureFlags {
   bool get scholarshipMatchEnabled =>
       _flag('scholarshipMatch', AppConfig.scholarshipMatchEnabled);
 
+  /// L'onboarding « la valeur d'abord » (chantier I3) est-il ouvert ?
+  ///
+  /// Clé `onboardingV2`, FERMÉE par défaut : absente (backend plus ancien),
+  /// illisible ou serveur injoignable, elle vaut `false` et l'ancien parcours
+  /// reste servi, inchangé. Ouverte : aucun champ pré-rempli sans choix de
+  /// l'élève, « Passer » dès la page 1, erreurs dans le champ. L'écran la lit
+  /// UNE fois, à son ouverture : un rafraîchissement en cours de saisie ne
+  /// change pas le formulaire sous les doigts de l'élève.
+  bool get onboardingV2Enabled => _flag('onboardingV2', false);
+
   // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
   //
   // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne

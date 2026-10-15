@@ -1464,6 +1464,10 @@ const Map<String, String> appTranslationsEn = {
   'onboarding_selection_required_title': 'Selection required',
   'onboarding_select_field_body': 'Choose at least one field of interest.',
   'onboarding_select_country_body': 'Choose at least one destination country.',
+  'onboarding_fields_required_inline':
+      'Pick at least one field you\'re interested in.',
+  'onboarding_countries_required_inline':
+      'Pick at least one country where you\'d like to study.',
   'onboarding_welcome_title': 'Welcome 👋',
   'onboarding_welcome_subtitle': 'Let\'s create your KPB Education profile.',
   'onboarding_academic_title': 'Your background 🎓',

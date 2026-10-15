@@ -1609,6 +1609,11 @@ const Map<String, String> appTranslationsFr = {
   'onboarding_select_field_body': 'Choisissez au moins une filière d\'intérêt.',
   'onboarding_select_country_body':
       'Choisissez au moins un pays de destination.',
+  // Onboarding V2 : l'erreur s'écrit SOUS le groupe de puces, en tu.
+  'onboarding_fields_required_inline':
+      'Choisis au moins une filière qui t\'intéresse.',
+  'onboarding_countries_required_inline':
+      'Choisis au moins un pays où tu aimerais étudier.',
   'onboarding_welcome_title': 'Bienvenue 👋',
   'onboarding_welcome_subtitle': 'Créons votre profil KPB Education.',
   'onboarding_academic_title': 'Votre parcours 🎓',

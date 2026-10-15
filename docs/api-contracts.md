@@ -959,6 +959,22 @@ Indépendant de tout autre drapeau. Gardé par `backend/src/modules/config/app-c
 et `test/release/config_env_relay_test.dart` (relais compose, défaut `false`). Contrat des routes :
 section « Mes 10 bourses » plus bas.
 
+### Interrupteur « Onboarding la valeur d'abord » dans `features` : `onboardingV2`
+
+Un booléen **strict**, toujours présent, **`false` par défaut** (seule la valeur `true`, casse
+et espaces tolérés, l'ouvre). Un backend plus ancien ne le sert pas : l'app lit une clé absente
+comme `false` et garde l'ancien parcours.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.onboardingV2` | `KPB_ONBOARDING_V2_ENABLED` | Nouvel onboarding (chantier I3) : aucun champ pré-rempli sans choix de l'élève (niveau, pays, domaine, budget…), « Passer » dès la page 1, erreurs affichées dans le champ. Coupé : l'ancien parcours, inchangé. |
+
+Purement côté app : aucune route serveur ne dépend de ce drapeau, et le contrat de
+`PATCH /profiles/me` est inchangé (un champ non choisi n'est simplement pas envoyé). L'âge et
+le consentement du tuteur restent exigés dans les deux parcours. Indépendant de tout autre
+drapeau. Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
+`test/release/config_env_relay_test.dart` (relais compose, défaut `false`).
+
 ### Ce que `GET /config/app` sert d'autre que des drapeaux (build 54)
 
 Route publique, sans authentification. Quatre ajouts, tous **absents sur un

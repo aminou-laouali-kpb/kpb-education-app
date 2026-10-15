@@ -185,6 +185,9 @@ services:
       # routes /scholarships/match/* (404 `{ disabled: true }` tant qu'il est
       # coupé). FERMÉ par défaut : livré éteint, ouvert à la bascule.
       - KPB_SCHOLARSHIP_MATCH_ENABLED=${KPB_SCHOLARSHIP_MATCH_ENABLED:-false}
+      # Onboarding « la valeur d'abord » (chantier I3) : `features.onboardingV2`.
+      # FERMÉ par défaut : l'ancien parcours reste servi tant qu'il est coupé.
+      - KPB_ONBOARDING_V2_ENABLED=${KPB_ONBOARDING_V2_ENABLED:-false}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.

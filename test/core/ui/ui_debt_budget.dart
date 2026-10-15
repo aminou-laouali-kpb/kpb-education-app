@@ -23,7 +23,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/auth/app_lock_screen.dart': 4,
   'lib/app/features/auth/auth_welcome_screen.dart': 6,
   'lib/app/features/auth/magic_link_email_screen.dart': 2,
-  'lib/app/features/auth/magic_link_verify_screen.dart': 3,
+  'lib/app/features/auth/magic_link_verify_screen.dart': 2,
   'lib/app/features/budget/budget_calculator_screen.dart': 12,
   'lib/app/features/cases/case_detail_screen.dart': 1,
   'lib/app/features/cases/case_detail_screen/cards.dart': 13,

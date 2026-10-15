@@ -40,7 +40,18 @@ class _PageIdentity extends StatelessWidget {
     required this.guardianKey,
     required this.consentKey,
     required this.onGuardianChanged,
+    this.requireCountry = false,
+    this.showAgeErrorEagerly = false,
   });
+
+  /// V2 : le pays de résidence n'est plus pré-rempli, il est donc exigé — et
+  /// l'erreur s'écrit dans le champ.
+  final bool requireCountry;
+
+  /// V2 : une date de moins de 16 ans (restaurée d'un profil) est signalée
+  /// dans le champ dès l'affichage, sans attendre un « Continuer » — c'est
+  /// elle qui bloque aussi « Passer ».
+  final bool showAgeErrorEagerly;
 
   /// Un « Continuer » a déjà échoué : les sections hors formulaire montrent
   /// leur erreur en place (et plus dans un bandeau posé sur le bouton).
@@ -50,7 +61,8 @@ class _PageIdentity extends StatelessWidget {
   final VoidCallback onGuardianChanged;
 
   final AccountType accountType;
-  final String language, country;
+  final String language;
+  final String? country;
   final TextEditingController firstNameCtrl,
       lastNameCtrl,
       emailCtrl,
@@ -221,6 +233,7 @@ class _PageIdentity extends StatelessWidget {
         DropdownButtonFormField<String>(
           initialValue: country,
           decoration: InputDecoration(labelText: 'country'.tr),
+          validator: requireCountry ? _req : null,
           items: _countries
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),
@@ -231,13 +244,11 @@ class _PageIdentity extends StatelessWidget {
         // ── Âge + consentement tuteur (mineurs) ────────────────────
         if (accountType == AccountType.student) ...[
           Builder(builder: (context) {
-            final birthError = !showErrors
-                ? null
-                : birthDate == null
-                    ? 'onboarding_birthdate_required'.tr
-                    : isUnderMinimumAge
-                        ? 'onboarding_under_16_body'.tr
-                        : null;
+            final birthError = birthDate == null
+                ? (showErrors ? 'onboarding_birthdate_required'.tr : null)
+                : isUnderMinimumAge && (showErrors || showAgeErrorEagerly)
+                    ? 'onboarding_under_16_body'.tr
+                    : null;
             return InkWell(
               key: birthDateKey,
               onTap: () async {
@@ -508,9 +519,15 @@ class _PageAcademic extends StatelessWidget {
     required this.onPreferredCurrency,
     required this.onWantsScholarship,
     required this.onWantsNewsletter,
+    this.requireLevels = false,
   });
 
-  final String currentLevel, targetLevel, languageLevel, gradeRange;
+  /// V2 : niveau actuel et niveau visé ne sont plus pré-remplis ; ils sont
+  /// exigés pour continuer, avec l'erreur dans le champ. La langue et la
+  /// moyenne restent facultatives : non choisies, elles restent VIDES.
+  final bool requireLevels;
+
+  final String? currentLevel, targetLevel, languageLevel, gradeRange;
   final int? annualTuitionBudgetEur;
   final String preferredCurrency;
   final bool wantsScholarship;
@@ -534,6 +551,7 @@ class _PageAcademic extends StatelessWidget {
           value: currentLevel,
           items: _studyLevels,
           onChanged: onCurrentLevel,
+          required: requireLevels,
         ),
         const SizedBox(height: KpbSpacing.md),
         _DD(
@@ -541,6 +559,7 @@ class _PageAcademic extends StatelessWidget {
           value: targetLevel,
           items: _targetLevels,
           onChanged: onTargetLevel,
+          required: requireLevels,
         ),
         const SizedBox(height: KpbSpacing.md),
         _DD(
@@ -697,18 +716,26 @@ class _PageInterests extends StatelessWidget {
     required this.onToggleField,
     required this.onToggleCountry,
     required this.onToggleDoc,
+    this.showErrors = false,
+    this.fieldsKey,
+    this.countriesKey,
   });
 
   final AppController controller;
   final Set<String> fieldIds, countryIds, docs;
   final ValueChanged<String> onToggleField, onToggleCountry, onToggleDoc;
 
+  /// V2 : un « Créer mon compte » a échoué — l'erreur s'écrit SOUS le groupe
+  /// de puces vide (et plus dans un toast).
+  final bool showErrors;
+  final GlobalKey? fieldsKey, countriesKey;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('explore_fields'.tr, style: KpbTextStyles.titleMd),
+        Text('explore_fields'.tr, key: fieldsKey, style: KpbTextStyles.titleMd),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -734,8 +761,11 @@ class _PageInterests extends StatelessWidget {
             );
           }).toList(),
         ),
+        if (showErrors && fieldIds.isEmpty)
+          _InlineError('onboarding_fields_required_inline'.tr),
         const SizedBox(height: KpbSpacing.lg),
-        Text('explore_countries'.tr, style: KpbTextStyles.titleMd),
+        Text('explore_countries'.tr,
+            key: countriesKey, style: KpbTextStyles.titleMd),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -761,6 +791,8 @@ class _PageInterests extends StatelessWidget {
             );
           }).toList(),
         ),
+        if (showErrors && countryIds.isEmpty)
+          _InlineError('onboarding_countries_required_inline'.tr),
         const SizedBox(height: KpbSpacing.lg),
         Text('available_documents'.tr, style: KpbTextStyles.titleMd),
         const SizedBox(height: 10),

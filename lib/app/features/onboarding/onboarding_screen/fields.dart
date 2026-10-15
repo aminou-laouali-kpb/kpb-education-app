@@ -51,16 +51,25 @@ class _DD extends StatelessWidget {
     required this.value,
     required this.items,
     required this.onChanged,
+    this.required = false,
   });
-  final String label, value;
+  final String label;
+
+  /// Null tant que rien n'est choisi (onboarding V2) : le champ reste vide.
+  final String? value;
   final List<(String, String)> items;
   final ValueChanged<String?> onChanged;
+
+  /// Exigé pour continuer : l'erreur s'écrit dans le champ.
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       initialValue: value,
       decoration: InputDecoration(labelText: label),
+      validator:
+          required ? (v) => v == null ? 'field_required'.tr : null : null,
       items: items
           .map((e) =>
               DropdownMenuItem(value: e.$1, child: Text(_optionLabel(e.$1))))
