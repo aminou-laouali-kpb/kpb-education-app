@@ -820,6 +820,7 @@ class LiveScholarshipModel {
     this.deadlineAt,
     required this.applicationUrl,
     this.sourceUrl,
+    this.lastVerifiedAt,
     required this.tags,
     required this.matchScore,
     this.currentCycle,
@@ -847,6 +848,10 @@ class LiveScholarshipModel {
   final DateTime? deadlineAt;
   final String applicationUrl;
   final String? sourceUrl;
+
+  /// Dernière vérification de la fiche par l'équipe (`lastVerifiedAt` servi
+  /// par l'API) ; null sur un backend plus ancien ou une ligne jamais revue.
+  final DateTime? lastVerifiedAt;
   final List<String> tags;
   final int matchScore;
   final ScholarshipCycleModel? currentCycle;
@@ -860,6 +865,27 @@ class LiveScholarshipModel {
 
   bool get isFullyFunded => fundingType == 'fully_funded';
   bool get isPartiallyFunded => fundingType == 'partially_funded';
+
+  /// « Vérifiée le … » : la vérification la plus RÉCENTE connue — celle de la
+  /// fiche (`lastVerifiedAt`) ou celle des dates du cycle en cours
+  /// (`currentCycle.verifiedAt`). Null quand le serveur n'en sert aucune.
+  DateTime? get verifiedAt {
+    final record = lastVerifiedAt;
+    final cycle = currentCycle?.verifiedAt;
+    if (record == null) return cycle;
+    if (cycle == null) return record;
+    return cycle.isAfter(record) ? cycle : record;
+  }
+
+  /// La source officielle : celle du cycle en cours (dates et conditions de
+  /// la session), sinon celle de la fiche. Brute : l'écran vérifie qu'elle
+  /// est ouvrable avant de l'afficher.
+  String? get officialSourceUrl {
+    final cycle = currentCycle?.sourceUrl?.trim();
+    if (cycle != null && cycle.isNotEmpty) return cycle;
+    final record = sourceUrl?.trim();
+    return record == null || record.isEmpty ? null : record;
+  }
 
   /// La ligne de statut de la fiche (« Ouverte · clôture le … », « Ouvre le … »,
   /// « Ouverture estimée … », « Clôturée »), ou null quand on ne sait rien.
@@ -919,6 +945,9 @@ class LiveScholarshipModel {
           : null,
       applicationUrl: json['applicationUrl'] as String? ?? '',
       sourceUrl: json['sourceUrl'] as String?,
+      lastVerifiedAt: json['lastVerifiedAt'] is String
+          ? DateTime.tryParse(json['lastVerifiedAt'] as String)
+          : null,
       tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? [],
       matchScore: json['matchScore'] as int? ?? 0,
       currentCycle: json['currentCycle'] is Map<String, dynamic>
@@ -1077,6 +1106,8 @@ class ScholarshipCycleModel {
     this.estimatedCloseAt,
     this.opensAt,
     this.closesAt,
+    this.sourceUrl,
+    this.verifiedAt,
   });
 
   final String id;
@@ -1087,6 +1118,11 @@ class ScholarshipCycleModel {
   final DateTime? estimatedCloseAt;
   final DateTime? opensAt;
   final DateTime? closesAt;
+
+  /// Source officielle des dates de cette session, et date de leur dernière
+  /// vérification (servies par l'API ; null sur un backend plus ancien).
+  final String? sourceUrl;
+  final DateTime? verifiedAt;
 
   bool get isOpen => status == 'open';
   bool get isEstimated => dateConfidence == 'estimated';
@@ -1106,6 +1142,9 @@ class ScholarshipCycleModel {
       estimatedCloseAt: parse('estimatedCloseAt'),
       opensAt: parse('opensAt'),
       closesAt: parse('closesAt'),
+      sourceUrl:
+          json['sourceUrl'] is String ? json['sourceUrl'] as String : null,
+      verifiedAt: parse('verifiedAt'),
     );
   }
 }

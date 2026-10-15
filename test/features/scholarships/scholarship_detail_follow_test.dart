@@ -257,7 +257,7 @@ void main() {
     expect(find.textContaining('Ouverte'), findsNothing);
   });
 
-  testWidgets('cycle réellement ouvert : « Ouverte · clôture le … »',
+  testWidgets('cycle réellement ouvert : « Ouverte · clôture … »',
       (tester) async {
     final now = DateTime.now();
     await _pump(
@@ -272,6 +272,6 @@ void main() {
       })),
     );
 
-    expect(find.textContaining('Ouverte · clôture le'), findsOneWidget);
+    expect(find.textContaining('Ouverte · clôture'), findsOneWidget);
   });
 }

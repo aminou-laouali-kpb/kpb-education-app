@@ -256,9 +256,9 @@ void main() {
     expect(find.textContaining('Full Japanese government'), findsOneWidget);
     expect(find.text('FINANCEMENT'), findsOneWidget);
 
-    // External application form button (opens the real applicationUrl) — it sits
-    // below the benefits/eligibility sections, so scroll it into view first.
-    final ctaFinder = find.text('Formulaire officiel');
+    // « Postuler » (ouvre le vrai applicationUrl) vit dans la barre fixe du
+    // bas de la fiche (chantier I2).
+    final ctaFinder = find.text('Postuler');
     await tester.scrollUntilVisible(
       ctaFinder,
       250,

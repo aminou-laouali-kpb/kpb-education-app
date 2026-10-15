@@ -1185,7 +1185,6 @@ const Map<String, String> appTranslationsFr = {
   'live_scholarships_requirement_separate_application':
       'Candidature séparée requise',
   'live_scholarships_step_duration': 'Durée estimée : @days jour(s)',
-  'live_scholarships_apply_with_kpb': '🎯  Candidater avec KPB',
   'live_scholarships_view_official_application':
       'Voir le site officiel de candidature',
   'live_scholarships_official_form': 'Formulaire officiel',
@@ -3506,6 +3505,28 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_status_opening_estimated': 'Ouverture estimée : @date',
   'scholarship_status_opening_unknown': 'Date d\'ouverture à confirmer',
   'scholarship_status_closed': 'Clôturée',
+  // ── Fiche d'une bourse : en-tête d'urgence, vérification, actions (I2) ──
+  'scholarship_urgency_open': 'Ouverte · clôture @date',
+  'scholarship_urgency_closing_soon': 'Clôture proche · @date',
+  'scholarship_urgency_date_to_confirm': 'Date à confirmer',
+  'scholarship_urgency_last_day': 'Dernier jour pour candidater',
+  'scholarship_urgency_one_day_left': 'Il te reste 1 jour pour candidater',
+  'scholarship_urgency_days_left': 'Il te reste @count jours pour candidater',
+  'scholarship_urgency_estimated_hint':
+      'Estimation tirée des sessions précédentes : suis la bourse, on te prévient dès que les dates sont confirmées.',
+  'scholarship_urgency_unknown_hint':
+      'Les dates de la prochaine session ne sont pas encore publiées.',
+  'scholarship_urgency_closed_hint':
+      'Suis-la : on te prévient à l\'ouverture de la prochaine session.',
+  'scholarship_verified_on': 'Vérifiée le @date',
+  'scholarship_official_source': 'Source officielle',
+  'scholarship_official_source_a11y':
+      'Ouvrir la source officielle de cette bourse (site externe)',
+  'scholarship_action_apply': 'Postuler',
+  'scholarship_action_apply_a11y':
+      'Postuler à @title sur le site officiel (site externe)',
+  'scholarship_action_support': 'Être accompagné',
+  'scholarship_action_support_a11y': 'Être accompagné par KPB pour @title',
   // ── Test « Mes 10 bourses » (chantier H) ──────────────────────────────
   'scholarship_match_entry_title': 'Test : quelles bourses pour moi ?',
   'scholarship_match_entry_body':
