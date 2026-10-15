@@ -1188,37 +1188,19 @@ const Map<String, String> appTranslationsFr = {
   'live_scholarships_view_official_application':
       'Voir le site officiel de candidature',
   'live_scholarships_official_form': 'Formulaire officiel',
-  'live_scholarships_deadline_soon': 'Deadline imminente',
-  'live_scholarships_deadline_closed': 'Clôturée',
-  'live_scholarships_deadline_days': 'J-@count',
   'live_scholarships_no_deadline': 'Pas de date limite',
   'live_scholarships_funding_tile': 'Financement',
   'live_scholarships_alert': 'M\'avertir',
   'live_scholarships_alert_enabled': 'Alerte activée',
   'live_scholarships_alert_error':
       'Impossible de modifier cette alerte. Réessaie.',
-  'live_scholarships_open_now': 'Candidatures ouvertes',
-  'live_scholarships_open_estimated': 'Ouverture estimée : @date',
-  'live_scholarships_period_estimated': 'Période estimée : @open – @close',
   // ── Bourses « à venir » (revue du build 49, point 9) ─────────────
   // Quand la fenêtre estimée couvre des MOIS entiers, on l'annonce en
   // mois. Afficher « 01/03/2027 – 30/04/2027 » était plus précis que
   // ce qu'on sait réellement : ces deux dates sont les bornes du mois,
   // pas une date de campagne publiée.
-  'live_scholarships_upcoming_months':
-      'À venir, généralement aux mois de @from – @to',
-  'live_scholarships_upcoming_month': 'À venir, généralement au mois de @from',
   // ── Liste des bourses (chantier I) : ligne de statut, filtres, tri,
   // hors ligne. Une date ESTIMÉE ne se dit qu'au mois près.
-  'scholarships_list_status_open': 'Ouverte · clôture @date',
-  'scholarships_list_status_open_no_date': 'Ouverte · clôture à confirmer',
-  'scholarships_list_status_opens_on': 'Ouvre le @date',
-  'scholarships_list_status_opening_estimated': 'Ouverture estimée @date',
-  'scholarships_list_status_closing_estimated': 'Clôture estimée @date',
-  'scholarships_list_status_to_confirm': 'Date à confirmer',
-  'scholarships_list_status_closed': 'Clôturée',
-  'scholarships_list_closing_soon': 'Clôture proche · J-@count',
-  'scholarships_list_closing_today': 'Clôture aujourd\'hui',
   'scholarships_filter_button': 'Filtrer',
   'scholarships_filter_button_count': 'Filtrer · @count',
   'scholarships_filter_title': 'Filtrer les bourses',
@@ -3508,6 +3490,7 @@ const Map<String, String> appTranslationsFr = {
   // ── Fiche d'une bourse : en-tête d'urgence, vérification, actions (I2) ──
   'scholarship_urgency_open': 'Ouverte · clôture @date',
   'scholarship_urgency_closing_soon': 'Clôture proche · @date',
+  'scholarship_urgency_closing_estimated': 'Clôture estimée @date',
   'scholarship_urgency_date_to_confirm': 'Date à confirmer',
   'scholarship_urgency_last_day': 'Dernier jour pour candidater',
   'scholarship_urgency_one_day_left': 'Il te reste 1 jour pour candidater',

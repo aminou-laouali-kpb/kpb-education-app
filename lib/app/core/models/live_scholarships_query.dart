@@ -1,7 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-import 'app_models.dart';
-
 /// Statuts filtrables de la liste des bourses — ceux de `GET /scholarships
 /// ?status=` (chantier I), et ceux que la ligne de statut sait dire.
 enum ScholarshipListStatus {
@@ -41,29 +39,10 @@ enum ScholarshipListSort {
       .firstWhere((sort) => sort.wire == raw, orElse: () => relevance);
 }
 
-/// Le statut que la carte AFFICHE pour [scholarship] (même règle que le
-/// serveur pour `status=`), ou `null` quand elle est clôturée.
-///
-/// Sans cycle ni date, la carte dit « Date à confirmer » : c'est `forecast`.
-ScholarshipListStatus? scholarshipListStatusOf(
-  LiveScholarshipModel scholarship, {
-  DateTime? now,
-}) {
-  final line = scholarship.statusLine(now: now);
-  if (line == null) return ScholarshipListStatus.forecast;
-  return switch (line.kind) {
-    ScholarshipStatusKind.open => ScholarshipListStatus.open,
-    ScholarshipStatusKind.opensOn => ScholarshipListStatus.upcoming,
-    ScholarshipStatusKind.openingEstimated => ScholarshipListStatus.forecast,
-    ScholarshipStatusKind.closed => null,
-  };
-}
-
-/// Vrai quand la date limite CONFIRMÉE de [scholarship] est passée : hors
-/// ligne, une telle fiche est masquée (le cache peut dater de plusieurs jours,
-/// et le serveur, lui, l'aurait déjà retirée).
-bool isScholarshipExpired(LiveScholarshipModel scholarship, {DateTime? now}) =>
-    scholarship.statusLine(now: now)?.kind == ScholarshipStatusKind.closed;
+// Le statut que la carte AFFICHE (`scholarshipListStatusOf`) et ce que la
+// liste masque (`isScholarshipClosed`) se calculent dans
+// `features/scholarships/scholarship_urgency.dart` : LE calcul d'urgence,
+// partagé avec la fiche.
 
 /// Une page de `GET /scholarships`, enveloppe comprise.
 @immutable

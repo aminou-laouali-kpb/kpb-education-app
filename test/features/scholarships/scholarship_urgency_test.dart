@@ -193,6 +193,56 @@ void main() {
       expect(u.kind, ScholarshipUrgencyKind.closed);
     });
 
+    test(
+        'cycle ESTIMÉ fermé par l\'équipe (aucune clôture estimée passée '
+        'pour l\'expliquer) : « Clôturée »', () {
+      expect(
+        _of(_scholarship(
+          cycle: _cycle(status: 'closed', confidence: 'estimated'),
+        )).kind,
+        ScholarshipUrgencyKind.closed,
+      );
+      expect(
+        _of(_scholarship(
+          cycle: _cycle(
+            status: 'closed',
+            confidence: 'estimated',
+            estimatedCloseAt: _inDays(30),
+          ),
+        )).kind,
+        ScholarshipUrgencyKind.closed,
+      );
+    });
+
+    test(
+        'période ESTIMÉE déjà commencée : « Clôture estimée … », au mois '
+        'près, jamais « Clôture proche »', () {
+      final u = _of(_scholarship(
+        cycle: _cycle(
+          status: 'forecast',
+          confidence: 'estimated',
+          estimatedOpenAt: _inDays(-20),
+          estimatedCloseAt: _inDays(3),
+        ),
+      ));
+      expect(u.kind, ScholarshipUrgencyKind.closingEstimated);
+      expect(u.date, _inDays(3));
+      expect(u.isClosingSoon, isFalse);
+      expect(u.isOpen, isFalse);
+      // Estimée, ouverture ET clôture passées : rien de fiable.
+      expect(
+        _of(_scholarship(
+          cycle: _cycle(
+            status: 'forecast',
+            confidence: 'estimated',
+            estimatedOpenAt: _inDays(-60),
+            estimatedCloseAt: _inDays(-2),
+          ),
+        )).kind,
+        ScholarshipUrgencyKind.dateToConfirm,
+      );
+    });
+
     test('fiche sans cycle : la date limite seule parle', () {
       expect(
         _of(_scholarship(deadlineAt: _inDays(-2))).kind,

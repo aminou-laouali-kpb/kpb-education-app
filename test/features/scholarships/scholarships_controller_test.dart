@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/models/live_scholarships_query.dart';
 import 'package:karatou/app/core/services/scholarships_offline_cache.dart';
 import 'package:karatou/app/features/scholarships/scholarships_controller.dart';
@@ -286,6 +287,7 @@ void main() {
       DateTime? opensAt,
       DateTime? closesAt,
       DateTime? estimatedOpenAt,
+      DateTime? estimatedCloseAt,
       DateTime? deadlineAt,
     }) =>
         <String, dynamic>{
@@ -299,6 +301,7 @@ void main() {
             'opensAt': opensAt?.toIso8601String(),
             'closesAt': closesAt?.toIso8601String(),
             'estimatedOpenAt': estimatedOpenAt?.toIso8601String(),
+            'estimatedCloseAt': estimatedCloseAt?.toIso8601String(),
           },
         };
 
@@ -622,6 +625,147 @@ void main() {
         expect(controller.items, isEmpty);
         expect(controller.offlineSince, isNull);
       });
+
+      test('un 403 non plus : la session n\'y a plus droit', () async {
+        await cache.writeFirstPage(
+          'fr|all||relevance|profile:none',
+          <dynamic>[scholarshipJson(1)],
+        );
+        final api = MockApiClient();
+        stubAny(api, (_) async {
+          throw DioException(
+            requestOptions: RequestOptions(path: '/scholarships'),
+            response: Response<dynamic>(
+              requestOptions: RequestOptions(path: '/scholarships'),
+              statusCode: 403,
+            ),
+          );
+        });
+        final controller = ScholarshipsController(
+          apiClient: api,
+          lang: 'fr',
+          offlineCache: cache,
+        );
+        await controller.loadInitial();
+
+        expect(controller.items, isEmpty);
+        expect(controller.offlineSince, isNull);
+        expect(controller.error, isNotNull);
+      });
+
+      test(
+          'hors ligne, la liste masque EXACTEMENT ce que la fiche dit '
+          '« Clôturée »', () async {
+        await cache.writeFirstPage(
+          'fr|all||relevance|profile:none',
+          <dynamic>[
+            // Fermé par l'équipe : « Clôturée » sur la fiche → masqué.
+            withCycle(1, status: 'closed'),
+            // `closed` servi parce que la clôture ESTIMÉE est passée : la
+            // fiche dit « Date à confirmer » → visible.
+            withCycle(
+              2,
+              status: 'closed',
+              confidence: 'estimated',
+              estimatedCloseAt: now.subtract(const Duration(days: 3)),
+            ),
+            // Clôture confirmée passée depuis la mise en cache → masqué.
+            withCycle(
+              3,
+              status: 'open',
+              opensAt: now.subtract(const Duration(days: 40)),
+              closesAt: now.subtract(const Duration(days: 1)),
+            ),
+            withCycle(
+              4,
+              status: 'open',
+              opensAt: now.subtract(const Duration(days: 3)),
+              closesAt: now.add(const Duration(days: 30)),
+            ),
+          ],
+          fetchedAt: now.subtract(const Duration(days: 5)),
+        );
+        final api = MockApiClient();
+        stubAny(api, (_) async => throw Exception('offline'));
+        final controller = ScholarshipsController(
+          apiClient: api,
+          lang: 'fr',
+          offlineCache: cache,
+          clock: () => now,
+        );
+        await controller.loadInitial();
+
+        expect(controller.offlineSince, isNotNull);
+        expect(
+          controller.items.map((item) => item.id),
+          <String>['sch-2', 'sch-4'],
+        );
+      });
+
+      test(
+          'les champs ajoutés au modèle (countryId, lastVerifiedAt, sourceUrl '
+          'et verifiedAt du cycle) survivent à l\'aller-retour du disque',
+          () async {
+        final verified = DateTime.utc(2026, 10, 3, 10);
+        final cycleVerified = DateTime.utc(2026, 10, 9, 8);
+        final raw = <String, dynamic>{
+          ...withCycle(
+            1,
+            status: 'open',
+            opensAt: now.subtract(const Duration(days: 3)),
+            closesAt: now.add(const Duration(days: 30)),
+          ),
+          'countryId': 'jpn',
+          'sourceUrl': 'https://example.org/record',
+          'lastVerifiedAt': verified.toIso8601String(),
+        };
+        (raw['currentCycle'] as Map<String, dynamic>)
+          ..['sourceUrl'] = 'https://example.org/cycle'
+          ..['verifiedAt'] = cycleVerified.toIso8601String();
+
+        await cache.writeFirstPage('sig', <dynamic>[raw]);
+        await cache.writeDetail('fr', 'sch-1', raw);
+        final fromList = LiveScholarshipModel.fromJson(
+          Map<String, dynamic>.from(
+            (await cache.readFirstPage('sig'))!.items.single as Map,
+          ),
+        );
+        final fromDetail = LiveScholarshipModel.fromJson(
+          (await cache.readDetail('fr', 'sch-1'))!.json,
+        );
+        for (final model in <LiveScholarshipModel>[fromList, fromDetail]) {
+          expect(model.countryId, 'jpn');
+          expect(model.lastVerifiedAt, verified);
+          expect(model.sourceUrl, 'https://example.org/record');
+          expect(model.currentCycle?.sourceUrl, 'https://example.org/cycle');
+          expect(model.currentCycle?.verifiedAt, cycleVerified);
+          expect(model.verifiedAt, cycleVerified);
+          expect(model.officialSourceUrl, 'https://example.org/cycle');
+        }
+      });
+    });
+
+    test(
+        'backend ancien (sans `query`) : il ignore `sort` — la liste le sait '
+        'et ne promet aucun autre ordre que la pertinence', () async {
+      final api = MockApiClient();
+      var announces = true;
+      stubAny(
+        api,
+        (_) async => LiveScholarshipsPage(
+          items: <dynamic>[scholarshipJson(1)],
+          serverAppliedQuery: announces,
+        ),
+      );
+      final controller = ScholarshipsController(apiClient: api, lang: 'fr');
+      await controller.loadInitial();
+      expect(controller.serverAppliesQuery, isTrue);
+
+      announces = false;
+      await controller.changeSort(ScholarshipListSort.deadline);
+      expect(controller.serverAppliesQuery, isFalse);
+      expect(controller.sort, ScholarshipListSort.relevance);
+      expect(controller.items, hasLength(1));
     });
   });
 }

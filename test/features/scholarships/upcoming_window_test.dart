@@ -14,7 +14,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karatou/app/core/models/app_models.dart';
-import 'package:karatou/app/features/scholarships/widgets/scholarship_list_status.dart';
+import 'package:karatou/app/features/scholarships/widgets/scholarship_status_line.dart';
 
 void main() {
   ScholarshipModel build({
@@ -89,14 +89,14 @@ void main() {
   group('le mois d\'une date estimée se lit en UTC, pas en heure locale', () {
     test('1er mars 00 h UTC reste mars, exprimé en local ou non', () {
       final open = DateTime.utc(2027, 3, 1);
-      expect(formatScholarshipListMonth(open), '03/2027');
-      expect(formatScholarshipListMonth(open.toLocal()), '03/2027');
+      expect(formatScholarshipMonth(open), '03/2027');
+      expect(formatScholarshipMonth(open.toLocal()), '03/2027');
     });
 
     test('30 avril 23 h 59 UTC reste avril, même à l\'est d\'UTC', () {
       final close = DateTime.utc(2027, 4, 30, 23, 59, 59);
-      expect(formatScholarshipListMonth(close), '04/2027');
-      expect(formatScholarshipListMonth(close.toLocal()), '04/2027');
+      expect(formatScholarshipMonth(close), '04/2027');
+      expect(formatScholarshipMonth(close.toLocal()), '04/2027');
     });
   });
 

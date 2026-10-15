@@ -406,6 +406,32 @@ void main() {
       expect(_follow, findsOneWidget);
     });
 
+    testWidgets(
+        'date estimée ou inconnue : pas de « Postuler » principal, mais le '
+        'formulaire officiel reste joignable (« Comment candidater »)',
+        (tester) async {
+      final launcher = _RecordingLauncher();
+      UrlLauncherPlatform.instance = launcher;
+      await _pump(
+        tester,
+        _scholarship(
+          cycle: _cycle(status: 'forecast', confidence: 'estimated'),
+        ),
+      );
+      expect(_apply, findsNothing);
+
+      final howTo = find.text('live_scholarships_section_application_steps'.tr);
+      await tester.ensureVisible(howTo);
+      await tester.pumpAndSettle();
+      await tester.tap(howTo);
+      await tester.pumpAndSettle();
+      final official = find.text('live_scholarships_official_form'.tr);
+      expect(official, findsOneWidget);
+      await tester.tap(official);
+      await tester.pumpAndSettle();
+      expect(launcher.launched, ['https://apply.example.org/chevening']);
+    });
+
     testWidgets('clôturée : « Suivre », jamais « Postuler »', (tester) async {
       await _pump(tester, _scholarship(cycle: _cycle(closesAt: _inDays(-2))));
       expect(_apply, findsNothing);

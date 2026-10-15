@@ -12,7 +12,7 @@ import 'shell_tabs.dart';
 /// Bourses — deux listes, deux états de filtres, et un « retour » qui ramenait
 /// à la première. Désormais :
 ///
-///  · une bourse précise est visée → sa FICHE ;
+///  · une bourse précise est visée → sa FICHE (élève connecté) ;
 ///  · sinon → l'onglet Bourses de la coquille (on referme ce qui est empilé
 ///    au-dessus), jamais un second écran de liste.
 ///
@@ -21,6 +21,11 @@ import 'shell_tabs.dart';
 enum ScholarshipNavigationTarget { detail, tab, route }
 
 /// La destination, sans naviguer (testable seule).
+///
+/// Un invité (ou une session sans profil) va TOUJOURS à l'onglet : la fiche
+/// exige un compte (401), et elle n'a pas de porte d'inscription — elle dirait
+/// « Erreur de connexion » avec un « Réessayer » sans issue. L'onglet, lui,
+/// montre la porte d'invité.
 ///
 /// [fromCatalog] : l'identifiant vient du catalogue local (accueil, recherche).
 /// Quand ce catalogue est l'échantillon embarqué (`catalogIsSampleData`), ses
@@ -33,7 +38,12 @@ ScholarshipNavigationTarget resolveScholarshipNavigation({
 }) {
   final id = scholarshipId?.trim() ?? '';
   final sampleIds = fromCatalog && (controller?.catalogIsSampleData ?? false);
-  if (id.isNotEmpty && !sampleIds) return ScholarshipNavigationTarget.detail;
+  final signedIn = controller != null &&
+      !controller.isGuestMode &&
+      controller.profile != null;
+  if (id.isNotEmpty && !sampleIds && (signedIn || controller == null)) {
+    return ScholarshipNavigationTarget.detail;
+  }
   if (controller == null || controller.isCommercial) {
     return ScholarshipNavigationTarget.route;
   }

@@ -7,6 +7,7 @@ import '../../core/models/app_models.dart';
 import '../../core/models/live_scholarships_query.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/services/scholarships_offline_cache.dart';
+import 'scholarship_urgency.dart';
 
 /// Pourquoi la liste de bourses est vide, quand elle l'est.
 ///
@@ -105,6 +106,12 @@ class ScholarshipsController extends ChangeNotifier {
   /// le filtre est alors appliqué ici, page par page.
   bool _filterStatusLocally = false;
 
+  /// Faux quand la dernière réponse EN LIGNE ne portait pas l'écho `query` :
+  /// backend antérieur au chantier I, qui ignore `q`, `status` et `sort` (sans
+  /// 400 : la route lit ses paramètres un par un). L'écran masque alors
+  /// « Trier », qu'il ne pourrait pas tenir. Vrai tant qu'on ne sait pas.
+  bool serverAppliesQuery = true;
+
   /// True once the profile-derived criteria ([level], [fieldIds]) have been
   /// dropped from the query because they matched nothing. The screen must
   /// disclose it: the visible list is then the whole catalog, not a
@@ -160,6 +167,12 @@ class ScholarshipsController extends ChangeNotifier {
         if (generation != _requestGeneration) return;
       }
 
+      serverAppliesQuery = page.serverAppliedQuery;
+      if (!serverAppliesQuery && sort != ScholarshipListSort.relevance) {
+        // Le serveur a servi la pertinence : le libellé « Trier : … » ne
+        // doit pas annoncer un autre ordre.
+        sort = ScholarshipListSort.relevance;
+      }
       _filterStatusLocally =
           statusFilter.isNotEmpty && !page.serverAppliedQuery;
       final parsed = _visible(_parse(page.items));
@@ -197,9 +210,10 @@ class ScholarshipsController extends ChangeNotifier {
       if (generation == _requestGeneration) {
         final cause = _classify(exception);
         // Hors ligne : la dernière première page reçue pour ces filtres, datée,
-        // plutôt qu'un écran d'erreur. Jamais sur un 401 — l'invité doit voir
-        // la porte d'inscription, pas les bourses d'un compte précédent.
-        final cached = cause == ScholarshipsFailure.connection
+        // plutôt qu'un écran d'erreur. Jamais sur un 401 ni un 403 — la
+        // session n'y a plus droit (l'invité doit voir la porte
+        // d'inscription, pas les bourses d'un compte précédent).
+        final cached = _mayServeFromDisk(exception)
             ? await _cache.readFirstPage(_cacheSignature)
             : null;
         if (generation != _requestGeneration) return;
@@ -238,13 +252,13 @@ class ScholarshipsController extends ChangeNotifier {
         offset: offset,
       );
 
-  /// Ce que la liste montre de [items] : jamais une fiche dont la date limite
-  /// CONFIRMÉE est passée (le cache peut dater de plusieurs jours), et le
-  /// filtre de statut quand le serveur ne l'a pas appliqué.
+  /// Ce que la liste montre de [items] : jamais une fiche que la fiche dirait
+  /// « Clôturée » ([isScholarshipClosed] — le cache peut dater de plusieurs
+  /// jours), et le filtre de statut quand le serveur ne l'a pas appliqué.
   List<LiveScholarshipModel> _visible(List<LiveScholarshipModel> items) {
     final now = _clock();
     return items.where((item) {
-      if (isScholarshipExpired(item, now: now)) return false;
+      if (isScholarshipClosed(item, now: now)) return false;
       if (!_filterStatusLocally) return true;
       final status = scholarshipListStatusOf(item, now: now);
       return status != null && statusFilter.contains(status);
@@ -274,6 +288,14 @@ class ScholarshipsController extends ChangeNotifier {
         else
           'profile:${level ?? ''}:${(fieldIds ?? const <String>[]).join(',')}',
       ].join('|');
+
+  /// Le cache disque peut-il remplacer la réponse ? Pas après un 401 ni un
+  /// 403 : la session n'a plus droit à ces données.
+  static bool _mayServeFromDisk(Object exception) {
+    final status =
+        exception is DioException ? exception.response?.statusCode : null;
+    return status != 401 && status != 403;
+  }
 
   /// 401 ⇒ il faut un compte. Tout le reste ⇒ « réessayez ».
   ///

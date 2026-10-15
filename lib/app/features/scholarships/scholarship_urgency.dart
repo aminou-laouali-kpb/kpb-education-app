@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/models/app_models.dart';
+import '../../core/models/live_scholarships_query.dart';
 import '../../core/ui/app_tokens.dart';
 import 'widgets/scholarship_status_line.dart';
 
@@ -21,11 +22,17 @@ import 'widgets/scholarship_status_line.dart';
 //     ([LiveScholarshipModel.statusLine]) : jamais « Ouverte » avant `opensAt` ;
 //   · « Clôture proche » : clôture CONFIRMÉE dans [kScholarshipClosingSoonDays]
 //     jours ou moins — jamais sur une date estimée ;
-//   · « Clôturée » seulement si une date de clôture CONFIRMÉE est passée (ou
-//     un cycle fermé à dates confirmées). Le serveur sert `closed` dès qu'une
+//   · « Clôturée » seulement si une date de clôture CONFIRMÉE est passée, ou
+//     si l'équipe a fermé le cycle. Le serveur sert aussi `closed` dès qu'une
 //     clôture ESTIMÉE est passée (`servedCycleStatus`) : ce cas-là se lit
 //     « Date à confirmer », pas « Clôturée » ;
+//   · une période ESTIMÉE déjà commencée se dit par sa clôture estimée, au
+//     mois près (« Clôture estimée nov. 2026 ») ;
 //   · aucune date fiable : « Date à confirmer ».
+//
+// La liste en dérive aussi ce qu'elle MASQUE hors ligne ([isScholarshipClosed])
+// et le statut filtrable de chaque carte ([scholarshipListStatusOf]) — même
+// règle que `scholarshipServedStatus` côté serveur (`status=`).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// « Clôture proche » : clôture confirmée dans ce nombre de jours calendaires
@@ -47,6 +54,10 @@ enum ScholarshipUrgencyKind {
 
   /// Ouverture estimée (au mois près). `date` = ouverture estimée.
   openingEstimated,
+
+  /// Période estimée déjà commencée : `date` = clôture estimée, à venir (au
+  /// mois près). Jamais « Clôture proche ».
+  closingEstimated,
 
   /// Aucune date fiable (rien de servi, ou clôture estimée dépassée).
   dateToConfirm,
@@ -133,30 +144,71 @@ ScholarshipUrgency scholarshipUrgencyOf(
     case ScholarshipStatusKind.opensOn:
       return ScholarshipUrgency(ScholarshipUrgencyKind.opensOn, date: date);
     case ScholarshipStatusKind.openingEstimated:
-      return date == null
-          ? const ScholarshipUrgency(ScholarshipUrgencyKind.dateToConfirm)
-          : ScholarshipUrgency(
-              ScholarshipUrgencyKind.openingEstimated,
-              date: date,
-            );
+      if (date != null && date.isAfter(ref)) {
+        return ScholarshipUrgency(
+          ScholarshipUrgencyKind.openingEstimated,
+          date: date,
+        );
+      }
+      // Ouverture estimée déjà passée (ou inconnue) : la période estimée est
+      // peut-être en cours. On cite sa clôture estimée si elle est à venir —
+      // une « Ouverture estimée » au passé ne dirait rien d'utile.
+      final cycle = scholarship.currentCycle;
+      final estimatedClose = cycle?.estimatedCloseAt ?? cycle?.closesAt;
+      if (estimatedClose != null && estimatedClose.isAfter(ref)) {
+        return ScholarshipUrgency(
+          ScholarshipUrgencyKind.closingEstimated,
+          date: estimatedClose,
+        );
+      }
+      return const ScholarshipUrgency(ScholarshipUrgencyKind.dateToConfirm);
   }
 }
 
-/// « Clôturée » se mérite : une clôture CONFIRMÉE passée, ou un cycle fermé à
-/// dates confirmées que la seule clôture estimée n'explique pas.
+/// « Clôturée » se mérite : une clôture CONFIRMÉE passée, ou un cycle fermé
+/// par l'équipe — c.-à-d. un `closed` que la seule clôture ESTIMÉE dépassée
+/// n'explique pas. Même règle que `scholarshipServedStatus` (serveur).
 bool _isConfirmedClosed(LiveScholarshipModel s, DateTime ref) {
   final cycle = s.currentCycle;
   final estimated = cycle?.isEstimated ?? false;
   final confirmedClose = cycle?.closesAt ?? (estimated ? null : s.deadlineAt);
   if (confirmedClose != null && !ref.isBefore(confirmedClose)) return true;
-  if (cycle == null || estimated || cycle.status != 'closed') return false;
+  if (cycle == null || cycle.status != 'closed') return false;
   // Fermé en base alors que la clôture confirmée est à venir : l'équipe l'a
   // close, c'est confirmé.
   if (cycle.closesAt != null) return true;
   // `closed` servi parce que la clôture ESTIMÉE est passée : rien de confirmé.
+  // Sans clôture estimée passée pour l'expliquer, c'est l'équipe qui l'a
+  // fermé (cycle estimé compris).
   final estimatedClose = cycle.estimatedCloseAt;
   return estimatedClose == null || estimatedClose.isAfter(ref);
 }
+
+/// La liste ne montre JAMAIS une bourse que la fiche dirait « Clôturée » —
+/// ni en ligne, ni depuis le cache hors ligne (qui peut dater de plusieurs
+/// jours). Une clôture seulement ESTIMÉE dépassée reste visible (« Date à
+/// confirmer »), comme sur la fiche.
+bool isScholarshipClosed(LiveScholarshipModel scholarship, {DateTime? now}) =>
+    scholarshipUrgencyOf(scholarship, now: now).isClosed;
+
+/// Le statut filtrable que la carte AFFICHE (même règle que le serveur pour
+/// `status=`, `scholarshipServedStatus`), ou `null` quand elle est clôturée.
+ScholarshipListStatus? scholarshipListStatusOf(
+  LiveScholarshipModel scholarship, {
+  DateTime? now,
+}) =>
+    switch (scholarshipUrgencyOf(scholarship, now: now).kind) {
+      ScholarshipUrgencyKind.open ||
+      ScholarshipUrgencyKind.closingSoon ||
+      ScholarshipUrgencyKind.openDateToConfirm =>
+        ScholarshipListStatus.open,
+      ScholarshipUrgencyKind.opensOn => ScholarshipListStatus.upcoming,
+      ScholarshipUrgencyKind.openingEstimated ||
+      ScholarshipUrgencyKind.closingEstimated ||
+      ScholarshipUrgencyKind.dateToConfirm =>
+        ScholarshipListStatus.forecast,
+      ScholarshipUrgencyKind.closed => null,
+    };
 
 /// « 6 janv. » cette année, « 6 janv. 2027 » sinon — au jour près, dans la
 /// langue active.
@@ -195,6 +247,10 @@ String scholarshipUrgencyLabel(ScholarshipUrgency urgency, {DateTime? now}) {
       return 'scholarship_status_opening_estimated'.trParams({
         'date': formatScholarshipMonth(date!),
       });
+    case ScholarshipUrgencyKind.closingEstimated:
+      return 'scholarship_urgency_closing_estimated'.trParams({
+        'date': formatScholarshipMonth(date!),
+      });
     case ScholarshipUrgencyKind.dateToConfirm:
       return 'scholarship_urgency_date_to_confirm'.tr;
     case ScholarshipUrgencyKind.closed:
@@ -230,7 +286,9 @@ ScholarshipUrgencyStyle scholarshipUrgencyStyle(ScholarshipUrgencyKind kind) =>
           background: KpbColors.actionPrimarySoft,
           icon: Icons.event_available_rounded,
         ),
-      ScholarshipUrgencyKind.openingEstimated => (
+      ScholarshipUrgencyKind.openingEstimated ||
+      ScholarshipUrgencyKind.closingEstimated =>
+        (
           foreground: KpbColors.warning,
           background: KpbColors.warningLight,
           icon: Icons.schedule_rounded,
@@ -249,19 +307,23 @@ ScholarshipUrgencyStyle scholarshipUrgencyStyle(ScholarshipUrgencyKind kind) =>
 
 /// La puce d'urgence (cartes de liste). Texte ≥ 12 sp, icône décorative.
 class ScholarshipUrgencyChip extends StatelessWidget {
-  const ScholarshipUrgencyChip({super.key, required this.urgency});
+  const ScholarshipUrgencyChip({super.key, required this.urgency, this.now});
 
   final ScholarshipUrgency urgency;
+
+  /// Horloge injectée (tests) : décide si la date dit son année.
+  final DateTime? now;
 
   @override
   Widget build(BuildContext context) {
     final style = scholarshipUrgencyStyle(urgency.kind);
-    final label = scholarshipUrgencyLabel(urgency);
+    final label = scholarshipUrgencyLabel(urgency, now: now);
     return Semantics(
       container: true,
       label: label,
       excludeSemantics: true,
       child: Container(
+        key: const ValueKey<String>('scholarship-urgency-chip'),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: style.background,

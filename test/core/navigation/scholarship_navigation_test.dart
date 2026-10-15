@@ -85,6 +85,22 @@ void main() {
       );
     });
 
+    test(
+        'invité : jamais la fiche (401 sans porte d\'inscription), toujours '
+        'l\'onglet, qui montre la porte d\'invité', () async {
+      final controller = await _seed();
+      controller.catalogDataState = CatalogDataState.live;
+      controller.isGuestMode = true;
+      expect(
+        resolveScholarshipNavigation(
+          scholarshipId: 'mext',
+          fromCatalog: true,
+          controller: controller,
+        ),
+        ScholarshipNavigationTarget.tab,
+      );
+    });
+
     test('aucune bourse visée → l\'onglet', () async {
       final controller = await _seed();
       expect(

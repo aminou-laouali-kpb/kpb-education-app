@@ -138,11 +138,14 @@ void main() {
     // Real data bound from the model.
     expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
     expect(find.text('Entièrement financée'), findsWidgets); // fundingType chip
-    // Chantier I : une ligne de statut tirée de la date limite CONFIRMÉE
-    // (~5 jours) — « Ouverte · clôture … » — et, à 14 jours ou moins,
-    // l'étiquette « Clôture proche · J-5 » (texte foncé sur ambre).
-    expect(find.textContaining('Ouverte · clôture'), findsOneWidget);
-    expect(find.textContaining('Clôture proche · J-'), findsOneWidget);
+    // Chantier I : la puce d'urgence de la FICHE, tirée de la date limite
+    // CONFIRMÉE (~5 jours) : « Clôture proche · <date> » (texte foncé sur
+    // ambre), jamais « Ouverte · clôture … » en même temps.
+    expect(find.textContaining('Clôture proche · '), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('scholarship-urgency-chip')),
+      findsOneWidget,
+    );
     // Le drapeau vient de `countryId` (`jpn`), plus du nom du pays.
     expect(find.text('🇯🇵'), findsOneWidget);
     // Le total réel du serveur.
@@ -608,6 +611,34 @@ void main() {
         find.byKey(const ValueKey<String>('scholarships-offline-stamp')),
         findsNothing,
       );
+    });
+
+    testWidgets(
+        'serveur sans le chantier I (pas d\'écho `query`) : la liste '
+        's\'affiche, « Trier » est masqué, « Filtrer » reste', (tester) async {
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+      whenScholarshipsPage(mock).thenAnswer(
+        (_) async => LiveScholarshipsPage(
+          items: <dynamic>[_scholarshipJson()],
+          hasMore: false,
+        ),
+      );
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-sort-button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-filter-button')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('le tri se choisit dans sa feuille et part au serveur',

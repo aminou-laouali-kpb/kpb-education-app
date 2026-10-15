@@ -1,8 +1,9 @@
-// Chantier I — la ligne de statut de la liste des bourses, le drapeau tiré de
-// `countryId`, et le statut filtrable.
+// Chantier I — ce que la CARTE de la liste dit d'une bourse, le drapeau tiré
+// de `countryId`, le statut filtrable et ce que la liste masque.
 //
-// Une variante par état de cycle : c'est la phrase que l'élève lit AVANT
-// d'ouvrir la fiche, elle ne doit jamais dire plus que ce qu'on sait.
+// La carte n'a plus de calcul à elle : elle pose la puce d'urgence de la fiche
+// (`scholarship_urgency.dart`). Ces tests gardent ce qu'elle doit en lire :
+// une variante par état de cycle, jamais plus que ce qu'on sait.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,7 +14,7 @@ import 'package:karatou/app/core/models/live_scholarships_query.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/core/utils/country_utils.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
-import 'package:karatou/app/features/scholarships/widgets/scholarship_list_status.dart';
+import 'package:karatou/app/features/scholarships/scholarship_urgency.dart';
 
 final _now = DateTime(2026, 10, 15, 12);
 
@@ -72,12 +73,12 @@ void main() {
     Get.locale = const Locale('fr');
   });
 
-  ScholarshipListLine line(LiveScholarshipModel s) =>
-      scholarshipListLine(s, now: _now);
+  ScholarshipUrgency urgency(LiveScholarshipModel s) =>
+      scholarshipUrgencyOf(s, now: _now);
   String label(LiveScholarshipModel s) =>
-      scholarshipListLineLabel(line(s), now: _now);
+      scholarshipUrgencyLabel(urgency(s), now: _now);
 
-  group('ligne de statut — une variante par cycle', () {
+  group('puce de la carte — une variante par cycle', () {
     test('ouverte, clôture confirmée lointaine : « Ouverte · clôture … »', () {
       final s = _scholarship(
         cycle: _cycle(
@@ -86,15 +87,14 @@ void main() {
           closesAt: DateTime(2027, 1, 6, 23, 59),
         ),
       );
-      expect(line(s).kind, ScholarshipListLineKind.open);
-      expect(line(s).closingSoon, isFalse);
-      // Hors MaterialApp, DateFormat retombe sur le numérique, sans l'année
-      // pour une date à moins de 300 jours.
-      expect(label(s), 'Ouverte · clôture 06/01');
+      expect(urgency(s).kind, ScholarshipUrgencyKind.open);
+      // Hors MaterialApp, DateFormat retombe sur le numérique ; l'année est
+      // dite quand elle n'est pas celle de [now].
+      expect(label(s), 'Ouverte · clôture 06/01/2027');
       expect(scholarshipListStatusOf(s, now: _now), ScholarshipListStatus.open);
     });
 
-    test('ouverte, clôture dans 5 jours : « Clôture proche · J-5 »', () {
+    test('ouverte, clôture confirmée dans 5 jours : « Clôture proche »', () {
       final s = _scholarship(
         cycle: _cycle(
           status: 'open',
@@ -102,16 +102,17 @@ void main() {
           closesAt: _now.add(const Duration(days: 5)),
         ),
       );
-      expect(line(s).closingSoonDays, 5);
-      expect(scholarshipClosingSoonLabel(5), 'Clôture proche · J-5');
-      expect(scholarshipClosingSoonLabel(0), 'Clôture aujourd\'hui');
+      expect(urgency(s).kind, ScholarshipUrgencyKind.closingSoon);
+      expect(urgency(s).daysLeft, 5);
+      expect(label(s), 'Clôture proche · 20/10');
+      expect(scholarshipListStatusOf(s, now: _now), ScholarshipListStatus.open);
     });
 
-    test('ouverte sans date ferme : « Ouverte · clôture à confirmer »', () {
+    test('ouverte sans date ferme : « clôture à confirmer », sans urgence', () {
       final s = _scholarship(cycle: _cycle(status: 'open'));
-      expect(line(s).kind, ScholarshipListLineKind.openNoDate);
-      expect(label(s), 'Ouverte · clôture à confirmer');
-      expect(line(s).closingSoon, isFalse);
+      expect(urgency(s).kind, ScholarshipUrgencyKind.openDateToConfirm);
+      expect(label(s), 'Ouverte · date de clôture à confirmer');
+      expect(scholarshipListStatusOf(s, now: _now), ScholarshipListStatus.open);
     });
 
     test('ouverte mais ouverture confirmée à venir : jamais « Ouverte »', () {
@@ -122,7 +123,7 @@ void main() {
           closesAt: DateTime(2027, 1, 6),
         ),
       );
-      expect(line(s).kind, ScholarshipListLineKind.opensOn);
+      expect(urgency(s).kind, ScholarshipUrgencyKind.opensOn);
       expect(label(s), 'Ouvre le 03/11');
       expect(
         scholarshipListStatusOf(s, now: _now),
@@ -139,9 +140,8 @@ void main() {
           estimatedCloseAt: DateTime.utc(2027, 3, 31),
         ),
       );
-      expect(line(s).kind, ScholarshipListLineKind.openingEstimated);
-      expect(label(s), 'Ouverture estimée 02/2027');
-      expect(line(s).closingSoon, isFalse);
+      expect(urgency(s).kind, ScholarshipUrgencyKind.openingEstimated);
+      expect(label(s), 'Ouverture estimée : 02/2027');
       expect(
         scholarshipListStatusOf(s, now: _now),
         ScholarshipListStatus.forecast,
@@ -158,9 +158,13 @@ void main() {
           estimatedCloseAt: DateTime.utc(2026, 10, 18),
         ),
       );
-      expect(line(s).kind, ScholarshipListLineKind.closingEstimated);
+      expect(urgency(s).kind, ScholarshipUrgencyKind.closingEstimated);
+      expect(urgency(s).isClosingSoon, isFalse);
       expect(label(s), 'Clôture estimée 10/2026');
-      expect(line(s).closingSoon, isFalse);
+      expect(
+        scholarshipListStatusOf(s, now: _now),
+        ScholarshipListStatus.forecast,
+      );
     });
 
     test('rien de connu : « Date à confirmer »', () {
@@ -177,48 +181,12 @@ void main() {
       );
     });
 
-    test('clôture confirmée passée : « Clôturée », et masquée hors ligne', () {
-      final s = _scholarship(
-        cycle: _cycle(
-          status: 'open',
-          opensAt: _now.subtract(const Duration(days: 60)),
-          closesAt: _now.subtract(const Duration(days: 1)),
-        ),
-      );
-      expect(label(s), 'Clôturée');
-      expect(isScholarshipExpired(s, now: _now), isTrue);
-      expect(scholarshipListStatusOf(s, now: _now), isNull);
-    });
-
-    test('date limite ESTIMÉE passée : jamais « expirée »', () {
-      final s = _scholarship(
-        deadlineAt: _now.subtract(const Duration(days: 2)),
-        cycle: _cycle(status: 'forecast', confidence: 'estimated'),
-      );
-      expect(isScholarshipExpired(s, now: _now), isFalse);
-    });
-
     test('fiche sans cycle : la date limite seule parle', () {
       final s = _scholarship(deadlineAt: _now.add(const Duration(days: 40)));
-      expect(line(s).kind, ScholarshipListLineKind.open);
-      expect(
-        isScholarshipExpired(
-          _scholarship(deadlineAt: _now.subtract(const Duration(days: 1))),
-          now: _now,
-        ),
-        isTrue,
-      );
+      expect(urgency(s).kind, ScholarshipUrgencyKind.open);
     });
 
-    test('une date à plus de 300 jours dit son année', () {
-      expect(
-        formatScholarshipListDay(DateTime(2027, 11, 2), now: _now),
-        '02/11/2027',
-      );
-    });
-
-    testWidgets('la ligne et l\'étiquette se lisent à 12 sp au moins',
-        (tester) async {
+    testWidgets('la puce se lit à 12 sp au moins', (tester) async {
       final s = _scholarship(
         cycle: _cycle(
           status: 'open',
@@ -228,13 +196,84 @@ void main() {
       );
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: ScholarshipListStatusRow(line: line(s), now: _now),
+          body: ScholarshipUrgencyChip(urgency: urgency(s), now: _now),
         ),
       ));
       for (final text in tester.widgetList<Text>(find.byType(Text))) {
         expect(text.style?.fontSize, greaterThanOrEqualTo(12));
       }
-      expect(find.text('Clôture proche · J-2'), findsOneWidget);
+      expect(find.text('Clôture proche · 17/10'), findsOneWidget);
+    });
+  });
+
+  // Ce que la liste MASQUE (en ligne comme depuis le cache hors ligne) est
+  // exactement ce que la fiche dit « Clôturée » — ni plus, ni moins.
+  group('masquée par la liste ⇔ « Clôturée » sur la fiche', () {
+    test('clôture confirmée passée : clôturée, masquée, hors de tout filtre',
+        () {
+      final s = _scholarship(
+        cycle: _cycle(
+          status: 'open',
+          opensAt: _now.subtract(const Duration(days: 60)),
+          closesAt: _now.subtract(const Duration(days: 1)),
+        ),
+      );
+      expect(label(s), 'Clôturée');
+      expect(isScholarshipClosed(s, now: _now), isTrue);
+      expect(scholarshipListStatusOf(s, now: _now), isNull);
+    });
+
+    test('fiche sans cycle, date limite passée : clôturée', () {
+      final s =
+          _scholarship(deadlineAt: _now.subtract(const Duration(days: 1)));
+      expect(isScholarshipClosed(s, now: _now), isTrue);
+    });
+
+    test('cycle fermé par l\'équipe : clôturé, même à dates estimées', () {
+      expect(
+        isScholarshipClosed(_scholarship(cycle: _cycle(status: 'closed')),
+            now: _now),
+        isTrue,
+      );
+      expect(
+        isScholarshipClosed(
+          _scholarship(
+            cycle: _cycle(
+              status: 'closed',
+              confidence: 'estimated',
+              estimatedCloseAt: _now.add(const Duration(days: 30)),
+            ),
+          ),
+          now: _now,
+        ),
+        isTrue,
+      );
+    });
+
+    test(
+        '`closed` servi parce que la clôture ESTIMÉE est passée : « Date à '
+        'confirmer », VISIBLE (la fiche ne dit pas « Clôturée »)', () {
+      final s = _scholarship(
+        cycle: _cycle(
+          status: 'closed',
+          confidence: 'estimated',
+          estimatedCloseAt: _now.subtract(const Duration(days: 3)),
+        ),
+      );
+      expect(label(s), 'Date à confirmer');
+      expect(isScholarshipClosed(s, now: _now), isFalse);
+      expect(
+        scholarshipListStatusOf(s, now: _now),
+        ScholarshipListStatus.forecast,
+      );
+    });
+
+    test('date limite ESTIMÉE passée : jamais masquée', () {
+      final s = _scholarship(
+        deadlineAt: _now.subtract(const Duration(days: 2)),
+        cycle: _cycle(status: 'forecast', confidence: 'estimated'),
+      );
+      expect(isScholarshipClosed(s, now: _now), isFalse);
     });
   });
 

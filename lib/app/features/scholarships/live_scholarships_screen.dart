@@ -18,10 +18,10 @@ import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarship_match/scholarship_match_entry_card.dart';
 import 'scholarship_detail_screen.dart';
 import 'scholarship_guide_info_screen.dart';
+import 'scholarship_urgency.dart';
 import 'scholarships_controller.dart';
 import 'widgets/follow_scholarship_button.dart';
 import 'widgets/scholarship_filter_sheet.dart';
-import 'widgets/scholarship_list_status.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture
 // §6/§10.2). L'ancienne _Palette locale du handoff a été absorbée au lot 5 ;
@@ -299,16 +299,19 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                             active: controller.activeFilterCount > 0,
                             onTap: _openFilters,
                           ),
-                          _ToolbarButton(
-                            key: const ValueKey<String>(
-                              'scholarships-sort-button',
+                          // Backend sans le chantier I (pas d'écho `query`) :
+                          // il ignore `sort`, le bouton ne promet rien.
+                          if (controller.serverAppliesQuery)
+                            _ToolbarButton(
+                              key: const ValueKey<String>(
+                                'scholarships-sort-button',
+                              ),
+                              icon: Icons.sort_rounded,
+                              label: 'scholarships_sort_button'.trParams({
+                                'sort': scholarshipSortLabel(controller.sort),
+                              }),
+                              onTap: _openSort,
                             ),
-                            icon: Icons.sort_rounded,
-                            label: 'scholarships_sort_button'.trParams({
-                              'sort': scholarshipSortLabel(controller.sort),
-                            }),
-                            onTap: _openSort,
-                          ),
                         ],
                       ),
                     ],
@@ -574,7 +577,7 @@ class LiveScholarshipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = scholarship;
     final (fundBg, fundFg, fundLabel) = _fundingTag(s);
-    final line = scholarshipListLine(s, now: now);
+    final urgency = scholarshipUrgencyOf(s, now: now);
     final subtitle =
         s.level.isEmpty ? s.countryName : '${s.countryName} · ${s.level}';
 
@@ -630,7 +633,11 @@ class LiveScholarshipCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    ScholarshipListStatusRow(line: line, now: now),
+                    // LE calcul d'urgence de la fiche (« Clôture proche »
+                    // seulement sur une clôture confirmée à 14 jours ou
+                    // moins, estimations au mois près) : la carte et la fiche
+                    // ne peuvent plus dire deux choses de la même bourse.
+                    ScholarshipUrgencyChip(urgency: urgency, now: now),
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(

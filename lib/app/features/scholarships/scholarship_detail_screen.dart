@@ -553,6 +553,7 @@ class ScholarshipStatusHeader extends StatelessWidget {
         if (days == 1) return 'scholarship_urgency_one_day_left'.tr;
         return 'scholarship_urgency_days_left'.trParams({'count': '$days'});
       case ScholarshipUrgencyKind.openingEstimated:
+      case ScholarshipUrgencyKind.closingEstimated:
         return 'scholarship_urgency_estimated_hint'.tr;
       case ScholarshipUrgencyKind.dateToConfirm:
         return label.isNotEmpty ? label : 'scholarship_urgency_unknown_hint'.tr;
