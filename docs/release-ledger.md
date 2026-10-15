@@ -909,3 +909,54 @@ additive, aucune colonne lue par l'ancien code).
 5. Seulement alors, et après la validation juridique de la collecte de la nationalité :
    drapeau en préproduction pour la recette, puis en production avec la build qui porte
    l'écran (chantier H) — jamais avant que cette build soit en store.
+
+### 15/10/2026 — chantier I : bourses (liste, hors ligne, fiche) et onboarding V2, drapeau FERMÉ
+
+**État : prêt, PAS déployé.** Branche locale `i/integrated` (I1 liste / hors ligne /
+raccourcis + backend `GET /scholarships`, I2 fiche, I3 onboarding V2 et code OTP), non
+fusionnée, sans PR. **Ne se déploie pas avant le préflight de la 56** (même règle que les
+entrées ci-dessus).
+
+**Ce qui change côté serveur** (aucune migration) :
+
+- **`GET /scholarships`** gagne trois paramètres **optionnels et tolérants** : `q`
+  (recherche), `status` (`open`, `upcoming`, `forecast`, séparés par des virgules) et
+  `sort` (`relevance` par défaut, `deadline`, `verified`, `title`). Une valeur inconnue est
+  ignorée (statut retiré, tri → `relevance`, `q` tronqué à 100 caractères), jamais un 400.
+  La réponse gagne la clé **additive** `query` (ce qui a été appliqué). Sans ces
+  paramètres, la réponse est celle d'avant (ordre, `total`). Contrat :
+  `docs/api-contracts.md`, « Liste des bourses : recherche, statut et tri ».
+- **Drapeau `features.onboardingV2`** (`KPB_ONBOARDING_V2_ENABLED`), **FERMÉ par défaut** :
+  absent du `.env`, défaut `false` dans `docker-compose.yml` (gardé par
+  `config_env_relay_test`), seule la valeur `true` l'ouvre. Fermé, absent ou backend plus
+  ancien : l'app garde l'ancien onboarding, inchangé.
+
+**Couplage : `tolerates-old` dans les deux sens.**
+
+- *Builds en store (≤ 56) face au nouveau backend* : elles n'envoient ni `q`, ni `status`,
+  ni `sort`, ignorent `query` et `onboardingV2`. Aucun effet.
+- *Nouvelle app face à un backend sans le chantier I* (production actuelle) : la route lit
+  ses paramètres un par un (`@Query('nom')`, pas de DTO) ; le `ValidationPipe`
+  (`forbidNonWhitelisted`) ne s'y applique pas et les clés inconnues sont **ignorées, pas
+  refusées** (prouvé en HTTP : `scholarships-list.http.spec.ts`). La liste s'affiche ;
+  sans écho `query`, l'app filtre le statut elle-même sur la page reçue, n'affiche pas de
+  total, et **masque le bouton « Trier »**. `onboardingV2` absent = fermé.
+
+**Ordre de déploiement :**
+
+1. **Backend** (workflow « Deploy backend (VPS) », `scope=full`), après le préflight de la
+   56. Vérifier depuis l'extérieur : `GET /api/config/app` → `features.onboardingV2:
+   false` ; `GET /api/scholarships?status=bogus&sort=bogus` (connecté) → 200 et
+   `query: {status: null, sort: "relevance"}`.
+2. **Build mobile** qui porte le chantier I (après la 56) — elle tolère le backend d'avant,
+   l'ordre 1 → 2 n'est donc qu'une préférence (« Trier » visible dès le premier jour).
+3. **Ouverture de l'onboarding V2** (`KPB_ONBOARDING_V2_ENABLED=true`) seulement quand
+   cette build est en store et adoptée : une build plus ancienne ignore le drapeau.
+
+**Retour arrière :** `KPB_ONBOARDING_V2_ENABLED` coupé (l'app relit le drapeau à la
+prochaine ouverture de l'onboarding) ; le backend se ramène au tag précédent sans rien
+toucher (aucune migration, la clé `query` est additive).
+
+**Données locales :** le cache hors ligne des bourses (boîte Hive
+`kpb.scholarships.cache`, première page par jeu de filtres et 60 fiches au plus) est vidé
+à la déconnexion et à la perte de session, et n'est jamais relu après un 401 ou un 403.
