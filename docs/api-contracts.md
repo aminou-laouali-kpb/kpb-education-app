@@ -926,7 +926,7 @@ Gardé par `backend/src/modules/config/app-config.controller.spec.ts`,
 
 ### Interrupteurs « Suivre » / Mes suivis / notifications dans `features`
 
-Sept booléens ajoutés à `features`, **`true` par défaut** côté serveur comme côté app.
+Booléens ajoutés à `features` (chantiers G puis K), **`true` par défaut** côté serveur comme côté app.
 Ils existent pour **couper** une fonction de la build sur les téléphones installés, sans
 soumission store. Seule la valeur `false` (casse et espaces tolérés) les ferme ; une variable
 absente, vide ou mal tapée les laisse ouverts. Un backend plus ancien ne les sert pas : l'app
@@ -941,6 +941,13 @@ lit une clé absente comme `true`.
 | `features.notificationsUnreadCount` | `KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED` | Point de la cloche allumé par les non-lus serveur. |
 | `features.followedScholarshipOptOut` | `KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED` | Ligne de préférence « Bourses que je suis ». |
 | `features.homeFollowedEntry` | `KPB_HOME_FOLLOWED_ENTRY_ENABLED` | Bouton « Mes suivis » de l'accueil. |
+| `features.homeNextStep` | `KPB_HOME_NEXT_STEP_ENABLED` | Carte « Ta prochaine étape » de l'accueil élève. |
+| `features.homeScholarships` | `KPB_HOME_SCHOLARSHIPS_ENABLED` | Section « Tes bourses » de l'accueil. |
+| `features.homeDeadlines` | `KPB_HOME_DEADLINES_ENABLED` | Section « Tes échéances » de l'accueil élève. |
+| `features.homePartners` | `KPB_HOME_PARTNERS_ENABLED` | Bloc écoles partenaires de l'accueil. |
+| `features.homeIntelligence` | `KPB_HOME_INTELLIGENCE_ENABLED` | Entrée KPB Intelligence de l'accueil. |
+| `features.homeParcours` | `KPB_HOME_PARCOURS_ENABLED` | Bloc Parcours de l'accueil. |
+| `features.homeCounselor` | `KPB_HOME_COUNSELOR_ENABLED` | Bloc conseiller WhatsApp de l'accueil. |
 
 Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
 `test/release/config_env_relay_test.dart` (relais compose).

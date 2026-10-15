@@ -82,6 +82,13 @@ describe('AppConfigController', () => {
       notificationsUnreadCount: true,
       followedScholarshipOptOut: true,
       homeFollowedEntry: true,
+      homeNextStep: true,
+      homeScholarships: true,
+      homeDeadlines: true,
+      homePartners: true,
+      homeIntelligence: true,
+      homeParcours: true,
+      homeCounselor: true,
       scholarshipMatch: false,
       onboardingV2: false,
     });
@@ -612,7 +619,7 @@ describe('AppConfigController', () => {
     });
   });
 
-  // Chantier G : sept interrupteurs OUVERTS par défaut. Ils servent à COUPER
+  // Chantiers G et K : interrupteurs OUVERTS par défaut. Ils servent à COUPER
   // une fonction sur les téléphones installés ; une variable absente, vide ou
   // mal tapée ne doit jamais l'éteindre — seul `false` le fait.
   const followSwitches = [
@@ -623,6 +630,13 @@ describe('AppConfigController', () => {
     ['notificationsUnreadCount', 'KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED'],
     ['followedScholarshipOptOut', 'KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED'],
     ['homeFollowedEntry', 'KPB_HOME_FOLLOWED_ENTRY_ENABLED'],
+    ['homeNextStep', 'KPB_HOME_NEXT_STEP_ENABLED'],
+    ['homeScholarships', 'KPB_HOME_SCHOLARSHIPS_ENABLED'],
+    ['homeDeadlines', 'KPB_HOME_DEADLINES_ENABLED'],
+    ['homePartners', 'KPB_HOME_PARTNERS_ENABLED'],
+    ['homeIntelligence', 'KPB_HOME_INTELLIGENCE_ENABLED'],
+    ['homeParcours', 'KPB_HOME_PARCOURS_ENABLED'],
+    ['homeCounselor', 'KPB_HOME_COUNSELOR_ENABLED'],
   ] as const;
 
   describe.each(followSwitches)('%s — interrupteur ouvert par défaut', (key, envVar) => {
@@ -642,7 +656,7 @@ describe('AppConfigController', () => {
       }
     });
 
-    it('se ferme sur « false », sans toucher aux six autres', () => {
+    it('se ferme sur « false », sans toucher aux autres', () => {
       process.env[envVar] = ' FALSE ';
       const { features } = new AppConfigController().getAppConfig();
       expect(features[key]).toBe(false);
