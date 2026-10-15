@@ -847,3 +847,65 @@ ce qui suit.
   minute par surcharge nommée.
 - **Shortlist** (#307) : ne recommande que la procédure de l'espace de l'étudiant, et
   le post-bac n'a plus d'étage « sécurité ». L'app, à `0641601`, ne l'appelle pas.
+
+### 15/10/2026 — chantier D « Mes 10 bourses » : backend + admin, drapeau FERMÉ
+
+**État : prêt, PAS déployé.** Branche locale `d/integrated` (D1 schéma et moteur, D2 API
+élève, D3 catalogue 1.5.0, D4 admin), non fusionnée, sans PR. **Ne se déploie pas avant le
+préflight de la 56** (même règle que ci-dessus : la production reste au SHA relevé par la
+checklist de la 56 tant que celle-ci n'est pas archivée).
+
+**Couplage : `tolerates-old` côté mobile — aucun effet pour les builds en store.** Aucune
+build (49 à 56) n'appelle `/scholarships/match/*` ni `POST /me/scholarship-alerts` ; aucun
+champ requis n'est ajouté à un corps existant (`POST /cases` gagne un `scholarshipId`
+FACULTATIF, gardé seulement si la fiche existe) ; `GET /profiles/me`, `/config/app` et les
+dossiers gagnent des clés que les builds ignorent. Le seul effet visible sans drapeau : le
+catalogue lit `eligibleLevels` quand il est rempli (une cible Licence reçoit le bonus de
+niveau sur les fiches reprises des tags).
+
+**Ordre de déploiement :**
+
+1. **Backend d'abord.** Le workflow « Deploy backend (VPS) » remplace `api` et `admin`
+   ensemble (`docs/DEPLOYMENT.md`) : c'est sans risque ici, puisque l'admin tolère un
+   backend plus ancien (point 3) ; en déploiement manuel, `api` d'abord, santé vérifiée,
+   puis `admin`. Le backend porte **une migration, additive** : `20261020120000_scholarship_match_v1` — deux types enum, onze
+   colonnes nulles sur `UserProfile`, cinq colonnes avec défaut sur `Scholarship`, une
+   colonne nulle + index + clé étrangère `SET NULL` sur `Case`, la table
+   `ScholarshipMatchRun` (cascade à la suppression du compte) ; puis la reprise des niveaux
+   des seules fiches `catalog:%` SANS tampon (une reprise non relue n'exclut personne).
+   Rien n'est supprimé ni réécrit ; `lock_timeout` de 5 s.
+2. **Drapeau `KPB_SCHOLARSHIP_MATCH_ENABLED` absent ou `false`** dans le `.env` de
+   production (défaut `false` dans `docker-compose.yml`, gardé par
+   `config_env_relay_test`). Vérifier depuis l'extérieur : `GET /api/config/app` →
+   `features.scholarshipMatch: false`, et `GET /api/scholarships/match/state` → `404
+   {disabled: true}` (avant toute authentification).
+3. **Admin ensuite** (ou dans le même passage du workflow). L'admin tolère un backend plus ancien : le
+   compteur de couverture se masque s'il ne répond pas, un dossier sans résumé de bourse
+   affiche l'identifiant seul. À l'inverse, un admin plus ancien ignore les clés nouvelles.
+4. `catalog:reconcile --dry-run` puis `--apply` : porte le catalogue 1.5.0 (niveau
+   `doctorate` pour Gates Cambridge, critères en BROUILLON). Un brouillon du dépôt ne
+   remplace jamais un bloc d'éligibilité tamponné en base (`keptFromDatabase`).
+
+**Retour arrière :** drapeau coupé (la carte disparaît, les routes répondent 404
+`{disabled: true}`) ; le code se ramène au tag précédent sans toucher au schéma (migration
+additive, aucune colonne lue par l'ancien code).
+
+**Procédure éditoriale, avant toute ouverture du drapeau** (détail :
+`docs/catalog-verification-sop.md`, « Structurer l'éligibilité des bourses ») :
+
+1. **Relire et tamponner les 36 fiches** du catalogue 1.5.0 : chaque critère contre sa
+   source officielle « eligibility », listes de pays recopiées d'abord (Taiwan ICDF, SI,
+   IsDB, OCI…), puis `reviewed: { at, by }` dans une PR relue, ou le bouton « Conditions
+   vérifiées » de l'admin (l'admin écrit le même bloc ; reporter ensuite la relecture dans le
+   dépôt pour qu'elle survive aux versions suivantes).
+2. **Porte de lancement : au moins 90 % des bourses PUBLIQUES structurées et fraîches**
+   (tampon de moins de 400 jours), lue sur `GET /admin/scholarships/eligibility-coverage`
+   **en production** (carte « Couverture » de `/scholarships`) — fiches créées dans l'admin
+   et collectées comprises, pas seulement celles du dépôt.
+3. Contrôler quelques profils réels avec « Tester un profil » (`POST
+   /admin/scholarships/match-preview` : mêmes candidates que l'élève, rien n'est écrit).
+4. Quand `npm run verify:catalog` affiche `36/36 reviewed and stamped`, passer
+   `STRUCTURED_ELIGIBILITY_GATE` à `'error'` dans une PR dédiée.
+5. Seulement alors, et après la validation juridique de la collecte de la nationalité :
+   drapeau en préproduction pour la recette, puis en production avec la build qui porte
+   l'écran (chantier H) — jamais avant que cette build soit en store.
