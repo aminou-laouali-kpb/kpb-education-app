@@ -497,6 +497,54 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
       }
     });
 
+    // Chantier D : les niveaux STRUCTURÉS (`eligibleLevels`) priment ; vides,
+    // on retombe sur la lecture des tags et libellés ci-dessus.
+    it('cible Bachelor en locale FR : +30 via eligibleLevels, même sans tag ni libellé lisible', async () => {
+      const structured = {
+        ...baseRow,
+        id: 'structured',
+        levelEligibleFr: 'Programme de quatre ans',
+        levelEligibleEn: 'Four-year programme',
+        tags: ['ghana'],
+        eligibleLevels: ['bachelor'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([structured]);
+
+      for (const lang of ['fr', 'en'] as const) {
+        const bachelor = await service.listForProfile({ lang, level: 'Bachelor' });
+        const master = await service.listForProfile({ lang, level: 'Master' });
+        expect(scoreOf(bachelor.items, 'structured')).toBe(60);
+        expect(scoreOf(master.items, 'structured')).toBe(30);
+      }
+    });
+
+    it('eligibleLevels prime sur les tags et les libellés (doctorat structuré)', async () => {
+      const gates = {
+        ...baseRow,
+        id: 'gates-structured',
+        levelEligibleFr: 'Licence',
+        levelEligibleEn: 'Bachelor',
+        tags: ['bachelor'],
+        eligibleLevels: ['master', 'doctorate'],
+        baseMatch: 30,
+      };
+      const { service } = makeService([gates]);
+
+      const phd = await service.listForProfile({ lang: 'fr', level: 'PhD' });
+      const bachelor = await service.listForProfile({ lang: 'fr', level: 'Bachelor' });
+      expect(scoreOf(phd.items, 'gates-structured')).toBe(60);
+      expect(scoreOf(bachelor.items, 'gates-structured')).toBe(30);
+    });
+
+    it('eligibleLevels vide : repli sur les tags et libellés', async () => {
+      const { service } = makeService([{ ...licenceRow, eligibleLevels: [] }]);
+
+      const result = await service.listForProfile({ lang: 'fr', level: 'Bachelor' });
+
+      expect(scoreOf(result.items, 'licence')).toBe(60);
+    });
+
     it('gives no boost for an unrecognised or blank target level', async () => {
       const { service } = makeService([licenceRow]);
 

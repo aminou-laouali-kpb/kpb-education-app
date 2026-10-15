@@ -42,6 +42,7 @@ import {
   AVATAR_STORAGE_LABEL,
 } from './profile-avatar.policy';
 import { isAtLeastAge, MINIMUM_ACCOUNT_AGE } from './profile-age.policy';
+import { parseLanguageTests } from '../scholarship-match/match-inputs';
 
 /** The multipart file as produced by multer's memory storage. */
 export interface UploadedAvatarFile {
@@ -1027,6 +1028,8 @@ export class ProfilesService {
         aiQuotaBuckets,
         impactCohortMemberships,
         eefInterest,
+        scholarshipMatchRuns,
+        scholarshipAlertSubscriptions,
       ] = await Promise.all([
         prisma.case.findMany({
           where: { userId: id },
@@ -1376,6 +1379,18 @@ export class ProfilesService {
             updatedAt: true,
           },
         }),
+        // « Mes 10 bourses » (chantier D) : les résultats calculés pour
+        // l'élève (5 au plus). Supprimés avec le profil par la cascade.
+        prisma.scholarshipMatchRun.findMany({
+          where: { userId: id },
+          orderBy: { createdAt: 'asc' },
+        }),
+        // Les cloches « M'avertir » posées par l'élève. Elles manquaient à
+        // l'export alors que la suppression les couvre (cascade).
+        prisma.scholarshipAlertSubscription.findMany({
+          where: { userId: id },
+          orderBy: { createdAt: 'asc' },
+        }),
       ]);
 
       // Les avis que l'étudiant a rédigés sur ses conseillers : son nom, sa note
@@ -1451,6 +1466,8 @@ export class ProfilesService {
         // garantit zéro ou une ligne, et rendre un objet plutôt qu'un tableau
         // d'un élément dit au lecteur ce que la donnée est réellement.
         eefInterest: eefInterest[0] ?? null,
+        scholarshipMatchRuns,
+        scholarshipAlertSubscriptions,
       };
     });
 
@@ -1524,6 +1541,23 @@ export class ProfilesService {
       guardianConsentedAt: p.guardianConsentedAt
         ? p.guardianConsentedAt.toISOString()
         : null,
+      // « Mes 10 bourses » (chantier D) — LECTURE SEULE ici : ces valeurs ne
+      // s'écrivent que par POST /scholarships/match/runs, jamais par le PATCH
+      // du profil complet. Les builds plus anciennes ignorent ces clés
+      // (profile_api_codec.dart lit des clés explicites).
+      nationalityCode: p.nationalityCode,
+      secondNationalityCode: p.secondNationalityCode,
+      highestDiploma: p.highestDiploma,
+      scholarshipTargetLevel: p.scholarshipTargetLevel,
+      gradeBandOn20: p.gradeBandOn20,
+      englishLevel: p.englishLevel,
+      frenchLevel: p.frenchLevel,
+      languageTests: parseLanguageTests(p.languageTests),
+      workExperienceBand: p.workExperienceBand,
+      scholarshipProfileConfirmedAt: p.scholarshipProfileConfirmedAt
+        ? p.scholarshipProfileConfirmedAt.toISOString()
+        : null,
+      scholarshipMatchAlertsOptIn: p.scholarshipMatchAlertsOptInAt !== null,
       updatedAt: p.updatedAt.toISOString(),
     };
   }

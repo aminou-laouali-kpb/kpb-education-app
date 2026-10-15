@@ -66,6 +66,8 @@ describe('ProfilesService — account deletion & export', () => {
     'deviceToken',
     'partnerLead',
     'studentCredential',
+    'scholarshipMatchRun',
+    'scholarshipAlertSubscription',
   ] as const;
 
   function makeFakePrisma(profile: unknown) {
@@ -429,6 +431,12 @@ describe('ProfilesService — account deletion & export', () => {
     // l'erreur qu'on répare ici.
     expect(out).toHaveProperty('eefInterest');
     expect((out as { eefInterest?: unknown }).eefInterest).toBeNull();
+    // « Mes 10 bourses » (chantier D) : les runs calculés et les cloches
+    // « M'avertir » sont des données de l'élève. Clés présentes même vides.
+    expect((out as { scholarshipMatchRuns?: unknown }).scholarshipMatchRuns).toEqual([]);
+    expect(
+      (out as { scholarshipAlertSubscriptions?: unknown }).scholarshipAlertSubscriptions,
+    ).toEqual([]);
   });
 
   it('never puts the avatar storage key in the GDPR export', async () => {

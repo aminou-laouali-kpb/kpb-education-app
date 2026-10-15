@@ -58,6 +58,14 @@ function matches(row: object, where: Where): boolean {
     ) {
       return record[key] !== (expected as { not: unknown }).not;
     }
+    if (
+      expected !== null &&
+      typeof expected === 'object' &&
+      !(expected instanceof Date) &&
+      'in' in expected
+    ) {
+      return (expected as { in: unknown[] }).in.includes(record[key]);
+    }
     return record[key] === expected;
   });
 }
@@ -131,6 +139,8 @@ class FollowStore {
         const row = this.scholarships.find((s) => s.id === args.where.id);
         return row ? pick(row, args.select) : null;
       },
+      findMany: async (args: { where: Where; select?: Record<string, boolean> }) =>
+        this.scholarships.filter((s) => matches(s, args.where)).map((s) => pick(s, args.select)),
     },
     savedItem: {
       findUnique: async (args: {
@@ -316,6 +326,47 @@ describe.each(MODES)('Suivre une bourse — mode %s (règles communes)', (mode) 
         expect(store.saved).toEqual([]);
       },
     );
+  });
+
+  describe('POST /me/scholarship-alerts (« Suivre les N compatibles »)', () => {
+    it('allume la cloche sur les bourses suivables, ignore les autres sans erreur', async () => {
+      const { store, alerts } = setup();
+      store.addScholarship('eiffel');
+
+      await expect(
+        alerts.subscribeMany(STUDENT, [SID, 'pending-one', 'eiffel', 'inactive-one', 'missing']),
+      ).resolves.toEqual({
+        subscribedIds: [SID, 'eiffel'],
+        skippedIds: ['pending-one', 'inactive-one', 'missing'],
+      });
+      expect(store.alertOf(STUDENT, SID)).toMatchObject({ mutedAt: null });
+      expect(store.alertOf(STUDENT, 'eiffel')).toMatchObject({ mutedAt: null });
+      expect(store.alertOf(STUDENT, 'pending-one')).toBeUndefined();
+      expect(store.alertOf(STUDENT, 'inactive-one')).toBeUndefined();
+    });
+
+    it('est idempotent : un favori déjà posé reste, une sourdine est levée, rien n’est doublé', async () => {
+      const { store, alerts } = setup();
+      store.addFavorite(STUDENT, SID);
+      store.addAlert(STUDENT, SID, { mutedAt: new Date() });
+
+      await alerts.subscribeMany(STUDENT, [SID, SID]);
+      await alerts.subscribeMany(STUDENT, [SID]);
+
+      expect(store.alerts.filter((row) => row.scholarshipId === SID)).toHaveLength(1);
+      expect(store.alertOf(STUDENT, SID)).toMatchObject({ mutedAt: null, impliedFollow: false });
+      expect(store.favoriteOf(STUDENT, SID)).toBeDefined();
+      expect(store.saved.filter((row) => row.itemId === SID)).toHaveLength(1);
+    });
+
+    it('une liste vide ne lit ni n’écrit rien', async () => {
+      const { store, alerts } = setup();
+      await expect(alerts.subscribeMany(STUDENT, [])).resolves.toEqual({
+        subscribedIds: [],
+        skippedIds: [],
+      });
+      expect(store.alerts).toEqual([]);
+    });
   });
 
   describe('DELETE /me/scholarship-alerts/:id (cloche éteinte)', () => {
@@ -664,5 +715,30 @@ describe('ScholarshipAlertsController', () => {
     )?.value as object;
     expect(Reflect.getMetadata(PATH_METADATA, handler)).toBe(':scholarshipId');
     expect(Reflect.getMetadata(METHOD_METADATA, handler)).toBe(RequestMethod.PATCH);
+  });
+
+  it('POST / (groupé) a sa propre route, sans paramètre : aucun conflit avec POST :scholarshipId', async () => {
+    const service = {
+      subscribeMany: jest.fn(async () => ({ subscribedIds: [SID], skippedIds: [] })),
+    } as unknown as ScholarshipAlertsService;
+    const controller = new ScholarshipAlertsController(service);
+
+    await expect(
+      controller.subscribeMany({ scholarshipIds: [SID] }, { studentUser: { id: STUDENT } }),
+    ).resolves.toEqual({ subscribedIds: [SID], skippedIds: [] });
+    expect(service.subscribeMany).toHaveBeenCalledWith(STUDENT, [SID]);
+
+    const route = (name: string) => {
+      const handler = Object.getOwnPropertyDescriptor(
+        ScholarshipAlertsController.prototype,
+        name,
+      )?.value as object;
+      return [
+        Reflect.getMetadata(METHOD_METADATA, handler),
+        Reflect.getMetadata(PATH_METADATA, handler),
+      ];
+    };
+    expect(route('subscribeMany')).toEqual([RequestMethod.POST, '/']);
+    expect(route('subscribe')).toEqual([RequestMethod.POST, ':scholarshipId']);
   });
 });

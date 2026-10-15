@@ -76,6 +76,8 @@ export class CommercialService {
         discussionMotive: item.discussionMotive,
         studentName: item.user.fullName,
         studentLevel: item.user.currentLevel,
+        // « Mes 10 bourses » : la bourse accompagnée, s'il y en a une.
+        scholarshipId: item.scholarshipId ?? null,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
         lastCommercialInteractionAt: item.lastCommercialInteractionAt,
