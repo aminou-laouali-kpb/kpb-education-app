@@ -725,6 +725,10 @@ model SavedItem {
   user      UserProfile @relation(fields: [userId], references: [id])
 
   @@unique([userId, itemType, itemId])
+  // Les abonnés d'UNE bourse (annonce d'ouverture, rappels d'échéance) :
+  // `itemType = 'scholarship' AND itemId IN (…)`. Sans lui, chaque lecture
+  // parcourait tous les favoris de bourse.
+  @@index([itemType, itemId])
 }
 
 model PartnerLead {
@@ -1277,11 +1281,42 @@ model ScholarshipCycle {
   scholarship      Scholarship               @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
   workspaces       ScholarshipWorkspace[]
 
+  // ── Annonce d'ouverture (chantier C) ──────────────────────────────────────
+  // Envoi programmé (activate), annulable tant qu'il n'a pas couru ; remis à
+  // NULL par le worker (envoi fait) ou par l'annulation.
+  openingFanoutDueAt   DateTime?
+  // 'alerts' | 'followers' — audience figée au moment de la programmation.
+  openingFanoutScope   String?
+  // Qui a programmé l'envoi en attente (AdminUser.id, sans FK). Effacé avec
+  // openingFanoutDueAt ; ne remplace jamais openingNotifiedById.
+  openingFanoutById    String?
+  // Dernier envoi exécuté par le worker (première annonce ou relance).
+  openingLastFanoutAt  DateTime?
+  // Première annonce terminée (le worker). Reprise = activatedAt.
+  openingNotifiedAt    DateTime?
+  // Auteur de la PREMIÈRE annonce : COALESCE(…, openingFanoutById) au worker.
+  openingNotifiedById  String?
+  // Lignes d'inbox insérées, cumulées sur toutes les annonces du cycle.
+  openingAudience      Int?
+  // Cycle volontairement non annoncé : 'pre_existing_open' (reprise),
+  // 'dates_only' (notify:false), 'not_public_at_fanout',
+  // 'cycle_closed_at_fanout' (worker).
+  openingSkippedAt     DateTime?
+  openingSkippedReason String?
+  // « Arrêter les envois restants » : toute ligne écrite avant cet instant est
+  // sautée au prochain passage, y compris une ligne en vol qui revient en
+  // nouvelle tentative.
+  openingStoppedAt     DateTime?
+  // Ouvert ou activé avant ce chantier (reprise) : jamais d'annonce, même aux
+  // « nouveaux abonnés » — leurs favoris n'ont jamais été prévenus.
+  openingPreExisting   Boolean   @default(false)
+
   @@unique([scholarshipId, academicYear])
   @@index([scholarshipId, status])
   @@index([estimatedOpenAt])
   @@index([opensAt])
   @@index([closesAt])
+  @@index([openingFanoutDueAt])
 }
 
 // Explicit opt-in behind the mobile "M'avertir" action.
@@ -1289,10 +1324,18 @@ model ScholarshipAlertSubscription {
   id            String      @id @default(cuid())
   userId        String
   scholarshipId String
+  // pushEnabled : aucun client livré ne sait le passer à false (subscribe
+  // l'écrit à true). inAppEnabled : retiré, toujours true, encore renvoyé.
   pushEnabled   Boolean     @default(true)
   inAppEnabled  Boolean     @default(true)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  // Sourdine explicite « ne me prévenez pas de l'ouverture de cette bourse ».
+  // Prime sur un favori. La bourse reste suivie (rappels, liste suivie).
+  mutedAt       DateTime?
+  // Vrai quand c'est la cloche (subscribe) ou la CLI de bascule qui a créé le
+  // favori : « cloche coupée » défait alors exactement ce que la cloche a fait.
+  impliedFollow Boolean     @default(false)
   user          UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   scholarship   Scholarship @relation(fields: [scholarshipId], references: [id], onDelete: Cascade)
 
@@ -1304,31 +1347,55 @@ model ScholarshipAlertSubscription {
 // Durable, per-user in-app feed. Scholarship activations use `dedupeKey` so an
 // admin retry cannot create duplicate rows or duplicate push notifications.
 model UserNotification {
-  id            String       @id @default(cuid())
-  userId        String
-  scholarshipId String?
-  kind          String
-  dedupeKey     String       @unique
-  titleFr       String
-  titleEn       String
-  bodyFr        String
-  bodyEn        String
-  route         String
-  data          Json?
-  readAt        DateTime?
+  id              String       @id @default(cuid())
+  userId          String
+  scholarshipId   String?
+  kind            String
+  dedupeKey       String       @unique
+  titleFr         String
+  titleEn         String
+  bodyFr          String
+  bodyEn          String
+  route           String
+  data            Json?
+  readAt          DateTime?
   // When a push was actually delivered for this entry (NULL = feed-only: the
   // durable in-app notification was written but no push went out, e.g. it was
   // suppressed by quiet hours or the daily frequency cap). Also the counter the
   // dispatcher uses to enforce the per-user daily push cap.
-  pushedAt      DateTime?
-  createdAt     DateTime     @default(now())
-  user          UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scholarship   Scholarship? @relation(fields: [scholarshipId], references: [id], onDelete: SetNull)
+  //
+  // Boîte d'envoi des annonces d'ouverture : posé sur UNE ligne par push (la
+  // ligne seule, ou la ligne de tête d'un groupé), jamais sur les autres lignes
+  // d'un groupé — le plafond du dispatcher compte des lignes, pas des push.
+  pushedAt        DateTime?
+  createdAt       DateTime     @default(now())
+  // Cycle annoncé (lignes scholarship_opened). Sans FK : la ligne d'inbox
+  // survit au cycle, comme scholarshipId survit en SetNull.
+  cycleId         String?
+  // Boîte d'envoi push. NULL = ligne héritée ou du dispatcher : le worker n'y
+  // touche jamais. 'pending' | 'accepted' | 'no_device' | 'failed' |
+  // 'skipped' | 'expired'.
+  pushStatus      String?
+  pushNotBefore   DateTime?
+  // Appels au fournisseur seulement (un report n'en est pas un).
+  pushAttempts    Int          @default(0)
+  pushLockedUntil DateTime?
+  pushLockedBy    String?
+  // Raison du dernier report / saut / échec (voir PUSH_* dans le contrat).
+  pushLastError   String?
+  // 'fcm' | 'onesignal' — le fournisseur qui a accepté.
+  pushProvider    String?
+  // Même valeur pour toutes les lignes d'un même push (regroupement).
+  pushBatchId     String?
+  user            UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scholarship     Scholarship? @relation(fields: [scholarshipId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([userId, readAt])
   @@index([userId, pushedAt])
   @@index([scholarshipId])
+  @@index([pushStatus, pushNotBefore])
+  @@index([cycleId, kind])
 }
 
 // Ordered, admin-authored "how to apply" steps for a specific scholarship

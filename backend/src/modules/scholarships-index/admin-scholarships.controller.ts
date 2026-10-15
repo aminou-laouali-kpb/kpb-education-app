@@ -8,10 +8,15 @@ import {
   Post,
   Query,
   Req,
+  Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
+import type { IncomingHttpHeaders } from 'node:http';
 
 import type { AdminSessionUser } from '../auth/auth.service';
+import { resolveRequestId } from '../../common/request-id';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { InternalRole } from '../../common/enums/internal-role.enum';
 import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
@@ -24,7 +29,10 @@ import { ScholarshipContentQualityService } from './scholarship-content-quality.
 import { ScholarshipLifecycleService } from './scholarship-lifecycle.service';
 import { ScholarshipsIndexService } from './scholarships-index.service';
 
-type AdminRequest = { adminUser?: AdminSessionUser };
+type AdminRequest = {
+  adminUser?: AdminSessionUser;
+  headers: IncomingHttpHeaders;
+};
 
 /**
  * Admin: manual refresh trigger.
@@ -89,8 +97,20 @@ export class AdminScholarshipsController {
   activate(
     @Param('id') id: string,
     @Body() input: ActivateScholarshipDto,
+    @Req() req: AdminRequest,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.scholarshipLifecycle.activate(id, input);
+    // L'identifiant est celui de la ligne d'audit : renvoyé en en-tête, il
+    // relie l'événement à l'appel qui l'a écrit.
+    const requestId = resolveRequestId(req.headers['x-request-id']);
+    res.setHeader('X-Request-Id', requestId);
+    if (!req.adminUser) throw new UnauthorizedException();
+    return this.scholarshipLifecycle.activate(
+      id,
+      input,
+      req.adminUser,
+      requestId,
+    );
   }
 
   @Post(':id/forecast')

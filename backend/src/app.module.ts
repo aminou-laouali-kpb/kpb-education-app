@@ -61,6 +61,7 @@ import { CampaignCronService } from './modules/notifications/campaign-cron.servi
 import { NotificationDispatchService } from './modules/notifications/notification-dispatch.service';
 import { WeeklyDigestService } from './modules/notifications/weekly-digest.service';
 import { MilestoneReminderService } from './modules/notifications/milestone-reminder.service';
+import { PushOutboxWorkerService } from './modules/notifications/push-outbox-worker.service';
 import { ProfileNudgeCronService } from './modules/notifications/profile-nudge-cron.service';
 import { SalonReminderCronService } from './modules/notifications/salon-reminder-cron.service';
 import { MauticService } from './modules/newsletter/mautic.service';
@@ -142,6 +143,12 @@ import { ScholarshipContentQualityService } from './modules/scholarships-index/s
 import { ScholarshipVideosService } from './modules/scholarships-index/scholarship-videos.service';
 import { UserNotificationsController } from './modules/scholarships-index/user-notifications.controller';
 import { UserNotificationsService } from './modules/scholarships-index/user-notifications.service';
+import { FollowedScholarshipsController } from './modules/scholarships-index/followed-scholarships.controller';
+import { FollowedScholarshipsService } from './modules/scholarships-index/followed-scholarships.service';
+import { AdminScholarshipOpeningController } from './modules/scholarships-index/opening/admin-scholarship-opening.controller';
+import { ScholarshipOpeningAdminService } from './modules/scholarships-index/opening/scholarship-opening-admin.service';
+import { ScholarshipOpeningAudienceService } from './modules/scholarships-index/opening/scholarship-opening-audience.service';
+import { ScholarshipOpeningFanoutService } from './modules/scholarships-index/opening/scholarship-opening-fanout.service';
 import { GreatYopScraper } from './modules/scholarships-index/scrapers/greatyop.scraper';
 import { MastereTnScraper } from './modules/scholarships-index/scrapers/mastereTn.scraper';
 import { VisaAvailabilityController } from './modules/visa-availability/visa-availability.controller';
@@ -235,10 +242,15 @@ import { SalonService } from './modules/salon/salon.service';
     ParentLinksController,
     ReferralsController,
     AmbassadorController,
+    // Annonce d'ouverture (chantier C). Déclaré AVANT AdminScholarshipsController :
+    // ses routes à segment fixe (`opening-todo`, `opening-overview`) ne doivent
+    // jamais être lues comme un `:id` de bourse.
+    AdminScholarshipOpeningController,
     AdminScholarshipsController,
     ScholarshipsController,
     ScholarshipAlertsController,
     UserNotificationsController,
+    FollowedScholarshipsController,
     VisaAvailabilityController,
     ServicePackagesController,
     MyPurchasesController,
@@ -339,6 +351,12 @@ import { SalonService } from './modules/salon/salon.service';
     ScholarshipContentQualityService,
     ScholarshipVideosService,
     UserNotificationsService,
+    // Annonce d'ouverture d'une bourse suivie (chantier C).
+    ScholarshipOpeningAdminService,
+    ScholarshipOpeningAudienceService,
+    ScholarshipOpeningFanoutService,
+    PushOutboxWorkerService,
+    FollowedScholarshipsService,
     GreatYopScraper,
     MastereTnScraper,
     VisaAvailabilityService,

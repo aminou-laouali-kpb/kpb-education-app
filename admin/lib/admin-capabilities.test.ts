@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -274,5 +277,70 @@ describe('PublishEefCatalog — miroir du contrôleur backend', () => {
   it('un rôle inconnu n’a aucun accès', () => {
     expect(hasAdminCapability('stagiaire', AdminCapability.PublishEefCatalog)).toBe(false);
     expect(hasAdminCapability(null, AdminCapability.PublishEefCatalog)).toBe(false);
+  });
+});
+
+describe('SendLargeScholarshipOpening — miroir de OPENING_SEND_ROLES', () => {
+  // `activate` refuse (403 OPENING_REQUIRES_ADMIN) une annonce au-delà du seuil
+  // à tout rôle hors `OPENING_SEND_ROLES`. Le panneau d'ouverture désactive son
+  // bouton sur cette capacité : si les deux listes divergent, un rôle se voit
+  // proposer un envoi que le serveur refusera, ou un administrateur perd le
+  // bouton sans raison.
+  it.each([InternalRole.Admin, InternalRole.SuperAdmin])(
+    '%s peut annoncer au-delà du seuil',
+    (role) => {
+      expect(
+        hasAdminCapability(role, AdminCapability.SendLargeScholarshipOpening),
+      ).toBe(true);
+    },
+  );
+
+  it.each([
+    InternalRole.ContentManager,
+    InternalRole.Moderator,
+    InternalRole.Commercial,
+    InternalRole.Counselor,
+  ])('%s ne le peut pas', (role) => {
+    expect(
+      hasAdminCapability(role, AdminCapability.SendLargeScholarshipOpening),
+    ).toBe(false);
+  });
+
+  it('accorde exactement les rôles du contrat backend', () => {
+    const contract = readFileSync(
+      join(
+        __dirname,
+        '..',
+        '..',
+        'backend',
+        'src',
+        'modules',
+        'scholarships-index',
+        'opening',
+        'scholarship-opening.contract.ts',
+      ),
+      'utf8',
+    );
+    const block =
+      /export const OPENING_SEND_ROLES[^=]*=\s*\[([^\]]*)\]/.exec(contract)?.[1] ??
+      '';
+    const backendRoles = [...block.matchAll(/InternalRole\.(\w+)/g)].map(
+      ([, name]) => InternalRole[name as keyof typeof InternalRole],
+    );
+    expect(backendRoles.length).toBeGreaterThan(0);
+
+    const allowed = Object.values(InternalRole).filter((role) =>
+      hasAdminCapability(role, AdminCapability.SendLargeScholarshipOpening),
+    );
+    expect(allowed.sort()).toEqual(backendRoles.sort());
+  });
+
+  it('un rôle inconnu n’a aucun accès', () => {
+    expect(
+      hasAdminCapability('stagiaire', AdminCapability.SendLargeScholarshipOpening),
+    ).toBe(false);
+    expect(
+      hasAdminCapability(null, AdminCapability.SendLargeScholarshipOpening),
+    ).toBe(false);
   });
 });

@@ -71,6 +71,18 @@ export enum AdminCapability {
    * point : élargir l'une ne doit jamais élargir l'autre.
    */
   PublishEefCatalog = 'publish_eef_catalog',
+  /**
+   * Annoncer l'ouverture d'une bourse à PLUS de `confirmThreshold` (500)
+   * étudiants.
+   *
+   * Miroir de `OPENING_SEND_ROLES` (Admin, SuperAdmin) dans
+   * `backend/…/opening/scholarship-opening.contract.ts`, que `activate` fait
+   * respecter par un 403 `OPENING_REQUIRES_ADMIN`. PAS `ContentManager` : il
+   * ouvre les cycles et annonce en dessous du seuil, mais un envoi massif
+   * engage la relation avec des milliers d'étudiants. Présentation seulement :
+   * elle désactive le bouton, le serveur reste seul juge.
+   */
+  SendLargeScholarshipOpening = 'send_large_scholarship_opening',
 }
 
 const ALL_ROLES = Object.freeze([
@@ -131,6 +143,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
     AdminCapability.PublishEefCatalog,
+    AdminCapability.SendLargeScholarshipOpening,
     AdminCapability.ManagePartnerAgreements,
     AdminCapability.ViewAssignedPilotCohorts,
     AdminCapability.RecruitPilotParticipants,

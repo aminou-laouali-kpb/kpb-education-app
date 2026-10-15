@@ -19,6 +19,13 @@ import {
   ScholarshipScraper,
 } from './scholarship-source.interface';
 import { ScholarshipContentQualityService } from './scholarship-content-quality.service';
+import type { ScholarshipFollowState } from './opening/scholarship-opening.contract';
+import {
+  alertFacts,
+  followFlags,
+  hasFollowedScholarshipOptOut,
+  SCHOLARSHIP_SAVED_ITEM_TYPE,
+} from './scholarship-follow-state';
 import { levelsInText, scholarshipLevels } from './scholarship-level';
 import { GreatYopScraper } from './scrapers/greatyop.scraper';
 import { MastereTnScraper } from './scrapers/mastereTn.scraper';
@@ -359,6 +366,9 @@ export class ScholarshipsIndexService {
             where: {
               userId: params.userId,
               scholarshipId: { in: items.map((item) => item.id) },
+              // Chantier C : une alerte en sourdine est une cloche éteinte
+              // pour les builds 53/56.
+              mutedAt: null,
             },
             select: { scholarshipId: true },
           }),
@@ -457,17 +467,44 @@ export class ScholarshipsIndexService {
     if (!scholarship) {
       throw new NotFoundException(`Scholarship ${id} not found.`);
     }
-    const subscription = await this.prismaService.execute((prisma) =>
-      prisma.scholarshipAlertSubscription.findUnique({
-        where: {
-          userId_scholarshipId: {
-            userId: params.userId,
-            scholarshipId: id,
+    const followRows = await this.prismaService.execute((prisma) =>
+      Promise.all([
+        prisma.scholarshipAlertSubscription.findUnique({
+          where: {
+            userId_scholarshipId: {
+              userId: params.userId,
+              scholarshipId: id,
+            },
           },
-        },
-        select: { pushEnabled: true, inAppEnabled: true },
-      }),
+          select: { pushEnabled: true, inAppEnabled: true, mutedAt: true },
+        }),
+        prisma.savedItem.findUnique({
+          where: {
+            userId_itemType_itemId: {
+              userId: params.userId,
+              itemType: SCHOLARSHIP_SAVED_ITEM_TYPE,
+              itemId: id,
+            },
+          },
+          select: { id: true },
+        }),
+        prisma.userProfile.findUnique({
+          where: { id: params.userId },
+          select: { disabledNotificationTypes: true },
+        }),
+      ]),
     );
+    const [alertRow, favorite, profile] = followRows ?? [null, null, null];
+    // `alert.*` est l'état de la cloche des builds 53/56 : une alerte en
+    // sourdine y est une cloche éteinte.
+    const subscription =
+      alertRow !== null && alertRow.mutedAt === null ? alertRow : null;
+    const follow: ScholarshipFollowState = {
+      ...followFlags({ favorite: favorite !== null, ...alertFacts(alertRow) }),
+      globalOptOut: hasFollowedScholarshipOptOut(
+        profile?.disabledNotificationTypes,
+      ),
+    };
     return {
       ...this.publicDto(scholarship, params.lang),
       cycles: scholarship.cycles.map((cycle) => this.publicCycleDto(cycle)),
@@ -479,6 +516,8 @@ export class ScholarshipsIndexService {
         pushEnabled: subscription?.pushEnabled ?? false,
         inAppEnabled: subscription?.inAppEnabled ?? false,
       },
+      // Chantier C, additif : « Suivre » = favori + alerte d'ouverture.
+      follow,
     };
   }
 

@@ -626,7 +626,12 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
           findUnique: async () => ({
             pushEnabled: true,
             inAppEnabled: true,
+            mutedAt: null,
           }),
+        },
+        savedItem: { findUnique: async () => null },
+        userProfile: {
+          findUnique: async () => ({ disabledNotificationTypes: [] }),
         },
       };
       const prisma = {
@@ -656,6 +661,236 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
         pushEnabled: true,
         inAppEnabled: true,
       });
+      expect(result.follow).toEqual({
+        following: true,
+        viaFavorite: false,
+        viaAlert: true,
+        notifyOpening: true,
+        globalOptOut: false,
+      });
+    });
+  });
+
+  // Chantier C : une alerte en sourdine est une cloche ÉTEINTE pour les builds
+  // 53/56 (qui ne lisent que `isAlertEnabled` et `alert.*`), et la fiche gagne
+  // un bloc `follow` additif pour les builds récentes. Rien d'autre ne bouge.
+  describe('follow state (chantier C)', () => {
+    const detailRow = {
+      ...baseRow,
+      typeOfFundingFr: 'Financement complet',
+      typeOfFundingEn: 'Fully funded',
+      keyRequirementsFr: [],
+      keyRequirementsEn: [],
+      cycles: [],
+      videos: [],
+    };
+
+    function makeDetailService(opts: {
+      alert: { pushEnabled: boolean; inAppEnabled: boolean; mutedAt: Date | null } | null;
+      favorite: boolean;
+      disabledNotificationTypes?: string[];
+      profileMissing?: boolean;
+    }) {
+      const lookups: Array<{ model: string; args: Record<string, unknown> }> = [];
+      const client = {
+        scholarship: { findFirst: async () => detailRow },
+        scholarshipAlertSubscription: {
+          findUnique: async (args: Record<string, unknown>) => {
+            lookups.push({ model: 'alert', args });
+            return opts.alert;
+          },
+        },
+        savedItem: {
+          findUnique: async (args: Record<string, unknown>) => {
+            lookups.push({ model: 'savedItem', args });
+            return opts.favorite ? { id: 'saved-1' } : null;
+          },
+        },
+        userProfile: {
+          findUnique: async (args: Record<string, unknown>) => {
+            lookups.push({ model: 'userProfile', args });
+            return opts.profileMissing
+              ? null
+              : { disabledNotificationTypes: opts.disabledNotificationTypes ?? [] };
+          },
+        },
+      };
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (value: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        {} as ScholarshipContentQualityService,
+      );
+      return { service, lookups };
+    }
+
+    it('keeps the detail keys of before, plus the additive `follow` block', async () => {
+      const { service } = makeDetailService({ alert: null, favorite: false });
+      const result = await service.getForProfile('sch-1', {
+        lang: 'fr',
+        userId: 'user-1',
+      });
+      expect(Object.keys(result).sort()).toEqual([
+        'advantages',
+        'alert',
+        'applicationRequirement',
+        'applicationSteps',
+        'applicationUrl',
+        'countryId',
+        'countryName',
+        'currentCycle',
+        'cycles',
+        'deadlineAt',
+        'deadlineLabel',
+        'description',
+        'eligibility',
+        'follow',
+        'fundingType',
+        'id',
+        'keyRequirements',
+        'lastVerifiedAt',
+        'level',
+        'relatedFieldIds',
+        'sourceUrl',
+        'tags',
+        'title',
+        'typeOfFunding',
+        'videos',
+      ]);
+      expect(result.alert).toEqual({
+        subscribed: false,
+        pushEnabled: false,
+        inAppEnabled: false,
+      });
+      expect(result.follow).toEqual({
+        following: false,
+        viaFavorite: false,
+        viaAlert: false,
+        notifyOpening: false,
+        globalOptOut: false,
+      });
+    });
+
+    it('a muted alert reads as a bell off; the favourite still follows, without the opening alert', async () => {
+      const { service, lookups } = makeDetailService({
+        alert: {
+          pushEnabled: true,
+          inAppEnabled: true,
+          mutedAt: new Date('2026-10-01T00:00:00.000Z'),
+        },
+        favorite: true,
+        disabledNotificationTypes: ['weekly_digest', 'followed_scholarship_updates'],
+      });
+
+      const result = await service.getForProfile('sch-1', {
+        lang: 'fr',
+        userId: 'user-1',
+      });
+
+      expect(result.alert).toEqual({
+        subscribed: false,
+        pushEnabled: false,
+        inAppEnabled: false,
+      });
+      expect(result.follow).toEqual({
+        following: true,
+        viaFavorite: true,
+        viaAlert: false,
+        notifyOpening: false,
+        globalOptOut: true,
+      });
+      // Scoped to the student and to this scholarship's favourite.
+      expect(lookups).toEqual(
+        expect.arrayContaining([
+          {
+            model: 'savedItem',
+            args: expect.objectContaining({
+              where: {
+                userId_itemType_itemId: {
+                  userId: 'user-1',
+                  itemType: 'scholarship',
+                  itemId: 'sch-1',
+                },
+              },
+            }),
+          },
+          {
+            model: 'userProfile',
+            args: expect.objectContaining({ where: { id: 'user-1' } }),
+          },
+        ]),
+      );
+    });
+
+    it('a muted alert without favourite is not followed', async () => {
+      const { service } = makeDetailService({
+        alert: { pushEnabled: true, inAppEnabled: true, mutedAt: new Date() },
+        favorite: false,
+        profileMissing: true,
+      });
+      const result = await service.getForProfile('sch-1', {
+        lang: 'en',
+        userId: 'user-1',
+      });
+      expect(result.follow).toEqual({
+        following: false,
+        viaFavorite: false,
+        viaAlert: false,
+        notifyOpening: false,
+        globalOptOut: false,
+      });
+    });
+
+    it('the list counts unmuted alerts only for `isAlertEnabled`', async () => {
+      const subscriptionQueries: Array<Record<string, unknown>> = [];
+      const rows = [
+        { ...baseRow, id: 'muted-one' },
+        { ...baseRow, id: 'active-one' },
+      ];
+      const client = {
+        scholarship: {
+          findMany: async () => rows,
+          count: async () => rows.length,
+        },
+        scholarshipAlertSubscription: {
+          findMany: async (args: Record<string, unknown>) => {
+            subscriptionQueries.push(args);
+            // La base applique `mutedAt: null` : seule l'alerte active revient.
+            return [{ scholarshipId: 'active-one' }];
+          },
+        },
+      };
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        { assertReady: jest.fn() } as unknown as ScholarshipContentQualityService,
+      );
+
+      const result = await service.listForProfile({ lang: 'fr', userId: 'user-1' });
+
+      expect(subscriptionQueries).toEqual([
+        {
+          where: {
+            userId: 'user-1',
+            scholarshipId: { in: ['muted-one', 'active-one'] },
+            mutedAt: null,
+          },
+          select: { scholarshipId: true },
+        },
+      ]);
+      const enabled = Object.fromEntries(
+        result.items.map((item) => [item.id, item.isAlertEnabled]),
+      );
+      expect(enabled).toEqual({ 'muted-one': false, 'active-one': true });
     });
   });
 });

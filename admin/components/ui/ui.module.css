@@ -326,6 +326,9 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
+.dialog:focus {
+  outline: none;
+}
 .dialogTitle {
   margin: 0;
   font-size: var(--text-lg);
@@ -341,4 +344,43 @@
   gap: var(--space-2);
   justify-content: flex-end;
   margin-top: var(--space-2);
+}
+
+/* ── Modal (general purpose) ────────────────────────────────────────────────
+   Sits one layer under the ConfirmDialog overlay (z-index 50), so a
+   confirmation opened from a modal always appears on top of it. The title
+   and the action row stay put; only the body scrolls. */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(15, 23, 42, 0.45);
+}
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 2 * var(--space-4));
+  padding: var(--space-5);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+.modal:focus {
+  outline: none;
+}
+.modalLg {
+  max-width: 760px;
+}
+.modalBody {
+  display: grid;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }

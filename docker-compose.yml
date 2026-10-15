@@ -89,6 +89,30 @@ services:
       - KPB_WEEKLY_DIGEST_ENABLED=${KPB_WEEKLY_DIGEST_ENABLED:-false}
       - KPB_MATCH_RECOMPUTE_ENABLED=${KPB_MATCH_RECOMPUTE_ENABLED:-false}
       - KPB_PARCOURS_WEEKLY_ENABLED=${KPB_PARCOURS_WEEKLY_ENABLED:-false}
+      # Annonce d'ouverture des bourses suivies (chantier C). Le mode reste
+      # `legacy` (le chemin d'avant) tant que l'exploitation ne bascule pas ;
+      # KPB_PUSH_OUTBOX_ENABLED=false est l'arrêt d'urgence du worker. Les
+      # réglages vides valent le défaut du code (bornes dans
+      # scholarship-opening.contract.ts), comme les heures calmes.
+      - KPB_SCHOLARSHIP_OPENING_MODE=${KPB_SCHOLARSHIP_OPENING_MODE:-legacy}
+      - KPB_PUSH_OUTBOX_ENABLED=${KPB_PUSH_OUTBOX_ENABLED:-true}
+      - KPB_OPENING_HOLD_SECONDS=${KPB_OPENING_HOLD_SECONDS:-}
+      - KPB_OPENING_CONFIRM_THRESHOLD=${KPB_OPENING_CONFIRM_THRESHOLD:-}
+      - KPB_OPENING_COALESCE_MINUTES=${KPB_OPENING_COALESCE_MINUTES:-}
+      - KPB_OPENING_MAX_PER_DAY=${KPB_OPENING_MAX_PER_DAY:-}
+      - KPB_OPENING_RENOTIFY_DAYS=${KPB_OPENING_RENOTIFY_DAYS:-}
+      - KPB_OPENING_FANOUT_CYCLES_PER_TICK=${KPB_OPENING_FANOUT_CYCLES_PER_TICK:-}
+      - KPB_OPENING_FANOUT_MAX_LATENESS_HOURS=${KPB_OPENING_FANOUT_MAX_LATENESS_HOURS:-}
+      - KPB_PUSH_OUTBOX_TTL_HOURS=${KPB_PUSH_OUTBOX_TTL_HOURS:-}
+      - KPB_PUSH_OUTBOX_TICK_BUDGET_MS=${KPB_PUSH_OUTBOX_TICK_BUDGET_MS:-}
+      - KPB_PUSH_OUTBOX_CONCURRENCY=${KPB_PUSH_OUTBOX_CONCURRENCY:-}
+      - KPB_PUSH_OUTBOX_BATCH=${KPB_PUSH_OUTBOX_BATCH:-}
+      - KPB_PUSH_OUTBOX_LEASE_MS=${KPB_PUSH_OUTBOX_LEASE_MS:-}
+      - KPB_PUSH_OUTBOX_MAX_ATTEMPTS=${KPB_PUSH_OUTBOX_MAX_ATTEMPTS:-}
+      # Heures calmes des push (21 h → 8 h locales par défaut), lues par le
+      # dispatcher et par le worker d'annonce.
+      - KPB_PUSH_QUIET_START=${KPB_PUSH_QUIET_START:-}
+      - KPB_PUSH_QUIET_END=${KPB_PUSH_QUIET_END:-}
       # Quotas IA quotidiens par utilisateur (vide = défaut du code : 30 / 10 / 10).
       - KPB_AI_DAILY_QUOTA_TOOLS=${KPB_AI_DAILY_QUOTA_TOOLS:-}
       - KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW=${KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW:-}
