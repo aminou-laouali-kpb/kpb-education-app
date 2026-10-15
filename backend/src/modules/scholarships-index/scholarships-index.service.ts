@@ -768,6 +768,13 @@ export class ScholarshipsIndexService {
         lastVerifiedAt: r.lastVerifiedAt,
         isActive: r.isActive,
         tags: r.tags,
+        // Éligibilité structurée (chantier D4) : éditée dans le back-office,
+        // lue par la colonne « Éligibilité » et le compteur de couverture.
+        eligibleLevels: r.eligibleLevels,
+        fieldsScope: r.fieldsScope,
+        eligibilityCriteria: r.eligibilityCriteria,
+        eligibilityStructuredAt: r.eligibilityStructuredAt,
+        eligibilityStructuredBy: r.eligibilityStructuredBy,
         videos: (r.videos ?? []).map((video) => ({
           ...video,
           watchUrl: `https://www.youtube.com/watch?v=${video.youtubeVideoId}`,

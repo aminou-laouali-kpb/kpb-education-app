@@ -1200,6 +1200,45 @@ l'import encore en attente (voir plus bas).
   mêmes clauses, catégorie par catégorie. Le SLA compte sur la file COMPLÈTE,
   jamais sur la version plafonnée.
 
+## Admin — éligibilité structurée des bourses (« Mes 10 bourses », chantier D4)
+
+Gardes `AdminAuthGuard` + `RolesGuard`, rôles admin, super_admin,
+content_manager (comme l'édition du contenu des bourses). Le moteur est celui de
+`backend/src/modules/scholarship-match/` (assess, rank, reasons), réutilisé tel
+quel. Les routes à segment fixe sont déclarées AVANT `AdminScholarshipsController`.
+
+### Écriture : `POST /admin/catalog/scholarships` et `PATCH /admin/catalog/scholarships/:id` (étendues)
+
+Champs additionnels, lus STRICTEMENT (une valeur présente mais invalide → 400,
+rien n'est écrit) ; une clé absente laisse la colonne intacte :
+
+| Champ | Forme |
+| --- | --- |
+| `eligibleLevels` | `('secondary'\|'bachelor'\|'master'\|'doctorate')[]` ; `null` = vide. 400 `INVALID_ELIGIBLE_LEVELS`. |
+| `fieldsScope` | `'unknown'\|'all'\|'listed'` ; `null` = `unknown`. 400 `INVALID_FIELDS_SCOPE`. |
+| `eligibilityCriteria` | Critères v1 (`eligibility-criteria.ts`), vérifiés par `validateEligibilityCriteria` ; la copie normalisée est stockée. 400 `INVALID_ELIGIBILITY_CRITERIA` avec `message: string[]` et `issues: [{path, code, message}]` (`path` = `[2].countries[0]`). |
+| `markStructured` | `true` : « Conditions vérifiées » — tamponne `eligibilityStructuredAt` (maintenant) et `eligibilityStructuredBy` (nom de l'admin, sinon e-mail) sur le contenu FINAL ; 400 `ELIGIBILITY_LEVELS_REQUIRED` sans niveau, 400 `INVALID_ELIGIBILITY_CRITERIA` si les critères stockés sont illisibles. `false` : retire le tampon. |
+
+Un contenu d'éligibilité MODIFIÉ sans `markStructured: true` retire le tampon
+(la fiche redevient un brouillon : ses règles n'excluent plus). Rien de changé,
+rien de demandé : aucune écriture. Chaque écriture d'éligibilité écrit, dans la
+même transaction, un `AdminAuditEvent` : `purposeCode: 'scholarship_eligibility'`,
+`entityType: 'Scholarship'`, `action` ∈ `scholarship.eligibility_updated |
+scholarship.eligibility_structured | scholarship.eligibility_unstamped`,
+`changes` = `{changedFields, eligibleLevels, fieldsScope, criteriaCount,
+criteriaKeys, stamped, stampCleared, previousStructuredAt}` (aucune donnée
+personnelle, aucune citation). `GET /admin/scholarships/moderation` sert
+désormais `eligibleLevels`, `fieldsScope`, `eligibilityCriteria`,
+`eligibilityStructuredAt` et `eligibilityStructuredBy`.
+
+### Routes
+
+| Route | Rôle |
+| --- | --- |
+| `GET /admin/scholarships/eligibility-coverage` | Porte de lancement, sur les bourses PUBLIQUES (`publicScholarshipWhere`) : `{generatedAt, freshnessDays: 400, launchGatePercent: 90, total, structuredFresh, stale, unstructured, notAnalyzed, invalidCriteria, coveragePercent, launchReady, toStructure: [{id, nameFr, nameEn, state, structuredAt, structuredBy}], toStructureIds, truncated}`. `state` ∈ `not_analyzed` (aucun niveau) `\| unstructured` (jamais tamponnée) `\| stale` (tampon ≥ 400 j) ; liste triée dans cet ordre puis par nom, 500 au plus. `coveragePercent` est arrondi PAR DÉFAUT à 0,1 ; `launchReady` = `structuredFresh / total ≥ 90 %` (faux sur un catalogue vide). |
+| `GET /admin/scholarships/eligibility-options` | Table ISO 3166-1 du serveur (`common/iso-countries.ts`) pour l'éditeur : `{countries: [{code, nameFr, nameEn, priority, selectable}], freshnessDays, launchGatePercent, maxResults}`. `selectable: false` pour un territoire inhabité (valide dans un critère, jamais proposé à un élève). |
+| `POST /admin/scholarships/match-preview` | « Tester un profil », SANS RIEN PERSISTER. Corps `MatchPreviewDto` : les champs du test (`nationalityCode`, `secondNationalityCode`, `countryOfResidence`, `birthDate` AAAA-MM-JJ, `guardianConsented`, `highestDiploma`, `scholarshipTargetLevel`, `fieldIds[]`, `targetCountryIds[]`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests[]`, `workExperienceBand`), plus `lang`, `confirmed` (défaut `true`) et `focusScholarshipId` (une fiche évaluée à part, publique ou non). Jetons tolérants : un jeton inconnu est abandonné et nommé dans `dropped`, jamais une 400 ; un champ non déclaré → 400. Réponse 200 : `{persisted: false, algorithmVersion, generatedAt, lang, profile, dropped, readiness, counts, items (≤ 10, rang, section), beyondLimitCount, excluded, excludedSummary, notAnalyzed, focus}` ; chaque point porte `code`, `label` (rendu serveur), `criterionKey?`, `officialText?`, `sourceUrl?`. Candidates : bourses publiques, 500 au plus. |
+
 ## Admin content operations
 
 - `GET /admin/service-offers`

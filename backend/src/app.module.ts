@@ -84,6 +84,8 @@ import { AppBuildInterceptor } from './modules/app-builds/app-build.interceptor'
 import { AppBuildTrackerService } from './modules/app-builds/app-build-tracker.service';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
 import { AdminCatalogService } from './modules/admin-catalog/admin-catalog.service';
+import { AdminScholarshipEligibilityController } from './modules/admin-catalog/admin-scholarship-eligibility.controller';
+import { ScholarshipEligibilityAdminService } from './modules/admin-catalog/scholarship-eligibility-admin.service';
 import { ImpactController } from './modules/impact/impact.controller';
 import { ImpactService } from './modules/impact/impact.service';
 import { ToolsController } from './modules/tools/tools.controller';
@@ -246,6 +248,10 @@ import { SalonService } from './modules/salon/salon.service';
     // ses routes à segment fixe (`opening-todo`, `opening-overview`) ne doivent
     // jamais être lues comme un `:id` de bourse.
     AdminScholarshipOpeningController,
+    // Éligibilité structurée (chantier D4) : routes à segment fixe
+    // (`eligibility-coverage`, `eligibility-options`, `match-preview`),
+    // déclarées elles aussi AVANT AdminScholarshipsController.
+    AdminScholarshipEligibilityController,
     AdminScholarshipsController,
     ScholarshipsController,
     ScholarshipAlertsController,
@@ -315,6 +321,7 @@ import { SalonService } from './modules/salon/salon.service';
     AdminAppBuildsService,
     AppBuildTrackerService,
     AdminCatalogService,
+    ScholarshipEligibilityAdminService,
     ImpactService,
     ToolsService,
     YoutubeService,
