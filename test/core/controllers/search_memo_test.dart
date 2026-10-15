@@ -38,12 +38,12 @@ void main() {
     await controller.hydrate();
     Get.put<AppController>(controller, permanent: true);
 
-    final first = controller.recommendedScholarships;
-    expect(identical(first, controller.recommendedScholarships), isTrue);
+    final first = controller.scholarshipsByDeadline;
+    expect(identical(first, controller.scholarshipsByDeadline), isTrue);
 
     await controller.updateProfile(
       controller.profile!.copyWith(targetCountryIds: const ['usa']),
     );
-    expect(identical(first, controller.recommendedScholarships), isFalse);
+    expect(identical(first, controller.scholarshipsByDeadline), isFalse);
   });
 }

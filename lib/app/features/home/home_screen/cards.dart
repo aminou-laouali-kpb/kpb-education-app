@@ -463,7 +463,6 @@ class _ScholarshipCard extends StatelessWidget {
     required this.name,
     required this.flag,
     required this.funding,
-    required this.fit,
     required this.onTap,
   });
 
@@ -471,7 +470,6 @@ class _ScholarshipCard extends StatelessWidget {
   final String name;
   final String flag;
   final String funding;
-  final ProfileFit fit;
   final VoidCallback onTap;
 
   @override
@@ -493,8 +491,9 @@ class _ScholarshipCard extends StatelessWidget {
             Row(
               children: [
                 Text(flag, style: const TextStyle(fontSize: 24)),
+                // Plus de palier « Très bon match » : il venait d'un score
+                // client qui ne lisait aucune condition d'éligibilité.
                 const Spacer(),
-                Flexible(child: ProfileFitBadge(fit: fit, fontSize: 10.5)),
                 FollowScholarshipButton(
                   scholarshipId: scholarshipId,
                   scholarshipTitle: name,

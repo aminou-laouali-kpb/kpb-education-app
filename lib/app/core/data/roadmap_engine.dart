@@ -45,8 +45,8 @@ class RoadmapEngine {
         title:
             LocalizedText(fr: 'Revue Finale Expert', en: 'Final Expert Review'),
         description: LocalizedText(
-          fr: 'Faites relire votre dossier par un expert KPB pour maximiser vos chances.',
-          en: 'Have your application reviewed by a KPB expert to maximize your chances.',
+          fr: 'Faites relire votre dossier par un expert KPB avant de l\'envoyer.',
+          en: 'Have a KPB expert review your application before you send it.',
         ),
         daysBeforeDeadline: 15,
         // Idem : '/consultation' n'existe pas non plus. L'affordance n'est pas

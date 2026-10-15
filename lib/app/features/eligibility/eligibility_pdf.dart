@@ -123,7 +123,9 @@ Future<void> shareEligibilityPdf({
                         borderRadius: pw.BorderRadius.circular(4),
                       ),
                       child: pw.Text(
-                        '${r.verdictLabel.toUpperCase()} · ${r.score}%',
+                        // Verdict seul : pas de « % » qui se lirait comme des
+                        // chances (voir eligibility_simulator_screen.dart).
+                        r.verdictLabel.toUpperCase(),
                         style: const pw.TextStyle(
                             fontSize: 8, color: PdfColors.white),
                       ),

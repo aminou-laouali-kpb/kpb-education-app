@@ -115,8 +115,7 @@ class HomeScreen extends StatelessWidget {
 
         // Data — limited, curated
         final institutions = controller.institutions.take(4).toList();
-        final scholarships =
-            controller.recommendedScholarships.take(3).toList();
+        final scholarships = _homeScholarships(controller);
         final articles = controller.publishedArticles.take(2).toList();
         final activeCases = controller.cases
             .where((c) =>
@@ -125,9 +124,9 @@ class HomeScreen extends StatelessWidget {
                 c.status != CaseStatus.rejected)
             .take(2)
             .toList();
-        // Toute la liste recommandée, pas seulement les 3 cartes affichées.
+        // Toute la liste, pas seulement les 3 cartes affichées.
         final urgentScholarship =
-            _findUrgentDeadline(controller.recommendedScholarships);
+            _findUrgentDeadline(controller.scholarshipsByDeadline);
 
         return Container(
           color: KpbColors.canvas,
@@ -411,12 +410,12 @@ class HomeScreen extends StatelessWidget {
                       child: SizedBox(height: KpbSpacing.xl)),
                 ],
 
-                // ── 6. Bourses pour toi ───────────────────────────────
+                // ── 6. Bourses à suivre (sans palier de compatibilité) ─
                 if (scholarships.isNotEmpty &&
                     (controller.isStudent || controller.isParent)) ...[
                   SliverToBoxAdapter(
                     child: HScrollSection(
-                      title: 'scholarships_for_you'.tr,
+                      title: 'home_scholarships_title'.tr,
                       actionLabel: 'see_all'.tr,
                       onAction: () => Get.toNamed(AppRoutes.scholarships),
                       itemCount: scholarships.length,
@@ -429,7 +428,6 @@ class HomeScreen extends StatelessWidget {
                           name: controller.resolve(s.name),
                           flag: _flag(s.countryId),
                           funding: controller.resolve(s.typeOfFunding),
-                          fit: controller.scholarshipFit(s),
                           onTap: () => Get.toNamed(AppRoutes.scholarships),
                         );
                       },
@@ -485,6 +483,20 @@ class HomeScreen extends StatelessWidget {
   }
 
   /// Nearest scholarship whose CONFIRMED deadline falls within 30 days.
+  /// Les 3 cartes « Bourses à suivre » de l'accueil.
+  ///
+  /// POINT D'EXTENSION (chantier H3) : pour un ÉTUDIANT qui a un run « Mes 10
+  /// bourses », les cartes viendront de ce run (statut texte servi par le
+  /// serveur, détail au toucher) ; sans run, une carte « Fais le test ». Le
+  /// branchement se fait ICI et nulle part ailleurs : le titre de la section,
+  /// la carte et [_findUrgentDeadline] n'ont pas à changer.
+  ///
+  /// En attendant — et pour toujours chez les parents — l'ordre est neutre et
+  /// vérifiable (clôture confirmée la plus proche d'abord), sans aucun palier
+  /// de compatibilité : voir [AppController.scholarshipsByDeadline].
+  List<ScholarshipModel> _homeScholarships(AppController controller) =>
+      controller.scholarshipsByDeadline.take(3).toList();
+
   ScholarshipModel? _findUrgentDeadline(List<ScholarshipModel> scholarships) {
     ScholarshipModel? nearest;
     var nearestDays = 31;

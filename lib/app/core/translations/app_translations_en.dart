@@ -45,7 +45,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarships_auth_required_title':
       'Create your account to see the scholarships',
   'scholarships_auth_required_body':
-      'Scholarships are selected and verified for your profile: your level, your target countries, your field. That is why an account is needed. It is free and takes two minutes.',
+      'Scholarships are checked by KPB. You need an account to see and follow them. It is free and takes two minutes.',
   'scholarships_auth_required_cta': 'Create my account',
   'guest_cases_title': 'All your cases in one place',
   'guest_cases_body':
@@ -1149,14 +1149,14 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_guide_author':
       'Created by a 2024 Chevening scholar who has supported hundreds of African students.',
   'scholarships_sorted_hint':
-      'Ranked for your profile. Enable an alert so you do not miss the opening.',
+      'Scholarships checked by KPB and not yet closed. Enable an alert so you do not miss the opening.',
   'eligibility_see_my_result': 'See my result',
   'answer_yes': 'Yes',
   'answer_maybe': 'Maybe',
   'answer_no': 'No',
   'eligibility_verdict_eligible_title': '🟢 You appear eligible',
   'eligibility_verdict_eligible_body':
-      'You meet the stated criteria. Prepare your application — a KPB advisor can help you maximise your chances.',
+      'You meet the stated criteria. Prepare your application — a KPB advisor can help you.',
   'eligibility_verdict_conditional_title': '🟡 Eligibility to be confirmed',
   'eligibility_verdict_conditional_body':
       'You meet some of the criteria but some remain to be verified. An advisor can help you confirm your eligibility.',
@@ -1579,6 +1579,7 @@ const Map<String, String> appTranslationsEn = {
   'home_hero_subtitle_other': 'Get started today.',
   'home_hero_cta_consultation': 'Consultation',
   'home_hero_cta_become_partner': 'Become a partner',
+  'home_hero_cta_find_scholarships': 'Find your scholarships',
   'home_case_title_book_appointment': 'Book an appointment',
   'home_hero_profile_ring_label': 'Profile',
   'home_next_step_label_action_required': 'Action required',
@@ -2235,7 +2236,7 @@ const Map<String, String> appTranslationsEn = {
   'private_schools_admission': 'Private schools admission',
   'dedicated_path_intake': 'Dedicated path · @intake',
   'eligibility_simulator_title': 'Eligibility simulator',
-  'eligibility_hook': 'In 1 minute, discover your chances',
+  'eligibility_hook': 'In 1 minute, check the basic criteria',
   'eligibility_intro':
       'Answer 5 questions and get a 🟢 🟡 🔴 verdict for each of the 9 KPB destinations, then export your report as a PDF.',
   'offline_cache_notice': 'Offline mode. Showing cached data.',
@@ -2271,8 +2272,6 @@ const Map<String, String> appTranslationsEn = {
   'review_before_send':
       'Check the summary before sending. KPB replies within 24–48 h.',
   'upcoming': 'Upcoming',
-  'scholarship_gap_msg':
-      'Your current profile is at @score%. For a scholarship like "@name", the safety threshold is 85%.',
   'scholarship_tutorials':
       'Access the exclusive video tutorial pack to ace your application.',
   'answer_all_criteria': 'Answer all criteria to see your result.',
@@ -2344,7 +2343,7 @@ const Map<String, String> appTranslationsEn = {
   'continue_orientation': 'Continue orientation',
   'explore_fields': 'Explore fields',
   'explore_countries': 'Explore countries',
-  'scholarships_for_you': 'Scholarships for you',
+  'home_scholarships_title': 'Scholarships to follow',
   'my_plan_title': 'My plan',
   'my_plan_next_step': 'Next step: @step',
   'my_plan_step_profile': 'complete your profile',
@@ -2433,7 +2432,7 @@ const Map<String, String> appTranslationsEn = {
       'Sign in with email to save your journey, or browse as a guest.',
   'auth_intelligence_title': 'KPB Intelligence, your guide to studying abroad',
   'auth_intelligence_body':
-      'Answer 12 questions and discover the universities that match your profile.',
+      'Build your profile in 3 steps and discover universities ranked by your answers.',
   'auth_intelligence_benefit_fit': 'Universities ranked for your profile',
   // Voir le commentaire du bloc `fr` : ne nomme que le coach, la seule
   // surface KPB Intelligence atteignable en build 49.
@@ -2474,7 +2473,6 @@ const Map<String, String> appTranslationsEn = {
   'match_in_target_country': 'Located in a target country',
   'match_kpb_partner': 'KPB partner',
   'match_field_match': 'Matching field',
-  'match_scholarship_interest': 'Budget & Funding',
   'match_general': 'General match',
   // Case snackbar
   'case_created_title': 'Case created ✅',
