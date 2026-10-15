@@ -25,6 +25,7 @@ import {
 } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 
 import {
   EEF_INSTITUTION_ID_PREFIX,
@@ -33,6 +34,15 @@ import {
 import type { AdminSessionUser } from '../auth/auth.service';
 import { programSearchText } from '../etudes-en-france/catalog/eef-search-text';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  ELIGIBILITY_AUDIT_ENTITY_TYPE,
+  ELIGIBILITY_AUDIT_PURPOSE,
+  EMPTY_ELIGIBILITY_STATE,
+  hasEligibilityInput,
+  pickEligibilityWrite,
+  planEligibilityUpdate,
+  type EligibilityPlan,
+} from './scholarship-eligibility-admin';
 import {
   capFairly,
   compareVerificationItems,
@@ -1009,9 +1019,15 @@ export class AdminCatalogService {
   // SCHOLARSHIPS (bourses) — manual entries keep sourceKey null so the scraper
   // refresh (which upserts by prefixed sourceKey) never touches them.
   // ════════════════════════════════════════════════════════════════════════
-  async createScholarship(input: Record<string, unknown>) {
+  async createScholarship(
+    input: Record<string, unknown>,
+    actor?: AdminSessionUser,
+    requestId?: string,
+  ) {
     this.assertDb();
     const nameFr = this.requireStr(input, 'nameFr');
+    // Lu (et refusé s'il est invalide) AVANT toute écriture.
+    const eligibility = hasEligibilityInput(input) ? pickEligibilityWrite(input) : null;
     const data: Prisma.ScholarshipCreateInput = {
       nameFr,
       nameEn: this.str(input.nameEn) ?? nameFr,
@@ -1048,11 +1064,73 @@ export class AdminCatalogService {
       tags: this.strArr(input.tags) ?? [],
       // sourceKey intentionally left null → flags this as a manual entry.
     };
-    return this.prisma.execute((db) => db.scholarship.create({ data }));
+    if (!eligibility) {
+      return this.prisma.execute((db) => db.scholarship.create({ data }));
+    }
+    const plan = planEligibilityUpdate(
+      EMPTY_ELIGIBILITY_STATE,
+      eligibility,
+      actor,
+      new Date(),
+    );
+    return this.prisma.execute((db) =>
+      db.$transaction(async (tx) => {
+        const created = await tx.scholarship.create({
+          data: { ...data, ...this.eligibilityColumns(plan) },
+        });
+        await this.auditEligibility(tx, created.id, plan, actor, requestId);
+        return created;
+      }),
+    );
   }
 
-  async updateScholarship(id: string, input: Record<string, unknown>) {
+  /// Les colonnes d'éligibilité d'un plan, au format Prisma (JSON des critères).
+  private eligibilityColumns(plan: EligibilityPlan) {
+    const { eligibilityCriteria, ...rest } = plan.data;
+    return {
+      ...rest,
+      ...(eligibilityCriteria !== undefined
+        ? {
+            eligibilityCriteria:
+              eligibilityCriteria as unknown as Prisma.InputJsonValue,
+          }
+        : {}),
+    };
+  }
+
+  /// Une ligne `AdminAuditEvent` par écriture d'éligibilité (sur le modèle de
+  /// l'annonce d'ouverture) : aucune donnée personnelle, des niveaux, des clés
+  /// de critères et l'état du tampon.
+  private async auditEligibility(
+    tx: Prisma.TransactionClient,
+    scholarshipId: string,
+    plan: EligibilityPlan,
+    actor: AdminSessionUser | undefined,
+    requestId: string | undefined,
+  ) {
+    if (!plan.audit) return;
+    await tx.adminAuditEvent.create({
+      data: {
+        actorAdminId: actor?.id ?? null,
+        action: plan.audit.action,
+        purposeCode: ELIGIBILITY_AUDIT_PURPOSE,
+        entityType: ELIGIBILITY_AUDIT_ENTITY_TYPE,
+        entityId: scholarshipId,
+        requestId: requestId ?? randomUUID(),
+        result: 'success',
+        changes: plan.audit.changes,
+      },
+    });
+  }
+
+  async updateScholarship(
+    id: string,
+    input: Record<string, unknown>,
+    actor?: AdminSessionUser,
+    requestId?: string,
+  ) {
     this.assertDb();
+    const eligibility = hasEligibilityInput(input) ? pickEligibilityWrite(input) : null;
     const data = this.clean<Prisma.ScholarshipUpdateInput>({
       nameFr: this.str(input.nameFr),
       nameEn: this.str(input.nameEn),
@@ -1084,10 +1162,42 @@ export class AdminCatalogService {
       isActive: this.bool(input.isActive),
       tags: this.strArr(input.tags),
     });
+    if (!eligibility) {
+      return this.runUpdate(
+        () =>
+          this.prisma.execute((db) =>
+            db.scholarship.update({ where: { id }, data }),
+          ),
+        'Scholarship',
+        id,
+      );
+    }
+    // Éligibilité structurée : lecture de l'état courant, plan (tampon,
+    // retrait du tampon d'un contenu modifié), écriture et audit dans la même
+    // transaction.
     return this.runUpdate(
       () =>
         this.prisma.execute((db) =>
-          db.scholarship.update({ where: { id }, data }),
+          db.$transaction(async (tx) => {
+            const existing = await tx.scholarship.findUnique({
+              where: { id },
+              select: {
+                eligibleLevels: true,
+                fieldsScope: true,
+                eligibilityCriteria: true,
+                eligibilityStructuredAt: true,
+                eligibilityStructuredBy: true,
+              },
+            });
+            if (!existing) throw new NotFoundException(`Scholarship ${id} not found.`);
+            const plan = planEligibilityUpdate(existing, eligibility, actor, new Date());
+            const updated = await tx.scholarship.update({
+              where: { id },
+              data: { ...data, ...this.eligibilityColumns(plan) },
+            });
+            await this.auditEligibility(tx, id, plan, actor, requestId);
+            return updated;
+          }),
         ),
       'Scholarship',
       id,
