@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
 class DocumentViewerScreen extends StatelessWidget {
@@ -40,12 +40,9 @@ class DocumentViewerScreen extends StatelessWidget {
               icon: const Icon(Icons.download_rounded),
               onPressed: () {
                 // Future enhancement: Download and save the PDF locally.
-                Get.snackbar(
-                  'doc_viewer_download_title'.tr,
+                KpbToast.info(
                   'doc_viewer_download_body'.tr,
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: KpbColors.actionPrimary,
-                  colorText: Colors.white,
+                  title: 'doc_viewer_download_title'.tr,
                 );
               },
             ),

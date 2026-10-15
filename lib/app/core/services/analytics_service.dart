@@ -325,6 +325,51 @@ class AnalyticsService {
     }
   }
 
+  // ── Suivre / push (chantier G) ──────────────────────────────────────────
+
+  /// Les propriétés de `push_opened` : la seule clé `kind`, réduite à un
+  /// identifiant fermé (lettres, chiffres, `_`, 40 caractères au plus).
+  @visibleForTesting
+  static Map<String, Object> pushOpenedParams(String kind) {
+    final cleaned = kind.trim().toLowerCase();
+    final safe =
+        RegExp(r'^[a-z0-9_]{1,40}$').hasMatch(cleaned) ? cleaned : 'unknown';
+    return <String, Object>{AnalyticsParamKey.kind: safe};
+  }
+
+  /// Un tap sur une notification push. [kind] : le `kind` de la charge.
+  Future<void> logPushOpened({required String kind}) async {
+    final params = pushOpenedParams(kind);
+    try {
+      await _logEvent(AnalyticsEventName.pushOpened, params);
+      _mirror(AnalyticsEventName.pushOpened, params);
+    } catch (e, s) {
+      _logError('logPushOpened', e, s);
+    }
+  }
+
+  /// La feuille d'explication du premier « Suivre » s'est affichée.
+  Future<void> logPermissionPrimerShown() async {
+    try {
+      await _logEvent(
+          AnalyticsEventName.permissionPrimerShown, const <String, Object>{});
+      _mirror(AnalyticsEventName.permissionPrimerShown);
+    } catch (e, s) {
+      _logError('logPermissionPrimerShown', e, s);
+    }
+  }
+
+  /// Issue de la feuille : `granted`, `denied` ou `dismissed`.
+  Future<void> logPermissionPrimerResult(String result) async {
+    final params = <String, Object>{AnalyticsParamKey.result: result};
+    try {
+      await _logEvent(AnalyticsEventName.permissionPrimerGranted, params);
+      _mirror(AnalyticsEventName.permissionPrimerGranted, params);
+    } catch (e, s) {
+      _logError('logPermissionPrimerResult', e, s);
+    }
+  }
+
   // ── Daily scholarship (KPB-162) ─────────────────────────────────────────────
 
   Future<void> logDailyScholarshipViewed(String scholarshipId) async {

@@ -58,7 +58,7 @@ consoles (`lib/main.dart:238` — `fallbackLocale: const Locale('fr')`).
 | Bourses : financement, niveau, date limite, compte à rebours | `lib/app/features/scholarships/live_scholarships_screen.dart:121-149` (`_DeadlineBadge`), `:653-665` ; libellés `lib/app/core/translations/app_translations.dart:1080-1086,1108-1111` |
 | Bourses : filtre par type de financement (3 chips) | `lib/app/features/scholarships/live_scholarships_screen.dart:359-376` |
 | Bourses : lien vers le site / formulaire officiel | `lib/app/core/translations/app_translations.dart:1087,1105-1107` |
-| Bourses : alerte par bourse (+ push) | `lib/app/features/scholarships/widgets/scholarship_alert_button.dart:50-56` (`subscribeScholarshipAlert` puis `requestPermission`) |
+| Bourses : « Suivre » une bourse (favori + alerte d'ouverture + rappels, + push) | `lib/app/features/scholarships/widgets/follow_scholarship_button.dart` (`FollowScholarshipButton`) ; demande d'autorisation au premier suivi `lib/app/features/scholarships/widgets/follow_push_primer.dart` |
 | Bourses : compte requis (mur invité) | `lib/app/features/scholarships/live_scholarships_screen.dart:416` (`KpbGuestGate`) ; copie `lib/app/core/translations/app_translations.dart:47-50` |
 | Exploration sans compte | `lib/app/features/auth/auth_welcome_screen.dart:249` (`'auth_explore_guest'`) ; libellé `lib/app/core/translations/app_translations.dart:2025` |
 | Dossiers : statuts + fil de messages avec le conseiller | `lib/app/features/cases/cases_screen.dart:569-625` (`_statusPill`) ; `lib/app/features/cases/case_detail_screen.dart:656-682` (champ + `addCaseMessage`) |

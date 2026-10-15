@@ -73,6 +73,13 @@ describe('AppConfigController', () => {
       eefSpace: false,
       eefHelpBubble: false,
       eefPrivateSchools: false,
+      followPushPrimer: true,
+      followOpeningAlert: true,
+      openingAlertToggle: true,
+      followedScholarships: true,
+      notificationsUnreadCount: true,
+      followedScholarshipOptOut: true,
+      homeFollowedEntry: true,
     });
     expect(config.eefCampaign).toEqual({
       opensAt: null,
@@ -598,6 +605,46 @@ describe('AppConfigController', () => {
       expect(new AppConfigController().getAppConfig().androidStoreUrl).toBe(
         'https://play.example/app',
       );
+    });
+  });
+
+  // Chantier G : sept interrupteurs OUVERTS par défaut. Ils servent à COUPER
+  // une fonction sur les téléphones installés ; une variable absente, vide ou
+  // mal tapée ne doit jamais l'éteindre — seul `false` le fait.
+  const followSwitches = [
+    ['followPushPrimer', 'KPB_FOLLOW_PUSH_PRIMER_ENABLED'],
+    ['followOpeningAlert', 'KPB_FOLLOW_OPENING_ALERT_ENABLED'],
+    ['openingAlertToggle', 'KPB_OPENING_ALERT_TOGGLE_ENABLED'],
+    ['followedScholarships', 'KPB_FOLLOWED_SCHOLARSHIPS_ENABLED'],
+    ['notificationsUnreadCount', 'KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED'],
+    ['followedScholarshipOptOut', 'KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED'],
+    ['homeFollowedEntry', 'KPB_HOME_FOLLOWED_ENTRY_ENABLED'],
+  ] as const;
+
+  describe.each(followSwitches)('%s — interrupteur ouvert par défaut', (key, envVar) => {
+    afterEach(() => {
+      delete process.env[envVar];
+    });
+
+    it('est ouvert quand la variable est absente', () => {
+      delete process.env[envVar];
+      expect(new AppConfigController().getAppConfig().features[key]).toBe(true);
+    });
+
+    it('reste ouvert sur toute valeur autre que « false »', () => {
+      for (const value of ['', 'true', '0', 'no', 'off', 'flase']) {
+        process.env[envVar] = value;
+        expect(new AppConfigController().getAppConfig().features[key]).toBe(true);
+      }
+    });
+
+    it('se ferme sur « false », sans toucher aux six autres', () => {
+      process.env[envVar] = ' FALSE ';
+      const { features } = new AppConfigController().getAppConfig();
+      expect(features[key]).toBe(false);
+      for (const [other] of followSwitches) {
+        if (other !== key) expect(features[other]).toBe(true);
+      }
     });
   });
 });

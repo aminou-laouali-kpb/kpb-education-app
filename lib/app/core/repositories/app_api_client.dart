@@ -12,6 +12,7 @@ import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
+import '../services/notification_router.dart' show NotificationRouterBackend;
 import '../services/push_service.dart' show PushBackend;
 import 'app_version_headers.dart';
 
@@ -35,6 +36,31 @@ part 'app_api_client/marketplace.dart';
 /// fixing the five call sites alone would let the next one reintroduce it.
 String _normalizePath(String path) => path.startsWith('/') ? path : '/$path';
 
+/// Vrai quand [error] dit « cette route n'existe pas sur ce backend » (404,
+/// 405, 501) — le cas d'une build plus récente que le serveur. Pas une panne :
+/// l'écran masque la fonction au lieu d'afficher une erreur, et réessaiera à la
+/// prochaine ouverture.
+bool isEndpointUnavailable(Object error) {
+  if (error is! DioException) return false;
+  final status = error.response?.statusCode;
+  return status == 404 || status == 405 || status == 501;
+}
+
+/// Les références acceptées par `POST /me/notifications/read-by-ref` : au plus
+/// 20, motif `^[A-Za-z0-9:_-]+$`, 200 caractères au plus, sans doublon.
+List<String> sanitizeNotificationRefs(Iterable<String> refs) {
+  final pattern = RegExp(r'^[A-Za-z0-9:_-]+$');
+  final out = <String>[];
+  for (final raw in refs) {
+    final ref = raw.trim();
+    if (ref.isEmpty || ref.length > 200 || !pattern.hasMatch(ref)) continue;
+    if (out.contains(ref)) continue;
+    out.add(ref);
+    if (out.length == 20) break;
+  }
+  return out;
+}
+
 /// What the per-domain mixins need from the client: the shared [Dio] (one
 /// instance, one auth interceptor) and the long AI receive timeout.
 abstract class _ApiClientBase {
@@ -55,7 +81,7 @@ class AppApiClient extends _ApiClientBase
         _CatalogApi,
         _CasesApi,
         _MarketplaceApi
-    implements PushBackend {
+    implements PushBackend, NotificationRouterBackend {
   AppApiClient({Dio? dio, Duration? aiReceiveTimeout})
       : _aiReceiveTimeout = aiReceiveTimeout ??
             const Duration(seconds: AppConfig.aiRequestTimeoutInSeconds),

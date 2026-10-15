@@ -210,10 +210,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                       _ctrl.uploadDocument(caseId, doc.id, file.path);
                     }
                   } on FileTooLargeException catch (error) {
-                    Get.snackbar(
-                      'case_tunnel_file_too_large_title'.tr,
+                    KpbToast.error(
                       error.localizedBody(),
-                      snackPosition: SnackPosition.BOTTOM,
+                      title: 'case_tunnel_file_too_large_title'.tr,
                     );
                   } catch (error, stack) {
                     // `e.toString()` était peint à l'écran tel quel : sur ce
@@ -227,11 +226,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                       domain: CrashlyticsObsDomain.cases,
                       operation: 'pick_case_document_pdf',
                     );
-                    Get.snackbar(
-                      'common_error'.tr,
-                      'case_tunnel_add_file_failed'.tr,
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
+                    KpbToast.error('case_tunnel_add_file_failed'.tr);
                   }
                 },
               ),
@@ -319,14 +314,12 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
           reviewerName: _ctrl.profile?.fullName ?? 'KPB',
           caseId: c.id,
         );
-        Get.snackbar('review_prompt_title'.tr, 'review_prompt_thanks'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12));
+        KpbToast.success('review_prompt_thanks'.tr,
+            title: 'review_prompt_title'.tr);
       } catch (_) {
         sendFailed = true;
-        Get.snackbar('review_prompt_title'.tr, 'review_prompt_error'.tr,
-            snackPosition: SnackPosition.BOTTOM,
-            margin: const EdgeInsets.all(12));
+        KpbToast.error('review_prompt_error'.tr,
+            title: 'review_prompt_title'.tr);
       }
     }
     textCtrl.dispose();

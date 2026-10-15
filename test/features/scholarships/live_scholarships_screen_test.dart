@@ -141,11 +141,16 @@ void main() {
     expect(find.textContaining('J-'), findsWidgets);
     // Near deadline (<= 14 days) surfaces the amber "soon" chip.
     expect(find.text('Deadline imminente'), findsOneWidget);
-    // The trailing action is backed by the alert-subscription API.
-    expect(find.text('M\'avertir'), findsOneWidget);
-    expect(find.byIcon(Icons.notifications), findsNothing);
-    expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+    // The trailing action is the single « Suivre » control (chantier G): the
+    // bell « M'avertir » is gone — the bell now means notifications only.
+    expect(find.text('Suivre'), findsOneWidget);
+    expect(find.text('M\'avertir'), findsNothing);
+    expect(find.byIcon(Icons.bookmark_add_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.notifications_none_rounded), findsNothing);
     expect(find.byIcon(Icons.notifications_active_rounded), findsNothing);
+    // « Mes suivis » est joignable depuis l'en-tête de l'onglet Bourses.
+    expect(find.byKey(const ValueKey<String>('scholarships-followed-entry')),
+        findsOneWidget);
 
     expect(tester.takeException(), isNull);
   });

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'app_tokens.dart';
 import 'kpb_theme_ext.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24,15 +25,27 @@ class _SkeletonPulse extends StatefulWidget {
 
 class _SkeletonPulseState extends State<_SkeletonPulse>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  bool? _animating;
 
   @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Pulsation figée quand le mouvement est coupé (système ou mode données
+    // réduites) : le squelette reste lisible, sans trame à calculer.
+    final animate = KpbMotion.of(context).enabled;
+    if (animate == _animating) return;
+    _animating = animate;
+    if (animate) {
+      _ctrl.repeat(reverse: true);
+    } else {
+      _ctrl
+        ..stop()
+        ..value = 0;
+    }
   }
 
   @override
@@ -131,6 +144,62 @@ class CasesScreenSkeleton extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (_, __) =>
           const _SkeletonPulse(height: 100, borderRadius: 12),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Briques publiques (KpbAsyncView et écrans)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Un bloc de squelette (pulsation, figée quand le mouvement est coupé).
+class KpbSkeletonBox extends StatelessWidget {
+  const KpbSkeletonBox({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = KpbRadius.sm,
+  });
+
+  final double? width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) => _SkeletonPulse(
+        width: width,
+        height: height,
+        borderRadius: radius,
+      );
+}
+
+/// Squelette générique d'une liste de cartes : le défaut de KpbAsyncView.
+class KpbSkeletonList extends StatelessWidget {
+  const KpbSkeletonList({
+    super.key,
+    this.itemCount = 4,
+    this.itemHeight = 88,
+    this.padding = const EdgeInsets.all(KpbSpacing.page),
+  });
+
+  final int itemCount;
+  final double itemHeight;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < itemCount; i++) ...[
+            if (i > 0) const SizedBox(height: KpbSpacing.sm + KpbSpacing.xs),
+            KpbSkeletonBox(height: itemHeight, radius: KpbRadius.md),
+          ],
+        ],
+      ),
     );
   }
 }

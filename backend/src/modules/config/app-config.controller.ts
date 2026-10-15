@@ -7,6 +7,16 @@ function enabled(value: string | undefined, defaultValue = false): boolean {
   return value.trim().toLowerCase() === 'true';
 }
 
+/**
+ * Interrupteur OUVERT par défaut : seule la valeur `false` (casse et espaces
+ * tolérés) le ferme. Sert aux fonctions déjà livrées dans la build, qu'on veut
+ * pouvoir couper à distance sans qu'une variable absente, vide ou mal tapée ne
+ * les éteigne par accident.
+ */
+function notDisabled(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() !== 'false';
+}
+
 function rolloutPercent(value: string | undefined): number {
   const parsed = Number(value ?? '0');
   if (!Number.isFinite(parsed)) return 0;
@@ -324,6 +334,26 @@ export class AppConfigController {
         eefSpace,
         eefHelpBubble,
         eefPrivateSchools,
+        // « Suivre », Mes suivis et les notifications (chantier G). OUVERTS par
+        // défaut, comme dans l'app : ces clés existent pour COUPER une
+        // fonction sur les téléphones déjà installés, sans soumission store.
+        followPushPrimer: notDisabled(process.env.KPB_FOLLOW_PUSH_PRIMER_ENABLED),
+        followOpeningAlert: notDisabled(
+          process.env.KPB_FOLLOW_OPENING_ALERT_ENABLED,
+        ),
+        openingAlertToggle: notDisabled(
+          process.env.KPB_OPENING_ALERT_TOGGLE_ENABLED,
+        ),
+        followedScholarships: notDisabled(
+          process.env.KPB_FOLLOWED_SCHOLARSHIPS_ENABLED,
+        ),
+        notificationsUnreadCount: notDisabled(
+          process.env.KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED,
+        ),
+        followedScholarshipOptOut: notDisabled(
+          process.env.KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED,
+        ),
+        homeFollowedEntry: notDisabled(process.env.KPB_HOME_FOLLOWED_ENTRY_ENABLED),
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse

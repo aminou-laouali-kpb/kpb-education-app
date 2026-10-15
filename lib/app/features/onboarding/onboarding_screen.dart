@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_routes.dart';
@@ -9,7 +8,6 @@ import '../../core/i18n/app_locale.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/models/app_models.dart';
-import '../../core/services/push_service.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/currency_utils.dart';
 import '../legal/legal_pages.dart';
@@ -465,27 +463,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       2 => () {
           if (_fieldIds.isEmpty) {
             _logValidationFailed(2, 'fields_missing');
-            Get.snackbar(
-              'onboarding_selection_required_title'.tr,
+            KpbToast.info(
               'onboarding_select_field_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: KpbColors.warning),
+              title: 'onboarding_selection_required_title'.tr,
             );
             return false;
           }
           if (_countryIds.isEmpty) {
             _logValidationFailed(2, 'countries_missing');
-            Get.snackbar(
-              'onboarding_selection_required_title'.tr,
+            KpbToast.info(
               'onboarding_select_country_body'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              duration: const Duration(seconds: 3),
-              icon: const Icon(Icons.info_outline_rounded,
-                  color: KpbColors.warning),
+              title: 'onboarding_selection_required_title'.tr,
             );
             return false;
           }
@@ -494,7 +482,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _ => true,
     };
     if (!valid) return;
-    HapticFeedback.lightImpact();
+    KpbHaptics.confirm();
     if (_page < _totalPages - 1) {
       final nextPage = _page + 1;
       // Persist progress so the user can resume mid-onboarding.
@@ -553,7 +541,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     GlobalKey? section,
   }) {
     setState(() => _attemptedPages.add(page));
-    HapticFeedback.mediumImpact();
+    KpbHaptics.error();
     _logValidationFailed(page, reason);
     // Après la trame : les erreurs qu'on vient d'allumer doivent être montées
     // pour qu'on puisse les atteindre.
@@ -627,9 +615,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_submitting) return;
     setState(() => _submitting = true);
     try {
-      // Ask for push permission; the device token is linked in
-      // completeOnboarding() → syncPushIdentity().
-      await PushService.instance.requestPermission();
+      // Plus de demande d'autorisation des notifications ici : elle arrivait
+      // avant toute valeur, sans contexte, et grillait l'invite unique d'iOS.
+      // Elle est faite au premier « Suivre », derrière une feuille qui dit à
+      // quoi elle sert (FollowPushPrimer). Le jeton d'un appareil DÉJÀ
+      // autorisé reste rattaché par completeOnboarding() → syncPushIdentity().
       unawaited(AnalyticsService.instance
           .logOnboardingCompleted(accountType: _accountType.name));
       final profile = _buildProfile();

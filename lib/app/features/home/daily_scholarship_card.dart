@@ -7,6 +7,7 @@ import '../../core/models/app_models.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/ui/app_tokens.dart';
 import '../scholarships/scholarship_detail_screen.dart';
+import '../scholarships/widgets/follow_scholarship_button.dart';
 
 /// Home "Bourse du jour" card (KPB-162). Self-fetches today's featured
 /// scholarship; renders nothing until loaded and self-hides when none is
@@ -148,8 +149,11 @@ class _DailyScholarshipCardState extends State<DailyScholarshipCard> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded,
-                    color: KpbColors.actionPrimary),
+                FollowScholarshipButton(
+                  scholarshipId: s.id,
+                  scholarshipTitle: s.title,
+                  variant: FollowButtonVariant.icon,
+                ),
               ],
             ),
           ),

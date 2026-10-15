@@ -188,11 +188,7 @@ class _ParcoursScreenState extends State<ParcoursScreen> {
           .where((v) => (v.youtubeId ?? '').isNotEmpty)
           .toList(growable: false);
       if ((story.youtubeId ?? '').isEmpty || playable.isEmpty) {
-        Get.snackbar(
-          'parcours_appbar_title'.tr,
-          'parcours_video_unavailable'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        KpbToast.error('parcours_video_unavailable'.tr);
         return;
       }
       final index = playable.indexWhere((v) => v.slug == story.slug);

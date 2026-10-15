@@ -7,6 +7,7 @@ import '../../utils/external_link.dart';
 import '../../utils/version_utils.dart';
 import '../app_tokens.dart';
 import '../kpb_theme_ext.dart';
+import 'kpb_toast.dart';
 
 /// L'invitation DOUCE à mettre à jour : un bandeau qu'on ferme.
 ///
@@ -80,12 +81,9 @@ class _UpdateRecommendedBannerState extends State<UpdateRecommendedBanner> {
   /// d'une app plantée (voir `kpbOpenExternalUrl`, `EefOfficialLink`).
   Future<void> _open(String url) async {
     if (await kpbOpenExternalUrlString(url)) return;
-    Get.snackbar(
-      'update_recommended_title'.tr,
+    KpbToast.error(
       'external_link_failed_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 4),
+      title: 'update_recommended_title'.tr,
     );
   }
 

@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:karatou/app/core/config/app_routes.dart';
+import 'package:karatou/app/core/services/notification_router.dart';
 import 'package:karatou/app/core/services/push_service.dart';
 
 class _MockMessaging extends Mock implements FirebaseMessaging {}
@@ -48,6 +49,10 @@ void main() {
 
   setUp(() async {
     await PushService.instance.debugReset();
+    NotificationRouter.instance
+      ..debugReset()
+      ..navigateOverride = (_) async {}
+      ..navigatorReadyOverride = () => true;
     messaging = _MockMessaging();
     backend = _FakeBackend();
     opened = StreamController<RemoteMessage>.broadcast();
@@ -80,6 +85,7 @@ void main() {
   tearDown(() async {
     await opened.close();
     await PushService.instance.debugReset();
+    NotificationRouter.instance.debugReset();
   });
 
   test('le harnais initialise réellement le service', () {
@@ -140,6 +146,76 @@ void main() {
     expect(backend.opened, [
       {'campaignId': 'camp-1'},
     ]);
+  });
+
+  // Chantier G : le tap qui LANCE l'app arrive avant `runApp`. Il doit entrer
+  // dans la file du routeur — pas partir vers un navigateur qui n'existe pas.
+  test('démarrage à froid : le tap initial attend la première image', () async {
+    await PushService.instance.debugReset();
+    NotificationRouter.instance.debugReset();
+    final routes = <String?>[];
+    NotificationRouter.instance
+      ..navigateOverride = (route) async {
+        routes.add(route);
+      }
+      ..navigatorReadyOverride = () => true;
+    when(() => messaging.getInitialMessage()).thenAnswer(
+      (_) async => const RemoteMessage(data: {
+        'route': '/deadlines',
+        'type': 'scholarship_opened_bundle',
+        'kind': 'scholarship_opened_bundle',
+        'count': '2',
+      }),
+    );
+    await PushService.instance.initialize(
+      backend: backend,
+      messaging: messaging,
+      foregroundMessages: const Stream<RemoteMessage>.empty(),
+      openedMessages: opened.stream,
+    );
+    expect(routes, isEmpty);
+    expect(NotificationRouter.instance.pendingCount, 1);
+
+    NotificationRouter.instance.markReady();
+    await Future<void>.delayed(Duration.zero);
+    expect(routes, [AppRoutes.saved],
+        reason: 'le push groupé ouvre Mes suivis');
+  });
+
+  test('requestPermission rend la réponse du système, traduite', () async {
+    final settings = _MockSettings();
+    when(() => settings.authorizationStatus)
+        .thenReturn(AuthorizationStatus.denied);
+    when(() => messaging.requestPermission()).thenAnswer((_) async => settings);
+    status = AuthorizationStatus.denied;
+    expect(
+      await PushService.instance.requestPermission(),
+      PushPermissionStatus.denied,
+    );
+    expect(
+      await PushService.instance.permissionStatus(),
+      PushPermissionStatus.denied,
+    );
+  });
+
+  test("sans initialisation, l'état est « indisponible » (aucune feuille)",
+      () async {
+    await PushService.instance.debugReset();
+    expect(
+      await PushService.instance.permissionStatus(),
+      PushPermissionStatus.unavailable,
+    );
+    expect(
+      await PushService.instance.requestPermission(),
+      PushPermissionStatus.unavailable,
+    );
+  });
+
+  test('pushPermissionStatusOf : provisoire compte comme accordée', () {
+    expect(pushPermissionStatusOf(AuthorizationStatus.provisional),
+        PushPermissionStatus.granted);
+    expect(pushPermissionStatusOf(AuthorizationStatus.notDetermined),
+        PushPermissionStatus.notDetermined);
   });
 
   group('resolvePushRoute', () {

@@ -22,6 +22,7 @@ import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §10.2).
 /// A shared case, from `/parent-links/cases` — only fields the backend returns.
@@ -123,13 +124,7 @@ class _ParentSurfaceScreenState extends State<ParentSurfaceScreen> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(SnackBar(
-        content: Text(msg),
-        backgroundColor: KpbColors.brandNavy,
-        behavior: SnackBarBehavior.floating,
-      ));
+    KpbToast.error(msg, context: context);
   }
 
   void _whatsapp(String prefill, String contextType) {

@@ -122,56 +122,73 @@ class _SuccessLabListScreenState extends State<SuccessLabListScreen> {
   }
 
   Widget _buildControllerState(SuccessLabListController controller) {
-    if (controller.items.isEmpty) {
-      switch (controller.phase) {
-        case LabLoadPhase.initial:
-        case LabLoadPhase.loading:
-        case LabLoadPhase.syncing:
-          return const Center(child: CircularProgressIndicator());
-        case LabLoadPhase.empty:
-          return KpbEmptyState(
-            icon: Icons.auto_awesome_outlined,
-            title: 'success_lab_empty_title'.tr,
-            subtitle: 'success_lab_empty_body'.tr,
-            action: KpbButton(
-              label: 'success_lab_empty_action'.tr,
-              onPressed: () => Get.toNamed(AppRoutes.scholarships),
-            ),
-          );
-        case LabLoadPhase.offline:
-          return KpbEmptyState(
-            icon: Icons.cloud_off_rounded,
-            title: 'success_lab_offline_title'.tr,
-            subtitle: 'success_lab_offline_empty_body'.tr,
-            action: KpbButton(
-              label: 'retry'.tr,
-              onPressed: controller.loadInitial,
-            ),
-          );
-        case LabLoadPhase.forbidden:
-          return KpbEmptyState(
-            icon: Icons.lock_outline_rounded,
-            title: 'success_lab_forbidden_title'.tr,
-            subtitle: 'success_lab_forbidden_body'.tr,
-          );
-        case LabLoadPhase.featureDisabled:
-          return KpbEmptyState(
-            icon: Icons.construction_rounded,
-            title: 'success_lab_disabled_title'.tr,
-            subtitle: 'success_lab_disabled_body'.tr,
-          );
-        case LabLoadPhase.error:
-          return KpbErrorState(
-            title: 'success_lab_error_title'.tr,
-            subtitle: 'success_lab_error_body'.tr,
-            onRetry: controller.loadInitial,
-          );
-        case LabLoadPhase.cached:
-        case LabLoadPhase.ready:
-          break;
-      }
-    }
+    final phase = controller.phase;
+    final showingCache = phase == LabLoadPhase.cached ||
+        phase == LabLoadPhase.syncing ||
+        phase == LabLoadPhase.offline;
+    return KpbAsyncView(
+      phase: controller.items.isNotEmpty
+          ? KpbAsyncPhase.content
+          : switch (phase) {
+              LabLoadPhase.initial ||
+              LabLoadPhase.loading ||
+              LabLoadPhase.syncing =>
+                KpbAsyncPhase.loading,
+              LabLoadPhase.error => KpbAsyncPhase.error,
+              LabLoadPhase.cached ||
+              LabLoadPhase.ready =>
+                KpbAsyncPhase.content,
+              LabLoadPhase.empty ||
+              LabLoadPhase.offline ||
+              LabLoadPhase.forbidden ||
+              LabLoadPhase.featureDisabled =>
+                KpbAsyncPhase.empty,
+            },
+      errorTitle: 'success_lab_error_title'.tr,
+      errorMessage: 'success_lab_error_body'.tr,
+      onRetry: controller.loadInitial,
+      updatedAt: showingCache && controller.items.isNotEmpty
+          ? controller.cachedAt
+          : null,
+      empty: _emptyState(controller),
+      builder: (context) => _buildList(controller),
+    );
+  }
 
+  Widget _emptyState(SuccessLabListController controller) {
+    return switch (controller.phase) {
+      LabLoadPhase.offline => KpbEmptyState(
+          icon: Icons.cloud_off_rounded,
+          title: 'success_lab_offline_title'.tr,
+          subtitle: 'success_lab_offline_empty_body'.tr,
+          action: KpbButton(
+            label: 'retry'.tr,
+            onPressed: controller.loadInitial,
+          ),
+        ),
+      LabLoadPhase.forbidden => KpbEmptyState(
+          icon: Icons.lock_outline_rounded,
+          title: 'success_lab_forbidden_title'.tr,
+          subtitle: 'success_lab_forbidden_body'.tr,
+        ),
+      LabLoadPhase.featureDisabled => KpbEmptyState(
+          icon: Icons.construction_rounded,
+          title: 'success_lab_disabled_title'.tr,
+          subtitle: 'success_lab_disabled_body'.tr,
+        ),
+      _ => KpbEmptyState(
+          icon: Icons.auto_awesome_outlined,
+          title: 'success_lab_empty_title'.tr,
+          subtitle: 'success_lab_empty_body'.tr,
+          action: KpbButton(
+            label: 'success_lab_empty_action'.tr,
+            onPressed: () => Get.toNamed(AppRoutes.scholarships),
+          ),
+        ),
+    };
+  }
+
+  Widget _buildList(SuccessLabListController controller) {
     return KpbRefresh(
       onRefresh: controller.loadInitial,
       child: ListView.separated(

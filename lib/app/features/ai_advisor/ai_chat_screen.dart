@@ -12,6 +12,7 @@ import '../../core/ui/components/ai_content_report_sheet.dart';
 import '../tools/motivation_letters_screen.dart';
 import '../../core/ui/app_tokens.dart';
 import 'coach_quota_handoff.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
 const _cardShadow = <BoxShadow>[
@@ -135,14 +136,12 @@ class _AiChatScreenState extends State<AiChatScreen> {
   /// PR), so this only surfaces the real remaining/limit — never a paywall or
   /// fake checkout.
   void _showQuotaInfo() {
-    Get.snackbar(
-      'coach_quota_info_title'.tr,
+    KpbToast.info(
       'coach_quota_info_body'.trParams({
         'rem': '${_remainingMessages ?? '—'}',
         'total': '${_weeklyQuota ?? '—'}',
       }),
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
+      title: 'coach_quota_info_title'.tr,
     );
   }
 

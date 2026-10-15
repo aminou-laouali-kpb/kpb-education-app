@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/navigation/shell_tabs.dart';
@@ -414,7 +413,7 @@ class _ResultsViewState extends State<_ResultsView>
     _particles = _buildParticles();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      HapticFeedback.mediumImpact();
+      KpbHaptics.success();
       _confetti.forward();
     });
   }

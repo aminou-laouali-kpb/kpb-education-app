@@ -47,12 +47,9 @@ class EefOfficialLink extends StatelessWidget {
   Future<void> _open() async {
     if (await kpbOpenExternalUrlString(url)) return;
     // Un lien officiel qui ne s'ouvre pas doit le DIRE (voir `KpbSourceLink`).
-    Get.snackbar(
-      labelKey.tr,
+    KpbToast.error(
       'external_link_failed_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 4),
+      title: labelKey.tr,
     );
   }
 

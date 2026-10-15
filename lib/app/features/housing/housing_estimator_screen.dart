@@ -50,13 +50,10 @@ class _HousingEstimatorScreenState extends State<HousingEstimatorScreen> {
     if (_selectedCity == null) return;
 
     if (_selectedCity!.country != 'France') {
-      Get.snackbar(
-        'coming_soon_title'.tr,
+      KpbToast.info(
         'housing_auto_search_soon'
             .trParams({'country': _selectedCity!.country}),
-        backgroundColor: KpbColors.warning,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
+        title: 'coming_soon_title'.tr,
       );
       return;
     }
@@ -66,13 +63,7 @@ class _HousingEstimatorScreenState extends State<HousingEstimatorScreen> {
     final uri = Uri.parse(urlStr);
 
     if (!await kpbOpenExternalUrl(uri)) {
-      Get.snackbar(
-        'error'.tr,
-        'housing_studapart_open_error'.tr,
-        backgroundColor: KpbColors.error,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      KpbToast.error('housing_studapart_open_error'.tr);
     }
   }
 

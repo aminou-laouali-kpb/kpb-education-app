@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/navigation/app_boot_screen.dart';
@@ -45,7 +44,7 @@ class _IntroSlideshowScreenState extends State<IntroSlideshowScreen> {
   }
 
   void _onNext() {
-    HapticFeedback.lightImpact();
+    KpbHaptics.confirm();
     if (_currentPage < _slides.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 400),

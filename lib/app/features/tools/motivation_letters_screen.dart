@@ -10,6 +10,7 @@ import '../ai_advisor/ai_disclosure_banner.dart';
 import '../etudes_en_france/eef_help_line.dart';
 import 'motivation_letter_templates.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
 const _cardShadow = <BoxShadow>[
@@ -267,9 +268,7 @@ class _LetterCardState extends State<_LetterCard> {
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(aiErrorMessage(error))),
-        );
+        KpbToast.error(aiErrorMessage(error), context: context);
       }
     } finally {
       if (mounted) setState(() => _isPersonalizing = false);
@@ -469,8 +468,9 @@ class _LetterCardState extends State<_LetterCard> {
                   tooltip: 'letters_copy_tooltip'.tr,
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: _displayText));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('letters_copied_snackbar'.tr)),
+                    KpbToast.success(
+                      'letters_copied_snackbar'.tr,
+                      context: context,
                     );
                   },
                 ),

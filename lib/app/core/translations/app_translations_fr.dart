@@ -810,7 +810,7 @@ const Map<String, String> appTranslationsFr = {
           'Le détail des destinataires et des durées de conservation figure dans la Politique de confidentialité, section « Analyse d\'usage ».',
   'deadlines_date_to_confirm': 'Date à confirmer',
   'deadlines_filter_all': 'Toutes',
-  'deadlines_filter_saved': 'Sauvegardées',
+  'deadlines_filter_saved': 'Bourses suivies',
   'deadlines_filter_cases': 'Dossiers',
   'deadlines_filter_upcoming': 'À venir',
   'deadlines_empty_title': 'Aucune échéance',
@@ -3453,4 +3453,73 @@ const Map<String, String> appTranslationsFr = {
       'Entraîne-toi aux entretiens visa et admission avec un retour IA',
   'case_ai_review_subtitle':
       'Fais relire un document par l\'IA avant de l\'envoyer',
+  // ── Bandeaux (KpbToast) ────────────────────────────────────────
+  'toast_offline_pending_default':
+      'C\'est gardé sur ton téléphone. On l\'envoie dès que tu es en ligne.',
+  // ── États asynchrones (KpbAsyncView) ───────────────────────────
+  'async_loading': 'Chargement…',
+  'async_empty_title': 'Rien à afficher pour l\'instant',
+  'async_updated_ago': 'Mis à jour @ago',
+  // ── Suivre une bourse, Mes suivis, notifications (chantier G) ──────
+  'follow_scholarship_follow': 'Suivre',
+  'follow_scholarship_following': 'Suivie',
+  'follow_scholarship_a11y_follow': 'Suivre la bourse @title',
+  'follow_scholarship_a11y_following':
+      'Bourse suivie : @title. Touche pour ne plus la suivre',
+  'push_primer_title': 'On te prévient dès qu\'elle ouvre',
+  'push_primer_body':
+      'Active les notifications pour savoir à temps quand une bourse que tu suis ouvre, et avant sa date limite. Tu peux les régler quand tu veux.',
+  'push_primer_enable': 'Activer les notifications',
+  'push_primer_later': 'Plus tard',
+  'push_denied_title': 'Notifications coupées',
+  'push_denied_body':
+      'Tu ne recevras pas les alertes sur ton téléphone. Tu les retrouveras quand même dans l\'app, dans Notifications. Pour les rallumer, ouvre les réglages de l\'app.',
+  'push_denied_open_settings': 'Ouvrir les réglages',
+  'scholarship_notify_opening_title': 'Me prévenir à l\'ouverture',
+  'scholarship_notify_opening_subtitle':
+      'Une notification le jour où les candidatures ouvrent. Les rappels de date limite continuent.',
+  'scholarship_notify_opening_global_off':
+      'Tu as coupé les alertes d\'ouverture dans tes préférences de notification.',
+  'scholarship_notify_opening_error':
+      'Ton choix n\'a pas été enregistré. Réessaie quand tu es en ligne.',
+  'scholarship_status_open': 'Ouverte · clôture le @date',
+  'scholarship_status_open_no_date': 'Ouverte · date de clôture à confirmer',
+  'scholarship_status_opens_on': 'Ouvre le @date',
+  'scholarship_status_opening_estimated': 'Ouverture estimée : @date',
+  'scholarship_status_opening_unknown': 'Date d\'ouverture à confirmer',
+  'scholarship_status_closed': 'Clôturée',
+  'followed_title': 'Mes suivis',
+  'followed_scholarships_section': 'Bourses suivies',
+  'followed_sort_label': 'Trier par',
+  'followed_sort_status': 'Statut',
+  'followed_sort_deadline': 'Date limite',
+  'followed_sort_name': 'A–Z',
+  'followed_empty_title': 'Tu ne suis encore aucune bourse',
+  'followed_empty_body':
+      'Touche « Suivre » sur une bourse : on te prévient à son ouverture et avant sa date limite.',
+  'followed_empty_cta': 'Découvrir les bourses',
+  'followed_removed': 'Tu ne suis plus « @title »',
+  'followed_undo': 'Annuler',
+  'followed_offline': 'Hors ligne — données du @date',
+  'followed_detail_unavailable': 'Fiche indisponible pour le moment',
+  'followed_opening_muted': 'Alerte d\'ouverture coupée',
+  'followed_remove_a11y': 'Ne plus suivre @title',
+  'notifications_group_today': 'Aujourd\'hui',
+  'notifications_group_week': 'Cette semaine',
+  'notifications_group_earlier': 'Plus tôt',
+  'notif_cta_open_scholarship': 'Voir la bourse',
+  'notif_cta_open_followed': 'Voir mes suivis',
+  'notif_cta_deadline': 'Voir l\'échéance',
+  'notif_cta_case': 'Ouvrir le dossier',
+  'notif_cta_message': 'Lire le message',
+  'notif_cta_open': 'Ouvrir',
+  'followed_scholarship_pref_title': 'Bourses que je suis : ouverture',
+  'followed_scholarship_pref_subtitle':
+      'Une notification quand une bourse que tu suis ouvre. Les rappels de date limite continuent.',
+  'notifications_push_granted_title': 'Notifications activées',
+  'notifications_push_granted_subtitle':
+      'Tu reçois les alertes sur ce téléphone.',
+  'notifications_push_denied_subtitle':
+      'Rallume-les dans les réglages de l\'app pour recevoir les alertes.',
+  'notifications_push_settings_action': 'Réglages',
 };

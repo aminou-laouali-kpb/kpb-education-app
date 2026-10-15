@@ -16,6 +16,7 @@ import '../../core/models/app_models.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import 'referral_screen.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §10.2).
 // Couleurs catégorielles des avatars (séries distinctes — exception §14 de
@@ -116,8 +117,10 @@ class _AmbassadorScreenState extends State<AmbassadorScreen> {
     final d = _dash;
     if (d == null || _withdrawing || _withdrawn) return;
     if (!d.canWithdraw) {
-      _toast('amb_withdraw_min'
-          .trParams({'amount': _fmtFcfa(d.minWithdrawalFCFA)}));
+      _toast(
+          'amb_withdraw_min'
+              .trParams({'amount': _fmtFcfa(d.minWithdrawalFCFA)}),
+          kind: KpbToastKind.error);
       return;
     }
     setState(() => _withdrawing = true);
@@ -126,27 +129,19 @@ class _AmbassadorScreenState extends State<AmbassadorScreen> {
       final amount = (res['amountFCFA'] as num?)?.toInt() ?? d.withdrawableFCFA;
       if (mounted) {
         setState(() => _withdrawn = true);
-        _toast('amb_toast_withdraw'.trParams({'amount': _fmtFcfa(amount)}));
+        _toast('amb_toast_withdraw'.trParams({'amount': _fmtFcfa(amount)}),
+            kind: KpbToastKind.success);
       }
     } catch (_) {
-      _toast('amb_withdraw_error'.tr);
+      _toast('amb_withdraw_error'.tr, kind: KpbToastKind.error);
     } finally {
       if (mounted) setState(() => _withdrawing = false);
     }
   }
 
-  void _toast(String msg) {
+  void _toast(String msg, {KpbToastKind kind = KpbToastKind.info}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: KpbColors.brandNavy,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    KpbToast.show(kind: kind, message: msg, context: context);
   }
 
   @override

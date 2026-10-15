@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/services/remote_feature_flags.dart';
 import 'package:karatou/app/core/ui/app_tokens.dart';
 import 'package:karatou/app/features/home/home_screen.dart';
 
@@ -77,12 +78,20 @@ void main() {
 
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.byIcon(Icons.smart_toy_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
+      // Chantier G : « Mes suivis » prend la place du raccourci Profil (déjà
+      // dans la barre d'onglets).
+      expect(find.byKey(const ValueKey<String>('home-followed-entry')),
+          findsOneWidget);
 
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('profile action jumps to profile tab', (tester) async {
+    testWidgets(
+        'profile action jumps to profile tab (drapeau homeFollowedEntry '
+        'coupé : repli sur le raccourci Profil)', (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest(const {'homeFollowedEntry': false});
+      addTearDown(RemoteFeatureFlags.resetForTest);
       await tester.binding.setSurfaceSize(const Size(1440, 2560));
       final profile = createTestProfile();
       final snapshot = AppSnapshot(

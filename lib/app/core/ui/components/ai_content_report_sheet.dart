@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../services/ai_content_report_service.dart';
 import '../app_tokens.dart';
+import 'kpb_toast.dart';
 
 Future<void> showAiContentReportSheet({
   required BuildContext context,
@@ -23,11 +24,9 @@ Future<void> showAiContentReportSheet({
     ),
   );
   if (receipt == null) return;
-  Get.snackbar(
-    'ai_report_success_title'.tr,
+  KpbToast.success(
     'ai_report_success_body'.trParams({'code': receipt.referenceCode}),
-    snackPosition: SnackPosition.BOTTOM,
-    margin: const EdgeInsets.all(12),
+    title: 'ai_report_success_title'.tr,
   );
 }
 

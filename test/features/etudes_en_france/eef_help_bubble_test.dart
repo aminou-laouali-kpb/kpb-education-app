@@ -928,9 +928,19 @@ void main() {
       expect(find.text('Numéro officiel de KPB Education : $number'),
           findsOneWidget);
       expect(find.textContaining('contact@kpbeducation.com'), findsOneWidget);
-      // Les phrases qui existent déjà dans l'app, mot pour mot.
-      expect(find.text('anti_fraud_body'.tr), findsOneWidget);
-      expect(find.text('eef_help_fineprint'.tr), findsOneWidget);
+      // Les phrases qui existent déjà dans l'app, mot pour mot — cherchées
+      // DANS la feuille : l'écran porteur, dessous, peut afficher la même
+      // mention quand elle tient dans sa zone de construction.
+      final sheet = find.byKey(const ValueKey('eef-help-bubble-sheet'));
+      expect(
+        find.descendant(of: sheet, matching: find.text('anti_fraud_body'.tr)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+            of: sheet, matching: find.text('eef_help_fineprint'.tr)),
+        findsOneWidget,
+      );
       expect(find.text('Copier le numéro'), findsOneWidget);
       expect(rawTranslationKeysOnScreen(tester), isEmpty);
     });

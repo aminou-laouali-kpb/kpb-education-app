@@ -459,6 +459,7 @@ class _InstitutionCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _ScholarshipCard extends StatelessWidget {
   const _ScholarshipCard({
+    required this.scholarshipId,
     required this.name,
     required this.flag,
     required this.funding,
@@ -466,6 +467,7 @@ class _ScholarshipCard extends StatelessWidget {
     required this.onTap,
   });
 
+  final String scholarshipId;
   final String name;
   final String flag;
   final String funding;
@@ -493,9 +495,14 @@ class _ScholarshipCard extends StatelessWidget {
                 Text(flag, style: const TextStyle(fontSize: 24)),
                 const Spacer(),
                 Flexible(child: ProfileFitBadge(fit: fit, fontSize: 10.5)),
+                FollowScholarshipButton(
+                  scholarshipId: scholarshipId,
+                  scholarshipTitle: name,
+                  variant: FollowButtonVariant.icon,
+                ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Text(
               name,
               style: TextStyle(

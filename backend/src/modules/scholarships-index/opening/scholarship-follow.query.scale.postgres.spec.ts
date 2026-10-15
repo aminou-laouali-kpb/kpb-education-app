@@ -33,6 +33,12 @@ import {
  *    le planificateur quand des statistiques périmées estiment les favoris à
  *    une ligne). L'ancien texte prenait alors 2,8 s à 5 000 et ~25 s à 20 000
  *    (CTE des favoris, matérialisée donc sans index, en boucle interne : n × n).
+ *    Troisième plan, celui qu'un autoanalyze a produit en CI : `UserProfile`
+ *    ANALYSÉ depuis une autre connexion pendant que la transaction tient ses
+ *    lignes — 0 ligne vue, ses pages comptées. Le profil, aplati
+ *    en jointure, passait alors en boucle externe et l'agrégat des abonnés
+ *    était recalculé pour chaque profil (13 s à 5 000, plus de 170 s à
+ *    20 000) : d'où l'`OFFSET 0` du `LATERAL`.
  *
  * Tout se passe dans des transactions annulées : rien à nettoyer, et les
  * lignes insérées n'existent pour aucune statistique.
@@ -43,6 +49,16 @@ const describePostgres =
     : describe.skip;
 
 class Rollback extends Error {}
+
+/** Les tables que lit la requête de suivi. */
+const STATS_TABLES = [
+  'UserProfile',
+  'SavedItem',
+  'Scholarship',
+  'ScholarshipAlertSubscription',
+  'UserNotification',
+  'DeviceToken',
+] as const;
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -421,6 +437,32 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
     `;
   }
 
+  /** Le plan retenu (sans l'exécuter), dans la transaction et ses réglages. */
+  async function explain(tx: Prisma.TransactionClient, query: Prisma.Sql): Promise<string> {
+    const lines = await tx.$queryRawUnsafe<{ 'QUERY PLAN': string }[]>(
+      `EXPLAIN ${query.text}`,
+      ...query.values,
+    );
+    return lines.map((line) => line['QUERY PLAN']).join('\n');
+  }
+
+  /** Ce que le planificateur croit des tables lues : lignes / pages, et le réel. */
+  async function tableStats(tx: Prisma.TransactionClient): Promise<string> {
+    const rows = await tx.$queryRaw<
+      { name: string; reltuples: number; relpages: number; pages: number }[]
+    >`
+      SELECT c.relname AS name, c.reltuples::float8 AS reltuples, c.relpages,
+             (pg_relation_size(c.oid) / current_setting('block_size')::int)::int AS pages
+      FROM pg_class c
+      WHERE c.relnamespace = 'public'::regnamespace AND c.relkind = 'r'
+        AND c.relname = ANY(${[...STATS_TABLES]})
+      ORDER BY c.relname
+    `;
+    return rows
+      .map((r) => `${r.name} ${r.reltuples} l. / ${r.relpages} p. (réel ${r.pages} p.)`)
+      .join(', ');
+  }
+
   async function timed<T>(work: () => Promise<T>): Promise<[T, number]> {
     const started = Date.now();
     const result = await work();
@@ -435,8 +477,15 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
       const prefix = `fq-scale-${sfx}-`;
       const cycleId = `${prefix}cycle`;
       const timings: string[] = [];
+      // Ce qu'un échec montre pour être compris sans rejouer la CI : le plan
+      // retenu et ce que le planificateur croyait des tables à cet instant.
+      let lastPlan = '';
+      let lastStats = '';
 
       await rolledBack(async (tx) => {
+        // Un plan dégénéré échoue vite, avec son plan, au lieu d'épuiser le
+        // délai de la transaction.
+        await tx.$executeRawUnsafe(`SET LOCAL statement_timeout = '20s'`);
         await tx.scholarship.create({ data: scholarship(sid) });
         const expected = (n: number) => {
           // Candidats : tous (abonnés) ou les porteurs d'alerte ; exclus : la
@@ -459,10 +508,22 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
         ] as const) {
           await bulkFollowers(tx, prefix, sid, from, to);
           const args = [sid, scope, cycleId, renotifySince, null] as const;
-          for (const plan of ['naturel', 'boucles imbriquées'] as const) {
-            const nestedOnly = plan === 'boucles imbriquées' ? 'off' : 'on';
+          for (const plan of ['naturel', 'boucles imbriquées', 'statistiques vides'] as const) {
+            if (plan === 'statistiques vides') {
+              // L'état mesuré en CI après un autoanalyze : hors de la
+              // transaction, l'ANALYZE ne voit aucun des profils insérés
+              // ci-dessus (0 ligne) mais compte leurs pages, tandis que les
+              // autres tables gardent des estimations non nulles.
+              await prisma.$executeRawUnsafe(`ANALYZE "UserProfile"`);
+            }
+            const nestedOnly = plan === 'naturel' ? 'on' : 'off';
             await tx.$executeRawUnsafe(`SET LOCAL enable_hashjoin = ${nestedOnly}`);
             await tx.$executeRawUnsafe(`SET LOCAL enable_mergejoin = ${nestedOnly}`);
+            lastStats = await tableStats(tx);
+            lastPlan = `${to} abonnés, plan ${plan}, comptes :\n${await explain(
+              tx,
+              followerAudienceCountsSql(...args),
+            )}`;
             const [[counts], countMs] = await timed(() =>
               tx.$queryRaw<FollowerAudienceCounts[]>(followerAudienceCountsSql(...args)),
             );
@@ -490,7 +551,13 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
             expect(newMs).toBeLessThan(2_000);
           }
         }
-      }, () => `portée ${scope} ; mesures déjà prises : ${timings.join(' ; ') || 'aucune'}`);
+      }, () =>
+        [
+          `portée ${scope} ; mesures déjà prises : ${timings.join(' ; ') || 'aucune'}`,
+          `tables : ${lastStats || 'non lues'}`,
+          lastPlan,
+        ].join('\n'),
+      );
       console.log(`Requête de suivi (${scope}, sans ANALYZE) — ${timings.join(' ; ')}.`);
     },
   );

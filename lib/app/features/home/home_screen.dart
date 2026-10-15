@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/config/app_routes.dart';
 import '../../core/navigation/shell_tabs.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
@@ -23,6 +26,7 @@ import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../parcours/parcours_screen.dart';
 import '../parcours/parcours_story_screen.dart';
+import '../scholarships/widgets/follow_scholarship_button.dart';
 import '../tools/student_tools_screen.dart';
 import 'counsellor_testimonials_carousel.dart';
 import 'daily_scholarship_card.dart';
@@ -175,8 +179,18 @@ class HomeScreen extends StatelessWidget {
                   title: _HomeGreetingHeader(firstName: firstName),
                   actions: [
                     _NotifBellChip(
-                      hasUnread: hasDerivedNotifications(controller),
-                      onTap: () => Get.to(() => const NotificationsScreen()),
+                      // Le point s'allume aussi pour les non-lus du fil
+                      // serveur (« bourse ouverte »), pas seulement pour
+                      // l'activité des dossiers.
+                      hasUnread: hasDerivedNotifications(controller) ||
+                          controller.serverUnreadNotifications > 0,
+                      onTap: () async {
+                        await Get.to<void>(() => const NotificationsScreen());
+                        unawaited(
+                          controller.refreshServerUnreadCount(force: true),
+                        );
+                      },
+                      onMounted: controller.refreshServerUnreadCount,
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -184,12 +198,20 @@ class HomeScreen extends StatelessWidget {
                         onTap: () => openAiChatIfConsented(context, controller),
                       ),
                     ),
+                    // « Mes suivis » prend la place du raccourci Profil (déjà
+                    // dans la barre d'onglets) : la largeur de la salutation
+                    // ne change pas. Drapeau coupé → l'ancien raccourci.
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: _HomeProfileButton(
-                        onTap: () =>
-                            controller.goToTab(StudentShellTab.profile),
-                      ),
+                      child: RemoteFeatureFlags
+                              .instance.homeFollowedEntryEnabled
+                          ? _HomeFollowedButton(
+                              onTap: () => Get.toNamed<void>(AppRoutes.saved),
+                            )
+                          : _HomeProfileButton(
+                              onTap: () =>
+                                  controller.goToTab(StudentShellTab.profile),
+                            ),
                     ),
                   ],
                 ),
@@ -403,6 +425,7 @@ class HomeScreen extends StatelessWidget {
                       itemBuilder: (ctx, i) {
                         final s = scholarships[i];
                         return _ScholarshipCard(
+                          scholarshipId: s.id,
                           name: controller.resolve(s.name),
                           flag: _flag(s.countryId),
                           funding: controller.resolve(s.typeOfFunding),

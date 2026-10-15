@@ -8,6 +8,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/app_tokens.dart';
 import 'parent_case_view_screen.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 /// Entry point for parent accounts (Track C1 — Phase 1).
 ///
@@ -81,7 +82,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       if (!mounted || code.isEmpty) return;
       _showInviteSheet(code);
     } catch (_) {
-      _toast('parent_invite_create_error'.tr);
+      _toast('parent_invite_create_error'.tr, kind: KpbToastKind.error);
     }
   }
 
@@ -142,7 +143,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     label: Text('copy'.tr),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code));
-                      _toast('parent_code_copied'.tr);
+                      _toast('parent_code_copied'.tr,
+                          kind: KpbToastKind.success);
                     },
                   ),
                 ),
@@ -178,23 +180,21 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   Future<void> _acceptInvite() async {
     final code = _codeController.text.trim().toUpperCase();
     if (code.length != 8) {
-      _toast('parent_code_length_error'.tr);
+      _toast('parent_code_length_error'.tr, kind: KpbToastKind.error);
       return;
     }
     try {
       await _api.acceptParentInvite(code);
       _codeController.clear();
-      _toast('parent_link_activated'.tr);
+      _toast('parent_link_activated'.tr, kind: KpbToastKind.success);
       await _refresh();
     } catch (_) {
-      _toast('auth_magic_verify_error'.tr);
+      _toast('auth_magic_verify_error'.tr, kind: KpbToastKind.error);
     }
   }
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-    );
+  void _toast(String msg, {KpbToastKind kind = KpbToastKind.info}) {
+    KpbToast.show(kind: kind, message: msg, context: context);
   }
 
   @override

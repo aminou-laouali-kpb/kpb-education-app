@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
@@ -8,6 +7,7 @@ import '../../core/services/connectivity_service.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/kpb_offline_banner.dart';
 import '../../core/ui/components/kpb_sample_data_banner.dart';
+import '../../core/ui/kpb_haptics.dart';
 import '../../core/ui/kpb_theme_ext.dart';
 import '../../core/ui/shell_chrome.dart';
 import '../cases/cases_screen.dart';
@@ -232,8 +232,10 @@ class _KpbFloatingNavBar extends StatelessWidget {
             ),
             _NavItem(
               key: const ValueKey('kpb_nav_scholarships'),
-              icon: Icons.notifications_none_rounded,
-              selectedIcon: Icons.notifications_active_rounded,
+              // La cloche est réservée aux notifications : les bourses ont
+              // leur propre icône (programme UX, « une notion, un mot »).
+              icon: Icons.workspace_premium_outlined,
+              selectedIcon: Icons.workspace_premium_rounded,
               label: 'nav_scholarships'.tr,
               isSelected: currentIndex == StudentShellTab.scholarships,
               onTap: () => onTap(StudentShellTab.scholarships),
@@ -294,7 +296,7 @@ class _NavItem extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (!isSelected) HapticFeedback.selectionClick();
+              if (!isSelected) KpbHaptics.selection();
               onTap();
             },
             child: Padding(
@@ -348,7 +350,9 @@ class _NavItem extends StatelessWidget {
                         color: isSelected ? activeColor : inactiveColor,
                         fontWeight:
                             isSelected ? FontWeight.w800 : FontWeight.w600,
-                        fontSize: 9.5,
+                        // Plancher de lisibilité : 12 sp (11 sp au pire,
+                        // une fois réduit par le FittedBox sur 360 dp).
+                        fontSize: KpbFontSize.xs,
                         height: 1,
                       ),
                       maxLines: 1,

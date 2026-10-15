@@ -165,13 +165,7 @@ class _FlightEstimatorScreenState extends State<FlightEstimatorScreen> {
         'https://www.kayak.fr/flights/${_origin!.code}-${_destination!.code}/$_dep?sort=price_a';
     final uri = Uri.parse(urlStr);
     if (!await kpbOpenExternalUrl(uri)) {
-      Get.snackbar(
-        'error'.tr,
-        'flight_launch_failed'.tr,
-        backgroundColor: KpbColors.error,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      KpbToast.error('flight_launch_failed'.tr);
     }
   }
 

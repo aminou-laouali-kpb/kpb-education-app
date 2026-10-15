@@ -80,6 +80,15 @@ export interface FollowerRow {
  *      par sa clé primaire en `LATERAL`, `dedupeKey` unique, jeton FCM par son
  *      index) — calculée une fois (`MATERIALIZED`), les filtres de
  *      `follow_rows` la relisent sans recalculer les sous-requêtes.
+ *      Le `LATERAL` du profil porte `OFFSET 0` : sans cette barrière, le
+ *      planificateur l'aplatit en jointure et peut la RETOURNER. Mesuré : un
+ *      autoanalyze passé pendant une vague d'inscriptions encore non validées
+ *      écrit `UserProfile` à 0 ligne ; le planificateur parcourt alors tout
+ *      l'index des profils en boucle externe et RECALCULE l'agrégat
+ *      `follow_user` pour chaque profil — 13 s à 5 000 abonnés, plus de 170 s
+ *      à 20 000. Gardée non aplatie, la sous-requête ne peut être que le côté
+ *      interne, paramétré par `follow_user` : une recherche par clé par
+ *      étudiant, quel que soit l'état des statistiques.
  * Sémantique inchangée, prouvée contre l'ancien texte sur des données tirées
  * au hasard (`scholarship-follow.query.postgres.spec.ts`).
  *
@@ -187,6 +196,7 @@ export function followerRowsCte(
         SELECT pr."disabledNotificationTypes", pr."preferredLanguage", pr."countryOfResidence"
         FROM "UserProfile" pr
         WHERE pr."id" = u."userId"
+        OFFSET 0
       ) p
     ),
     follow_rows AS (

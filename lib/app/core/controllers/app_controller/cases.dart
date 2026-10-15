@@ -89,21 +89,18 @@ mixin _CasesMixin on _AppControllerBase {
     _cases.insert(0, created);
     _persist();
     update();
-    HapticFeedback.heavyImpact();
+    KpbHaptics.success();
     AnalyticsService.instance.logCaseCreated(caseType: type.name);
-    Get.snackbar(
-      'case_created_title'.tr,
+    KpbToast.success(
       'case_created_body'.trParams({'code': created.referenceCode}),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
+      title: 'case_created_title'.tr,
       duration: const Duration(seconds: 4),
-      mainButton: TextButton(
+      action: KpbToastAction(
+        label: 'view'.tr,
         onPressed: () {
           shellIndex = StudentShellTab.cases;
           update();
-          Get.closeCurrentSnackbar();
         },
-        child: Text('view'.tr),
       ),
     );
     unawaited(_createRemoteCase(created));
@@ -146,12 +143,7 @@ mixin _CasesMixin on _AppControllerBase {
         domain: CrashlyticsObsDomain.cases,
         operation: 'set_parent_visibility',
       );
-      Get.snackbar(
-        'KPB Education',
-        'parent_visibility_error'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-      );
+      KpbToast.error('parent_visibility_error'.tr);
     }
   }
 
@@ -433,12 +425,7 @@ mixin _CasesMixin on _AppControllerBase {
           status != 429) {
         // Refus définitif (message trop long, dossier introuvable…) : le
         // remettre en file le ferait échouer à chaque reconnexion, en silence.
-        Get.snackbar(
-          'KPB Education',
-          'case_message_send_failed'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-        );
+        KpbToast.error('case_message_send_failed'.tr);
         return;
       }
       // Network blip — queue it. The connectivity listener will retry.

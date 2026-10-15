@@ -255,6 +255,12 @@ class KpbShadow {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mouvement : durées et courbe communes. Pas de durées ad hoc dans les écrans.
+//
+// Les constantes ci-dessous sont les valeurs NOMINALES. Un widget qui anime
+// lit `KpbMotion.of(context)` : il reçoit des durées nulles quand l'utilisateur
+// a coupé les animations (réglage d'accessibilité du système, reflété par
+// `MediaQuery.disableAnimations`) ou a activé le « Mode données réduites » de
+// l'app — sur un Android d'entrée de gamme, chaque animation coûte des trames.
 
 class KpbMotion {
   KpbMotion._();
@@ -263,9 +269,103 @@ class KpbMotion {
   static const base = Duration(milliseconds: 200);
   static const page = Duration(milliseconds: 280); // = transition GetX
   static const curve = Curves.easeOutCubic;
+
+  /// Apparition d'un élément de liste ou d'un bandeau (fondu + glissé).
+  static const reveal = Duration(milliseconds: 550);
+
+  /// Décalage entre deux éléments successifs d'une liste animée.
+  static const staggerStep = Duration(milliseconds: 70);
+
+  /// Seuls les N premiers éléments d'une liste sont animés : au-delà, ils
+  /// apparaissent tout de suite (pas de délai index × pas sans limite).
+  static const staggerMaxItems = 6;
+
+  /// Sonde de l'économiseur de données de l'app, branchée par AppController.
+  /// Les tokens ne dépendent ainsi d'aucun contrôleur ; sans sonde (tests de
+  /// widget isolés), l'économiseur est considéré comme coupé.
+  static ValueGetter<bool>? dataSaverProbe;
+
+  static bool get _dataSaverOn {
+    try {
+      return dataSaverProbe?.call() ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Durées effectives pour [context] : nominales, ou nulles si les
+  /// animations sont désactivées (système) ou l'économiseur de données actif.
+  static KpbMotionSpec of(BuildContext context) {
+    final systemOff = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return (systemOff || _dataSaverOn) ? KpbMotionSpec.off : KpbMotionSpec.on;
+  }
+
+  /// Variante sans contexte (bandeaux posés depuis un contrôleur) : ne voit
+  /// que l'économiseur de données, plus le réglage système si [context] est
+  /// fourni.
+  static KpbMotionSpec resolve([BuildContext? context]) {
+    if (context != null) return of(context);
+    return _dataSaverOn ? KpbMotionSpec.off : KpbMotionSpec.on;
+  }
+}
+
+/// Jeu de durées résolu par [KpbMotion.of].
+@immutable
+class KpbMotionSpec {
+  const KpbMotionSpec._(this.enabled);
+
+  static const on = KpbMotionSpec._(true);
+  static const off = KpbMotionSpec._(false);
+
+  /// Faux quand toute animation doit sauter directement à son état final.
+  final bool enabled;
+
+  Duration get fast => enabled ? KpbMotion.fast : Duration.zero;
+  Duration get base => enabled ? KpbMotion.base : Duration.zero;
+  Duration get page => enabled ? KpbMotion.page : Duration.zero;
+  Duration get reveal => enabled ? KpbMotion.reveal : Duration.zero;
+  Duration get staggerStep => enabled ? KpbMotion.staggerStep : Duration.zero;
+  Curve get curve => KpbMotion.curve;
+
+  /// Une durée propre à un composant, annulée elle aussi quand le mouvement
+  /// est coupé.
+  Duration scale(Duration nominal) => enabled ? nominal : Duration.zero;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Échelle typographique : SEPT tailles, de 12 à 28 sp. Toute taille de
+/// texte de l'app en est issue (budget des `fontSize:` en dur dans
+/// test/core/ui/ui_debt_audit_test.dart). 12 sp est le plancher d'un texte
+/// porteur de sens (lisible sur un 360 × 640 d'entrée de gamme, en plein
+/// soleil) ; en dessous, réservé au décor.
+class KpbFontSize {
+  KpbFontSize._();
+
+  /// Légendes, badges, métadonnées, libellés de la barre de navigation.
+  static const double xs = 12;
+
+  /// Corps secondaire, puces, sous-titres de carte.
+  static const double sm = 13;
+
+  /// Corps de texte, boutons, titres de carte.
+  static const double md = 15;
+
+  /// Titres de section et de carte mise en avant.
+  static const double lg = 18;
+
+  /// Titres d'écran (AppBar), titres de feuille.
+  static const double xl = 20;
+
+  /// Titres de page.
+  static const double xxl = 24;
+
+  /// Heros et chiffres clés.
+  static const double display = 28;
+
+  /// Les sept tailles, de la plus petite à la plus grande.
+  static const List<double> scale = [xs, sm, md, lg, xl, xxl, display];
+}
 
 /// Nom canonique de la typographie (le plan parle de `KpbTypography`) ; la
 /// classe historique `KpbTextStyles` reste le nom concret pour ne pas churner
@@ -284,7 +384,7 @@ class KpbTextStyles {
 
   static const display = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 32,
+    fontSize: KpbFontSize.display,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.2,
@@ -293,7 +393,7 @@ class KpbTextStyles {
 
   static const displaySm = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 28,
+    fontSize: KpbFontSize.display,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.2,
@@ -302,7 +402,7 @@ class KpbTextStyles {
 
   static const displayXs = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 26,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w800,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -311,7 +411,7 @@ class KpbTextStyles {
 
   static const headlineLg = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 26,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -320,7 +420,7 @@ class KpbTextStyles {
 
   static const headline = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 24,
+    fontSize: KpbFontSize.xxl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.25,
@@ -329,7 +429,7 @@ class KpbTextStyles {
 
   static const headlineSm = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 20,
+    fontSize: KpbFontSize.xl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
@@ -337,7 +437,7 @@ class KpbTextStyles {
 
   static const titleLg = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 22,
+    fontSize: KpbFontSize.xl,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
@@ -345,55 +445,55 @@ class KpbTextStyles {
 
   static const title = TextStyle(
     fontFamily: headingFamily,
-    fontSize: 18,
+    fontSize: KpbFontSize.lg,
     fontWeight: FontWeight.w700,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const titleMd = TextStyle(
-    fontSize: 16,
+    fontSize: KpbFontSize.md,
     fontWeight: FontWeight.w600,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const titleSm = TextStyle(
-    fontSize: 14,
+    fontSize: KpbFontSize.sm,
     fontWeight: FontWeight.w600,
     color: KpbColors.textPrimary,
     height: 1.3,
   );
 
   static const body = TextStyle(
-    fontSize: 15,
+    fontSize: KpbFontSize.md,
     fontWeight: FontWeight.w400,
     color: KpbColors.textPrimary,
     height: 1.5,
   );
 
   static const bodySm = TextStyle(
-    fontSize: 13,
+    fontSize: KpbFontSize.sm,
     fontWeight: FontWeight.w400,
     color: KpbColors.textSecondary,
     height: 1.4,
   );
 
   static const label = TextStyle(
-    fontSize: 12,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w600,
     color: KpbColors.textSecondary,
     letterSpacing: 0.4,
   );
 
   static const labelSm = TextStyle(
-    fontSize: 11,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.3,
   );
 
   static const caption = TextStyle(
-    fontSize: 12,
+    fontSize: KpbFontSize.xs,
     fontWeight: FontWeight.w400,
     color: KpbColors.textMuted,
     height: 1.4,

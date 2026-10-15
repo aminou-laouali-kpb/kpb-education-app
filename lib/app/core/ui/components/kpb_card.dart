@@ -10,7 +10,7 @@ enum KpbCardVariant {
   /// Surface blanche, ombre douce — le défaut historique.
   standard,
 
-  /// Carte tappable avec retour tactile (press-scale + haptique).
+  /// Carte tappable avec enfoncement (press-scale), sans vibration.
   interactive,
 
   /// Carte mise en avant : bordure action + fond soft.
@@ -29,6 +29,7 @@ class KpbCard extends StatelessWidget {
     this.shadow = KpbShadow.card,
     this.onTap,
     this.border,
+    this.semanticLabel,
   });
 
   final Widget child;
@@ -40,6 +41,10 @@ class KpbCard extends StatelessWidget {
   final List<BoxShadow> shadow;
   final VoidCallback? onTap;
   final Border? border;
+
+  /// Libellé lu par le lecteur d'écran quand la carte est tappable. Nul : le
+  /// texte de la carte est lu.
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +74,21 @@ class KpbCard extends StatelessWidget {
       child: child,
     );
 
-    if (variant == KpbCardVariant.interactive && onTap != null) {
-      return KpbPressable(onTap: onTap, child: card);
+    if (onTap == null) return card;
+    if (variant == KpbCardVariant.interactive) {
+      return KpbPressable(
+        onTap: onTap,
+        semanticLabel: semanticLabel,
+        child: card,
+      );
     }
-    return GestureDetector(onTap: onTap, child: card);
+    // Tappable : annoncée comme un bouton aux lecteurs d'écran.
+    return Semantics(
+      container: true,
+      button: true,
+      enabled: true,
+      label: semanticLabel,
+      child: GestureDetector(onTap: onTap, child: card),
+    );
   }
 }

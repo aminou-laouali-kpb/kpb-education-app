@@ -31,6 +31,7 @@ import '../housing/housing_estimator_screen.dart';
 import '../parent/parent_dashboard_screen.dart';
 import '../parent/parent_surface_screen.dart';
 import '../saved/saved_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
 import '../services/service_packages_screen.dart';
 import '../alumni/alumni_directory_screen.dart';
@@ -39,6 +40,7 @@ import '../salon/salon_screen.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/shell_chrome.dart';
 import 'profile_avatar.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 part 'profile_screen/widgets.dart';
 part 'profile_screen/header.dart';
@@ -271,11 +273,7 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
     } catch (_) {
-      Get.snackbar(
-        'data_rights_section'.tr,
-        'export_data_error'.tr,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      KpbToast.error('export_data_error'.tr);
     }
   }
 
@@ -297,11 +295,7 @@ class ProfileScreen extends StatelessWidget {
                 await controller.deleteAccount();
                 unawaited(Get.offAll(() => const AppBootScreen()));
               } catch (_) {
-                Get.snackbar(
-                  'delete_account'.tr,
-                  'delete_account_error'.tr,
-                  snackPosition: SnackPosition.BOTTOM,
-                );
+                KpbToast.error('delete_account_error'.tr);
               }
             },
             style: FilledButton.styleFrom(backgroundColor: KpbColors.error),

@@ -21,12 +21,9 @@ class KpbSourceLink extends StatelessWidget {
     // Un lien de source qui ne s'ouvre pas doit le DIRE. C'est l'affordance
     // anti-fraude du produit : un parent méfiant vient précisément vérifier que
     // le chiffre n'est pas inventé, et un lien muet lui donne raison de douter.
-    Get.snackbar(
-      'view_official_source'.tr,
+    KpbToast.error(
       'external_link_failed_body'.tr,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(12),
-      duration: const Duration(seconds: 4),
+      title: 'view_official_source'.tr,
     );
   }
 

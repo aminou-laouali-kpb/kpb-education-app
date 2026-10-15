@@ -16,7 +16,8 @@ import '../../core/utils/whatsapp_utils.dart';
 import 'scholarship_detail_screen.dart';
 import 'scholarship_guide_info_screen.dart';
 import 'scholarships_controller.dart';
-import 'widgets/scholarship_alert_button.dart';
+import 'widgets/follow_scholarship_button.dart';
+import 'widgets/scholarship_status_line.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture
 // §6/§10.2). L'ancienne _Palette locale du handoff a été absorbée au lot 5 ;
@@ -135,6 +136,17 @@ String _monthName(DateTime date) {
   final cycle = scholarship.currentCycle;
   if (cycle == null) return null;
   if (cycle.isOpen) {
+    // Jamais « Candidatures ouvertes » avant la date d'ouverture confirmée :
+    // c'est ce que dira le push d'ouverture, la carte ne doit pas le devancer.
+    final opensAt = cycle.opensAt;
+    if (opensAt != null && opensAt.isAfter(DateTime.now())) {
+      return (
+        'scholarship_status_opens_on'
+            .trParams({'date': formatScholarshipDay(opensAt)}),
+        KpbColors.actionPrimarySoft,
+        KpbColors.actionPrimary,
+      );
+    }
     final closing = cycle.closesAt ?? cycle.estimatedCloseAt;
     if (closing != null && closing.isBefore(DateTime.now())) {
       return (
@@ -287,8 +299,6 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
   bool get _authRequired =>
       _scholarshipsController.failure == ScholarshipsFailure.authRequired;
   String get _fundingFilter => _scholarshipsController.fundingFilter;
-  Set<String> get _alertedScholarshipIds =>
-      _scholarshipsController.alertedScholarshipIds;
 
   @override
   void initState() {
@@ -308,6 +318,12 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
   }
 
   void _onScholarshipsChanged() {
+    // Les alertes posées par la cloche des builds précédentes valent
+    // « Suivie » partout dans l'app, pas seulement dans cette liste.
+    final alerted = _scholarshipsController.alertedScholarshipIds;
+    if (alerted.isNotEmpty) {
+      Get.find<AppController>().rememberServerFollowedScholarships(alerted);
+    }
     if (mounted) setState(() {});
   }
 
@@ -406,6 +422,13 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                       ),
                       onPressed: _openSuccessLab,
                     ),
+                  IconButton(
+                    key: const ValueKey<String>('scholarships-followed-entry'),
+                    tooltip: 'followed_title'.tr,
+                    icon: const Icon(Icons.bookmarks_outlined,
+                        color: KpbColors.brandNavy),
+                    onPressed: () => Get.toNamed<void>(AppRoutes.saved),
+                  ),
                   IconButton(
                     tooltip: 'a11y_refresh'.tr,
                     icon: const Icon(Icons.refresh_rounded,
@@ -547,11 +570,6 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                             padding: const EdgeInsets.only(bottom: 10),
                             child: _LiveScholarshipCard(
                               scholarship: s,
-                              alertEnabled:
-                                  _alertedScholarshipIds.contains(s.id),
-                              apiClient: widget.apiClient,
-                              onAlertChanged: (enabled) =>
-                                  _setAlertState(s.id, enabled),
                               onTap: () => _openDetail(context, s),
                             ),
                           ),
@@ -640,16 +658,10 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
       () => ScholarshipDetailScreen(
         scholarshipId: s.id,
         initialScholarship: s,
-        initialAlertEnabled: _alertedScholarshipIds.contains(s.id),
         apiClient: _apiClient,
-        onAlertChanged: (enabled) => _setAlertState(s.id, enabled),
       ),
       routeName: AppRoutes.scholarshipDetailPath(s.id),
     );
-  }
-
-  void _setAlertState(String scholarshipId, bool enabled) {
-    _scholarshipsController.setAlertState(scholarshipId, enabled);
   }
 }
 
@@ -659,17 +671,11 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
 class _LiveScholarshipCard extends StatelessWidget {
   const _LiveScholarshipCard({
     required this.scholarship,
-    required this.alertEnabled,
-    required this.onAlertChanged,
     required this.onTap,
-    this.apiClient,
   });
 
   final LiveScholarshipModel scholarship;
-  final bool alertEnabled;
-  final ValueChanged<bool> onAlertChanged;
   final VoidCallback onTap;
-  final AppApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
@@ -748,14 +754,12 @@ class _LiveScholarshipCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              ScholarshipAlertButton(
+              const SizedBox(width: 6),
+              // « Suivre » remplace la cloche « M'avertir » : la cloche ne
+              // veut plus dire que « notifications ».
+              FollowScholarshipButton(
                 scholarshipId: s.id,
                 scholarshipTitle: s.title,
-                initialEnabled: alertEnabled,
-                apiClient: apiClient,
-                onChanged: onAlertChanged,
-                compact: true,
               ),
             ],
           ),

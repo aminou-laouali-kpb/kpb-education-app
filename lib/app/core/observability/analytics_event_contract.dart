@@ -185,6 +185,17 @@ abstract final class AnalyticsEventName {
   static const aiCoachMessageSent = 'ai_coach_message_sent';
   static const aiCoachLoadFailed = 'ai_coach_load_failed';
 
+  /// Boucle « Suivre → alerte → ouvrir » (chantier G).
+  /// `push_opened` : un tap sur une notification push, avec son `kind`
+  /// (`scholarship_opened`, `scholarship_opened_bundle`, `deadline_reminder`…)
+  /// — l'identifiant fermé de la charge, jamais un titre ni un identifiant de
+  /// bourse. `permission_primer_shown` / `permission_primer_granted` : la
+  /// feuille d'explication du premier « Suivre » et sa conversion en
+  /// autorisation (`result` = `granted`, `denied`, `dismissed`).
+  static const pushOpened = 'push_opened';
+  static const permissionPrimerShown = 'permission_primer_shown';
+  static const permissionPrimerGranted = 'permission_primer_granted';
+
   /// Sync / catalog observability (paired with [AnalyticsService] helpers).
   static const syncFullComplete = 'sync_full_complete';
   static const syncConflictResolved = 'sync_conflict_resolved';
@@ -284,6 +295,9 @@ abstract final class AnalyticsParamKey {
   /// Coach IA : d'où vient la question et comment le tour s'est terminé.
   static const result = 'result';
   static const quotaRemaining = 'quota_remaining';
+
+  /// `push_opened` : le `kind` de la charge push (identifiant fermé).
+  static const kind = 'kind';
 
   /// `view_item` : la famille du contenu consulté (`scholarship`, `program`,
   /// `country`, `institution`). Clé GA4 standard, distincte d'`item_type`.

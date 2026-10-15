@@ -221,6 +221,62 @@ mixin _CatalogApi on _ApiClientBase {
     await _dio.post<void>('/me/notifications/read-all');
   }
 
+  // ── Suivre une bourse (chantier C — routes des builds récentes) ──────────
+  //
+  // Chacune de ces routes peut répondre 404 sur un backend pas encore
+  // déployé : les appelants lisent [isEndpointUnavailable] et se dégradent
+  // (section masquée, interrupteur caché) au lieu d'afficher une erreur.
+
+  /// `PATCH /me/scholarship-alerts/:id` `{notifyOpening}` — met l'annonce
+  /// d'ouverture en sourdine (`false`) ou la rallume (`true`), sans toucher au
+  /// favori. Rend `{scholarshipId, following, notifyOpening}`.
+  Future<Map<String, dynamic>> updateScholarshipOpeningAlert(
+    String scholarshipId, {
+    required bool notifyOpening,
+  }) async {
+    final response = await _dio.patch<Map<String, dynamic>>(
+      '/me/scholarship-alerts/${Uri.encodeComponent(scholarshipId)}',
+      data: <String, dynamic>{'notifyOpening': notifyOpening},
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  /// `GET /me/followed-scholarships` — les bourses suivies, closes comprises.
+  Future<FollowedScholarshipsPage> fetchFollowedScholarships(
+      String lang) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/me/followed-scholarships',
+      queryParameters: <String, dynamic>{'lang': lang == 'en' ? 'en' : 'fr'},
+    );
+    return FollowedScholarshipsPage.fromJson(
+      response.data ?? <String, dynamic>{},
+    ).withFetchedAt(DateTime.now());
+  }
+
+  /// `GET /me/notifications/unread-count` — le badge de la cloche, sans
+  /// rapatrier le fil.
+  Future<int> fetchUnreadNotificationCount() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/me/notifications/unread-count',
+    );
+    final raw = response.data?['unreadCount'];
+    return raw is num && raw > 0 ? raw.toInt() : 0;
+  }
+
+  /// `POST /me/notifications/read-by-ref` — marque lues les entrées d'inbox
+  /// d'un push (ex. le push groupé). Au plus 20 références par appel, filtrées
+  /// ici sur le motif du contrat pour ne jamais déclencher un 400.
+  Future<int> markNotificationsReadByRef(List<String> refs) async {
+    final valid = sanitizeNotificationRefs(refs);
+    if (valid.isEmpty) return 0;
+    final response = await _dio.post<Map<String, dynamic>>(
+      '/me/notifications/read-by-ref',
+      data: <String, dynamic>{'refs': valid},
+    );
+    final updated = response.data?['updated'];
+    return updated is num ? updated.toInt() : 0;
+  }
+
   /// Cheapest flight price for a route/date, proxied from Kayak Price-Insights.
   /// Returns the flat contract map `{configured, cached, currency, results:[]}`.
   Future<Map<String, dynamic>> flightRoutes({

@@ -924,6 +924,27 @@ Gardé par `backend/src/modules/config/app-config.controller.spec.ts`,
 `test/core/services/remote_feature_flags_test.dart`, `test/release/config_env_relay_test.dart`
 (relais compose) et `test/release/vps_ops_eef_switches_test.dart`.
 
+### Interrupteurs « Suivre » / Mes suivis / notifications dans `features`
+
+Sept booléens ajoutés à `features`, **`true` par défaut** côté serveur comme côté app.
+Ils existent pour **couper** une fonction de la build sur les téléphones installés, sans
+soumission store. Seule la valeur `false` (casse et espaces tolérés) les ferme ; une variable
+absente, vide ou mal tapée les laisse ouverts. Un backend plus ancien ne les sert pas : l'app
+lit une clé absente comme `true`.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.followPushPrimer` | `KPB_FOLLOW_PUSH_PRIMER_ENABLED` | Feuille d'explication avant la demande d'autorisation, au premier « Suivre ». |
+| `features.followOpeningAlert` | `KPB_FOLLOW_OPENING_ALERT_ENABLED` | « Suivre » pose aussi l'alerte d'ouverture (`POST /me/scholarship-alerts/:id`). |
+| `features.openingAlertToggle` | `KPB_OPENING_ALERT_TOGGLE_ENABLED` | Interrupteur « Me prévenir à l'ouverture » de la fiche. |
+| `features.followedScholarships` | `KPB_FOLLOWED_SCHOLARSHIPS_ENABLED` | Section « Bourses suivies » de Mes suivis. |
+| `features.notificationsUnreadCount` | `KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED` | Point de la cloche allumé par les non-lus serveur. |
+| `features.followedScholarshipOptOut` | `KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED` | Ligne de préférence « Bourses que je suis ». |
+| `features.homeFollowedEntry` | `KPB_HOME_FOLLOWED_ENTRY_ENABLED` | Bouton « Mes suivis » de l'accueil. |
+
+Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
+`test/release/config_env_relay_test.dart` (relais compose).
+
 ### Ce que `GET /config/app` sert d'autre que des drapeaux (build 54)
 
 Route publique, sans authentification. Quatre ajouts, tous **absents sur un

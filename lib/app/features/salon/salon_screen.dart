@@ -83,46 +83,28 @@ class _SalonScreenState extends State<SalonScreen> {
       AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics());
 
   Widget _buildBody() {
-    if (_loading) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: const [
-          SizedBox(height: 160),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: 160),
-        ],
-      );
-    }
-    if (_error != null) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.65,
-            child: KpbErrorState(
-              title: 'salon_unavailable_title'.tr,
-              subtitle: _error!,
-              onRetry: _load,
-            ),
-          ),
-        ],
-      );
-    }
-    if (_events.isEmpty) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.65,
-            child: KpbEmptyState(
-              icon: Icons.event_available_outlined,
-              title: 'salon_no_edition_title'.tr,
-              subtitle: 'salon_no_edition_subtitle'.tr,
-            ),
-          ),
-        ],
-      );
-    }
+    return KpbAsyncView(
+      refreshable: true,
+      phase: _loading
+          ? KpbAsyncPhase.loading
+          : _error != null
+              ? KpbAsyncPhase.error
+              : _events.isEmpty
+                  ? KpbAsyncPhase.empty
+                  : KpbAsyncPhase.content,
+      errorTitle: 'salon_unavailable_title'.tr,
+      errorMessage: _error,
+      onRetry: _load,
+      empty: KpbEmptyState(
+        icon: Icons.event_available_outlined,
+        title: 'salon_no_edition_title'.tr,
+        subtitle: 'salon_no_edition_subtitle'.tr,
+      ),
+      builder: (context) => _buildList(),
+    );
+  }
+
+  Widget _buildList() {
     return ListView.separated(
       physics: _scrollPhysics,
       padding: const EdgeInsets.all(16),
@@ -306,9 +288,7 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('salon_rsvp_error'.tr)),
-      );
+      KpbToast.error('salon_rsvp_error'.tr, context: context);
     } finally {
       _togglingSessionIds.remove(id);
     }
@@ -335,49 +315,34 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
     );
   }
 
+  List<Map<String, dynamic>> get _sessions =>
+      (_event['sessions'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>();
+
   Widget _buildBody() {
-    if (_loading) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: const [
-          SizedBox(height: 160),
-          Center(child: CircularProgressIndicator()),
-          SizedBox(height: 160),
-        ],
-      );
-    }
-    if (_error != null) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.65,
-            child: KpbErrorState(
-              title: 'salon_program_unavailable_title'.tr,
-              subtitle: _error!,
-              onRetry: _load,
-            ),
-          ),
-        ],
-      );
-    }
-    final sessions = (_event['sessions'] as List<dynamic>? ?? const [])
-        .cast<Map<String, dynamic>>();
-    if (sessions.isEmpty) {
-      return ListView(
-        physics: _scrollPhysics,
-        children: [
-          SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.65,
-            child: KpbEmptyState(
-              icon: Icons.schedule_outlined,
-              title: 'salon_program_upcoming_title'.tr,
-              subtitle: 'salon_program_upcoming_subtitle'.tr,
-            ),
-          ),
-        ],
-      );
-    }
+    return KpbAsyncView(
+      refreshable: true,
+      phase: _loading
+          ? KpbAsyncPhase.loading
+          : _error != null
+              ? KpbAsyncPhase.error
+              : _sessions.isEmpty
+                  ? KpbAsyncPhase.empty
+                  : KpbAsyncPhase.content,
+      errorTitle: 'salon_program_unavailable_title'.tr,
+      errorMessage: _error,
+      onRetry: _load,
+      empty: KpbEmptyState(
+        icon: Icons.schedule_outlined,
+        title: 'salon_program_upcoming_title'.tr,
+        subtitle: 'salon_program_upcoming_subtitle'.tr,
+      ),
+      builder: (context) => _buildList(),
+    );
+  }
+
+  Widget _buildList() {
+    final sessions = _sessions;
     return ListView.separated(
       physics: _scrollPhysics,
       padding: const EdgeInsets.all(16),

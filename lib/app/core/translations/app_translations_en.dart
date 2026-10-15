@@ -740,7 +740,7 @@ const Map<String, String> appTranslationsEn = {
           'Recipients and retention periods are detailed in the Privacy Policy, section "Usage analytics".',
   'deadlines_date_to_confirm': 'Date to be confirmed',
   'deadlines_filter_all': 'All',
-  'deadlines_filter_saved': 'Saved',
+  'deadlines_filter_saved': 'Followed scholarships',
   'deadlines_filter_cases': 'Cases',
   'deadlines_filter_upcoming': 'Upcoming',
   'deadlines_empty_title': 'No deadlines',
@@ -3195,4 +3195,71 @@ const Map<String, String> appTranslationsEn = {
       'Practice visa and admission interviews with AI feedback',
   'case_ai_review_subtitle':
       'Have the AI proofread a document before you send it',
+  // ── Toasts (KpbToast) ──────────────────────────────────────────
+  'toast_offline_pending_default':
+      'Saved on your phone. We\'ll send it as soon as you\'re online.',
+  // ── Async states (KpbAsyncView) ────────────────────────────────
+  'async_loading': 'Loading…',
+  'async_empty_title': 'Nothing to show yet',
+  'async_updated_ago': 'Updated @ago',
+  // ── Follow a scholarship, Followed, notifications (chantier G) ──────
+  'follow_scholarship_follow': 'Follow',
+  'follow_scholarship_following': 'Following',
+  'follow_scholarship_a11y_follow': 'Follow the @title scholarship',
+  'follow_scholarship_a11y_following': 'Following @title. Tap to unfollow',
+  'push_primer_title': 'We\'ll tell you as soon as it opens',
+  'push_primer_body':
+      'Turn on notifications to know in time when a scholarship you follow opens, and before its deadline. You can change this anytime.',
+  'push_primer_enable': 'Turn on notifications',
+  'push_primer_later': 'Not now',
+  'push_denied_title': 'Notifications are off',
+  'push_denied_body':
+      'You won\'t get alerts on your phone. You\'ll still find them in the app, under Notifications. To turn them back on, open the app settings.',
+  'push_denied_open_settings': 'Open settings',
+  'scholarship_notify_opening_title': 'Notify me when it opens',
+  'scholarship_notify_opening_subtitle':
+      'One notification the day applications open. Deadline reminders keep coming.',
+  'scholarship_notify_opening_global_off':
+      'You turned off opening alerts in your notification preferences.',
+  'scholarship_notify_opening_error':
+      'Your choice wasn\'t saved. Try again when you\'re online.',
+  'scholarship_status_open': 'Open · closes @date',
+  'scholarship_status_open_no_date': 'Open · closing date to be confirmed',
+  'scholarship_status_opens_on': 'Opens @date',
+  'scholarship_status_opening_estimated': 'Expected to open: @date',
+  'scholarship_status_opening_unknown': 'Opening date to be confirmed',
+  'scholarship_status_closed': 'Closed',
+  'followed_title': 'Followed',
+  'followed_scholarships_section': 'Followed scholarships',
+  'followed_sort_label': 'Sort by',
+  'followed_sort_status': 'Status',
+  'followed_sort_deadline': 'Deadline',
+  'followed_sort_name': 'A–Z',
+  'followed_empty_title': 'You\'re not following any scholarship yet',
+  'followed_empty_body':
+      'Tap "Follow" on a scholarship: we\'ll tell you when it opens and before its deadline.',
+  'followed_empty_cta': 'Browse scholarships',
+  'followed_removed': 'You unfollowed "@title"',
+  'followed_undo': 'Undo',
+  'followed_offline': 'Offline — data from @date',
+  'followed_detail_unavailable': 'Details unavailable for now',
+  'followed_opening_muted': 'Opening alert off',
+  'followed_remove_a11y': 'Unfollow @title',
+  'notifications_group_today': 'Today',
+  'notifications_group_week': 'This week',
+  'notifications_group_earlier': 'Earlier',
+  'notif_cta_open_scholarship': 'See the scholarship',
+  'notif_cta_open_followed': 'See followed scholarships',
+  'notif_cta_deadline': 'See the deadline',
+  'notif_cta_case': 'Open the case',
+  'notif_cta_message': 'Read the message',
+  'notif_cta_open': 'Open',
+  'followed_scholarship_pref_title': 'Scholarships I follow: opening',
+  'followed_scholarship_pref_subtitle':
+      'A notification when a scholarship you follow opens. Deadline reminders keep coming.',
+  'notifications_push_granted_title': 'Notifications are on',
+  'notifications_push_granted_subtitle': 'You get alerts on this phone.',
+  'notifications_push_denied_subtitle':
+      'Turn them back on in the app settings to get alerts.',
+  'notifications_push_settings_action': 'Settings',
 };

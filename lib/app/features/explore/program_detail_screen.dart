@@ -21,6 +21,7 @@ import '../cases/case_tunnel_flow.dart';
 import '../search/match_explanation_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
+import '../../core/ui/components/kpb_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Palette (App-engagement handoff · Student App.dc.html · "Fiche université").
@@ -862,11 +863,7 @@ void _openCaseTunnel(
           onClose: () => Navigator.pop(ctx),
           onSubmitted: () {
             Navigator.pop(ctx);
-            Get.snackbar(
-              'KPB Education',
-              'request_submitted'.tr,
-              snackPosition: SnackPosition.BOTTOM,
-            );
+            KpbToast.success('request_submitted'.tr);
           },
         ),
       ),
@@ -976,12 +973,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
         source: ShareSource.match,
       );
       if (!withImage && mounted) {
-        Get.snackbar(
-          AppConfig.brandName,
-          'match_card_share_error'.tr,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-        );
+        KpbToast.error('match_card_share_error'.tr);
       }
       if (mounted) unawaited(Navigator.of(context).maybePop());
     } finally {
