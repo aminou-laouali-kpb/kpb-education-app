@@ -172,6 +172,15 @@ services:
       # tout le reste ; une clé absente est lue « faux » par l'app.
       - KPB_EEF_HELP_BUBBLE_ENABLED=${KPB_EEF_HELP_BUBBLE_ENABLED:-false}
       - KPB_EEF_PRIVATE_SCHOOLS_ENABLED=${KPB_EEF_PRIVATE_SCHOOLS_ENABLED:-false}
+      # « Suivre », Mes suivis, notifications : OUVERTS par défaut (seul
+      # `false` les ferme). Ils existent pour couper une fonction à distance.
+      - KPB_FOLLOW_PUSH_PRIMER_ENABLED=${KPB_FOLLOW_PUSH_PRIMER_ENABLED:-true}
+      - KPB_FOLLOW_OPENING_ALERT_ENABLED=${KPB_FOLLOW_OPENING_ALERT_ENABLED:-true}
+      - KPB_OPENING_ALERT_TOGGLE_ENABLED=${KPB_OPENING_ALERT_TOGGLE_ENABLED:-true}
+      - KPB_FOLLOWED_SCHOLARSHIPS_ENABLED=${KPB_FOLLOWED_SCHOLARSHIPS_ENABLED:-true}
+      - KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED=${KPB_NOTIFICATIONS_UNREAD_COUNT_ENABLED:-true}
+      - KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED=${KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED:-true}
+      - KPB_HOME_FOLLOWED_ENTRY_ENABLED=${KPB_HOME_FOLLOWED_ENTRY_ENABLED:-true}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.
