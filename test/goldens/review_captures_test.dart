@@ -31,6 +31,7 @@ import 'package:karatou/app/features/profile/profile_screen.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 import 'package:karatou/app/features/universities/universities_screen.dart';
 
+import '../features/scholarships/scholarships_test_support.dart';
 import '../widget_test_helpers.dart';
 
 const _outDir = 'build/review_captures';
@@ -168,6 +169,7 @@ StudentCase _buildCase(String id, String reference, CaseStatus status) {
 
 void main() {
   setUpAll(() async {
+    registerScholarshipListFallbacks();
     TestWidgetsFlutterBinding.ensureInitialized();
     await initializeDateFormatting('fr');
   });
@@ -235,16 +237,12 @@ void main() {
   testWidgets('capture — bourses (liste)', (tester) async {
     await setViewport(tester);
     final mock = MockApiClient();
-    when(() => mock.fetchLiveScholarships(
-          lang: any(named: 'lang'),
-          level: any(named: 'level'),
-          fieldIds: any(named: 'fieldIds'),
-          fundingType: any(named: 'fundingType'),
-        )).thenAnswer((_) async => <dynamic>[
-          _scholarshipJson('mext', 'Bourse MEXT 2027', 5, 86),
-          _scholarshipJson('eiffel', 'Bourse Eiffel — France', 41, 72),
-          _scholarshipJson('mastercard', 'Mastercard Foundation', 120, 64),
-        ]);
+    whenScholarshipsPage(mock)
+        .thenAnswer((_) async => scholarshipsPage(<dynamic>[
+              _scholarshipJson('mext', 'Bourse MEXT 2027', 5, 86),
+              _scholarshipJson('eiffel', 'Bourse Eiffel — France', 41, 72),
+              _scholarshipJson('mastercard', 'Mastercard Foundation', 120, 64),
+            ]));
     when(() => mock.fetchScholarshipAlerts())
         .thenAnswer((_) async => <String>{'mext'});
     await _seedController(apiClient: mock);

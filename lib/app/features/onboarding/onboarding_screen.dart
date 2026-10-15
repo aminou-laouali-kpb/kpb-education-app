@@ -7,6 +7,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/i18n/app_locale.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/currency_utils.dart';
@@ -169,14 +170,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _phoneCtrl = TextEditingController();
   final _whatsAppCtrl = TextEditingController();
 
+  /// Onboarding « la valeur d'abord » (`features.onboardingV2`), lu UNE fois
+  /// à l'ouverture : un rafraîchissement des drapeaux en cours de saisie ne
+  /// change pas le formulaire sous les doigts de l'élève. Fermé : l'ancien
+  /// parcours, inchangé.
+  late final bool _v2;
+
   // State
   AccountType _accountType = AccountType.student;
   String _language = 'fr';
-  String _country = 'Niger';
-  String _currentLevel = 'High school';
-  String _targetLevel = 'Bachelor';
-  String _languageLevel = 'Intermediate';
-  String _gradeRange = '12 - 14/20';
+  // Nuls tant que l'élève n'a pas choisi (parcours V2). L'ancien parcours les
+  // pré-remplit dans [initState] avec ses valeurs historiques : des choix
+  // jamais faits partaient tels quels dans le profil (Niger, Lycée → Licence,
+  // anglais intermédiaire, 12-14/20) et biaisaient le matching.
+  String? _country;
+  String? _currentLevel;
+  String? _targetLevel;
+  String? _languageLevel;
+  String? _gradeRange;
   int? _annualTuitionBudgetEur;
   String _preferredCurrency = DisplayCurrency.xof.code;
   bool _wantsScholarship = true;
@@ -209,6 +220,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _birthDateKey = GlobalKey();
   final _guardianKey = GlobalKey();
   final _consentKey = GlobalKey();
+  // Étape 3 (V2) : les deux groupes de puces obligatoires, pour y faire
+  // défiler la page quand ce sont eux qui bloquent.
+  final _fieldsKey = GlobalKey();
+  final _countriesKey = GlobalKey();
 
   // Age gate + self-attested guardian consent for declared minors (<18).
   DateTime? _birthDate;
@@ -259,6 +274,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    _v2 = RemoteFeatureFlags.instance.onboardingV2Enabled;
+    if (!_v2) {
+      // Ancien parcours (drapeau fermé) : ses valeurs par défaut historiques,
+      // à l'identique.
+      _country = 'Niger';
+      _currentLevel = 'High school';
+      _targetLevel = 'Bachelor';
+      _languageLevel = 'Intermediate';
+      _gradeRange = '12 - 14/20';
+    }
     _restoreFromProfile();
     // For a freshly-authenticated user with no persisted profile yet, seed the
     // email (and name, when the OAuth provider supplied it) from the Supabase
@@ -280,8 +305,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _skip() {
+    // V2 : « Passer » existe dès la page 1, donc avant le contrôle de l'âge.
+    // Il ne contourne pas le plancher des CGU : une date de moins de 16 ans
+    // déjà saisie (ou restaurée) bloque, avec l'erreur dans le champ.
+    if (_v2 && _accountType == AccountType.student && _isUnderMinimumAge) {
+      if (_page != 0) _pageController.jumpToPage(0);
+      // Pas `markAttempted` : un « Passer » refusé n'allume pas les erreurs
+      // des AUTRES champs (consentement, téléphone) — seule celle de l'âge,
+      // déjà visible dans son champ en V2, est en cause.
+      _onPageInvalid(
+        0,
+        'under_minimum_age',
+        _key0,
+        section: _birthDateKey,
+        markAttempted: false,
+      );
+      return;
+    }
     AnalyticsService.instance.logOnboardingSkipped(step: _page + 1);
-    _ctrl.skipOnboarding();
+    _ctrl.skipOnboarding(ageDeclaration: _v2 ? _ageDeclaration() : null);
+  }
+
+  /// L'âge et l'accord du tuteur déjà saisis, conservés par « Passer » (V2).
+  /// Null quand rien n'a été déclaré ou que le compte n'est pas élève.
+  OnboardingAgeDeclaration? _ageDeclaration() {
+    if (_accountType != AccountType.student || _birthDate == null) return null;
+    final guardianName = _guardianNameCtrl.text.trim();
+    final guardianContact = _guardianContactCtrl.text.trim();
+    final guardianComplete = _isMinor &&
+        _guardianConsented &&
+        guardianName.isNotEmpty &&
+        guardianContact.isNotEmpty;
+    return OnboardingAgeDeclaration(
+      birthDate: _birthDate,
+      guardianName: guardianComplete ? guardianName : null,
+      guardianContact: guardianComplete ? guardianContact : null,
+      guardianConsented: guardianComplete,
+    );
   }
 
   /// Fills email/name from the current Supabase session, but only where the
@@ -422,7 +482,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       email: _emailCtrl.text.trim(),
       phone: phone,
       whatsApp: whatsApp,
-      countryOfResidence: _country,
+      countryOfResidence: _country ?? '',
       preferredLanguage: _language,
       currentLevel: isPartner ? null : _currentLevel,
       targetLevel: isPartner ? null : _targetLevel,
@@ -460,6 +520,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           if (!ok) _onPageInvalid(1, 'required_fields', _key1);
           return ok;
         }(),
+      2 when _v2 => _validateInterestsPage(),
       2 => () {
           if (_fieldIds.isEmpty) {
             _logValidationFailed(2, 'fields_missing');
@@ -494,6 +555,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } else {
       _submit();
     }
+  }
+
+  /// V2 : l'étape 3 dit ce qui manque SOUS le groupe de puces concerné, et y
+  /// fait défiler la page — plus de toast générique.
+  bool _validateInterestsPage() {
+    final issue = _fieldIds.isEmpty
+        ? 'fields_missing'
+        : _countryIds.isEmpty
+            ? 'countries_missing'
+            : null;
+    if (issue == null) return true;
+    _onPageInvalid(
+      2,
+      issue,
+      _key2,
+      section: issue == 'fields_missing' ? _fieldsKey : _countriesKey,
+    );
+    return false;
   }
 
   /// La raison qui bloque l'étape 1, dans l'ORDRE de la page (de haut en bas),
@@ -539,8 +618,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     String reason,
     GlobalKey<FormState> formKey, {
     GlobalKey? section,
+    bool markAttempted = true,
   }) {
-    setState(() => _attemptedPages.add(page));
+    if (markAttempted) setState(() => _attemptedPages.add(page));
     KpbHaptics.error();
     _logValidationFailed(page, reason);
     // Après la trame : les erreurs qu'on vient d'allumer doivent être montées
@@ -653,7 +733,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page: _page,
             total: _totalPages,
             onBack: _page > 0 ? _prev : null,
-            onSkip: _page > 0 ? _skip : null,
+            // V2 : « Passer » dès la page 1. Ancien parcours : à partir de
+            // la page 2, comme avant.
+            onSkip: (_v2 || _page > 0) ? _skip : null,
           ),
 
           // ── Pages ────────────────────────────────────────────────
@@ -691,6 +773,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     guardianContactCtrl: _guardianContactCtrl,
                     guardianConsented: _guardianConsented,
                     showErrors: _attemptedPages.contains(0),
+                    requireCountry: _v2,
+                    showAgeErrorEagerly: _v2,
                     isUnderMinimumAge: _isUnderMinimumAge,
                     guardianIncomplete: _guardianIncomplete,
                     birthDateKey: _birthDateKey,
@@ -726,6 +810,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       preferredCurrency: _preferredCurrency,
                       wantsScholarship: _wantsScholarship,
                       wantsNewsletter: _wantsNewsletter,
+                      requireLevels: _v2,
                       onCurrentLevel: (v) =>
                           setState(() => _currentLevel = v ?? _currentLevel),
                       onTargetLevel: (v) =>
@@ -764,6 +849,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       fieldIds: _fieldIds,
                       countryIds: _countryIds,
                       docs: _docs,
+                      showErrors: _v2 && _attemptedPages.contains(2),
+                      fieldsKey: _fieldsKey,
+                      countriesKey: _countriesKey,
                       onToggleField: (id) => setState(() {
                         if (_fieldIds.contains(id)) {
                           _fieldIds.remove(id);

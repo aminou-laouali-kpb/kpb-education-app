@@ -14,7 +14,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karatou/app/core/models/app_models.dart';
-import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
+import 'package:karatou/app/features/scholarships/widgets/scholarship_status_line.dart';
 
 void main() {
   ScholarshipModel build({
@@ -77,45 +77,26 @@ void main() {
   // ── Revue automatique de la PR #252 (P2) ────────────────────────────────
   //
   // Les bornes du catalogue sont des dates SANS heure écrites en UTC
-  // (`2027-03-01T00:00:00.000Z` → `2027-04-30T23:59:59.000Z`). La première
-  // version comparait après `toLocal()`, et changeait donc de jour calendaire
-  // pour presque tout le monde : à l'est d'UTC — Niger, Sénégal, Côte d'Ivoire,
-  // c'est-à-dire notre public — le 30 avril 23 h 59 UTC devient le 1er mai, et
-  // le test « dernier jour du mois » échouait pour la convention même qu'il
-  // doit reconnaître. La carte retombait alors sur des dates précises
-  // trompeuses.
-  group('la fenêtre de mois se lit en UTC, pas en heure locale', () {
-    test('bornes de mois entières reconnues quel que soit le fuseau', () {
+  // (`2027-03-01T00:00:00.000Z` → `2027-04-30T23:59:59.000Z`). Converties en
+  // heure locale, elles changent de jour calendaire pour presque tout le
+  // monde — et à la frontière d'un mois, de MOIS : le 1er mars 00 h UTC devient
+  // le 28 février à l'ouest d'UTC.
+  //
+  // Chantier I : la carte dit désormais « Ouverture estimée mars 2027 » — une
+  // date estimée ne se dit plus qu'au mois près, quelle que soit la fenêtre
+  // saisie (l'ancien prédicat « fenêtre de mois entiers » n'a plus d'objet).
+  // Ce qui reste à garantir, c'est que ce mois se lit en UTC.
+  group('le mois d\'une date estimée se lit en UTC, pas en heure locale', () {
+    test('1er mars 00 h UTC reste mars, exprimé en local ou non', () {
       final open = DateTime.utc(2027, 3, 1);
+      expect(formatScholarshipMonth(open), '03/2027');
+      expect(formatScholarshipMonth(open.toLocal()), '03/2027');
+    });
+
+    test('30 avril 23 h 59 UTC reste avril, même à l\'est d\'UTC', () {
       final close = DateTime.utc(2027, 4, 30, 23, 59, 59);
-      expect(isWholeMonthWindowForTest(open, close), isTrue);
-      // Même instant, exprimé en local : le prédicat ne doit pas changer d'avis.
-      expect(
-        isWholeMonthWindowForTest(open.toLocal(), close.toLocal()),
-        isTrue,
-      );
-    });
-
-    test('février bissextile : le 29 est bien le dernier jour', () {
-      expect(
-        isWholeMonthWindowForTest(
-          DateTime.utc(2028, 2, 1),
-          DateTime.utc(2028, 2, 29, 23, 59, 59),
-        ),
-        isTrue,
-      );
-    });
-
-    test('une fenêtre saisie au jour près n\'est PAS une fenêtre de mois', () {
-      expect(
-        isWholeMonthWindowForTest(
-          DateTime.utc(2027, 3, 12),
-          DateTime.utc(2027, 4, 18),
-        ),
-        isFalse,
-        reason: 'ces dates ont été saisies précisément : les rendre en mois '
-            'perdrait de l\'information que l\'opérateur a fournie',
-      );
+      expect(formatScholarshipMonth(close), '04/2027');
+      expect(formatScholarshipMonth(close.toLocal()), '04/2027');
     });
   });
 

@@ -28,7 +28,7 @@ class _QuickActions extends StatelessWidget {
         Icons.workspace_premium_rounded,
         'home_quick_action_scholarships'.tr,
         KpbColors.warning,
-        () => Get.toNamed(AppRoutes.scholarships),
+        openScholarshipOrTab,
       ),
       (
         Icons.folder_copy_rounded,
@@ -555,7 +555,11 @@ class _UrgentDeadlineCard extends StatelessWidget {
     final daysLeft = scholarship.daysUntilDeadline() ?? -1;
 
     return KpbPressable(
-      onTap: () => Get.toNamed(AppRoutes.scholarships),
+      // La fiche de la bourse dont la clôture approche (chantier I).
+      onTap: () => openScholarshipOrTab(
+        scholarshipId: scholarship.id,
+        fromCatalog: true,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: KpbColors.warningLight,

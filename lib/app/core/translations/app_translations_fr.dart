@@ -1185,30 +1185,39 @@ const Map<String, String> appTranslationsFr = {
   'live_scholarships_requirement_separate_application':
       'Candidature séparée requise',
   'live_scholarships_step_duration': 'Durée estimée : @days jour(s)',
-  'live_scholarships_apply_with_kpb': '🎯  Candidater avec KPB',
   'live_scholarships_view_official_application':
       'Voir le site officiel de candidature',
   'live_scholarships_official_form': 'Formulaire officiel',
-  'live_scholarships_deadline_soon': 'Deadline imminente',
-  'live_scholarships_deadline_closed': 'Clôturée',
-  'live_scholarships_deadline_days': 'J-@count',
   'live_scholarships_no_deadline': 'Pas de date limite',
   'live_scholarships_funding_tile': 'Financement',
   'live_scholarships_alert': 'M\'avertir',
   'live_scholarships_alert_enabled': 'Alerte activée',
   'live_scholarships_alert_error':
       'Impossible de modifier cette alerte. Réessaie.',
-  'live_scholarships_open_now': 'Candidatures ouvertes',
-  'live_scholarships_open_estimated': 'Ouverture estimée : @date',
-  'live_scholarships_period_estimated': 'Période estimée : @open – @close',
   // ── Bourses « à venir » (revue du build 49, point 9) ─────────────
   // Quand la fenêtre estimée couvre des MOIS entiers, on l'annonce en
   // mois. Afficher « 01/03/2027 – 30/04/2027 » était plus précis que
   // ce qu'on sait réellement : ces deux dates sont les bornes du mois,
   // pas une date de campagne publiée.
-  'live_scholarships_upcoming_months':
-      'À venir, généralement aux mois de @from – @to',
-  'live_scholarships_upcoming_month': 'À venir, généralement au mois de @from',
+  // ── Liste des bourses (chantier I) : ligne de statut, filtres, tri,
+  // hors ligne. Une date ESTIMÉE ne se dit qu'au mois près.
+  'scholarships_filter_button': 'Filtrer',
+  'scholarships_filter_button_count': 'Filtrer · @count',
+  'scholarships_filter_title': 'Filtrer les bourses',
+  'scholarships_filter_clear': 'Tout effacer',
+  'scholarships_filter_status_section': 'Statut',
+  'scholarships_filter_status_open': 'Ouvertes maintenant',
+  'scholarships_filter_status_upcoming': 'Ouverture confirmée à venir',
+  'scholarships_filter_status_forecast': 'Dates estimées ou à confirmer',
+  'scholarships_filter_funding_section': 'Financement',
+  'scholarships_filter_apply': 'Voir les bourses',
+  'scholarships_sort_button': 'Trier : @sort',
+  'scholarships_sort_sheet_title': 'Trier par',
+  'scholarships_sort_relevance': 'Pertinence pour ton profil',
+  'scholarships_sort_deadline': 'Clôture la plus proche',
+  'scholarships_sort_verified': 'Récemment vérifiées',
+  'scholarships_sort_title': 'Nom (A-Z)',
+  'scholarships_offline_count': '@count bourse(s) gardée(s) sur ton téléphone',
   'scholarship_detail_title': 'Détails de la bourse',
   'scholarship_detail_not_found': 'Bourse introuvable',
   'scholarship_detail_not_found_body':
@@ -1581,6 +1590,11 @@ const Map<String, String> appTranslationsFr = {
   'onboarding_select_field_body': 'Choisissez au moins une filière d\'intérêt.',
   'onboarding_select_country_body':
       'Choisissez au moins un pays de destination.',
+  // Onboarding V2 : l'erreur s'écrit SOUS le groupe de puces, en tu.
+  'onboarding_fields_required_inline':
+      'Choisis au moins une filière qui t\'intéresse.',
+  'onboarding_countries_required_inline':
+      'Choisis au moins un pays où tu aimerais étudier.',
   'onboarding_welcome_title': 'Bienvenue 👋',
   'onboarding_welcome_subtitle': 'Créons votre profil KPB Education.',
   'onboarding_academic_title': 'Votre parcours 🎓',
@@ -3444,6 +3458,7 @@ const Map<String, String> appTranslationsFr = {
   'async_loading': 'Chargement…',
   'async_empty_title': 'Rien à afficher pour l\'instant',
   'async_updated_ago': 'Mis à jour @ago',
+  'async_offline_data_from': 'Hors ligne — données du @date à @time',
   // ── Suivre une bourse, Mes suivis, notifications (chantier G) ──────
   'follow_scholarship_follow': 'Suivre',
   'follow_scholarship_following': 'Suivie',
@@ -3472,6 +3487,29 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_status_opening_estimated': 'Ouverture estimée : @date',
   'scholarship_status_opening_unknown': 'Date d\'ouverture à confirmer',
   'scholarship_status_closed': 'Clôturée',
+  // ── Fiche d'une bourse : en-tête d'urgence, vérification, actions (I2) ──
+  'scholarship_urgency_open': 'Ouverte · clôture @date',
+  'scholarship_urgency_closing_soon': 'Clôture proche · @date',
+  'scholarship_urgency_closing_estimated': 'Clôture estimée @date',
+  'scholarship_urgency_date_to_confirm': 'Date à confirmer',
+  'scholarship_urgency_last_day': 'Dernier jour pour candidater',
+  'scholarship_urgency_one_day_left': 'Il te reste 1 jour pour candidater',
+  'scholarship_urgency_days_left': 'Il te reste @count jours pour candidater',
+  'scholarship_urgency_estimated_hint':
+      'Estimation tirée des sessions précédentes : suis la bourse, on te prévient dès que les dates sont confirmées.',
+  'scholarship_urgency_unknown_hint':
+      'Les dates de la prochaine session ne sont pas encore publiées.',
+  'scholarship_urgency_closed_hint':
+      'Suis-la : on te prévient à l\'ouverture de la prochaine session.',
+  'scholarship_verified_on': 'Vérifiée le @date',
+  'scholarship_official_source': 'Source officielle',
+  'scholarship_official_source_a11y':
+      'Ouvrir la source officielle de cette bourse (site externe)',
+  'scholarship_action_apply': 'Postuler',
+  'scholarship_action_apply_a11y':
+      'Postuler à @title sur le site officiel (site externe)',
+  'scholarship_action_support': 'Être accompagné',
+  'scholarship_action_support_a11y': 'Être accompagné par KPB pour @title',
   // ── Test « Mes 10 bourses » (chantier H) ──────────────────────────────
   'scholarship_match_entry_title': 'Test : quelles bourses pour moi ?',
   'scholarship_match_entry_body':

@@ -959,6 +959,22 @@ Indépendant de tout autre drapeau. Gardé par `backend/src/modules/config/app-c
 et `test/release/config_env_relay_test.dart` (relais compose, défaut `false`). Contrat des routes :
 section « Mes 10 bourses » plus bas.
 
+### Interrupteur « Onboarding la valeur d'abord » dans `features` : `onboardingV2`
+
+Un booléen **strict**, toujours présent, **`false` par défaut** (seule la valeur `true`, casse
+et espaces tolérés, l'ouvre). Un backend plus ancien ne le sert pas : l'app lit une clé absente
+comme `false` et garde l'ancien parcours.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.onboardingV2` | `KPB_ONBOARDING_V2_ENABLED` | Nouvel onboarding (chantier I3) : aucun champ pré-rempli sans choix de l'élève (niveau, pays, domaine, budget…), « Passer » dès la page 1, erreurs affichées dans le champ. Coupé : l'ancien parcours, inchangé. |
+
+Purement côté app : aucune route serveur ne dépend de ce drapeau, et le contrat de
+`PATCH /profiles/me` est inchangé (un champ non choisi n'est simplement pas envoyé). L'âge et
+le consentement du tuteur restent exigés dans les deux parcours. Indépendant de tout autre
+drapeau. Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
+`test/release/config_env_relay_test.dart` (relais compose, défaut `false`).
+
 ### Ce que `GET /config/app` sert d'autre que des drapeaux (build 54)
 
 Route publique, sans authentification. Quatre ajouts, tous **absents sur un
@@ -1802,3 +1818,39 @@ des clés explicites).
 (clés présentes même vides) ; les colonnes du profil y sont déjà par construction. La
 suppression du compte les emporte par cascade (prouvé contre PostgreSQL :
 `scholarship-match-api.postgres.spec.ts`).
+
+## Liste des bourses : recherche, statut et tri (chantier I)
+
+`GET /scholarships` (élève connecté, `StudentAuthGuard`) garde ses paramètres d'avant
+(`lang`, `level`, `fields`, `countryId`, `fundingType`, `limit` 1–100, `offset`) et
+accepte trois paramètres **optionnels**. Les builds en store ne les envoient pas : sans
+eux, la réponse est exactement celle d'avant (tri par pertinence, total lu en base).
+
+| Paramètre | Valeurs | Effet |
+|---|---|---|
+| `q` | texte libre, espaces repliés, tronqué à 100 caractères ; vide = absent | Recherche insensible à la casse dans `nameFr`, `nameEn`, `countryNameFr`, `countryNameEn`. Ajoutée en `AND` : la clause publique (`publicScholarshipWhere`, dont l'`OR` sur `deadlineAt`) reste intacte. |
+| `status` | `open`, `upcoming`, `forecast`, séparés par des virgules (`open,upcoming`) ; vide = absent | Filtre sur le statut du cycle SERVI, avec la règle d'urgence de l'app (`scholarshipUrgencyOf`) : clôture confirmée passée ou cycle fermé par l'équipe → `closed`, jamais listée par ce filtre ; cycle servi `closed` SEULEMENT parce que sa clôture ESTIMÉE est passée → `forecast` (l'app dit « Date à confirmer ») ; cycle `open` dont `opensAt` est à venir → `upcoming` ; `open` sinon ; ouverture confirmée à venir (cycle non estimé) → `upcoming` ; le reste (estimé, à confirmer) → `forecast`. Sans cycle : une date limite → `open`, rien → `forecast`. |
+| `sort` | `relevance` (défaut), `deadline`, `verified`, `title` | `relevance` : `matchScore` décroissant puis date limite (l'ordre d'avant). `deadline` : clôture la plus proche (`closesAt`, sinon `estimatedCloseAt`, sinon `deadlineAt`), dates inconnues en dernier. `verified` : `lastVerifiedAt` décroissant. `title` : titre dans la langue demandée, A→Z, sans tenir compte des accents ni de la casse. |
+
+**Tolérants** (comme `fundingType` ou `limit`) : une valeur inconnue n'est jamais un 400.
+Un statut inconnu est retiré (`status=open,expired` → `open` ; `status=expired` → aucun
+filtre), un tri inconnu vaut `relevance`, un `q` trop long est tronqué, une clé répétée
+(`status=open&status=upcoming`) est lue. L'écho `query` dit ce qui a été réellement appliqué.
+
+**Clés inconnues de la route** : `GET /scholarships` lit ses paramètres un par un
+(`@Query('nom')`, aucun DTO de requête) ; le `ValidationPipe` (`forbidNonWhitelisted`) ne
+s'applique donc pas à la query string de cette route, et un serveur antérieur au chantier I
+**ignore** `q`, `status` et `sort` sans 400 (prouvé en HTTP par
+`scholarships-list.http.spec.ts`).
+
+Réponse : `{items, total, limit, offset, hasMore, fieldFilterRelaxed, databaseUnavailable, query}`.
+
+- `total` : nombre réel de bourses correspondantes (`count` en base, indépendant du
+  plafond de 500 candidates). Avec `status`, filtre calculé en mémoire, c'est le nombre
+  de la liste filtrée.
+- `query` (**additif**) : `{q: string|null, status: string[]|null, sort}`, ce que le
+  serveur a APPLIQUÉ. Un client qui ne trouve pas cette clé parle à un backend plus
+  ancien, qui a ignoré `q`, `status` et `sort` ; l'app filtre alors le statut elle-même
+  sur la page reçue, ne montre pas de total, et masque le bouton « Trier » (un tri
+  qu'elle ne peut pas obtenir du serveur ne s'affiche pas).
+- Chaque item porte déjà `countryId` (alpha-3, sert au drapeau) et `lastVerifiedAt`.

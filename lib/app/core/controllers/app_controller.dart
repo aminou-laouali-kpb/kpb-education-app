@@ -42,6 +42,7 @@ import '../services/catalog_cache_service.dart';
 import '../services/push_service.dart';
 import '../services/followed_scholarships_store.dart';
 import '../services/scholarship_match_store.dart';
+import '../services/scholarships_offline_cache.dart';
 import '../services/remote_feature_flags.dart';
 import '../services/sync_conflict_merge.dart';
 import '../services/sync_telemetry.dart';

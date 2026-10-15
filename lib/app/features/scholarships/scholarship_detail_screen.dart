@@ -13,8 +13,10 @@ import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
-import '../cases/case_composer_sheet.dart';
+import '../../core/ui/skeleton.dart';
+import '../cases/scholarship_support_case.dart';
 import '../scholarship_match/widgets/match_assessment_block.dart';
+import 'scholarship_urgency.dart';
 import 'scholarship_video_player_screen.dart';
 import 'widgets/how_to_apply_sheet.dart';
 import 'widgets/follow_scholarship_button.dart';
@@ -55,6 +57,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   bool _notifyOpeningUnavailable = false;
   bool _loading = false;
   bool _startingWorkspace = false;
+  bool _startingSupport = false;
   bool _successLabEnabled = false;
   String? _error;
 
@@ -153,12 +156,15 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   /// L'interrupteur « Me prévenir à l'ouverture » est-il pertinent ici ?
   /// Seulement si le serveur sert le bloc `follow` (backend du chantier C), si
   /// l'élève suit la bourse, et tant qu'elle n'est pas close.
-  bool _showNotifyOpening(AppController controller, LiveScholarshipModel s) {
+  bool _showNotifyOpening(
+    AppController controller,
+    ScholarshipUrgency urgency,
+  ) {
     if (!RemoteFeatureFlags.instance.openingAlertToggleEnabled) return false;
     if (_follow == null || _notifyOpeningUnavailable) return false;
     if (controller.isGuestMode || controller.profile == null) return false;
-    if (!controller.isFollowingScholarship(s.id)) return false;
-    return s.statusLine()?.kind != ScholarshipStatusKind.closed;
+    if (!controller.isFollowingScholarship(widget.scholarshipId)) return false;
+    return !urgency.isClosed;
   }
 
   /// Un « Suivre » tout neuf pose l'alerte : prévenu par défaut, tant que le
@@ -325,9 +331,41 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     };
   }
 
+  /// « Être accompagné » : le dossier d'accompagnement de cette bourse (même
+  /// chemin que les résultats « Mes 10 bourses », lien `scholarshipId` posé
+  /// seulement quand le serveur le connaît — voir [canLinkCaseToScholarship]).
+  Future<void> _startSupport() async {
+    final scholarship = _scholarship;
+    if (scholarship == null || _startingSupport) return;
+    unawaited(KpbHaptics.selection());
+    setState(() => _startingSupport = true);
+    try {
+      await startScholarshipSupportCase(
+        context,
+        scholarshipId: scholarship.id,
+        title: scholarship.title,
+        contextLabel: scholarship.countryName,
+      );
+    } finally {
+      if (mounted) setState(() => _startingSupport = false);
+    }
+  }
+
+  /// « Postuler » n'a de sens que si l'on PEUT candidater maintenant, et
+  /// qu'un lien de candidature ouvrable existe. Sinon la barre propose
+  /// « Suivre ».
+  bool _canApply(
+    LiveScholarshipModel scholarship,
+    ScholarshipUrgency urgency,
+  ) =>
+      urgency.isOpen && isOpenableWebUrl(scholarship.applicationUrl);
+
   @override
   Widget build(BuildContext context) {
     final scholarship = _scholarship;
+    final urgency =
+        scholarship == null ? null : scholarshipUrgencyOf(scholarship);
+    final canApply = scholarship != null && _canApply(scholarship, urgency!);
     return Scaffold(
       backgroundColor: KpbColors.canvas,
       appBar: AppBar(
@@ -340,195 +378,390 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
           ),
         ],
       ),
-      body: scholarship == null
-          ? _buildUnavailable()
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 36),
-                children: [
-                  _HeaderCard(scholarship: scholarship),
-                  const SizedBox(height: 12),
-                  FollowScholarshipButton(
-                    scholarshipId: scholarship.id,
-                    scholarshipTitle: scholarship.title,
-                    variant: FollowButtonVariant.full,
-                  ),
-                  GetBuilder<AppController>(
-                    builder: (controller) {
-                      if (!_showNotifyOpening(controller, scholarship)) {
-                        return const SizedBox.shrink();
-                      }
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: _NotifyOpeningTile(
-                          value: _notifyOpening,
-                          saving: _notifyOpeningSaving,
-                          globalOptOut: _follow?.globalOptOut ?? false,
-                          onChanged: _setNotifyOpening,
-                        ),
-                      );
-                    },
-                  ),
-                  // « Mes 10 bourses » : le résultat du test pour CETTE
-                  // bourse, ou l'invitation à le faire (drapeau ouvert).
-                  ScholarshipMatchAssessmentBlock(
-                    scholarshipId: scholarship.id,
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () => showHowToApplySheet(
-                      context,
-                      scholarshipTitle: scholarship.title,
-                      steps: scholarship.applicationSteps,
-                      onOpenOfficialForm:
-                          isOpenableWebUrl(scholarship.applicationUrl)
-                              ? () => _openUrl(scholarship.applicationUrl)
-                              : null,
-                    ),
-                    icon: const Icon(Icons.format_list_numbered_rounded),
-                    label: Text(
-                      'live_scholarships_section_application_steps'.tr,
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                  ),
-                  if (_canStartWorkspace(scholarship)) ...[
-                    const SizedBox(height: 10),
-                    KpbButton(
-                      key: const ValueKey<String>(
-                        'scholarship-start-success-lab',
-                      ),
-                      label: 'success_lab_start_action'.tr,
-                      icon: Icons.auto_awesome_rounded,
-                      fullWidth: true,
-                      loading: _startingWorkspace,
-                      onPressed: _startWorkspace,
-                    ),
-                  ],
-                  if (scholarship.description.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _TextSection(
-                      title: 'live_scholarships_section_description'.tr,
-                      body: scholarship.description,
-                    ),
-                  ],
-                  if (scholarship.advantages.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _BulletSection(
-                      title: 'live_scholarships_section_advantages'.tr,
-                      items: scholarship.advantages,
-                      color: KpbColors.success,
-                    ),
-                  ],
-                  if (scholarship.eligibility.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _BulletSection(
-                      title: 'live_scholarships_section_eligibility'.tr,
-                      items: scholarship.eligibility,
-                      color: KpbColors.actionPrimary,
-                    ),
-                  ],
-                  if (scholarship.keyRequirements.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _BulletSection(
-                      title: 'live_scholarships_section_key_requirements'.tr,
-                      items: scholarship.keyRequirements,
-                      color: KpbColors.lawPurple,
-                    ),
-                  ],
-                  if (scholarship.videos.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _VideosSection(
-                      videos: scholarship.videos,
-                      onOpen: _openVideo,
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  // `isNotEmpty` ne suffisait pas : le catalogue contient des
-                  // `applicationUrl` sans schéma (« exemple.org/apply »), que
-                  // rien ne peut ouvrir. Un bouton principal qui ne peut PAS
-                  // marcher est masqué, pas grisé et pas silencieux.
-                  if (isOpenableWebUrl(scholarship.applicationUrl)) ...[
-                    FilledButton.icon(
-                      onPressed: () => _openUrl(scholarship.applicationUrl),
-                      icon: const Icon(Icons.open_in_new_rounded),
-                      label: Text('live_scholarships_official_form'.tr),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                  ],
-                  OutlinedButton(
-                    onPressed: () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => CaseComposerSheet(
-                        caseType: CaseType.scholarshipSupport,
-                        title: scholarship.title,
-                        contextLabel: scholarship.countryName,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: Text('live_scholarships_apply_with_kpb'.tr),
-                  ),
-                ],
-              ),
+      bottomNavigationBar: scholarship == null
+          ? null
+          : _ActionBar(
+              scholarship: scholarship,
+              canApply: canApply,
+              supportBusy: _startingSupport,
+              onApply: () => _openUrl(scholarship.applicationUrl),
+              onSupport: _startSupport,
             ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: KpbAsyncView(
+          phase: KpbAsyncView.phaseOf(
+            loading: _loading,
+            hasData: scholarship != null,
+            failed: _error != null,
+          ),
+          refreshable: true,
+          skeleton: const _DetailSkeleton(),
+          empty: KpbEmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'scholarship_detail_not_found'.tr,
+            subtitle: 'scholarship_detail_not_found_body'.tr,
+            action: KpbButton(text: 'retry'.tr, onPressed: _load),
+          ),
+          errorTitle: 'live_scholarships_connection_error_title'.tr,
+          errorMessage: 'live_scholarships_connection_error_subtitle'.tr,
+          onRetry: _load,
+          builder: (context) =>
+              _buildContent(context, scholarship!, urgency!, canApply),
+        ),
+      ),
     );
   }
 
-  Widget _buildUnavailable() {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    return Center(
-      child: KpbEmptyState(
-        icon:
-            _error == null ? Icons.search_off_rounded : Icons.wifi_off_rounded,
-        title: _error == null
-            ? 'scholarship_detail_not_found'.tr
-            : 'live_scholarships_connection_error_title'.tr,
-        subtitle: _error == null
-            ? 'scholarship_detail_not_found_body'.tr
-            : 'live_scholarships_connection_error_subtitle'.tr,
-        action: KpbButton(text: 'retry'.tr, onPressed: _load),
+  Widget _buildContent(
+    BuildContext context,
+    LiveScholarshipModel scholarship,
+    ScholarshipUrgency urgency,
+    bool canApply,
+  ) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        // En tête : là où un tap de push (ouverture, rappel de clôture) fait
+        // atterrir l'élève — il lit d'abord ce que le push annonçait.
+        ScholarshipStatusHeader(scholarship: scholarship, urgency: urgency),
+        const SizedBox(height: 12),
+        _HeaderCard(
+          scholarship: scholarship,
+          urgency: urgency,
+          // « Suivre » est dans la barre du bas quand on ne peut pas
+          // postuler ; sinon il reste ici, à côté du titre.
+          showFollow: canApply,
+          onOpenSource: _openSource,
+        ),
+        GetBuilder<AppController>(
+          builder: (controller) {
+            if (!_showNotifyOpening(controller, urgency)) {
+              return const SizedBox.shrink();
+            }
+            return Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _NotifyOpeningTile(
+                value: _notifyOpening,
+                saving: _notifyOpeningSaving,
+                globalOptOut: _follow?.globalOptOut ?? false,
+                onChanged: _setNotifyOpening,
+              ),
+            );
+          },
+        ),
+        // « Mes 10 bourses » : le résultat du test pour CETTE
+        // bourse, ou l'invitation à le faire (drapeau ouvert).
+        ScholarshipMatchAssessmentBlock(scholarshipId: scholarship.id),
+        const SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => showHowToApplySheet(
+            context,
+            scholarshipTitle: scholarship.title,
+            steps: scholarship.applicationSteps,
+            onOpenOfficialForm: isOpenableWebUrl(scholarship.applicationUrl)
+                ? () => _openUrl(scholarship.applicationUrl)
+                : null,
+          ),
+          icon: const Icon(Icons.format_list_numbered_rounded),
+          label: Text('live_scholarships_section_application_steps'.tr),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+        if (_canStartWorkspace(scholarship)) ...[
+          const SizedBox(height: 10),
+          KpbButton(
+            key: const ValueKey<String>('scholarship-start-success-lab'),
+            label: 'success_lab_start_action'.tr,
+            icon: Icons.auto_awesome_rounded,
+            fullWidth: true,
+            loading: _startingWorkspace,
+            onPressed: _startWorkspace,
+          ),
+        ],
+        if (scholarship.description.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _TextSection(
+            title: 'live_scholarships_section_description'.tr,
+            body: scholarship.description,
+          ),
+        ],
+        // Puces NEUTRES : une coche verte dirait « condition remplie », ce
+        // que personne n'a vérifié pour cet élève.
+        if (scholarship.advantages.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _BulletSection(
+            title: 'live_scholarships_section_advantages'.tr,
+            items: scholarship.advantages,
+          ),
+        ],
+        if (scholarship.eligibility.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _BulletSection(
+            title: 'live_scholarships_section_eligibility'.tr,
+            items: scholarship.eligibility,
+          ),
+        ],
+        if (scholarship.keyRequirements.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _BulletSection(
+            title: 'live_scholarships_section_key_requirements'.tr,
+            items: scholarship.keyRequirements,
+          ),
+        ],
+        if (scholarship.videos.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _VideosSection(videos: scholarship.videos, onOpen: _openVideo),
+        ],
+      ],
+    );
+  }
+
+  /// Le lien « Source officielle » : comme [KpbSourceLink], un lien qui ne
+  /// s'ouvre pas le DIT.
+  Future<void> _openSource(String url) async {
+    if (await kpbOpenExternalUrlString(url)) return;
+    if (!mounted) return;
+    KpbToast.error(
+      'external_link_failed_body'.tr,
+      title: 'view_official_source'.tr,
+    );
+  }
+}
+
+/// L'en-tête de statut de la fiche : « Ouverte · clôture 6 janv. »,
+/// « Clôture proche · … », « Ouverture estimée : … », « Date à confirmer »,
+/// « Clôturée ». C'est la première chose lue — y compris en arrivant d'un push.
+/// Le calcul vient de [scholarshipUrgencyOf] (partagé avec la liste).
+class ScholarshipStatusHeader extends StatelessWidget {
+  const ScholarshipStatusHeader({
+    super.key,
+    required this.scholarship,
+    required this.urgency,
+  });
+
+  final LiveScholarshipModel scholarship;
+  final ScholarshipUrgency urgency;
+
+  String? _hint() {
+    final label = scholarship.deadlineLabel.trim();
+    switch (urgency.kind) {
+      case ScholarshipUrgencyKind.closingSoon:
+        final days = urgency.daysLeft ?? 0;
+        if (days <= 0) return 'scholarship_urgency_last_day'.tr;
+        if (days == 1) return 'scholarship_urgency_one_day_left'.tr;
+        return 'scholarship_urgency_days_left'.trParams({'count': '$days'});
+      case ScholarshipUrgencyKind.openingEstimated:
+      case ScholarshipUrgencyKind.closingEstimated:
+        return 'scholarship_urgency_estimated_hint'.tr;
+      case ScholarshipUrgencyKind.dateToConfirm:
+        return label.isNotEmpty ? label : 'scholarship_urgency_unknown_hint'.tr;
+      case ScholarshipUrgencyKind.closed:
+        return 'scholarship_urgency_closed_hint'.tr;
+      case ScholarshipUrgencyKind.openDateToConfirm:
+        return label.isNotEmpty ? label : null;
+      case ScholarshipUrgencyKind.open:
+      case ScholarshipUrgencyKind.opensOn:
+        return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = scholarshipUrgencyStyle(urgency.kind);
+    final label = scholarshipUrgencyLabel(urgency);
+    final hint = _hint();
+    return Semantics(
+      container: true,
+      header: true,
+      label: hint == null ? label : '$label. $hint',
+      excludeSemantics: true,
+      child: Container(
+        key: const ValueKey<String>('scholarship-status-header'),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: style.background,
+          borderRadius: KpbRadius.mdBr,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Icon(style.icon, size: 22, color: style.foreground),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: style.foreground,
+                      fontSize: KpbFontSize.md,
+                      height: 1.3,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  if (hint != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      hint,
+                      style: TextStyle(
+                        color: style.foreground,
+                        fontSize: KpbFontSize.sm,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Le squelette de la fiche, le temps du premier chargement (arrivée depuis un
+/// push ou un lien : aucune donnée de liste à montrer).
+class _DetailSkeleton extends StatelessWidget {
+  const _DetailSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+        key: ValueKey<String>('scholarship-detail-skeleton'),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            KpbSkeletonBox(height: 56, radius: KpbRadius.md),
+            SizedBox(height: 12),
+            KpbSkeletonBox(height: 168, radius: KpbRadius.lg),
+            SizedBox(height: 12),
+            KpbSkeletonBox(height: 48, radius: KpbRadius.md),
+            SizedBox(height: 12),
+            KpbSkeletonBox(height: 120, radius: KpbRadius.md),
+          ],
+        ),
+      );
+}
+
+/// La barre fixe du bas : « Postuler » (cycle ouvert + lien de candidature)
+/// ou « Suivre », et « Être accompagné ». Cibles de 48 dp.
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({
+    required this.scholarship,
+    required this.canApply,
+    required this.supportBusy,
+    required this.onApply,
+    required this.onSupport,
+  });
+
+  final LiveScholarshipModel scholarship;
+  final bool canApply;
+  final bool supportBusy;
+  final VoidCallback onApply;
+  final VoidCallback onSupport;
+
+  @override
+  Widget build(BuildContext context) {
+    const buttonSize = Size.fromHeight(48);
+    final Widget first = canApply
+        ? Semantics(
+            button: true,
+            label: 'scholarship_action_apply_a11y'.trParams({
+              'title': scholarship.title,
+            }),
+            excludeSemantics: true,
+            onTap: onApply,
+            child: FilledButton.icon(
+              key: const ValueKey<String>('scholarship-action-apply'),
+              onPressed: onApply,
+              icon: const Icon(Icons.open_in_new_rounded, size: 18),
+              label: Text('scholarship_action_apply'.tr),
+              style: FilledButton.styleFrom(minimumSize: buttonSize),
+            ),
+          )
+        : FollowScholarshipButton(
+            scholarshipId: scholarship.id,
+            scholarshipTitle: scholarship.title,
+            variant: FollowButtonVariant.full,
+          );
+    final supportLabel = Text(
+      'scholarship_action_support'.tr,
+      textAlign: TextAlign.center,
+    );
+    final onSupportPressed = supportBusy ? null : onSupport;
+    final Widget support = Semantics(
+      button: true,
+      label: 'scholarship_action_support_a11y'.trParams({
+        'title': scholarship.title,
+      }),
+      excludeSemantics: true,
+      onTap: onSupportPressed,
+      child: canApply
+          ? OutlinedButton(
+              key: const ValueKey<String>('scholarship-action-support'),
+              onPressed: onSupportPressed,
+              style: OutlinedButton.styleFrom(minimumSize: buttonSize),
+              child: supportLabel,
+            )
+          : FilledButton(
+              key: const ValueKey<String>('scholarship-action-support'),
+              onPressed: onSupportPressed,
+              style: FilledButton.styleFrom(minimumSize: buttonSize),
+              child: supportLabel,
+            ),
+    );
+    return DecoratedBox(
+      key: const ValueKey<String>('scholarship-action-bar'),
+      decoration: const BoxDecoration(
+        color: KpbColors.surface,
+        border: Border(top: BorderSide(color: KpbColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            children: [
+              Expanded(child: first),
+              const SizedBox(width: 10),
+              Expanded(child: support),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({required this.scholarship});
+  const _HeaderCard({
+    required this.scholarship,
+    required this.urgency,
+    required this.showFollow,
+    required this.onOpenSource,
+  });
 
   final LiveScholarshipModel scholarship;
+  final ScholarshipUrgency urgency;
+  final bool showFollow;
+  final ValueChanged<String> onOpenSource;
 
   @override
   Widget build(BuildContext context) {
     final cycle = scholarship.currentCycle;
-    // Une date ESTIMÉE ne doit pas devenir une « Date limite » au jour près.
-    //
-    // La carte de la liste se tait déjà dans ce cas (`_deadlineBadge` rend
-    // `null` quand le cycle est estimé) ; la fiche détail, elle, retombait sur
-    // `deadlineAt` — qui vient de `estimatedCloseAt` à l'import — et
-    // l'affichait formatée en jj/mm/aaaa. Les deux écrans disaient donc deux
-    // choses différentes de la même bourse, et c'est le plus détaillé des deux
-    // qui affirmait le plus faux.
-    //
-    // `null` ici n'efface rien : le bloc plus bas retombe alors sur
-    // `deadlineLabel`, c'est-à-dire la phrase « À venir, généralement aux mois
-    // de … » — la formulation honnête, à la granularité de ce qu'on sait.
-    // Prédicat IDENTIQUE à celui de `_deadlineBadge`
-    // (live_scholarships_screen.dart) — volontairement recopié à l'octet près
-    // plutôt que « équivalent » : c'est leur divergence qui faisait dire deux
-    // choses aux deux écrans.
+    // Une date ESTIMÉE ne devient jamais une « Date limite » au jour près :
+    // le bloc retombe alors sur `deadlineLabel` (« À venir, généralement aux
+    // mois de … »), la formulation honnête à la granularité de ce qu'on sait.
+    // Même prédicat que l'urgence ([scholarshipUrgencyOf]).
     final isEstimated = cycle?.isEstimated ?? false;
-    // « Ouverte » seulement si elle l'est VRAIMENT : un cycle `open` dont la
-    // date d'ouverture est à venir se lit « Ouvre le … ».
-    final statusLine = scholarship.statusLine();
     final deadline =
         isEstimated ? null : (cycle?.closesAt ?? scholarship.deadlineAt);
     final funding = scholarship.isFullyFunded
@@ -563,23 +796,29 @@ class _HeaderCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (showFollow) ...[
+                const SizedBox(width: 8),
+                FollowScholarshipButton(
+                  scholarshipId: scholarship.id,
+                  scholarshipTitle: scholarship.title,
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),
           Text(
-            [scholarship.countryName, scholarship.level]
-                .where((value) => value.isNotEmpty)
-                .join(' · '),
+            [
+              scholarship.countryName,
+              scholarship.level,
+            ].where((value) => value.isNotEmpty).join(' · '),
             style: const TextStyle(color: KpbColors.textMuted),
           ),
-          if (statusLine != null) ...[
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ScholarshipStatusChip(line: statusLine),
-            ),
-          ],
-          const SizedBox(height: 16),
+          _VerificationLine(
+            verifiedAt: scholarship.verifiedAt,
+            sourceUrl: scholarship.officialSourceUrl,
+            onOpenSource: onOpenSource,
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -596,7 +835,7 @@ class _HeaderCard extends StatelessWidget {
                       ? (scholarship.deadlineLabel.isEmpty
                           ? 'live_scholarships_no_deadline'.tr
                           : scholarship.deadlineLabel)
-                      : _formatDate(deadline),
+                      : formatScholarshipDay(deadline),
                 ),
               ),
             ],
@@ -605,11 +844,101 @@ class _HeaderCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    final local = date.toLocal();
-    return '${local.day.toString().padLeft(2, '0')}/'
-        '${local.month.toString().padLeft(2, '0')}/${local.year}';
+/// « Vérifiée le 3 oct. 2026 · Source officielle » : la date de la dernière
+/// vérification servie par l'API, et le lien sortant vers la source. Chaque
+/// moitié se masque quand elle manque ; rien du tout quand les deux manquent.
+class _VerificationLine extends StatelessWidget {
+  const _VerificationLine({
+    required this.verifiedAt,
+    required this.sourceUrl,
+    required this.onOpenSource,
+  });
+
+  final DateTime? verifiedAt;
+  final String? sourceUrl;
+  final ValueChanged<String> onOpenSource;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = verifiedAt;
+    final source = sourceUrl;
+    final hasSource = isOpenableWebUrl(source);
+    if (date == null && !hasSource) return const SizedBox.shrink();
+    const textStyle = TextStyle(
+      color: KpbColors.textSecondary,
+      fontSize: KpbFontSize.xs,
+      fontWeight: FontWeight.w700,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (date != null)
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Align(
+                widthFactor: 1,
+                child: Text(
+                  'scholarship_verified_on'.trParams({
+                    'date': formatScholarshipDay(date),
+                  }),
+                  key: const ValueKey<String>('scholarship-verified-on'),
+                  style: textStyle,
+                ),
+              ),
+            ),
+          if (date != null && hasSource)
+            const ExcludeSemantics(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6),
+                child: Text('·', style: textStyle),
+              ),
+            ),
+          if (hasSource)
+            Semantics(
+              link: true,
+              label: 'scholarship_official_source_a11y'.tr,
+              excludeSemantics: true,
+              onTap: () => onOpenSource(source!),
+              child: InkWell(
+                key: const ValueKey<String>('scholarship-official-source'),
+                onTap: () => onOpenSource(source!),
+                borderRadius: KpbRadius.xsBr,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: 48,
+                    minWidth: 48,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'scholarship_official_source'.tr,
+                        style: const TextStyle(
+                          color: KpbColors.actionPrimary,
+                          fontSize: KpbFontSize.xs,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.underline,
+                          decorationColor: KpbColors.actionPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.open_in_new_rounded,
+                        size: 14,
+                        color: KpbColors.actionPrimary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -708,16 +1037,14 @@ class _TextSection extends StatelessWidget {
       );
 }
 
+/// Une liste à puces NEUTRES (avantages, conditions, pièces). Pas de coche :
+/// une icône de validation suggérerait une éligibilité vérifiée — ce qui est
+/// faux tant que personne n'a comparé ces conditions au profil de l'élève.
 class _BulletSection extends StatelessWidget {
-  const _BulletSection({
-    required this.title,
-    required this.items,
-    required this.color,
-  });
+  const _BulletSection({required this.title, required this.items});
 
   final String title;
   final List<String> items;
-  final Color color;
 
   @override
   Widget build(BuildContext context) => _SectionCard(
@@ -730,10 +1057,15 @@ class _BulletSection extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1, right: 10),
-                      child: Icon(Icons.check_circle_rounded,
-                          size: 17, color: color),
+                    Container(
+                      key: const ValueKey<String>('scholarship-bullet'),
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(top: 7, left: 2, right: 12),
+                      decoration: const BoxDecoration(
+                        color: KpbColors.textMuted,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                     Expanded(
                       child: Text(

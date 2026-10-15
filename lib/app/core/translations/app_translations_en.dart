@@ -1093,24 +1093,33 @@ const Map<String, String> appTranslationsEn = {
   'live_scholarships_requirement_separate_application':
       'Separate application required',
   'live_scholarships_step_duration': 'Estimated duration: @days day(s)',
-  'live_scholarships_apply_with_kpb': '🎯  Apply with KPB',
   'live_scholarships_view_official_application':
       'View the official application site',
   'live_scholarships_official_form': 'Official application form',
-  'live_scholarships_deadline_soon': 'Deadline soon',
-  'live_scholarships_deadline_closed': 'Closed',
-  'live_scholarships_deadline_days': 'D-@count',
   'live_scholarships_no_deadline': 'No fixed deadline',
   'live_scholarships_funding_tile': 'Funding',
   'live_scholarships_alert': 'Notify me',
   'live_scholarships_alert_enabled': 'Alert enabled',
   'live_scholarships_alert_error':
       'Unable to update this alert. Please try again.',
-  'live_scholarships_open_now': 'Applications open',
-  'live_scholarships_open_estimated': 'Estimated opening: @date',
-  'live_scholarships_period_estimated': 'Estimated period: @open – @close',
-  'live_scholarships_upcoming_months': 'Upcoming, usually in @from – @to',
-  'live_scholarships_upcoming_month': 'Upcoming, usually in @from',
+  // ── Scholarship list (chantier I): status line, filters, sort, offline.
+  'scholarships_filter_button': 'Filter',
+  'scholarships_filter_button_count': 'Filter · @count',
+  'scholarships_filter_title': 'Filter scholarships',
+  'scholarships_filter_clear': 'Clear all',
+  'scholarships_filter_status_section': 'Status',
+  'scholarships_filter_status_open': 'Open now',
+  'scholarships_filter_status_upcoming': 'Confirmed upcoming opening',
+  'scholarships_filter_status_forecast': 'Estimated or unconfirmed dates',
+  'scholarships_filter_funding_section': 'Funding',
+  'scholarships_filter_apply': 'Show scholarships',
+  'scholarships_sort_button': 'Sort: @sort',
+  'scholarships_sort_sheet_title': 'Sort by',
+  'scholarships_sort_relevance': 'Relevance to your profile',
+  'scholarships_sort_deadline': 'Closing soonest',
+  'scholarships_sort_verified': 'Recently verified',
+  'scholarships_sort_title': 'Name (A–Z)',
+  'scholarships_offline_count': '@count scholarship(s) saved on your phone',
   'scholarship_detail_title': 'Scholarship details',
   'scholarship_detail_not_found': 'Scholarship not found',
   'scholarship_detail_not_found_body':
@@ -1436,6 +1445,10 @@ const Map<String, String> appTranslationsEn = {
   'onboarding_selection_required_title': 'Selection required',
   'onboarding_select_field_body': 'Choose at least one field of interest.',
   'onboarding_select_country_body': 'Choose at least one destination country.',
+  'onboarding_fields_required_inline':
+      'Pick at least one field you\'re interested in.',
+  'onboarding_countries_required_inline':
+      'Pick at least one country where you\'d like to study.',
   'onboarding_welcome_title': 'Welcome 👋',
   'onboarding_welcome_subtitle': 'Let\'s create your KPB Education profile.',
   'onboarding_academic_title': 'Your background 🎓',
@@ -3177,6 +3190,7 @@ const Map<String, String> appTranslationsEn = {
   'async_loading': 'Loading…',
   'async_empty_title': 'Nothing to show yet',
   'async_updated_ago': 'Updated @ago',
+  'async_offline_data_from': 'Offline — data from @date at @time',
   // ── Follow a scholarship, Followed, notifications (chantier G) ──────
   'follow_scholarship_follow': 'Follow',
   'follow_scholarship_following': 'Following',
@@ -3204,6 +3218,29 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_status_opening_estimated': 'Expected to open: @date',
   'scholarship_status_opening_unknown': 'Opening date to be confirmed',
   'scholarship_status_closed': 'Closed',
+  // ── Scholarship detail: urgency header, verification, actions (I2) ──
+  'scholarship_urgency_open': 'Open · closes @date',
+  'scholarship_urgency_closing_soon': 'Closing soon · @date',
+  'scholarship_urgency_closing_estimated': 'Expected to close @date',
+  'scholarship_urgency_date_to_confirm': 'Date to be confirmed',
+  'scholarship_urgency_last_day': 'Last day to apply',
+  'scholarship_urgency_one_day_left': 'You have 1 day left to apply',
+  'scholarship_urgency_days_left': 'You have @count days left to apply',
+  'scholarship_urgency_estimated_hint':
+      'Estimated from previous sessions: follow the scholarship and we will tell you as soon as the dates are confirmed.',
+  'scholarship_urgency_unknown_hint':
+      'The dates of the next session have not been published yet.',
+  'scholarship_urgency_closed_hint':
+      'Follow it: we will tell you when the next session opens.',
+  'scholarship_verified_on': 'Verified on @date',
+  'scholarship_official_source': 'Official source',
+  'scholarship_official_source_a11y':
+      'Open the official source of this scholarship (external site)',
+  'scholarship_action_apply': 'Apply',
+  'scholarship_action_apply_a11y':
+      'Apply to @title on the official website (external site)',
+  'scholarship_action_support': 'Get support',
+  'scholarship_action_support_a11y': 'Get support from KPB for @title',
   // ── « My 10 scholarships » test (chantier H) ──────────────────────────
   'scholarship_match_entry_title': 'Test: which scholarships fit me?',
   'scholarship_match_entry_body':

@@ -132,6 +132,30 @@ void main() {
     );
   });
 
+  // Onboarding « la valeur d'abord » (chantier I3) : `features.onboardingV2`,
+  // FERMÉ par défaut. Un défaut `true` dans compose basculerait tout le parc
+  // installé sur le nouveau parcours au premier redéploiement.
+  test('le drapeau « onboardingV2 » est lu, relayé, documenté et fermé', () {
+    const variable = 'KPB_ONBOARDING_V2_ENABLED';
+    expect(read, contains(variable),
+        reason: '$controllerPath ne lit plus $variable.');
+    expect(relayed, contains(variable),
+        reason: '$variable n\'est pas relayée dans docker-compose.yml.');
+    expect(documented, contains(variable),
+        reason: '$variable n\'est pas documentée dans .env.example.');
+    expect(
+      File('docker-compose.yml').readAsStringSync(),
+      contains('- $variable=\${$variable:-false}'),
+      reason:
+          '$variable doit avoir `false` pour défaut dans docker-compose.yml.',
+    );
+    expect(
+      File('docs/api-contracts.md').readAsStringSync(),
+      contains('`features.onboardingV2`'),
+      reason: 'features.onboardingV2 doit être documenté dans api-contracts.',
+    );
+  });
+
   test('les drapeaux KPB_EEF_* sont fermés par défaut dans compose', () {
     // Le sens de l'échec, figé. Une vitrine allumée par défaut serait
     // impossible à éteindre sans redéploiement du fichier compose, alors que

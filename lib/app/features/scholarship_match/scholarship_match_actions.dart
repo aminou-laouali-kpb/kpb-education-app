@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/success_lab_api_codec.dart';
-import '../../core/models/app_models.dart';
 import '../../core/models/scholarship_match.dart';
 import '../../core/navigation/app_boot_screen.dart';
 import '../../core/navigation/shell_tabs.dart';
@@ -18,7 +17,7 @@ import '../../core/services/remote_feature_flags.dart';
 import '../../core/services/scholarship_match_store.dart';
 import '../../core/ui/components/kpb_toast.dart';
 import '../../core/utils/whatsapp_utils.dart';
-import '../cases/case_composer_sheet.dart';
+import '../cases/scholarship_support_case.dart';
 
 /// La route du test (PAS sous `/scholarships/` : `/scholarships/match` y serait
 /// lu comme l'identifiant d'une bourse).
@@ -141,38 +140,28 @@ Future<void> openScholarshipMatchWhatsApp({
 /// « Être accompagné par KPB » : rouvre le dossier OUVERT déjà lié à cette
 /// bourse (local, puis `GET /cases?scholarshipId=`), sinon ouvre le
 /// compositeur prérempli avec `scholarshipId`. Rend vrai quand un dossier
-/// existant a été réutilisé.
+/// existant a été réutilisé. Même chemin que la fiche de la bourse
+/// ([startScholarshipSupportCase]).
 Future<bool> startScholarshipMatchCase(
   BuildContext context, {
   required MatchItem item,
   AppController? controller,
-}) async {
-  final app = controller ?? Get.find<AppController>();
-  final existing = await app.findOpenScholarshipCase(item.scholarshipId);
-  unawaited(AnalyticsService.instance.logScholarshipMatchCaseStarted(
-    itemId: item.scholarshipId,
-    rank: item.rank,
-    reusedExisting: existing != null,
-  ));
-  if (existing != null) {
-    unawaited(Get.toNamed<void>('/cases/${Uri.encodeComponent(existing.id)}'));
-    return true;
-  }
-  if (!context.mounted) return false;
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => CaseComposerSheet(
-      caseType: CaseType.scholarshipSupport,
+}) =>
+    startScholarshipSupportCase(
+      context,
+      scholarshipId: item.scholarshipId,
       title: 'scholarship_match_case_title'.trParams({'title': item.name}),
       contextLabel: item.scholarship?.countryName ?? item.name,
       countryId: item.scholarship?.countryId,
-      scholarshipId: item.scholarshipId,
-    ),
-  );
-  return false;
-}
+      controller: controller,
+      onResolved: (reusedExisting) => unawaited(
+        AnalyticsService.instance.logScholarshipMatchCaseStarted(
+          itemId: item.scholarshipId,
+          rank: item.rank,
+          reusedExisting: reusedExisting,
+        ),
+      ),
+    );
 
 /// L'accès Success Lab de l'élève (même vérification que la fiche bourse).
 /// Fermé dès que le serveur ne peut pas confirmer.

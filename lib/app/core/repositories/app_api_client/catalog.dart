@@ -68,6 +68,8 @@ mixin _CatalogApi on _ApiClientBase {
   // client-side by the single EligibilityEngine.
 
   /// Fetch live scraped scholarships, filtered and scored by the user's profile.
+  ///
+  /// Les items seuls ; [fetchLiveScholarshipsPage] garde l'enveloppe (total).
   Future<List<dynamic>> fetchLiveScholarships({
     required String lang,
     String? level,
@@ -77,6 +79,41 @@ mixin _CatalogApi on _ApiClientBase {
     int limit = 20,
     int offset = 0,
   }) async {
+    final page = await fetchLiveScholarshipsPage(
+      lang: lang,
+      level: level,
+      fieldIds: fieldIds,
+      countryId: countryId,
+      fundingType: fundingType,
+      limit: limit,
+      offset: offset,
+    );
+    return page.items;
+  }
+
+  /// `GET /scholarships`, enveloppe comprise : le `total` réel du serveur
+  /// (perdu tant que seule la liste remontait) et `query`, qui dit si le
+  /// serveur a appliqué [query], [statuses] et [sort] (chantier I).
+  ///
+  /// Ces trois paramètres ne partent que quand ils disent quelque chose : sans
+  /// eux, la requête est octet pour octet celle d'avant.
+  Future<LiveScholarshipsPage> fetchLiveScholarshipsPage({
+    required String lang,
+    String? level,
+    List<String>? fieldIds,
+    String? countryId,
+    String? fundingType,
+    String? query,
+    Set<ScholarshipListStatus>? statuses,
+    ScholarshipListSort sort = ScholarshipListSort.relevance,
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    final q = query?.trim() ?? '';
+    final statusWire = ScholarshipListStatus.values
+        .where((status) => statuses?.contains(status) ?? false)
+        .map((status) => status.wire)
+        .join(',');
     final queryParams = <String, dynamic>{
       'lang': lang,
       'limit': limit,
@@ -85,13 +122,17 @@ mixin _CatalogApi on _ApiClientBase {
       if (fieldIds != null && fieldIds.isNotEmpty) 'fields': fieldIds.join(','),
       if (countryId != null) 'countryId': countryId,
       if (fundingType != null) 'fundingType': fundingType,
+      if (q.isNotEmpty) 'q': q,
+      if (statusWire.isNotEmpty) 'status': statusWire,
+      if (sort != ScholarshipListSort.relevance) 'sort': sort.wire,
     };
     final response = await _dio.get<Map<String, dynamic>>(
       '/scholarships',
       queryParameters: queryParams,
     );
-    final data = response.data ?? <String, dynamic>{};
-    return (data['items'] as List<dynamic>? ?? <dynamic>[]);
+    return LiveScholarshipsPage.fromJson(
+      response.data ?? <String, dynamic>{},
+    );
   }
 
   /// Fetch one full scholarship when the detail endpoint is available, with a
@@ -117,6 +158,9 @@ mixin _CatalogApi on _ApiClientBase {
           ? Map<String, dynamic>.from(data['item'] as Map)
           : data;
       if ((raw['id'] as String? ?? '').isNotEmpty) {
+        // Fiche consultée : gardée sur le disque pour la relire hors ligne.
+        unawaited(ScholarshipsOfflineCache.instance
+            .writeDetail(lang, scholarshipId, raw));
         return LiveScholarshipModel.fromJson(raw);
       }
     } on DioException catch (error) {
@@ -126,6 +170,13 @@ mixin _CatalogApi on _ApiClientBase {
       // scan. Connectivity and authentication errors retain any initial item.
       if (status != 404 && status != 405 && status != 501) {
         if (initial != null) return initial;
+        // Hors ligne (ou serveur en panne) : la dernière copie consultée.
+        // Jamais sur un 401/403 — la session n'y a plus droit.
+        if (status != 401 && status != 403) {
+          final cached = await ScholarshipsOfflineCache.instance
+              .readDetail(lang, scholarshipId);
+          if (cached != null) return LiveScholarshipModel.fromJson(cached.json);
+        }
         rethrow;
       }
     }

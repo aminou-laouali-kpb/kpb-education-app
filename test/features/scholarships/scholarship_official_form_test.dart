@@ -1,4 +1,6 @@
 // « Formulaire officiel » — le bouton bleu pleine largeur qui ne faisait RIEN.
+// Depuis le chantier I2, c'est « Postuler », dans la barre fixe du bas de la
+// fiche (cycle ouvert + lien de candidature) ; les règles restent les mêmes.
 //
 // ## Deux défauts empilés
 //
@@ -179,7 +181,7 @@ void main() {
     await _pumpDetail(tester, 'exemple.org/apply');
 
     expect(
-      find.text('live_scholarships_official_form'.tr),
+      find.byKey(const ValueKey<String>('scholarship-action-apply')),
       findsNothing,
       reason: 'Le catalogue contient des `applicationUrl` sans schéma. '
           '`Uri.parse` les accepte — il y voit un chemin relatif — puis le '
@@ -194,7 +196,8 @@ void main() {
     UrlLauncherPlatform.instance = launcher;
     await _pumpDetail(tester, 'https://example.org/mext/apply');
 
-    final button = find.text('live_scholarships_official_form'.tr);
+    final button =
+        find.byKey(const ValueKey<String>('scholarship-action-apply'));
     expect(button, findsOneWidget);
 
     await tester.ensureVisible(button);
@@ -213,7 +216,8 @@ void main() {
     UrlLauncherPlatform.instance = launcher;
     await _pumpDetail(tester, 'https://example.org/mext/apply');
 
-    final button = find.text('live_scholarships_official_form'.tr);
+    final button =
+        find.byKey(const ValueKey<String>('scholarship-action-apply'));
     await tester.ensureVisible(button);
     await tester.pumpAndSettle();
     await tester.tap(button);

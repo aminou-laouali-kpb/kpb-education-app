@@ -301,3 +301,23 @@ enum ProfileCompletionItem {
   budget,
   documents,
 }
+
+/// Ce qu'un élève a déclaré de son âge avant de « Passer » l'onboarding V2 :
+/// la date de naissance et, pour un mineur, l'accord du représentant légal.
+///
+/// [guardianConsented] ne vaut que si la case a été cochée ; le nom et le
+/// contact du représentant ne voyagent qu'avec cet accord (tout ou rien, comme
+/// l'étape tuteur de « Mes 10 bourses »).
+class OnboardingAgeDeclaration {
+  const OnboardingAgeDeclaration({
+    required this.birthDate,
+    this.guardianName,
+    this.guardianContact,
+    this.guardianConsented = false,
+  });
+
+  final DateTime? birthDate;
+  final String? guardianName;
+  final String? guardianContact;
+  final bool guardianConsented;
+}

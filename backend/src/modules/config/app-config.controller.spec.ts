@@ -31,6 +31,7 @@ describe('AppConfigController', () => {
     KPB_EEF_SUSPENDED_SOURCES: process.env.KPB_EEF_SUSPENDED_SOURCES,
     KPB_RECOMMENDED_APP_VERSION: process.env.KPB_RECOMMENDED_APP_VERSION,
     KPB_SCHOLARSHIP_MATCH_ENABLED: process.env.KPB_SCHOLARSHIP_MATCH_ENABLED,
+    KPB_ONBOARDING_V2_ENABLED: process.env.KPB_ONBOARDING_V2_ENABLED,
   };
 
   beforeEach(() => {
@@ -82,6 +83,7 @@ describe('AppConfigController', () => {
       followedScholarshipOptOut: true,
       homeFollowedEntry: true,
       scholarshipMatch: false,
+      onboardingV2: false,
     });
     expect(config.eefCampaign).toEqual({
       opensAt: null,
@@ -667,6 +669,27 @@ describe('AppConfigController', () => {
       const opened = new AppConfigController().getAppConfig().features;
       expect(opened.scholarshipMatch).toBe(true);
       expect({ ...opened, scholarshipMatch: false }).toEqual(closed);
+    });
+  });
+
+  // Onboarding « la valeur d'abord » (chantier I3) : FERMÉ par défaut, seule
+  // `true` l'ouvre, et il ne touche à aucun autre interrupteur.
+  describe('onboardingV2 — fermé par défaut', () => {
+    it('est fermé quand la variable est absente, vide ou mal tapée', () => {
+      for (const value of [undefined, '', 'false', '1', 'yes', 'on', 'ture']) {
+        if (value === undefined) delete process.env.KPB_ONBOARDING_V2_ENABLED;
+        else process.env.KPB_ONBOARDING_V2_ENABLED = value;
+        expect(new AppConfigController().getAppConfig().features.onboardingV2).toBe(false);
+      }
+    });
+
+    it('s’ouvre sur « true » (casse et espaces tolérés), sans rien ouvrir d’autre', () => {
+      delete process.env.KPB_ONBOARDING_V2_ENABLED;
+      const closed = new AppConfigController().getAppConfig().features;
+      process.env.KPB_ONBOARDING_V2_ENABLED = ' TRUE ';
+      const opened = new AppConfigController().getAppConfig().features;
+      expect(opened.onboardingV2).toBe(true);
+      expect({ ...opened, onboardingV2: false }).toEqual(closed);
     });
   });
 });

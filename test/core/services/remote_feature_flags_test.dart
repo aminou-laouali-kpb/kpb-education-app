@@ -292,6 +292,51 @@ void main() {
     });
   });
 
+  // Onboarding « la valeur d'abord » (chantier I3) : FERMÉ tant que le
+  // serveur ne l'ouvre pas explicitement — l'ancien parcours est le repli.
+  group('onboardingV2 — fermé par défaut', () {
+    test('fermé avant toute lecture', () {
+      expect(flags.onboardingV2Enabled, isFalse);
+    });
+
+    test('fermé quand le serveur est injoignable', () async {
+      when(api.getAppConfig).thenThrow(DioException(
+        requestOptions: RequestOptions(path: '/config/app'),
+        type: DioExceptionType.connectionError,
+      ));
+      await flags.refresh(api);
+      expect(flags.onboardingV2Enabled, isFalse);
+    });
+
+    test('clé absente (ancien backend) ou non booléenne = fermé', () async {
+      when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+            'features': <String, dynamic>{'scholarshipMatch': true},
+          });
+      await flags.refresh(api);
+      expect(flags.onboardingV2Enabled, isFalse);
+
+      when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+            'features': <String, dynamic>{'onboardingV2': 'true'},
+          });
+      await flags.refresh(api);
+      expect(flags.onboardingV2Enabled, isFalse);
+    });
+
+    test('servi à vrai = ouvert, à faux = fermé', () async {
+      when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+            'features': <String, dynamic>{'onboardingV2': true},
+          });
+      await flags.refresh(api);
+      expect(flags.onboardingV2Enabled, isTrue);
+
+      when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+            'features': <String, dynamic>{'onboardingV2': false},
+          });
+      await flags.refresh(api);
+      expect(flags.onboardingV2Enabled, isFalse);
+    });
+  });
+
   group('la lecture de la charge', () {
     test('la valeur servie PRIME sur le repli de compilation', () async {
       AppConfig.eefTeaserEnabledOverride = true;

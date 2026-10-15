@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/navigation/shell_tabs.dart';
+import '../../core/navigation/scholarship_navigation.dart';
 import '../../core/controllers/app_controller.dart';
-import '../../core/config/app_routes.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
 import '../explore/country_detail_screen.dart';
@@ -72,8 +72,9 @@ class _SearchScreenState extends State<SearchScreen> {
       case SearchResultType.program:
         Get.to(() => ProgramDetailScreen(programId: result.id));
       case SearchResultType.scholarship:
-        Get.back();
-        Get.toNamed(AppRoutes.scholarships);
+        // La fiche de LA bourse touchée, plus la liste entière empilée par-
+        // dessus la recherche (chantier I).
+        openScholarshipOrTab(scholarshipId: result.id, fromCatalog: true);
     }
   }
 

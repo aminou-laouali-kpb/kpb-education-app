@@ -569,6 +569,9 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
         'items',
         'limit',
         'offset',
+        // Chantier I, additif : ce que le serveur a appliqué (`q`, `status`,
+        // `sort`). Les builds en store ignorent cette clé.
+        'query',
         'total',
       ]);
       expect(Object.keys(result.items[0]).sort()).toEqual([

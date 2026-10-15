@@ -9,6 +9,38 @@ import '../../core/services/auth_service.dart';
 import '../../core/ui/kpb_components.dart';
 import 'auth_welcome_screen.dart';
 
+/// Le code à 6 chiffres, quelle que soit sa provenance : frappe, collage d'un
+/// e-mail (« Ton code : 123 456 »), ou remplissage automatique du système.
+///
+/// `digitsOnly` seul gardait TOUS les chiffres d'un texte collé : « Code
+/// 123456, valable 60 min » devenait « 12345660 », tronqué à « 123456 » par
+/// chance — et « valable 60 min : 123456 » devenait « 601234 », un code faux
+/// soumis d'office. On prend donc d'abord une suite ISOLÉE de six chiffres ;
+/// à défaut, les six premiers chiffres.
+class OtpCodeInputFormatter extends TextInputFormatter {
+  const OtpCodeInputFormatter();
+
+  static const length = 6;
+  static final _isolatedCode = RegExp(r'(?<!\d)\d{6}(?!\d)');
+  static final _nonDigit = RegExp(r'\D');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final raw = newValue.text;
+    final digits = raw.replaceAll(_nonDigit, '');
+    if (digits == raw && digits.length <= length) return newValue;
+    final code = _isolatedCode.firstMatch(raw)?.group(0) ??
+        (digits.length > length ? digits.substring(0, length) : digits);
+    return TextEditingValue(
+      text: code,
+      selection: TextSelection.collapsed(offset: code.length),
+    );
+  }
+}
+
 class MagicLinkVerifyScreen extends StatefulWidget {
   const MagicLinkVerifyScreen({
     super.key,
@@ -30,13 +62,39 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
   String? _error;
   int _resendCooldown = 0;
 
+  /// Le dernier code soumis D'OFFICE (au 6e chiffre). Un même code n'est
+  /// soumis d'office qu'une fois : la frappe, le collage et le remplissage
+  /// automatique déclenchent tous `onChanged`, et le clavier peut encore
+  /// envoyer « OK » derrière. Remis à zéro dès que le code est incomplet,
+  /// pour qu'un code retapé reparte.
+  String? _autoSubmittedCode;
+
   @override
   void dispose() {
     _codeController.dispose();
     super.dispose();
   }
 
+  /// Au 6e chiffre, la vérification part seule — une seule fois par code.
+  void _onCodeChanged(String value) {
+    if (value.length < OtpCodeInputFormatter.length) {
+      _autoSubmittedCode = null;
+      setState(() {});
+      return;
+    }
+    if (_loading || value == _autoSubmittedCode) {
+      setState(() {});
+      return;
+    }
+    _autoSubmittedCode = value;
+    unawaited(_verify(code: value));
+  }
+
   Future<void> _verify({String? code, String? token}) async {
+    // Une seule soumission à la fois : le 6e chiffre, « OK » du clavier et le
+    // bouton peuvent arriver dans la même seconde. `_loading` passe à vrai
+    // de façon SYNCHRONE ci-dessous, avant le premier `await`.
+    if (_loading) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -122,10 +180,16 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
               TextFormField(
                 controller: _codeController,
                 enabled: !_loading,
+                autofocus: true,
+                // Le système propose le code reçu (iOS : depuis Mail ou
+                // Messages ; Android : gestionnaires de saisie) au-dessus du
+                // clavier.
+                autofillHints: const [AutofillHints.oneTimeCode],
                 keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
                 textAlign: TextAlign.center,
-                maxLength: 6,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                maxLength: OtpCodeInputFormatter.length,
+                inputFormatters: const [OtpCodeInputFormatter()],
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
@@ -135,29 +199,29 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
                   context,
                   label: 'auth_magic_verify_code_label'.tr,
                   prefixIcon: Icons.pin_outlined,
-                ).copyWith(counterText: ''),
-                onChanged: (_) => setState(() {}),
+                ).copyWith(
+                  counterText: '',
+                  // L'erreur s'écrit DANS le champ, là où l'œil est.
+                  errorText: _error,
+                  errorMaxLines: 3,
+                ),
+                onChanged: _onCodeChanged,
                 onFieldSubmitted: (_) {
-                  if (_codeController.text.length == 6) {
-                    _verify(code: _codeController.text);
+                  if (_codeController.text.length ==
+                      OtpCodeInputFormatter.length) {
+                    unawaited(_verify(code: _codeController.text));
                   }
                 },
               ),
               const SizedBox(height: KpbSpacing.md),
               FilledButton(
-                onPressed: _loading || _codeController.text.length != 6
+                onPressed: _loading ||
+                        _codeController.text.length !=
+                            OtpCodeInputFormatter.length
                     ? null
                     : () => _verify(code: _codeController.text),
                 child: Text('auth_magic_verify_button'.tr),
               ),
-              if (_error != null) ...[
-                const SizedBox(height: KpbSpacing.sm),
-                Text(
-                  _error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: KpbColors.error, fontSize: 13),
-                ),
-              ],
               if (_loading)
                 const Padding(
                   padding: EdgeInsets.only(top: KpbSpacing.md),

@@ -105,7 +105,8 @@ class _HomeScholarshipsSectionState extends State<_HomeScholarshipsSection> {
       HScrollSection(
         title: 'home_scholarships_title'.tr,
         actionLabel: 'see_all'.tr,
-        onAction: () => Get.toNamed(AppRoutes.scholarships),
+        // « Voir tout » : l'onglet Bourses, jamais une seconde liste empilée.
+        onAction: openScholarshipOrTab,
         itemCount: scholarships.length,
         height: 168,
         itemWidth: 210,
@@ -116,7 +117,9 @@ class _HomeScholarshipsSectionState extends State<_HomeScholarshipsSection> {
             name: controller.resolve(s.name),
             flag: _flag(s.countryId),
             funding: controller.resolve(s.typeOfFunding),
-            onTap: () => Get.toNamed(AppRoutes.scholarships),
+            // La fiche de CETTE bourse (chantier I).
+            onTap: () =>
+                openScholarshipOrTab(scholarshipId: s.id, fromCatalog: true),
           );
         },
       ),
