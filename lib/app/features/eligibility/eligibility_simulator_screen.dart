@@ -373,7 +373,10 @@ class _ResultCard extends StatelessWidget {
                 child: Text(result.rule.nameFr, style: KpbTextStyles.titleMd),
               ),
               KpbBadge(
-                label: '${result.verdictEmoji} ${result.score}%',
+                // Le verdict, jamais un pourcentage : le score est une somme
+                // de points budget/langue/niveau, pas une probabilité, et un
+                // « 80 % » se lit comme des chances.
+                label: result.verdictEmoji,
                 color: _color,
                 small: true,
               ),

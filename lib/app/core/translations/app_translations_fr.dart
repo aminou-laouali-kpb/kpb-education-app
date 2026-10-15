@@ -54,7 +54,7 @@ const Map<String, String> appTranslationsFr = {
   // donne l'action qui la lève.
   'scholarships_auth_required_title': 'Crée ton compte pour voir les bourses',
   'scholarships_auth_required_body':
-      'Les bourses sont sélectionnées et vérifiées pour ton profil : ton niveau, tes pays visés, ton domaine. C\'est pour ça qu\'un compte est nécessaire. C\'est gratuit et ça prend deux minutes.',
+      'Les bourses sont vérifiées par KPB. Il faut un compte pour les voir et les suivre. C\'est gratuit et ça prend deux minutes.',
   'scholarships_auth_required_cta': 'Créer mon compte',
   'guest_cases_title': 'Tes dossiers en un seul endroit',
   'guest_cases_body':
@@ -1261,15 +1261,18 @@ const Map<String, String> appTranslationsFr = {
       'Renforcer ton anglais et éviter les erreurs les plus fréquentes.',
   'scholarship_guide_author':
       'Conçu par un lauréat Chevening 2024 ayant accompagné des centaines d\'étudiants africains.',
+  // « Classées selon ton profil » promettait un tri personnalisé ; la liste
+  // est celle des bourses vérifiées et pas encore clôturées
+  // (`publicScholarshipWhere` côté serveur). On dit ce qui est vrai.
   'scholarships_sorted_hint':
-      'Classées selon ton profil. Active une alerte pour ne pas rater l\'ouverture.',
+      'Bourses vérifiées par KPB, pas encore clôturées. Active une alerte pour ne pas rater l\'ouverture.',
   'eligibility_see_my_result': 'Voir mon résultat',
   'answer_yes': 'Oui',
   'answer_maybe': 'Peut-être',
   'answer_no': 'Non',
   'eligibility_verdict_eligible_title': '🟢 Tu sembles éligible',
   'eligibility_verdict_eligible_body':
-      'Tu remplis les critères annoncés. Prépare ton dossier — un conseiller KPB peut t’accompagner pour maximiser tes chances.',
+      'Tu remplis les critères annoncés. Prépare ton dossier — un conseiller KPB peut t’accompagner.',
   'eligibility_verdict_conditional_title': '🟡 Éligibilité à confirmer',
   'eligibility_verdict_conditional_body':
       'Tu remplis une partie des critères mais certains restent à vérifier. Un conseiller peut t’aider à confirmer ton éligibilité.',
@@ -1729,6 +1732,9 @@ const Map<String, String> appTranslationsFr = {
   'home_hero_subtitle_other': 'Démarrez dès aujourd\'hui.',
   'home_hero_cta_consultation': 'Consultation',
   'home_hero_cta_become_partner': 'Devenir partenaire',
+  // CTA du héros pour un INVITÉ : mène à l'onglet Bourses. Sans durée ni
+  // nombre, pour rester vrai que le test « Mes 10 bourses » soit ouvert ou non.
+  'home_hero_cta_find_scholarships': 'Trouve tes bourses',
   'home_case_title_book_appointment': 'Prendre rendez-vous',
   'home_hero_profile_ring_label': 'Profil',
   'home_next_step_label_action_required': 'Action requise',
@@ -2448,7 +2454,7 @@ const Map<String, String> appTranslationsFr = {
   'private_schools_admission': 'Admission écoles privées',
   'dedicated_path_intake': 'Parcours dédié · @intake',
   'eligibility_simulator_title': 'Simulateur d\'éligibilité',
-  'eligibility_hook': 'En 1 minute, découvre tes chances',
+  'eligibility_hook': 'En 1 minute, vérifie les critères de base',
   'eligibility_intro':
       'Réponds à 5 questions et obtiens un verdict 🟢 🟡 🔴 pour chacune des 9 destinations KPB, puis exporte ton bilan en PDF.',
   'offline_cache_notice': 'Mode hors ligne. Affichage des données en cache.',
@@ -2489,8 +2495,6 @@ const Map<String, String> appTranslationsFr = {
   'review_before_send':
       'Vérifie le récapitulatif avant envoi. KPB te répond sous 24–48 h.',
   'upcoming': 'À venir',
-  'scholarship_gap_msg':
-      'Ton dossier actuel est à @score%. Pour une bourse comme "@name", le seuil de sécurité est de 85%.',
   'scholarship_tutorials':
       'Accède au pack de tutoriels vidéos exclusifs pour réussir ton dossier.',
   'answer_all_criteria': 'Réponds à tous les critères pour voir ton résultat.',
@@ -2564,7 +2568,9 @@ const Map<String, String> appTranslationsFr = {
   'continue_orientation': 'Continuer mon orientation',
   'explore_fields': 'Explorer les filières',
   'explore_countries': 'Explorer les pays',
-  'scholarships_for_you': 'Bourses pour toi',
+  // « Bourses pour toi » sur une liste qui n'est plus calculée pour le profil
+  // (ordre par date de clôture, filtre de niveau seulement) aurait menti.
+  'home_scholarships_title': 'Bourses à suivre',
   'my_plan_title': 'Mon plan',
   'my_plan_next_step': 'Prochaine étape : @step',
   'my_plan_step_profile': 'compléter ton profil',
@@ -2653,8 +2659,10 @@ const Map<String, String> appTranslationsFr = {
       'Connectez-vous par email pour sauvegarder votre parcours, ou explorez l’app en mode invité.',
   'auth_intelligence_title':
       'KPB Intelligence, ton guide pour étudier à l’étranger',
+  // « 12 questions » ne correspondait à rien : l'onboarding étudiant compte 3
+  // écrans (`_totalPages`, garde : honest_labels_guard_test.dart).
   'auth_intelligence_body':
-      'Réponds à 12 questions et découvre les universités qui correspondent à ton profil.',
+      'Crée ton profil en 3 étapes et découvre des universités classées selon tes réponses.',
   'auth_intelligence_benefit_fit': 'Universités classées selon ton profil',
   // Ne nomme QUE le coach, seule surface KPB Intelligence en ligne en
   // build 49. La version précédente promettait « lettre, entretien » :
@@ -2701,7 +2709,6 @@ const Map<String, String> appTranslationsFr = {
   'match_in_target_country': 'Situé dans un pays cible',
   'match_kpb_partner': 'Partenaire KPB',
   'match_field_match': 'Filière correspondante',
-  'match_scholarship_interest': 'Budget & Financement',
   'match_general': 'Correspondance générale',
   // Case snackbar
   'case_created_title': 'Dossier créé ✅',

@@ -438,13 +438,12 @@ class _SearchResultTile extends StatelessWidget {
         } catch (_) {
           return null;
         }
+      // Aucun palier pour une bourse : l'ancien venait d'un score client qui
+      // partait du `baseMatch` éditorial et ne lisait aucune condition
+      // d'éligibilité (« Très bon match » sur une bourse fermée à ton niveau).
+      // Seul le test « Mes 10 bourses », côté serveur, dit ce qui est
+      // compatible.
       case SearchResultType.scholarship:
-        try {
-          return controller
-              .scholarshipFit(controller.scholarshipById(result.id));
-        } catch (_) {
-          return null;
-        }
       case SearchResultType.country:
         return null;
     }

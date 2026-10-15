@@ -53,7 +53,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/home/daily_scholarship_card.dart': 4,
   'lib/app/features/home/home_impact_proof.dart': 1,
   'lib/app/features/home/home_screen/abroad.dart': 14,
-  'lib/app/features/home/home_screen/cards.dart': 18,
+  'lib/app/features/home/home_screen/cards.dart': 17,
   'lib/app/features/home/home_screen/engagement.dart': 10,
   'lib/app/features/home/home_screen/header.dart': 1,
   'lib/app/features/home/home_screen/hero.dart': 10,

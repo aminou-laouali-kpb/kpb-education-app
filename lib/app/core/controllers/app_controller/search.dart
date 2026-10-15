@@ -86,10 +86,9 @@ mixin _SearchMixin on _AppControllerBase {
       ? null
       : ProfileFit.fromScore(_searchService.institutionMatch(institution));
 
-  /// Displayable fit tier for [scholarship]. Unlike schools, scholarships
-  /// carry a curated `baseMatch`, so a tier exists even without a profile.
-  ProfileFit scholarshipFit(ScholarshipModel scholarship) =>
-      ProfileFit.fromScore(_searchService.scholarshipMatch(scholarship));
+  // Pas de `scholarshipFit` : aucune bourse n'affiche plus de palier de
+  // compatibilité calculé côté client (il partait du `baseMatch` éditorial et
+  // ne lisait aucune condition). Voir [scholarshipsByDeadline].
 
   List<FieldModel> get recommendedFields => _searchService.recommendedFields;
 
@@ -102,9 +101,9 @@ mixin _SearchMixin on _AppControllerBase {
   List<String> matchExplanation(SearchResultType type, String id) =>
       _searchService.matchExplanation(type, id);
 
-  List<ScholarshipModel> get recommendedScholarships =>
-      _searchService.recommendedScholarships;
-
-  int scholarshipMatch(ScholarshipModel scholarship) =>
-      _searchService.scholarshipMatch(scholarship);
+  /// Bourses dans un ordre neutre (clôture confirmée la plus proche d'abord,
+  /// filtre simple sur le niveau visé quand il est connu), sans score. Voir
+  /// [AppSearchService.scholarshipsByDeadline].
+  List<ScholarshipModel> get scholarshipsByDeadline =>
+      _searchService.scholarshipsByDeadline;
 }
