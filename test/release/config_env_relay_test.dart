@@ -112,6 +112,25 @@ void main() {
     }
   });
 
+  // « Mes 10 bourses » (chantier D) : une variable pour la carte de l'app
+  // (`features.scholarshipMatch`) ET les routes /scholarships/match/*. Livrée
+  // éteinte : un défaut `true` dans compose ouvrirait le test en production au
+  // premier redéploiement, avant la validation juridique de la collecte.
+  test('le drapeau « Mes 10 bourses » est lu, relayé, documenté et fermé', () {
+    const variable = 'KPB_SCHOLARSHIP_MATCH_ENABLED';
+    expect(read, contains(variable),
+        reason: '$controllerPath ne lit plus $variable.');
+    expect(relayed, contains(variable),
+        reason: '$variable n\'est pas relayée dans docker-compose.yml.');
+    expect(documented, contains(variable),
+        reason: '$variable n\'est pas documentée dans .env.example.');
+    expect(
+      File('docker-compose.yml').readAsStringSync(),
+      contains('- $variable=\${$variable:-false}'),
+      reason: '$variable doit avoir `false` pour défaut dans docker-compose.yml.',
+    );
+  });
+
   test('les drapeaux KPB_EEF_* sont fermés par défaut dans compose', () {
     // Le sens de l'échec, figé. Une vitrine allumée par défaut serait
     // impossible à éteindre sans redéploiement du fichier compose, alors que

@@ -117,6 +117,9 @@ jobs:
       # Les lectures publiques de bourses vivent dans un `where` Prisma : seule
       # une base réelle dit si elles filtrent. Trois états qui ont été servis à
       # de vrais étudiants sont insérés puis vérifiés absents.
+      # « Mes 10 bourses » y est aussi prouvé : reprise des niveaux, candidates
+      # publiques seulement, run + réponses atomiques, élagage à 5, export et
+      # cascade RGPD, « Suivre les N compatibles ».
       - name: PostgreSQL public scholarship reads integration
         env:
           KPB_RUN_POSTGRES_INTEGRATION: 'true'

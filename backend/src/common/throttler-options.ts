@@ -44,3 +44,13 @@ export function buildThrottlerOptions(
 export const ADMIN_LOGIN_THROTTLE = {
   [GLOBAL_THROTTLER]: { limit: 10, ttl: 60_000 },
 };
+
+/**
+ * « Mes 10 bourses » : `POST /scholarships/match/runs` écrit le profil et un run
+ * dans une transaction qui évalue jusqu'à 500 fiches. 10 calculs par minute et
+ * par IP suffisent largement à un élève (le test, un « Refaire », une mise à
+ * jour) ; au-delà, c'est une boucle côté client.
+ */
+export const SCHOLARSHIP_MATCH_RUN_THROTTLE = {
+  [GLOBAL_THROTTLER]: { limit: 10, ttl: 60_000 },
+};
