@@ -271,3 +271,66 @@ String _slug(String input) {
   accents.forEach((k, v) => s = s.replaceAll(k, v));
   return s.replaceAll(RegExp(r'[^a-z0-9]'), '');
 }
+
+/// Niveau d'études CANONIQUE d'une bourse (axe 3), indépendant de la locale.
+///
+/// Même vocabulaire que le serveur (`CanonicalStudyLevel`,
+/// backend/src/modules/scholarships-index/scholarship-level.ts) : c'est ce que
+/// le catalogue vérifié et le moteur « Mes 10 bourses » comparent.
+enum ScholarshipStudyLevel { secondary, bachelor, master, doctorate }
+
+/// Synonymes FR et EN de chaque niveau, cherchés comme MOTS dans un texte en
+/// minuscules et sans accents. Copie conforme de `LEVEL_PATTERNS` côté serveur,
+/// pièges compris : « Mastercard » n'est pas un master, « post-secondaire »
+/// n'est pas le lycée, « pas de doctorat » n'est pas un doctorat.
+final List<(ScholarshipStudyLevel, RegExp)> _scholarshipLevelPatterns = [
+  (
+    ScholarshipStudyLevel.secondary,
+    RegExp(
+      r'(?<!post[\s-])\b(?:secondary|secondaires?|lycees?|high[\s-]?schools?)\b',
+    ),
+  ),
+  (
+    ScholarshipStudyLevel.bachelor,
+    RegExp(r'\b(?:bachelors?|bacheliers?|licences?|undergraduates?)\b'),
+  ),
+  (
+    ScholarshipStudyLevel.master,
+    RegExp(r'\b(?:masters?|masteres?|msc|mba|mim)\b'),
+  ),
+  (
+    ScholarshipStudyLevel.doctorate,
+    RegExp(
+      r'(?<!\b(?:no|not|pas de|sans|hors|excluding|except)\s)(?<!post[\s-])'
+      r'\b(?:doctorats?|doctorates?|doctoral|ph\.?\s?d|dphil)\b',
+    ),
+  ),
+];
+
+/// Niveaux canoniques cités dans un texte libre : le libellé `levelEligible`
+/// d'une bourse, ou le niveau visé d'un profil (`Bachelor`, `Master`, `PhD`).
+/// Vide quand rien n'est reconnu — et un ensemble vide veut dire « inconnu »,
+/// jamais « aucun niveau » : l'appelant ne doit pas exclure sur un vide.
+Set<ScholarshipStudyLevel> scholarshipStudyLevelsInText(String? text) {
+  final levels = <ScholarshipStudyLevel>{};
+  if (text == null || text.trim().isEmpty) return levels;
+  final folded = _foldAccents(text.toLowerCase());
+  for (final (level, pattern) in _scholarshipLevelPatterns) {
+    if (pattern.hasMatch(folded)) levels.add(level);
+  }
+  return levels;
+}
+
+/// Minuscules déjà faites par l'appelant ; retire seulement les accents, sans
+/// toucher aux espaces ni à la ponctuation (les motifs cherchent des MOTS).
+String _foldAccents(String input) {
+  const accents = 'àáâäãåèéêëìíîïòóôöõùúûüçñ';
+  const plain = 'aaaaaaeeeeiiiiooooouuuucn';
+  final buffer = StringBuffer();
+  for (final rune in input.runes) {
+    final char = String.fromCharCode(rune);
+    final index = accents.indexOf(char);
+    buffer.write(index == -1 ? char : plain[index]);
+  }
+  return buffer.toString();
+}

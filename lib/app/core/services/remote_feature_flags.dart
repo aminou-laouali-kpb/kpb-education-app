@@ -349,6 +349,16 @@ class RemoteFeatureFlags {
   bool get eefPrivateSchoolsEnabled =>
       _flag('eefPrivateSchools', AppConfig.eefPrivateSchoolsEnabled);
 
+  /// Le test « Mes 10 bourses » (carte de l'onglet Bourses, assistant,
+  /// résultats) est-il ouvert ?
+  ///
+  /// Clé `scholarshipMatch`, FERMÉE par défaut : absente (backend plus ancien),
+  /// illisible ou serveur injoignable, elle vaut `false`. Indépendante de tout
+  /// autre drapeau. Le serveur coupe aussi ses routes avec la même variable
+  /// (404 `{disabled: true}`), que l'app lit comme ce drapeau fermé.
+  bool get scholarshipMatchEnabled =>
+      _flag('scholarshipMatch', AppConfig.scholarshipMatchEnabled);
+
   // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
   //
   // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne

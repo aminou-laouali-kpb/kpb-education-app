@@ -14,6 +14,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../cases/case_composer_sheet.dart';
+import '../scholarship_match/widgets/match_assessment_block.dart';
 import 'scholarship_video_player_screen.dart';
 import 'widgets/how_to_apply_sheet.dart';
 import 'widgets/follow_scholarship_button.dart';
@@ -368,6 +369,11 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
                         ),
                       );
                     },
+                  ),
+                  // « Mes 10 bourses » : le résultat du test pour CETTE
+                  // bourse, ou l'invitation à le faire (drapeau ouvert).
+                  ScholarshipMatchAssessmentBlock(
+                    scholarshipId: scholarship.id,
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(

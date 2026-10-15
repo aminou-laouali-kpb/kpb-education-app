@@ -45,7 +45,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarships_auth_required_title':
       'Create your account to see the scholarships',
   'scholarships_auth_required_body':
-      'Scholarships are selected and verified for your profile: your level, your target countries, your field. That is why an account is needed. It is free and takes two minutes.',
+      'Scholarships are checked by KPB. You need an account to see and follow them. It is free and takes two minutes.',
   'scholarships_auth_required_cta': 'Create my account',
   'guest_cases_title': 'All your cases in one place',
   'guest_cases_body':
@@ -907,8 +907,6 @@ const Map<String, String> appTranslationsEn = {
   'search_no_results_title': 'No results for « @query »',
   'scholarship_boost_analysis_title': 'Boost Analysis: @name',
   'live_scholarships_result_count': '@count scholarship(s) found',
-  'eligibility_whatsapp_prefill':
-      'Hello KPB Education, I\'m interested in the « @name » scholarship and would like to check my eligibility / get support.',
   'eligibility_pdf_generated_on': 'Generated on @date',
   'eligibility_pdf_budget_per_month': '@budget € / month',
   // --- KPB-89 batch ---
@@ -1149,21 +1147,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_guide_author':
       'Created by a 2024 Chevening scholar who has supported hundreds of African students.',
   'scholarships_sorted_hint':
-      'Ranked for your profile. Enable an alert so you do not miss the opening.',
-  'eligibility_see_my_result': 'See my result',
-  'answer_yes': 'Yes',
-  'answer_maybe': 'Maybe',
-  'answer_no': 'No',
-  'eligibility_verdict_eligible_title': '🟢 You appear eligible',
-  'eligibility_verdict_eligible_body':
-      'You meet the stated criteria. Prepare your application — a KPB advisor can help you maximise your chances.',
-  'eligibility_verdict_conditional_title': '🟡 Eligibility to be confirmed',
-  'eligibility_verdict_conditional_body':
-      'You meet some of the criteria but some remain to be verified. An advisor can help you confirm your eligibility.',
-  'eligibility_verdict_unlikely_title': '🔴 Probably not eligible',
-  'eligibility_verdict_unlikely_body':
-      'At least one key criterion does not appear to be met. Exceptions sometimes exist — talk to an advisor, or explore other scholarships.',
-  'talk_to_advisor': 'Talk to an advisor',
+      'Scholarships checked by KPB and not yet closed. Enable an alert so you do not miss the opening.',
   'roadmap_redirect_writing_tutorials': 'Redirecting to writing tutorials...',
   'roadmap_redirect_kpb_expert': 'Redirecting to the KPB expert...',
   'roadmap_view_tutorials': 'View tutorials',
@@ -1579,6 +1563,7 @@ const Map<String, String> appTranslationsEn = {
   'home_hero_subtitle_other': 'Get started today.',
   'home_hero_cta_consultation': 'Consultation',
   'home_hero_cta_become_partner': 'Become a partner',
+  'home_hero_cta_find_scholarships': 'Find your scholarships',
   'home_case_title_book_appointment': 'Book an appointment',
   'home_hero_profile_ring_label': 'Profile',
   'home_next_step_label_action_required': 'Action required',
@@ -2182,8 +2167,6 @@ const Map<String, String> appTranslationsEn = {
   'main_subjects': 'Main subjects',
   'linked_children': 'Linked children',
   'shared_cases': 'Shared cases',
-  'am_i_eligible': 'Am I eligible?',
-  'to_check': 'To check:',
   'key_criteria': 'Key criteria:',
   'privacy_policy': 'Privacy Policy',
   'parent_create_invite': 'Create an invite code',
@@ -2235,7 +2218,7 @@ const Map<String, String> appTranslationsEn = {
   'private_schools_admission': 'Private schools admission',
   'dedicated_path_intake': 'Dedicated path · @intake',
   'eligibility_simulator_title': 'Eligibility simulator',
-  'eligibility_hook': 'In 1 minute, discover your chances',
+  'eligibility_hook': 'In 1 minute, check the basic criteria',
   'eligibility_intro':
       'Answer 5 questions and get a 🟢 🟡 🔴 verdict for each of the 9 KPB destinations, then export your report as a PDF.',
   'offline_cache_notice': 'Offline mode. Showing cached data.',
@@ -2271,11 +2254,8 @@ const Map<String, String> appTranslationsEn = {
   'review_before_send':
       'Check the summary before sending. KPB replies within 24–48 h.',
   'upcoming': 'Upcoming',
-  'scholarship_gap_msg':
-      'Your current profile is at @score%. For a scholarship like "@name", the safety threshold is 85%.',
   'scholarship_tutorials':
       'Access the exclusive video tutorial pack to ace your application.',
-  'answer_all_criteria': 'Answer all criteria to see your result.',
   'scholarships_title': 'Scholarships',
   'recommended_opportunities': 'Recommended opportunities',
   'ranked_by_profile': 'Ranked by your profile and academic goals.',
@@ -2323,10 +2303,6 @@ const Map<String, String> appTranslationsEn = {
   'search_results_count': '@n result(s)',
   'doc_review_paste_hint':
       'Paste your draft and get structured feedback in seconds — strengths, areas to improve and missing elements.',
-  'eligibility_honest_hint':
-      'Answer each criterion honestly to estimate your eligibility. It\'s only an indication — an advisor will confirm your case.',
-  'eligibility_not_detailed':
-      'This scholarship\'s eligibility criteria aren\'t detailed yet. A KPB advisor can check your case directly.',
   'roadmap_objective':
       'Goal: @intake intake · @field. Here are the steps, dated backward from the deadline — tick them off as you go.',
   'parent_share_case_title': 'Share with my parent',
@@ -2344,7 +2320,7 @@ const Map<String, String> appTranslationsEn = {
   'continue_orientation': 'Continue orientation',
   'explore_fields': 'Explore fields',
   'explore_countries': 'Explore countries',
-  'scholarships_for_you': 'Scholarships for you',
+  'home_scholarships_title': 'Scholarships to follow',
   'my_plan_title': 'My plan',
   'my_plan_next_step': 'Next step: @step',
   'my_plan_step_profile': 'complete your profile',
@@ -2433,7 +2409,7 @@ const Map<String, String> appTranslationsEn = {
       'Sign in with email to save your journey, or browse as a guest.',
   'auth_intelligence_title': 'KPB Intelligence, your guide to studying abroad',
   'auth_intelligence_body':
-      'Answer 12 questions and discover the universities that match your profile.',
+      'Build your profile in 3 steps and discover universities ranked by your answers.',
   'auth_intelligence_benefit_fit': 'Universities ranked for your profile',
   // Voir le commentaire du bloc `fr` : ne nomme que le coach, la seule
   // surface KPB Intelligence atteignable en build 49.
@@ -2474,7 +2450,6 @@ const Map<String, String> appTranslationsEn = {
   'match_in_target_country': 'Located in a target country',
   'match_kpb_partner': 'KPB partner',
   'match_field_match': 'Matching field',
-  'match_scholarship_interest': 'Budget & Funding',
   'match_general': 'General match',
   // Case snackbar
   'case_created_title': 'Case created ✅',
@@ -3229,6 +3204,239 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_status_opening_estimated': 'Expected to open: @date',
   'scholarship_status_opening_unknown': 'Opening date to be confirmed',
   'scholarship_status_closed': 'Closed',
+  // ── « My 10 scholarships » test (chantier H) ──────────────────────────
+  'scholarship_match_entry_title': 'Test: which scholarships fit me?',
+  'scholarship_match_entry_body':
+      '2 min · up to 10 scholarships · we explain why',
+  'scholarship_match_entry_guest_body':
+      'With an account, take the test: up to 10 scholarships for your profile.',
+  'scholarship_match_entry_cta': 'Take the test',
+  'scholarship_match_entry_run_title': 'Your scholarships: @counts',
+  'scholarship_match_entry_run_body': 'Updated on @date',
+  'scholarship_match_entry_run_body_undated': 'Your test results',
+  'scholarship_match_entry_view': 'View',
+  'scholarship_match_entry_update': 'Update',
+  'scholarship_match_count_compatible': '@count compatible',
+  'scholarship_match_count_compatible_one': '1 compatible',
+  'scholarship_match_count_to_verify': '@count to check',
+  'scholarship_match_count_to_verify_one': '1 to check',
+  'scholarship_match_flow_title': 'My scholarships',
+  'scholarship_match_flow_close': 'Leave the test',
+  'scholarship_match_leave_title': 'Leave the test?',
+  'scholarship_match_leave_body':
+      'Your answers are kept on this phone. You will pick up where you left off.',
+  'scholarship_match_leave_stay': 'Keep going',
+  'scholarship_match_leave_quit': 'Leave',
+  'scholarship_match_intro_title': 'Which scholarships fit me?',
+  'scholarship_match_intro_body':
+      '2 minutes. You only answer what is missing (@count questions).',
+  'scholarship_match_intro_body_one':
+      '2 minutes. You only answer what is missing (1 question).',
+  'scholarship_match_intro_body_none':
+      'Your details are already here: check them, and off you go.',
+  'scholarship_match_intro_privacy':
+      'Your nationality and date of birth are only used to check scholarship conditions.',
+  'scholarship_match_intro_privacy_link': 'Privacy policy',
+  'scholarship_match_start': 'Start',
+  'scholarship_match_apply': 'Confirm',
+  'scholarship_match_progress_a11y': 'Question @index of @total',
+  'scholarship_match_q_nationality': 'Your nationality',
+  'scholarship_match_q_nationality_help': 'The one on your passport.',
+  'scholarship_match_nationality_suggestion':
+      'You live in « @country »: is it also your nationality?',
+  'scholarship_match_second_nationality': 'I have a second nationality',
+  'scholarship_match_second_nationality_set': 'Second nationality: @country',
+  'scholarship_match_country_search': 'Search for a country',
+  'scholarship_match_country_none': 'No country matches.',
+  'scholarship_match_q_residence': 'Your country of residence',
+  'scholarship_match_q_residence_help':
+      'Some scholarships depend on the country you live in.',
+  'scholarship_match_q_birth_date': 'Your date of birth',
+  'scholarship_match_q_birth_date_help': 'Many scholarships have an age limit.',
+  'scholarship_match_q_diploma': 'Your highest diploma',
+  'scholarship_match_q_target': 'You want a scholarship for…',
+  'scholarship_match_q_target_help':
+      'The level of study you want to do with the scholarship.',
+  'scholarship_match_target_diploma_hint':
+      'This level usually asks for a diploma you do not have yet. Keep it if you will get it before you leave.',
+  'scholarship_match_q_fields': 'Your fields of study',
+  'scholarship_match_q_fields_help': 'Up to 3.',
+  'scholarship_match_fields_undecided': 'Not decided yet',
+  'scholarship_match_q_grade': 'Your average last year (out of 20)',
+  'scholarship_match_q_grade_help': 'An estimate is enough.',
+  'scholarship_match_grade_other_scale': 'My system is not out of 20',
+  'scholarship_match_grade_scale': 'Out of @scale',
+  'scholarship_match_grade_scale_value': 'Your average',
+  'scholarship_match_grade_converted': 'Out of 20: @band',
+  'scholarship_match_q_english': 'Your English level',
+  'scholarship_match_q_french_optional': 'And in French? (optional)',
+  'scholarship_match_q_french': 'Your French level',
+  'scholarship_match_has_test_score': 'I have a test score',
+  'scholarship_match_test_value': '@test: @score',
+  'scholarship_match_test_score_label': 'Your score (@min to @max)',
+  'scholarship_match_q_experience': 'Your work experience',
+  'scholarship_match_q_experience_help':
+      'Internships count if you were paid full time.',
+  'scholarship_match_recap_title': 'Check your details',
+  'scholarship_match_recap_help':
+      'The test uses these answers. Fix anything that is wrong.',
+  'scholarship_match_recap_nationality': 'Nationality',
+  'scholarship_match_recap_residence': 'Country of residence',
+  'scholarship_match_recap_birth_date': 'Date of birth',
+  'scholarship_match_recap_guardian_done': 'Consent given',
+  'scholarship_match_recap_diploma': 'Highest diploma',
+  'scholarship_match_recap_target': 'Scholarship for',
+  'scholarship_match_recap_fields': 'Fields',
+  'scholarship_match_recap_grade': 'Average',
+  'scholarship_match_recap_english': 'English',
+  'scholarship_match_recap_french': 'French: @level',
+  'scholarship_match_recap_experience': 'Work experience',
+  'scholarship_match_recap_boosters': 'For more precision (optional)',
+  'scholarship_match_recap_destinations': 'Target countries',
+  'scholarship_match_recap_test': 'Test score',
+  'scholarship_match_recap_improves_precision': 'Improves precision',
+  'scholarship_match_recap_missing': 'To fill in',
+  'scholarship_match_recap_edit': 'Edit',
+  'scholarship_match_recap_fill': 'Fill in',
+  'scholarship_match_recap_edit_a11y': 'Edit: @field',
+  'scholarship_match_recap_complete_first':
+      'Fill in the lines in red to see your scholarships.',
+  'scholarship_match_submit': 'All good, show my scholarships',
+  'scholarship_match_analysing': 'Checking @count scholarships…',
+  'scholarship_match_analysing_generic': 'Checking the scholarships…',
+  'scholarship_match_still_missing': 'One detail is still missing.',
+  'scholarship_match_draft_kept': 'Your answers are kept.',
+  'scholarship_match_load_error_title': 'The test will not open',
+  'scholarship_match_error_offline':
+      'No connection. Try again when you are online.',
+  'scholarship_match_error_timeout': 'The server is taking too long to answer.',
+  'scholarship_match_error_rate_limited':
+      'Too many tries at once. Try again in a minute.',
+  'scholarship_match_error_session':
+      'Your session has expired. Sign in again, then try again.',
+  'scholarship_match_error_unavailable': 'The test is not available right now.',
+  'scholarship_match_error_server': 'The check did not go through.',
+  'scholarship_match_results_title': 'Your scholarships',
+  'scholarship_match_results_header': 'Your scholarships — @date',
+  'scholarship_match_offline': 'Offline — results from @date',
+  'scholarship_match_updating': 'Updating your results…',
+  'scholarship_match_needs_review':
+      'Your details changed: check them to update your results.',
+  'scholarship_match_edit_info': 'Edit my details',
+  'scholarship_match_precision_kpb':
+      'Many of these scholarships are not fully analysed by KPB yet: read their official conditions before you apply.',
+  'scholarship_match_precision_answers':
+      'We are missing some details to be more precise: complete your answers.',
+  'scholarship_match_empty': 'No compatible scholarship in our catalogue yet.',
+  'scholarship_match_empty_closed_return':
+      'Some closed scholarships will come back when their next session opens.',
+  'scholarship_match_none_compatible':
+      'No scholarship is clearly compatible today, @count need checking.',
+  'scholarship_match_none_compatible_one':
+      'No scholarship is clearly compatible today, 1 needs checking.',
+  'scholarship_match_fewer': '@count scholarships found for your profile.',
+  'scholarship_match_fewer_one': '1 scholarship found for your profile.',
+  'scholarship_match_see_more_title': 'How to see more',
+  'scholarship_match_see_more_edit': 'Check my answers',
+  'scholarship_match_section_compatible': 'Compatible with your profile',
+  'scholarship_match_section_to_verify': 'Check before you apply',
+  'scholarship_match_status_compatible': 'Compatible',
+  'scholarship_match_status_to_verify': 'To check',
+  'scholarship_match_status_a11y': 'Status: @status',
+  'scholarship_match_unavailable': 'No longer available',
+  'scholarship_match_new': 'New',
+  'scholarship_match_window_a11y': 'Applications: @window',
+  'scholarship_match_window_closed': 'Closed',
+  'scholarship_match_window_suspended': 'Suspended',
+  'scholarship_match_window_open': 'Open',
+  'scholarship_match_window_open_until': 'Open · closes on @date',
+  'scholarship_match_window_open_estimated_close':
+      'Open · estimated close: @month',
+  'scholarship_match_window_opens_on': 'Opens on @date',
+  'scholarship_match_window_estimated_open': 'Estimated opening: @month',
+  'scholarship_match_window_estimated_close': 'Estimated close: @month',
+  'scholarship_match_official_show': 'See the official condition',
+  'scholarship_match_official_hide': 'Hide the official condition',
+  'scholarship_match_official_quote_label': 'Text from the organisation:',
+  'scholarship_match_official_source': 'See the source',
+  'scholarship_match_case_cta': 'Get support',
+  'scholarship_match_case_title': 'Application — @title',
+  'scholarship_match_success_lab_cta': 'Prepare with Success Lab',
+  'scholarship_match_whatsapp_a11y':
+      'Message an advisor on WhatsApp about @title',
+  'scholarship_match_whatsapp_prefill':
+      'Hello KPB, the « My scholarships » test suggested « @title ». Can you help me?',
+  'scholarship_match_advisor_prefill':
+      'Hello KPB, I took the « My scholarships » test and would like to talk to an advisor.',
+  'scholarship_match_report_prefill':
+      'Hello KPB, I think there is a mistake in the « My scholarships » test: « @group ».',
+  'scholarship_match_needs_connection': 'Connection needed',
+  'scholarship_match_excluded_title':
+      'Why some scholarships are not shown (@count)',
+  'scholarship_match_excluded_report': 'Report a mistake',
+  'scholarship_match_follow_all': 'Follow the @count compatible ones',
+  'scholarship_match_follow_all_one': 'Follow the compatible scholarship',
+  'scholarship_match_follow_all_done':
+      'You now follow @count scholarships: we will tell you when they open and before the deadline.',
+  'scholarship_match_share': 'Share my scholarships',
+  'scholarship_match_share_text':
+      'My scholarships found with KPB Education:\n@list\n\nTake the test too: @link',
+  'scholarship_match_redo': 'Take the test again',
+  'scholarship_match_advisor': 'Talk to an advisor',
+  'scholarship_match_alerts_title':
+      'Tell me when a new compatible scholarship arrives',
+  'scholarship_match_alerts_error': 'The setting was not saved. Try again.',
+  // Home, scholarship page, Profile and notifications (H3).
+  'home_hero_cta_find_scholarships_test': 'Find your scholarships (2 min)',
+  'home_match_title': 'Your scholarships',
+  'home_match_see_all': 'See my @count scholarships',
+  'home_match_see_all_one': 'See my scholarship',
+  'scholarship_match_assessment_title': 'Your test result',
+  'scholarship_match_assessment_date': 'Based on your test of @date',
+  'scholarship_match_assessment_not_in_run':
+      'This scholarship is not among your test results.',
+  'scholarship_match_assessment_see_results': 'See my results',
+  'profile_quick_scholarship_match': 'My matching scholarships',
+  'scholarship_match_alerts_pref_title': 'New matching scholarships (weekly)',
+  'scholarship_match_alerts_pref_subtitle':
+      'At most one notification a week, when a new scholarship matching your test arrives.',
+  'scholarship_match_disclaimer':
+      'The test checks the main published conditions. The organisation still makes the selection.',
+  'scholarship_match_diff_added': '@count new',
+  'scholarship_match_diff_added_one': '1 new',
+  'scholarship_match_diff_removed': '@count removed',
+  'scholarship_match_diff_removed_one': '1 removed',
+  'scholarship_match_diploma_none': 'No baccalaureate yet',
+  'scholarship_match_diploma_bac': 'Baccalaureate',
+  'scholarship_match_diploma_bac_plus_2': 'Two years after the bac',
+  'scholarship_match_diploma_licence': 'Bachelor\'s degree',
+  'scholarship_match_diploma_master': 'Master\'s degree',
+  'scholarship_match_diploma_doctorat': 'Doctorate',
+  'scholarship_match_target_secondary': 'International high school (UWC)',
+  'scholarship_match_target_bachelor': 'Bachelor',
+  'scholarship_match_target_master': 'Master',
+  'scholarship_match_target_doctorate': 'Doctorate',
+  'scholarship_match_grade_lt10': 'Below 10',
+  'scholarship_match_grade_10_12': '10 to 11.9',
+  'scholarship_match_grade_12_14': '12 to 13.9',
+  'scholarship_match_grade_14_16': '14 to 15.9',
+  'scholarship_match_grade_16_plus': '16 or more',
+  'scholarship_match_lang_none': 'None',
+  'scholarship_match_lang_a1_a2': 'Beginner',
+  'scholarship_match_lang_b1': 'I get by (B1)',
+  'scholarship_match_lang_b2': 'Comfortable (B2)',
+  'scholarship_match_lang_c1_c2': 'Fluent',
+  'scholarship_match_exp_none': 'None',
+  'scholarship_match_exp_lt12': 'Less than 1 year',
+  'scholarship_match_exp_12_24': '1 to 2 years',
+  'scholarship_match_exp_24_36': '2 to 3 years',
+  'scholarship_match_exp_36_60': '3 to 5 years',
+  'scholarship_match_exp_60_plus': '5 years or more',
+  'scholarship_match_test_ielts': 'IELTS',
+  'scholarship_match_test_toefl_ibt': 'TOEFL iBT',
+  'scholarship_match_test_duolingo': 'Duolingo',
+  'scholarship_match_test_tcf': 'TCF',
+  'scholarship_match_test_tef': 'TEF',
   'followed_title': 'Followed',
   'followed_scholarships_section': 'Followed scholarships',
   'followed_sort_label': 'Sort by',

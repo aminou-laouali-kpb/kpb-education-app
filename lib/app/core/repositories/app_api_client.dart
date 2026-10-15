@@ -12,6 +12,7 @@ import '../config/app_config.dart';
 import '../controllers/app_controller.dart';
 import '../data/catalog_source.dart';
 import '../models/app_models.dart';
+import '../models/scholarship_match.dart';
 import '../services/notification_router.dart' show NotificationRouterBackend;
 import '../services/push_service.dart' show PushBackend;
 import 'app_version_headers.dart';
@@ -25,6 +26,7 @@ part 'app_api_client/commercial.dart';
 part 'app_api_client/catalog.dart';
 part 'app_api_client/cases.dart';
 part 'app_api_client/marketplace.dart';
+part 'app_api_client/scholarship_match.dart';
 
 /// Dio CONCATENATES `baseUrl + path` (`dio/lib/src/options.dart`) — it does
 /// not resolve URIs. Since `resolveApiBaseUrl` ends in `/api` with no trailing
@@ -80,7 +82,8 @@ class AppApiClient extends _ApiClientBase
         _CommercialApi,
         _CatalogApi,
         _CasesApi,
-        _MarketplaceApi
+        _MarketplaceApi,
+        _ScholarshipMatchApi
     implements PushBackend, NotificationRouterBackend {
   AppApiClient({Dio? dio, Duration? aiReceiveTimeout})
       : _aiReceiveTimeout = aiReceiveTimeout ??

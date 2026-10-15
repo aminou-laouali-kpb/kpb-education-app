@@ -54,7 +54,7 @@ const Map<String, String> appTranslationsFr = {
   // donne l'action qui la lève.
   'scholarships_auth_required_title': 'Crée ton compte pour voir les bourses',
   'scholarships_auth_required_body':
-      'Les bourses sont sélectionnées et vérifiées pour ton profil : ton niveau, tes pays visés, ton domaine. C\'est pour ça qu\'un compte est nécessaire. C\'est gratuit et ça prend deux minutes.',
+      'Les bourses sont vérifiées par KPB. Il faut un compte pour les voir et les suivre. C\'est gratuit et ça prend deux minutes.',
   'scholarships_auth_required_cta': 'Créer mon compte',
   'guest_cases_title': 'Tes dossiers en un seul endroit',
   'guest_cases_body':
@@ -988,8 +988,6 @@ const Map<String, String> appTranslationsFr = {
   'search_no_results_title': 'Aucun résultat pour « @query »',
   'scholarship_boost_analysis_title': 'Analyse Boost : @name',
   'live_scholarships_result_count': '@count bourse(s) trouvée(s)',
-  'eligibility_whatsapp_prefill':
-      'Bonjour KPB Education, je m\'intéresse à la bourse « @name » et j\'aimerais vérifier mon éligibilité / être accompagné(e).',
   'eligibility_pdf_generated_on': 'Généré le @date',
   'eligibility_pdf_budget_per_month': '@budget € / mois',
   // --- KPB-89 batch ---
@@ -1261,22 +1259,11 @@ const Map<String, String> appTranslationsFr = {
       'Renforcer ton anglais et éviter les erreurs les plus fréquentes.',
   'scholarship_guide_author':
       'Conçu par un lauréat Chevening 2024 ayant accompagné des centaines d\'étudiants africains.',
+  // « Classées selon ton profil » promettait un tri personnalisé ; la liste
+  // est celle des bourses vérifiées et pas encore clôturées
+  // (`publicScholarshipWhere` côté serveur). On dit ce qui est vrai.
   'scholarships_sorted_hint':
-      'Classées selon ton profil. Active une alerte pour ne pas rater l\'ouverture.',
-  'eligibility_see_my_result': 'Voir mon résultat',
-  'answer_yes': 'Oui',
-  'answer_maybe': 'Peut-être',
-  'answer_no': 'Non',
-  'eligibility_verdict_eligible_title': '🟢 Tu sembles éligible',
-  'eligibility_verdict_eligible_body':
-      'Tu remplis les critères annoncés. Prépare ton dossier — un conseiller KPB peut t’accompagner pour maximiser tes chances.',
-  'eligibility_verdict_conditional_title': '🟡 Éligibilité à confirmer',
-  'eligibility_verdict_conditional_body':
-      'Tu remplis une partie des critères mais certains restent à vérifier. Un conseiller peut t’aider à confirmer ton éligibilité.',
-  'eligibility_verdict_unlikely_title': '🔴 Probablement non éligible',
-  'eligibility_verdict_unlikely_body':
-      'Au moins un critère clé ne semble pas rempli. Des exceptions existent parfois — parles-en à un conseiller, ou explore d’autres bourses.',
-  'talk_to_advisor': 'Discuter avec un conseiller',
+      'Bourses vérifiées par KPB, pas encore clôturées. Active une alerte pour ne pas rater l\'ouverture.',
   'roadmap_redirect_writing_tutorials':
       'Redirection vers les tutoriels de rédaction...',
   'roadmap_redirect_kpb_expert': 'Redirection vers l\'expert KPB...',
@@ -1729,6 +1716,9 @@ const Map<String, String> appTranslationsFr = {
   'home_hero_subtitle_other': 'Démarrez dès aujourd\'hui.',
   'home_hero_cta_consultation': 'Consultation',
   'home_hero_cta_become_partner': 'Devenir partenaire',
+  // CTA du héros pour un INVITÉ : mène à l'onglet Bourses. Sans durée ni
+  // nombre, pour rester vrai que le test « Mes 10 bourses » soit ouvert ou non.
+  'home_hero_cta_find_scholarships': 'Trouve tes bourses',
   'home_case_title_book_appointment': 'Prendre rendez-vous',
   'home_hero_profile_ring_label': 'Profil',
   'home_next_step_label_action_required': 'Action requise',
@@ -2392,8 +2382,6 @@ const Map<String, String> appTranslationsFr = {
   'main_subjects': 'Matières principales',
   'linked_children': 'Enfants liés',
   'shared_cases': 'Dossiers partagés',
-  'am_i_eligible': 'Suis-je éligible ?',
-  'to_check': 'À vérifier :',
   'key_criteria': 'Critères clés :',
   'privacy_policy': 'Politique de Confidentialité',
   'parent_create_invite': 'Créer un code d\'invitation',
@@ -2448,7 +2436,7 @@ const Map<String, String> appTranslationsFr = {
   'private_schools_admission': 'Admission écoles privées',
   'dedicated_path_intake': 'Parcours dédié · @intake',
   'eligibility_simulator_title': 'Simulateur d\'éligibilité',
-  'eligibility_hook': 'En 1 minute, découvre tes chances',
+  'eligibility_hook': 'En 1 minute, vérifie les critères de base',
   'eligibility_intro':
       'Réponds à 5 questions et obtiens un verdict 🟢 🟡 🔴 pour chacune des 9 destinations KPB, puis exporte ton bilan en PDF.',
   'offline_cache_notice': 'Mode hors ligne. Affichage des données en cache.',
@@ -2489,11 +2477,8 @@ const Map<String, String> appTranslationsFr = {
   'review_before_send':
       'Vérifie le récapitulatif avant envoi. KPB te répond sous 24–48 h.',
   'upcoming': 'À venir',
-  'scholarship_gap_msg':
-      'Ton dossier actuel est à @score%. Pour une bourse comme "@name", le seuil de sécurité est de 85%.',
   'scholarship_tutorials':
       'Accède au pack de tutoriels vidéos exclusifs pour réussir ton dossier.',
-  'answer_all_criteria': 'Réponds à tous les critères pour voir ton résultat.',
   'scholarships_title': 'Bourses d\'études',
   'recommended_opportunities': 'Opportunités recommandées',
   'ranked_by_profile':
@@ -2542,10 +2527,6 @@ const Map<String, String> appTranslationsFr = {
   'search_results_count': '@n résultat(s)',
   'doc_review_paste_hint':
       'Colle ton brouillon et obtiens un retour structuré en quelques secondes — points forts, axes d’amélioration et éléments manquants.',
-  'eligibility_honest_hint':
-      'Réponds honnêtement à chaque critère pour estimer ton éligibilité. Ce n’est qu’une indication — un conseiller confirmera ton cas.',
-  'eligibility_not_detailed':
-      'Les critères d’éligibilité de cette bourse ne sont pas encore détaillés. Un conseiller KPB peut vérifier ton cas directement.',
   'roadmap_objective':
       'Objectif : rentrée @intake · @field. Voici les étapes, datées à rebours de l’échéance — coche-les au fur et à mesure.',
   'parent_share_case_title': 'Partager avec mon parent',
@@ -2564,7 +2545,9 @@ const Map<String, String> appTranslationsFr = {
   'continue_orientation': 'Continuer mon orientation',
   'explore_fields': 'Explorer les filières',
   'explore_countries': 'Explorer les pays',
-  'scholarships_for_you': 'Bourses pour toi',
+  // « Bourses pour toi » sur une liste qui n'est plus calculée pour le profil
+  // (ordre par date de clôture, filtre de niveau seulement) aurait menti.
+  'home_scholarships_title': 'Bourses à suivre',
   'my_plan_title': 'Mon plan',
   'my_plan_next_step': 'Prochaine étape : @step',
   'my_plan_step_profile': 'compléter ton profil',
@@ -2653,8 +2636,10 @@ const Map<String, String> appTranslationsFr = {
       'Connectez-vous par email pour sauvegarder votre parcours, ou explorez l’app en mode invité.',
   'auth_intelligence_title':
       'KPB Intelligence, ton guide pour étudier à l’étranger',
+  // « 12 questions » ne correspondait à rien : l'onboarding étudiant compte 3
+  // écrans (`_totalPages`, garde : honest_labels_guard_test.dart).
   'auth_intelligence_body':
-      'Réponds à 12 questions et découvre les universités qui correspondent à ton profil.',
+      'Crée ton profil en 3 étapes et découvre des universités classées selon tes réponses.',
   'auth_intelligence_benefit_fit': 'Universités classées selon ton profil',
   // Ne nomme QUE le coach, seule surface KPB Intelligence en ligne en
   // build 49. La version précédente promettait « lettre, entretien » :
@@ -2701,7 +2686,6 @@ const Map<String, String> appTranslationsFr = {
   'match_in_target_country': 'Situé dans un pays cible',
   'match_kpb_partner': 'Partenaire KPB',
   'match_field_match': 'Filière correspondante',
-  'match_scholarship_interest': 'Budget & Financement',
   'match_general': 'Correspondance générale',
   // Case snackbar
   'case_created_title': 'Dossier créé ✅',
@@ -3488,6 +3472,244 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_status_opening_estimated': 'Ouverture estimée : @date',
   'scholarship_status_opening_unknown': 'Date d\'ouverture à confirmer',
   'scholarship_status_closed': 'Clôturée',
+  // ── Test « Mes 10 bourses » (chantier H) ──────────────────────────────
+  'scholarship_match_entry_title': 'Test : quelles bourses pour moi ?',
+  'scholarship_match_entry_body':
+      '2 min · jusqu\'à 10 bourses · on t\'explique pourquoi',
+  'scholarship_match_entry_guest_body':
+      'Avec un compte, fais le test : jusqu\'à 10 bourses pour ton profil.',
+  'scholarship_match_entry_cta': 'Faire le test',
+  'scholarship_match_entry_run_title': 'Tes bourses : @counts',
+  'scholarship_match_entry_run_body': 'Mis à jour le @date',
+  'scholarship_match_entry_run_body_undated': 'Tes résultats du test',
+  'scholarship_match_entry_view': 'Voir',
+  'scholarship_match_entry_update': 'Mettre à jour',
+  'scholarship_match_count_compatible': '@count compatibles',
+  'scholarship_match_count_compatible_one': '1 compatible',
+  'scholarship_match_count_to_verify': '@count à vérifier',
+  'scholarship_match_count_to_verify_one': '1 à vérifier',
+  'scholarship_match_flow_title': 'Mes bourses',
+  'scholarship_match_flow_close': 'Quitter le test',
+  'scholarship_match_leave_title': 'Quitter le test ?',
+  'scholarship_match_leave_body':
+      'Tes réponses sont gardées sur ce téléphone. Tu reprendras au même endroit.',
+  'scholarship_match_leave_stay': 'Continuer le test',
+  'scholarship_match_leave_quit': 'Quitter',
+  'scholarship_match_intro_title': 'Quelles bourses pour moi ?',
+  'scholarship_match_intro_body':
+      '2 minutes. Tu réponds seulement à ce qui manque (@count questions).',
+  'scholarship_match_intro_body_one':
+      '2 minutes. Tu réponds seulement à ce qui manque (1 question).',
+  'scholarship_match_intro_body_none':
+      'Tes infos sont déjà là : vérifie-les, et c\'est parti.',
+  'scholarship_match_intro_privacy':
+      'Ta nationalité et ta date de naissance servent uniquement à vérifier les conditions des bourses.',
+  'scholarship_match_intro_privacy_link': 'Politique de confidentialité',
+  'scholarship_match_start': 'Commencer',
+  'scholarship_match_apply': 'Valider',
+  'scholarship_match_progress_a11y': 'Question @index sur @total',
+  'scholarship_match_q_nationality': 'Ta nationalité',
+  'scholarship_match_q_nationality_help': 'Celle de ton passeport.',
+  'scholarship_match_nationality_suggestion':
+      'Tu vis au pays « @country » : c\'est aussi ta nationalité ?',
+  'scholarship_match_second_nationality': 'J\'ai une deuxième nationalité',
+  'scholarship_match_second_nationality_set': 'Deuxième nationalité : @country',
+  'scholarship_match_country_search': 'Chercher un pays',
+  'scholarship_match_country_none': 'Aucun pays ne correspond.',
+  'scholarship_match_q_residence': 'Ton pays de résidence',
+  'scholarship_match_q_residence_help':
+      'Certaines bourses dépendent du pays où tu vis.',
+  'scholarship_match_q_birth_date': 'Ta date de naissance',
+  'scholarship_match_q_birth_date_help':
+      'Beaucoup de bourses ont une limite d\'âge.',
+  'scholarship_match_q_diploma': 'Ton plus haut diplôme obtenu',
+  'scholarship_match_q_target': 'Tu vises une bourse pour…',
+  'scholarship_match_q_target_help':
+      'Le niveau d\'études que tu veux faire avec la bourse.',
+  'scholarship_match_target_diploma_hint':
+      'Ce niveau demande en général un diplôme que tu n\'as pas encore. Tu peux le garder si tu l\'obtiens avant le départ.',
+  'scholarship_match_q_fields': 'Tes domaines d\'études',
+  'scholarship_match_q_fields_help': 'Jusqu\'à 3.',
+  'scholarship_match_fields_undecided': 'Pas encore décidé',
+  'scholarship_match_q_grade': 'Ta moyenne de la dernière année (sur 20)',
+  'scholarship_match_q_grade_help': 'Une estimation suffit.',
+  'scholarship_match_grade_other_scale': 'Mon système n\'est pas sur 20',
+  'scholarship_match_grade_scale': 'Sur @scale',
+  'scholarship_match_grade_scale_value': 'Ta moyenne',
+  'scholarship_match_grade_converted': 'Sur 20 : @band',
+  'scholarship_match_q_english': 'Ton niveau d\'anglais',
+  'scholarship_match_q_french_optional': 'Et en français ? (facultatif)',
+  'scholarship_match_q_french': 'Ton niveau de français',
+  'scholarship_match_has_test_score': 'J\'ai un score de test',
+  'scholarship_match_test_value': '@test : @score',
+  'scholarship_match_test_score_label': 'Ton score (de @min à @max)',
+  'scholarship_match_q_experience': 'Ton expérience professionnelle',
+  'scholarship_match_q_experience_help':
+      'Les stages comptent si tu étais payé à temps plein.',
+  'scholarship_match_recap_title': 'Vérifie tes infos',
+  'scholarship_match_recap_help':
+      'Le test s\'appuie sur ces réponses. Corrige ce qui n\'est pas juste.',
+  'scholarship_match_recap_nationality': 'Nationalité',
+  'scholarship_match_recap_residence': 'Pays de résidence',
+  'scholarship_match_recap_birth_date': 'Date de naissance',
+  'scholarship_match_recap_guardian_done': 'Accord donné',
+  'scholarship_match_recap_diploma': 'Plus haut diplôme',
+  'scholarship_match_recap_target': 'Bourse visée',
+  'scholarship_match_recap_fields': 'Domaines',
+  'scholarship_match_recap_grade': 'Moyenne',
+  'scholarship_match_recap_english': 'Anglais',
+  'scholarship_match_recap_french': 'français : @level',
+  'scholarship_match_recap_experience': 'Expérience professionnelle',
+  'scholarship_match_recap_boosters': 'Pour plus de précision (facultatif)',
+  'scholarship_match_recap_destinations': 'Pays visés',
+  'scholarship_match_recap_test': 'Score de test',
+  'scholarship_match_recap_improves_precision': 'Améliore la précision',
+  'scholarship_match_recap_missing': 'À compléter',
+  'scholarship_match_recap_edit': 'Modifier',
+  'scholarship_match_recap_fill': 'Compléter',
+  'scholarship_match_recap_edit_a11y': 'Modifier : @field',
+  'scholarship_match_recap_complete_first':
+      'Complète les lignes en rouge pour voir tes bourses.',
+  'scholarship_match_submit': 'C\'est bon, voir mes bourses',
+  'scholarship_match_analysing': 'On analyse @count bourses…',
+  'scholarship_match_analysing_generic': 'On analyse les bourses…',
+  'scholarship_match_still_missing': 'Il manque encore une information.',
+  'scholarship_match_draft_kept': 'Tes réponses sont gardées.',
+  'scholarship_match_load_error_title': 'Le test ne s\'ouvre pas',
+  'scholarship_match_error_offline':
+      'Pas de connexion. Réessaie quand tu es en ligne.',
+  'scholarship_match_error_timeout': 'Le serveur met trop de temps à répondre.',
+  'scholarship_match_error_rate_limited':
+      'Trop d\'essais d\'un coup. Réessaie dans une minute.',
+  'scholarship_match_error_session':
+      'Ta session a expiré. Reconnecte-toi, puis réessaie.',
+  'scholarship_match_error_unavailable':
+      'Le test n\'est pas disponible pour le moment.',
+  'scholarship_match_error_server': 'Le calcul n\'a pas abouti.',
+  'scholarship_match_results_title': 'Tes bourses',
+  'scholarship_match_results_header': 'Tes bourses — @date',
+  'scholarship_match_offline': 'Hors ligne — résultats du @date',
+  'scholarship_match_updating': 'Mise à jour de tes résultats…',
+  'scholarship_match_needs_review':
+      'Tes infos ont changé : vérifie-les pour mettre tes résultats à jour.',
+  'scholarship_match_edit_info': 'Modifier mes infos',
+  'scholarship_match_precision_kpb':
+      'Une bonne partie de ces bourses n\'est pas encore entièrement analysée par KPB : lis leurs conditions officielles avant de postuler.',
+  'scholarship_match_precision_answers':
+      'Il nous manque des infos pour être plus précis : complète tes réponses.',
+  'scholarship_match_empty':
+      'Pas encore de bourse compatible dans notre catalogue.',
+  'scholarship_match_empty_closed_return':
+      'Certaines bourses fermées reviendront à l\'ouverture de leur prochaine session.',
+  'scholarship_match_none_compatible':
+      'Aucune bourse n\'est clairement compatible aujourd\'hui, @count sont à vérifier.',
+  'scholarship_match_none_compatible_one':
+      'Aucune bourse n\'est clairement compatible aujourd\'hui, 1 est à vérifier.',
+  'scholarship_match_fewer': '@count bourses trouvées pour ton profil.',
+  'scholarship_match_fewer_one': '1 bourse trouvée pour ton profil.',
+  'scholarship_match_see_more_title': 'Comment en voir plus',
+  'scholarship_match_see_more_edit': 'Vérifier mes réponses',
+  'scholarship_match_section_compatible': 'Compatibles avec ton profil',
+  'scholarship_match_section_to_verify': 'À vérifier avant de postuler',
+  'scholarship_match_status_compatible': 'Compatible',
+  'scholarship_match_status_to_verify': 'À vérifier',
+  'scholarship_match_status_a11y': 'Statut : @status',
+  'scholarship_match_unavailable': 'Plus disponible',
+  'scholarship_match_new': 'Nouveau',
+  'scholarship_match_window_a11y': 'Candidatures : @window',
+  'scholarship_match_window_closed': 'Clôturée',
+  'scholarship_match_window_suspended': 'Suspendue',
+  'scholarship_match_window_open': 'Ouverte',
+  'scholarship_match_window_open_until': 'Ouverte · clôture le @date',
+  'scholarship_match_window_open_estimated_close':
+      'Ouverte · clôture estimée : @month',
+  'scholarship_match_window_opens_on': 'Ouvre le @date',
+  'scholarship_match_window_estimated_open': 'Ouverture estimée : @month',
+  'scholarship_match_window_estimated_close': 'Clôture estimée : @month',
+  'scholarship_match_official_show': 'Voir la condition officielle',
+  'scholarship_match_official_hide': 'Masquer la condition officielle',
+  'scholarship_match_official_quote_label': 'Texte de l\'organisme :',
+  'scholarship_match_official_source': 'Voir la source',
+  'scholarship_match_case_cta': 'Être accompagné',
+  'scholarship_match_case_title': 'Candidature — @title',
+  'scholarship_match_success_lab_cta': 'Préparer avec Success Lab',
+  'scholarship_match_whatsapp_a11y':
+      'Écrire à un conseiller sur WhatsApp à propos de @title',
+  'scholarship_match_whatsapp_prefill':
+      'Bonjour KPB, le test « Mes bourses » m\'a proposé « @title ». Pouvez-vous m\'aider ?',
+  'scholarship_match_advisor_prefill':
+      'Bonjour KPB, j\'ai fait le test « Mes bourses » et j\'aimerais en parler avec un conseiller.',
+  'scholarship_match_report_prefill':
+      'Bonjour KPB, je pense qu\'il y a une erreur dans le test « Mes bourses » : « @group ».',
+  'scholarship_match_needs_connection': 'Connexion nécessaire',
+  'scholarship_match_excluded_title':
+      'Pourquoi certaines bourses n\'apparaissent pas (@count)',
+  'scholarship_match_excluded_report': 'Signaler une erreur',
+  'scholarship_match_follow_all': 'Suivre les @count compatibles',
+  'scholarship_match_follow_all_one': 'Suivre la bourse compatible',
+  'scholarship_match_follow_all_done':
+      'Tu suis maintenant @count bourses : on te prévient à l\'ouverture et avant la date limite.',
+  'scholarship_match_share': 'Partager mes bourses',
+  'scholarship_match_share_text':
+      'Mes bourses trouvées avec KPB Education :\n@list\n\nFais le test toi aussi : @link',
+  'scholarship_match_redo': 'Refaire le test',
+  'scholarship_match_advisor': 'Parler à un conseiller',
+  'scholarship_match_alerts_title':
+      'Préviens-moi quand une nouvelle bourse compatible arrive',
+  'scholarship_match_alerts_error':
+      'Le réglage n\'a pas été enregistré. Réessaie.',
+  // Accueil, fiche bourse, Profil et notifications (chantier H3).
+  'home_hero_cta_find_scholarships_test': 'Trouve tes bourses (2 min)',
+  'home_match_title': 'Tes bourses',
+  'home_match_see_all': 'Voir mes @count bourses',
+  'home_match_see_all_one': 'Voir ma bourse',
+  'scholarship_match_assessment_title': 'Ton résultat au test',
+  'scholarship_match_assessment_date': 'D\'après ton test du @date',
+  'scholarship_match_assessment_not_in_run':
+      'Cette bourse ne fait pas partie de tes résultats du test.',
+  'scholarship_match_assessment_see_results': 'Voir mes résultats',
+  'profile_quick_scholarship_match': 'Mes bourses compatibles',
+  'scholarship_match_alerts_pref_title':
+      'Nouvelles bourses compatibles (hebdo)',
+  'scholarship_match_alerts_pref_subtitle':
+      'Au plus une notification par semaine, quand une nouvelle bourse compatible avec ton test arrive.',
+  'scholarship_match_disclaimer':
+      'Le test vérifie les conditions principales publiées. La sélection reste décidée par l\'organisme.',
+  'scholarship_match_diff_added': '@count nouvelles',
+  'scholarship_match_diff_added_one': '1 nouvelle',
+  'scholarship_match_diff_removed': '@count retirées',
+  'scholarship_match_diff_removed_one': '1 retirée',
+  'scholarship_match_diploma_none': 'Pas encore le bac',
+  'scholarship_match_diploma_bac': 'Bac',
+  'scholarship_match_diploma_bac_plus_2': 'Bac+2',
+  'scholarship_match_diploma_licence': 'Licence',
+  'scholarship_match_diploma_master': 'Master',
+  'scholarship_match_diploma_doctorat': 'Doctorat',
+  'scholarship_match_target_secondary': 'Lycée international (UWC)',
+  'scholarship_match_target_bachelor': 'Licence',
+  'scholarship_match_target_master': 'Master',
+  'scholarship_match_target_doctorate': 'Doctorat',
+  'scholarship_match_grade_lt10': 'Moins de 10',
+  'scholarship_match_grade_10_12': '10 à 11,9',
+  'scholarship_match_grade_12_14': '12 à 13,9',
+  'scholarship_match_grade_14_16': '14 à 15,9',
+  'scholarship_match_grade_16_plus': '16 ou plus',
+  'scholarship_match_lang_none': 'Aucun',
+  'scholarship_match_lang_a1_a2': 'Débutant',
+  'scholarship_match_lang_b1': 'Je me débrouille (B1)',
+  'scholarship_match_lang_b2': 'À l\'aise (B2)',
+  'scholarship_match_lang_c1_c2': 'Courant',
+  'scholarship_match_exp_none': 'Aucune',
+  'scholarship_match_exp_lt12': 'Moins d\'1 an',
+  'scholarship_match_exp_12_24': '1 à 2 ans',
+  'scholarship_match_exp_24_36': '2 à 3 ans',
+  'scholarship_match_exp_36_60': '3 à 5 ans',
+  'scholarship_match_exp_60_plus': '5 ans ou plus',
+  'scholarship_match_test_ielts': 'IELTS',
+  'scholarship_match_test_toefl_ibt': 'TOEFL iBT',
+  'scholarship_match_test_duolingo': 'Duolingo',
+  'scholarship_match_test_tcf': 'TCF',
+  'scholarship_match_test_tef': 'TEF',
   'followed_title': 'Mes suivis',
   'followed_scholarships_section': 'Bourses suivies',
   'followed_sort_label': 'Trier par',

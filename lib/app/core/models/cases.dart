@@ -102,6 +102,7 @@ class StudentCase {
     this.counsellorId,
     this.scheduledAt,
     this.parentCanView = false,
+    this.scholarshipId,
   });
 
   final String id;
@@ -135,6 +136,17 @@ class StudentCase {
   /// Drives the parent-visibility toggle and what the parent dashboard shows.
   /// Defaults to false — students opt in explicitly, per case.
   final bool parentCanView;
+
+  /// La bourse à laquelle le dossier est lié (« Être accompagné » depuis le
+  /// test « Mes 10 bourses »), ou `null`. Sert à retrouver un dossier déjà
+  /// ouvert pour la même bourse au lieu d'en créer un second.
+  final String? scholarshipId;
+
+  /// Le dossier est-il encore ouvert (ni terminé, ni refusé, ni annulé) ?
+  bool get isOpen =>
+      status != CaseStatus.completed &&
+      status != CaseStatus.rejected &&
+      status != CaseStatus.cancelled;
 
   /// True while the case still carries a client-generated temporary id
   /// (`case-<millis>`). On a successful remote create the backend swaps in the
@@ -176,6 +188,7 @@ class StudentCase {
       counsellorId: counsellorId ?? this.counsellorId,
       scheduledAt: scheduledAt ?? this.scheduledAt,
       parentCanView: parentCanView ?? this.parentCanView,
+      scholarshipId: scholarshipId,
     );
   }
 }

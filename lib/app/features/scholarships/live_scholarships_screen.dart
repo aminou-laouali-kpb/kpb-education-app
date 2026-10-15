@@ -13,6 +13,8 @@ import '../../core/ui/components/kpb_guest_gate.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/ui/shell_chrome.dart';
 import '../../core/utils/whatsapp_utils.dart';
+import '../scholarship_match/scholarship_match_actions.dart';
+import '../scholarship_match/scholarship_match_entry_card.dart';
 import 'scholarship_detail_screen.dart';
 import 'scholarship_guide_info_screen.dart';
 import 'scholarships_controller.dart';
@@ -483,12 +485,17 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                 ),
               ),
 
+              // Le test « Mes 10 bourses » prend la place de la promotion du
+              // guide (drapeau `scholarshipMatch`, élèves seulement) ; carte
+              // cachée, le guide reste ici comme avant.
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                  child: _GuidePromoCard(
-                    onTap: () =>
-                        Get.to(() => const ScholarshipGuideInfoScreen()),
+                  child: ScholarshipMatchEntryCard(
+                    fallback: _GuidePromoCard(
+                      onTap: () =>
+                          Get.to(() => const ScholarshipGuideInfoScreen()),
+                    ),
                   ),
                 ),
               ),
@@ -577,6 +584,23 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                       },
                       childCount: _items.length,
                     ),
+                  ),
+                ),
+                // Carte du test visible : le guide descend sous la première
+                // page de résultats (jamais trois promotions côte à côte).
+                SliverToBoxAdapter(
+                  child: ScholarshipMatchListener(
+                    builder: (context, variant) => variant ==
+                            ScholarshipMatchEntryVariant.hidden
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+                            child: _GuidePromoCard(
+                              onTap: () => Get.to(
+                                () => const ScholarshipGuideInfoScreen(),
+                              ),
+                            ),
+                          ),
                   ),
                 ),
                 if (_scholarshipsController.loadingMore)

@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 
 import '../models/app_models.dart';
+import '../utils/study_level.dart';
 
 /// Snapshot of catalog + profile state needed for search and match scoring.
 class AppSearchContext {
@@ -30,26 +31,24 @@ class AppSearchContext {
 
 /// Search across catalog entities and profile-aware match scoring.
 class AppSearchService {
-  AppSearchService(this._ctx);
+  AppSearchService(this._ctx, {DateTime Function()? clock})
+      : _clock = clock ?? DateTime.now;
 
   final AppSearchContext _ctx;
+
+  /// Horloge injectable : seul [scholarshipsByDeadline] la lit.
+  final DateTime Function() _clock;
 
   String _resolve(LocalizedText text) => text.resolve(_ctx.localeCode);
 
   FieldModel? _fieldByIdOrNull(String id) =>
       _ctx.fields.firstWhereOrNull((item) => item.id == id);
 
-  CountryModel? _countryByIdOrNull(String id) =>
-      _ctx.countries.firstWhereOrNull((item) => item.id == id);
-
   InstitutionModel? _institutionByIdOrNull(String id) =>
       _ctx.institutions.firstWhereOrNull((item) => item.id == id);
 
   ProgramModel? _programByIdOrNull(String id) =>
       _ctx.programs.firstWhereOrNull((item) => item.id == id);
-
-  ScholarshipModel? _scholarshipByIdOrNull(String id) =>
-      _ctx.scholarships.firstWhereOrNull((item) => item.id == id);
 
   List<SearchResult> run(String query) {
     final q = query.trim().toLowerCase();
@@ -272,70 +271,92 @@ class AppSearchService {
           reasons.add('match_target_country'.tr);
         }
       case SearchResultType.scholarship:
-        final s = _scholarshipByIdOrNull(id);
-        if (s == null) break;
-        if (p.targetCountryIds.contains(s.countryId)) {
-          final country = _countryByIdOrNull(s.countryId);
-          if (country != null) {
-            reasons.add(
-                '${'match_target_country'.tr} : ${_resolve(country.name)}');
-          } else {
-            reasons.add('match_target_country'.tr);
-          }
-        }
-        if (p.fieldIds.any((fid) => s.relatedFieldIds.contains(fid))) {
-          reasons.add('match_field_match'.tr);
-        }
-        if (p.wantsScholarshipSupport) {
-          reasons.add('match_scholarship_interest'.tr);
-        }
+        // Aucune explication de « match » pour une bourse : le client ne
+        // calcule plus de palier de compatibilité (voir
+        // [scholarshipsByDeadline]). Les raisons d'éligibilité viennent du
+        // serveur, avec le test « Mes 10 bourses ».
+        break;
     }
     if (reasons.isEmpty) reasons.add('match_general'.tr);
     return reasons;
   }
 
+  /// Les bourses de l'accueil, dans un ordre NEUTRE et vérifiable — aucun
+  /// score, aucun palier de compatibilité.
+  ///
+  /// ## Pourquoi plus de score
+  ///
+  /// L'ancienne formule `_matchScholarship` partait du `baseMatch` éditorial
+  /// (78 pour certaines fiches), ajoutait des points pour le pays visé, le
+  /// domaine, la tranche de notes et l'envie de bourse, puis plafonnait à 98.
+  /// Elle ne lisait AUCUNE condition d'éligibilité : une bourse réservée à une
+  /// autre nationalité ou à un autre niveau sortait « Très bon match » sur
+  /// l'accueil et dans la Recherche, parce que 78 franchit à lui seul le seuil
+  /// de 70. C'est le serveur (« Mes 10 bourses ») qui vérifie les conditions
+  /// publiées ; le client ne prétend plus le faire.
+  ///
+  /// ## L'ordre retenu, et ce qu'il affirme
+  ///
+  ///  1. une bourse dont la clôture CONFIRMÉE est passée (copie hors ligne
+  ///     périmée) n'est pas proposée ;
+  ///  2. filtre simple sur le niveau visé, SEULEMENT quand les deux niveaux
+  ///     sont connus : une fiche dont le libellé ne cite aucun niveau reconnu
+  ///     reste visible (« inconnu » n'est jamais une exclusion) ;
+  ///  3. clôture confirmée d'abord, la plus proche en tête ; puis les clôtures
+  ///     estimées, puis les fiches sans date ; à égalité, l'ordre alphabétique.
+  ///
+  /// Chaque critère se lit sur la fiche elle-même : l'ordre ne dit rien du
+  /// profil au-delà du niveau visé, et l'écran ne doit pas dire le contraire.
+  ///
+  /// Un ÉLÈVE qui a un run « Mes 10 bourses » voit à l'accueil les cartes de
+  /// ce run (`_HomeScholarshipsSection`) ; cette liste reste la source des
+  /// parents, des invités, de tous tant que le test est fermé, et TOUJOURS de
+  /// la carte « Deadline urgente ».
+  ///
   /// Memoized for the lifetime of this service (one controller state).
-  late final List<ScholarshipModel> recommendedScholarships =
-      _computeRecommendedScholarships();
+  late final List<ScholarshipModel> scholarshipsByDeadline =
+      _computeScholarshipsByDeadline();
 
-  List<ScholarshipModel> _computeRecommendedScholarships() {
-    final activeProfile = _ctx.profile;
-    if (activeProfile == null) return _ctx.scholarships.take(4).toList();
+  List<ScholarshipModel> _computeScholarshipsByDeadline() {
+    final now = _clock();
+    final targetLevels =
+        scholarshipStudyLevelsInText(_ctx.profile?.targetLevel);
 
-    final sorted = _ctx.scholarships
-        .map((scholarship) =>
-            MapEntry(scholarship, _matchScholarship(scholarship)))
+    bool levelAllows(ScholarshipModel scholarship) {
+      if (targetLevels.isEmpty) return true;
+      final offered = {
+        ...scholarshipStudyLevelsInText(scholarship.levelEligible.fr),
+        ...scholarshipStudyLevelsInText(scholarship.levelEligible.en),
+      };
+      return offered.isEmpty || offered.any(targetLevels.contains);
+    }
+
+    // 0 = clôture confirmée à venir, 1 = clôture estimée, 2 = sans date.
+    int bucket(ScholarshipModel scholarship) {
+      if (scholarship.deadlineAt == null) return 2;
+      return scholarship.deadlineIsEstimated ? 1 : 0;
+    }
+
+    final kept = _ctx.scholarships
+        .where((s) =>
+            s.windowStatus(now: now) != ScholarshipWindowStatus.closed &&
+            levelAllows(s))
         .toList()
-      ..sort((left, right) => right.value.compareTo(left.value));
-
-    return sorted.take(6).map((entry) => entry.key).toList();
-  }
-
-  int scholarshipMatch(ScholarshipModel scholarship) =>
-      _matchScholarship(scholarship);
-
-  int _matchScholarship(ScholarshipModel scholarship) {
-    final activeProfile = _ctx.profile;
-    if (activeProfile == null) return scholarship.baseMatch;
-
-    var score = scholarship.baseMatch;
-    if (activeProfile.targetCountryIds.contains(scholarship.countryId)) {
-      score += 20;
-    }
-    if (activeProfile.fieldIds
-        .any((fieldId) => scholarship.relatedFieldIds.contains(fieldId))) {
-      score += 15;
-    }
-
-    final grade = activeProfile.gradeRange ?? '';
-    if (grade.contains('15') || grade.contains('16') || grade.contains('17')) {
-      score += 25;
-    } else if (grade.contains('13') || grade.contains('14')) {
-      score += 10;
-    }
-
-    if (activeProfile.wantsScholarshipSupport) score += 10;
-
-    return min(score, 98);
+      ..sort((left, right) {
+        final byBucket = bucket(left).compareTo(bucket(right));
+        if (byBucket != 0) return byBucket;
+        final leftClose = left.deadlineAt;
+        final rightClose = right.deadlineAt;
+        if (leftClose != null && rightClose != null) {
+          final byDate = leftClose.compareTo(rightClose);
+          if (byDate != 0) return byDate;
+        }
+        final byName = _resolve(left.name)
+            .toLowerCase()
+            .compareTo(_resolve(right.name).toLowerCase());
+        if (byName != 0) return byName;
+        return left.id.compareTo(right.id);
+      });
+    return List<ScholarshipModel>.unmodifiable(kept);
   }
 }

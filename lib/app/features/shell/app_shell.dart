@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,6 +15,7 @@ import '../../core/ui/shell_chrome.dart';
 import '../cases/cases_screen.dart';
 import '../home/home_screen.dart';
 import '../profile/profile_screen.dart';
+import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarships/live_scholarships_screen.dart';
 import '../universities/universities_screen.dart';
 import '../ai_advisor/coach_fab.dart';
@@ -42,6 +45,15 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     KpbToolsDrawer.registerShell(_shellKey);
+    // Une intention laissée en invité (« Faire le test ») s'ouvre au premier
+    // rendu de l'accueil d'un élève connecté — après l'onboarding ou
+    // « Passer », jamais pendant l'écran des premiers résultats.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !Get.isRegistered<AppController>()) return;
+      unawaited(
+        consumeScholarshipMatchPendingIntent(Get.find<AppController>()),
+      );
+    });
   }
 
   @override

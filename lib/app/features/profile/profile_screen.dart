@@ -31,6 +31,8 @@ import '../housing/housing_estimator_screen.dart';
 import '../parent/parent_dashboard_screen.dart';
 import '../parent/parent_surface_screen.dart';
 import '../saved/saved_screen.dart';
+import '../scholarship_match/scholarship_match_actions.dart';
+import '../scholarship_match/scholarship_match_results_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
 import '../services/service_packages_screen.dart';

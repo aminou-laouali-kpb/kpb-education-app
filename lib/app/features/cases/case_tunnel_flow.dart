@@ -87,6 +87,7 @@ class CaseTunnelPrefill {
     this.countryId,
     this.institutionId,
     this.programId,
+    this.scholarshipId,
   });
 
   final String title;
@@ -95,6 +96,9 @@ class CaseTunnelPrefill {
   final String? countryId;
   final String? institutionId;
   final String? programId;
+
+  /// La bourse liée (« Être accompagné » du test « Mes 10 bourses »).
+  final String? scholarshipId;
 }
 
 class CaseTunnelFlow extends StatefulWidget {
@@ -199,6 +203,7 @@ class _CaseTunnelFlowState extends State<CaseTunnelFlow> {
         description: descriptionParts.join('\n\n'),
         contextLabel: widget.prefill.contextLabel,
         contactMethod: _contactMethod,
+        scholarshipId: widget.prefill.scholarshipId,
       );
       widget.onSubmitted?.call();
     } on StateError {

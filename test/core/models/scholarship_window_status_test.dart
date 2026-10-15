@@ -1,6 +1,12 @@
+// La fenêtre de candidature d'une bourse du catalogue (`windowStatus`).
+//
+// Ces cas vivaient dans le test de l'ancien questionnaire « Suis-je
+// éligible ? » (ScholarshipEligibilityScreen, supprimé au chantier H3 : le
+// bloc d'évaluation « Mes 10 bourses » de la fiche le remplace). Ils testent
+// le modèle, pas l'écran : ils restent.
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:karatou/app/core/models/app_models.dart';
-import 'package:karatou/app/features/scholarships/scholarship_eligibility_screen.dart';
 
 ScholarshipModel _scholarship({DateTime? deadlineAt}) => ScholarshipModel(
       id: 's',
@@ -16,47 +22,6 @@ ScholarshipModel _scholarship({DateTime? deadlineAt}) => ScholarshipModel(
     );
 
 void main() {
-  group('computeScholarshipEligibility', () {
-    test('all yes → eligible', () {
-      expect(
-        computeScholarshipEligibility(
-            [CriterionAnswer.yes, CriterionAnswer.yes, CriterionAnswer.yes]),
-        ScholarshipEligibilityVerdict.eligible,
-      );
-    });
-
-    test('any no → unlikely (a stated criterion is not met)', () {
-      expect(
-        computeScholarshipEligibility(
-            [CriterionAnswer.yes, CriterionAnswer.no, CriterionAnswer.yes]),
-        ScholarshipEligibilityVerdict.unlikely,
-      );
-    });
-
-    test('some maybe but no "no" → conditional', () {
-      expect(
-        computeScholarshipEligibility(
-            [CriterionAnswer.yes, CriterionAnswer.maybe]),
-        ScholarshipEligibilityVerdict.conditional,
-      );
-    });
-
-    test('a "no" overrides any "maybe" → unlikely', () {
-      expect(
-        computeScholarshipEligibility(
-            [CriterionAnswer.maybe, CriterionAnswer.no]),
-        ScholarshipEligibilityVerdict.unlikely,
-      );
-    });
-
-    test('empty answers → conditional (cannot confirm)', () {
-      expect(
-        computeScholarshipEligibility(const []),
-        ScholarshipEligibilityVerdict.conditional,
-      );
-    });
-  });
-
   group('ScholarshipModel.windowStatus', () {
     final now = DateTime(2026, 6, 20);
 

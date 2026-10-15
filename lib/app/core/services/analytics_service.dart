@@ -370,6 +370,178 @@ class AnalyticsService {
     }
   }
 
+  // ── Test « Mes 10 bourses » (chantier H) ───────────────────────────────────
+
+  /// Les SEULES clés que les événements `scholarship_match_*` peuvent porter.
+  /// Toute autre clé est retirée avant l'envoi : la nationalité, l'âge, la
+  /// date de naissance, la moyenne et le niveau de langue ne peuvent donc pas
+  /// partir, même par erreur d'un appelant.
+  @visibleForTesting
+  static const scholarshipMatchAllowedParams = <String>{
+    AnalyticsParamKey.source,
+    AnalyticsParamKey.missingCount,
+    AnalyticsParamKey.isRerun,
+    AnalyticsParamKey.matchStep,
+    AnalyticsParamKey.index,
+    AnalyticsParamKey.total,
+    AnalyticsParamKey.changedPrefill,
+    AnalyticsParamKey.lastStep,
+    AnalyticsParamKey.eligibleCount,
+    AnalyticsParamKey.toVerifyCount,
+    AnalyticsParamKey.excludedCount,
+    AnalyticsParamKey.durationS,
+    AnalyticsParamKey.algorithmVersion,
+    AnalyticsParamKey.reason,
+    AnalyticsParamKey.itemId,
+    AnalyticsParamKey.rank,
+    AnalyticsParamKey.status,
+    AnalyticsParamKey.bulk,
+    AnalyticsParamKey.reusedExisting,
+    AnalyticsParamKey.suggestion,
+    AnalyticsParamKey.enabled,
+  };
+
+  /// Les paramètres réellement envoyés : clés autorisées seulement, booléens
+  /// en 0/1 (Firebase n'accepte que String ou num), textes bornés à 100.
+  @visibleForTesting
+  static Map<String, Object> scholarshipMatchParams(
+    Map<String, Object?> raw,
+  ) {
+    final out = <String, Object>{};
+    raw.forEach((key, value) {
+      if (!scholarshipMatchAllowedParams.contains(key) || value == null) {
+        return;
+      }
+      if (value is bool) {
+        out[key] = value ? 1 : 0;
+      } else if (value is num) {
+        out[key] = value;
+      } else {
+        final text = value.toString();
+        out[key] = text.length > 100 ? text.substring(0, 100) : text;
+      }
+    });
+    return out;
+  }
+
+  Future<void> _logScholarshipMatch(
+    String name,
+    Map<String, Object?> raw,
+  ) async {
+    final params = scholarshipMatchParams(raw);
+    try {
+      await _logEvent(name, params);
+      _mirror(name, params);
+    } catch (e, s) {
+      _logError(name, e, s);
+    }
+  }
+
+  Future<void> logScholarshipMatchEntryViewed({required String source}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchEntryViewed,
+          {AnalyticsParamKey.source: source});
+
+  Future<void> logScholarshipMatchStarted({
+    required String source,
+    required int missingCount,
+    required bool isRerun,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchStarted, {
+        AnalyticsParamKey.source: source,
+        AnalyticsParamKey.missingCount: missingCount,
+        AnalyticsParamKey.isRerun: isRerun,
+      });
+
+  Future<void> logScholarshipMatchStepViewed({
+    required String step,
+    required int index,
+    required int total,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchStepViewed, {
+        AnalyticsParamKey.matchStep: step,
+        AnalyticsParamKey.index: index,
+        AnalyticsParamKey.total: total,
+      });
+
+  Future<void> logScholarshipMatchStepCompleted({
+    required String step,
+    required bool changedPrefill,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchStepCompleted, {
+        AnalyticsParamKey.matchStep: step,
+        AnalyticsParamKey.changedPrefill: changedPrefill,
+      });
+
+  Future<void> logScholarshipMatchAbandoned({required String lastStep}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchAbandoned,
+          {AnalyticsParamKey.lastStep: lastStep});
+
+  Future<void> logScholarshipMatchCompleted({
+    required int eligibleCount,
+    required int toVerifyCount,
+    required int excludedCount,
+    required int durationS,
+    required String algorithmVersion,
+    required bool isRerun,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchCompleted, {
+        AnalyticsParamKey.eligibleCount: eligibleCount,
+        AnalyticsParamKey.toVerifyCount: toVerifyCount,
+        AnalyticsParamKey.excludedCount: excludedCount,
+        AnalyticsParamKey.durationS: durationS,
+        AnalyticsParamKey.algorithmVersion: algorithmVersion,
+        AnalyticsParamKey.isRerun: isRerun,
+      });
+
+  Future<void> logScholarshipMatchFailed({required String reason}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchFailed,
+          {AnalyticsParamKey.reason: reason});
+
+  Future<void> logScholarshipMatchResultOpened({
+    required String itemId,
+    required int rank,
+    required String status,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchResultOpened, {
+        AnalyticsParamKey.itemId: itemId,
+        AnalyticsParamKey.rank: rank,
+        AnalyticsParamKey.status: status,
+      });
+
+  Future<void> logScholarshipMatchFollow({
+    required String itemId,
+    required int rank,
+    required bool bulk,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchFollow, {
+        AnalyticsParamKey.itemId: itemId,
+        AnalyticsParamKey.rank: rank,
+        AnalyticsParamKey.bulk: bulk,
+      });
+
+  Future<void> logScholarshipMatchCaseStarted({
+    required String itemId,
+    required int rank,
+    required bool reusedExisting,
+  }) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchCaseStarted, {
+        AnalyticsParamKey.itemId: itemId,
+        AnalyticsParamKey.rank: rank,
+        AnalyticsParamKey.reusedExisting: reusedExisting,
+      });
+
+  Future<void> logScholarshipMatchBroadenTapped({required String suggestion}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchBroadenTapped,
+          {AnalyticsParamKey.suggestion: suggestion});
+
+  Future<void> logScholarshipMatchRerun({required String reason}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchRerun,
+          {AnalyticsParamKey.reason: reason});
+
+  Future<void> logScholarshipMatchAlertsToggled({required bool enabled}) =>
+      _logScholarshipMatch(AnalyticsEventName.scholarshipMatchAlertsToggled,
+          {AnalyticsParamKey.enabled: enabled});
+
   // ── Daily scholarship (KPB-162) ─────────────────────────────────────────────
 
   Future<void> logDailyScholarshipViewed(String scholarshipId) async {

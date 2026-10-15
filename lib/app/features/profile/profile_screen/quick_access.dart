@@ -31,6 +31,19 @@ class _QuickAccessCard extends StatelessWidget {
           KpbColors.actionPrimary,
           'profile_quick_orientation_test'.tr,
           () => Get.to(() => const OrientationScreen()));
+      // Test « Mes 10 bourses » : élèves seulement, drapeau ouvert (sans run,
+      // l'écran des résultats propose de faire le test).
+      if (scholarshipMatchEntryVariant(controller) !=
+          ScholarshipMatchEntryVariant.hidden) {
+        add(
+            Icons.emoji_events_outlined,
+            KpbColors.actionPrimary,
+            'profile_quick_scholarship_match'.tr,
+            () => Get.to(
+                () => const ScholarshipMatchResultsScreen(source: 'profile')));
+      }
+      // Le simulateur d'éligibilité juge des PAYS d'études (budget, langue,
+      // niveau), pas une bourse : il reste à côté du test.
       add(
           Icons.fact_check_outlined,
           KpbColors.warning,

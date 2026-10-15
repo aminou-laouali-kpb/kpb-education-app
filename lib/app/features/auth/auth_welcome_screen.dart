@@ -132,8 +132,11 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
+                      // Une icône « % » annonçait un pourcentage de
+                      // compatibilité que l'app n'affiche pas (et ne doit pas
+                      // afficher) : les formations sont CLASSÉES, rien de plus.
                       _BenefitRow(
-                        icon: Icons.percent_rounded,
+                        icon: Icons.sort_rounded,
                         label: 'auth_intelligence_benefit_fit'.tr,
                       ),
                       const SizedBox(height: 17),

@@ -126,7 +126,40 @@ class _HeroCard extends StatelessWidget {
                         height: 1.4,
                       ),
                     ),
-                    if (!controller.isStudent) ...[
+                    if (controller.isGuestMode) ...[
+                      // L'invité est, dans l'immense majorité, un ÉTUDIANT qui
+                      // découvre l'app : « Devenir partenaire » lui parlait à
+                      // côté. L'accès partenaire reste au choix du type de
+                      // compte, à l'inscription.
+                      //
+                      // Test « Mes 10 bourses » OUVERT (drapeau serveur
+                      // `features.scholarshipMatch`) : « Trouve tes bourses
+                      // (2 min) » garde l'intention 24 h et passe par
+                      // l'inscription ; l'élève arrive sur le test à son
+                      // premier accueil. FERMÉ : libellé sans durée, vers
+                      // l'onglet Bourses, dont le mur invité
+                      // (`scholarships_gate`) fait créer le compte.
+                      const SizedBox(height: 16),
+                      ListenableBuilder(
+                        listenable: RemoteFeatureFlags.instance.flagsVersion,
+                        builder: (context, _) {
+                          final testOpen = RemoteFeatureFlags
+                              .instance.scholarshipMatchEnabled;
+                          return _HeroCta(
+                            key: const ValueKey<String>('home-hero-guest-cta'),
+                            label: testOpen
+                                ? 'home_hero_cta_find_scholarships_test'.tr
+                                : 'home_hero_cta_find_scholarships'.tr,
+                            onTap: testOpen
+                                ? () => unawaited(startScholarshipMatchAsGuest(
+                                      source: 'home_hero_scholarship_match',
+                                    ))
+                                : () => controller
+                                    .goToTab(StudentShellTab.scholarships),
+                          );
+                        },
+                      ),
+                    ] else if (!controller.isStudent) ...[
                       const SizedBox(height: 16),
                       _HeroCta(
                         label: controller.isParent
@@ -251,7 +284,7 @@ class _AnimatedRing extends StatelessWidget {
 }
 
 class _HeroCta extends StatelessWidget {
-  const _HeroCta({required this.label, required this.onTap});
+  const _HeroCta({super.key, required this.label, required this.onTap});
   final String label;
   final VoidCallback onTap;
 

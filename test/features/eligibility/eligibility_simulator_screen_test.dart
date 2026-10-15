@@ -59,6 +59,11 @@ void main() {
       // results section rendered.
       expect(find.textContaining('France'), findsWidgets);
       expect(find.text('eligibility_export_pdf'), findsOneWidget);
+
+      // Chantier H2 : le verdict, jamais un pourcentage. Le score est une
+      // somme de points budget/langue/niveau ; « 🟢 80 % » se lisait comme des
+      // chances.
+      expect(find.textContaining('%'), findsNothing);
     });
   });
 }

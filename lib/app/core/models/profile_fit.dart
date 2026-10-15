@@ -1,7 +1,11 @@
 part of 'app_models.dart';
 
-/// How well a school, programme or scholarship lines up with the student's
+/// How well a school, programme or field of study lines up with the student's
 /// declared profile (field, target countries, level…).
+///
+/// Jamais pour une BOURSE : le palier y venait d'un score client qui partait du
+/// `baseMatch` éditorial et ne lisait aucune condition d'éligibilité. Seul le
+/// test serveur « Mes 10 bourses » dit qu'une bourse est compatible.
 ///
 /// Conformité marque : jamais de pourcentage ni de « chances d'admission ».
 /// Le score interne reste un outil de TRI ; seul ce palier qualitatif est

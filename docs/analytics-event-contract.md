@@ -110,6 +110,39 @@ Split by `item_type` too: a video that stalls at 20 % and an interview read to t
 end are different problems. A drop in `feed` completion while `library` holds
 steady points at the feed itself, not at the content.
 
+## Test « Mes 10 bourses » (chantier H)
+
+Derrière `features.scholarshipMatch` (fermé par défaut). Constantes :
+`AnalyticsEventName.scholarshipMatch*` ; méthodes : `AnalyticsService.logScholarshipMatch*`.
+Les propriétés passent par une LISTE FERMÉE (`AnalyticsService.scholarshipMatchAllowedParams`) :
+toute autre clé est retirée avant l'envoi. **Jamais** la nationalité, l'âge, la date de
+naissance, la moyenne ni le niveau de langue — ni ici, ni dans le push (l'enregistrement
+d'appareil ne porte que le jeton et la plateforme). Booléens envoyés en `0`/`1`.
+
+| Event | Parameters | Purpose |
+|-------|------------|---------|
+| `scholarship_match_entry_viewed` | `source` (`scholarships_tab`, `home`, `scholarship_detail`) | La carte d'entrée a été vue (une fois par source et par lancement) |
+| `scholarship_match_started` | `source`, `missing_count` (questions posées), `is_rerun` | L'assistant démarre (pas à la reprise d'un brouillon) |
+| `scholarship_match_step_viewed` | `match_step`, `index`, `total` | Une question (ou l'accueil / le récapitulatif) s'affiche |
+| `scholarship_match_step_completed` | `match_step`, `changed_prefill` | « Continuer » sur une question ; `changed_prefill` = l'élève a changé la suggestion (sans la valeur) |
+| `scholarship_match_abandoned` | `last_step` | L'assistant est quitté sans run (le brouillon reste) |
+| `scholarship_match_completed` | `eligible_count`, `to_verify_count`, `excluded_count`, `duration_s`, `algorithm_version`, `is_rerun` | Run calculé depuis l'assistant |
+| `scholarship_match_failed` | `reason` (`offline`, `timeout`, `rate_limited`, `unauthorized`, `forbidden`, `disabled`, `server`, `invalid`, `profile_incomplete`) | Échec d'un run — sans lui, une panne se lirait comme un abandon |
+| `scholarship_match_result_opened` | `item_id`, `rank`, `status` (`eligible`/`to_verify`) | Une bourse du run ouverte (écran des résultats ou cartes « Tes bourses » de l'accueil) |
+| `scholarship_match_follow` | `item_id`, `rank`, `bulk` | « Suivre » sur un résultat, ou « Suivre les N compatibles » (`bulk` = 1, un événement par bourse) |
+| `scholarship_match_case_started` | `item_id`, `rank`, `reused_existing` | « Être accompagné » : dossier existant rouvert (1) ou compositeur ouvert (0) |
+| `scholarship_match_broaden_tapped` | `suggestion` (`edit_answers`, `advisor`) | « Comment en voir plus » (moins de 10 résultats) |
+| `scholarship_match_rerun` | `reason` (`stale`, `manual`) | Run périmé relancé à l'ouverture des résultats, ou « Mettre à jour » |
+| `scholarship_match_alerts_toggled` | `enabled` | Opt-in explicite au push hebdomadaire « nouvelles bourses compatibles » (PUT confirmé), depuis les résultats ou les réglages de notification |
+
+`match_step` et `last_step` sont des identifiants fermés (`intro`, `nationality`,
+`birth_date`, `guardian`, `diploma`, `target_level`, `fields`, `grade`, `language`,
+`work_experience`, `recap`, `residence`) — `match_step` et non `step`, qui est un entier
+pour l'onboarding. Réutilisés : `guest_to_signup` (`source` = `scholarship_match_gate`, ou
+`home_hero_scholarship_match` pour « Trouve tes bourses (2 min) » du héros invité) et
+`whatsapp_handoff` (`source` = `scholarship_match_card`, `scholarship_match_results`,
+`scholarship_match_broaden`, `scholarship_match_report` ; `context_type` = `scholarship_match`).
+
 ## Espace « Études en France » (Phase 0 — vitrine)
 
 | Event | Parameters | Purpose |

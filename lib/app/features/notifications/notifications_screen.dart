@@ -9,10 +9,14 @@ import '../../core/models/app_models.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/services/notification_router.dart';
 import '../../core/services/push_permission.dart';
+import '../../core/services/analytics_service.dart';
 import '../../core/services/remote_feature_flags.dart';
+import '../../core/services/scholarship_match_store.dart';
 import '../../core/ui/components/kpb_async_view.dart';
 import '../../core/ui/components/kpb_refresh.dart';
+import '../../core/ui/components/kpb_toast.dart';
 import '../../core/ui/skeleton.dart';
+import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarships/widgets/follow_push_primer.dart';
 import '../cases/case_detail_screen.dart';
 import '../cases/case_timeline_definition.dart';
@@ -278,12 +282,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// L'autorisation réelle des notifications sur ce téléphone.
   PushPermissionStatus _pushStatus = PushPermissionStatus.unavailable;
 
+  /// « Nouvelles bourses compatibles » : le choix posé ici, en attendant que
+  /// `PUT /scholarships/match/alerts` le confirme.
+  bool? _matchAlertsOverride;
+  bool _matchAlertsSaving = false;
+
   @override
   void initState() {
     super.initState();
     _apiClient = Get.find<AppController>().apiClient;
     unawaited(_loadStored());
     unawaited(_refreshPushStatus());
+    unawaited(_loadMatchState());
     // Le badge serveur prouve aussi que le backend sert les routes du suivi :
     // c'est ce qui allume la ligne « Bourses que je suis : ouverture ».
     unawaited(
@@ -297,6 +307,74 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _refreshPushStatus(),
       Get.find<AppController>().refreshServerUnreadCount(force: true),
     ]);
+  }
+
+  /// L'état du test « Mes 10 bourses » porte l'opt-in hebdomadaire. Rien
+  /// n'est demandé quand le test est fermé (drapeau, parent, invité).
+  Future<void> _loadMatchState() async {
+    final app = Get.find<AppController>();
+    final variant = scholarshipMatchEntryVariant(app);
+    if (variant == ScholarshipMatchEntryVariant.hidden ||
+        variant == ScholarshipMatchEntryVariant.guest) {
+      return;
+    }
+    await ScholarshipMatchStore.instance.loadState(
+      client: app.apiClient,
+      userId: scholarshipMatchUserId(app),
+      lang: scholarshipMatchLang(app),
+    );
+  }
+
+  Future<void> _setMatchAlerts(bool enabled) async {
+    if (_matchAlertsSaving) return;
+    final store = ScholarshipMatchStore.instance;
+    final previous = store.alertsOptIn;
+    setState(() {
+      _matchAlertsOverride = enabled;
+      _matchAlertsSaving = true;
+    });
+    final confirmed = await store.setAlerts(
+      client: _apiClient,
+      enabled: enabled,
+    );
+    if (!mounted) return;
+    setState(() {
+      _matchAlertsSaving = false;
+      _matchAlertsOverride = confirmed ?? previous;
+    });
+    if (confirmed == null) {
+      KpbToast.error('scholarship_match_alerts_error'.tr, context: context);
+    } else {
+      unawaited(AnalyticsService.instance
+          .logScholarshipMatchAlertsToggled(enabled: confirmed));
+    }
+  }
+
+  /// Opt-in EXPLICITE (éteint tant que l'élève ne l'allume pas), porté par le
+  /// serveur du test — pas un `NotificationOptOutType`. Visible seulement
+  /// quand le test est ouvert pour cet élève et que son état est connu.
+  Widget _matchAlertsRow() {
+    return ScholarshipMatchListener(
+      builder: (context, variant) {
+        final store = ScholarshipMatchStore.instance;
+        if (variant == ScholarshipMatchEntryVariant.hidden ||
+            variant == ScholarshipMatchEntryVariant.guest ||
+            store.state == null) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          key: const ValueKey<String>('notif-pref-scholarship-match'),
+          padding: const EdgeInsets.only(top: 12),
+          child: _prefToggleRow(
+            icon: Icons.emoji_events_rounded,
+            titleKey: 'scholarship_match_alerts_pref_title',
+            subtitleKey: 'scholarship_match_alerts_pref_subtitle',
+            receive: _matchAlertsOverride ?? store.alertsOptIn,
+            onReceiveChanged: (value) => unawaited(_setMatchAlerts(value)),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _refreshPushStatus() async {
@@ -869,6 +947,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   subtitleKey: 'followed_scholarship_pref_subtitle',
                 ),
               ],
+              _matchAlertsRow(),
               const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
