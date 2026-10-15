@@ -64,6 +64,15 @@
  *    pointant vers une source qu'il n'a pas vue. Les quatre champs vont donc
  *    ensemble. La règle est monotone : on n'avance jamais dans le passé.
  *
+ * 5. **Une éligibilité structurée relue en base** (chantier D, catalogue
+ *    1.5.0). `eligibleLevels`, `fieldsScope`, `eligibilityCriteria`,
+ *    `eligibilityStructuredAt` et `eligibilityStructuredBy` forment un bloc :
+ *    l'admin les écrit ensemble et tamponne. Un tampon en base plus récent que
+ *    celui du dépôt n'est JAMAIS écrasé, et un brouillon du dépôt (tampon nul)
+ *    ne remplace jamais des critères tamponnés : seul un tampon de relecture du
+ *    dépôt au moins aussi récent les remplace. Sans tampon en base (brouillon
+ *    ou reprise des tags), le dépôt fait foi, comme pour le texte.
+ *
  * ## Les étapes de candidature ne sont jamais supprimées
  *
  * `ScholarshipWorkspaceStep.sourceStepId` pointe vers `ScholarshipApplicationStep`
@@ -121,6 +130,23 @@ export const VERIFICATION_PROVENANCE_FIELDS = [
   'verifiedById',
   'verifiedByName',
   'sourceUrl',
+] as const;
+
+/**
+ * L'éligibilité structurée, qui se déplace d'un bloc et dont le tampon
+ * (`eligibilityStructuredAt`) n'avance jamais dans le passé. Voir la règle 5
+ * de l'en-tête.
+ *
+ * `eligibleLevels` en fait partie : un éditeur qui corrige les niveaux dans
+ * l'admin tamponne la même relecture, et le moteur n'exclut sur le niveau que
+ * sous ce tampon.
+ */
+export const ELIGIBILITY_PROVENANCE_FIELDS = [
+  'eligibleLevels',
+  'fieldsScope',
+  'eligibilityCriteria',
+  'eligibilityStructuredAt',
+  'eligibilityStructuredBy',
 ] as const;
 
 export type DriftScope = 'scholarship' | 'cycle' | 'step';
@@ -203,10 +229,24 @@ function toComparable(value: unknown): unknown {
   return value;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    !(value instanceof Date)
+  );
+}
+
 /**
  * `undefined` et `null` sont le même vide, une `Date` et son ISO le même
  * instant, et deux tableaux sont égaux à l'ordre près de rien du tout : l'ordre
  * des avantages ou des prérequis est éditorial, donc significatif.
+ *
+ * Deux objets JSON (les critères d'éligibilité) sont égaux clé par clé, à
+ * l'ordre des CLÉS près : PostgreSQL range les clés d'un `jsonb` à sa façon, et
+ * une clé absente vaut une clé `undefined`. Sans cela, chaque passage verrait
+ * les 36 fiches « divergentes » et les réécrirait.
  */
 export function sameValue(a: unknown, b: unknown): boolean {
   const left = toComparable(a);
@@ -218,6 +258,11 @@ export function sameValue(a: unknown, b: unknown): boolean {
       left.every((item, index) => sameValue(item, right[index]))
     );
   }
+  if (isPlainObject(left) || isPlainObject(right)) {
+    if (!isPlainObject(left) || !isPlainObject(right)) return false;
+    const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+    return [...keys].every((key) => sameValue(left[key], right[key]));
+  }
   return left === right;
 }
 
@@ -227,7 +272,9 @@ export function renderValue(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   const text = Array.isArray(value)
     ? `[${value.map((item) => renderValue(item)).join(', ')}]`
-    : String(value);
+    : isPlainObject(value)
+      ? JSON.stringify(value)
+      : String(value);
   return text.length > 120 ? `${text.slice(0, 117)}…` : text;
 }
 
@@ -285,6 +332,19 @@ export function planScholarshipReconciliation(
     ) ?? null;
   const cycleIsAdminOwned = dbCycle?.activatedAt != null;
 
+  // Le bloc d'éligibilité : décidé UNE fois, appliqué à ses cinq champs.
+  const eligibilityKeptReason = (() => {
+    const inDb = asDate(row.eligibilityStructuredAt);
+    if (!inDb) return undefined;
+    if (created.eligibilityStructuredAt == null) {
+      return `critères relus en base le ${renderValue(inDb)} — un brouillon du dépôt ne les remplace pas`;
+    }
+    if (!catalogStampIsNotOlder(inDb, created.eligibilityStructuredAt)) {
+      return 'structuration relue en base plus récente que celle du catalogue';
+    }
+    return undefined;
+  })();
+
   const push = (
     scope: DriftScope,
     field: string,
@@ -321,6 +381,14 @@ export function planScholarshipReconciliation(
     }
 
     if (sameValue(row[field], wanted)) continue;
+
+    if (
+      eligibilityKeptReason !== undefined &&
+      (ELIGIBILITY_PROVENANCE_FIELDS as readonly string[]).includes(field)
+    ) {
+      push('scholarship', field, row[field], wanted, eligibilityKeptReason);
+      continue;
+    }
 
     if (
       cycleIsAdminOwned &&

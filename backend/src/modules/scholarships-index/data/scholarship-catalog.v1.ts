@@ -1,4 +1,5 @@
 import type { VersionedScholarshipCatalog } from './scholarship-catalog.types';
+import { attachStructuredEligibility } from './scholarship-catalog.eligibility.v1';
 import { VERIFIED_ADDITIONAL_MASTER_RECORDS_V1 } from './scholarship-catalog.records.additional-master.v1';
 import { VERIFIED_AFRICA_BACHELOR_RECORDS_V1 } from './scholarship-catalog.records.africa-bachelor.v1';
 import { VERIFIED_BACHELOR_RECORDS_V1 } from './scholarship-catalog.records.bachelor.v1';
@@ -17,7 +18,11 @@ import { VERIFIED_SCHOLARSHIP_RECORDS_V1 } from './scholarship-catalog.records.v
  */
 export const SCHOLARSHIP_CATALOG_V1: VersionedScholarshipCatalog = {
   schemaVersion: 1,
-  catalogVersion: '1.4.0',
+  // 1.5.0 : éligibilité structurée (brouillons à relire, voir
+  // scholarship-catalog.eligibility.v1.ts) et niveau `doctorate` (Gates
+  // Cambridge, UCT). Le tag `catalog:1.5.0` est ajouté aux lignes existantes
+  // par `catalog:reconcile`, c'est par lui que `publish` les retrouve.
+  catalogVersion: '1.5.0',
   // Planchers, pas des plafonds : le validateur signale un déficit sous ces
   // seuils. Relevés avec la vague « Top 10 » (25 → 34 fiches).
   volumeTargets: {
@@ -26,7 +31,7 @@ export const SCHOLARSHIP_CATALOG_V1: VersionedScholarshipCatalog = {
     bachelor: 15,
     master: 15,
   },
-  records: [
+  records: attachStructuredEligibility([
     ...VERIFIED_SCHOLARSHIP_RECORDS_V1,
     ...VERIFIED_MULTI_LEVEL_RECORDS_V1,
     ...VERIFIED_BACHELOR_RECORDS_V1,
@@ -35,11 +40,12 @@ export const SCHOLARSHIP_CATALOG_V1: VersionedScholarshipCatalog = {
     // Vague « Top 10 » : les bourses du lead magnet KPB, vérifiées sur sources
     // officielles le 10/08/2026. Deux du dépliant sont absentes à dessein —
     // Commonwealth PhD et Vanier Canada sont doctorales, et l'énumération des
-    // niveaux s'arrête au master.
+    // niveaux s'arrêtait alors au master (`doctorate` existe depuis 1.5.0 ;
+    // les ajouter demande une vérification à part entière).
     ...VERIFIED_AFRICA_BACHELOR_RECORDS_V1,
     ...VERIFIED_EUROPE_MASTER_RECORDS_V1,
     ...VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1,
-  ],
+  ]),
   backlog: [
     {
       legacyId: 'mccall_macbain',

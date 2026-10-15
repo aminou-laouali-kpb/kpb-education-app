@@ -113,6 +113,52 @@ chacun) :
 
 Les preuves de la vague du 29/09 : `docs/catalog-verification-2026-09-29.md`.
 
+## Structurer l'éligibilité des bourses (catalogue 1.5.0, chantier D)
+
+« Mes 10 bourses » n'exclut un élève que sur une règle **dure**, **tamponnée
+depuis moins de 400 jours** et une réponse **confirmée** par l'élève. Le
+tampon (`eligibilityStructuredAt`) est propre à la relecture des CRITÈRES :
+il ne se confond pas avec `lastVerifiedAt`, qui certifie la relecture des
+pages officielles.
+
+**État au 1.5.0 : 36 brouillons, 0 fiche tamponnée.** Les critères de
+`backend/src/modules/scholarships-index/data/scholarship-catalog.eligibility.v1.ts`
+ont été rédigés à partir du seul texte d'éligibilité de chaque fiche ; chaque
+critère cite une ligne de la fiche, mot pour mot, avec sa source officielle
+« eligibility ». Tant qu'ils ne sont pas relus, ils n'excluent personne : tout
+écart s'affiche « à vérifier ».
+
+Relire une fiche, c'est :
+
+1. ouvrir sa source officielle « eligibility » et la lire en entier ;
+2. pour chaque critère, vérifier le type, l'impact (`hard` seulement pour une
+   nationalité, une résidence, un âge ou une expérience énoncés sans
+   exception), les pays (ISO alpha-3), les bornes et la date de référence
+   (`asOf`) ; quand la source donne une liste que la fiche ne reproduit pas
+   (Taiwan ICDF « alliés diplomatiques », SI « 34 pays », IsDB, OCI…), la
+   recopier dans la fiche d'abord, puis seulement la structurer ;
+3. ajouter `reviewed: { at: '<ISO du jour>', by: '<Prénom Nom>' }` à
+   l'entrée de la fiche, dans une PR relue ;
+4. après fusion et déploiement : `catalog:reconcile --dry-run` puis
+   `--apply` porte le tampon en base.
+
+**La porte éditoriale.** `missing_structured_eligibility` est un
+**avertissement** tant que les 36 fiches ne sont pas relues
+(`STRUCTURED_ELIGIBILITY_GATE = 'warning'` dans
+`scholarship-catalog.validator.ts`) : une erreur rendrait la CI rouge et
+pousserait à tamponner sans relire. Le jour où `npm run verify:catalog`
+affiche `36/36 reviewed and stamped`, passer la constante à `'error'` dans
+une PR dédiée : toute fiche ajoutée ensuite sans éligibilité relue cassera
+`scholarships:validate:merge-gate`. Un tampon de plus de 400 jours donne
+`stale_structured_eligibility` (avertissement, horloge seule) : la fiche
+redevient « à vérifier » jusqu'à la relecture suivante.
+
+**Dépôt contre admin.** L'admin écrit le même bloc (niveaux, domaines,
+critères, tampon). `catalog:reconcile` ne remplace JAMAIS un bloc tamponné en
+base par un brouillon du dépôt, ni par un tampon du dépôt plus ancien ; il le
+signale dans `keptFromDatabase`. Pour qu'une relecture faite dans l'admin
+survive aux versions suivantes, la reporter dans le dépôt (`reviewed`).
+
 ## Publier le catalogue vérifié en production
 
 Le catalogue vérifié vit dans le dépôt (`backend/src/modules/scholarships-index/data/`).
@@ -183,6 +229,7 @@ docker compose exec -T api npm run catalog:switch -- --apply
 > | `lastVerifiedAt` en base plus récent que celui du dépôt | la base | Un contrôle humain du mois dernier ne se remplace pas par un tampon de catalogue plus ancien. `lastVerifiedAt`, `verifiedById`, `verifiedByName` et **`sourceUrl`** se déplacent d'un bloc : `verificationData` les écrit ensemble, et garder le nom du relecteur en réécrivant sa source attribuerait sa vérification à un lien qu'il n'a pas ouvert |
 > | Étape de candidature présente en base et absente du catalogue | la base | `ScholarshipWorkspaceStep.sourceStepId` est en `onDelete: SetNull` : la supprimer détacherait la progression des étudiants |
 > | Tags posés dans l'admin, ou tag d'une version antérieure du catalogue | la base | Les tags s'ajoutent, ne se remplacent pas — `publish` retrouve les lignes par ce tag |
+> | **Éligibilité structurée tamponnée en base** (`eligibilityStructuredAt` posé), face à un brouillon du dépôt ou à un tampon du dépôt plus ancien | la base | Une relecture humaine ne se remplace pas par des critères non relus ou plus anciens. `eligibleLevels`, `fieldsScope`, `eligibilityCriteria` et le tampon se déplacent d'un bloc (catalogue 1.5.0) |
 >
 > Sur tout le reste — texte, avantages, éligibilité, dates du cycle, étapes —
 > **le dépôt fait foi**. Une modification faite dans l'admin sur un champ

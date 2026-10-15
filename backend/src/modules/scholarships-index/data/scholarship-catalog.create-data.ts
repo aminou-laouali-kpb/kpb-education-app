@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client';
+
 import type { VerifiedScholarshipCatalogRecord } from './scholarship-catalog.types';
 
 /**
@@ -56,6 +58,19 @@ export function buildScholarshipCreateData(
     isActive: false,
     moderationStatus: 'pending' as const,
     tags: [...new Set([...scholarship.tags, `catalog:${catalogVersion}`])],
+    // Éligibilité structurée (chantier D). `eligibleLevels` reprend `levels`
+    // tel quel : c'est la donnée que relit un éditeur. Le tampon est celui de
+    // la relecture des CRITÈRES (`eligibility.structuredAt`), jamais
+    // `verifiedAt` : un brouillon arrive donc non tamponné, et le moteur
+    // n'exclut personne dessus. Sans bloc, la fiche reste « non structurée ».
+    eligibleLevels: [...record.levels],
+    fieldsScope: record.eligibility?.fieldsScope ?? ('unknown' as const),
+    eligibilityCriteria: (record.eligibility?.criteria ??
+      []) as unknown as Prisma.InputJsonValue,
+    eligibilityStructuredAt: record.eligibility?.structuredAt
+      ? new Date(record.eligibility.structuredAt)
+      : null,
+    eligibilityStructuredBy: record.eligibility?.structuredBy ?? null,
     applicationSteps: {
       create: record.applicationSteps.map((step) => ({
         stepNumber: step.stepNumber,

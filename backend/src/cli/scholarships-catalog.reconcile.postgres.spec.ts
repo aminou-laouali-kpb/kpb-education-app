@@ -31,6 +31,8 @@
  * | `moderationDifferences` renvoie toujours `[]` | « le filet attrape une publication qui contournerait le planificateur » |
  * | Les étapes sont supprimées puis recréées (le « delete + recreate » naïf) | « l'étape ajoutée dans l'admin survit » ; « un second passage … » |
  * | La règle de révocation rendue inopérante dans `reconcile.ts` | « une vérification révoquée ne redevient pas publique » |
+ * | `sameValue` compare les objets par identité | « un second passage ne trouve plus rien à faire » (les critères `jsonb` reviennent clés réordonnées) |
+ * | La règle du tampon d'éligibilité rendue inopérante | « une éligibilité relue dans l'admin survit au réalignement » |
  */
 import { randomUUID } from 'node:crypto';
 
@@ -80,6 +82,8 @@ describePostgres('catalog:reconcile — intégration PostgreSQL', () => {
    */
   const beforeReverification: VerifiedScholarshipCatalogRecord = {
     ...current,
+    // Importée avant la 1.5.0 : aucune éligibilité structurée.
+    eligibility: undefined,
     cycle: {
       academicYear: '2027-2028',
       status: 'forecast',
@@ -187,6 +191,17 @@ describePostgres('catalog:reconcile — intégration PostgreSQL', () => {
     expect(row.deadlineAt?.toISOString()).toBe('2027-01-28T04:59:00.000Z');
   });
 
+  it("écrit l'éligibilité structurée du dépôt, en brouillon non tamponné", async () => {
+    const row = await readRow();
+    expect(row.eligibleLevels).toEqual(['bachelor']);
+    expect(row.eligibilityCriteria).toEqual(
+      JSON.parse(JSON.stringify(current.eligibility!.criteria)),
+    );
+    expect(row.eligibilityStructuredBy).toBe('draft');
+    // Un brouillon n'exclut personne : aucun tampon n'est posé.
+    expect(row.eligibilityStructuredAt).toBeNull();
+  });
+
   it("n'a ni publié ni dépublié en réalignant", async () => {
     const row = await readRow();
     expect(row.isActive).toBe(true);
@@ -208,6 +223,45 @@ describePostgres('catalog:reconcile — intégration PostgreSQL', () => {
     const plan = await reconcileOnce();
     expect(planIsEmpty(plan)).toBe(true);
     expect(plan.drifts.filter((drift) => drift.reconciled)).toEqual([]);
+  });
+
+  it("une éligibilité relue dans l'admin survit au réalignement", async () => {
+    // Ce qu'écrit l'admin : un bloc relu, tamponné, plus récent que tout
+    // brouillon du dépôt.
+    const reviewed = [
+      {
+        key: 'relu-dans-l-admin',
+        type: 'other',
+        impact: 'soft',
+        officialTextFr: current.scholarship.eligibilityFr[0],
+        officialTextEn: current.scholarship.eligibilityEn[0],
+        sourceUrl: current.scholarship.sourceUrl,
+      },
+    ];
+    const stampedAt = new Date('2026-10-10T08:00:00.000Z');
+    await prisma.scholarship.update({
+      where: { id },
+      data: {
+        eligibleLevels: ['bachelor', 'master'],
+        fieldsScope: 'all',
+        eligibilityCriteria: reviewed,
+        eligibilityStructuredAt: stampedAt,
+        eligibilityStructuredBy: 'Éditrice KPB',
+      },
+    });
+
+    const plan = await reconcileOnce();
+
+    expect(planIsEmpty(plan)).toBe(true);
+    expect(
+      plan.drifts.filter((drift) => drift.field === 'eligibilityCriteria')[0]?.reconciled,
+    ).toBe(false);
+    const row = await readRow();
+    expect(row.eligibilityCriteria).toEqual(reviewed);
+    expect(row.eligibleLevels).toEqual(['bachelor', 'master']);
+    expect(row.fieldsScope).toBe('all');
+    expect(row.eligibilityStructuredAt?.toISOString()).toBe(stampedAt.toISOString());
+    expect(row.eligibilityStructuredBy).toBe('Éditrice KPB');
   });
 
   it("une vérification révoquée ne redevient pas publique d'elle-même", async () => {
