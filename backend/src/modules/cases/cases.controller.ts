@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Res,
   Req,
   UploadedFile,
@@ -37,9 +38,19 @@ export class CasesController {
     private readonly storageService: StorageService,
   ) {}
 
+  /**
+   * `?scholarshipId=` : les dossiers de l'étudiant liés à cette bourse (la
+   * déduplication de « Être accompagné »). Toujours limité à ses dossiers.
+   */
   @Get()
-  findAll(@Req() req: any) {
-    return this.casesService.findAll(req.studentUser.id);
+  findAll(@Req() req: any, @Query('scholarshipId') scholarshipId?: string) {
+    const filter =
+      typeof scholarshipId === 'string' && scholarshipId.trim()
+        ? scholarshipId.trim().slice(0, 64)
+        : undefined;
+    return filter
+      ? this.casesService.findAll(req.studentUser.id, { scholarshipId: filter })
+      : this.casesService.findAll(req.studentUser.id);
   }
 
   @Get(':id/documents/:documentId/file')

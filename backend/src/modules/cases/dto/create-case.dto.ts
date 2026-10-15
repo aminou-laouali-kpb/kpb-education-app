@@ -21,4 +21,14 @@ export class CreateCaseDto {
   @IsOptional()
   @IsString()
   preferredContactMethod?: string;
+
+  /**
+   * « Être accompagné par KPB » depuis « Mes 10 bourses » : la bourse dont ce
+   * dossier accompagne la candidature. Gardée seulement si la fiche existe
+   * (sinon le dossier est créé sans lien, jamais refusé).
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  scholarshipId?: string;
 }

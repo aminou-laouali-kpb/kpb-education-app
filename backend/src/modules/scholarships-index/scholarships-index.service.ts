@@ -383,13 +383,20 @@ export class ScholarshipsIndexService {
     // libellé de la langue demandée : l'app envoie « Bachelor », et en français
     // la fiche dit « Licence », donc aucun étudiant en Licence ne recevait le
     // bonus de niveau dans la locale livrée.
+    //
+    // Chantier D : `eligibleLevels` (niveaux structurés, `doctorate` compris)
+    // est la source quand il est rempli ; sinon, repli sur la lecture des tags
+    // et des libellés d'avant (fiches collectées, saisies admin non reprises).
     const targetLevels = levelsInText(params.level);
 
     const mapped = items.map((s) => {
       // Profile-match score
       let matchScore = s.baseMatch;
       if (targetLevels.size > 0) {
-        const offered = scholarshipLevels(s);
+        const offered: ReadonlySet<string> =
+          s.eligibleLevels && s.eligibleLevels.length > 0
+            ? new Set<string>(s.eligibleLevels)
+            : scholarshipLevels(s);
         if ([...targetLevels].some((level) => offered.has(level))) {
           matchScore += 30;
         }

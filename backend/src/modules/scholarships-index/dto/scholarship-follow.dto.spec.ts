@@ -1,5 +1,6 @@
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 
+import { BulkScholarshipAlertsDto } from './bulk-scholarship-alerts.dto';
 import { ReadNotificationsByRefDto } from './read-notifications-by-ref.dto';
 import { UpdateScholarshipAlertDto } from './update-scholarship-alert.dto';
 
@@ -45,6 +46,27 @@ describe('ReadNotificationsByRefDto', () => {
     ['une virgule (liste jointe)', { refs: ['scholarship-opened:a,scholarship-opened:b'] }],
     ['un nombre', { refs: [42] }],
     ['un champ inconnu', { refs: ['r1'], userId: 'someone-else' }],
+  ])('refuse %s', async (_label, value) => {
+    await expect(validate(value)).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('BulkScholarshipAlertsDto', () => {
+  const validate = (value: unknown) =>
+    pipe.transform(value, { type: 'body', metatype: BulkScholarshipAlertsDto });
+
+  it('accepte jusqu’à 10 identifiants (et une liste vide)', async () => {
+    const scholarshipIds = Array.from({ length: 10 }, (_, i) => `sch-${i}`);
+    await expect(validate({ scholarshipIds })).resolves.toMatchObject({ scholarshipIds });
+    await expect(validate({ scholarshipIds: [] })).resolves.toMatchObject({ scholarshipIds: [] });
+  });
+
+  it.each([
+    ['11 identifiants', { scholarshipIds: Array.from({ length: 11 }, (_, i) => `s${i}`) }],
+    ['un identifiant trop long', { scholarshipIds: ['a'.repeat(65)] }],
+    ['un nombre', { scholarshipIds: [42] }],
+    ['pas de liste', {}],
+    ['un champ inconnu', { scholarshipIds: ['s1'], userId: 'someone-else' }],
   ])('refuse %s', async (_label, value) => {
     await expect(validate(value)).rejects.toBeInstanceOf(BadRequestException);
   });

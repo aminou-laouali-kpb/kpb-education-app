@@ -354,6 +354,11 @@ export class AppConfigController {
           process.env.KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED,
         ),
         homeFollowedEntry: notDisabled(process.env.KPB_HOME_FOLLOWED_ENTRY_ENABLED),
+        // « Mes 10 bourses » (chantier D) : le test d'éligibilité et ses
+        // résultats. FERMÉ par défaut — livré éteint, ouvert à la bascule. La
+        // même variable coupe les routes `/scholarships/match/*` (404
+        // `{ disabled: true }`) : la carte et l'API s'allument ensemble.
+        scholarshipMatch: enabled(process.env.KPB_SCHOLARSHIP_MATCH_ENABLED),
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse
