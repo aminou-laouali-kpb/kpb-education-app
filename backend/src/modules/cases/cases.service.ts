@@ -26,8 +26,23 @@ import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto
 import { UpdateCaseDto } from './dto/update-case.dto';
 import { UploadCaseDocumentDto } from './dto/upload-case-document.dto';
 
+/**
+ * Le résumé de la bourse accompagnée (« Mes 10 bourses » → « Être
+ * accompagné »), lu avec le dossier par la relation : une requête groupée par
+ * lecture, jamais une par dossier. Servi aux seules lectures staff (admin,
+ * conseiller) : nom pour la file, lien officiel pour le conseiller.
+ */
+const CASE_SCHOLARSHIP_SELECT = {
+  id: true,
+  nameFr: true,
+  nameEn: true,
+  sourceUrl: true,
+  applicationUrl: true,
+} as const;
+
 const CASE_INCLUDE = {
   user: true,
+  scholarship: { select: CASE_SCHOLARSHIP_SELECT },
   messages: { orderBy: { createdAt: 'desc' as const } },
   timelineEvents: { orderBy: { createdAt: 'desc' as const } },
   tasks: { orderBy: { createdAt: 'desc' as const } },
@@ -851,6 +866,22 @@ export class CasesService {
       // « Mes 10 bourses » : la bourse accompagnée (lecture seule, élève,
       // conseiller et admin).
       scholarshipId: c.scholarshipId ?? null,
+      // Son nom et ses liens officiels, pour la file staff seulement (l'app
+      // affiche le nom tiré de son propre run). Absent de la réponse élève et
+      // de la diffusion Socket.IO `caseUpdated`.
+      ...(includeInternal
+        ? {
+            scholarship: c.scholarship
+              ? {
+                  id: c.scholarship.id,
+                  nameFr: c.scholarship.nameFr,
+                  nameEn: c.scholarship.nameEn,
+                  sourceUrl: c.scholarship.sourceUrl ?? null,
+                  applicationUrl: c.scholarship.applicationUrl ?? null,
+                }
+              : null,
+          }
+        : {}),
       type: c.type,
       title: c.title,
       status: c.status as CaseStatus,

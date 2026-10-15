@@ -3,6 +3,11 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import { ISO_COUNTRIES } from '../../common/iso-countries';
 import { publicScholarshipWhere } from '../../common/public-scholarship-where';
 import type { PrismaService } from '../prisma/prisma.service';
+import {
+  CandidateSnapshotService,
+  toMatchCandidate,
+  type CandidateRow,
+} from '../scholarship-match/candidate-snapshot';
 import { isHonestLabel } from '../scholarship-match/reasons';
 import type { MatchPreviewDto } from './dto/match-preview.dto';
 import {
@@ -10,7 +15,6 @@ import {
   droppedPreviewKeys,
   eligibilityOptions,
   ScholarshipEligibilityAdminService,
-  toNamedCandidate,
 } from './scholarship-eligibility-admin.service';
 
 const NOW = new Date('2026-10-13T12:00:00.000Z');
@@ -30,6 +34,16 @@ function row(overrides: Record<string, unknown> = {}) {
     nameFr: 'Bourse X',
     nameEn: 'Scholarship X',
     countryId: 'fra',
+    countryNameFr: 'France',
+    countryNameEn: 'France',
+    typeOfFundingFr: 'Bourse complète',
+    typeOfFundingEn: 'Fully funded',
+    levelEligibleFr: 'Master',
+    levelEligibleEn: 'Master',
+    deadlineLabelFr: '15 janvier 2027',
+    deadlineLabelEn: '15 January 2027',
+    applicationUrl: null,
+    sourceUrl: null,
     fundingType: 'fully_funded',
     eligibleLevels: ['master'],
     fieldsScope: 'all',
@@ -41,6 +55,7 @@ function row(overrides: Record<string, unknown> = {}) {
     cycles: [
       {
         id: 'cyc-1',
+        academicYear: '2026-2027',
         status: 'open',
         dateConfidence: 'confirmed',
         opensAt: date('2026-09-01'),
@@ -138,10 +153,15 @@ function readOnlyPrisma(rows: unknown[], extra: Record<string, unknown> = {}) {
   return { prisma, calls };
 }
 
+/** Le service tel que Nest le câble : candidates lues par le service du test élève. */
+function adminService(prisma: PrismaService) {
+  return new ScholarshipEligibilityAdminService(prisma, new CandidateSnapshotService(prisma));
+}
+
 describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »', () => {
   it('ne lit que les bourses publiques et n’écrit RIEN', async () => {
     const { prisma, calls } = readOnlyPrisma([EIFFEL, LICENCE, NOT_ANALYZED]);
-    const service = new ScholarshipEligibilityAdminService(prisma);
+    const service = adminService(prisma);
     const preview = await service.matchPreview(PROFILE, NOW);
     expect(preview.persisted).toBe(false);
     expect(calls).toHaveLength(1);
@@ -150,9 +170,53 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
     expect((calls[0].args as { take: number }).take).toBe(500);
   });
 
+  it('lit les candidates exactement comme le test élève (même requête, même cycle servi)', async () => {
+    const { prisma, calls } = readOnlyPrisma([]);
+    await adminService(prisma).matchPreview(PROFILE, NOW);
+    const studentCalls: unknown[] = [];
+    const studentPrisma = {
+      isEnabled: true,
+      execute: async (fn: (c: unknown) => unknown) =>
+        fn({
+          scholarship: {
+            findMany: async (args: unknown) => {
+              studentCalls.push(args);
+              return [];
+            },
+          },
+        }),
+    } as unknown as PrismaService;
+    await new CandidateSnapshotService(studentPrisma, () => NOW).get();
+    expect(calls[0].args).toEqual(studentCalls[0]);
+
+    // Un cycle ouvert sert la fiche même si une prévision plus récente existe
+    // (D4 servait jusqu'ici le plus récent : un autre cycleId que l'élève).
+    const twoCycles = row({
+      id: 'sch-deux-cycles',
+      cycles: [
+        {
+          id: 'cyc-prevision',
+          academicYear: '2027-2028',
+          status: 'forecast',
+          dateConfidence: 'estimated',
+          opensAt: null,
+          closesAt: null,
+          estimatedOpenAt: date('2027-09-01'),
+          estimatedCloseAt: date('2028-01-15'),
+        },
+        ...(row().cycles as unknown[]),
+      ],
+    });
+    const preview = await adminService(readOnlyPrisma([twoCycles]).prisma).matchPreview(
+      PROFILE,
+      NOW,
+    );
+    expect(preview.items[0]).toMatchObject({ scholarshipId: 'sch-deux-cycles', cycleId: 'cyc-1' });
+  });
+
   it('rend statuts, raisons, points à vérifier et exclusions avec leurs libellés', async () => {
     const { prisma } = readOnlyPrisma([EIFFEL, LICENCE, NOT_ANALYZED]);
-    const service = new ScholarshipEligibilityAdminService(prisma);
+    const service = adminService(prisma);
     const preview = await service.matchPreview(PROFILE, NOW);
 
     expect(preview.counts).toEqual({
@@ -189,7 +253,7 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
 
   it('un binational français est exclu d’Eiffel (sémantique « une des nationalités »)', async () => {
     const { prisma } = readOnlyPrisma([EIFFEL]);
-    const preview = await new ScholarshipEligibilityAdminService(prisma).matchPreview(
+    const preview = await adminService(prisma).matchPreview(
       { ...PROFILE, secondNationalityCode: 'fra' },
       NOW,
     );
@@ -201,7 +265,7 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
 
   it('un profil non confirmé n’exclut jamais : « à vérifier »', async () => {
     const { prisma } = readOnlyPrisma([LICENCE]);
-    const preview = await new ScholarshipEligibilityAdminService(prisma).matchPreview(
+    const preview = await adminService(prisma).matchPreview(
       { ...PROFILE, confirmed: false },
       NOW,
     );
@@ -213,7 +277,7 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
   it('évalue à part une bourse non publique demandée en focus', async () => {
     const draft = row({ id: 'sch-draft', nameFr: 'Brouillon', eligibilityStructuredAt: null });
     const { prisma, calls } = readOnlyPrisma([EIFFEL], { 'sch-draft': draft });
-    const preview = await new ScholarshipEligibilityAdminService(prisma).matchPreview(
+    const preview = await adminService(prisma).matchPreview(
       { ...PROFILE, focusScholarshipId: 'sch-draft' },
       NOW,
     );
@@ -243,7 +307,7 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
 
   it('est déterministe à `now` fixé', () => {
     const candidates = [EIFFEL, LICENCE, NOT_ANALYZED].map((r) =>
-      toNamedCandidate(r as unknown as Parameters<typeof toNamedCandidate>[0]),
+      toMatchCandidate(r as unknown as CandidateRow),
     );
     const a = buildMatchPreview(PROFILE, candidates, null, NOW);
     const b = buildMatchPreview(PROFILE, [...candidates].reverse(), null, NOW);
@@ -252,7 +316,7 @@ describe('ScholarshipEligibilityAdminService — aperçu « Tester un profil »'
 
   it('rend les libellés en anglais sur demande', async () => {
     const { prisma } = readOnlyPrisma([EIFFEL]);
-    const preview = await new ScholarshipEligibilityAdminService(prisma).matchPreview(
+    const preview = await adminService(prisma).matchPreview(
       { ...PROFILE, lang: 'en' },
       NOW,
     );
@@ -270,7 +334,7 @@ describe('ScholarshipEligibilityAdminService — couverture', () => {
       row({ id: 'a' }),
       row({ id: 'b', eligibilityStructuredAt: null }),
     ]);
-    const coverage = await new ScholarshipEligibilityAdminService(prisma).coverage(NOW);
+    const coverage = await adminService(prisma).coverage(NOW);
     expect((calls[0].args as { where: unknown }).where).toEqual(publicScholarshipWhere(NOW));
     expect(coverage).toMatchObject({
       total: 2,
@@ -283,7 +347,7 @@ describe('ScholarshipEligibilityAdminService — couverture', () => {
 
   it('répond 503 sans base de données', async () => {
     const prisma = { isEnabled: false } as unknown as PrismaService;
-    await expect(new ScholarshipEligibilityAdminService(prisma).coverage(NOW)).rejects.toBeInstanceOf(
+    await expect(adminService(prisma).coverage(NOW)).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
   });

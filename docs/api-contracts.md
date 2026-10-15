@@ -1251,7 +1251,7 @@ désormais `eligibleLevels`, `fieldsScope`, `eligibilityCriteria`,
 | --- | --- |
 | `GET /admin/scholarships/eligibility-coverage` | Porte de lancement, sur les bourses PUBLIQUES (`publicScholarshipWhere`) : `{generatedAt, freshnessDays: 400, launchGatePercent: 90, total, structuredFresh, stale, unstructured, notAnalyzed, invalidCriteria, coveragePercent, launchReady, toStructure: [{id, nameFr, nameEn, state, structuredAt, structuredBy}], toStructureIds, truncated}`. `state` ∈ `not_analyzed` (aucun niveau) `\| unstructured` (jamais tamponnée) `\| stale` (tampon ≥ 400 j) ; liste triée dans cet ordre puis par nom, 500 au plus. `coveragePercent` est arrondi PAR DÉFAUT à 0,1 ; `launchReady` = `structuredFresh / total ≥ 90 %` (faux sur un catalogue vide). |
 | `GET /admin/scholarships/eligibility-options` | Table ISO 3166-1 du serveur (`common/iso-countries.ts`) pour l'éditeur : `{countries: [{code, nameFr, nameEn, priority, selectable}], freshnessDays, launchGatePercent, maxResults}`. `selectable: false` pour un territoire inhabité (valide dans un critère, jamais proposé à un élève). |
-| `POST /admin/scholarships/match-preview` | « Tester un profil », SANS RIEN PERSISTER. Corps `MatchPreviewDto` : les champs du test (`nationalityCode`, `secondNationalityCode`, `countryOfResidence`, `birthDate` AAAA-MM-JJ, `guardianConsented`, `highestDiploma`, `scholarshipTargetLevel`, `fieldIds[]`, `targetCountryIds[]`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests[]`, `workExperienceBand`), plus `lang`, `confirmed` (défaut `true`) et `focusScholarshipId` (une fiche évaluée à part, publique ou non). Jetons tolérants : un jeton inconnu est abandonné et nommé dans `dropped`, jamais une 400 ; un champ non déclaré → 400. Réponse 200 : `{persisted: false, algorithmVersion, generatedAt, lang, profile, dropped, readiness, counts, items (≤ 10, rang, section), beyondLimitCount, excluded, excludedSummary, notAnalyzed, focus}` ; chaque point porte `code`, `label` (rendu serveur), `criterionKey?`, `officialText?`, `sourceUrl?`. Candidates : bourses publiques, 500 au plus. |
+| `POST /admin/scholarships/match-preview` | « Tester un profil », SANS RIEN PERSISTER. Corps `MatchPreviewDto` : les champs du test (`nationalityCode`, `secondNationalityCode`, `countryOfResidence`, `birthDate` AAAA-MM-JJ, `guardianConsented`, `highestDiploma`, `scholarshipTargetLevel`, `fieldIds[]`, `targetCountryIds[]`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests[]`, `workExperienceBand`), plus `lang`, `confirmed` (défaut `true`) et `focusScholarshipId` (une fiche évaluée à part, publique ou non). Jetons tolérants : un jeton inconnu est abandonné et nommé dans `dropped`, jamais une 400 ; un champ non déclaré → 400. Réponse 200 : `{persisted: false, algorithmVersion, generatedAt, lang, profile, dropped, readiness, counts, items (≤ 10, rang, section), beyondLimitCount, excluded, excludedSummary, notAnalyzed, focus}` ; chaque point porte `code`, `label` (rendu serveur), `criterionKey?`, `officialText?`, `sourceUrl?`. Candidates : exactement celles du test élève (`CandidateSnapshotService` : bourses publiques, 500 au plus, même ordre de coupe, même cycle servi — ouvert, sinon prévision, sinon le plus récent), relues à chaque appel au lieu du cache de 60 s ; aucune écriture. |
 
 ## Admin content operations
 
@@ -1779,6 +1779,12 @@ avec `:scholarshipId`.
   de « Être accompagné ») ; sans le paramètre, la liste d'avant.
 - Chaque dossier rendu (élève, `GET /admin/cases`, conseiller) porte `scholarshipId: string|null` ;
   la liste commerciale des leads aussi. Lecture seule côté équipe.
+- Les lectures STAFF (`GET /admin/cases` admin et conseiller, et les réponses des écritures
+  `/admin/cases/:id…`) portent en plus `scholarship: {id, nameFr, nameEn, sourceUrl|null,
+  applicationUrl|null} | null`, lu par la relation dans la même requête (pas de N+1) ; `null`
+  quand le dossier n'est pas lié ou que la fiche a été supprimée (SET NULL). La réponse élève et
+  la diffusion Socket.IO `caseUpdated` ne le portent pas. Un admin plus ancien l'ignore ; l'admin
+  courant affiche l'identifiant seul si la clé manque (backend plus ancien).
 
 ### `GET /profiles/me` (lecture seule)
 

@@ -14,6 +14,7 @@ import { ALGORITHM_VERSION } from './assess';
 import {
   CandidateSnapshotService,
   MATCH_CLOCK,
+  snapshotReadinessOptions,
   type CandidateSnapshot,
   type MatchClock,
 } from './candidate-snapshot';
@@ -246,11 +247,7 @@ export class ScholarshipMatchService {
   }
 
   private readinessOptions(snapshot: CandidateSnapshot) {
-    return {
-      hasSecondaryCandidates: snapshot.candidates.some((candidate) =>
-        candidate.scholarship.eligibleLevels.includes('secondary'),
-      ),
-    };
+    return snapshotReadinessOptions(snapshot);
   }
 
   // ── GET /scholarships/match/state ────────────────────────────────────────

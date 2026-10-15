@@ -1,5 +1,4 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 
 import { ISO_COUNTRIES, isSelectableCountryCode } from '../../common/iso-countries';
 import { publicScholarshipWhere } from '../../common/public-scholarship-where';
@@ -8,18 +7,22 @@ import {
   ALGORITHM_VERSION,
   STRUCTURED_FRESHNESS_DAYS,
   type Assessment,
-  type MatchScholarship,
 } from '../scholarship-match/assess';
+import {
+  CANDIDATE_SELECT,
+  CandidateSnapshotService,
+  MAX_CANDIDATES,
+  snapshotReadinessOptions,
+  toMatchCandidate,
+  type CandidateRow,
+  type MatchCandidate,
+} from '../scholarship-match/candidate-snapshot';
 import {
   normaliseCountryAnswer,
   normaliseResidence,
   PRIORITY_COUNTRY_CODES,
   type MatchLang,
 } from '../scholarship-match/countries';
-import {
-  parseEligibilityCriteria,
-  type EligibleLevel,
-} from '../scholarship-match/eligibility-criteria';
 import {
   ageOn,
   DIPLOMAS,
@@ -49,77 +52,16 @@ import {
  * pays servie à l'éditeur de critères.
  *
  * Le moteur est celui de `scholarship-match/` (assess, rank, reasons), réutilisé
- * tel quel : l'aperçu montre exactement ce que l'élève verrait.
+ * tel quel, et les candidates sont lues par `CandidateSnapshotService` — même
+ * filtre public, même plafond, même ordre de coupe, même cycle servi et même
+ * conversion (`toMatchCandidate`) que le test élève : l'aperçu montre
+ * exactement ce que l'élève verrait. Seule différence voulue : l'aperçu relit
+ * le catalogue (`readFresh`) au lieu du cache de 60 s, pour qu'un critère
+ * tamponné à l'instant s'y voie tout de suite.
  */
 
-/** Plafond des candidates lues pour un aperçu (comme le test élève). */
-export const PREVIEW_MAX_CANDIDATES = 500;
-
-const CANDIDATE_SELECT = {
-  id: true,
-  nameFr: true,
-  nameEn: true,
-  countryId: true,
-  fundingType: true,
-  eligibleLevels: true,
-  fieldsScope: true,
-  relatedFieldIds: true,
-  eligibilityCriteria: true,
-  eligibilityStructuredAt: true,
-  deadlineAt: true,
-  cycles: {
-    orderBy: { academicYear: 'desc' },
-    take: 1,
-    select: {
-      id: true,
-      status: true,
-      dateConfidence: true,
-      opensAt: true,
-      closesAt: true,
-      estimatedOpenAt: true,
-      estimatedCloseAt: true,
-    },
-  },
-} satisfies Prisma.ScholarshipSelect;
-
-type CandidateRow = Prisma.ScholarshipGetPayload<{ select: typeof CANDIDATE_SELECT }>;
-
-export interface NamedCandidate {
-  scholarship: MatchScholarship;
-  nameFr: string;
-  nameEn: string;
-}
-
-/** Une ligne Prisma → l'entrée du moteur (cycle servi = le plus récent). */
-export function toNamedCandidate(row: CandidateRow): NamedCandidate {
-  const cycle = row.cycles[0] ?? null;
-  return {
-    nameFr: row.nameFr,
-    nameEn: row.nameEn,
-    scholarship: {
-      id: row.id,
-      countryId: row.countryId,
-      fundingType: row.fundingType,
-      eligibleLevels: row.eligibleLevels as EligibleLevel[],
-      fieldsScope: row.fieldsScope,
-      relatedFieldIds: row.relatedFieldIds,
-      eligibilityCriteria: row.eligibilityCriteria,
-      eligibilityStructuredAt: row.eligibilityStructuredAt,
-      deadlineAt: row.deadlineAt,
-      cycle: cycle
-        ? {
-            id: cycle.id,
-            status: cycle.status,
-            dateConfidence: cycle.dateConfidence,
-            opensAt: cycle.opensAt,
-            closesAt: cycle.closesAt,
-            estimatedOpenAt: cycle.estimatedOpenAt,
-            estimatedCloseAt: cycle.estimatedCloseAt,
-          }
-        : null,
-    },
-  };
-}
+/** Plafond des candidates lues pour un aperçu : celui du test élève. */
+export const PREVIEW_MAX_CANDIDATES = MAX_CANDIDATES;
 
 // ── Aperçu : entrée ─────────────────────────────────────────────────────────
 
@@ -254,16 +196,13 @@ export interface MatchPreviewResponse {
 
 function renderPoints(
   points: readonly MatchPoint[],
-  candidate: NamedCandidate,
+  candidate: MatchCandidate,
   lang: MatchLang,
 ): PreviewPoint[] {
-  const criteria = new Map(
-    parseEligibilityCriteria(candidate.scholarship.eligibilityCriteria).criteria.map(
-      (criterion) => [criterion.key, criterion],
-    ),
-  );
   return points.map((point) => {
-    const criterion = point.criterionKey ? criteria.get(point.criterionKey) : undefined;
+    const criterion = point.criterionKey
+      ? candidate.criteriaByKey.get(point.criterionKey)
+      : undefined;
     return {
       code: point.code,
       label: renderPoint(point, lang),
@@ -278,14 +217,18 @@ function renderPoints(
   });
 }
 
+function nameOf(candidate: MatchCandidate, lang: MatchLang): string {
+  return lang === 'en' ? candidate.display.nameEn : candidate.display.nameFr;
+}
+
 function toEntry(
-  candidate: NamedCandidate,
+  candidate: MatchCandidate,
   assessment: Assessment,
   lang: MatchLang,
 ): PreviewEntry {
   return {
     scholarshipId: candidate.scholarship.id,
-    name: lang === 'en' ? candidate.nameEn : candidate.nameFr,
+    name: nameOf(candidate, lang),
     status: assessment.status,
     cycleId: assessment.cycleId,
     structuredFresh: assessment.structuredFresh,
@@ -299,8 +242,8 @@ function toEntry(
 /** L'aperçu complet, PUR : mêmes entrées, même sortie (à `now` fixé). */
 export function buildMatchPreview(
   dto: MatchPreviewDto,
-  candidates: readonly NamedCandidate[],
-  focus: { candidate: NamedCandidate; public: boolean } | null,
+  candidates: readonly MatchCandidate[],
+  focus: { candidate: MatchCandidate; public: boolean } | null,
   now: Date,
 ): MatchPreviewResponse {
   const lang: MatchLang = dto.lang === 'en' ? 'en' : 'fr';
@@ -319,7 +262,8 @@ export function buildMatchPreview(
   const sorted = [...run.entries].sort((a, b) =>
     a.scholarship.id < b.scholarship.id ? -1 : a.scholarship.id > b.scholarship.id ? 1 : 0,
   );
-  const ready = readiness(profile, now);
+  // Mêmes options que le test élève (question « lycée » selon le catalogue).
+  const ready = readiness(profile, now, snapshotReadinessOptions({ candidates }));
 
   let focusOut: MatchPreviewResponse['focus'] = null;
   if (focus) {
@@ -366,10 +310,9 @@ export function buildMatchPreview(
     notAnalyzed: sorted
       .filter((entry) => entry.assessment.status === 'not_analyzed')
       .map((entry) => {
-        const candidate = byId.get(entry.scholarship.id)!;
         return {
           scholarshipId: entry.scholarship.id,
-          name: lang === 'en' ? candidate.nameEn : candidate.nameFr,
+          name: nameOf(byId.get(entry.scholarship.id)!, lang),
         };
       }),
     focus: focusOut,
@@ -426,7 +369,10 @@ export function eligibilityOptions(): EligibilityOptionsResponse {
 
 @Injectable()
 export class ScholarshipEligibilityAdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly snapshots: CandidateSnapshotService,
+  ) {}
 
   private assertDb() {
     if (!this.prisma.isEnabled) {
@@ -466,28 +412,20 @@ export class ScholarshipEligibilityAdminService {
    */
   async matchPreview(dto: MatchPreviewDto, now: Date = new Date()): Promise<MatchPreviewResponse> {
     this.assertDb();
-    const rows =
-      (await this.prisma.execute((db) =>
-        db.scholarship.findMany({
-          where: publicScholarshipWhere(now),
-          select: CANDIDATE_SELECT,
-          orderBy: { id: 'asc' },
-          take: PREVIEW_MAX_CANDIDATES,
-        }),
-      )) ?? [];
-    const candidates = rows.map(toNamedCandidate);
+    const snapshot = await this.snapshots.readFresh(now);
+    const candidates = snapshot?.candidates ?? [];
 
-    let focus: { candidate: NamedCandidate; public: boolean } | null = null;
+    let focus: { candidate: MatchCandidate; public: boolean } | null = null;
     const focusId = dto.focusScholarshipId?.trim();
     if (focusId) {
-      const inPublic = candidates.find((candidate) => candidate.scholarship.id === focusId);
+      const inPublic = snapshot?.byId.get(focusId);
       if (inPublic) {
         focus = { candidate: inPublic, public: true };
       } else {
         const row = await this.prisma.execute((db) =>
           db.scholarship.findUnique({ where: { id: focusId }, select: CANDIDATE_SELECT }),
         );
-        if (row) focus = { candidate: toNamedCandidate(row), public: false };
+        if (row) focus = { candidate: toMatchCandidate(row as CandidateRow), public: false };
       }
     }
     return buildMatchPreview(dto, candidates, focus, now);

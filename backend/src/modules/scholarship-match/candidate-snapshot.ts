@@ -182,45 +182,68 @@ function iso(date: Date | null): string | null {
   return date ? date.toISOString() : null;
 }
 
+/**
+ * Une ligne lue (`CANDIDATE_SELECT`) → la candidate du moteur et sa carte.
+ * Seule conversion du dépôt : le test élève et l'aperçu admin (« Tester un
+ * profil ») la partagent, pour que l'aperçu montre exactement ce que l'élève
+ * verrait (même cycle servi, mêmes niveaux reconnus, mêmes citations).
+ */
+export function toMatchCandidate(row: CandidateRow): MatchCandidate {
+  const cycle = selectServedCycle(row.cycles ?? []);
+  const parsed = parseEligibilityCriteria(row.eligibilityCriteria);
+  return {
+    scholarship: {
+      id: row.id,
+      countryId: row.countryId,
+      fundingType: row.fundingType,
+      eligibleLevels: knownLevels(row.eligibleLevels ?? []),
+      fieldsScope: row.fieldsScope,
+      relatedFieldIds: row.relatedFieldIds ?? [],
+      eligibilityCriteria: row.eligibilityCriteria,
+      eligibilityStructuredAt: row.eligibilityStructuredAt,
+      deadlineAt: row.deadlineAt,
+      cycle: toMatchCycle(cycle),
+    },
+    display: {
+      nameFr: row.nameFr,
+      nameEn: row.nameEn,
+      countryNameFr: row.countryNameFr,
+      countryNameEn: row.countryNameEn,
+      typeOfFundingFr: row.typeOfFundingFr,
+      typeOfFundingEn: row.typeOfFundingEn,
+      levelEligibleFr: row.levelEligibleFr,
+      levelEligibleEn: row.levelEligibleEn,
+      deadlineLabelFr: row.deadlineLabelFr,
+      deadlineLabelEn: row.deadlineLabelEn,
+      applicationUrl: row.applicationUrl,
+      sourceUrl: row.sourceUrl,
+      academicYear: cycle?.academicYear ?? null,
+    },
+    criteriaByKey: new Map(parsed.criteria.map((criterion) => [criterion.key, criterion])),
+  };
+}
+
+/**
+ * Les options de `readiness()` qui dépendent du catalogue : la question
+ * « niveau lycée » n'est utile que si une candidate l'accepte. Partagées par
+ * le test élève et l'aperçu admin.
+ */
+export function snapshotReadinessOptions(snapshot: Pick<CandidateSnapshot, 'candidates'>): {
+  hasSecondaryCandidates: boolean;
+} {
+  return {
+    hasSecondaryCandidates: snapshot.candidates.some((candidate) =>
+      candidate.scholarship.eligibleLevels.includes('secondary'),
+    ),
+  };
+}
+
 /** Construit l'instantané à partir des lignes lues. Pur : testé sans base. */
 export function buildCandidateSnapshot(
   rows: readonly CandidateRow[],
   takenAt: Date,
 ): CandidateSnapshot {
-  const candidates: MatchCandidate[] = rows.map((row) => {
-    const cycle = selectServedCycle(row.cycles ?? []);
-    const parsed = parseEligibilityCriteria(row.eligibilityCriteria);
-    return {
-      scholarship: {
-        id: row.id,
-        countryId: row.countryId,
-        fundingType: row.fundingType,
-        eligibleLevels: knownLevels(row.eligibleLevels ?? []),
-        fieldsScope: row.fieldsScope,
-        relatedFieldIds: row.relatedFieldIds ?? [],
-        eligibilityCriteria: row.eligibilityCriteria,
-        eligibilityStructuredAt: row.eligibilityStructuredAt,
-        deadlineAt: row.deadlineAt,
-        cycle: toMatchCycle(cycle),
-      },
-      display: {
-        nameFr: row.nameFr,
-        nameEn: row.nameEn,
-        countryNameFr: row.countryNameFr,
-        countryNameEn: row.countryNameEn,
-        typeOfFundingFr: row.typeOfFundingFr,
-        typeOfFundingEn: row.typeOfFundingEn,
-        levelEligibleFr: row.levelEligibleFr,
-        levelEligibleEn: row.levelEligibleEn,
-        deadlineLabelFr: row.deadlineLabelFr,
-        deadlineLabelEn: row.deadlineLabelEn,
-        applicationUrl: row.applicationUrl,
-        sourceUrl: row.sourceUrl,
-        academicYear: cycle?.academicYear ?? null,
-      },
-      criteriaByKey: new Map(parsed.criteria.map((criterion) => [criterion.key, criterion])),
-    };
-  });
+  const candidates: MatchCandidate[] = rows.map(toMatchCandidate);
 
   // Ordre stable (par identifiant) : l'empreinte ne dépend pas de l'ordre de lecture.
   const sorted = [...candidates].sort((a, b) =>
@@ -295,7 +318,25 @@ export class CandidateSnapshotService {
     this.cached = null;
   }
 
+  /**
+   * Un instantané relu à l'instant, SANS passer par le cache ni le remplir :
+   * l'aperçu admin (« Tester un profil ») voit tout de suite le critère qu'on
+   * vient de tamponner. Même requête, même filtre public, même plafond que
+   * `get()`. Lecture seule.
+   */
+  async readFresh(now: Date = this.clock()): Promise<CandidateSnapshot | null> {
+    return this.read(now);
+  }
+
   private async load(now: Date): Promise<CandidateSnapshot | null> {
+    const snapshot = await this.read(now);
+    if (snapshot) {
+      this.cached = { snapshot, expiresAt: now.getTime() + SNAPSHOT_TTL_MS };
+    }
+    return snapshot;
+  }
+
+  private async read(now: Date): Promise<CandidateSnapshot | null> {
     const rows = await this.prismaService.execute((prisma) =>
       prisma.scholarship.findMany({
         where: publicScholarshipWhere(now),
@@ -313,7 +354,6 @@ export class CandidateSnapshotService {
         `Scholarship match hit the ${MAX_CANDIDATES}-candidate cap; later scholarships are not analysed.`,
       );
     }
-    this.cached = { snapshot, expiresAt: now.getTime() + SNAPSHOT_TTL_MS };
     return snapshot;
   }
 }

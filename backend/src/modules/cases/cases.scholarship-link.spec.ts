@@ -2,6 +2,7 @@ import { BadRequestException, ValidationPipe, type ExecutionContext, type INestA
 import type { ModuleRef } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 
+import { InternalRole } from '../../common/enums/internal-role.enum';
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
 import type { PushSenderService } from '../notifications/push-sender.service';
 import type { PrismaService } from '../prisma/prisma.service';
@@ -15,7 +16,8 @@ import { CreateCaseDto } from './dto/create-case.dto';
  * - le dossier porte la bourse accompagnée, SEULEMENT si la fiche existe ;
  * - `GET /cases?scholarshipId=` (déduplication) reste dans les dossiers de
  *   l'appelant ;
- * - la bourse est relue par l'élève, le conseiller et l'admin.
+ * - la bourse est relue par l'élève, le conseiller et l'admin ; son nom et ses
+ *   liens officiels (relation, sans N+1) par les seules lectures staff.
  */
 
 const NOW = new Date('2026-10-15T10:00:00.000Z');
@@ -116,16 +118,29 @@ describe('CasesService — dossier lié à une bourse', () => {
 });
 
 describe('CasesService — déduplication par bourse, dans la portée de l’élève', () => {
-  function makeListService() {
+  const LINKED = caseRow({
+    scholarshipId: 'eiffel',
+    scholarship: {
+      id: 'eiffel',
+      nameFr: 'Bourse Eiffel',
+      nameEn: 'Eiffel Scholarship',
+      sourceUrl: 'https://www.campusfrance.org/fr/eiffel',
+      applicationUrl: null,
+    },
+  });
+
+  function makeListService(rows: unknown[] = [LINKED]) {
     const wheres: unknown[] = [];
+    const includes: unknown[] = [];
     const prisma = {
       isEnabled: true,
       execute: async (fn: (client: unknown) => Promise<unknown>) =>
         fn({
           case: {
-            findMany: async ({ where }: { where: unknown }) => {
+            findMany: async ({ where, include }: { where: unknown; include: unknown }) => {
               wheres.push(where);
-              return [caseRow({ scholarshipId: 'eiffel' })];
+              includes.push(include);
+              return rows;
             },
           },
         }),
@@ -135,7 +150,7 @@ describe('CasesService — déduplication par bourse, dans la portée de l’él
       { get: () => null } as unknown as ModuleRef,
       { sendToUser: async () => undefined } as unknown as PushSenderService,
     );
-    return { service, wheres };
+    return { service, wheres, includes };
   }
 
   it('filtre sur l’étudiant ET la bourse', async () => {
@@ -153,10 +168,53 @@ describe('CasesService — déduplication par bourse, dans la portée de l’él
     expect(wheres).toEqual([{ userId: 'user-1' }]);
   });
 
-  it('la liste staff (admin, conseiller) relit aussi la bourse', async () => {
+  it('la liste staff (admin, conseiller) relit aussi la bourse, avec son nom', async () => {
     const { service } = makeListService();
     const items = await service.findAll();
     expect(items[0].scholarshipId).toBe('eiffel');
+    expect(items[0]).toMatchObject({
+      scholarship: {
+        id: 'eiffel',
+        nameFr: 'Bourse Eiffel',
+        nameEn: 'Eiffel Scholarship',
+        sourceUrl: 'https://www.campusfrance.org/fr/eiffel',
+        applicationUrl: null,
+      },
+    });
+  });
+
+  it('le nom est lu par la relation, dans la même requête (pas de N+1)', async () => {
+    const { service, includes } = makeListService();
+    await service.findAll();
+    expect(includes[0]).toMatchObject({
+      scholarship: {
+        select: { id: true, nameFr: true, nameEn: true, sourceUrl: true, applicationUrl: true },
+      },
+    });
+  });
+
+  it('un conseiller lit le même résumé sur SES dossiers', async () => {
+    const { service, wheres } = makeListService();
+    const items = await service.findAllForAdmin({
+      id: 'adm-1',
+      role: InternalRole.Counselor,
+      fullName: 'Awa Conseil',
+    });
+    expect(wheres[0]).toHaveProperty('OR');
+    expect(items[0]).toMatchObject({ scholarship: { id: 'eiffel', nameFr: 'Bourse Eiffel' } });
+  });
+
+  it('la réponse élève ne porte que l’identifiant (pas de résumé)', async () => {
+    const { service } = makeListService();
+    const items = await service.findAll('user-1');
+    expect(items[0].scholarshipId).toBe('eiffel');
+    expect(items[0]).not.toHaveProperty('scholarship');
+  });
+
+  it('bourse supprimée (SET NULL) : ni identifiant ni résumé, sans erreur', async () => {
+    const { service } = makeListService([caseRow({ scholarshipId: null, scholarship: null })]);
+    const items = await service.findAll();
+    expect(items[0]).toMatchObject({ scholarshipId: null, scholarship: null });
   });
 });
 

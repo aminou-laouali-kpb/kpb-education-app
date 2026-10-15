@@ -140,6 +140,23 @@ describe('CandidateSnapshotService — cache de 60 s', () => {
     expect(calls).toHaveLength(3);
   });
 
+  it('readFresh (aperçu admin) : même requête, relue à chaque appel, sans toucher au cache', async () => {
+    const { service, calls } = setup();
+
+    const cached = await service.get();
+    const fresh = await service.readFresh(NOW);
+    expect(fresh).not.toBe(cached);
+    expect(calls).toHaveLength(2);
+    expect(calls[1]).toEqual(calls[0]);
+    expect(fresh?.catalogHash).toBe(cached?.catalogHash);
+
+    // Le cache de l'élève est intact : pas de nouvelle lecture.
+    expect(await service.get()).toBe(cached);
+    expect(calls).toHaveLength(2);
+    await service.readFresh(NOW);
+    expect(calls).toHaveLength(3);
+  });
+
   it('signale le plafond atteint', async () => {
     const many = Array.from({ length: MAX_CANDIDATES }, (_, i) =>
       candidateRow(makeScholarship({ id: `s-${i}` })),
