@@ -165,6 +165,47 @@ ScholarshipUrgency scholarshipUrgencyOf(
   }
 }
 
+/// L'urgence d'une bourse du CATALOGUE local ([ScholarshipModel] : accueil,
+/// « Tes échéances », prochaine étape) — le même calcul que la liste et la
+/// fiche, pas une règle de plus. La fiche du catalogue ne porte que sa date
+/// limite et un drapeau « estimée » : une date ESTIMÉE devient un cycle
+/// estimé (jamais « Clôture proche » ni « Clôturée »), une date confirmée la
+/// clôture confirmée, et sans date c'est « Date à confirmer ».
+ScholarshipUrgency scholarshipUrgencyOfCatalog(
+  ScholarshipModel scholarship, {
+  DateTime? now,
+}) {
+  final deadline = scholarship.deadlineAt;
+  final estimated = scholarship.deadlineIsEstimated && deadline != null;
+  return scholarshipUrgencyOf(
+    LiveScholarshipModel(
+      id: scholarship.id,
+      title: '',
+      countryName: '',
+      fundingType: 'unknown',
+      description: '',
+      advantages: const <String>[],
+      eligibility: const <String>[],
+      level: '',
+      deadlineLabel: '',
+      deadlineAt: estimated ? null : deadline,
+      applicationUrl: '',
+      tags: const <String>[],
+      matchScore: 0,
+      currentCycle: estimated
+          ? ScholarshipCycleModel(
+              id: '',
+              academicYear: '',
+              status: 'forecast',
+              dateConfidence: 'estimated',
+              estimatedCloseAt: deadline,
+            )
+          : null,
+    ),
+    now: now,
+  );
+}
+
 /// « Clôturée » se mérite : une clôture CONFIRMÉE passée, ou un cycle fermé
 /// par l'équipe — c.-à-d. un `closed` que la seule clôture ESTIMÉE dépassée
 /// n'explique pas. Même règle que `scholarshipServedStatus` (serveur).

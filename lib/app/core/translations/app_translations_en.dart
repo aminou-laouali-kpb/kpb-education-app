@@ -3428,6 +3428,23 @@ const Map<String, String> appTranslationsEn = {
   'home_match_title': 'Your scholarships',
   'home_match_see_all': 'See my @count scholarships',
   'home_match_see_all_one': 'See my scholarship',
+  // ── Home "Your next step" (chantier K) ──
+  'home_next_step_eyebrow': 'YOUR NEXT STEP',
+  'home_next_step_plan_a11y': 'Your plan: @value out of 100',
+  'home_next_step_label_deadline': 'Closing soon',
+  'home_next_step_subtitle_profile_test':
+      'The scholarship test (2 min) completes your profile and sorts scholarships for you.',
+  'home_next_step_cta_case': 'Open the case',
+  'home_next_step_cta_scholarship': 'See the scholarship',
+  'home_next_step_cta_test': 'Take the test',
+  'home_next_step_cta_profile': 'Complete my profile',
+  'home_next_step_cta_orientation': 'Start the test',
+  'home_next_step_cta_start_case': 'Start my case',
+  'home_next_step_cta_explore': 'Explore',
+  'home_deadlines_title': 'Your deadlines',
+  'home_intelligence_title': 'KPB Intelligence',
+  'home_intelligence_body':
+      'Ask your questions about schools, scholarships or budget.',
   'scholarship_match_assessment_title': 'Your test result',
   'scholarship_match_assessment_date': 'Based on your test of @date',
   'scholarship_match_assessment_not_in_run':

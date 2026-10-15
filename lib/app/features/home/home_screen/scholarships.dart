@@ -13,15 +13,20 @@ part of '../home_screen.dart';
 ///   neutre [neutral] (clôture la plus proche d'abord), SANS aucun niveau de
 ///   compatibilité — exactement l'accueil d'avant le test.
 ///
-/// La carte « Deadline urgente » ne dépend PAS de cette section : elle lit
-/// toujours la liste complète (`_findUrgentDeadline`).
+/// « Tes échéances » ne dépend PAS de cette section : elle lit toujours la
+/// liste complète (`resolveHomeDeadlines`).
 class _HomeScholarshipsSection extends StatefulWidget {
   const _HomeScholarshipsSection({
     required this.controller,
     required this.neutral,
+    this.hideEntryCard = false,
   });
 
   final AppController controller;
+
+  /// Vrai quand la carte « prochaine étape » ouvre déjà le test : la carte
+  /// « Fais le test » se replie (pas deux entrées vers le même test).
+  final bool hideEntryCard;
 
   /// Les 3 bourses de la liste neutre (voir `_homeScholarships`).
   final List<ScholarshipModel> neutral;
@@ -90,12 +95,14 @@ class _HomeScholarshipsSectionState extends State<_HomeScholarshipsSection> {
         child: child,
       );
 
-  Widget _entryCard() => _spaced(
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: KpbSpacing.pagePad),
-          child: ScholarshipMatchEntryCard(source: 'home'),
-        ),
-      );
+  Widget _entryCard() => widget.hideEntryCard
+      ? const SizedBox.shrink()
+      : _spaced(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: KpbSpacing.pagePad),
+            child: ScholarshipMatchEntryCard(source: 'home'),
+          ),
+        );
 
   Widget _neutralSection() {
     final controller = widget.controller;

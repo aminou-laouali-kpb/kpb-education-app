@@ -403,6 +403,14 @@ class RemoteFeatureFlags {
   /// Profil, déjà présent dans la barre d'onglets).
   bool get homeFollowedEntryEnabled => _flag('homeFollowedEntry', true);
 
+  /// Blocs de l'accueil « Ta prochaine étape » (chantier K) : un
+  /// interrupteur d'urgence par bloc — `homeNextStep`, `homeScholarships`,
+  /// `homeDeadlines`, `homePartners`, `homeIntelligence`, `homeParcours`,
+  /// `homeCounselor`. Ouverts tant que le serveur ne les sert pas : chaque
+  /// bloc se replie déjà tout seul quand son appel réseau échoue ; servir
+  /// `false` sous `features` en retire un des téléphones installés.
+  bool homeBlockEnabled(String key) => _flag(key, true);
+
   /// Pose des drapeaux servis, pour qu'un test d'écran n'ait pas besoin de
   /// simuler tout `/config/app`.
   @visibleForTesting

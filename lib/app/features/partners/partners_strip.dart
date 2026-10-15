@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
+import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/kpb_network_image.dart';
 
 import '../../core/repositories/app_api_client.dart';
@@ -18,16 +19,31 @@ import '../../core/utils/external_link.dart';
 /// list to Hive because partners rotate infrequently enough that a fresh
 /// fetch every cold start is fine.
 class PartnersStrip extends StatefulWidget {
-  const PartnersStrip({super.key, this.height = 80});
+  const PartnersStrip({
+    super.key,
+    this.height = 80,
+    this.api,
+    this.padding = const EdgeInsets.symmetric(vertical: 8),
+  });
 
   final double height;
+
+  /// Le client à interroger ; nul : celui de l'app (en-têtes et
+  /// intercepteurs communs), à défaut un client neuf.
+  final AppApiClient? api;
+
+  /// Marges du bandeau quand il a des partenaires à montrer (rien sinon).
+  final EdgeInsets padding;
 
   @override
   State<PartnersStrip> createState() => _PartnersStripState();
 }
 
 class _PartnersStripState extends State<PartnersStrip> {
-  final AppApiClient _api = AppApiClient();
+  late final AppApiClient _api = widget.api ??
+      (Get.isRegistered<AppController>()
+          ? Get.find<AppController>().apiClient
+          : AppApiClient());
   List<dynamic> _partners = const [];
   bool _loading = true;
 
@@ -53,23 +69,13 @@ class _PartnersStripState extends State<PartnersStrip> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return SizedBox(
-        height: widget.height,
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
-      );
-    }
-    if (_partners.isEmpty) {
+    // Rien tant qu'il n'y a pas de partenaire à montrer : ni spinner seul
+    // pendant le chargement, ni trou quand l'appel échoue ou rend vide.
+    if (_loading || _partners.isEmpty) {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: widget.padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -147,7 +153,10 @@ class _PartnerTile extends StatelessWidget {
               name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(fontSize: KpbFontSize.xs),
             ),
           ],
         ),

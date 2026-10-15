@@ -1,6 +1,6 @@
 part of '../home_screen.dart';
 
-// En-tête de l'accueil : salutation, copilote, profil, cloche.
+// En-tête de l'accueil : salutation, cloche, « Mes suivis » (ou profil).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // App bar — greeting (fills the title slot) + soft-elevated icon chips
@@ -47,46 +47,12 @@ class _HomeGreetingHeader extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontFamily: KpbTextStyles.headingFamily,
-              fontSize: 20,
+              fontSize: KpbFontSize.xl,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.4,
               color: KpbColors.brandNavy,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeCopilotButton extends StatelessWidget {
-  const _HomeCopilotButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'home_ai_advisor_title'.tr,
-      child: KpbPressable(
-        onTap: onTap,
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: KpbColors.actionPrimary,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: KpbColors.actionPrimary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.smart_toy_rounded,
-              color: Colors.white, size: 19),
         ),
       ),
     );
@@ -108,8 +74,8 @@ class _HomeFollowedButton extends StatelessWidget {
         key: const ValueKey<String>('home-followed-entry'),
         onTap: onTap,
         child: Container(
-          width: 38,
-          height: 38,
+          width: _kHomeHeaderButton,
+          height: _kHomeHeaderButton,
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
@@ -136,8 +102,8 @@ class _HomeProfileButton extends StatelessWidget {
       child: KpbPressable(
         onTap: onTap,
         child: Container(
-          width: 38,
-          height: 38,
+          width: _kHomeHeaderButton,
+          height: _kHomeHeaderButton,
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
@@ -189,13 +155,14 @@ class _NotifBellChipState extends State<_NotifBellChip> {
         button: true,
         label: 'notifications_title'.tr,
         child: KpbPressable(
+          key: const ValueKey<String>('home-bell'),
           onTap: widget.onTap,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: _kHomeHeaderButton,
+                height: _kHomeHeaderButton,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
@@ -207,8 +174,8 @@ class _NotifBellChipState extends State<_NotifBellChip> {
               ),
               if (widget.hasUnread)
                 Positioned(
-                  top: 8,
-                  right: 9,
+                  top: 10,
+                  right: 11,
                   child: Container(
                     key: const ValueKey<String>('home-bell-unread-dot'),
                     width: 9,
