@@ -127,7 +127,8 @@ void main() {
     expect(
       File('docker-compose.yml').readAsStringSync(),
       contains('- $variable=\${$variable:-false}'),
-      reason: '$variable doit avoir `false` pour défaut dans docker-compose.yml.',
+      reason:
+          '$variable doit avoir `false` pour défaut dans docker-compose.yml.',
     );
   });
 
