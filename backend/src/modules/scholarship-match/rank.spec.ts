@@ -1,14 +1,19 @@
 import { assess, type MatchScholarship } from './assess';
 import {
+  CERTAINTY_PENALTY_PER_POINT,
   closingDate,
   composeRun,
   matchScholarships,
+  PROFILE_DEPENDENT_TO_VERIFY,
   relevance,
   RELEVANCE_WEIGHTS,
   type RankedEntry,
 } from './rank';
+import { TO_VERIFY_CODES } from './reasons';
 import {
   date,
+  grade,
+  language,
   makeCycle,
   makeProfile,
   makeScholarship,
@@ -79,6 +84,68 @@ describe('relevance (interne, jamais exposée)', () => {
     expect(relevance(wanted, row, assess(wanted, row, NOW), NOW)).toBeGreaterThan(
       relevance(makeProfile({ targetCountryIds: ['can'] }), row, assess(wanted, row, NOW), NOW),
     );
+  });
+});
+
+describe('relevance — la certitude ne compte que les incertitudes du profil', () => {
+  it('une condition que le test ne pose pas ne fait pas reculer une fiche', () => {
+    // Même fiche, transcrite en une ou en quatre conditions « autres » (liste
+    // de pays non reproduite, leadership…) : même pertinence.
+    const sparse = entry(toVerifyRow('sparse'));
+    const detailed = entry(
+      toVerifyRow('detailed', {
+        eligibilityCriteria: [
+          other('pays-eligibles'),
+          other('heures'),
+          other('leadership'),
+          other('exclusions'),
+          grade('top-10-pour-cent'),
+          language('langue-du-cursus', { lang: 'de', minCefr: 'b2' }),
+        ],
+      }),
+    );
+    expect(detailed.assessment.status).toBe('to_verify');
+    expect(detailed.assessment.toVerify).toHaveLength(6);
+    expect(detailed.relevance).toBe(sparse.relevance);
+    // Le statut et la liste affichée, eux, ne bougent pas.
+    expect(detailed.assessment.toVerify.map((point) => point.code)).toEqual([
+      'condition_other',
+      'condition_other',
+      'condition_other',
+      'condition_other',
+      'grade_check',
+      'language_other',
+    ]);
+  });
+
+  it('une incertitude qui tient à l’élève fait toujours reculer', () => {
+    const sure = entry(toVerifyRow('sure'));
+    const belowGrade = entry(
+      toVerifyRow('below', { eligibilityCriteria: [other('lettre'), grade('moyenne', 16)] }),
+    );
+    const noScore = entry(
+      toVerifyRow('no-score', {
+        eligibilityCriteria: [other('lettre'), language('ielts', { tests: [{ type: 'ielts', min: 6.5 }] })],
+      }),
+    );
+    expect(belowGrade.assessment.toVerify.map((point) => point.code)).toContain('grade_below');
+    expect(noScore.assessment.toVerify.map((point) => point.code)).toContain('language_missing');
+    expect(belowGrade.relevance).toBe(sure.relevance - CERTAINTY_PENALTY_PER_POINT);
+    expect(noScore.relevance).toBe(sure.relevance - CERTAINTY_PENALTY_PER_POINT);
+  });
+
+  it('classe chaque code « à vérifier » : profil ou catalogue', () => {
+    const catalogSide = TO_VERIFY_CODES.filter((code) => !PROFILE_DEPENDENT_TO_VERIFY.has(code));
+    expect(catalogSide).toEqual([
+      'eligibility_not_structured',
+      'eligibility_stale',
+      'criteria_not_structured',
+      'criterion_unreadable',
+      'language_other',
+      'grade_check',
+      'condition_other',
+    ]);
+    for (const code of PROFILE_DEPENDENT_TO_VERIFY) expect(TO_VERIFY_CODES).toContain(code);
   });
 });
 

@@ -81,9 +81,53 @@ function timingScore(scholarship: MatchScholarship, now: Date): number {
   return Math.round(w * 0.3);
 }
 
+/**
+ * Les points « à vérifier » qui tiennent au PROFIL de l'élève : une réponse
+ * manquante ou non confirmée, une valeur à la limite, une règle que ce profil
+ * ne remplit pas mais qui ne peut pas exclure. Eux seuls entament la
+ * certitude.
+ *
+ * Les autres tiennent au CATALOGUE — fiche non relue ou périmée, critère
+ * illisible, condition que le test ne pose pas (`condition_other` : liste de
+ * pays non reproduite, leadership…), langue autre que l'anglais ou le
+ * français, exigence de notes non chiffrée. Ils restent affichés tels quels,
+ * mais ne classent pas : sinon une fiche détaillée par KPB en conditions
+ * qu'aucun élève ne peut lever passerait derrière des fiches moins
+ * pertinentes pour lui, uniquement à cause de la façon dont KPB a structuré
+ * ses données. (Mesuré sur le catalogue 1.5.0 : SI Global Professionals,
+ * quatre conditions « autres », au-delà des 10 du Sénégalais de 26 ans.)
+ */
+export const PROFILE_DEPENDENT_TO_VERIFY: ReadonlySet<ToVerifyCode> = new Set<ToVerifyCode>([
+  'profile_unconfirmed',
+  'level_missing',
+  'level_check',
+  'nationality_missing',
+  'residence_missing',
+  'nationality_check',
+  'residence_check',
+  'age_missing',
+  'age_borderline',
+  'age_check',
+  'experience_missing',
+  'experience_borderline',
+  'experience_check',
+  'language_missing',
+  'language_below',
+  'grade_missing',
+  'grade_below',
+  'field_not_listed',
+  'field_undecided',
+]);
+
+/** Points de certitude retirés par incertitude qui tient au profil. */
+export const CERTAINTY_PENALTY_PER_POINT = 4;
+
 function certaintyScore(assessment: Assessment): number {
   const w = RELEVANCE_WEIGHTS.certainty;
-  return Math.max(0, w - 4 * assessment.toVerify.length);
+  const profileDependent = assessment.toVerify.filter((point) =>
+    PROFILE_DEPENDENT_TO_VERIFY.has(point.code),
+  ).length;
+  return Math.max(0, w - CERTAINTY_PENALTY_PER_POINT * profileDependent);
 }
 
 /** Pertinence interne, entier de 0 à 100. */

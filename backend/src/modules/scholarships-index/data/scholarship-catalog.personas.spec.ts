@@ -18,6 +18,18 @@ import { SCHOLARSHIP_CATALOG_V1 } from './scholarship-catalog.v1';
  * être RELU (la nouvelle liste est-elle juste pour cet élève ?), jamais
  * recopié depuis la sortie du test.
  *
+ * ## Classement : la certitude ne compte que ce qui tient au profil
+ *
+ * Depuis le réglage de `rank.ts` (`PROFILE_DEPENDENT_TO_VERIFY`), seuls les
+ * points « à vérifier » qui tiennent à l'élève (réponse manquante, valeur à la
+ * limite, règle non excluante qu'il ne remplit pas) entament la composante
+ * « certitude ». Les conditions que le test ne pose pas (`condition_other`),
+ * les exigences de notes non chiffrées (`grade_check`) et l'état de la fiche
+ * ne classent plus : une fiche que KPB a détaillée en quatre conditions
+ * « autres » ne passe plus derrière une fiche moins pertinente transcrite en
+ * une seule. Entre fiches de même pertinence, la clôture la plus proche passe
+ * devant. Les statuts, les exclusions et les comptes sont inchangés.
+ *
  * ## Deux hypothèses de décor, explicites
  *
  * 1. Les critères sont considérés TAMPONNÉS (relus il y a 30 jours). Dans le
@@ -199,26 +211,37 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
     );
 
     expect(result.items).toEqual([
-      'mastercard_foundation_scholars_2027 to_verify',
+      // Pearson : financement complet, campagne ouverte aux dates confirmées.
       'uoft_lester_b_pearson_2027 to_verify',
-      'brunei_government_scholarship_2027_forecast to_verify',
-      'open_doors_russia_2027 to_verify',
       // Türkiye : moins de 21 ans en Licence (18 ans, marge comprise) et pas
-      // turc ; la moyenne de 70 % reste souple → « à vérifier ».
+      // turc ; la moyenne de 70 % reste souple → « à vérifier ». Ses conditions
+      // non chiffrées ne la font plus reculer (5e → 2e).
       'turkiye_scholarships_2027_forecast to_verify',
-      'heydar_aliyev_grant_2027_forecast to_verify',
-      'auc_excellence_2027 to_verify',
       // Taiwan ICDF : la règle « alliés diplomatiques » de la Licence est
       // citée et reste « à vérifier » — la fiche ne reproduit pas la liste.
+      // Quatre conditions « autres » la reléguaient au 8e rang (→ 3e).
       'taiwan_icdf_2027 to_verify',
       'qatar_university_international_2027_forecast to_verify',
-      'alu_scholarship_2027 to_verify',
+      // Mastercard Foundation : complète mais prévision à clôture lointaine ;
+      // elle ne tirait sa 1re place que de sa fiche peu détaillée (→ 5e).
+      'mastercard_foundation_scholars_2027 to_verify',
+      'open_doors_russia_2027 to_verify',
+      'auc_excellence_2027 to_verify',
+      // Brunei : un score IELTS demandé et non indiqué — incertitude qui tient
+      // à l'élève, elle compte toujours (3e → 8e).
+      'brunei_government_scholarship_2027_forecast to_verify',
+      // Heydar Aliyev : 70/100 demandés, tranche 12-14 sur 20 en dessous —
+      // tient à l'élève aussi (6e → 9e).
+      'heydar_aliyev_grant_2027_forecast to_verify',
+      // Six fiches partielles ex æquo : la clôture la plus proche (15/01/2027)
+      // passe devant ; ALU (18/06/2027) sort des 10.
+      'stipendium_hungaricum_2027_forecast to_verify',
     ]);
     expect(result.beyondTen).toEqual([
+      'alu_scholarship_2027',
       'ashesi_scholarship_2027',
       'kazakhstan_foreign_students_2027_forecast',
       'romania_mfa_scholarship_2027_forecast',
-      'stipendium_hungaricum_2027_forecast',
       'turkiye_isdb_joint_2027_forecast',
       'york_pise_2027_forecast',
     ]);
@@ -258,29 +281,39 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
     );
 
     expect(result.items).toEqual([
+      // Gates et CMU-Africa : complètes, campagnes ouvertes aux dates confirmées.
       'gates_cambridge_2027 to_verify',
       'cmu_africa_mastercard_2027 to_verify',
-      'mastercard_foundation_scholars_2027 to_verify',
-      'erasmus_mundus_joint_masters_2027 to_verify',
-      'brunei_government_scholarship_2027_forecast to_verify',
-      'heydar_aliyev_grant_2027_forecast to_verify',
-      'open_doors_russia_2027 to_verify',
+      // Puis les complètes en prévision, sans incertitude propre à l'élève,
+      // par clôture la plus proche : ETH (30/11/2026) …
       'eth_zurich_esop_2027 to_verify',
-      'turkiye_scholarships_2027_forecast to_verify',
       // Deux ans d'expérience demandés : la tranche 24-36 mois suffit.
       'daad_epos_2027 to_verify',
+      'erasmus_mundus_joint_masters_2027 to_verify',
+      'turkiye_scholarships_2027_forecast to_verify',
+      // SI Global Professionals ENTRE dans les 10 (au-delà avant) : ses quatre
+      // conditions que le test ne pose pas (liste des 34 pays, 3 000 heures,
+      // leadership, exclusions) restent affichées « à vérifier » mais ne la
+      // classent plus derrière des fiches partielles.
+      'si_global_professionals_2027_forecast to_verify',
+      // Taiwan ICDF entre aussi, pour la même raison (liste de pays non
+      // reproduite) ; la condition reste à vérifier sur la page officielle.
+      'taiwan_icdf_2027 to_verify',
+      'heydar_aliyev_grant_2027_forecast to_verify',
+      // … jusqu'à Mastercard Foundation (30/06/2027), 3e avant.
+      'mastercard_foundation_scholars_2027 to_verify',
     ]);
-    // SI Global Professionals reste POSSIBLE (« à vérifier ») mais au-delà
-    // des 10 : quatre conditions que le test ne connaît pas (liste des
-    // 34 pays, 3 000 heures, leadership, exclusions) pèsent sur la certitude.
+    // Sortent des 10 : Open Doors (financement partiel, 7e avant) et Brunei
+    // (score IELTS demandé, non indiqué : une incertitude qui tient à l'élève).
+    // JJ/WBG : trois ans d'expérience pour une tranche 24-36 mois, à la limite.
     expect(result.beyondTen).toEqual([
+      'brunei_government_scholarship_2027_forecast',
       'eiffel_excellence_master_2027',
       'jj_wbgsp_2027_forecast',
       'kazakhstan_foreign_students_2027_forecast',
+      'open_doors_russia_2027',
       'romania_mfa_scholarship_2027_forecast',
-      'si_global_professionals_2027_forecast',
       'stipendium_hungaricum_2027_forecast',
-      'taiwan_icdf_2027',
       'turkiye_isdb_joint_2027_forecast',
     ]);
     // Australia Awards : cinq ans d'expérience exigés, 36 mois au plus ici.
@@ -308,15 +341,23 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
     expect(result.items).toEqual([
       'gates_cambridge_2027 to_verify',
       'cmu_africa_mastercard_2027 to_verify',
-      'mastercard_foundation_scholars_2027 to_verify',
-      'erasmus_mundus_joint_masters_2027 to_verify',
-      'brunei_government_scholarship_2027_forecast to_verify',
-      'heydar_aliyev_grant_2027_forecast to_verify',
-      'open_doors_russia_2027 to_verify',
+      // Mêmes déplacements que pour le Sénégalais (complètes en prévision, par
+      // clôture), plus JJ/WBG : 36-60 mois couvrent les trois ans demandés,
+      // ses huit conditions « autres » ne la relèguent plus.
       'eth_zurich_esop_2027 to_verify',
       'daad_epos_2027 to_verify',
+      'erasmus_mundus_joint_masters_2027 to_verify',
       'si_global_professionals_2027_forecast to_verify',
+      'jj_wbgsp_2027_forecast to_verify',
+      'taiwan_icdf_2027 to_verify',
+      'heydar_aliyev_grant_2027_forecast to_verify',
+      'mastercard_foundation_scholars_2027 to_verify',
     ]);
+    // Open Doors (partielle) et Brunei (score IELTS non indiqué) passent
+    // au-delà des 10.
+    expect(result.beyondTen).toEqual(
+      expect.arrayContaining(['brunei_government_scholarship_2027_forecast', 'open_doors_russia_2027']),
+    );
     // Eiffel (« 29 ans au plus ») et Türkiye (« moins de 30 ans » en Master) :
     // 30 ans déjà un an avant la clôture, la marge ne change rien.
     expect(result.excluded.eiffel_excellence_master_2027).toEqual([
