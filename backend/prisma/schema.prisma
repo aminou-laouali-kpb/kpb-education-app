@@ -115,6 +115,24 @@ enum ScholarshipDateConfidence {
   confirmed
 }
 
+// « Mes 10 bourses » (chantier D). Niveaux qu'une bourse accepte, dans le
+// vocabulaire canonique du catalogue (scholarship-level.ts) plus `doctorate`.
+// Nom distinct du type TS ScholarshipStudyLevel du catalogue.
+enum ScholarshipEligibleLevel {
+  secondary
+  bachelor
+  master
+  doctorate
+}
+
+// Domaines acceptés par une bourse : `unknown` tant que KPB n'a pas structuré
+// la fiche, `all` tous domaines, `listed` seulement `relatedFieldIds`.
+enum ScholarshipFieldsScope {
+  unknown
+  all
+  listed
+}
+
 enum CoachMessageRole {
   user
   assistant
@@ -331,76 +349,102 @@ enum SlotOfferStatus {
 }
 
 model UserProfile {
-  id                        String                         @id @default(cuid())
-  accountType               AccountType
+  id                            String                         @id @default(cuid())
+  accountType                   AccountType
   // Supabase Auth user id (JWT `sub`). Null for legacy/home-grown accounts
   // not yet migrated. Used by SupabaseAuthGuard to map a verified token to a
   // local profile.
-  supabaseUserId            String?                        @unique
-  preferredLanguage         String
-  fullName                  String
-  email                     String                         @unique
-  phone                     String
-  whatsApp                  String?
-  countryOfResidence        String
-  currentLevel              String?
-  targetLevel               String?
-  languageLevel             String?
-  gradeRange                String?
+  supabaseUserId                String?                        @unique
+  preferredLanguage             String
+  fullName                      String
+  email                         String                         @unique
+  phone                         String
+  whatsApp                      String?
+  countryOfResidence            String
+  currentLevel                  String?
+  targetLevel                   String?
+  languageLevel                 String?
+  gradeRange                    String?
   // Série du bac (A, C, D, G2, PRO…). Distincte de `gradeRange`, qui est la
   // moyenne : le client faisait auparavant voyager la série dans `gradeRange`
   // faute de colonne, ce qui écrasait la moyenne à chaque enregistrement.
-  bacSeries                 String?
+  bacSeries                     String?
   // Legacy monthly living budget. Read only for backward compatibility.
-  monthlyBudgetEur          Int?
+  monthlyBudgetEur              Int?
   // Annual tuition budget is the canonical financial input for matching.
-  annualTuitionBudgetEur    Int?
+  annualTuitionBudgetEur        Int?
   // EUR is the canonical stored unit; this is only the user's display choice.
-  preferredCurrency         String                         @default("XOF")
-  wantsScholarship          Boolean                        @default(false)
+  preferredCurrency             String                         @default("XOF")
+  wantsScholarship              Boolean                        @default(false)
   // Per-user interest selections (previously held in a shared in-memory
   // singleton, which leaked across users). Now persisted per profile.
-  fieldIds                  String[]                       @default([])
-  targetCountryIds          String[]                       @default([])
-  availableDocuments        String[]                       @default([])
-  consentedAt               DateTime?
+  fieldIds                      String[]                       @default([])
+  targetCountryIds              String[]                       @default([])
+  availableDocuments            String[]                       @default([])
+  consentedAt                   DateTime?
   // Separate, explicit consent for third-party AI processing (Groq). Gates the
   // AI coach independently of the general onboarding consent above.
-  aiConsentedAt             DateTime?
+  aiConsentedAt                 DateTime?
   // Scholarship-newsletter opt-in (Mautic). `newsletterOptIn` is the user's
   // current desired state; `newsletterConsentedAt` is the timestamped proof of
   // the latest opt-in (GDPR); `newsletterSyncedOptIn` is the last state
   // actually pushed to Mautic (null = never synced). The reconciliation cron
   // syncs every profile where desired != synced, so a failed push self-heals.
-  newsletterOptIn           Boolean                        @default(false)
-  newsletterConsentedAt     DateTime?
-  newsletterSyncedOptIn     Boolean?
+  newsletterOptIn               Boolean                        @default(false)
+  newsletterConsentedAt         DateTime?
+  newsletterSyncedOptIn         Boolean?
   // KPB-169: the per-type notification opt-outs, as stable keys (see
   // src/common/notification-types.ts). A third type appeared, so — as the
   // previous note planned — the per-type booleans collapsed into one column.
   // Adding a family now costs a key, not a migration.
-  disabledNotificationTypes String[]                       @default([])
+  disabledNotificationTypes     String[]                       @default([])
   // DEPRECATED (KPB-169) — no longer read by any code path. Kept for one
   // release so a rollback still finds its data; the values were copied into
   // disabledNotificationTypes by the 20260725_notification_optout_types
   // migration. Drop both columns in KPB-174.
-  dailyScholarshipOptOut    Boolean                        @default(false)
-  weeklyDigestOptOut        Boolean                        @default(false)
+  dailyScholarshipOptOut        Boolean                        @default(false)
+  weeklyDigestOptOut            Boolean                        @default(false)
   // Age gate + self-attested guardian consent for declared minors (<18).
   // guardianConsentedAt gates data sync and AI processing for minors.
-  birthDate                 DateTime?
-  guardianName              String?
-  guardianContact           String?
-  guardianConsentedAt       DateTime?
+  birthDate                     DateTime?
+  guardianName                  String?
+  guardianContact               String?
+  guardianConsentedAt           DateTime?
+  // ── « Mes 10 bourses » (chantier D) ──────────────────────────────────────
+  // Réponses du test d'éligibilité, écrites UNIQUEMENT par
+  // POST /scholarships/match/runs (jamais par le PATCH du profil complet).
+  // Jetons validés et normalisés par scholarship-match/match-inputs.ts.
+  // Nationalités : ISO 3166-1 alpha-3 minuscule, comme Scholarship.countryId.
+  nationalityCode               String?
+  secondNationalityCode         String?
+  // none | bac | bac_plus_2 | licence | master | doctorat
+  highestDiploma                String?
+  // secondary | bachelor | master | doctorate. Distinct de `targetLevel`, lu
+  // par le matching écoles, la shortlist EEF, le mail de lead et le CV.
+  scholarshipTargetLevel        String?
+  // lt10 | 10_12 | 12_14 | 14_16 | 16_plus
+  gradeBandOn20                 String?
+  // none | a1_a2 | b1 | b2 | c1_c2
+  englishLevel                  String?
+  frenchLevel                   String?
+  // [{ type, score, takenAt? }]
+  languageTests                 Json?
+  // none | lt12 | 12_24 | 24_36 | 36_60 | 60_plus
+  workExperienceBand            String?
+  // Posé par le SERVEUR quand l'élève valide le récapitulatif (confirm: true).
+  // Sans lui, aucune valeur du profil ne peut exclure une bourse.
+  scholarshipProfileConfirmedAt DateTime?
+  // Opt-in explicite au push hebdomadaire « nouvelles bourses compatibles ».
+  scholarshipMatchAlertsOptInAt DateTime?
   // Profile photo. This is the PRIVATE storage key of the image object (e.g.
   // "2026-08-12/<uuid>.jpg"), never a URL: the catalog also serves secondary
   // scholarships, so an avatar can be a minor's face and a guessable public URL
   // would be a design defect. The bytes are served only by the authenticated
   // GET /api/profiles/me/avatar endpoint, which re-checks ownership.
-  avatarStorageKey          String?
+  avatarStorageKey              String?
   // Last time the profile-completion nudge (KPB-76) was sent — throttles the
   // re-engagement push so an incomplete profile is reminded at most monthly.
-  profileNudgedAt           DateTime?
+  profileNudgedAt               DateTime?
   // Dernière build de l'app vue pour ce compte (en-têtes X-KPB-App-Version /
   // X-KPB-App-Build, envoyés depuis la build 54). Écrites par
   // AppBuildInterceptor, au plus une fois par 6 h par compte (plus tôt après une
@@ -408,64 +452,65 @@ model UserProfile {
   // modification du profil). `lastAppSeenAt` est rafraîchi même sans en-tête :
   // un compte vu sans build connue est une build ≤ 53, pas un compte inactif.
   // Lues seulement en agrégat (GET /admin/app-builds).
-  lastAppVersion            String?
-  lastAppBuild              Int?
-  lastAppSeenAt             DateTime?
+  lastAppVersion                String?
+  lastAppBuild                  Int?
+  lastAppSeenAt                 DateTime?
   // Stable per-student referral code (KPB-69) — generated on first read, shared
   // via WhatsApp. Friends who redeem it are attributed back to this profile.
-  referralCode              String?                        @unique
+  referralCode                  String?                        @unique
   // No-cash referral rewards (KPB-77). Denormalized credit balance: +1 when a
   // referee reaches the first-case milestone, spent into a WhatsApp advisor
   // voucher. The signed CreditTransaction log is the audit trail and reconciles
   // this counter via SUM(amount); both are always written in one $transaction.
-  reviewCredits             Int                            @default(0)
-  createdAt                 DateTime                       @default(now())
-  updatedAt                 DateTime                       @updatedAt
-  cases                     Case[]
-  appointments              Appointment[]
-  savedItems                SavedItem[]
-  partnerLead               PartnerLead?
-  credential                StudentCredential?
-  deviceTokens              DeviceToken[]
-  purchases                 AcademyPurchase[]
-  parentLinksAsParent       ParentChildLink[]              @relation("parentLink_parent")
-  parentLinksAsChild        ParentChildLink[]              @relation("parentLink_child")
-  paymentIntents            PaymentIntent[]
+  reviewCredits                 Int                            @default(0)
+  createdAt                     DateTime                       @default(now())
+  updatedAt                     DateTime                       @updatedAt
+  cases                         Case[]
+  appointments                  Appointment[]
+  savedItems                    SavedItem[]
+  partnerLead                   PartnerLead?
+  credential                    StudentCredential?
+  deviceTokens                  DeviceToken[]
+  purchases                     AcademyPurchase[]
+  parentLinksAsParent           ParentChildLink[]              @relation("parentLink_parent")
+  parentLinksAsChild            ParentChildLink[]              @relation("parentLink_child")
+  paymentIntents                PaymentIntent[]
   // Espace « Études en France » — au plus une déclaration d'intérêt par
   // profil (contrainte @unique portée par EefInterest.userId).
-  eefInterest               EefInterest?
-  premiumWaitlist           PremiumWaitlistEntry?
+  eefInterest                   EefInterest?
+  premiumWaitlist               PremiumWaitlistEntry?
   // ── Phase 3 — Alumni mentor layer ─────────────────────────────────────────
   // Students who got admitted become verified mentors with a badge in the
   // community. We keep the fields flat on UserProfile (rather than a separate
   // Mentor model) because the identity is the same — it's a status, not a new
   // account type. Admin flips `alumniStatus` to `approved` after reviewing the
   // acceptance letter uploaded via `alumniProofUrl`.
-  alumniStatus              AlumniVerificationStatus       @default(none)
-  alumniUniversity          String?
-  alumniProgramme           String?
-  alumniGraduationYear      Int?
-  alumniCountryCode         String? // ISO 3166-1 alpha-2
-  alumniBioFr               String?
-  alumniBioEn               String?
-  alumniProofUrl            String? // Admission letter / degree — admin-only
-  alumniVerifiedAt          DateTime?
-  alumniVerifiedById        String? // AdminUser.id (no FK — keep decoupled)
-  alumniBadgeVisible        Boolean                        @default(true)
-  servicePurchases          ServicePurchase[]
-  salonRegistrations        SalonRegistration[]
-  referralsMade             Referral[]                     @relation("referral_referrer")
-  referralReceived          Referral?                      @relation("referral_referee")
-  creditTransactions        CreditTransaction[]
-  matches                   Match[]
-  scholarshipAlerts         ScholarshipAlertSubscription[]
-  userNotifications         UserNotification[]
-  consentReceipts           ConsentReceipt[]
-  scholarshipWorkspaces     ScholarshipWorkspace[]
-  aiQuotaBuckets            AiQuotaBucket[]
-  outcomeEvidenceAssets     OutcomeEvidenceAsset[]
-  outcomeEvidenceLinks      OutcomeEvidenceLink[]
-  impactCohortMemberships   ImpactCohortMembership[]
+  alumniStatus                  AlumniVerificationStatus       @default(none)
+  alumniUniversity              String?
+  alumniProgramme               String?
+  alumniGraduationYear          Int?
+  alumniCountryCode             String? // ISO 3166-1 alpha-2
+  alumniBioFr                   String?
+  alumniBioEn                   String?
+  alumniProofUrl                String? // Admission letter / degree — admin-only
+  alumniVerifiedAt              DateTime?
+  alumniVerifiedById            String? // AdminUser.id (no FK — keep decoupled)
+  alumniBadgeVisible            Boolean                        @default(true)
+  servicePurchases              ServicePurchase[]
+  salonRegistrations            SalonRegistration[]
+  referralsMade                 Referral[]                     @relation("referral_referrer")
+  referralReceived              Referral?                      @relation("referral_referee")
+  creditTransactions            CreditTransaction[]
+  matches                       Match[]
+  scholarshipAlerts             ScholarshipAlertSubscription[]
+  userNotifications             UserNotification[]
+  consentReceipts               ConsentReceipt[]
+  scholarshipWorkspaces         ScholarshipWorkspace[]
+  aiQuotaBuckets                AiQuotaBucket[]
+  outcomeEvidenceAssets         OutcomeEvidenceAsset[]
+  outcomeEvidenceLinks          OutcomeEvidenceLink[]
+  impactCohortMemberships       ImpactCohortMembership[]
+  scholarshipMatchRuns          ScholarshipMatchRun[]
 
   @@index([accountType])
   @@index([createdAt])
@@ -588,10 +633,15 @@ model Case {
   leadTag                     String?
   discussionMotive            String?
   lastCommercialInteractionAt DateTime?
+  // ── « Mes 10 bourses » (chantier D) ─────────────────────────────────────
+  // Bourse dont ce dossier accompagne la candidature (« Être accompagné »).
+  // Mis à NULL si la fiche disparaît : le dossier, lui, reste.
+  scholarshipId               String?
   createdAt                   DateTime               @default(now())
   updatedAt                   DateTime               @updatedAt
   user                        UserProfile            @relation(fields: [userId], references: [id])
   counsellor                  Counsellor?            @relation(fields: [counsellorId], references: [id])
+  scholarship                 Scholarship?           @relation(fields: [scholarshipId], references: [id], onDelete: SetNull)
   messages                    CaseMessage[]
   timelineEvents              CaseTimelineEvent[]
   tasks                       CaseTask[]
@@ -609,6 +659,7 @@ model Case {
   @@index([leadTag])
   @@index([type])
   @@index([counsellorId])
+  @@index([scholarshipId])
 }
 
 model CaseMessage {
@@ -1196,40 +1247,40 @@ model MatchExplanation {
 }
 
 model Scholarship {
-  id                     String                         @id @default(cuid())
-  nameFr                 String
-  nameEn                 String
-  countryId              String
-  countryNameFr          String                         @default("")
-  countryNameEn          String                         @default("")
-  levelEligibleFr        String
-  levelEligibleEn        String
-  typeOfFundingFr        String
-  typeOfFundingEn        String
-  fundingType            FundingType                    @default(unknown)
-  applicationRequirement ApplicationRequirement         @default(separate_application)
-  deadlineLabelFr        String
-  deadlineLabelEn        String
-  descriptionFr          String                         @default("")
-  descriptionEn          String                         @default("")
-  advantagesFr           String[]                       @default([])
-  advantagesEn           String[]                       @default([])
-  eligibilityFr          String[]                       @default([])
-  eligibilityEn          String[]                       @default([])
-  keyRequirementsFr      String[]
-  keyRequirementsEn      String[]
-  relatedFieldIds        String[]
-  baseMatch              Int                            @default(30)
-  academyCourseId        String?
+  id                      String                         @id @default(cuid())
+  nameFr                  String
+  nameEn                  String
+  countryId               String
+  countryNameFr           String                         @default("")
+  countryNameEn           String                         @default("")
+  levelEligibleFr         String
+  levelEligibleEn         String
+  typeOfFundingFr         String
+  typeOfFundingEn         String
+  fundingType             FundingType                    @default(unknown)
+  applicationRequirement  ApplicationRequirement         @default(separate_application)
+  deadlineLabelFr         String
+  deadlineLabelEn         String
+  descriptionFr           String                         @default("")
+  descriptionEn           String                         @default("")
+  advantagesFr            String[]                       @default([])
+  advantagesEn            String[]                       @default([])
+  eligibilityFr           String[]                       @default([])
+  eligibilityEn           String[]                       @default([])
+  keyRequirementsFr       String[]
+  keyRequirementsEn       String[]
+  relatedFieldIds         String[]
+  baseMatch               Int                            @default(30)
+  academyCourseId         String?
   // ── Live-index fields (Track A1) ────────────────────────────────────────
   // Populated by the 48h refresh job; null for legacy seed data.
-  sourceKey              String?                        @unique // e.g. "greatyop-ajinomoto-2026"
-  sourceUrl              String?
-  applicationUrl         String?
-  deadlineAt             DateTime?
-  lastVerifiedAt         DateTime?
-  verifiedById           String?
-  verifiedByName         String?
+  sourceKey               String?                        @unique // e.g. "greatyop-ajinomoto-2026"
+  sourceUrl               String?
+  applicationUrl          String?
+  deadlineAt              DateTime?
+  lastVerifiedAt          DateTime?
+  verifiedById            String?
+  verifiedByName          String?
   // FAIL-CLOSED. Ces deux défauts valaient `true` et `approved`, et c'est le
   // mécanisme exact par lequel 11 fiches de démonstration sont devenues
   // publiques : créées par une version du seed antérieure au 16/07/2026 qui ne
@@ -1239,18 +1290,30 @@ model Scholarship {
   // (seed, importeur de catalogue, upsert du scraper, createScholarship), donc
   // le changement n'a aucun effet sur le comportement existant. Il ferme la
   // porte pour le prochain chemin d'écriture qui oubliera.
-  isActive               Boolean                        @default(false)
-  moderationStatus       ScholarshipModeration          @default(pending)
-  tags                   String[]                       @default([])
-  createdAt              DateTime                       @default(now())
-  updatedAt              DateTime                       @updatedAt
-  academyCourse          AcademyCourse?                 @relation(fields: [academyCourseId], references: [id])
-  applicationSteps       ScholarshipApplicationStep[]
-  videos                 ScholarshipVideo[]
-  cycles                 ScholarshipCycle[]
-  alertSubscriptions     ScholarshipAlertSubscription[]
-  userNotifications      UserNotification[]
-  workspaces             ScholarshipWorkspace[]
+  isActive                Boolean                        @default(false)
+  moderationStatus        ScholarshipModeration          @default(pending)
+  tags                    String[]                       @default([])
+  // ── Éligibilité structurée (« Mes 10 bourses », chantier D) ──────────────
+  // Une règle n'exclut un élève QUE si `eligibilityStructuredAt` est posé et
+  // date de moins de 400 jours (niveau compris) : les niveaux repris des tags
+  // du catalogue ne sont pas tamponnés et n'excluent donc personne.
+  // `eligibleLevels` vide = fiche non analysée (jamais montrée, comptée).
+  eligibleLevels          ScholarshipEligibleLevel[]     @default([])
+  fieldsScope             ScholarshipFieldsScope         @default(unknown)
+  // Critères v1 typés (scholarship-match/eligibility-criteria.ts).
+  eligibilityCriteria     Json                           @default("[]")
+  eligibilityStructuredAt DateTime?
+  eligibilityStructuredBy String?
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+  academyCourse           AcademyCourse?                 @relation(fields: [academyCourseId], references: [id])
+  applicationSteps        ScholarshipApplicationStep[]
+  videos                  ScholarshipVideo[]
+  cycles                  ScholarshipCycle[]
+  alertSubscriptions      ScholarshipAlertSubscription[]
+  userNotifications       UserNotification[]
+  workspaces              ScholarshipWorkspace[]
+  cases                   Case[]
 
   @@index([countryId])
   @@index([deadlineAt])
@@ -1342,6 +1405,37 @@ model ScholarshipAlertSubscription {
   @@unique([userId, scholarshipId])
   @@index([userId])
   @@index([scholarshipId])
+}
+
+// « Mes 10 bourses » (chantier D) : un passage du moteur d'éligibilité pour un
+// élève. Les 5 derniers sont gardés (élagage dans la même transaction).
+// `inputsSummary` est MINIMISÉ : niveau, nombre de domaines, compléments
+// présents et drapeaux de préparation — ni nationalité, ni date de naissance,
+// ni moyenne ; `profileHash` suffit à détecter un changement de profil.
+model ScholarshipMatchRun {
+  id                     String      @id @default(cuid())
+  userId                 String
+  // Version de l'algorithme ('sm-1').
+  algorithmVersion       String
+  // 'wizard' | 'rerun' | 'stale_refresh' | 'recompute'…
+  trigger                String
+  profileHash            String
+  catalogHash            String
+  inputsSummary          Json
+  // [{ scholarshipId, cycleId, rank, status, relevance, reasonCodes, toVerifyCodes }]
+  items                  Json
+  excludedSummary        Json
+  eligibleCount          Int         @default(0)
+  toVerifyCount          Int         @default(0)
+  excludedCount          Int         @default(0)
+  candidateCount         Int         @default(0)
+  notAnalyzedCount       Int         @default(0)
+  // Bourses déjà annoncées par le push hebdomadaire : jamais deux fois.
+  notifiedScholarshipIds String[]    @default([])
+  createdAt              DateTime    @default(now())
+  user                   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 // Durable, per-user in-app feed. Scholarship activations use `dedupeKey` so an

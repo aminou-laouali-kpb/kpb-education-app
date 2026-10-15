@@ -106,12 +106,15 @@ const PRISMA_TYPE: Record<string, string> = {
 };
 
 describe('migrations scholarship_follow — additives, verrous bornés', () => {
-  it('sont les trois dernières, dans cet ordre, après le suivi des builds', () => {
+  it('se suivent, dans cet ordre, juste après le suivi des builds', () => {
     const directories = readdirSync(MIGRATIONS, { withFileTypes: true })
       .filter((entry) => entry.isDirectory())
       .map((entry) => entry.name)
       .sort();
-    const tail = directories.slice(directories.indexOf('20261013121500_profile_last_app_build'));
+    // Les migrations des chantiers suivants (D : 20261020120000_scholarship_match_v1)
+    // viennent après : seul l'enchaînement de ces trois-là est figé ici.
+    const start = directories.indexOf('20261013121500_profile_last_app_build');
+    const tail = directories.slice(start, start + 4);
     expect(tail).toEqual([
       '20261013121500_profile_last_app_build',
       FILES.fanout,
