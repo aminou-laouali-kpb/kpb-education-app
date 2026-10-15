@@ -9,6 +9,9 @@ import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
+import '../../core/models/scholarship_match.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/scholarship_match_store.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/ui/components/update_recommended_banner.dart';
 import '../../core/ui/skeleton.dart';
@@ -26,6 +29,10 @@ import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../parcours/parcours_screen.dart';
 import '../parcours/parcours_story_screen.dart';
+import '../scholarship_match/match_format.dart';
+import '../scholarship_match/scholarship_match_actions.dart';
+import '../scholarship_match/scholarship_match_entry_card.dart';
+import '../scholarship_match/scholarship_match_results_screen.dart';
 import '../scholarships/widgets/follow_scholarship_button.dart';
 import '../tools/student_tools_screen.dart';
 import 'counsellor_testimonials_carousel.dart';
@@ -39,6 +46,7 @@ part 'home_screen/hero.dart';
 part 'home_screen/cards.dart';
 part 'home_screen/abroad.dart';
 part 'home_screen/engagement.dart';
+part 'home_screen/scholarships.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Flag helpers
@@ -410,32 +418,16 @@ class HomeScreen extends StatelessWidget {
                       child: SizedBox(height: KpbSpacing.xl)),
                 ],
 
-                // ── 6. Bourses à suivre (sans palier de compatibilité) ─
-                if (scholarships.isNotEmpty &&
-                    (controller.isStudent || controller.isParent)) ...[
+                // ── 6. Bourses : « Tes bourses » (run du test), « Fais le
+                // test », ou la liste neutre (parents, invités, drapeau
+                // fermé) — voir _HomeScholarshipsSection.
+                if (controller.isStudent || controller.isParent)
                   SliverToBoxAdapter(
-                    child: HScrollSection(
-                      title: 'home_scholarships_title'.tr,
-                      actionLabel: 'see_all'.tr,
-                      onAction: () => Get.toNamed(AppRoutes.scholarships),
-                      itemCount: scholarships.length,
-                      height: 168,
-                      itemWidth: 210,
-                      itemBuilder: (ctx, i) {
-                        final s = scholarships[i];
-                        return _ScholarshipCard(
-                          scholarshipId: s.id,
-                          name: controller.resolve(s.name),
-                          flag: _flag(s.countryId),
-                          funding: controller.resolve(s.typeOfFunding),
-                          onTap: () => Get.toNamed(AppRoutes.scholarships),
-                        );
-                      },
+                    child: _HomeScholarshipsSection(
+                      controller: controller,
+                      neutral: scholarships,
                     ),
                   ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.xl)),
-                ],
 
                 // ── 7. Articles récents ───────────────────────────────
                 // Community/articles is a V1.1+ module (hidden under MVP lock).
@@ -482,21 +474,19 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Nearest scholarship whose CONFIRMED deadline falls within 30 days.
-  /// Les 3 cartes « Bourses à suivre » de l'accueil.
+  /// Les 3 cartes de la liste NEUTRE de l'accueil : clôture confirmée la
+  /// plus proche d'abord, sans aucun palier de compatibilité (voir
+  /// [AppController.scholarshipsByDeadline]).
   ///
-  /// POINT D'EXTENSION (chantier H3) : pour un ÉTUDIANT qui a un run « Mes 10
-  /// bourses », les cartes viendront de ce run (statut texte servi par le
-  /// serveur, détail au toucher) ; sans run, une carte « Fais le test ». Le
-  /// branchement se fait ICI et nulle part ailleurs : le titre de la section,
-  /// la carte et [_findUrgentDeadline] n'ont pas à changer.
-  ///
-  /// En attendant — et pour toujours chez les parents — l'ordre est neutre et
-  /// vérifiable (clôture confirmée la plus proche d'abord), sans aucun palier
-  /// de compatibilité : voir [AppController.scholarshipsByDeadline].
+  /// C'est la liste des parents, des invités et de tout le monde tant que le
+  /// test « Mes 10 bourses » est fermé. Un ÉLÈVE qui a un run voit à la place
+  /// « Tes bourses » (3 cartes du run), et sans run la carte « Fais le test » :
+  /// le choix se fait dans [_HomeScholarshipsSection], qui lit le drapeau et
+  /// le magasin du test. [_findUrgentDeadline] n'en dépend pas.
   List<ScholarshipModel> _homeScholarships(AppController controller) =>
       controller.scholarshipsByDeadline.take(3).toList();
 
+  /// Nearest scholarship whose CONFIRMED deadline falls within 30 days.
   ScholarshipModel? _findUrgentDeadline(List<ScholarshipModel> scholarships) {
     ScholarshipModel? nearest;
     var nearestDays = 31;

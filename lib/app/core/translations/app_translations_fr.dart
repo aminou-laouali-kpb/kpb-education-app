@@ -988,8 +988,6 @@ const Map<String, String> appTranslationsFr = {
   'search_no_results_title': 'Aucun résultat pour « @query »',
   'scholarship_boost_analysis_title': 'Analyse Boost : @name',
   'live_scholarships_result_count': '@count bourse(s) trouvée(s)',
-  'eligibility_whatsapp_prefill':
-      'Bonjour KPB Education, je m\'intéresse à la bourse « @name » et j\'aimerais vérifier mon éligibilité / être accompagné(e).',
   'eligibility_pdf_generated_on': 'Généré le @date',
   'eligibility_pdf_budget_per_month': '@budget € / mois',
   // --- KPB-89 batch ---
@@ -1266,20 +1264,6 @@ const Map<String, String> appTranslationsFr = {
   // (`publicScholarshipWhere` côté serveur). On dit ce qui est vrai.
   'scholarships_sorted_hint':
       'Bourses vérifiées par KPB, pas encore clôturées. Active une alerte pour ne pas rater l\'ouverture.',
-  'eligibility_see_my_result': 'Voir mon résultat',
-  'answer_yes': 'Oui',
-  'answer_maybe': 'Peut-être',
-  'answer_no': 'Non',
-  'eligibility_verdict_eligible_title': '🟢 Tu sembles éligible',
-  'eligibility_verdict_eligible_body':
-      'Tu remplis les critères annoncés. Prépare ton dossier — un conseiller KPB peut t’accompagner.',
-  'eligibility_verdict_conditional_title': '🟡 Éligibilité à confirmer',
-  'eligibility_verdict_conditional_body':
-      'Tu remplis une partie des critères mais certains restent à vérifier. Un conseiller peut t’aider à confirmer ton éligibilité.',
-  'eligibility_verdict_unlikely_title': '🔴 Probablement non éligible',
-  'eligibility_verdict_unlikely_body':
-      'Au moins un critère clé ne semble pas rempli. Des exceptions existent parfois — parles-en à un conseiller, ou explore d’autres bourses.',
-  'talk_to_advisor': 'Discuter avec un conseiller',
   'roadmap_redirect_writing_tutorials':
       'Redirection vers les tutoriels de rédaction...',
   'roadmap_redirect_kpb_expert': 'Redirection vers l\'expert KPB...',
@@ -2398,8 +2382,6 @@ const Map<String, String> appTranslationsFr = {
   'main_subjects': 'Matières principales',
   'linked_children': 'Enfants liés',
   'shared_cases': 'Dossiers partagés',
-  'am_i_eligible': 'Suis-je éligible ?',
-  'to_check': 'À vérifier :',
   'key_criteria': 'Critères clés :',
   'privacy_policy': 'Politique de Confidentialité',
   'parent_create_invite': 'Créer un code d\'invitation',
@@ -2497,7 +2479,6 @@ const Map<String, String> appTranslationsFr = {
   'upcoming': 'À venir',
   'scholarship_tutorials':
       'Accède au pack de tutoriels vidéos exclusifs pour réussir ton dossier.',
-  'answer_all_criteria': 'Réponds à tous les critères pour voir ton résultat.',
   'scholarships_title': 'Bourses d\'études',
   'recommended_opportunities': 'Opportunités recommandées',
   'ranked_by_profile':
@@ -2546,10 +2527,6 @@ const Map<String, String> appTranslationsFr = {
   'search_results_count': '@n résultat(s)',
   'doc_review_paste_hint':
       'Colle ton brouillon et obtiens un retour structuré en quelques secondes — points forts, axes d’amélioration et éléments manquants.',
-  'eligibility_honest_hint':
-      'Réponds honnêtement à chaque critère pour estimer ton éligibilité. Ce n’est qu’une indication — un conseiller confirmera ton cas.',
-  'eligibility_not_detailed':
-      'Les critères d’éligibilité de cette bourse ne sont pas encore détaillés. Un conseiller KPB peut vérifier ton cas directement.',
   'roadmap_objective':
       'Objectif : rentrée @intake · @field. Voici les étapes, datées à rebours de l’échéance — coche-les au fur et à mesure.',
   'parent_share_case_title': 'Partager avec mon parent',
@@ -3681,6 +3658,21 @@ const Map<String, String> appTranslationsFr = {
       'Préviens-moi quand une nouvelle bourse compatible arrive',
   'scholarship_match_alerts_error':
       'Le réglage n\'a pas été enregistré. Réessaie.',
+  // Accueil, fiche bourse, Profil et notifications (chantier H3).
+  'home_hero_cta_find_scholarships_test': 'Trouve tes bourses (2 min)',
+  'home_match_title': 'Tes bourses',
+  'home_match_see_all': 'Voir mes @count bourses',
+  'home_match_see_all_one': 'Voir ma bourse',
+  'scholarship_match_assessment_title': 'Ton résultat au test',
+  'scholarship_match_assessment_date': 'D\'après ton test du @date',
+  'scholarship_match_assessment_not_in_run':
+      'Cette bourse ne fait pas partie de tes résultats du test.',
+  'scholarship_match_assessment_see_results': 'Voir mes résultats',
+  'profile_quick_scholarship_match': 'Mes bourses compatibles',
+  'scholarship_match_alerts_pref_title':
+      'Nouvelles bourses compatibles (hebdo)',
+  'scholarship_match_alerts_pref_subtitle':
+      'Au plus une notification par semaine, quand une nouvelle bourse compatible avec ton test arrive.',
   'scholarship_match_disclaimer':
       'Le test vérifie les conditions principales publiées. La sélection reste décidée par l\'organisme.',
   'scholarship_match_diff_added': '@count nouvelles',

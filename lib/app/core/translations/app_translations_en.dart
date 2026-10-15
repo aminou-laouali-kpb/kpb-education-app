@@ -907,8 +907,6 @@ const Map<String, String> appTranslationsEn = {
   'search_no_results_title': 'No results for « @query »',
   'scholarship_boost_analysis_title': 'Boost Analysis: @name',
   'live_scholarships_result_count': '@count scholarship(s) found',
-  'eligibility_whatsapp_prefill':
-      'Hello KPB Education, I\'m interested in the « @name » scholarship and would like to check my eligibility / get support.',
   'eligibility_pdf_generated_on': 'Generated on @date',
   'eligibility_pdf_budget_per_month': '@budget € / month',
   // --- KPB-89 batch ---
@@ -1150,20 +1148,6 @@ const Map<String, String> appTranslationsEn = {
       'Created by a 2024 Chevening scholar who has supported hundreds of African students.',
   'scholarships_sorted_hint':
       'Scholarships checked by KPB and not yet closed. Enable an alert so you do not miss the opening.',
-  'eligibility_see_my_result': 'See my result',
-  'answer_yes': 'Yes',
-  'answer_maybe': 'Maybe',
-  'answer_no': 'No',
-  'eligibility_verdict_eligible_title': '🟢 You appear eligible',
-  'eligibility_verdict_eligible_body':
-      'You meet the stated criteria. Prepare your application — a KPB advisor can help you.',
-  'eligibility_verdict_conditional_title': '🟡 Eligibility to be confirmed',
-  'eligibility_verdict_conditional_body':
-      'You meet some of the criteria but some remain to be verified. An advisor can help you confirm your eligibility.',
-  'eligibility_verdict_unlikely_title': '🔴 Probably not eligible',
-  'eligibility_verdict_unlikely_body':
-      'At least one key criterion does not appear to be met. Exceptions sometimes exist — talk to an advisor, or explore other scholarships.',
-  'talk_to_advisor': 'Talk to an advisor',
   'roadmap_redirect_writing_tutorials': 'Redirecting to writing tutorials...',
   'roadmap_redirect_kpb_expert': 'Redirecting to the KPB expert...',
   'roadmap_view_tutorials': 'View tutorials',
@@ -2183,8 +2167,6 @@ const Map<String, String> appTranslationsEn = {
   'main_subjects': 'Main subjects',
   'linked_children': 'Linked children',
   'shared_cases': 'Shared cases',
-  'am_i_eligible': 'Am I eligible?',
-  'to_check': 'To check:',
   'key_criteria': 'Key criteria:',
   'privacy_policy': 'Privacy Policy',
   'parent_create_invite': 'Create an invite code',
@@ -2274,7 +2256,6 @@ const Map<String, String> appTranslationsEn = {
   'upcoming': 'Upcoming',
   'scholarship_tutorials':
       'Access the exclusive video tutorial pack to ace your application.',
-  'answer_all_criteria': 'Answer all criteria to see your result.',
   'scholarships_title': 'Scholarships',
   'recommended_opportunities': 'Recommended opportunities',
   'ranked_by_profile': 'Ranked by your profile and academic goals.',
@@ -2322,10 +2303,6 @@ const Map<String, String> appTranslationsEn = {
   'search_results_count': '@n result(s)',
   'doc_review_paste_hint':
       'Paste your draft and get structured feedback in seconds — strengths, areas to improve and missing elements.',
-  'eligibility_honest_hint':
-      'Answer each criterion honestly to estimate your eligibility. It\'s only an indication — an advisor will confirm your case.',
-  'eligibility_not_detailed':
-      'This scholarship\'s eligibility criteria aren\'t detailed yet. A KPB advisor can check your case directly.',
   'roadmap_objective':
       'Goal: @intake intake · @field. Here are the steps, dated backward from the deadline — tick them off as you go.',
   'parent_share_case_title': 'Share with my parent',
@@ -3409,6 +3386,20 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_alerts_title':
       'Tell me when a new compatible scholarship arrives',
   'scholarship_match_alerts_error': 'The setting was not saved. Try again.',
+  // Home, scholarship page, Profile and notifications (H3).
+  'home_hero_cta_find_scholarships_test': 'Find your scholarships (2 min)',
+  'home_match_title': 'Your scholarships',
+  'home_match_see_all': 'See my @count scholarships',
+  'home_match_see_all_one': 'See my scholarship',
+  'scholarship_match_assessment_title': 'Your test result',
+  'scholarship_match_assessment_date': 'Based on your test of @date',
+  'scholarship_match_assessment_not_in_run':
+      'This scholarship is not among your test results.',
+  'scholarship_match_assessment_see_results': 'See my results',
+  'profile_quick_scholarship_match': 'My matching scholarships',
+  'scholarship_match_alerts_pref_title': 'New matching scholarships (weekly)',
+  'scholarship_match_alerts_pref_subtitle':
+      'At most one notification a week, when a new scholarship matching your test arrives.',
   'scholarship_match_disclaimer':
       'The test checks the main published conditions. The organisation still makes the selection.',
   'scholarship_match_diff_added': '@count new',

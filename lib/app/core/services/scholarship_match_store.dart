@@ -103,8 +103,9 @@ class MatchRunFailed extends MatchRunOutcome {
 /// « Mes 10 bourses » côté app : l'état servi, le dernier run (lisible hors
 /// ligne, daté) et le brouillon de l'assistant.
 ///
-/// UN point d'accès pour les trois entrées (carte de l'onglet Bourses,
-/// résultats, et l'accueil « Tes bourses » à venir) :
+/// UN point d'accès pour toutes les entrées (carte de l'onglet Bourses,
+/// résultats, accueil « Tes bourses », bloc d'évaluation de la fiche bourse,
+/// réglage des notifications, accès du Profil) :
 ///
 /// - [loadState] appelle `GET /scholarships/match/state` au plus UNE fois par
 ///   passage au premier plan (un retour au premier plan rouvre la question) ;

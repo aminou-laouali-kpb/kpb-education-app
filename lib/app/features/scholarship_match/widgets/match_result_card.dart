@@ -101,7 +101,7 @@ class MatchResultCard extends StatelessWidget {
           spacing: KpbSpacing.xs,
           runSpacing: KpbSpacing.xs,
           children: [
-            _Pill(
+            MatchPill(
               key: ValueKey<String>('match-status-${item.scholarshipId}'),
               text: available ? statusText : 'scholarship_match_unavailable'.tr,
               semantics: available
@@ -112,7 +112,7 @@ class MatchResultCard extends StatelessWidget {
               background: available ? statusBg : KpbColors.surfaceMuted,
             ),
             if (item.isNew && available)
-              _Pill(
+              MatchPill(
                 key: ValueKey<String>('match-new-${item.scholarshipId}'),
                 text: 'scholarship_match_new'.tr,
                 semantics: 'scholarship_match_new'.tr,
@@ -120,14 +120,14 @@ class MatchResultCard extends StatelessWidget {
                 background: KpbColors.actionPrimarySoft,
               ),
             if (available && card?.fundingLabel != null)
-              _Pill(
+              MatchPill(
                 text: card!.fundingLabel!,
                 semantics: card.fundingLabel!,
                 color: KpbColors.textPrimary,
                 background: KpbColors.surfaceMuted,
               ),
             if (available && window != null)
-              _Pill(
+              MatchPill(
                 key: ValueKey<String>('match-window-${item.scholarshipId}'),
                 text: window.$1,
                 semantics: 'scholarship_match_window_a11y'
@@ -146,13 +146,13 @@ class MatchResultCard extends StatelessWidget {
         if (available) ...[
           if (item.reasons.isNotEmpty) const SizedBox(height: KpbSpacing.sm),
           for (final reason in item.reasons.take(3))
-            _Point(
+            MatchPoint(
               icon: Icons.check_circle_rounded,
               color: KpbColors.success,
               text: reason.label,
             ),
           for (final point in item.toVerify) ...[
-            _Point(
+            MatchPoint(
               icon: Icons.warning_amber_rounded,
               color: KpbColors.warning,
               text: point.label,
@@ -229,8 +229,10 @@ class MatchResultCard extends StatelessWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
-  const _Pill({
+/// Une pastille de texte (statut, « Nouveau », fenêtre) avec son libellé
+/// pour le lecteur d'écran. Partagée avec le bloc d'évaluation de la fiche.
+class MatchPill extends StatelessWidget {
+  const MatchPill({
     super.key,
     required this.text,
     required this.semantics,
@@ -270,8 +272,14 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _Point extends StatelessWidget {
-  const _Point({required this.icon, required this.color, required this.text});
+/// Une raison (✓) ou un point à vérifier (⚠) servi par le serveur.
+class MatchPoint extends StatelessWidget {
+  const MatchPoint({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
 
   final IconData icon;
   final Color color;

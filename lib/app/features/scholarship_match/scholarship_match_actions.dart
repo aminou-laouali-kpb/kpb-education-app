@@ -78,14 +78,17 @@ ScholarshipMatchEntryVariant scholarshipMatchEntryVariant(
 }
 
 /// L'invité veut faire le test : on garde l'intention (24 h), puis la porte
-/// d'inscription habituelle (`guest_to_signup`, source dédiée).
-Future<void> startScholarshipMatchAsGuest() async {
+/// d'inscription habituelle (`guest_to_signup`, source dédiée :
+/// [scholarshipMatchGuestSource] pour la carte de l'onglet Bourses,
+/// `home_hero_scholarship_match` pour le héros de l'accueil).
+Future<void> startScholarshipMatchAsGuest({
+  String source = scholarshipMatchGuestSource,
+}) async {
   await PendingIntentStore.save(
     route: scholarshipMatchRoute,
-    source: scholarshipMatchGuestSource,
+    source: source,
   );
-  Get.find<AppController>()
-      .leaveGuestForSignup(source: scholarshipMatchGuestSource);
+  Get.find<AppController>().leaveGuestForSignup(source: source);
   unawaited(Get.offAll<void>(() => const AppBootScreen()));
 }
 

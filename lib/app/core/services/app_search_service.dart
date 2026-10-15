@@ -308,9 +308,10 @@ class AppSearchService {
   /// Chaque critère se lit sur la fiche elle-même : l'ordre ne dit rien du
   /// profil au-delà du niveau visé, et l'écran ne doit pas dire le contraire.
   ///
-  /// Point d'extension (chantier H3) : l'accueil prendra ses cartes dans le
-  /// dernier run « Mes 10 bourses » quand il existe. Cette liste reste alors la
-  /// source des comptes parent et de la carte « Deadline urgente ».
+  /// Un ÉLÈVE qui a un run « Mes 10 bourses » voit à l'accueil les cartes de
+  /// ce run (`_HomeScholarshipsSection`) ; cette liste reste la source des
+  /// parents, des invités, de tous tant que le test est fermé, et TOUJOURS de
+  /// la carte « Deadline urgente ».
   ///
   /// Memoized for the lifetime of this service (one controller state).
   late final List<ScholarshipModel> scholarshipsByDeadline =
