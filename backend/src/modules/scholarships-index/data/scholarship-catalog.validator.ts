@@ -1,5 +1,12 @@
+import { STRUCTURED_FRESHNESS_DAYS } from '../../scholarship-match/assess';
 import {
+  parseEligibilityCriteria,
+  validateEligibilityCriteria,
+} from '../../scholarship-match/eligibility-criteria';
+import {
+  DRAFT_STRUCTURED_BY,
   REQUIRED_OFFICIAL_SOURCE_KINDS,
+  SCHOLARSHIP_FIELDS_SCOPES,
   SCHOLARSHIP_STUDY_LEVELS,
   type ScholarshipStudyLevel,
   type VerifiedScholarshipCatalogRecord,
@@ -8,6 +15,27 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_VERIFICATION_AGE_DAYS = 30;
+
+/**
+ * La porte éditoriale de l'éligibilité structurée : `warning` ou `error`.
+ *
+ * `missing_structured_eligibility` signale une fiche dont l'éligibilité n'a
+ * pas été relue par un humain (aucun bloc, ou un brouillon sans tampon). La
+ * spécification du chantier D la voulait BLOQUANTE dès 1.5.0 (porte « tout ou
+ * rien »). Elle est livrée en AVERTISSEMENT : les 36 fiches portent des
+ * brouillons honnêtement non tamponnés, et une erreur rendrait la CI rouge sur
+ * toute PR jusqu'à la fin de la relecture — ce qui pousserait à tamponner sans
+ * relire, exactement ce que la règle doit empêcher.
+ *
+ * Passage en `error` prévu, en UNE ligne ici, le jour où la couverture
+ * (`eligibilityCoverage.stamped`) atteint le nombre de fiches : à partir de là,
+ * toute fiche ajoutée sans éligibilité relue casse la CI. Procédure :
+ * `docs/catalog-verification-sop.md`, « Structurer l'éligibilité ».
+ */
+export const STRUCTURED_ELIGIBILITY_GATE: 'warning' | 'error' = 'warning';
+
+/** Le vocabulaire des tags qui reprennent `levels` (voir scholarship-level.ts). */
+const LEVEL_TAGS: ReadonlySet<string> = new Set(SCHOLARSHIP_STUDY_LEVELS);
 
 /**
  * L'horizon d'alerte AVANT clôture.
@@ -60,6 +88,36 @@ export interface ScholarshipCatalogValidationReport {
    * jours. Ce ne sont PAS des anomalies : ce sont des rendez-vous.
    */
   closingSoon: ScholarshipCatalogClosingSoon[];
+  /**
+   * Avertissements : ils ne pèsent sur AUCUN verdict. Aujourd'hui,
+   * l'éligibilité non relue (`missing_structured_eligibility`, tant que
+   * {@link STRUCTURED_ELIGIBILITY_GATE} vaut `warning`) et un tampon de
+   * structuration de plus de 400 jours (`stale_structured_eligibility`).
+   */
+  warnings: ScholarshipCatalogValidationIssue[];
+  /** Où en est la structuration de l'éligibilité, fiche par fiche. */
+  eligibilityCoverage: ScholarshipEligibilityCoverage;
+}
+
+/**
+ * La couverture de l'éligibilité structurée.
+ *
+ * - `missing` : aucun bloc `eligibility` (ou aucun critère) ;
+ * - `drafts` : des critères, mais aucun tampon humain (`structuredAt` nul) —
+ *   ils n'excluent personne ;
+ * - `stamped` : relus et tamponnés ; parmi eux, `stale` a plus de 400 jours
+ *   et n'exclut plus personne non plus.
+ */
+export interface ScholarshipEligibilityCoverage {
+  records: number;
+  missing: number;
+  drafts: number;
+  stamped: number;
+  stale: number;
+  criteria: number;
+  byImpact: { hard: number; soft: number; informational: number };
+  missingIds: string[];
+  draftIds: string[];
 }
 
 export interface ScholarshipCatalogClosingSoon {
@@ -74,6 +132,8 @@ export interface ScholarshipCatalogValidationOptions {
   now?: Date;
   /** Horizon de l'alerte avant clôture, en jours. Défaut : 14. */
   closingSoonHorizonDays?: number;
+  /** Défaut : {@link STRUCTURED_ELIGIBILITY_GATE}. Exposé pour les tests. */
+  structuredEligibilityGate?: 'warning' | 'error';
 }
 
 function isNonBlank(value: unknown): value is string {
@@ -175,6 +235,28 @@ function validateRecord(
     push(issues, 'missing_levels', `${root}.levels`, 'At least one structured study level is required.');
   } else if (record.levels.some((level) => !SCHOLARSHIP_STUDY_LEVELS.includes(level))) {
     push(issues, 'invalid_level', `${root}.levels`, 'An unsupported study level was provided.');
+  } else {
+    // La reprise SQL de `eligibleLevels` (migration scholarship_match_v1) et
+    // `scholarshipLevels` lisent les niveaux dans les TAGS : ils doivent dire
+    // exactement `levels`, sinon une ligne servirait d'autres niveaux que ceux
+    // que le dépôt affirme.
+    const tagged = new Set(
+      (scholarship.tags ?? [])
+        .map((tag) => tag.trim().toLowerCase())
+        .filter((tag) => LEVEL_TAGS.has(tag)),
+    );
+    const declared = new Set<string>(record.levels);
+    if (
+      tagged.size !== declared.size ||
+      [...declared].some((level) => !tagged.has(level))
+    ) {
+      push(
+        issues,
+        'level_tags_mismatch',
+        `${root}.scholarship.tags`,
+        `Level tags (${[...tagged].sort().join(', ') || '∅'}) must equal levels (${[...declared].sort().join(', ')}).`,
+      );
+    }
   }
 
   requireBilingualList(
@@ -382,6 +464,185 @@ function validateRecord(
   }
 }
 
+/** Les lignes citables d'une fiche, en paires FR/EN de même index. */
+function quotablePairs(record: VerifiedScholarshipCatalogRecord): Set<string> {
+  const pairs = new Set<string>();
+  const scholarship = record.scholarship;
+  for (const [fr, en] of [
+    [scholarship.eligibilityFr, scholarship.eligibilityEn],
+    [scholarship.keyRequirementsFr, scholarship.keyRequirementsEn],
+  ] as const) {
+    (fr ?? []).forEach((line, index) => pairs.add(`${line}\u0000${en?.[index] ?? ''}`));
+  }
+  return pairs;
+}
+
+/**
+ * La forme de l'éligibilité structurée (erreurs) et sa relecture
+ * (avertissement ou erreur selon {@link STRUCTURED_ELIGIBILITY_GATE}).
+ */
+function validateEligibility(
+  record: VerifiedScholarshipCatalogRecord,
+  index: number,
+  issues: ScholarshipCatalogValidationIssue[],
+  warnings: ScholarshipCatalogValidationIssue[],
+  now: Date,
+  gate: 'warning' | 'error',
+) {
+  const root = `records[${index}].eligibility`;
+  const eligibility = record.eligibility;
+  const gateList = gate === 'error' ? issues : warnings;
+
+  if (!eligibility) {
+    push(
+      gateList,
+      'missing_structured_eligibility',
+      root,
+      'No structured eligibility: the matching engine cannot analyse this record.',
+    );
+    return;
+  }
+
+  if (!(SCHOLARSHIP_FIELDS_SCOPES as readonly string[]).includes(eligibility.fieldsScope)) {
+    push(issues, 'invalid_fields_scope', `${root}.fieldsScope`, "Use 'unknown', 'all' or 'listed'.");
+  }
+
+  // La forme : le validateur du moteur, sans repli. Un critère invalide serait
+  // ignoré en production ; ici il refuse la fiche.
+  for (const issue of validateEligibilityCriteria(eligibility.criteria)) {
+    push(
+      issues,
+      'invalid_eligibility_criterion',
+      `${root}.criteria${issue.path}`,
+      `${issue.code}: ${issue.message}`,
+    );
+  }
+
+  // L'honnêteté : chaque critère cite le texte de SA fiche, mot pour mot, et
+  // la source officielle qu'elle déclare. Une condition sans citation
+  // vérifiable serait une condition inventée.
+  const pairs = quotablePairs(record);
+  const officialUrls = new Set(record.officialSources.map((source) => source.url));
+  const levels = new Set<string>(record.levels);
+  (Array.isArray(eligibility.criteria) ? eligibility.criteria : []).forEach((criterion, at) => {
+    const path = `${root}.criteria[${at}]`;
+    if (!pairs.has(`${criterion.officialTextFr}\u0000${criterion.officialTextEn}`)) {
+      push(
+        issues,
+        'criterion_quote_not_in_record',
+        path,
+        'officialTextFr/En must quote the same eligibility (or requirement) line of this record, verbatim.',
+      );
+    }
+    if (!officialUrls.has(criterion.sourceUrl)) {
+      push(
+        issues,
+        'criterion_source_not_official',
+        `${path}.sourceUrl`,
+        "sourceUrl must be one of this record's declared official sources.",
+      );
+    }
+    if (
+      (criterion.type === 'age' || criterion.type === 'work_experience') &&
+      criterion.level !== undefined &&
+      !levels.has(criterion.level)
+    ) {
+      push(
+        issues,
+        'criterion_level_not_in_record',
+        `${path}.level`,
+        `Level ${criterion.level} is not one of this record's levels.`,
+      );
+    }
+  });
+
+  const criteriaCount = Array.isArray(eligibility.criteria) ? eligibility.criteria.length : 0;
+  if (eligibility.structuredAt === null) {
+    if (eligibility.structuredBy !== DRAFT_STRUCTURED_BY) {
+      push(
+        issues,
+        'invalid_structured_by',
+        `${root}.structuredBy`,
+        `An unstamped block is a draft: structuredBy must be "${DRAFT_STRUCTURED_BY}".`,
+      );
+    }
+    push(
+      gateList,
+      'missing_structured_eligibility',
+      root,
+      criteriaCount === 0
+        ? 'No structured criteria: the matching engine cannot analyse this record.'
+        : `Draft criteria (${criteriaCount}) awaiting human review: they exclude no one until structuredAt is set.`,
+    );
+    return;
+  }
+
+  const stampedAt = parseDate(eligibility.structuredAt);
+  if (!stampedAt) {
+    push(issues, 'invalid_structured_at', `${root}.structuredAt`, 'A valid ISO timestamp (or null for a draft) is required.');
+  } else if (stampedAt.getTime() > now.getTime()) {
+    push(issues, 'invalid_structured_at', `${root}.structuredAt`, 'A review cannot be stamped in the future.');
+  } else if (now.getTime() - stampedAt.getTime() >= STRUCTURED_FRESHNESS_DAYS * DAY_MS) {
+    push(
+      warnings,
+      'stale_structured_eligibility',
+      `${root}.structuredAt`,
+      `Reviewed more than ${STRUCTURED_FRESHNESS_DAYS} days ago: hard criteria no longer exclude anyone.`,
+    );
+  }
+  if (!isNonBlank(eligibility.structuredBy) || eligibility.structuredBy === DRAFT_STRUCTURED_BY) {
+    push(issues, 'invalid_structured_by', `${root}.structuredBy`, 'A stamped block names its human reviewer.');
+  }
+  if (criteriaCount === 0) {
+    push(
+      gateList,
+      'missing_structured_eligibility',
+      `${root}.criteria`,
+      'A stamped block without criteria analyses nothing beyond the level.',
+    );
+  }
+}
+
+/** Le décompte de la couverture, sur le catalogue tel qu'il est. */
+export function eligibilityCoverage(
+  catalog: VersionedScholarshipCatalog,
+  now: Date = new Date(),
+): ScholarshipEligibilityCoverage {
+  const coverage: ScholarshipEligibilityCoverage = {
+    records: catalog.records.length,
+    missing: 0,
+    drafts: 0,
+    stamped: 0,
+    stale: 0,
+    criteria: 0,
+    byImpact: { hard: 0, soft: 0, informational: 0 },
+    missingIds: [],
+    draftIds: [],
+  };
+  for (const record of catalog.records) {
+    const id = record.scholarship.id;
+    const criteria = parseEligibilityCriteria(record.eligibility?.criteria).criteria;
+    coverage.criteria += criteria.length;
+    for (const criterion of criteria) coverage.byImpact[criterion.impact] += 1;
+    if (!record.eligibility || criteria.length === 0) {
+      coverage.missing += 1;
+      coverage.missingIds.push(id);
+      continue;
+    }
+    const stampedAt = parseDate(record.eligibility.structuredAt);
+    if (!stampedAt) {
+      coverage.drafts += 1;
+      coverage.draftIds.push(id);
+      continue;
+    }
+    coverage.stamped += 1;
+    if (now.getTime() - stampedAt.getTime() >= STRUCTURED_FRESHNESS_DAYS * DAY_MS) {
+      coverage.stale += 1;
+    }
+  }
+  return coverage;
+}
+
 export function validateScholarshipCatalog(
   catalog: VersionedScholarshipCatalog,
   options: ScholarshipCatalogValidationOptions = {},
@@ -392,8 +653,10 @@ export function validateScholarshipCatalog(
   const horizonDays =
     options.closingSoonHorizonDays ?? CLOSING_SOON_HORIZON_DAYS;
   const closingSoon: ScholarshipCatalogClosingSoon[] = [];
-  const verifiedCounts = { secondary: 0, bachelor: 0, master: 0 };
-  const backlogCounts = { secondary: 0, bachelor: 0, master: 0 };
+  const warnings: ScholarshipCatalogValidationIssue[] = [];
+  const gate = options.structuredEligibilityGate ?? STRUCTURED_ELIGIBILITY_GATE;
+  const verifiedCounts = { secondary: 0, bachelor: 0, master: 0, doctorate: 0 };
+  const backlogCounts = { secondary: 0, bachelor: 0, master: 0, doctorate: 0 };
 
   if (catalog.schemaVersion !== 1) {
     push(issues, 'unsupported_schema_version', 'schemaVersion', 'Only catalog schema version 1 is supported.');
@@ -419,6 +682,7 @@ export function validateScholarshipCatalog(
     recordIds.add(record.scholarship.id);
     for (const level of new Set(record.levels)) verifiedCounts[level] += 1;
     validateRecord(record, index, issues, now, closingSoon, horizonDays);
+    validateEligibility(record, index, issues, warnings, now, gate);
   }
 
   const backlogIds = new Set<string>();
@@ -437,6 +701,7 @@ export function validateScholarshipCatalog(
     secondary: Math.max(0, catalog.volumeTargets.secondary - verifiedCounts.secondary),
     bachelor: Math.max(0, catalog.volumeTargets.bachelor - verifiedCounts.bachelor),
     master: Math.max(0, catalog.volumeTargets.master - verifiedCounts.master),
+    doctorate: Math.max(0, (catalog.volumeTargets.doctorate ?? 0) - verifiedCounts.doctorate),
   };
   const uniqueRecordCount = catalog.records.length;
   const uniqueRecordDeficit = Math.max(
@@ -447,6 +712,7 @@ export function validateScholarshipCatalog(
     secondary: Math.max(0, catalog.volumeTargets.secondary - backlogCounts.secondary),
     bachelor: Math.max(0, catalog.volumeTargets.bachelor - backlogCounts.bachelor),
     master: Math.max(0, catalog.volumeTargets.master - backlogCounts.master),
+    doctorate: Math.max(0, (catalog.volumeTargets.doctorate ?? 0) - backlogCounts.doctorate),
   };
   if (includeVolumeTargets) {
     if (uniqueRecordDeficit > 0) {
@@ -494,6 +760,8 @@ export function validateScholarshipCatalog(
       ? true
       : issues.length === 0,
     closingSoon: closingSoon.sort((a, b) => a.daysLeft - b.daysLeft),
+    warnings,
+    eligibilityCoverage: eligibilityCoverage(catalog, now),
     catalogVersion: catalog.catalogVersion,
     uniqueRecordCount,
     uniqueRecordDeficit,

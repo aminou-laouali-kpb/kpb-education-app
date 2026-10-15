@@ -1,6 +1,9 @@
 import { buildScholarshipCreateData } from '../modules/scholarships-index/data/scholarship-catalog.create-data';
 import { SCHOLARSHIP_CATALOG_V1 } from '../modules/scholarships-index/data/scholarship-catalog.v1';
-import { validateScholarshipCatalog } from '../modules/scholarships-index/data/scholarship-catalog.validator';
+import {
+  eligibilityCoverage,
+  validateScholarshipCatalog,
+} from '../modules/scholarships-index/data/scholarship-catalog.validator';
 
 import {
   LEGACY_SEED_IDS,
@@ -88,10 +91,15 @@ describe('scholarships-catalog CLI', () => {
         catalogVersion: '1.3.0',
         uniqueRecordCount: 0,
         uniqueRecordDeficit: 0,
-        verifiedCounts: { secondary: 0, bachelor: 0, master: 0 },
-        backlogCounts: { secondary: 0, bachelor: 0, master: 0 },
-        volumeDeficits: { secondary: 0, bachelor: 0, master: 0 },
-        backlogDeficits: { secondary: 0, bachelor: 0, master: 0 },
+        verifiedCounts: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        backlogCounts: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        volumeDeficits: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        backlogDeficits: { secondary: 0, bachelor: 0, master: 0, doctorate: 0 },
+        warnings: [],
+        eligibilityCoverage: eligibilityCoverage({
+          ...SCHOLARSHIP_CATALOG_V1,
+          records: [],
+        }),
         issues: [
           {
             code: 'open_cycle_already_closed',

@@ -402,7 +402,11 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
   }),
   record({
     id: 'gates_cambridge_2027',
-    levels: ['master'],
+    // Catalogue 1.5.0 : le texte de la fiche dit « … ou doctorat » (libellé),
+    // « environ deux tiers pour des doctorants » (description) et « Postuler à
+    // un doctorat, un MLitt ou une formation d'un an » (éligibilité). Limité au
+    // master, un élève visant un doctorat en était écarté à tort.
+    levels: ['master', 'doctorate'],
     name: ['Bourse Gates Cambridge 2027–2028', 'Gates Cambridge Scholarship 2027–2028'],
     country: ['gbr', 'Royaume-Uni — University of Cambridge', 'United Kingdom — University of Cambridge'],
     levelLabel: [
@@ -471,7 +475,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       application: 'https://www.gatescambridge.org/apply/how-to-apply/',
       cycle: 'https://www.gatescambridge.org/apply/timeline/',
     },
-    tags: ['master', 'uk', 'cambridge', 'university', 'open', 'fully-funded'],
+    tags: ['master', 'doctorate', 'uk', 'cambridge', 'university', 'open', 'fully-funded'],
     checkedAt: '2026-10-07T11:40:00.000Z',
   }),
   record({
