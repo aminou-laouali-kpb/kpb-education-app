@@ -160,10 +160,11 @@ export class ScholarshipsController {
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
     // Chantier I — OPTIONNELS (les builds en store ne les envoient pas) ;
-    // validés par le service : une valeur inconnue → 400.
-    @Query('q') q?: string,
-    @Query('status') status?: string,
-    @Query('sort') sort?: string,
+    // tolérants : une valeur inconnue est ignorée par le service, jamais un
+    // 400 (une clé répétée arrive en tableau).
+    @Query('q') q?: string | string[],
+    @Query('status') status?: string | string[],
+    @Query('sort') sort?: string | string[],
   ) {
     return this.scholarshipsIndexService.listForProfile({
       lang: lang === 'en' ? 'en' : 'fr',

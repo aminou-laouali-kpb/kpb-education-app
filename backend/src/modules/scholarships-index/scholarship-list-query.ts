@@ -1,14 +1,16 @@
-import { BadRequestException } from '@nestjs/common';
-
 /**
  * Paramètres OPTIONNELS de `GET /scholarships` (chantier I) : recherche (`q`),
  * statut (`status`) et tri (`sort`).
  *
  * Tous facultatifs : les builds en store ne les envoient pas, et leur réponse
  * doit rester exactement celle d'avant (tri par pertinence, aucun filtre).
- * Une valeur INCONNUE, elle, est refusée (400) plutôt qu'ignorée : un filtre
- * ignoré en silence afficherait « Ouvertes » au-dessus d'une liste qui ne l'est
- * pas.
+ *
+ * TOLÉRANTS, comme `fundingType` ou `limit` sur la même route : une valeur
+ * inconnue est IGNORÉE (statut inconnu retiré, tri inconnu → `relevance`,
+ * recherche trop longue tronquée), jamais un 400. Une app plus récente que le
+ * serveur (un statut ajouté plus tard) doit continuer à afficher la liste.
+ * L'honnêteté passe par l'écho `query` de la réponse : il dit ce qui a été
+ * réellement APPLIQUÉ, et un client qui demandait autre chose le voit.
  */
 
 /** Statuts filtrables — ceux que la ligne de statut de l'app sait dire. */
@@ -28,64 +30,62 @@ export type ScholarshipListSort = (typeof SCHOLARSHIP_LIST_SORTS)[number];
 
 export const SCHOLARSHIP_LIST_QUERY_MAX_LENGTH = 100;
 
-/** `q` : texte libre, espaces repliés ; vide → pas de recherche. */
-export function parseScholarshipListQuery(raw?: string): string | undefined {
-  if (raw === undefined || raw === null) return undefined;
-  if (typeof raw !== 'string') {
-    throw new BadRequestException('Invalid q: expected a single string.');
+/**
+ * Les valeurs texte d'un paramètre de requête. Express rend un tableau quand
+ * la clé est répétée (`?status=open&status=upcoming`) : on les garde toutes ;
+ * tout ce qui n'est pas du texte est ignoré.
+ */
+function queryStrings(raw: unknown): string[] {
+  if (typeof raw === 'string') return [raw];
+  if (Array.isArray(raw)) {
+    return raw.filter((value): value is string => typeof value === 'string');
   }
-  const q = raw.replace(/\s+/g, ' ').trim();
-  if (q.length === 0) return undefined;
-  if (q.length > SCHOLARSHIP_LIST_QUERY_MAX_LENGTH) {
-    throw new BadRequestException(
-      `Invalid q: at most ${SCHOLARSHIP_LIST_QUERY_MAX_LENGTH} characters.`,
-    );
-  }
-  return q;
+  return [];
+}
+
+/**
+ * `q` : texte libre, espaces repliés, tronqué à
+ * [SCHOLARSHIP_LIST_QUERY_MAX_LENGTH] ; vide → pas de recherche. Clé répétée :
+ * la première valeur.
+ */
+export function parseScholarshipListQuery(raw?: unknown): string | undefined {
+  const [first] = queryStrings(raw);
+  if (first === undefined) return undefined;
+  const q = first
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, SCHOLARSHIP_LIST_QUERY_MAX_LENGTH)
+    .trim();
+  return q.length === 0 ? undefined : q;
 }
 
 /**
  * `status` : une ou plusieurs valeurs séparées par des virgules
- * (`open,upcoming`). Vide → pas de filtre.
+ * (`open,upcoming`), ou la clé répétée. Les valeurs inconnues sont retirées ;
+ * s'il n'en reste aucune → pas de filtre (`query.status: null` le dit).
  */
 export function parseScholarshipListStatuses(
-  raw?: string,
+  raw?: unknown,
 ): ScholarshipListStatus[] | undefined {
-  if (raw === undefined || raw === null) return undefined;
-  if (typeof raw !== 'string') {
-    throw new BadRequestException('Invalid status: expected a single string.');
-  }
-  const values = raw
-    .split(',')
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-  if (values.length === 0) return undefined;
   const allowed: readonly string[] = SCHOLARSHIP_LIST_STATUSES;
-  const unknown = values.filter((value) => !allowed.includes(value));
-  if (unknown.length > 0) {
-    throw new BadRequestException(
-      `Invalid status filter: ${unknown.join(', ')}. ` +
-        `Expected ${SCHOLARSHIP_LIST_STATUSES.join(' | ')}.`,
-    );
-  }
+  const values = queryStrings(raw)
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim())
+    .filter((value) => allowed.includes(value));
+  if (values.length === 0) return undefined;
   return [...new Set(values)] as ScholarshipListStatus[];
 }
 
-/** `sort` : absent ou vide → `relevance` (l'ordre d'avant). */
-export function parseScholarshipListSort(raw?: string): ScholarshipListSort {
-  if (raw === undefined || raw === null) return 'relevance';
-  if (typeof raw !== 'string') {
-    throw new BadRequestException('Invalid sort: expected a single string.');
-  }
-  const value = raw.trim();
-  if (value.length === 0) return 'relevance';
+/**
+ * `sort` : absent, vide ou inconnu → `relevance` (l'ordre d'avant). Clé
+ * répétée : la première valeur connue.
+ */
+export function parseScholarshipListSort(raw?: unknown): ScholarshipListSort {
   const allowed: readonly string[] = SCHOLARSHIP_LIST_SORTS;
-  if (!allowed.includes(value)) {
-    throw new BadRequestException(
-      `Invalid sort: ${value}. Expected ${SCHOLARSHIP_LIST_SORTS.join(' | ')}.`,
-    );
-  }
-  return value as ScholarshipListSort;
+  const known = queryStrings(raw)
+    .map((value) => value.trim())
+    .find((value) => allowed.includes(value));
+  return (known as ScholarshipListSort | undefined) ?? 'relevance';
 }
 
 /** Ce que le statut lit d'une fiche servie (le DTO public, dates ISO). */
@@ -109,12 +109,15 @@ function toTime(value: string | null | undefined): number | null {
 }
 
 /**
- * Le statut tel que l'app le DIT — même règle que
- * `resolveScholarshipStatusLine` (lib/app/core/models/scholarship_follow.dart),
+ * Le statut tel que l'app le DIT — même règle que `scholarshipUrgencyOf`
+ * (lib/app/features/scholarships/scholarship_urgency.dart, bâti sur
+ * `resolveScholarshipStatusLine`),
  * pour que « Ouvertes » côté filtre et « Ouverte · clôture … » côté carte ne
  * puissent pas se contredire :
  *
- *  · une clôture CONFIRMÉE passée, ou un cycle `closed` → `closed` ;
+ *  · une clôture CONFIRMÉE passée, ou un cycle fermé par l'équipe → `closed` ;
+ *  · un cycle `closed` seulement parce que sa clôture ESTIMÉE est passée →
+ *    `forecast` (l'app dit « Date à confirmer », pas « Clôturée ») ;
  *  · cycle `open` dont l'ouverture confirmée est à venir → `upcoming` (jamais
  *    « ouverte » avant `opensAt`) ;
  *  · cycle `open` sinon → `open` ;
@@ -138,8 +141,15 @@ export function scholarshipServedStatus(
   const estimated = cycle.dateConfidence === 'estimated';
   const confirmedClose =
     toTime(cycle.closesAt) ?? (estimated ? null : toTime(item.deadlineAt));
-  if (cycle.status === 'closed' || (confirmedClose !== null && confirmedClose <= ref)) {
-    return 'closed';
+  if (confirmedClose !== null && confirmedClose <= ref) return 'closed';
+  if (cycle.status === 'closed') {
+    // Fermé par l'équipe (clôture confirmée encore à venir, ou aucune clôture
+    // estimée pour l'expliquer) → `closed`. Mais `servedCycleStatus` sert
+    // aussi `closed` dès qu'une clôture ESTIMÉE est passée : rien n'est alors
+    // confirmé, l'app dit « Date à confirmer » — c'est `forecast`.
+    if (toTime(cycle.closesAt) !== null) return 'closed';
+    const estimatedClose = toTime(cycle.estimatedCloseAt);
+    return estimatedClose === null || estimatedClose > ref ? 'closed' : 'forecast';
   }
   const opensAt = toTime(cycle.opensAt);
   const opensInFuture = opensAt !== null && opensAt > ref;

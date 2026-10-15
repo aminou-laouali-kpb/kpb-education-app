@@ -1,5 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
-
 import { PrismaService } from '../prisma/prisma.service';
 import { ScholarshipContentQualityService } from './scholarship-content-quality.service';
 import {
@@ -19,8 +17,9 @@ import { MastereTnScraper } from './scrapers/mastereTn.scraper';
  * Deux promesses tenues ici :
  *  · rétrocompatibilité — sans ces paramètres, la réponse est celle d'avant
  *    (même ordre, même total) : les builds en store ne les envoient pas ;
- *  · honnêteté — une valeur inconnue est un 400, jamais un filtre ignoré en
- *    silence sous un libellé « Ouvertes ».
+ *  · tolérance — une valeur inconnue est ignorée (jamais un 400 : une app plus
+ *    récente que le serveur doit garder sa liste), et l'écho `query` dit ce
+ *    qui a été réellement appliqué.
  */
 const NOW = new Date('2026-10-15T12:00:00.000Z');
 const iso = (days: number) =>
@@ -50,21 +49,23 @@ describe('scholarship list query — parsing', () => {
     expect(parseScholarshipListSort('')).toBe('relevance');
   });
 
-  it('collapses whitespace in q and bounds its length', () => {
+  it('collapses whitespace in q and truncates it to its bound', () => {
     expect(parseScholarshipListQuery('  bourse   eiffel ')).toBe('bourse eiffel');
     expect(parseScholarshipListQuery('x'.repeat(100))).toHaveLength(100);
-    expect(() => parseScholarshipListQuery('x'.repeat(101))).toThrow(
-      BadRequestException,
-    );
+    expect(parseScholarshipListQuery('x'.repeat(101))).toBe('x'.repeat(100));
   });
 
-  it('rejects a repeated query parameter (array) instead of guessing', () => {
-    const asArray = ['a', 'b'] as unknown as string;
-    expect(() => parseScholarshipListQuery(asArray)).toThrow(BadRequestException);
-    expect(() => parseScholarshipListStatuses(asArray)).toThrow(
-      BadRequestException,
-    );
-    expect(() => parseScholarshipListSort(asArray)).toThrow(BadRequestException);
+  it('a repeated key (array) is read, never a 400', () => {
+    expect(parseScholarshipListQuery(['eiffel', 'mext'])).toBe('eiffel');
+    expect(parseScholarshipListStatuses(['open', 'upcoming,bogus'])).toEqual([
+      'open',
+      'upcoming',
+    ]);
+    expect(parseScholarshipListSort(['popularity', 'title'])).toBe('title');
+    // Rien de lisible (objet `?status[a]=b`) : pas de paramètre.
+    expect(parseScholarshipListStatuses({ a: 'b' })).toBeUndefined();
+    expect(parseScholarshipListSort({ a: 'b' })).toBe('relevance');
+    expect(parseScholarshipListQuery({ a: 'b' })).toBeUndefined();
   });
 
   it('accepts comma-separated statuses, deduplicated', () => {
@@ -74,13 +75,11 @@ describe('scholarship list query — parsing', () => {
     ]);
   });
 
-  it('refuses an unknown status or sort (400), never ignores it', () => {
-    expect(() => parseScholarshipListStatuses('open,closed')).toThrow(
-      BadRequestException,
-    );
-    expect(() => parseScholarshipListSort('popularity')).toThrow(
-      BadRequestException,
-    );
+  it('ignores an unknown status or sort (tolerant, like fundingType)', () => {
+    expect(parseScholarshipListStatuses('open,closed')).toEqual(['open']);
+    expect(parseScholarshipListStatuses('closed,expired')).toBeUndefined();
+    expect(parseScholarshipListSort('popularity')).toBe('relevance');
+    expect(parseScholarshipListSort(' deadline ')).toBe('deadline');
   });
 });
 
@@ -143,6 +142,33 @@ describe('scholarshipServedStatus — same rule as the app status line', () => {
       at({
         deadlineAt: iso(-1),
         currentCycle: cycle({ estimatedCloseAt: iso(-1) }),
+      }),
+    ).toBe('forecast');
+  });
+
+  it('closed by the team → closed; closed only by a passed ESTIMATED closing → forecast', () => {
+    // Fermé par l'équipe avant sa clôture confirmée.
+    expect(
+      at({
+        currentCycle: cycle({
+          status: 'closed',
+          dateConfidence: 'confirmed',
+          closesAt: iso(20),
+        }),
+      }),
+    ).toBe('closed');
+    // Fermé par l'équipe, sans aucune date (estimée ou non) pour l'expliquer.
+    expect(at({ currentCycle: cycle({ status: 'closed' }) })).toBe('closed');
+    expect(
+      at({
+        currentCycle: cycle({ status: 'closed', estimatedCloseAt: iso(30) }),
+      }),
+    ).toBe('closed');
+    // `servedCycleStatus` a servi `closed` parce que la clôture ESTIMÉE est
+    // passée : l'app dit « Date à confirmer » → `forecast`, pas `closed`.
+    expect(
+      at({
+        currentCycle: cycle({ status: 'closed', estimatedCloseAt: iso(-3) }),
       }),
     ).toBe('forecast');
   });
@@ -379,17 +405,42 @@ describe('ScholarshipsIndexService.listForProfile — q, status, sort', () => {
     ]);
   });
 
-  it('refuses unknown values before reading the database', async () => {
-    const { service, wheres } = makeService(rows);
-    await expect(
-      service.listForProfile({ lang: 'fr', status: 'expired' }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    await expect(
-      service.listForProfile({ lang: 'fr', sort: 'random' }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    await expect(
-      service.listForProfile({ lang: 'fr', q: 'x'.repeat(101) }),
-    ).rejects.toBeInstanceOf(BadRequestException);
-    expect(wheres).toHaveLength(0);
+  it('ignores unknown values: the list is served, and `query` says what applied', async () => {
+    const { service } = makeService(rows, 3);
+
+    const unknownStatus = await service.listForProfile({
+      lang: 'fr',
+      status: 'expired',
+    });
+    expect(unknownStatus.items.map((item) => item.id)).toEqual([
+      'open',
+      'upcoming',
+      'forecast',
+    ]);
+    expect(unknownStatus.query.status).toBeNull();
+
+    const mixed = await service.listForProfile({
+      lang: 'fr',
+      status: 'open,expired',
+    });
+    expect(mixed.items.map((item) => item.id)).toEqual(['open']);
+    expect(mixed.query.status).toEqual(['open']);
+
+    const unknownSort = await service.listForProfile({
+      lang: 'fr',
+      sort: 'random',
+    });
+    expect(unknownSort.items.map((item) => item.id)).toEqual([
+      'open',
+      'upcoming',
+      'forecast',
+    ]);
+    expect(unknownSort.query.sort).toBe('relevance');
+
+    const longQuery = await service.listForProfile({
+      lang: 'fr',
+      q: 'x'.repeat(101),
+    });
+    expect(longQuery.query.q).toBe('x'.repeat(100));
   });
 });

@@ -1828,12 +1828,20 @@ eux, la réponse est exactement celle d'avant (tri par pertinence, total lu en b
 
 | Paramètre | Valeurs | Effet |
 |---|---|---|
-| `q` | texte libre, espaces repliés, 100 caractères au plus ; vide = absent | Recherche insensible à la casse dans `nameFr`, `nameEn`, `countryNameFr`, `countryNameEn`. Ajoutée en `AND` : la clause publique (`publicScholarshipWhere`, dont l'`OR` sur `deadlineAt`) reste intacte. |
-| `status` | `open`, `upcoming`, `forecast`, séparés par des virgules (`open,upcoming`) ; vide = absent | Filtre sur le statut du cycle SERVI, avec la règle de la ligne de statut de l'app (`resolveScholarshipStatusLine`) : `closed` ou clôture confirmée passée → jamais listée par ce filtre ; cycle `open` dont `opensAt` est à venir → `upcoming` ; `open` sinon ; ouverture confirmée à venir (cycle non estimé) → `upcoming` ; le reste (estimé, à confirmer) → `forecast`. Sans cycle : une date limite → `open`, rien → `forecast`. |
+| `q` | texte libre, espaces repliés, tronqué à 100 caractères ; vide = absent | Recherche insensible à la casse dans `nameFr`, `nameEn`, `countryNameFr`, `countryNameEn`. Ajoutée en `AND` : la clause publique (`publicScholarshipWhere`, dont l'`OR` sur `deadlineAt`) reste intacte. |
+| `status` | `open`, `upcoming`, `forecast`, séparés par des virgules (`open,upcoming`) ; vide = absent | Filtre sur le statut du cycle SERVI, avec la règle d'urgence de l'app (`scholarshipUrgencyOf`) : clôture confirmée passée ou cycle fermé par l'équipe → `closed`, jamais listée par ce filtre ; cycle servi `closed` SEULEMENT parce que sa clôture ESTIMÉE est passée → `forecast` (l'app dit « Date à confirmer ») ; cycle `open` dont `opensAt` est à venir → `upcoming` ; `open` sinon ; ouverture confirmée à venir (cycle non estimé) → `upcoming` ; le reste (estimé, à confirmer) → `forecast`. Sans cycle : une date limite → `open`, rien → `forecast`. |
 | `sort` | `relevance` (défaut), `deadline`, `verified`, `title` | `relevance` : `matchScore` décroissant puis date limite (l'ordre d'avant). `deadline` : clôture la plus proche (`closesAt`, sinon `estimatedCloseAt`, sinon `deadlineAt`), dates inconnues en dernier. `verified` : `lastVerifiedAt` décroissant. `title` : titre dans la langue demandée, A→Z, sans tenir compte des accents ni de la casse. |
 
-Une valeur inconnue (`status=closed`, `sort=random`, `q` de 101 caractères, paramètre
-répété) → **400**, jamais un filtre ignoré en silence.
+**Tolérants** (comme `fundingType` ou `limit`) : une valeur inconnue n'est jamais un 400.
+Un statut inconnu est retiré (`status=open,expired` → `open` ; `status=expired` → aucun
+filtre), un tri inconnu vaut `relevance`, un `q` trop long est tronqué, une clé répétée
+(`status=open&status=upcoming`) est lue. L'écho `query` dit ce qui a été réellement appliqué.
+
+**Clés inconnues de la route** : `GET /scholarships` lit ses paramètres un par un
+(`@Query('nom')`, aucun DTO de requête) ; le `ValidationPipe` (`forbidNonWhitelisted`) ne
+s'applique donc pas à la query string de cette route, et un serveur antérieur au chantier I
+**ignore** `q`, `status` et `sort` sans 400 (prouvé en HTTP par
+`scholarships-list.http.spec.ts`).
 
 Réponse : `{items, total, limit, offset, hasMore, fieldFilterRelaxed, databaseUnavailable, query}`.
 
@@ -1843,5 +1851,6 @@ Réponse : `{items, total, limit, offset, hasMore, fieldFilterRelaxed, databaseU
 - `query` (**additif**) : `{q: string|null, status: string[]|null, sort}`, ce que le
   serveur a APPLIQUÉ. Un client qui ne trouve pas cette clé parle à un backend plus
   ancien, qui a ignoré `q`, `status` et `sort` ; l'app filtre alors le statut elle-même
-  sur la page reçue.
+  sur la page reçue, ne montre pas de total, et masque le bouton « Trier » (un tri
+  qu'elle ne peut pas obtenir du serveur ne s'affiche pas).
 - Chaque item porte déjà `countryId` (alpha-3, sert au drapeau) et `lastVerifiedAt`.

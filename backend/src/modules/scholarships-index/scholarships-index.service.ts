@@ -249,15 +249,15 @@ export class ScholarshipsIndexService {
     limit?: number;
     offset?: number;
     /** Chantier I, optionnels : recherche, statut(s), tri. */
-    q?: string;
-    status?: string;
-    sort?: string;
+    q?: string | string[];
+    status?: string | string[];
+    sort?: string | string[];
   }) {
     const lang = params.lang;
     const limit = this.boundedInt(params.limit, 20, 1, 100);
     const offset = this.boundedInt(params.offset, 0, 0, 10000);
-    // Validés AVANT toute lecture : une valeur inconnue est un 400, jamais un
-    // filtre ignoré en silence.
+    // Tolérants : une valeur inconnue est ignorée (jamais un 400), et l'écho
+    // `query` de la réponse dit ce qui a été réellement appliqué.
     const q = parseScholarshipListQuery(params.q);
     const statuses = parseScholarshipListStatuses(params.status);
     const sort = parseScholarshipListSort(params.sort);
