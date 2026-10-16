@@ -2467,6 +2467,21 @@ const Map<String, String> appTranslationsEn = {
   // Case snackbar
   'case_created_title': 'Case created ✅',
   'case_created_body': 'Your case @code has been submitted.',
+  // Content of a case created on the device, before the server answers
+  // (`submitCase`). Stored in both languages with the case.
+  'case_local_next_step_title': 'Your case is under review',
+  'case_local_next_step_body':
+      'The KPB team will review your request and check your information. Then they will assign you a counselor.',
+  'case_local_submitted_title': 'Request submitted',
+  'case_local_submitted_body':
+      'Your request is in the “My Cases” tab. The KPB team has received it.',
+  'case_local_welcome_sender': 'KPB team',
+  'case_local_welcome_body':
+      'Thanks for your request. We will come back to you with the next step.',
+  'case_local_doc_profile_title': 'Complete academic profile',
+  'case_local_student_reply_title': 'Student reply',
+  'case_local_student_reply_body':
+      'The case has been updated with a new message.',
   'view': 'View',
   'anti_fraud_title': '🔒 KPB safety',
   'anti_fraud_body':

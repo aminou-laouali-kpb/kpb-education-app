@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
-import 'package:flutter/widgets.dart' show NavigatorObserver;
+import 'package:flutter/widgets.dart' show NavigatorObserver, Route;
 import 'package:posthog_flutter/posthog_flutter.dart';
 
 import '../config/app_config.dart';
@@ -22,6 +22,78 @@ Future<void> _applyFirebaseAnalyticsConsent(bool enabled) =>
 Future<void> _applyPosthogConsent(bool enabled) =>
     enabled ? Posthog().enable() : Posthog().disable();
 
+bool _firebaseAppReady() => Firebase.apps.isNotEmpty;
+
+NavigatorObserver _createFirebaseObserver() =>
+    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance);
+
+/// Relaie la navigation vers un [FirebaseAnalyticsObserver] créé seulement au
+/// premier changement d'écran, et seulement si une application Firebase
+/// existe.
+///
+/// Firebase absent (initialisation échouée, tests, web non configuré) : chaque
+/// événement de navigation est ignoré, sans exception. La vérification est
+/// refaite à chaque événement — elle ne coûte qu'une lecture de map — tant que
+/// l'observateur réel n'a pas pu être créé ; une fois créé, il est gardé.
+/// Une erreur levée par l'observateur réel est journalisée, jamais propagée :
+/// la mesure d'audience ne doit pas pouvoir casser la navigation.
+///
+/// [isFirebaseReady] et [createDelegate] ne servent qu'aux tests.
+class LazyFirebaseAnalyticsObserver extends NavigatorObserver {
+  LazyFirebaseAnalyticsObserver({
+    bool Function()? isFirebaseReady,
+    NavigatorObserver Function()? createDelegate,
+  })  : _isFirebaseReady = isFirebaseReady ?? _firebaseAppReady,
+        _createDelegate = createDelegate ?? _createFirebaseObserver;
+
+  final bool Function() _isFirebaseReady;
+  final NavigatorObserver Function() _createDelegate;
+  NavigatorObserver? _delegate;
+
+  /// L'observateur réel, s'il a pu être créé. Exposé pour les tests.
+  @visibleForTesting
+  NavigatorObserver? get delegate => _delegate;
+
+  NavigatorObserver? _resolve() {
+    final existing = _delegate;
+    if (existing != null) return existing;
+    try {
+      if (!_isFirebaseReady()) return null;
+      return _delegate = _createDelegate();
+    } catch (e, s) {
+      AnalyticsService._logError('observer.create', e, s);
+      return null;
+    }
+  }
+
+  void _forward(String operation, void Function(NavigatorObserver o) call) {
+    final delegate = _resolve();
+    if (delegate == null) return;
+    try {
+      call(delegate);
+    } catch (e, s) {
+      AnalyticsService._logError('observer.$operation', e, s);
+    }
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _forward('didPush', (o) => o.didPush(route, previousRoute));
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _forward('didPop', (o) => o.didPop(route, previousRoute));
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) =>
+      _forward('didReplace',
+          (o) => o.didReplace(newRoute: newRoute, oldRoute: oldRoute));
+
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _forward('didRemove', (o) => o.didRemove(route, previousRoute));
+}
+
 /// Thin wrapper around FirebaseAnalytics with typed event helpers.
 /// All calls are fire-and-forget — never throw to the caller.
 ///
@@ -39,8 +111,15 @@ class AnalyticsService {
   // into the surrounding try-catch that every method already provides.
   late final _analytics = FirebaseAnalytics.instance;
 
-  FirebaseAnalyticsObserver get observer =>
-      FirebaseAnalyticsObserver(analytics: _analytics);
+  /// Observateur d'écrans Firebase, PARESSEUX : il ne touche ni à
+  /// `Firebase` ni à `FirebaseAnalytics.instance` à la construction. Avant,
+  /// `FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance)` était
+  /// évalué dès la lecture de [navigatorObservers], c'est-à-dire au premier
+  /// `build` de l'app : si `Firebase.initializeApp` avait échoué (démarrage
+  /// hors ligne, web sans configuration), `instance` levait « no-app » et
+  /// l'app plantait avant son premier écran. Voir
+  /// [LazyFirebaseAnalyticsObserver].
+  late final NavigatorObserver observer = LazyFirebaseAnalyticsObserver();
 
   /// Navigator observers to install on the app. Includes PostHog's
   /// [PosthogObserver] (screen views + survey triggers) only when configured.

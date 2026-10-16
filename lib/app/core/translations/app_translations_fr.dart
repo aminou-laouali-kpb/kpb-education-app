@@ -89,40 +89,40 @@ const Map<String, String> appTranslationsFr = {
   'profile_avatar_take_photo': 'Prendre une photo',
   'profile_avatar_choose_photo': 'Choisir dans la galerie',
   'profile_avatar_remove': 'Retirer la photo',
-  'profile_avatar_remove_confirm_title': 'Retirer votre photo ?',
+  'profile_avatar_remove_confirm_title': 'Retirer ta photo ?',
   'profile_avatar_remove_confirm_body':
-      'Vos initiales seront affichées à la place. Vous pourrez ajouter une nouvelle photo à tout moment.',
-  'profile_avatar_updated': 'Votre photo de profil a été mise à jour.',
-  'profile_avatar_removed': 'Votre photo de profil a été retirée.',
+      'Tes initiales seront affichées à la place. Tu pourras ajouter une nouvelle photo à tout moment.',
+  'profile_avatar_updated': 'Ta photo de profil a été mise à jour.',
+  'profile_avatar_removed': 'Ta photo de profil a été retirée.',
   'profile_avatar_a11y_label': 'Modifier la photo de profil',
   'profile_avatar_error_too_large':
-      'Cette image est trop lourde. Choisissez une photo plus légère.',
+      'Cette image est trop lourde. Choisis une photo plus légère.',
   'profile_avatar_error_unsupported_type':
-      'Ce format n\'est pas accepté. Utilisez une photo JPEG, PNG ou WebP.',
+      'Ce format n\'est pas accepté. Utilise une photo JPEG, PNG ou WebP.',
   'profile_avatar_error_unreadable':
-      'Cette image n\'a pas pu être lue. Choisissez une autre photo.',
+      'Cette image n\'a pas pu être lue. Choisis une autre photo.',
   'profile_avatar_error_infected':
-      'Cette image a été refusée par notre analyse antivirus. Choisissez une autre photo — réessayer avec la même ne fonctionnera pas.',
+      'Cette image a été refusée par notre analyse antivirus. Choisis une autre photo — réessayer avec la même ne fonctionnera pas.',
   'profile_avatar_error_scan_unavailable':
-      'Notre analyse antivirus est momentanément indisponible, donc rien n\'a été enregistré. Votre photo n\'est pas en cause : réessayez dans quelques minutes.',
+      'Notre analyse antivirus est momentanément indisponible, donc rien n\'a été enregistré. Ta photo n\'est pas en cause : réessaie dans quelques minutes.',
   'profile_avatar_error_service_unavailable':
-      'Notre service d\'images est momentanément indisponible. Votre photo n\'est pas en cause : réessayez dans quelques minutes.',
+      'Notre service d\'images est momentanément indisponible. Ta photo n\'est pas en cause : réessaie dans quelques minutes.',
   'profile_avatar_error_conflict':
-      'Une autre modification de votre photo a été enregistrée avant celle-ci. Réessayez.',
+      'Une autre modification de ta photo a été enregistrée avant celle-ci. Réessaie.',
   'profile_avatar_error_profile_missing':
-      'Votre profil n\'a pas été retrouvé sur le serveur. Reconnectez-vous, puis réessayez.',
+      'Ton profil n\'a pas été retrouvé sur le serveur. Reconnecte-toi, puis réessaie.',
   'profile_avatar_error_unauthorized':
-      'Votre session a expiré. Reconnectez-vous, puis réessayez.',
+      'Ta session a expiré. Reconnecte-toi, puis réessaie.',
   'profile_avatar_error_rate_limited':
-      'Trop de tentatives. Attendez une minute avant de réessayer.',
+      'Trop de tentatives. Attends une minute avant de réessayer.',
   'profile_avatar_error_permission_denied':
-      'KPB Education n\'a pas accès à votre appareil photo ou à vos photos. Autorisez-le dans les réglages de votre téléphone.',
+      'KPB Education n\'a pas accès à ton appareil photo ou à tes photos. Autorise-le dans les réglages de ton téléphone.',
   'profile_avatar_error_network':
-      'Impossible de joindre le serveur. Vérifiez votre connexion, puis réessayez.',
+      'Impossible de joindre le serveur. Vérifie ta connexion, puis réessaie.',
   'profile_avatar_error_server':
-      'Le serveur a rencontré une erreur. Réessayez plus tard.',
+      'Le serveur a rencontré une erreur. Réessaie plus tard.',
   'profile_avatar_error_unknown':
-      'L\'envoi de la photo a échoué pour une raison inattendue. Réessayez ; si cela persiste, contactez un conseiller KPB.',
+      'L\'envoi de la photo a échoué pour une raison inattendue. Réessaie ; si cela continue, contacte un conseiller KPB.',
   'profile_edit_title': 'Modifier le profil',
   'profile_security': 'Sécurité',
   'profile_biometric': 'Verrouillage biométrique',
@@ -203,8 +203,7 @@ const Map<String, String> appTranslationsFr = {
   'parent_case_view_title': 'Dossier (lecture)',
   // --- KPB-89 wave2 ---
   'api_client_session_expired_title': 'Session Expirée',
-  'api_client_session_expired_message':
-      'Votre session a expiré. Veuillez vous reconnecter.',
+  'api_client_session_expired_message': 'Ta session a expiré. Reconnecte-toi.',
   'coach_suggestion_budget_schools':
       'Quelles écoles pour un budget de 10 000€ ?',
   'coach_suggestion_top_business_schools': 'Top écoles de commerce en France',
@@ -213,10 +212,9 @@ const Map<String, String> appTranslationsFr = {
   'file_size_kb': '@size Ko',
   'file_size_mb': '@size Mo',
   'security_biometric_reason':
-      'Déverrouillez pour accéder à vos documents sécurisés KPB',
+      'Déverrouille pour accéder à tes documents sécurisés KPB',
   'error_state_default_title': 'Connexion impossible',
-  'error_state_default_subtitle':
-      'Vérifiez votre connexion internet et réessayez.',
+  'error_state_default_subtitle': 'Vérifie ta connexion internet et réessaie.',
   'scholarship_status_badge_open': 'Ouvert',
   'scholarship_status_badge_closing_soon': 'Bientôt clôturé',
   'scholarship_status_badge_closed': 'Clôturé',
@@ -231,7 +229,7 @@ const Map<String, String> appTranslationsFr = {
   'academy_confirm_pay_cta': 'Confirmer et payer',
   'academy_purchase_success_title': 'Félicitations !',
   'academy_purchase_success_body':
-      'Formation débloquée avec succès. Vous pouvez maintenant suivre les cours.',
+      'Formation débloquée. Tu peux maintenant suivre les cours.',
   'academy_player_no_session': 'Aucune session disponible',
   'academy_player_session_progress': 'Session @current sur @total',
   'budget_calculator_title': 'Simulateur de coût',
@@ -258,12 +256,12 @@ const Map<String, String> appTranslationsFr = {
   'commercial_response_time_hours': '@count h',
   'commercial_response_time_days': '@count j',
   'housing_auto_search_soon':
-      'La recherche de logement automatisée pour le @country arrive très bientôt. Nos conseillers peuvent vous aider dans vos dossiers.',
+      'La recherche de logement automatisée pour le @country arrive très bientôt. Nos conseillers peuvent t\'aider dans tes dossiers.',
   'housing_studapart_open_error': 'Impossible d\'ouvrir Studapart.',
-  'housing_find_your_nest': 'Trouvez votre cocon',
+  'housing_find_your_nest': 'Trouve ton cocon',
   'housing_studapart_partnership_title': 'Partenariat Studapart',
   'housing_studapart_partnership_desc':
-      'Louez votre logement en France facilement avec ou sans garant local.',
+      'Loue ton logement en France facilement, avec ou sans garant local.',
   'parent_load_error': 'Impossible de charger. Vérifie ta connexion.',
   'parent_child_default': 'votre enfant',
   'parent_readonly_chip': 'Lecture seule',
@@ -321,11 +319,11 @@ const Map<String, String> appTranslationsFr = {
   'profile_replay_onboarding': 'Revoir le tutoriel de démarrage',
   'profile_replay_confirm_title': 'Revoir le tutoriel ?',
   'profile_replay_confirm_body':
-      'Vous reverrez l\'intro de démarrage. Vos informations de profil sont conservées.',
+      'Tu reverras l\'intro de démarrage. Tes informations de profil sont conservées.',
   'profile_replay_confirm_cta': 'Revoir',
   'profile_parent_access': 'Accès parent',
   'profile_parent_access_desc':
-      'Reliez un parent avec un code d\'invitation pour partager votre progression. Vous choisissez ce qu\'il peut voir, dossier par dossier.',
+      'Relie un parent avec un code d\'invitation pour partager ta progression. Tu choisis ce qu\'il peut voir, dossier par dossier.',
   'profile_parent_access_cta': 'Relier un parent',
   'profile_premium_card_title': 'Karatou Premium',
   'profile_premium_card_sub': 'Bientôt — activez via un conseiller KPB',
@@ -333,14 +331,14 @@ const Map<String, String> appTranslationsFr = {
   'premium_badge_soon': 'Bientôt disponible',
   'premium_hero_title': 'Passez à Karatou Premium',
   'premium_hero_sub':
-      'Premium arrive bientôt. En attendant, un conseiller KPB peut vous accompagner — sans aucun paiement dans l\'application.',
+      'Premium arrive bientôt. En attendant, un conseiller KPB peut t\'accompagner — sans aucun paiement dans l\'application.',
   'premium_value_ai_coach':
       'KPB Intelligence illimité — l\'offre gratuite inclut @count messages par semaine.',
   'premium_value_advisors':
       'Accompagnement prioritaire par un conseiller KPB vérifié.',
   'premium_value_more_soon': 'De nouveaux avantages Premium arrivent bientôt.',
   'premium_compare_title': 'Gratuit vs Premium',
-  'premium_compare_feature': 'Ce que vous obtenez',
+  'premium_compare_feature': 'Ce que tu obtiens',
   'premium_compare_free': 'Gratuit',
   'premium_compare_premium': 'Premium',
   'premium_row_ai_coach': 'Messages KPB Intelligence',
@@ -348,7 +346,7 @@ const Map<String, String> appTranslationsFr = {
   'premium_unlimited_soon': 'Illimité (bientôt)',
   'premium_how_title': 'Comment activer Premium',
   'premium_how_body':
-      'Aucun paiement dans l\'application. Premium arrive bientôt — un conseiller KPB vous guidera pour l\'activer.',
+      'Aucun paiement dans l\'application. Premium arrive bientôt — un conseiller KPB te guidera pour l\'activer.',
   'premium_wa_prefill':
       'Bonjour KPB, je souhaite en savoir plus sur Karatou Premium.',
   'premium_no_payment_note': 'Karatou ne propose aucun paiement intégré.',
@@ -360,9 +358,9 @@ const Map<String, String> appTranslationsFr = {
   // « Bientôt disponible » de l'écran reste affiché au-dessus.
   'premium_pitch_title': 'Postuler de A à Z, accompagné',
   'premium_pitch_body':
-      'Le Pass Karatou, c\'est votre candidature aux bourses prise en main du début à la fin : KPB Intelligence pour préparer, des conseillers KPB pour relire et valider.',
+      'Le Pass Karatou, c\'est ta candidature aux bourses prise en main du début à la fin : KPB Intelligence pour préparer, des conseillers KPB pour relire et valider.',
   'premium_pitch_point_shortlist':
-      'Une sélection de bourses faite pour votre profil, pas une liste générique.',
+      'Une sélection de bourses faite pour ton profil, pas une liste générique.',
   'premium_pitch_point_documents':
       'CV, lettres de motivation et réponses préparés avec KPB Intelligence.',
   'premium_pitch_point_review':
@@ -375,27 +373,30 @@ const Map<String, String> appTranslationsFr = {
   // `kPremiumWaitlistConsentVersion` DÉSIGNE. Le modifier sans
   // incrémenter la constante ferait pointer la preuve de consentement
   // vers un texte qui n'existe plus. Un test verrouille l'appariement.
-  'premium_waitlist_title': 'Soyez prévenu à l\'ouverture',
+  // C'est pourquoi `premium_waitlist_body` et `premium_waitlist_notice`
+  // vouvoient encore (exceptions de `voice_tutoiement_guard_test.dart`) :
+  // les tutoyer = une version v2, déployée d'abord côté backend.
+  'premium_waitlist_title': 'Sois prévenu à l\'ouverture',
   'premium_waitlist_body':
       'Le Pass n\'est pas encore ouvert. Inscrivez-vous sur la liste d\'attente : nous vous préviendrons en premier.',
   'premium_waitlist_notice':
       'En vous inscrivant, vous acceptez que KPB vous contacte au sujet du Pass Karatou. C\'est gratuit et sans engagement, et vous pouvez vous retirer à tout moment.',
   'premium_waitlist_cta': 'M\'inscrire sur la liste d\'attente',
-  'premium_waitlist_joined_title': 'Vous êtes sur la liste',
+  'premium_waitlist_joined_title': 'Tu es sur la liste',
   'premium_waitlist_joined_body':
-      'Inscrit le @date. Nous vous préviendrons dès l\'ouverture du Pass.',
+      'Inscrit le @date. Nous te préviendrons dès l\'ouverture du Pass.',
   'premium_waitlist_leave': 'Me retirer de la liste',
   'premium_waitlist_error_network':
-      'Connexion impossible. Vérifiez votre réseau et réessayez.',
+      'Connexion impossible. Vérifie ton réseau et réessaie.',
   'premium_waitlist_error_unauthorized':
-      'Votre session a expiré. Reconnectez-vous puis réessayez.',
+      'Ta session a expiré. Reconnecte-toi puis réessaie.',
   'premium_waitlist_error_server':
-      'Inscription impossible pour l\'instant. Réessayez dans un moment.',
+      'Inscription impossible pour l\'instant. Réessaie dans un moment.',
   'premium_waitlist_student_only':
       'La liste d\'attente est réservée aux comptes étudiants.',
-  'guest_premium_waitlist_title': 'Créez votre compte',
+  'guest_premium_waitlist_title': 'Crée ton compte',
   'guest_premium_waitlist_body':
-      'La liste d\'attente sert à vous prévenir à l\'ouverture du Pass. Sans compte, nous n\'aurions personne à prévenir.',
+      'La liste d\'attente sert à te prévenir à l\'ouverture du Pass. Sans compte, nous n\'aurions personne à prévenir.',
   'guest_premium_waitlist_cta': 'Créer mon compte',
   'parent_packs_label': 'Accompagnement KPB',
   'parent_pack_review': 'Relecture de dossier KPB',
@@ -636,7 +637,7 @@ const Map<String, String> appTranslationsFr = {
   'orientation_best_match_label': 'MEILLEURE CORRESPONDANCE',
   'orientation_best_match_badge': '⭐ Meilleur match',
   'orientation_ai_resilient_badge': '🛡 Résilient à l\'IA',
-  'orientation_why_it_fits_label': 'Pourquoi c\'est fait pour vous',
+  'orientation_why_it_fits_label': 'Pourquoi c\'est fait pour toi',
   'orientation_available_scholarships_label': 'Bourses disponibles',
   'orientation_ia_resilience_high': 'Métier d\'avenir · résistant à l\'IA',
   'orientation_ia_resilience_medium': 'Bonne résilience face à l\'IA',
@@ -836,7 +837,7 @@ const Map<String, String> appTranslationsFr = {
   'compare_help_choosing_university': 'Aide au choix d\'université',
   'compare_share_header': 'Comparaison d\'universités avec KPB Education :\n\n',
   'compare_share_footer':
-      'Découvrez KPB Education pour votre orientation universitaire.',
+      'Découvre KPB Education pour ton orientation universitaire.',
   'compare_yes': 'Oui',
   'compare_no': 'Non',
   'community_search_tooltip': 'Rechercher',
@@ -927,7 +928,7 @@ const Map<String, String> appTranslationsFr = {
   'coach_unavailable': 'KPB Intelligence indisponible.',
   'coach_unreachable': 'Impossible de joindre KPB Intelligence pour le moment.',
   'coach_ai_title': 'KPB Intelligence',
-  'coach_input_hint': 'Posez votre question sur les écoles, budgets...',
+  'coach_input_hint': 'Pose ta question sur les écoles, les budgets...',
   // ── App-engagement handoff : outils coaching + post-décision ──
   'coach_status_tagline': 'Connaît ton profil · répond aussitôt',
   'coach_quota_info_title': 'Messages KPB Intelligence',
@@ -996,7 +997,7 @@ const Map<String, String> appTranslationsFr = {
   'cv_default_languages': 'Français, Anglais',
   // Réservé au VRAI échec réseau. Un 404/503 ne doit pas accuser la
   // connexion de l'utilisateur : voir les trois clés suivantes.
-  'tools_ai_error_check_connection': 'Erreur IA — vérifiez votre connexion',
+  'tools_ai_error_check_connection': 'Erreur IA — vérifie ta connexion',
   'tools_ai_error_unavailable':
       'Le service IA est momentanément indisponible. Réessaie dans un instant.',
   'tools_ai_error_slow':
@@ -1020,7 +1021,7 @@ const Map<String, String> appTranslationsFr = {
   'cv_objective_destination': 'Destination visée : @country.',
   'cv_generator_title': 'Générateur de CV',
   'cv_generator_intro':
-      'Remplissez les champs et laissez l\'IA rédiger votre profil professionnel.',
+      'Remplis les champs et laisse l\'IA rédiger ton profil professionnel.',
   'cv_field_full_name': 'Nom complet',
   'cv_field_phone': 'Téléphone',
   'cv_field_study_level': 'Niveau d\'études',
@@ -1375,18 +1376,16 @@ const Map<String, String> appTranslationsFr = {
   'case_stepper_heading': 'Progression',
   'case_stepper_creation_title': 'Création du dossier',
   'case_stepper_creation_desc_draft':
-      'Complétez votre profil pour soumettre la demande.',
+      'Complète ton profil pour soumettre la demande.',
   'case_stepper_creation_desc_done': 'Dossier soumis avec succès.',
   'case_stepper_analysis_title': 'Analyse et Conseiller',
   'case_stepper_analysis_desc_docs':
       'Des documents supplémentaires sont requis.',
-  'case_stepper_analysis_desc_awaiting':
-      'Votre conseiller attend votre retour.',
-  'case_stepper_analysis_desc_default':
-      'Examen de votre profil par nos experts.',
+  'case_stepper_analysis_desc_awaiting': 'Ton conseiller attend ta réponse.',
+  'case_stepper_analysis_desc_default': 'Nos experts examinent ton profil.',
   'case_stepper_processing_title': 'Traitement',
   'case_stepper_processing_desc':
-      'Préparation et soumission de vos candidatures.',
+      'Préparation et soumission de tes candidatures.',
   'case_stepper_decision_title': 'Décision',
   'case_stepper_decision_desc': 'En attente des retours des institutions.',
   'case_stepper_finalization_title': 'Finalisation',
@@ -1459,7 +1458,7 @@ const Map<String, String> appTranslationsFr = {
   'case_message_dictation_on_device_unavailable_title':
       'Reconnaissance locale indisponible',
   'case_message_dictation_on_device_unavailable_body':
-      'Votre téléphone ne peut pas convertir la voix en texte hors ligne. Pour dicter, votre voix serait envoyée au service de reconnaissance de votre téléphone (Apple ou Google) et traitée hors de l\'appareil. Vous pouvez aussi écrire votre message.',
+      'Ton téléphone ne peut pas convertir la voix en texte hors ligne. Pour dicter, ta voix serait envoyée au service de reconnaissance de ton téléphone (Apple ou Google) et traitée hors de l\'appareil. Tu peux aussi écrire ton message.',
   'case_message_dictation_use_platform_service': 'Dicter quand même',
   'case_message_stop_dictation': 'Arrêter la dictée',
   'case_message_dictate': 'Dicter mon message',
@@ -1575,7 +1574,7 @@ const Map<String, String> appTranslationsFr = {
       'Dossier traité en priorité par l\'université.',
   'institution_dedicated_coach': 'Coach Dédié',
   'institution_dedicated_coach_desc':
-      'Un expert vous suit de l\'inscription au visa.',
+      'Un expert te suit de l\'inscription au visa.',
   'institution_exclusive_scholarships': 'Bourses Exclusives',
   'institution_exclusive_scholarships_desc':
       'Accès aux aides financières réservées aux partenaires.',
@@ -1596,13 +1595,13 @@ const Map<String, String> appTranslationsFr = {
   'onboarding_countries_required_inline':
       'Choisis au moins un pays où tu aimerais étudier.',
   'onboarding_welcome_title': 'Bienvenue 👋',
-  'onboarding_welcome_subtitle': 'Créons votre profil KPB Education.',
-  'onboarding_academic_title': 'Votre parcours 🎓',
-  'onboarding_academic_subtitle': 'Dites-nous où vous en êtes.',
+  'onboarding_welcome_subtitle': 'Créons ton profil KPB Education.',
+  'onboarding_academic_title': 'Ton parcours 🎓',
+  'onboarding_academic_subtitle': 'Dis-nous où tu en es.',
   'onboarding_partner_title': 'Votre structure 🤝',
   'onboarding_partner_subtitle': 'Parlez-nous de votre organisation.',
-  'onboarding_interests_title': 'Vos intérêts 🌍',
-  'onboarding_interests_subtitle': 'Personnalisez vos recommandations.',
+  'onboarding_interests_title': 'Tes intérêts 🌍',
+  'onboarding_interests_subtitle': 'Personnalise tes recommandations.',
   'skip': 'Passer',
   'onboarding_i_am': 'Je suis',
   'account_type_parent_short': 'Parent',
@@ -1610,15 +1609,15 @@ const Map<String, String> appTranslationsFr = {
   'onboarding_consent_and': ' et les ',
   'onboarding_terms_of_use_inline': 'conditions d\'utilisation',
   'onboarding_partnership_space': 'Espace partenariat',
-  'intro_slide1_title': 'Explorez vos destinations',
+  'intro_slide1_title': 'Explore tes destinations',
   'intro_slide1_body':
       "Découvrez des centaines de programmes au Canada, en France et partout dans le monde.",
   'intro_slide2_title': 'Bourses & accompagnement',
   'intro_slide2_body':
-      "Trouvez la bourse idéale et obtenez une feuille de route adaptée à votre profil.",
+      'Trouve la bourse idéale et obtiens une feuille de route adaptée à ton profil.',
   'intro_slide3_title': 'Suivi en temps réel',
   'intro_slide3_body':
-      "Suivez l'avancement de votre dossier et échangez avec nos conseillers, dans l'app.",
+      'Suis l\'avancement de ton dossier et échange avec nos conseillers, dans l\'app.',
   'get_started': 'Commencer',
   'continue_action': 'Continuer',
   'profile_data_saver_desc': 'Economise la data (masque les images lourdes)',
@@ -1654,12 +1653,12 @@ const Map<String, String> appTranslationsFr = {
   'required': 'Requis',
   'profile_field_phone': 'Téléphone',
   'profile_field_email_helper':
-      'Email de connexion à votre compte — il ne se modifie pas ici.',
+      'Email de connexion à ton compte — il ne se modifie pas ici.',
   'profile_field_country_of_residence': 'Pays de résidence',
   'profile_field_current_study_level': 'Niveau d\'études actuel',
   'profile_field_bac_series': 'Série du bac',
   'profile_updated_title': 'Profil mis à jour',
-  'profile_updated_body': 'Vos informations ont été sauvegardées.',
+  'profile_updated_body': 'Tes informations ont été sauvegardées.',
   'profile_missing_grade_field': 'Moyenne académique',
   'profile_missing_grade_impact':
       'Améliore la précision de tes recommandations d\'écoles',
@@ -1717,7 +1716,7 @@ const Map<String, String> appTranslationsFr = {
   'home_profile_pct_notice':
       'À @pct% — des champs manquants limitent tes recommandations',
   'home_admission_prefix': 'Admission : @value',
-  'home_subtitle_student': 'Votre tableau de bord',
+  'home_subtitle_student': 'Ton tableau de bord',
   'home_subtitle_parent': 'Espace parent',
   'home_subtitle_partner': 'Espace partenaire',
   'home_active_cases_title': 'Dossiers actifs',
@@ -1725,7 +1724,7 @@ const Map<String, String> appTranslationsFr = {
   'home_recommended_universities_title': 'Écoles pour ton profil',
   'home_hero_title_partner': 'Développons\nvotre réseau',
   'home_hero_title_parent': 'Accompagnez\nvotre enfant',
-  'home_hero_title_student': 'Votre parcours\nvers l\'étranger',
+  'home_hero_title_student': 'Ton parcours\nvers l\'étranger',
   'home_hero_subtitle_student': 'Une étape à la fois — on avance ensemble.',
   'home_hero_subtitle_other': 'Démarrez dès aujourd\'hui.',
   'home_hero_cta_consultation': 'Consultation',
@@ -2338,7 +2337,7 @@ const Map<String, String> appTranslationsFr = {
       '−30 % si tu étudies dans une école partenaire KPB',
   'kpb_offer_price_note':
       'Tarif indicatif · payable après échange avec un conseiller',
-  'onboarding_title': 'Construisons votre parcours',
+  'onboarding_title': 'Construisons ton parcours',
   'partner_redirect':
       'Les partenariats sont gérés via un formulaire dédié et un suivi KPB.',
   'nav_home': 'Accueil',
@@ -2403,21 +2402,21 @@ const Map<String, String> appTranslationsFr = {
   'intake_label': 'Rentrée',
   'turnaround_label': 'Délai',
   'home_find_school_desc':
-      'Trouvez votre école privée en France selon votre budget et vos objectifs. Discutez instantanément !',
+      'Trouve ton école privée en France selon ton budget et tes objectifs. Discute instantanément !',
   'closing_label': 'Clôture',
   'home_apply_world_desc':
       'Postulez dans les meilleures universités du monde (Canada, USA, UK, Allemagne, Maroc).',
   'discover': 'Découvrir',
   'home_destinations_desc':
-      'Découvrez les destinations d\'études où KPB Education vous accompagne de A à Z : orientation, admission et visa.',
+      'Découvre les destinations d\'études où KPB Education t\'accompagne de A à Z : orientation, admission et visa.',
   'tuition_prefix': 'Scolarité : ',
-  'analyzing_answers': 'Analyse de vos réponses…',
+  'analyzing_answers': 'Analyse de tes réponses…',
   'multiple_answers_allowed': 'Plusieurs réponses possibles',
   'orientation_results_intro':
-      'Voici les filières qui vous correspondent le mieux.',
+      'Voici les filières qui te correspondent le mieux.',
   'target_careers': 'Métiers visés',
   'recommended_countries': 'Pays recommandés',
-  'track_admission_deadlines': 'Suivez les échéances de vos admissions',
+  'track_admission_deadlines': 'Suis les échéances de tes admissions',
   'item_deleted': 'Élément supprimé',
   'documents_ready': 'documents prêts',
   'france_admission_title': 'Admission France — Écoles privées',
@@ -2434,7 +2433,7 @@ const Map<String, String> appTranslationsFr = {
   'terms_of_use': 'Conditions Générales d\'Utilisation',
   'student_living_cost': 'Coût de la vie étudiante',
   'budget_intro':
-      'Anticipez vos dépenses mensuelles selon votre destination et votre mode de vie.',
+      'Anticipe tes dépenses mensuelles selon ta destination et ton mode de vie.',
   'estimated_monthly_budget': 'Budget Mensuel Estimé',
   'details_by_category': 'Détails par catégorie',
   'budget_subtitle_monthly': 'coût de la vie mensuel',
@@ -2444,7 +2443,7 @@ const Map<String, String> appTranslationsFr = {
   'budget_see_scholarships_cta': 'Voir les bourses disponibles',
   'app_locked': 'Application Verrouillée',
   'app_lock_prompt':
-      'Veuillez vous authentifier pour accéder à vos documents et suivis KPB.',
+      'Authentifie-toi pour accéder à tes documents et suivis KPB.',
   'auth_failed': 'Authentification échouée.',
   'logout_title': 'Déconnexion',
   'private_schools_admission': 'Admission écoles privées',
@@ -2500,11 +2499,11 @@ const Map<String, String> appTranslationsFr = {
   'profile_compatibility': 'Compatibilité avec ton profil',
   'protect_app_access': 'Protéger l\'accès à l\'application',
   'logout_redirect_notice':
-      'Vous serez redirigé vers l\'écran d\'accueil. Vos données locales seront effacées.',
+      'Tu seras redirigé vers l\'écran d\'accueil. Tes données locales seront effacées.',
   'profile_complete_optimized': 'Profil complet — recommandations optimisées ✨',
   'remaining_to_pay': 'Reste à payer',
   'academy_unlock_msg':
-      'Vous allez débloquer la formation "@title" définitivement sur votre compte.',
+      'Tu vas débloquer la formation "@title" définitivement sur ton compte.',
   'coach_quota_exhausted':
       'Quota épuisé — Premium bientôt disponible ou contacte un conseiller KPB.',
   'application_sent_admin':
@@ -2512,7 +2511,7 @@ const Map<String, String> appTranslationsFr = {
   'no_verified_mentor':
       'Aucun mentor vérifié ne correspond à cette recherche pour l\'instant.',
   'community_intro':
-      'Articles, guides et conseils de nos experts pour réussir votre projet d\'études.',
+      'Articles, guides et conseils de nos experts pour réussir ton projet d\'études.',
   'community_members': '+2 000 étudiants — Conseils, entraide & actu',
   'published_on': 'Publié le',
   'choose_second_uni': 'Choisissez une 2ème université',
@@ -2520,7 +2519,7 @@ const Map<String, String> appTranslationsFr = {
   'register_abroad_title': 'Inscriptions à l\'Étranger',
   'register_abroad_cta': 'S\'inscrire à l\'Étranger',
   'housing_intro':
-      'Garantir votre hébergement est primordial pour l\'obtention de votre visa étudiant.',
+      'Garantir ton logement est essentiel pour obtenir ton visa étudiant.',
   'estimated_monthly_rent_in': 'Loyer Mensuel Estimé à',
   'to_range': 'à',
   'privacy_policy_inline': 'politique de confidentialité',
@@ -2532,9 +2531,9 @@ const Map<String, String> appTranslationsFr = {
       'Crée un code à 8 caractères et envoie-le par WhatsApp. Ton enfant pourra ensuite partager ses dossiers avec toi.',
   'parent_accept_code_hint':
       'Si un parent t\'a envoyé un code à 8 caractères, saisis-le ci-dessous pour lui donner un accès lecture à tes dossiers.',
-  'prepare_departure': 'Préparez votre départ',
+  'prepare_departure': 'Prépare ton départ',
   'travel_intro':
-      'Estimez le prix du billet pour votre pays d\'études et achetez au meilleur moment.',
+      'Estime le prix du billet pour ton pays d\'études et achète au meilleur moment.',
   'travel_powered_by':
       'Propulsé par le comparateur indépendant Kayak. Les prix sont affichés en direct.',
   'other_results': 'autres résultats',
@@ -2550,7 +2549,7 @@ const Map<String, String> appTranslationsFr = {
       'Impossible de mettre à jour le partage. Réessaie.',
   'view_official_source': 'Voir la source officielle',
   'nav_community': 'Communauté',
-  'home_for_student': 'Votre tableau de bord',
+  'home_for_student': 'Ton tableau de bord',
   'home_for_parent': 'Tableau de bord parent',
   'home_for_partner': 'Espace partenariat',
   'book_consultation': 'Réserver une consultation',
@@ -2587,11 +2586,11 @@ const Map<String, String> appTranslationsFr = {
   'parcours_feed_swipe_hint': 'Glisse vers le haut pour le suivant',
   'profile_completion': 'Complétude du profil',
   'orientation_intro':
-      'Répondez à quelques questions. KPB vous propose des pistes de filières, des pays et des grandes écoles cohérents.',
+      'Réponds à quelques questions. KPB te propose des pistes de filières, des pays et des grandes écoles cohérents.',
   'start_orientation': 'Commencer',
   'restart_orientation': 'Recommencer',
-  'orientation_results': 'Résultats de votre orientation',
-  'why_it_fits': 'Pourquoi cela vous correspond',
+  'orientation_results': 'Résultats de ton orientation',
+  'why_it_fits': 'Pourquoi cela te correspond',
   'recommended_scholarships': 'Programmes liés',
   'case_summary': 'Résumé du dossier',
   'assigned_advisor': 'Conseiller assigné',
@@ -2605,7 +2604,7 @@ const Map<String, String> appTranslationsFr = {
   'no_saved_items': 'Aucun élément sauvegardé',
   'partner_cta': 'Devenir partenaire',
   'contact_advisor': 'Contacter un conseiller',
-  'request_submitted': 'Votre demande a été envoyée.',
+  'request_submitted': 'Ta demande a été envoyée.',
   'create_case': 'Créer un dossier',
   'case_type': 'Type de demande',
   'description': 'Description',
@@ -2647,7 +2646,7 @@ const Map<String, String> appTranslationsFr = {
   'login_error': 'Email ou mot de passe incorrect.',
   'auth_welcome_title': 'Bienvenue sur KPB Education',
   'auth_welcome_subtitle':
-      'Connectez-vous par email pour sauvegarder votre parcours, ou explorez l’app en mode invité.',
+      'Connecte-toi par email pour sauvegarder ton parcours, ou explore l’app en mode invité.',
   'auth_intelligence_title':
       'KPB Intelligence, ton guide pour étudier à l’étranger',
   // « 12 questions » ne correspondait à rien : l'onboarding étudiant compte 3
@@ -2676,7 +2675,7 @@ const Map<String, String> appTranslationsFr = {
       'Mode invité : consultation du catalogue uniquement. Connexion requise pour créer un dossier.',
   'auth_magic_email_title': 'Connexion par email',
   'auth_magic_email_body':
-      'Nous vous enverrons un code à 6 chiffres pour vous connecter sans mot de passe.',
+      'Nous t\'enverrons un code à 6 chiffres pour te connecter sans mot de passe.',
   'auth_magic_send_button': 'Envoyer le code',
   'auth_magic_send_error': 'Impossible d’envoyer le code. Réessayez.',
   'auth_magic_verify_title': 'Vérification',
@@ -2687,15 +2686,14 @@ const Map<String, String> appTranslationsFr = {
   'auth_magic_resend': 'Renvoyer le code',
   'auth_magic_resend_wait': 'Renvoyer dans @seconds s',
   'auth_magic_resend_cooldown': 'Veuillez patienter avant de renvoyer un code.',
-  'auth_guest_profile_title': 'Connectez-vous pour accéder à votre profil',
+  'auth_guest_profile_title': 'Connecte-toi pour accéder à ton profil',
   'auth_guest_profile_body':
-      'Créez un compte pour suivre vos dossiers, sauvegarder des programmes et personnaliser votre parcours.',
+      'Crée un compte pour suivre tes dossiers, sauvegarder des programmes et personnaliser ton parcours.',
   // Match explanations
-  'match_complete_profile':
-      'Complétez votre profil pour un matching personnalisé',
-  'match_field_in_interests': 'Filière dans vos intérêts',
-  'match_from_orientation': 'Recommandée par votre orientation',
-  'match_available_target_country': 'Disponible dans vos pays cibles',
+  'match_complete_profile': 'Complète ton profil pour un matching personnalisé',
+  'match_field_in_interests': 'Filière dans tes intérêts',
+  'match_from_orientation': 'Recommandée par ton orientation',
+  'match_available_target_country': 'Disponible dans tes pays cibles',
   'match_target_country': 'Pays cible',
   'match_in_target_country': 'Situé dans un pays cible',
   'match_kpb_partner': 'Partenaire KPB',
@@ -2703,7 +2701,22 @@ const Map<String, String> appTranslationsFr = {
   'match_general': 'Correspondance générale',
   // Case snackbar
   'case_created_title': 'Dossier créé ✅',
-  'case_created_body': 'Votre dossier @code a bien été soumis.',
+  'case_created_body': 'Ton dossier @code a bien été soumis.',
+  // Contenu du dossier créé sur l'appareil, avant la réponse du serveur
+  // (`submitCase`). Enregistré dans les deux langues avec le dossier.
+  'case_local_next_step_title': 'Ton dossier est en revue',
+  'case_local_next_step_body':
+      'L’équipe KPB va étudier ta demande et vérifier tes informations. Ensuite, elle t’attribue un conseiller.',
+  'case_local_submitted_title': 'Demande envoyée',
+  'case_local_submitted_body':
+      'Ta demande est dans l’onglet « Dossiers ». L’équipe KPB l’a reçue.',
+  'case_local_welcome_sender': 'Équipe KPB',
+  'case_local_welcome_body':
+      'Merci pour ta demande. Nous revenons vers toi avec la prochaine étape.',
+  'case_local_doc_profile_title': 'Profil académique complet',
+  'case_local_student_reply_title': 'Réponse de l’étudiant',
+  'case_local_student_reply_body':
+      'Le dossier a été mis à jour avec un nouveau message.',
   'view': 'Voir',
   'anti_fraud_title': '🔒 Sécurité KPB',
   'anti_fraud_body':
@@ -2754,7 +2767,7 @@ const Map<String, String> appTranslationsFr = {
   'online_title': 'En ligne',
   'online_body': 'Connexion rétablie.',
   // Auth screens
-  'login_subtitle': 'Connectez-vous pour continuer',
+  'login_subtitle': 'Connecte-toi pour continuer',
   'login_button': 'Se connecter',
   'forgot_password_link': 'Mot de passe oublié ?',
   'no_account_prompt': 'Pas encore de compte ? ',
@@ -2764,12 +2777,12 @@ const Map<String, String> appTranslationsFr = {
   'create_account_button': 'Créer mon compte',
   'already_have_account': 'Déjà un compte ? ',
   'login_link': 'Se connecter',
-  'full_name_required': 'Votre nom complet est requis',
-  'full_name_hint': 'Entrez votre prénom et nom',
-  'email_required': 'Entrez votre email',
+  'full_name_required': 'Ton nom complet est requis',
+  'full_name_hint': 'Entre ton prénom et ton nom',
+  'email_required': 'Entre ton email',
   'email_invalid': 'Adresse email invalide',
   'phone_optional': 'Téléphone (optionnel)',
-  'password_required': 'Entrez votre mot de passe',
+  'password_required': 'Entre ton mot de passe',
   'password_choose': 'Choisissez un mot de passe',
   'password_min_length': 'Le mot de passe doit contenir au moins 8 caractères',
   'password_helper': 'Minimum 8 caractères',
@@ -2777,19 +2790,19 @@ const Map<String, String> appTranslationsFr = {
   'forgot_password_title': 'Mot de passe oublié',
   'reset_password_title': 'Réinitialiser le mot de passe',
   'reset_password_body':
-      'Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+      'Entre ton adresse email. Nous t\'enverrons un lien pour réinitialiser ton mot de passe.',
   'email_label': 'Adresse email',
   'send_link_button': 'Envoyer le lien',
   'back_to_login': 'Retour à la connexion',
   'email_sent_title': 'Email envoyé !',
   'email_sent_body':
-      'Vérifiez votre boîte email et suivez le lien pour réinitialiser votre mot de passe.',
+      'Vérifie ta boîte email et suis le lien pour réinitialiser ton mot de passe.',
   'forgot_password_error':
       'Une erreur est survenue. Vérifiez l\'adresse email.',
   // Register errors
   'register_error_generic': 'Une erreur est survenue. Réessayez.',
   'register_error_email_exists': 'Un compte avec cet email existe déjà.',
-  'register_error_network': 'Problème de connexion. Vérifiez votre réseau.',
+  'register_error_network': 'Problème de connexion. Vérifie ton réseau.',
   // ── Parrainage (KPB-69) ──
   'copy': 'Copier',
   'referral_title': 'Parrainer un ami',

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show compute, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -34,6 +34,7 @@ import '../utils/user_facing_sync_error.dart';
 import '../data/case_api_codec.dart';
 import '../data/profile_api_codec.dart';
 import '../i18n/app_locale.dart';
+import '../translations/app_translations.dart';
 import '../data/saved_item_api_codec.dart';
 import '../services/app_search_service.dart';
 import '../data/content_api_codec.dart';
@@ -453,7 +454,23 @@ typedef DecodedCatalog = ({
   List<ScholarshipModel> scholarships,
 });
 
-/// Pure function (no plugin, no Get) so it can run in `Isolate.run`. A corrupt
+/// Décode le catalogue en cache HORS du thread principal quand la plateforme
+/// le permet.
+///
+/// `Isolate.run` n'existe pas sur le web : il y lève `UnsupportedError`, et le
+/// démarrage web perdait tout le catalogue en cache. Sur le web
+/// ([isWeb], `kIsWeb` par défaut — paramètre exposé pour les tests), le
+/// décodage est donc fait de façon SYNCHRONE ; ailleurs il passe par
+/// `compute`, qui lance un isolate.
+Future<DecodedCatalog> decodeCachedCatalogInBackground(
+  Map<String, String?> raws, {
+  bool? isWeb,
+}) async {
+  if (isWeb ?? kIsWeb) return decodeCachedCatalog(raws);
+  return compute(decodeCachedCatalog, raws);
+}
+
+/// Pure function (no plugin, no Get) so it can run in an isolate. A corrupt
 /// or missing resource decodes to an empty list — the caller then falls back
 /// to the bundled sample catalogue, as before.
 DecodedCatalog decodeCachedCatalog(Map<String, String?> raws) {

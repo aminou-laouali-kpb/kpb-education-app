@@ -1,5 +1,14 @@
 part of '../app_controller.dart';
 
+/// Un texte de dossier dans les DEUX langues, lu dans les traductions : le
+/// dossier est enregistré avec son `fr` et son `en`, et s'affiche ensuite dans
+/// la langue courante. Une clé absente retombe sur la clé elle-même (visible
+/// en test, jamais un texte vide).
+LocalizedText _caseText(String key) => LocalizedText(
+      fr: appTranslationsFr[key] ?? key,
+      en: appTranslationsEn[key] ?? key,
+    );
+
 /// Dossiers : création, messagerie (socket + file d’envoi), documents.
 mixin _CasesMixin on _AppControllerBase {
   StudentCase submitCase({
@@ -29,23 +38,13 @@ mixin _CasesMixin on _AppControllerBase {
       preferredContactMethod: contactMethod,
       createdAt: now,
       updatedAt: now,
-      nextStepTitle: const LocalizedText(
-        fr: 'Votre dossier est en revue',
-        en: 'Your case is under review',
-      ),
-      nextStepDescription: const LocalizedText(
-        fr: 'L’équipe KPB va qualifier votre demande, vérifier vos informations et vous attribuer un conseiller.',
-        en: 'The KPB team will review your request, verify your information, and assign a counselor.',
-      ),
+      nextStepTitle: _caseText('case_local_next_step_title'),
+      nextStepDescription: _caseText('case_local_next_step_body'),
       timeline: [
         CaseTimelineEvent(
           id: 'submitted-${now.millisecondsSinceEpoch}',
-          title: const LocalizedText(
-              fr: 'Demande envoyée', en: 'Request submitted'),
-          description: const LocalizedText(
-            fr: 'Votre demande est visible dans My Cases et a été transmise à l’équipe KPB.',
-            en: 'Your request now appears in My Cases and has been sent to the KPB team.',
-          ),
+          title: _caseText('case_local_submitted_title'),
+          description: _caseText('case_local_submitted_body'),
           createdAt: now,
           status: CaseStatus.submitted,
         ),
@@ -53,12 +52,9 @@ mixin _CasesMixin on _AppControllerBase {
       messages: [
         CaseMessage(
           id: 'welcome-${now.millisecondsSinceEpoch}',
-          senderName: 'KPB Operations',
+          senderName: 'case_local_welcome_sender'.tr,
           senderRole: 'system',
-          body: const LocalizedText(
-            fr: 'Merci pour votre demande. Nous revenons vers vous avec la prochaine étape.',
-            en: 'Thanks for your request. We will come back to you with the next step.',
-          ),
+          body: _caseText('case_local_welcome_body'),
           createdAt: now,
         ),
       ],
@@ -75,13 +71,10 @@ mixin _CasesMixin on _AppControllerBase {
       // masquer serait le mensonge inverse. L'écran de dossier leur offre
       // désormais l'envoi par WhatsApp.
       documentRequests: AppConfig.documentUploadEnabled
-          ? const [
+          ? [
               DocumentRequest(
                 id: 'doc-profile',
-                title: LocalizedText(
-                  fr: 'Profil académique complet',
-                  en: 'Complete academic profile',
-                ),
+                title: _caseText('case_local_doc_profile_title'),
                 isProvided: false,
               ),
             ]
@@ -218,14 +211,8 @@ mixin _CasesMixin on _AppControllerBase {
         ...caseItem.timeline,
         CaseTimelineEvent(
           id: 'timeline-${now.millisecondsSinceEpoch}',
-          title: const LocalizedText(
-            fr: 'Réponse de l’étudiant',
-            en: 'Student reply',
-          ),
-          description: const LocalizedText(
-            fr: 'Le dossier a été mis à jour avec un nouveau message.',
-            en: 'The case has been updated with a new message.',
-          ),
+          title: _caseText('case_local_student_reply_title'),
+          description: _caseText('case_local_student_reply_body'),
           createdAt: now,
           status: caseItem.status,
         ),

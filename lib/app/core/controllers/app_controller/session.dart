@@ -99,16 +99,9 @@ mixin _SessionMixin on _AppControllerBase {
       };
 
       // Décodage JSON + fromJson d'environ un millier d'objets HORS du thread
-      // principal : fait ici, il figeait l'interface au démarrage.
-      final decoded = await Isolate.run(
-        () => decodeCachedCatalog(<String, String?>{
-          'fields': raws['fields'],
-          'countries': raws['countries'],
-          'institutions': raws['institutions'],
-          'programs': raws['programs'],
-          'scholarships': raws['scholarships'],
-        }),
-      );
+      // principal : fait ici, il figeait l'interface au démarrage. Sur le web,
+      // où les isolates n'existent pas, le décodage reste synchrone.
+      final decoded = await decodeCachedCatalogInBackground(raws);
       fields
         ..clear()
         ..addAll(

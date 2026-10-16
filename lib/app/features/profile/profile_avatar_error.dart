@@ -134,10 +134,11 @@ AvatarFailure classifyAvatarFailure(Object error) {
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.connectionError:
         return AvatarFailure.network;
-      case DioExceptionType.badCertificate:
-      case DioExceptionType.cancel:
-      case DioExceptionType.badResponse:
-      case DioExceptionType.unknown:
+      // badCertificate, cancel, badResponse, unknown — et toute valeur que
+      // Dio ajouterait demain : c'est le corps codé puis le statut qui
+      // tranchent. Pas de liste exhaustive ici, sinon un `pub upgrade` qui
+      // ajoute un `DioExceptionType` casse la compilation.
+      default:
         break;
     }
 
