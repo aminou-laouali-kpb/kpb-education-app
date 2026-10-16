@@ -16,6 +16,12 @@
  * in one transaction, and its `programIds` lists the formations actually
  * attached to it.
  *
+ * Rentrées : la grille est celle de l'automne 2026, reconduite d'un an
+ * (décision du propriétaire du 16/10/2026, src/modules/catalog/
+ * omnes-fall-roll.ts) — une base vierge reçoit directement « 01/10/2027 »,
+ * avec `rolledFromIntake` / `intakeEstimated`, comme une base où
+ * `roll:omnes-fall-2027` est passé. Aucune rentrée d'automne 2026 n'est écrite.
+ *
  * Refused on a production database that already holds `omnes-*` rows, unless
  * KPB_ALLOW_PRODUCTION_SEED=1 (see src/common/seed-safety.ts).
  *
@@ -43,6 +49,10 @@ import {
   studyLevelsFor,
 } from '../src/modules/catalog/omnes-conventions';
 import { omnesFormationIdentity } from '../src/modules/catalog/catalog-dedupe';
+import {
+  rollSeedIntakePeriod,
+  rollSeedOffering,
+} from '../src/modules/catalog/omnes-fall-roll';
 import { M5_COUNTRY_SEEDS } from '../src/modules/countries/data/m5-countries.seed';
 
 // Compose supplies DATABASE_URL (and NODE_ENV) to the API container, whose
@@ -60,6 +70,9 @@ type CampusOffering = {
   tuitionUpfront: number | null;
   tuitionInstallments: number | null;
   intake: string | null;
+  /// Rentrée d'automne 2026 reconduite en 2027 (omnes-fall-roll.ts).
+  rolledFromIntake?: string;
+  intakeEstimated?: true;
 };
 
 async function ensureFranceCountry() {
@@ -282,12 +295,15 @@ async function main() {
                 ...formation.offerings.entries(),
               ]
                 .sort(([a], [b]) => a.localeCompare(b, 'fr'))
-                .map(([campus, acc]) => ({
-                  campus,
-                  tuitionUpfront: acc.tuitionUpfront,
-                  tuitionInstallments: acc.tuitionInstallments,
-                  intake: [...acc.intakes].join(' · ') || null,
-                }));
+                .map(([campus, acc]) =>
+                  // Automne 2026 → 2027, même jour et mois, prix gardés.
+                  rollSeedOffering<CampusOffering>({
+                    campus,
+                    tuitionUpfront: acc.tuitionUpfront,
+                    tuitionInstallments: acc.tuitionInstallments,
+                    intake: [...acc.intakes].join(' · ') || null,
+                  }),
+                );
               const tuition = formatTuitionSummary(offerings);
               const requirements = [...formation.requirements];
               const language = [...formation.languages].join(' / ');
@@ -335,7 +351,7 @@ async function main() {
             tuitionLabelEn: tuitionLabel.en,
             languageRequirementsFr: 'Français ou Anglais selon programme',
             languageRequirementsEn: 'French or English depending on program',
-            intakePeriods: [...inst.intakes],
+            intakePeriods: [...new Set([...inst.intakes].map(rollSeedIntakePeriod))],
             programIds: linkedProgramIds(
               [...inst.programIds],
               attached.map((program) => program.id),

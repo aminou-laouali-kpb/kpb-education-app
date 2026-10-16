@@ -42,7 +42,7 @@ rows — and have no production guard yet.
 
 ```bash
 npm --prefix backend run import:omnes:bundled   # writes the normalized JSON
-npm --prefix backend run seed:omnes             # 292 formations, 5 schools
+npm --prefix backend run seed:omnes             # 280 formations, 5 schools — fall 2026 intakes already rolled to 2027
 ```
 
 ## 5) Partner schools only (annexe 05)
@@ -55,10 +55,18 @@ npm --prefix backend run seed:partners          # 76 programmes, 7 schools
 
 ```bash
 npm --prefix backend run import:omnes-spring             # simulation
-npm --prefix backend run import:omnes-spring -- --apply  # 37 formations créées, 90 complétées, 286 offres
+npm --prefix backend run import:omnes-spring -- --apply  # 28 formations créées, 94 complétées, 286 offres
 npm --prefix backend run import:igensia                  # simulation
 npm --prefix backend run import:igensia -- --apply       # 4 écoles, 22 formations, 34 offres
+npm --prefix backend run roll:omnes-fall-2027            # simulation
+npm --prefix backend run roll:omnes-fall-2027 -- --apply # automne 2026 → 2027 : 747 offres (+12 d'alias hors ligne)
 ```
+
+`roll:omnes-fall-2027` (owner decision, 16/10/2026) moves every untouched
+fall-2026 OMNES offering to the same day and month of 2027, keeping campus and
+prices, marked `rolledFromIntake` / `intakeEstimated`; a hand-edited offering
+is reported, never changed. Run it after `dedupe:omnes` and
+`import:omnes-spring`.
 
 Both only ADD: missing offerings (campus + intake) appended to
 `campusOfferings`, missing programs created, intake dates / program ids pushed

@@ -13,6 +13,12 @@
 // Les offres écrites avant ce chantier n'ont ni l'un ni l'autre : l'app déduit
 // alors la session du mois de la rentrée.
 //
+// Une offre d'automne 2026 reconduite en 2027 (décision du 16/10/2026,
+// omnes-fall-roll.ts) porte en plus :
+//
+//   rolledFromIntake : la rentrée d'origine (« 01/10/2026 »)
+//   intakeEstimated  : true — date et tarif non publiés par l'école
+//
 // La règle d'or des imports qui passent par ici : une offre EXISTANTE n'est
 // jamais réécrite, réordonnée ni « nettoyée ». On ajoute à la fin ce qui
 // manque, et l'objet existant est recopié tel quel, clés inconnues comprises.
@@ -34,6 +40,8 @@ export type CampusOffering = {
   intake: string | null;
   session?: OfferingSession;
   rhythm?: OfferingRhythm;
+  rolledFromIntake?: string;
+  intakeEstimated?: boolean;
 };
 
 /// Rythme OMNES (colonne « Rythme / Rythm »). Table FERMÉE : une valeur

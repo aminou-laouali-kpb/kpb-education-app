@@ -330,6 +330,11 @@ export class AdminCatalogService {
   /// les perdre à la première retouche dans l'admin effacerait le libellé
   /// « Rentrée décalée » de l'app, et l'import de printemps (qui reconnaît une
   /// offre déjà là à sa session) la croirait absente.
+  ///
+  /// `rolledFromIntake` (date « jj/mm/aaaa ») et `intakeEstimated: true` —
+  /// rentrée d'automne 2026 reconduite en 2027 (omnes-fall-roll.ts) — sont
+  /// gardés aussi : l'app en tire « Date reconduite de 2026, à confirmer ».
+  /// Une date CONFIRMÉE par l'école s'écrit sans eux.
   private pickCampusOfferings(
     input: Record<string, unknown>,
     key: string,
@@ -366,6 +371,11 @@ export class AdminCatalogService {
         ...(OFFERING_RHYTHMS.includes(row.rhythm as OfferingRhythm)
           ? { rhythm: row.rhythm as OfferingRhythm }
           : {}),
+        ...(typeof row.rolledFromIntake === 'string' &&
+        /^\d{1,2}\/\d{1,2}\/\d{4}( · \d{1,2}\/\d{1,2}\/\d{4})*$/.test(row.rolledFromIntake)
+          ? { rolledFromIntake: row.rolledFromIntake }
+          : {}),
+        ...(row.intakeEstimated === true ? { intakeEstimated: true } : {}),
       };
     }) as Prisma.InputJsonValue;
   }

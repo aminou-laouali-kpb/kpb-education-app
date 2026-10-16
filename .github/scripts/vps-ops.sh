@@ -819,6 +819,36 @@ case "$ACTION" in
     fi
     ;;
 
+  roll-omnes-fall-2027)
+    # Reconduit d'un an les rentrées d'automne OMNES 2026 (décision du
+    # propriétaire du 16/10/2026) : « 01/10/2026 » → « 01/10/2027 »,
+    # « 14/09/2026 » → « 14/09/2027 », « 31/08/2026 » → « 31/08/2027 ». Campus
+    # et prix gardés (tarifs 2026-2027) ; chaque offre reconduite porte
+    # `rolledFromIntake` et `intakeEstimated: true`, que l'app affiche « Date
+    # reconduite de 2026, à confirmer ». Les offres de rentrée décalée
+    # (janvier – mars 2027) ne bougent pas. Les `intakePeriods` des écoles
+    # OMNES suivent (date 2026 remplacée à sa place par la date 2027).
+    #
+    # Seules les offres NON RETOUCHÉES (campus, dates, prix de la grille
+    # `backend/scripts/data/omnes_fall_26.xlsx`) sont reconduites ; une offre
+    # retouchée dans l'admin est signalée « ⚠ », jamais modifiée. Écriture sous
+    # `WHERE updatedAt = …`. Rejouable : « 0 écriture ». À passer APRÈS
+    # `dedupe-omnes` et `import-omnes-spring`. Garde de production : la
+    # première application passe ; une relance qui aurait encore quelque chose
+    # à écrire demande KPB_ALLOW_PRODUCTION_SEED=1. Runbook :
+    # docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run roll:omnes-fall-2027
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run roll:omnes-fall-2027 -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   dedupe-omnes)
     # Fusionne les doublons OMNES déjà en base : la grille d'automne 2026
     # écrivait parfois la même formation de deux façons (casse, accent, campus

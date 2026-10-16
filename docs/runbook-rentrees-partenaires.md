@@ -1,12 +1,13 @@
-# Runbook — rentrée décalée OMNES et groupe IGENSIA Education
+# Runbook — rentrée décalée OMNES, reconduction 2027 et groupe IGENSIA Education
 
-Deux imports ADDITIFS du catalogue partenaires (chantier E/J, sources du
+Opérations du catalogue partenaires (chantier E/J, sources et décisions du
 propriétaire du 16/10/2026) :
 
 | Opération `vps-ops` | Script | Source (dans `backend/scripts/data/`) | Ce qu'elle écrit |
 |---|---|---|---|
 | `dedupe-omnes` | `npm run dedupe:omnes` | table `OMNES_PROGRAM_ID_ALIASES` (`src/modules/catalog/catalog-dedupe.ts`) | Doublons OMNES d'automne : offres des alias ajoutées à la fiche canonique, campus retiré de son intitulé, alias hors ligne (`isActive = false`) |
 | `import-omnes-spring` | `npm run import:omnes-spring` | `omnes_spring_27.csv` (extrait de `omnes_spring_27.pdf`) | Offres de printemps 2027 des formations OMNES (ECE, ESCE, INSEEC) ; formations OMNES manquantes |
+| `roll-omnes-fall-2027` | `npm run roll:omnes-fall-2027` | `omnes_fall_26.xlsx` (référence des offres non retouchées) ; règle : `src/modules/catalog/omnes-fall-roll.ts` | Offres d'automne 2026 reconduites en 2027 (même jour et mois), marquées `rolledFromIntake` / `intakeEstimated` ; `intakePeriods` des écoles OMNES |
 | `import-igensia` | `npm run import:igensia` | `igensia_2027.csv` (de `igensia_2027.pdf`), `abc_2027.csv` (de `abc_2027.xlsx`) ; faits des sites officiels : `igensia_2027.sources.md` | Écoles IGENSIA School of Business, IGENSIA Tech, IGENSIA RH, American Business College et leurs formations ; sur des fiches déjà en base, comble fiche RNCP, langue, durée / admission d'ABC |
 
 Prérequis : la migration `20261021120000_program_recognition` (colonnes
@@ -30,6 +31,48 @@ d'automne (déjà en production).
   est refusée sans `KPB_ALLOW_PRODUCTION_SEED=1`. On regarde d'abord pourquoi
   (fiche supprimée à la main, autre import…) avant de forcer.
 
+## Reconduction des rentrées d'automne 2026 → 2027
+
+Décision du propriétaire (16/10/2026) : OMNES n'a pas publié sa grille
+2027-2028 ; toutes les rentrées d'automne 2026 sont reconduites d'un an, même
+jour et même mois. La grille d'automne n'a que trois mois : août (31/08),
+septembre et octobre 2026 → août, septembre et octobre 2027. Les offres de
+rentrée décalée (janvier – mars 2027) ne bougent pas.
+
+- Une offre reconduite garde son campus et ses prix (tarifs 2026-2027) et
+  porte `rolledFromIntake` (date d'origine, « 14/09/2026 · 01/10/2026 » pour
+  une offre à deux dates) et `intakeEstimated: true`. L'app affiche sous
+  l'offre « Date reconduite de 2026, à confirmer · tarif 2026-2027 » (EN :
+  « Date carried over from 2026, to be confirmed · 2026-2027 fee »), et
+  « (à confirmer) » à côté de la rentrée sur les cartes et le comparateur.
+- **Seules les offres non retouchées** sont reconduites : campus, chaque
+  date et les deux prix identiques à `omnes_fall_26.xlsx` pour la formation
+  (alias de `dedupe-omnes` compris), aucun autre champ. Une offre retouchée
+  dans l'admin, une fiche créée à la main, une offre qui mêlerait 2026 et une
+  autre date, ou dont la reconduction ferait un doublon, est **signalée**
+  (« ⚠ … laissée telle quelle ») et jamais modifiée : à reprendre à la main.
+- Les `intakePeriods` des écoles OMNES : chaque date d'automne 2026 que plus
+  aucune offre ne porte est remplacée, à sa place, par la date 2027 ; les
+  dates de printemps et le texte libre ne bougent pas. Une date 2026 qu'une
+  offre signalée porte encore est gardée.
+- Les alias mis hors ligne par `dedupe-omnes` sont reconduits aussi (comptés
+  à part dans le rapport) : la base est la même quel que soit l'ordre.
+- Une base vierge (`seed:omnes`) naît directement reconduite : aucune
+  rentrée d'automne 2026, la simulation annonce « 0 écriture ».
+- Liste des offres reconduites, à faire confirmer par OMNES (date de
+  l'automne 2027 et tarif 2027-2028) : `docs/omnes-rentrees-reconduites-2027.md`.
+  Une date confirmée se corrige dans l'admin en retirant les deux marques.
+
+**Ordre et interactions.** À passer après `dedupe-omnes` et
+`import-omnes-spring`. L'import de printemps n'écrit que des dates de
+janvier – mars 2027 : il ne réintroduit aucune date 2026 et ne double pas une
+offre reconduite (elle n'a pas sa date, ni sa session). Rejoué sur
+Postgres 15 local dans les deux ordres (`dedupe → spring → roll` et
+`dedupe → roll → spring`), la base finale est identique, octet pour octet, et
+chaque relance des trois opérations annonce « 0 écriture » ; les tests
+(`src/modules/catalog/omnes-fall-roll.spec.ts`) jouent aussi
+`roll → dedupe → spring`.
+
 ## Doublons
 
 Une même formation doit retomber sur la même fiche, quelle que soit la grille
@@ -50,8 +93,8 @@ ne deviennent jamais des écoles (`assertTargetsAreSchools`).
 ## Procédure
 
 Pour chacune des opérations, dans cet ordre (`dedupe-omnes`,
-`import-omnes-spring`, puis `import-igensia`) — Actions → **VPS ops** → Run
-workflow :
+`import-omnes-spring`, `roll-omnes-fall-2027`, puis `import-igensia`) —
+Actions → **VPS ops** → Run workflow :
 
 1. **Simulation** : `action` = l'opération, `dry_run` coché. Lire le rapport :
    par école, formations à créer / complétées / inchangées et offres ajoutées.
@@ -64,6 +107,14 @@ workflow :
      printemps en tout (ECE 18, ESCE 17, INSEEC 251) ; `TOTAL : 125 écriture(s)`.
      Ces nombres valent si les fiches OMNES n'ont pas été modifiées depuis le
      seed ; un écart se lit ligne à ligne dans le rapport.
+   - `roll-omnes-fall-2027` : formations / offres reconduites ECE 54 / 70,
+     ESCE 46 / 55, HEIP 10 / 20, INSEEC 144 / 529, Sup de Pub 26 / 73 (747
+     offres), plus 12 fiches hors ligne (alias) ; 5 écoles (dates 2026
+     remplacées : ECE 7, ESCE 7, HEIP 5, INSEEC 18, Sup de Pub 4) ; « Dates
+     reconduites par mois : 08 → 19 ; 09 → 522 ; 10 → 218 » (alias compris) ;
+     `TOTAL : 297 écriture(s) prévue(s), 0 offre(s) signalée(s)`. Chaque ligne
+     « ⚠ » est une offre retouchée à la main, laissée en 2026 : à reprendre
+     dans l'admin.
    - `import-igensia` : 4 écoles « À CRÉER », 22 formations (ISB 12,
      IGENSIA Tech 2, IGENSIA RH 3, ABC 5), 34 offres ; `TOTAL : 4 écriture(s)`.
      Si la première version de l'import est déjà passée : 21 « fiches
@@ -79,8 +130,9 @@ workflow :
 3. **Vérification** : relancer la simulation. Attendu : `TOTAL : 0 écriture(s)`.
    Dans l'app, la recherche « IGENSIA », « ABC » ou « American Business College »
    trouve les nouvelles écoles ; une fiche OMNES comme « ECE - B1 - Cybersécurité
-   et réseaux » montre Paris deux fois : « Rentrée d'octobre 2026 » et
-   « Rentrée décalée · mars 2027 », chacune avec son prix.
+   et réseaux » montre Paris deux fois : « Rentrée décalée · mars 2027 » et
+   « Rentrée d'octobre 2027 » suivie de « Date reconduite de 2026, à confirmer
+   · tarif 2026-2027 », chacune avec son prix.
 
 ## Nouvelle grille
 
@@ -105,7 +157,24 @@ L'app n'annonce jamais une rentrée passée (horloge de
 `lib/app/core/utils/program_intakes.dart`) : ni sur les cartes, ni dans la
 fiche (tuile « Rentrée », offres par campus), ni dans le comparateur, ni dans
 le repli sur les rentrées de l'école, ni dans le libellé de rentrée d'un pays.
-Les `intakePeriods` d'une école (« 01/10/2026 ») s'écrivent en toutes lettres
-(« octobre 2026 ») sans réécrire la base. La liste des formations OMNES qui
-n'ont plus de rentrée à venir après la grille de printemps (à demander à OMNES
-pour l'automne 2027) : `docs/omnes-formations-sans-rentree-2027.md`.
+Les `intakePeriods` d'une école (« 01/10/2027 ») s'écrivent en toutes lettres
+(« octobre 2027 ») sans réécrire la base. Depuis `roll-omnes-fall-2027`,
+aucune formation OMNES n'est sans rentrée à venir : l'ancienne liste
+`omnes-formations-sans-rentree-2027.md` est remplacée par celle des offres
+reconduites à faire confirmer, `docs/omnes-rentrees-reconduites-2027.md`.
+
+## Libellé « prochaine rentrée » des pays
+
+`nextIntakeLabelFr/En` de `backend/src/modules/countries/data/m5-countries.seed.ts`
+(« Septembre 2027 » pour la France, l'Allemagne, le Maroc, la Turquie, les
+Émirats et l'Espagne depuis la reconduction : « Septembre 2026 » est passé) ne passe en base que par
+`npm run seed:countries-m5`, qui RÉÉCRIT chaque pays (`upsert` avec mise à
+jour) — corrections de l'admin comprises. `seed:omnes` ne crée la France que
+si elle manque (`update` vide) et aucune opération `vps-ops` ne lance
+`seed:countries-m5` : modifier le fichier ne touche pas la production, où le
+libellé reste « Septembre 2026 ». L'app masque déjà un libellé passé
+(`upcomingIntakeText`) : la carte pays n'annonce rien plutôt qu'une date
+fausse. Aucun écran de l'admin n'édite ce champ ; l'aligner en production
+(mise à jour ciblée, ou `seed:countries-m5` en connaissance de cause) est une
+décision du propriétaire (À VALIDER). Les États-Unis (« Septembre 2026 ») ne
+sont pas touchés ici : chantier Canada / États-Unis en cours.

@@ -843,6 +843,43 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
     });
   });
 
+  describe('campusOfferings — rentrée reconduite', () => {
+    // Décision du 16/10/2026 : une offre d'automne 2026 reconduite en 2027
+    // porte sa date d'origine et « à confirmer ». Une retouche dans l'admin
+    // ne doit pas effacer la mention à l'insu de l'éditeur.
+    it('keeps rolledFromIntake and intakeEstimated, drops malformed ones', async () => {
+      const { service, creates } = makeService();
+      await service.createProgram({
+        ...required,
+        campusOfferings: [
+          {
+            campus: 'Paris',
+            intake: '14/09/2027 · 01/10/2027',
+            rolledFromIntake: '14/09/2026 · 01/10/2026',
+            intakeEstimated: true,
+          },
+          { campus: 'Lyon', intake: '01/10/2027', rolledFromIntake: 'octobre', intakeEstimated: 'oui' },
+        ],
+      });
+      expect(creates[0].campusOfferings).toEqual([
+        {
+          campus: 'Paris',
+          tuitionUpfront: null,
+          tuitionInstallments: null,
+          intake: '14/09/2027 · 01/10/2027',
+          rolledFromIntake: '14/09/2026 · 01/10/2026',
+          intakeEstimated: true,
+        },
+        {
+          campus: 'Lyon',
+          tuitionUpfront: null,
+          tuitionInstallments: null,
+          intake: '01/10/2027',
+        },
+      ]);
+    });
+  });
+
   describe('recognition', () => {
     it('persists the recognition labels, EN falling back to FR', async () => {
       const { service, creates } = makeService();
