@@ -1,0 +1,3373 @@
+{
+  "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 — voir amerique-du-nord-2027.sources.md",
+  "consultedAt": "2026-10-16",
+  "exchangeRates": {
+    "date": "2026-10-16",
+    "source": "BCE, taux de référence (eurofxref-daily.xml)",
+    "perEur": {
+      "USD": 1.1253,
+      "CAD": 1.5935
+    }
+  },
+  "institutions": [
+    {
+      "id": "na-us-houston",
+      "countryId": "usa",
+      "nameFr": "University of Houston",
+      "nameEn": "University of Houston",
+      "acronym": "UH",
+      "locationFr": "Houston, Texas",
+      "locationEn": "Houston, Texas",
+      "websiteUrl": "https://www.uh.edu/",
+      "sourceUrl": "https://uh.edu/undergraduate-admissions/apply/international/international-freshman/international-freshman-process/",
+      "overviewFr": "Grande université publique de Houston (Texas). En licence, tu peux viser l'admission garantie (top 10 % de ta promotion, moyenne de 3.5 ou SAT 1250 / ACT 26) ; sinon ton essai et ton CV sont étudiés. Duolingo est accepté, et tu peux commencer en août ou en janvier.\n\nFrais de candidature : 90 USD (licence), 80 USD (masters Bauer).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large public university in Houston, Texas. For a bachelor's, you can aim for assured admission (top 10% of your class, 3.5 GPA or SAT 1250 / ACT 26); otherwise your essay and resume are reviewed. Duolingo is accepted, and you can start in August or January.\n\nApplication fee: USD 90 (bachelor's), USD 80 (Bauer master's).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 4.0 (échelle 1-6), IELTS 6.5 ou Duolingo 105 en licence ; TOEFL 79 / 4, IELTS 6.5, Duolingo 105 ou PTE 53 en master",
+      "languageRequirementsEn": "English: TOEFL iBT 4.0 (1-6 scale), IELTS 6.5 or Duolingo 105 for bachelor's; TOEFL 79 / 4, IELTS 6.5, Duolingo 105 or PTE 53 for master's",
+      "applicationFee": {
+        "amount": 90,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "90 USD (licence), 80 USD (masters Bauer)",
+      "applicationFeeEn": "USD 90 (bachelor's), USD 80 (Bauer master's)",
+      "tuitionLabelFr": "≈ 28 000 – 29 200 USD/an en licence (non-résident, tarif fixe 4 ans) ; 1 465 USD/crédit en master Business",
+      "tuitionLabelEn": "≈ USD 28,000 – 29,200/year for bachelor's (non-resident, 4-year fixed rate); USD 1,465/credit for Business master's",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science, B.S.",
+          "nameEn": "Computer Science, B.S.",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "28 065 USD/an (2 semestres, Sciences (NSM), non-résident, cohorte 2027 à tarif fixe)",
+          "tuitionEn": "USD 28,065/year (2 semesters, Natural Sciences (NSM), non-resident, fixed-rate 2027 cohort)",
+          "tuitionAnnual": {
+            "amount": 28065,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés de notes officiels",
+            "Anglais : TOEFL iBT 4.0 (nouvelle échelle), IELTS 6.5 ou Duolingo 105",
+            "Essai et CV si tu n'entres pas dans l'admission garantie (top 10 %, moyenne 3.5 ou SAT 1250 / ACT 26)"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4.0 (new scale), IELTS 6.5 or Duolingo 105",
+            "Essay and resume if you do not meet assured admission (top 10%, 3.5 GPA or SAT 1250 / ACT 26)"
+          ],
+          "sourceUrl": "https://www.uh.edu/nsm/computer-science/about/",
+          "offerings": [
+            {
+              "campus": "Houston",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Houston",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Finance, B.B.A.",
+          "nameEn": "Finance, B.B.A.",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "29 206 USD/an (2 semestres, Business/Engineering, non-résident, cohorte 2027 à tarif fixe)",
+          "tuitionEn": "USD 29,206/year (2 semesters, Business/Engineering, non-resident, fixed-rate 2027 cohort)",
+          "tuitionAnnual": {
+            "amount": 29206,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés de notes officiels",
+            "Anglais : TOEFL iBT 4.0 (nouvelle échelle), IELTS 6.5 ou Duolingo 105",
+            "Essai et CV si tu n'entres pas dans l'admission garantie (top 10 %, moyenne 3.5 ou SAT 1250 / ACT 26)"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4.0 (new scale), IELTS 6.5 or Duolingo 105",
+            "Essay and resume if you do not meet assured admission (top 10%, 3.5 GPA or SAT 1250 / ACT 26)"
+          ],
+          "sourceUrl": "https://bauer.uh.edu/undergraduate/finance/",
+          "offerings": [
+            {
+              "campus": "Houston",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Houston",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bsme-mechanical-engineering",
+          "nameFr": "Mechanical Engineering, B.S.M.E.",
+          "nameEn": "Mechanical Engineering, B.S.M.E.",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "29 206 USD/an (2 semestres, Business/Engineering, non-résident, cohorte 2027 à tarif fixe)",
+          "tuitionEn": "USD 29,206/year (2 semesters, Business/Engineering, non-resident, fixed-rate 2027 cohort)",
+          "tuitionAnnual": {
+            "amount": 29206,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés de notes officiels",
+            "Anglais : TOEFL iBT 4.0 (nouvelle échelle), IELTS 6.5 ou Duolingo 105",
+            "Essai et CV si tu n'entres pas dans l'admission garantie (top 10 %, moyenne 3.5 ou SAT 1250 / ACT 26)",
+            "Programme accrédité ABET"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4.0 (new scale), IELTS 6.5 or Duolingo 105",
+            "Essay and resume if you do not meet assured admission (top 10%, 3.5 GPA or SAT 1250 / ACT 26)",
+            "ABET-accredited programme"
+          ],
+          "sourceUrl": "https://www.me.uh.edu/undergraduate",
+          "offerings": [
+            {
+              "campus": "Houston",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Houston",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "ms-business-analytics",
+          "nameFr": "MS Business Analytics (STEM)",
+          "nameEn": "MS Business Analytics (STEM)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "26 365 USD/an (estimation : 18 crédits × 1 465 USD, Business, non-résident 2026-2027)",
+          "tuitionEn": "USD 26,365/year (estimate: 18 credits × USD 1,465, Business, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 26365,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence en 4 ans (ou équivalent international) dans toute discipline",
+            "GMAT ou GRE (dispense possible)",
+            "Anglais : TOEFL 79 (ou 4), IELTS 6.5, Duolingo 105 ou PTE 53",
+            "Frais de candidature : 80 USD",
+            "Candidature internationale pour l'automne 2027 : avant le 1er mai 2027"
+          ],
+          "requirementsEn": [
+            "Four-year bachelor's degree (or international equivalent) in any discipline",
+            "GMAT or GRE (waiver possible)",
+            "English: TOEFL 79 (or 4), IELTS 6.5, Duolingo 105 or PTE 53",
+            "Application fee: USD 80",
+            "International application for fall 2027: by 1 May 2027"
+          ],
+          "sourceUrl": "https://bauer.uh.edu/ms-business-analytics/"
+        },
+        {
+          "slug": "ms-finance",
+          "nameFr": "MS Finance (STEM)",
+          "nameEn": "MS Finance (STEM)",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "26 365 USD/an (estimation : 18 crédits × 1 465 USD, Business, non-résident 2026-2027)",
+          "tuitionEn": "USD 26,365/year (estimate: 18 credits × USD 1,465, Business, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 26365,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence en 4 ans (ou équivalent international) dans toute discipline",
+            "GMAT ou GRE (dispense possible)",
+            "Anglais : TOEFL 79 (ou 4), IELTS 6.5, Duolingo 105 ou PTE 53",
+            "Frais de candidature : 80 USD",
+            "Candidature internationale pour l'automne 2027 : avant le 1er mai 2027"
+          ],
+          "requirementsEn": [
+            "Four-year bachelor's degree (or international equivalent) in any discipline",
+            "GMAT or GRE (waiver possible)",
+            "English: TOEFL 79 (or 4), IELTS 6.5, Duolingo 105 or PTE 53",
+            "Application fee: USD 80",
+            "International application for fall 2027: by 1 May 2027"
+          ],
+          "sourceUrl": "https://bauer.uh.edu/msfinance/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-ut-arlington",
+      "countryId": "usa",
+      "nameFr": "University of Texas at Arlington (UTA)",
+      "nameEn": "University of Texas at Arlington (UTA)",
+      "acronym": "UTA",
+      "locationFr": "Arlington, Texas",
+      "locationEn": "Arlington, Texas",
+      "websiteUrl": "https://www.uta.edu/",
+      "sourceUrl": "https://catalog.uta.edu/academicregulations/admissions/undergraduate/",
+      "overviewFr": "Université publique de la région de Dallas–Fort Worth (Texas), avec une offre large en ingénierie, informatique et data. Duolingo est accepté (100, ou 105 en ingénierie), et les dates de candidature prioritaires pour les internationaux sont le 1er mai (automne), le 1er octobre (printemps) et le 1er mars (été).\n\nFrais de candidature : 75 USD (licence).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in the Dallas–Fort Worth area, Texas, with a broad offer in engineering, computing and data. Duolingo is accepted (100, or 105 for engineering), and international priority deadlines are 1 May (fall), 1 October (spring) and 1 March (summer).\n\nApplication fee: USD 75 (bachelor's).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100 (105 en ingénierie) ; dispense pour certains pays anglophones",
+      "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100 (105 for engineering); waived for some English-speaking countries",
+      "applicationFee": {
+        "amount": 75,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "75 USD (licence)",
+      "applicationFeeEn": "USD 75 (bachelor's)",
+      "tuitionLabelFr": "≈ 27 494 USD/an en licence, 23 486 USD/an en master (non-résident, 2026-2027)",
+      "tuitionLabelEn": "≈ USD 27,494/year for bachelor's, USD 23,486/year for master's (non-resident, 2026-2027)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (printemps)",
+        "Été"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Bachelor of Science in Computer Science",
+          "nameEn": "Bachelor of Science in Computer Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (123 crédits)",
+          "durationEn": "4 years (123 credit hours)",
+          "tuitionFr": "27 494 USD/an (frais de scolarité et frais, non-résident, 2026-2027)",
+          "tuitionEn": "USD 27,494/year (tuition and fees, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 27494,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires équivalente au diplôme américain, relevés officiels",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100 (105 en ingénierie)",
+            "Candidature via Common App, frais 75 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion equivalent to a U.S. high-school diploma, official transcripts",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100 (105 for engineering)",
+            "Apply through the Common App, USD 75 fee"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/engineering/computer/undergraduate/computer-science-bs/"
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Bachelor of Business Administration in Finance",
+          "nameEn": "Bachelor of Business Administration in Finance",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "27 494 USD/an (frais de scolarité et frais, non-résident, 2026-2027)",
+          "tuitionEn": "USD 27,494/year (tuition and fees, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 27494,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires équivalente au diplôme américain, relevés officiels",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100 (105 en ingénierie)",
+            "Candidature via Common App, frais 75 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion equivalent to a U.S. high-school diploma, official transcripts",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100 (105 for engineering)",
+            "Apply through the Common App, USD 75 fee"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/business/finance/undergraduate/finance-bba/"
+        },
+        {
+          "slug": "bs-mechanical-engineering",
+          "nameFr": "Bachelor of Science in Mechanical Engineering",
+          "nameEn": "Bachelor of Science in Mechanical Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "130 crédits",
+          "durationEn": "130 credit hours",
+          "tuitionFr": "27 494 USD/an (frais de scolarité et frais, non-résident, 2026-2027)",
+          "tuitionEn": "USD 27,494/year (tuition and fees, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 27494,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires équivalente au diplôme américain, relevés officiels",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100 (105 en ingénierie)",
+            "Candidature via Common App, frais 75 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion equivalent to a U.S. high-school diploma, official transcripts",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100 (105 for engineering)",
+            "Apply through the Common App, USD 75 fee"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/engineering/mechanical/undergraduate/mech-engr-bs/"
+        },
+        {
+          "slug": "bs-public-health",
+          "nameFr": "Bachelor of Science in Public Health",
+          "nameEn": "Bachelor of Science in Public Health",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "27 494 USD/an (frais de scolarité et frais, non-résident, 2026-2027)",
+          "tuitionEn": "USD 27,494/year (tuition and fees, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 27494,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires équivalente au diplôme américain, relevés officiels",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100 (105 en ingénierie)",
+            "Candidature via Common App, frais 75 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion equivalent to a U.S. high-school diploma, official transcripts",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100 (105 for engineering)",
+            "Apply through the Common App, USD 75 fee"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/nursing/kinesiology/undergraduate/public-health-bs/"
+        },
+        {
+          "slug": "ms-data-science",
+          "nameFr": "Master of Science in Data Science",
+          "nameEn": "Master of Science in Data Science",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "23 486 USD/an (frais de scolarité et frais, master, non-résident, 2026-2027)",
+          "tuitionEn": "USD 23,486/year (tuition and fees, graduate, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 23486,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/engineering/computer/graduate/data-science-ms/"
+        },
+        {
+          "slug": "ms-ai-for-business",
+          "nameFr": "Master of Science in Artificial Intelligence for Business",
+          "nameEn": "Master of Science in Artificial Intelligence for Business",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "33 crédits",
+          "durationEn": "33 credit hours",
+          "tuitionFr": "23 486 USD/an (frais de scolarité et frais, master, non-résident, 2026-2027)",
+          "tuitionEn": "USD 23,486/year (tuition and fees, graduate, non-resident, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 23486,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Anglais : IELTS 6.5, TOEFL iBT 79 ou Duolingo 100"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "English: IELTS 6.5, TOEFL iBT 79 or Duolingo 100"
+          ],
+          "sourceUrl": "https://catalog.uta.edu/business/infosystems/graduate/ai-for-business-ms/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-north-texas",
+      "countryId": "usa",
+      "nameFr": "University of North Texas (UNT)",
+      "nameEn": "University of North Texas (UNT)",
+      "acronym": "UNT",
+      "locationFr": "Denton, Texas",
+      "locationEn": "Denton, Texas",
+      "websiteUrl": "https://www.unt.edu/",
+      "sourceUrl": "https://www.unt.edu/admissions/international/deadlines-fees.html",
+      "overviewFr": "Université publique de Denton, au nord de Dallas (Texas). Duolingo est accepté (100) et le niveau d'IELTS demandé est de 6.0. Pour les internationaux, les dates limites en licence sont le 15 juillet (automne) et le 15 novembre (printemps).\n\nFrais de candidature : 85 USD (licence), 75 USD (master).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Denton, north of Dallas, Texas. Duolingo is accepted (100) and the IELTS requirement is 6.0. International bachelor's deadlines are 15 July (fall) and 15 November (spring).\n\nApplication fee: USD 85 (bachelor's), USD 75 (master's).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 4 (ou 79 avant le 21/01/2026), IELTS 6.0, Duolingo 100 ou PTE 53",
+      "languageRequirementsEn": "English: TOEFL iBT 4 (or 79 before 21/01/2026), IELTS 6.0, Duolingo 100 or PTE 53",
+      "applicationFee": {
+        "amount": 85,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "85 USD (licence), 75 USD (master)",
+      "applicationFeeEn": "USD 85 (bachelor's), USD 75 (master's)",
+      "tuitionLabelFr": "≈ 21 100 – 23 200 USD par année de 9 mois en licence, 17 000 – 19 800 USD en master (non-résident, 2026-2027)",
+      "tuitionLabelEn": "≈ USD 21,100 – 23,200 per 9-month year for bachelor's, USD 17,000 – 19,800 for master's (non-resident, 2026-2027)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science Degree (B.S.)",
+          "nameEn": "Computer Science Degree (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "22 521 USD/an (frais de scolarité et frais, 9 mois, College of Engineering, non-résident 2026-2027)",
+          "tuitionEn": "USD 22,521/year (tuition and fees, 9 months, College of Engineering, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 22521,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais : TOEFL iBT 4 (ou 79 avant le 21/01/2026), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 85 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4 (or 79 before 21/01/2026), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 85"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/computer-science-degree.html",
+          "offerings": [
+            {
+              "campus": "Denton",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Denton",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-cybersecurity",
+          "nameFr": "Cybersecurity B.S.",
+          "nameEn": "Cybersecurity B.S.",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "22 521 USD/an (frais de scolarité et frais, 9 mois, College of Engineering, non-résident 2026-2027)",
+          "tuitionEn": "USD 22,521/year (tuition and fees, 9 months, College of Engineering, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 22521,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais : TOEFL iBT 4 (ou 79 avant le 21/01/2026), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 85 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4 (or 79 before 21/01/2026), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 85"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/cybersecurity-degree.html",
+          "offerings": [
+            {
+              "campus": "Denton",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Denton",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Finance B.B.A.",
+          "nameEn": "Finance B.B.A.",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
+          "tuitionFr": "21 599 USD/an (frais de scolarité et frais, 9 mois, College of Business, non-résident 2026-2027)",
+          "tuitionEn": "USD 21,599/year (tuition and fees, 9 months, College of Business, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21599,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais : TOEFL iBT 4 (ou 79 avant le 21/01/2026), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 85 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4 (or 79 before 21/01/2026), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 85"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/finance-degree.html",
+          "offerings": [
+            {
+              "campus": "Denton",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Denton",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-mechanical-energy-engineering",
+          "nameFr": "Mechanical and Energy Engineering Degree (B.S.)",
+          "nameEn": "Mechanical and Energy Engineering Degree (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "4 ans (127 crédits)",
+          "durationEn": "4 years (127 credit hours)",
+          "tuitionFr": "22 521 USD/an (frais de scolarité et frais, 9 mois, College of Engineering, non-résident 2026-2027)",
+          "tuitionEn": "USD 22,521/year (tuition and fees, 9 months, College of Engineering, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 22521,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais : TOEFL iBT 4 (ou 79 avant le 21/01/2026), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 85 USD"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English: TOEFL iBT 4 (or 79 before 21/01/2026), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 85"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/mechanical-and-energy-engineering-degree.html",
+          "offerings": [
+            {
+              "campus": "Denton",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Denton",
+              "intake": "FALL 2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "ms-data-science",
+          "nameFr": "Data Science Master's",
+          "nameEn": "Data Science Master's",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 ans (36 crédits), format hybride",
+          "durationEn": "2 years (36 credit hours), hybrid",
+          "tuitionFr": "17 167 USD/an (frais de scolarité et frais, 9 mois, Data Science, non-résident 2026-2027)",
+          "tuitionEn": "USD 17,167/year (tuition and fees, 9 months, Data Science, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 17167,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Anglais : TOEFL iBT 4 (ou 79), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 75 USD"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "English: TOEFL iBT 4 (or 79), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 75"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/data-science-masters.html"
+        },
+        {
+          "slug": "ms-artificial-intelligence",
+          "nameFr": "Artificial Intelligence M.S.",
+          "nameEn": "Artificial Intelligence M.S.",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 à 3 ans (33 crédits)",
+          "durationEn": "2-3 years (33 credit hours)",
+          "tuitionFr": "19 186 USD/an (frais de scolarité et frais, 9 mois, College of Engineering, non-résident 2026-2027)",
+          "tuitionEn": "USD 19,186/year (tuition and fees, 9 months, College of Engineering, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 19186,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Anglais : TOEFL iBT 4 (ou 79), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 75 USD"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "English: TOEFL iBT 4 (or 79), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 75"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/artificial-intelligence-masters.html"
+        },
+        {
+          "slug": "ms-business-analytics",
+          "nameFr": "Business Analytics M.S.",
+          "nameEn": "Business Analytics M.S.",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "1 à 2 ans (36 crédits)",
+          "durationEn": "1-2 years (36 credit hours)",
+          "tuitionFr": "19 809 USD/an (frais de scolarité et frais, 9 mois, College of Business, non-résident 2026-2027)",
+          "tuitionEn": "USD 19,809/year (tuition and fees, 9 months, College of Business, non-resident 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 19809,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Anglais : TOEFL iBT 4 (ou 79), IELTS 6.0, Duolingo 100 ou PTE 53",
+            "Frais de candidature : 75 USD"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "English: TOEFL iBT 4 (or 79), IELTS 6.0, Duolingo 100 or PTE 53",
+            "Application fee: USD 75"
+          ],
+          "sourceUrl": "https://www.unt.edu/academics/programs/business-analytics-masters.html"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-wichita-state",
+      "countryId": "usa",
+      "nameFr": "Wichita State University",
+      "nameEn": "Wichita State University",
+      "acronym": "WSU",
+      "locationFr": "Wichita, Kansas",
+      "locationEn": "Wichita, Kansas",
+      "websiteUrl": "https://www.wichita.edu/",
+      "sourceUrl": "https://www.wichita.edu/admissions/international/undergraduate/TotalExpenses.php",
+      "overviewFr": "Université publique de Wichita (Kansas), connue pour l'ingénierie aéronautique. Pour 2026-2027, elle estime les frais de scolarité d'une licence à 20 100 USD sur 9 mois ; la bourse Global Select (5 500 USD si elle t'est attribuée) peut les réduire. Duolingo est accepté.\n\nFrais de candidature : 75 USD (service de base, 4 à 5 semaines) ; 150 ou 250 USD pour un traitement plus rapide.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Wichita, Kansas, known for aerospace engineering. For 2026-2027 it estimates bachelor's tuition and fees at USD 20,100 for 9 months; the Global Select Scholarship (USD 5,500 if awarded) can lower them. Duolingo is accepted.\n\nApplication fee: USD 75 (basic service, 4-5 weeks); USD 150 or 250 for faster processing.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais (plein temps) : TOEFL iBT 4 (ou 72 avant le 21/01/2026), IELTS 6.0, Duolingo 105, PTE 49, SAT EBRW 410 ou ACT anglais 20",
+      "languageRequirementsEn": "English (full-time): TOEFL iBT 4 (or 72 before 21/01/2026), IELTS 6.0, Duolingo 105, PTE 49, SAT EBRW 410 or ACT English 20",
+      "applicationFee": {
+        "amount": 75,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "75 USD (service de base, 4 à 5 semaines) ; 150 ou 250 USD pour un traitement plus rapide",
+      "applicationFeeEn": "USD 75 (basic service, 4-5 weeks); USD 150 or 250 for faster processing",
+      "tuitionLabelFr": "≈ 20 100 USD sur 9 mois en licence (estimation 2026-2027) ; 904 USD/crédit en master (non-résident)",
+      "tuitionLabelEn": "≈ USD 20,100 for 9 months for bachelor's (2026-2027 estimate); USD 904/credit for master's (non-resident)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Juin 2027",
+        "Août 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "BS in Computer Science",
+          "nameEn": "BS in Computer Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "20 100 USD/an (frais de scolarité et frais, 9 mois, estimation 2026-2027, avant bourse)",
+          "tuitionEn": "USD 20,100/year (tuition and fees, 9 months, 2026-2027 estimate, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 20100,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais (plein temps) : TOEFL iBT 4 (ou 72), IELTS 6.0, Duolingo 105 ou PTE 49 ; entre 95 et 104 au Duolingo, tu commences par l'anglais intensif ou à mi-temps"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English (full-time): TOEFL iBT 4 (or 72), IELTS 6.0, Duolingo 105 or PTE 49; with Duolingo 95-104 you start with intensive English or half-time"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/undergraduate/engineering/school-computing/bs-computer-science/",
+          "offerings": [
+            {
+              "campus": "Wichita",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Wichita",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-aerospace-engineering",
+          "nameFr": "BS in Aerospace Engineering",
+          "nameEn": "BS in Aerospace Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "129 crédits",
+          "durationEn": "129 credit hours",
+          "tuitionFr": "20 100 USD/an (frais de scolarité et frais, 9 mois, estimation 2026-2027, avant bourse)",
+          "tuitionEn": "USD 20,100/year (tuition and fees, 9 months, 2026-2027 estimate, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 20100,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais (plein temps) : TOEFL iBT 4 (ou 72), IELTS 6.0, Duolingo 105 ou PTE 49 ; entre 95 et 104 au Duolingo, tu commences par l'anglais intensif ou à mi-temps"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English (full-time): TOEFL iBT 4 (or 72), IELTS 6.0, Duolingo 105 or PTE 49; with Duolingo 95-104 you start with intensive English or half-time"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/undergraduate/engineering/aerospace-engineering/aerospace-engineering-bs/",
+          "offerings": [
+            {
+              "campus": "Wichita",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Wichita",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-mechanical-engineering",
+          "nameFr": "BS in Mechanical Engineering",
+          "nameEn": "BS in Mechanical Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "128 crédits",
+          "durationEn": "128 credit hours",
+          "tuitionFr": "20 100 USD/an (frais de scolarité et frais, 9 mois, estimation 2026-2027, avant bourse)",
+          "tuitionEn": "USD 20,100/year (tuition and fees, 9 months, 2026-2027 estimate, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 20100,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais (plein temps) : TOEFL iBT 4 (ou 72), IELTS 6.0, Duolingo 105 ou PTE 49 ; entre 95 et 104 au Duolingo, tu commences par l'anglais intensif ou à mi-temps"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English (full-time): TOEFL iBT 4 (or 72), IELTS 6.0, Duolingo 105 or PTE 49; with Duolingo 95-104 you start with intensive English or half-time"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/undergraduate/engineering/mechanical-engineering/mechanical-engineering-bs/",
+          "offerings": [
+            {
+              "campus": "Wichita",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Wichita",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "BBA - Finance",
+          "nameEn": "BBA - Finance",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "20 100 USD/an (frais de scolarité et frais, 9 mois, estimation 2026-2027, avant bourse)",
+          "tuitionEn": "USD 20,100/year (tuition and fees, 9 months, 2026-2027 estimate, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 20100,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires, relevés officiels",
+            "Anglais (plein temps) : TOEFL iBT 4 (ou 72), IELTS 6.0, Duolingo 105 ou PTE 49 ; entre 95 et 104 au Duolingo, tu commences par l'anglais intensif ou à mi-temps"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion, official transcripts",
+            "English (full-time): TOEFL iBT 4 (or 72), IELTS 6.0, Duolingo 105 or PTE 49; with Duolingo 95-104 you start with intensive English or half-time"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/undergraduate/w-frank-barton-business/finance-real-estate-decision-sciences/bba-finance/",
+          "offerings": [
+            {
+              "campus": "Wichita",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Wichita",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "ms-data-science",
+          "nameFr": "MS in Data Science",
+          "nameEn": "MS in Data Science",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "16 265 USD/an (estimation : 18 crédits × 904 USD, non-résident, automne 2026)",
+          "tuitionEn": "USD 16,265/year (estimate: 18 credits × USD 904, non-resident, fall 2026)",
+          "tuitionAnnual": {
+            "amount": 16265,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Frais de candidature : 75 USD (pas de traitement accéléré en master)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "Application fee: USD 75 (no expedited processing for master's)"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/graduate/engineering/school-computing/ms-data-science/"
+        },
+        {
+          "slug": "ms-business-analytics",
+          "nameFr": "MS in Business Analytics",
+          "nameEn": "MS in Business Analytics",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "16 265 USD/an (estimation : 18 crédits × 904 USD, non-résident, automne 2026)",
+          "tuitionEn": "USD 16,265/year (estimate: 18 credits × USD 904, non-resident, fall 2026)",
+          "tuitionAnnual": {
+            "amount": 16265,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Frais de candidature : 75 USD (pas de traitement accéléré en master)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "Application fee: USD 75 (no expedited processing for master's)"
+          ],
+          "sourceUrl": "https://catalog.wichita.edu/graduate/w-frank-barton-business/finance-real-estate-decision-sciences/ms-business-analytics/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-minnesota-state-mankato",
+      "countryId": "usa",
+      "nameFr": "Minnesota State University, Mankato",
+      "nameEn": "Minnesota State University, Mankato",
+      "acronym": "MNSU",
+      "locationFr": "Mankato, Minnesota",
+      "locationEn": "Mankato, Minnesota",
+      "websiteUrl": "https://www.mnsu.edu/",
+      "sourceUrl": "https://www.mnsu.edu/paying-for-college/cost-of-attendance/international-bachelor-student-cost-of-attendance/",
+      "overviewFr": "Université publique de Mankato (Minnesota). Les étudiants internationaux en licence reçoivent automatiquement l'International Maverick Scholarship, qui ramène les frais de scolarité estimés à 13 137 USD par an (21 013 USD sans). Le niveau d'anglais demandé est parmi les plus bas de cette liste (Duolingo 95, IELTS 5.5).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Mankato, Minnesota. International bachelor's students automatically receive the International Maverick Scholarship, which brings estimated tuition and fees to USD 13,137 a year (USD 21,013 without). Its English requirement is among the lowest on this list (Duolingo 95, IELTS 5.5).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 3.5 (ou 61 avant le 21/01/2026), IELTS 5.5, Duolingo 95, PTE 47, SAT CR 400 ou ACT anglais 15 (plus élevé en soins infirmiers et aviation)",
+      "languageRequirementsEn": "English: TOEFL iBT 3.5 (or 61 before 21/01/2026), IELTS 5.5, Duolingo 95, PTE 47, SAT CR 400 or ACT English 15 (higher for Nursing and Aviation)",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 13 137 USD/an en licence avec la bourse automatique (21 013 USD sans) ; 15 822 USD/an en master (2026-2027)",
+      "tuitionLabelEn": "≈ USD 13,137/year for bachelor's with the automatic scholarship (USD 21,013 without); USD 15,822/year for master's (2026-2027)",
+      "intakePeriods": [
+        "Août 2027",
+        "Janvier (printemps)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science (BS)",
+          "nameEn": "Computer Science (BS)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "13 137 USD/an (frais de scolarité et frais, automne + printemps, avec l'International Maverick Scholarship ; 21 013 USD sans)",
+          "tuitionEn": "USD 13,137/year (tuition and fees, fall + spring, with the International Maverick Scholarship; USD 21,013 without)",
+          "tuitionAnnual": {
+            "amount": 13137,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires (12 ans), moyenne équivalente à 3.0 sur 4",
+            "Anglais : TOEFL iBT 3.5 (ou 61), IELTS 5.5, Duolingo 95 ou PTE 47"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion (12 years), average equivalent to a 3.0 GPA",
+            "English: TOEFL iBT 3.5 (or 61), IELTS 5.5, Duolingo 95 or PTE 47"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/undergraduate/computer-science-bs/"
+        },
+        {
+          "slug": "bs-finance",
+          "nameFr": "Finance (BS) General Finance",
+          "nameEn": "Finance (BS) General Finance",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "13 137 USD/an (frais de scolarité et frais, automne + printemps, avec l'International Maverick Scholarship ; 21 013 USD sans)",
+          "tuitionEn": "USD 13,137/year (tuition and fees, fall + spring, with the International Maverick Scholarship; USD 21,013 without)",
+          "tuitionAnnual": {
+            "amount": 13137,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires (12 ans), moyenne équivalente à 3.0 sur 4",
+            "Anglais : TOEFL iBT 3.5 (ou 61), IELTS 5.5, Duolingo 95 ou PTE 47"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion (12 years), average equivalent to a 3.0 GPA",
+            "English: TOEFL iBT 3.5 (or 61), IELTS 5.5, Duolingo 95 or PTE 47"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/undergraduate/finance-bs-general-finance/"
+        },
+        {
+          "slug": "bsme-mechanical-engineering",
+          "nameFr": "Mechanical Engineering (BSME)",
+          "nameEn": "Mechanical Engineering (BSME)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "128 crédits",
+          "durationEn": "128 credits",
+          "tuitionFr": "13 137 USD/an (frais de scolarité et frais, automne + printemps, avec l'International Maverick Scholarship ; 21 013 USD sans)",
+          "tuitionEn": "USD 13,137/year (tuition and fees, fall + spring, with the International Maverick Scholarship; USD 21,013 without)",
+          "tuitionAnnual": {
+            "amount": 13137,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires (12 ans), moyenne équivalente à 3.0 sur 4",
+            "Anglais : TOEFL iBT 3.5 (ou 61), IELTS 5.5, Duolingo 95 ou PTE 47"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion (12 years), average equivalent to a 3.0 GPA",
+            "English: TOEFL iBT 3.5 (or 61), IELTS 5.5, Duolingo 95 or PTE 47"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/undergraduate/mechanical-engineering-bsme/"
+        },
+        {
+          "slug": "bs-public-health",
+          "nameFr": "Applied Health Science (BS) Public Health",
+          "nameEn": "Applied Health Science (BS) Public Health",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "13 137 USD/an (frais de scolarité et frais, automne + printemps, avec l'International Maverick Scholarship ; 21 013 USD sans)",
+          "tuitionEn": "USD 13,137/year (tuition and fees, fall + spring, with the International Maverick Scholarship; USD 21,013 without)",
+          "tuitionAnnual": {
+            "amount": 13137,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Fin d'études secondaires (12 ans), moyenne équivalente à 3.0 sur 4",
+            "Anglais : TOEFL iBT 3.5 (ou 61), IELTS 5.5, Duolingo 95 ou PTE 47"
+          ],
+          "requirementsEn": [
+            "Secondary-school completion (12 years), average equivalent to a 3.0 GPA",
+            "English: TOEFL iBT 3.5 (or 61), IELTS 5.5, Duolingo 95 or PTE 47"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/undergraduate/applied-health-science-bs-public-health/"
+        },
+        {
+          "slug": "ms-data-science",
+          "nameFr": "Data Science (MS)",
+          "nameEn": "Data Science (MS)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "32 crédits",
+          "durationEn": "32 credits",
+          "tuitionFr": "15 822 USD/an (2 semestres de 9 crédits, 2026-2027)",
+          "tuitionEn": "USD 15,822/year (2 semesters of 9 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 15822,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Preuve de ressources d'au moins 36 980 USD pour 9 mois (I-20, 2026-2027)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "Proof of at least USD 36,980 for 9 months (I-20, 2026-2027)"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/graduate/data-science-ms/"
+        },
+        {
+          "slug": "ms-artificial-intelligence",
+          "nameFr": "Artificial Intelligence (MS)",
+          "nameEn": "Artificial Intelligence (MS)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "32 crédits",
+          "durationEn": "32 credits",
+          "tuitionFr": "15 822 USD/an (2 semestres de 9 crédits, 2026-2027)",
+          "tuitionEn": "USD 15,822/year (2 semesters of 9 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 15822,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)",
+            "Preuve de ressources d'au moins 36 980 USD pour 9 mois (I-20, 2026-2027)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)",
+            "Proof of at least USD 36,980 for 9 months (I-20, 2026-2027)"
+          ],
+          "sourceUrl": "https://www.mnsu.edu/academic-catalog/graduate/artificial-intelligence-ms/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-nebraska-omaha",
+      "countryId": "usa",
+      "nameFr": "University of Nebraska Omaha (UNO)",
+      "nameEn": "University of Nebraska Omaha (UNO)",
+      "acronym": "UNO",
+      "locationFr": "Omaha, Nebraska",
+      "locationEn": "Omaha, Nebraska",
+      "websiteUrl": "https://www.unomaha.edu/",
+      "sourceUrl": "https://catalog.unomaha.edu/aboutuno/undergraduate-admissions/international-applicants/",
+      "overviewFr": "Université publique d'Omaha (Nebraska), avec un collège dédié à l'informatique et aux technologies de l'information (IS&T). Les frais de candidature sont de 45 USD, Duolingo est accepté (95), et une admission conditionnelle est possible si ton niveau d'anglais n'est pas encore suffisant.\n\nFrais de candidature : 45 USD.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Omaha, Nebraska, with a college dedicated to information science and technology (IS&T). The application fee is USD 45, Duolingo is accepted (95), and conditional admission is possible if your English is not yet at the required level.\n\nApplication fee: USD 45.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95, PTE 44 ; ingénierie : TOEFL 4.0 (ou 80), IELTS 6.5, Duolingo 110, PTE 53",
+      "languageRequirementsEn": "English: TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95, PTE 44; engineering: TOEFL 4.0 (or 80), IELTS 6.5, Duolingo 110, PTE 53",
+      "applicationFee": {
+        "amount": 45,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "45 USD",
+      "applicationFeeEn": "USD 45",
+      "tuitionLabelFr": "865 USD/crédit en licence (1 035 USD en IS&T, 1 066 USD en Business) ; 961 USD/crédit en master (non-résident, 2026-2027, hors frais)",
+      "tuitionLabelEn": "USD 865/credit for bachelor's (USD 1,035 in IS&T, USD 1,066 in Business); USD 961/credit for master's (non-resident, 2026-2027, before fees)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (printemps)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science, Bachelor of Science",
+          "nameEn": "Computer Science, Bachelor of Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "24 840 USD/an (estimation : 24 crédits × 1 035 USD (IS&T), non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 24,840/year (estimate: 24 credits × USD 1,035 (IS&T), non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 24840,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais (admission directe) : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95 ou PTE 44",
+            "Si ton score est insuffisant : admission conditionnelle possible via l'Intensive English Program"
+          ],
+          "requirementsEn": [
+            "English (direct admission): TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95 or PTE 44",
+            "If your score is too low: conditional admission possible through the Intensive English Program"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/undergraduate/college-information-science-technology/computer-science/computer-science-bs/"
+        },
+        {
+          "slug": "bs-artificial-intelligence",
+          "nameFr": "Artificial Intelligence, Bachelor of Science in Artificial Intelligence",
+          "nameEn": "Artificial Intelligence, Bachelor of Science in Artificial Intelligence",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "24 840 USD/an (estimation : 24 crédits × 1 035 USD (IS&T), non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 24,840/year (estimate: 24 credits × USD 1,035 (IS&T), non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 24840,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais (admission directe) : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95 ou PTE 44",
+            "Si ton score est insuffisant : admission conditionnelle possible via l'Intensive English Program"
+          ],
+          "requirementsEn": [
+            "English (direct admission): TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95 or PTE 44",
+            "If your score is too low: conditional admission possible through the Intensive English Program"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/undergraduate/college-information-science-technology/computer-science/ai-bs/"
+        },
+        {
+          "slug": "bs-cybersecurity",
+          "nameFr": "Cybersecurity, Bachelor of Science",
+          "nameEn": "Cybersecurity, Bachelor of Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "24 840 USD/an (estimation : 24 crédits × 1 035 USD (IS&T), non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 24,840/year (estimate: 24 credits × USD 1,035 (IS&T), non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 24840,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais (admission directe) : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95 ou PTE 44",
+            "Si ton score est insuffisant : admission conditionnelle possible via l'Intensive English Program"
+          ],
+          "requirementsEn": [
+            "English (direct admission): TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95 or PTE 44",
+            "If your score is too low: conditional admission possible through the Intensive English Program"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/undergraduate/college-information-science-technology/school-interdisciplinary-informatics-si2/cybersecurity-bs/"
+        },
+        {
+          "slug": "bsba-finance",
+          "nameFr": "Finance, Bachelor of Science in Business Administration",
+          "nameEn": "Finance, Bachelor of Science in Business Administration",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "25 584 USD/an (estimation : 24 crédits × 1 066 USD (Business), non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 25,584/year (estimate: 24 credits × USD 1,066 (Business), non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 25584,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais (admission directe) : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95 ou PTE 44",
+            "Si ton score est insuffisant : admission conditionnelle possible via l'Intensive English Program"
+          ],
+          "requirementsEn": [
+            "English (direct admission): TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95 or PTE 44",
+            "If your score is too low: conditional admission possible through the Intensive English Program"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/undergraduate/college-business-administration/college-business-administration-finance/"
+        },
+        {
+          "slug": "bs-public-health",
+          "nameFr": "Public Health, Bachelor of Science",
+          "nameEn": "Public Health, Bachelor of Science",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "20 760 USD/an (estimation : 24 crédits × 865 USD, non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 20,760/year (estimate: 24 credits × USD 865, non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 20760,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais (admission directe) : TOEFL iBT 3.5 (ou 61), IELTS 6.0, Duolingo 95 ou PTE 44",
+            "Si ton score est insuffisant : admission conditionnelle possible via l'Intensive English Program"
+          ],
+          "requirementsEn": [
+            "English (direct admission): TOEFL iBT 3.5 (or 61), IELTS 6.0, Duolingo 95 or PTE 44",
+            "If your score is too low: conditional admission possible through the Intensive English Program"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/undergraduate/college-education/health-kinesiology/public-health-bs/"
+        },
+        {
+          "slug": "ms-artificial-intelligence",
+          "nameFr": "Artificial Intelligence, MS",
+          "nameEn": "Artificial Intelligence, MS",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "22 158 USD/an (estimation : 18 crédits × 1 231 USD (IS&T), non-résident 2026-2027, hors frais)",
+          "tuitionEn": "USD 22,158/year (estimate: 18 credits × USD 1,231 (IS&T), non-resident 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 22158,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)"
+          ],
+          "sourceUrl": "https://catalog.unomaha.edu/graduate/degree-programs-certificates-minors/aims/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-arizona-state",
+      "countryId": "usa",
+      "nameFr": "Arizona State University (ASU)",
+      "nameEn": "Arizona State University (ASU)",
+      "acronym": "ASU",
+      "locationFr": "Tempe, Arizona",
+      "locationEn": "Tempe, Arizona",
+      "websiteUrl": "https://www.asu.edu/",
+      "sourceUrl": "https://admission.asu.edu/apply/international/first-year",
+      "overviewFr": "Grande université publique de l'Arizona (campus de Tempe et de la région de Phoenix). L'admission y est accessible : Duolingo accepté (95 hors ingénierie) et admission conditionnelle possible si ton anglais n'est pas encore au niveau. En revanche, le coût est élevé : 39 062 USD de frais de scolarité de base en licence pour 2026-2027.\n\nFrais de candidature : 90 USD (75 USD pour les programmes en ligne).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large public university in Arizona (Tempe and metro Phoenix campuses). Admission is accessible: Duolingo accepted (95 outside engineering) and conditional admission possible if your English is not there yet. The cost, however, is high: USD 39,062 base tuition for bachelor's in 2026-2027.\n\nApplication fee: USD 90 (USD 75 for online programmes).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 3.5 (ou 61), Duolingo 95, PTE 53 ; ingénierie (Fulton) : IELTS 6.5, TOEFL 4 (ou 79), Duolingo 105, PTE 58",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 3.5 (or 61), Duolingo 95, PTE 53; engineering (Fulton): IELTS 6.5, TOEFL 4 (or 79), Duolingo 105, PTE 58",
+      "applicationFee": {
+        "amount": 90,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "90 USD (75 USD pour les programmes en ligne)",
+      "applicationFeeEn": "USD 90 (USD 75 for online programmes)",
+      "tuitionLabelFr": "39 062 USD/an en licence, 42 475 USD/an en master (frais de scolarité de base, 2026-2027, hors frais)",
+      "tuitionLabelEn": "USD 39,062/year for bachelor's, USD 42,475/year for master's (base tuition, 2026-2027, before fees)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (printemps)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science, BS",
+          "nameEn": "Computer Science, BS",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "39 062 USD/an (frais de scolarité de base, campus de la région de Phoenix, 2026-2027, hors frais)",
+          "tuitionEn": "USD 39,062/year (base tuition, metro Phoenix campuses, 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 39062,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 3.00 sur 4 au secondaire (ou équivalent)",
+            "Anglais (hors ingénierie) : IELTS 6.0, TOEFL iBT 3.5 (ou 61), Duolingo 95 ou PTE 53",
+            "Admission conditionnelle possible (valable 3 semestres) si ton dossier est bon mais ton anglais insuffisant",
+            "Ingénierie (Fulton) : IELTS 6.5, TOEFL 4 (ou 79), Duolingo 105",
+            "Programme accrédité ABET"
+          ],
+          "requirementsEn": [
+            "3.00 GPA in secondary school (or equivalent)",
+            "English (outside engineering): IELTS 6.0, TOEFL iBT 3.5 (or 61), Duolingo 95 or PTE 53",
+            "Conditional admission possible (valid 3 semesters) if your record is strong but your English is not yet sufficient",
+            "Engineering (Fulton): IELTS 6.5, TOEFL 4 (or 79), Duolingo 105",
+            "ABET-accredited programme"
+          ],
+          "sourceUrl": "https://degrees.asu.edu/bachelors/major/ASU00/ESCSEBS/computer-science"
+        },
+        {
+          "slug": "bs-data-science",
+          "nameFr": "Data Science, BS",
+          "nameEn": "Data Science, BS",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "39 062 USD/an (frais de scolarité de base, campus de la région de Phoenix, 2026-2027, hors frais)",
+          "tuitionEn": "USD 39,062/year (base tuition, metro Phoenix campuses, 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 39062,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 3.00 sur 4 au secondaire (ou équivalent)",
+            "Anglais (hors ingénierie) : IELTS 6.0, TOEFL iBT 3.5 (ou 61), Duolingo 95 ou PTE 53",
+            "Admission conditionnelle possible (valable 3 semestres) si ton dossier est bon mais ton anglais insuffisant"
+          ],
+          "requirementsEn": [
+            "3.00 GPA in secondary school (or equivalent)",
+            "English (outside engineering): IELTS 6.0, TOEFL iBT 3.5 (or 61), Duolingo 95 or PTE 53",
+            "Conditional admission possible (valid 3 semesters) if your record is strong but your English is not yet sufficient"
+          ],
+          "sourceUrl": "https://degrees.asu.edu/bachelors/major/ASU00/LADATSCIBS/data-science"
+        },
+        {
+          "slug": "bs-finance",
+          "nameFr": "Finance, BS",
+          "nameEn": "Finance, BS",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "120 crédits minimum",
+          "durationEn": "120 credit hours minimum",
+          "tuitionFr": "39 062 USD/an (frais de scolarité de base, campus de la région de Phoenix, 2026-2027, hors frais)",
+          "tuitionEn": "USD 39,062/year (base tuition, metro Phoenix campuses, 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 39062,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 3.00 sur 4 au secondaire (ou équivalent)",
+            "Anglais (hors ingénierie) : IELTS 6.0, TOEFL iBT 3.5 (ou 61), Duolingo 95 ou PTE 53",
+            "Admission conditionnelle possible (valable 3 semestres) si ton dossier est bon mais ton anglais insuffisant"
+          ],
+          "requirementsEn": [
+            "3.00 GPA in secondary school (or equivalent)",
+            "English (outside engineering): IELTS 6.0, TOEFL iBT 3.5 (or 61), Duolingo 95 or PTE 53",
+            "Conditional admission possible (valid 3 semesters) if your record is strong but your English is not yet sufficient"
+          ],
+          "sourceUrl": "https://degrees.asu.edu/bachelors/major/ASU00/BAFINBS/finance"
+        },
+        {
+          "slug": "bs-financial-technology",
+          "nameFr": "Financial Technology, BS",
+          "nameEn": "Financial Technology, BS",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "39 062 USD/an (frais de scolarité de base, campus de la région de Phoenix, 2026-2027, hors frais)",
+          "tuitionEn": "USD 39,062/year (base tuition, metro Phoenix campuses, 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 39062,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 3.00 sur 4 au secondaire (ou équivalent)",
+            "Anglais (hors ingénierie) : IELTS 6.0, TOEFL iBT 3.5 (ou 61), Duolingo 95 ou PTE 53",
+            "Admission conditionnelle possible (valable 3 semestres) si ton dossier est bon mais ton anglais insuffisant"
+          ],
+          "requirementsEn": [
+            "3.00 GPA in secondary school (or equivalent)",
+            "English (outside engineering): IELTS 6.0, TOEFL iBT 3.5 (or 61), Duolingo 95 or PTE 53",
+            "Conditional admission possible (valid 3 semesters) if your record is strong but your English is not yet sufficient"
+          ],
+          "sourceUrl": "https://degrees.asu.edu/bachelors/major/ASU00/BAFINTBS/financial-technology"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-kent-state",
+      "countryId": "usa",
+      "nameFr": "Kent State University",
+      "nameEn": "Kent State University",
+      "acronym": "KSU",
+      "locationFr": "Kent, Ohio",
+      "locationEn": "Kent, Ohio",
+      "websiteUrl": "https://www.kent.edu/",
+      "sourceUrl": "https://www.kent.edu/admissions/international-first-year-student-requirements",
+      "overviewFr": "Université publique de Kent (Ohio). En licence, elle demande une moyenne de 2.5 sur 4, n'exige ni ACT ni SAT, accepte Duolingo (100) et peut t'admettre de façon conditionnelle si ton anglais n'est pas encore au niveau. Ses bourses peuvent atteindre, cumulées, 68 000 USD sur une licence de 4 ans.\n\nFrais de candidature : 70 USD.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Kent, Ohio. For a bachelor's it asks for a 2.5 GPA, requires neither ACT nor SAT, accepts Duolingo (100) and can admit you conditionally if your English is not there yet. Combined scholarships can reach USD 68,000 over a four-year bachelor's.\n\nApplication fee: USD 70.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 71, IELTS 6.0, Duolingo 100, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+      "languageRequirementsEn": "English: TOEFL iBT 71, IELTS 6.0, Duolingo 100, PTE 48, SAT EBRW 510 or ACT English 21",
+      "applicationFee": {
+        "amount": 70,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "70 USD",
+      "applicationFeeEn": "USD 70",
+      "tuitionLabelFr": "≈ 24 298 USD/an en licence, 21 169 USD/an en master (2026-2027)",
+      "tuitionLabelEn": "≈ USD 24,298/year for bachelor's, USD 21,169/year for master's (2026-2027)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (printemps)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science - B.S.",
+          "nameEn": "Computer Science - B.S.",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits minimum",
+          "durationEn": "120 credit hours minimum",
+          "tuitionFr": "24 298 USD/an (frais de scolarité et frais, 2 semestres, 2026-2027)",
+          "tuitionEn": "USD 24,298/year (tuition and fees, 2 semesters, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24298,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.5 sur 4 au secondaire ; ACT/SAT non exigés (test-optional)",
+            "Anglais : TOEFL iBT 71, IELTS 6.0, Duolingo 100 ou PTE 48 ; sinon admission conditionnelle possible",
+            "Frais de candidature : 70 USD"
+          ],
+          "requirementsEn": [
+            "2.5 GPA in secondary school; ACT/SAT not required (test-optional)",
+            "English: TOEFL iBT 71, IELTS 6.0, Duolingo 100 or PTE 48; otherwise conditional admission possible",
+            "Application fee: USD 70"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/sh/cs/computer-science-bs/"
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Finance - B.B.A.",
+          "nameEn": "Finance - B.B.A.",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "120 crédits minimum",
+          "durationEn": "120 credit hours minimum",
+          "tuitionFr": "24 298 USD/an (frais de scolarité et frais, 2 semestres, 2026-2027)",
+          "tuitionEn": "USD 24,298/year (tuition and fees, 2 semesters, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24298,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.5 sur 4 au secondaire ; ACT/SAT non exigés (test-optional)",
+            "Anglais : TOEFL iBT 71, IELTS 6.0, Duolingo 100 ou PTE 48 ; sinon admission conditionnelle possible",
+            "Frais de candidature : 70 USD"
+          ],
+          "requirementsEn": [
+            "2.5 GPA in secondary school; ACT/SAT not required (test-optional)",
+            "English: TOEFL iBT 71, IELTS 6.0, Duolingo 100 or PTE 48; otherwise conditional admission possible",
+            "Application fee: USD 70"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/be/fin/finance-bba/"
+        },
+        {
+          "slug": "bs-aerospace-engineering",
+          "nameFr": "Aerospace Engineering - B.S.",
+          "nameEn": "Aerospace Engineering - B.S.",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "123 crédits minimum",
+          "durationEn": "123 credit hours minimum",
+          "tuitionFr": "24 298 USD/an (frais de scolarité et frais, 2 semestres, 2026-2027)",
+          "tuitionEn": "USD 24,298/year (tuition and fees, 2 semesters, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24298,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.5 sur 4 au secondaire ; ACT/SAT non exigés (test-optional)",
+            "Anglais : TOEFL iBT 71, IELTS 6.0, Duolingo 100 ou PTE 48 ; sinon admission conditionnelle possible",
+            "Frais de candidature : 70 USD"
+          ],
+          "requirementsEn": [
+            "2.5 GPA in secondary school; ACT/SAT not required (test-optional)",
+            "English: TOEFL iBT 71, IELTS 6.0, Duolingo 100 or PTE 48; otherwise conditional admission possible",
+            "Application fee: USD 70"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/ar/engr/aerospace-engineering-bs/"
+        },
+        {
+          "slug": "bsph-public-health",
+          "nameFr": "Public Health - B.S.P.H.",
+          "nameEn": "Public Health - B.S.P.H.",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "120 crédits minimum",
+          "durationEn": "120 credit hours minimum",
+          "tuitionFr": "24 298 USD/an (frais de scolarité et frais, 2 semestres, 2026-2027)",
+          "tuitionEn": "USD 24,298/year (tuition and fees, 2 semesters, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24298,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.5 sur 4 au secondaire ; ACT/SAT non exigés (test-optional)",
+            "Anglais : TOEFL iBT 71, IELTS 6.0, Duolingo 100 ou PTE 48 ; sinon admission conditionnelle possible",
+            "Frais de candidature : 70 USD"
+          ],
+          "requirementsEn": [
+            "2.5 GPA in secondary school; ACT/SAT not required (test-optional)",
+            "English: TOEFL iBT 71, IELTS 6.0, Duolingo 100 or PTE 48; otherwise conditional admission possible",
+            "Application fee: USD 70"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/pb/public-health-bsph/"
+        },
+        {
+          "slug": "ms-artificial-intelligence",
+          "nameFr": "Artificial Intelligence - M.S.",
+          "nameEn": "Artificial Intelligence - M.S.",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits minimum",
+          "durationEn": "30 credit hours minimum",
+          "tuitionFr": "21 169 USD/an (frais de scolarité et frais, 2 semestres de 9 crédits, 2026-2027)",
+          "tuitionEn": "USD 21,169/year (tuition and fees, 2 semesters of 9 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21169,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/sh/cs/artificial-intelligence-ms/"
+        },
+        {
+          "slug": "ms-business-analytics",
+          "nameFr": "Business Analytics - M.S.",
+          "nameEn": "Business Analytics - M.S.",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "30 crédits minimum",
+          "durationEn": "30 credit hours minimum",
+          "tuitionFr": "21 169 USD/an (frais de scolarité et frais, 2 semestres de 9 crédits, 2026-2027)",
+          "tuitionEn": "USD 21,169/year (tuition and fees, 2 semesters of 9 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21169,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)"
+          ],
+          "sourceUrl": "https://catalog.kent.edu/colleges/be/isba/business-analytics-ms/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-toledo",
+      "countryId": "usa",
+      "nameFr": "University of Toledo",
+      "nameEn": "University of Toledo",
+      "acronym": "UToledo",
+      "locationFr": "Toledo, Ohio",
+      "locationEn": "Toledo, Ohio",
+      "websiteUrl": "https://www.utoledo.edu/",
+      "sourceUrl": "https://www.utoledo.edu/admission/international/tuition/",
+      "overviewFr": "Université publique de Toledo (Ohio). Pour 2026-2027, les frais de scolarité d'une licence sont estimés entre 24 160 et 24 760 USD par an, avant la bourse International Rocket Award (8 000 USD par an si ta moyenne est d'au moins 3.0). Dates limites pour les internationaux : 1er novembre 2026 pour janvier 2027, 1er juillet 2027 pour août 2027.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Toledo, Ohio. For 2026-2027, bachelor's tuition and fees are estimated at USD 24,160 – 24,760 a year, before the International Rocket Award (USD 8,000 a year with a GPA of 3.0 or higher). International deadlines: 1 November 2026 for January 2027, 1 July 2027 for August 2027.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 4 (ou 71 avant le 21/01/2026), IELTS 6.0, Duolingo 105, PTE 48, Cambridge 170",
+      "languageRequirementsEn": "English: TOEFL iBT 4 (or 71 before 21/01/2026), IELTS 6.0, Duolingo 105, PTE 48, Cambridge 170",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 24 160 – 24 760 USD/an en licence (2026-2027, avant bourse)",
+      "tuitionLabelEn": "≈ USD 24,160 – 24,760/year for bachelor's (2026-2027, before scholarship)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Août 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science-engineering",
+          "nameFr": "Computer Science and Engineering - Bachelor of Science (B.S.)",
+          "nameEn": "Computer Science and Engineering - Bachelor of Science (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 760 USD/an (frais de scolarité et frais avec frais d'ingénierie, 2026-2027, avant bourse)",
+          "tuitionEn": "USD 24,760/year (tuition and fees including engineering fees, 2026-2027, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 24760,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/computer-science-and-engineering/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "Computer Science - Bachelor of Science (B.S.)",
+          "nameEn": "Computer Science - Bachelor of Science (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
+          "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
+          "tuitionAnnual": {
+            "amount": 24160,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/computer-science/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-data-science",
+          "nameFr": "Data Science - Bachelor of Science (B.S.)",
+          "nameEn": "Data Science - Bachelor of Science (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
+          "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
+          "tuitionAnnual": {
+            "amount": 24160,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/data-science/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Finance - Bachelor of Business Administration (B.B.A.)",
+          "nameEn": "Finance - Bachelor of Business Administration (B.B.A.)",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
+          "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
+          "tuitionAnnual": {
+            "amount": 24160,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/finance/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-mechanical-engineering",
+          "nameFr": "Mechanical Engineering - Bachelor of Science (B.S.)",
+          "nameEn": "Mechanical Engineering - Bachelor of Science (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 760 USD/an (frais de scolarité et frais avec frais d'ingénierie, 2026-2027, avant bourse)",
+          "tuitionEn": "USD 24,760/year (tuition and fees including engineering fees, 2026-2027, before scholarship)",
+          "tuitionAnnual": {
+            "amount": 24760,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)",
+            "Ingénierie : ACT 22 / SAT maths 540, ou test ALEKS 76"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)",
+            "Engineering: ACT 22 / SAT math 540, or ALEKS 76"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/mechanical-engineering/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-public-health",
+          "nameFr": "Public Health - Bachelor of Science (B.S.)",
+          "nameEn": "Public Health - Bachelor of Science (B.S.)",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
+          "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
+          "tuitionAnnual": {
+            "amount": 24160,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4 (ou 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 ou ACT anglais 21",
+            "International Rocket Award : 8 000 USD/an si ta moyenne est d'au moins 3.0 (attribuée à l'admission, sur la majoration hors État)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4 (or 71), IELTS 6.0, Duolingo 105, PTE 48, SAT EBRW 510 or ACT English 21",
+            "International Rocket Award: USD 8,000/year with a GPA of 3.0 or higher (granted on admission, against the out-of-state surcharge)"
+          ],
+          "sourceUrl": "https://www.utoledo.edu/programs/undergrad/public-health/",
+          "offerings": [
+            {
+              "campus": "Toledo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Toledo",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-us-central-missouri",
+      "countryId": "usa",
+      "nameFr": "University of Central Missouri (UCM)",
+      "nameEn": "University of Central Missouri (UCM)",
+      "acronym": "UCM",
+      "locationFr": "Warrensburg, Missouri",
+      "locationEn": "Warrensburg, Missouri",
+      "websiteUrl": "https://www.ucmo.edu/",
+      "sourceUrl": "https://www.ucmo.edu/future-students/admissions/international-admissions/international-prospective-students/prospective-undergraduate-international/index.php",
+      "overviewFr": "Université publique de Warrensburg (Missouri), réputée pour l'informatique et la cybersécurité. Le niveau d'anglais demandé est bas (Duolingo 95, IELTS 5.5) et tu peux commencer en août, en janvier ou, pour l'informatique et la cybersécurité, en mai.\n\nFrais de candidature : 75 USD.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Warrensburg, Missouri, known for computing and cybersecurity. Its English requirement is low (Duolingo 95, IELTS 5.5) and you can start in August, January or, for computing and cybersecurity, in May.\n\nApplication fee: USD 75.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 ou test d'anglais de l'UCM",
+      "languageRequirementsEn": "English: TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 or the UCM English test",
+      "applicationFee": {
+        "amount": 75,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "75 USD",
+      "applicationFeeEn": "USD 75",
+      "tuitionLabelFr": "≈ 20 278 USD/an en licence (hors État, 2026-2027) ; 520 USD/crédit en master d'informatique",
+      "tuitionLabelEn": "≈ USD 20,278/year for bachelor's (out-of-state, 2026-2027); USD 520/credit for computing master's",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Août 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bs-computer-science",
+          "nameFr": "BS in Computer Science",
+          "nameEn": "BS in Computer Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "20 278 USD/an (frais de scolarité et frais généraux, 30 crédits, hors État, 2026-2027, avant aide)",
+          "tuitionEn": "USD 20,278/year (tuition and general fees, 30 credit hours, out-of-state, 2026-2027, before aid)",
+          "tuitionAnnual": {
+            "amount": 20278,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.0 au secondaire",
+            "Anglais : TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 ou test d'anglais de l'UCM",
+            "Frais de candidature : 75 USD"
+          ],
+          "requirementsEn": [
+            "2.0 secondary-school GPA",
+            "English: TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 or the UCM English test",
+            "Application fee: USD 75"
+          ],
+          "sourceUrl": "https://www.ucmo.edu/academics/programs/majors/chst/comp-sci-and-cybersecurity/computer-science/computer-science-bachelors/index.php",
+          "offerings": [
+            {
+              "campus": "Warrensburg",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Warrensburg",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Warrensburg",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bs-secure-software-development",
+          "nameFr": "Secure Software Development BS Degree",
+          "nameEn": "Secure Software Development BS Degree",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
+          "tuitionFr": "20 278 USD/an (frais de scolarité et frais généraux, 30 crédits, hors État, 2026-2027, avant aide)",
+          "tuitionEn": "USD 20,278/year (tuition and general fees, 30 credit hours, out-of-state, 2026-2027, before aid)",
+          "tuitionAnnual": {
+            "amount": 20278,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Moyenne de 2.0 au secondaire",
+            "Anglais : TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 ou test d'anglais de l'UCM",
+            "Frais de candidature : 75 USD"
+          ],
+          "requirementsEn": [
+            "2.0 secondary-school GPA",
+            "English: TOEFL iBT 61, IELTS 5.5, Duolingo 95, Cambridge 162 or the UCM English test",
+            "Application fee: USD 75"
+          ],
+          "sourceUrl": "https://www.ucmo.edu/academics/programs/majors/chst/comp-sci-and-cybersecurity/cybersecurity/cybersecurity-secure-software-development-bs/index.php"
+        },
+        {
+          "slug": "ms-computer-science",
+          "nameFr": "MS in Computer Science",
+          "nameEn": "MS in Computer Science",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "9 360 USD/an (estimation : 18 crédits × 520 USD (masters CS/CIS), 2026-2027, hors frais)",
+          "tuitionEn": "USD 9,360/year (estimate: 18 credits × USD 520 (CS/CIS master's), 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 9360,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)"
+          ],
+          "sourceUrl": "https://www.ucmo.edu/academics/programs/masters-degrees/computer-science-masters/index.php"
+        },
+        {
+          "slug": "ms-data-science-ai",
+          "nameFr": "MS in Data Science & Artificial Intelligence",
+          "nameEn": "MS in Data Science & Artificial Intelligence",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credit hours",
+          "tuitionFr": "9 360 USD/an (estimation : 18 crédits × 520 USD (masters CS/CIS), 2026-2027, hors frais)",
+          "tuitionEn": "USD 9,360/year (estimate: 18 credits × USD 520 (CS/CIS master's), 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 9360,
+            "currency": "USD"
+          },
+          "requirementsFr": [
+            "Licence (ou équivalent)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree (or equivalent)"
+          ],
+          "sourceUrl": "https://www.ucmo.edu/academics/programs/masters-degrees/chst/comp-sci-and-cybersecurity/computer-science/data-science-and-ai-masters/index.php"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-mcgill",
+      "countryId": "can",
+      "nameFr": "Université McGill",
+      "nameEn": "McGill University",
+      "acronym": "McGill",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.mcgill.ca/",
+      "sourceUrl": "https://www.mcgill.ca/student-accounts/files/student-accounts/new_intl_ugrad_degree_students_admitted_2026-27_0.pdf",
+      "overviewFr": "Université anglophone de Montréal, parmi les plus demandées du Canada. C'est aussi l'une des plus chères pour les internationaux : en 2026-2027, les droits de scolarité d'un B.Sc. sont de 64 786 CAD par an (garantis pour la durée du programme). Tu étudies en anglais dans une ville francophone.\n\nFrais de candidature : 140,16 CAD.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language university in Montreal, among the most sought-after in Canada. It is also one of the most expensive for international students: in 2026-2027, B.Sc. tuition is CAD 64,786 a year (guaranteed for the programme). You study in English in a French-speaking city.\n\nApplication fee: CAD 140.16.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 4.5 (ou 90) en sciences, génie et arts, 5.0 (ou 100) en gestion ; IELTS 6.5 ; Duolingo 125 (130 en B.Com.) ; CAEL 70",
+      "languageRequirementsEn": "English: TOEFL iBT 4.5 (or 90) for science, engineering and arts, 5.0 (or 100) for management; IELTS 6.5; Duolingo 125 (130 for B.Com.); CAEL 70",
+      "applicationFee": {
+        "amount": 140.16,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "140,16 CAD",
+      "applicationFeeEn": "CAD 140.16",
+      "tuitionLabelFr": "54 000 – 71 687 CAD/an selon le diplôme (B.A. 54 000, B.Sc. 64 786, B.Eng. 65 168, B.Com. 71 687 ; 2026-2027)",
+      "tuitionLabelEn": "CAD 54,000 – 71,687/year by degree (B.A. 54,000, B.Sc. 64,786, B.Eng. 65,168, B.Com. 71,687; 2026-2027)",
+      "intakePeriods": [
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bsc-computer-science-major",
+          "nameFr": "Computer Science Major (B.Sc.)",
+          "nameEn": "Computer Science Major (B.Sc.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "Majeure de 63 crédits dans un B.Sc.",
+          "durationEn": "63-credit major within a B.Sc.",
+          "tuitionFr": "64 786 CAD/an (droits de scolarité B.Sc., nouveaux étudiants internationaux 2026-2027, garantis pour la durée du programme)",
+          "tuitionEn": "CAD 64,786/year (B.Sc. tuition, new international students 2026-2027, guaranteed for the programme)",
+          "tuitionAnnual": {
+            "amount": 64786,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 90), IELTS 6.5 (6.0 par épreuve), Duolingo 125 ou CAEL 70",
+            "Frais de candidature : 140,16 CAD"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 90), IELTS 6.5 (6.0 per band), Duolingo 125 or CAEL 70",
+            "Application fee: CAD 140.16"
+          ],
+          "sourceUrl": "https://coursecatalogue.mcgill.ca/en/undergraduate/science/programs/computer-science/computer-science-major-bsc/"
+        },
+        {
+          "slug": "bsc-software-engineering-major",
+          "nameFr": "Software Engineering Major (B.Sc.)",
+          "nameEn": "Software Engineering Major (B.Sc.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "Majeure de 63 crédits dans un B.Sc.",
+          "durationEn": "63-credit major within a B.Sc.",
+          "tuitionFr": "64 786 CAD/an (droits de scolarité B.Sc., nouveaux étudiants internationaux 2026-2027, garantis pour la durée du programme)",
+          "tuitionEn": "CAD 64,786/year (B.Sc. tuition, new international students 2026-2027, guaranteed for the programme)",
+          "tuitionAnnual": {
+            "amount": 64786,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 90), IELTS 6.5 (6.0 par épreuve), Duolingo 125 ou CAEL 70",
+            "Frais de candidature : 140,16 CAD"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 90), IELTS 6.5 (6.0 per band), Duolingo 125 or CAEL 70",
+            "Application fee: CAD 140.16"
+          ],
+          "sourceUrl": "https://coursecatalogue.mcgill.ca/en/undergraduate/science/programs/computer-science/software-engineering-major-bsc/"
+        },
+        {
+          "slug": "bsc-mathematics-computer-science-major",
+          "nameFr": "Mathematics and Computer Science Major (B.Sc.)",
+          "nameEn": "Mathematics and Computer Science Major (B.Sc.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "Majeure de 72 crédits dans un B.Sc.",
+          "durationEn": "72-credit major within a B.Sc.",
+          "tuitionFr": "64 786 CAD/an (droits de scolarité B.Sc., nouveaux étudiants internationaux 2026-2027, garantis pour la durée du programme)",
+          "tuitionEn": "CAD 64,786/year (B.Sc. tuition, new international students 2026-2027, guaranteed for the programme)",
+          "tuitionAnnual": {
+            "amount": 64786,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 90), IELTS 6.5 (6.0 par épreuve), Duolingo 125 ou CAEL 70",
+            "Frais de candidature : 140,16 CAD"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 90), IELTS 6.5 (6.0 per band), Duolingo 125 or CAEL 70",
+            "Application fee: CAD 140.16"
+          ],
+          "sourceUrl": "https://coursecatalogue.mcgill.ca/en/undergraduate/science/programs/mathematics-statistics/mathematics-computer-science-major-bsc/"
+        },
+        {
+          "slug": "beng-mechanical-engineering",
+          "nameFr": "Mechanical Engineering (B.Eng.)",
+          "nameEn": "Mechanical Engineering (B.Eng.)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "142 crédits",
+          "durationEn": "142 credits",
+          "tuitionFr": "65 168 CAD/an (droits de scolarité B.Eng., nouveaux étudiants internationaux 2026-2027, garantis pour la durée du programme)",
+          "tuitionEn": "CAD 65,168/year (B.Eng. tuition, new international students 2026-2027, guaranteed for the programme)",
+          "tuitionAnnual": {
+            "amount": 65168,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 90), IELTS 6.5 (6.0 par épreuve), Duolingo 125 ou CAEL 70",
+            "Frais de candidature : 140,16 CAD"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 90), IELTS 6.5 (6.0 per band), Duolingo 125 or CAEL 70",
+            "Application fee: CAD 140.16"
+          ],
+          "sourceUrl": "https://coursecatalogue.mcgill.ca/en/undergraduate/engineering/programs/mechanical-engineering/mechanical-engineering-beng/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-concordia",
+      "countryId": "can",
+      "nameFr": "Université Concordia",
+      "nameEn": "Concordia University",
+      "acronym": "Concordia",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.concordia.ca/",
+      "sourceUrl": "https://www.concordia.ca/students/financial/tuition-fees/rates/undergrad.html",
+      "overviewFr": "Université anglophone de Montréal, avec une grande école de génie et d'informatique (Gina Cody). Duolingo est accepté (105) et la plupart des programmes ouvrent en septembre et en janvier. Pour 2026-2027, compte 1 285 CAD par crédit en génie et informatique, soit environ 38 550 CAD pour une année de 30 crédits.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language university in Montreal, with a large engineering and computer science school (Gina Cody). Duolingo is accepted (105) and most programmes start in September and January. For 2026-2027, expect CAD 1,285 per credit in engineering and computer science, about CAD 38,550 for a 30-credit year.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : Duolingo 105 (sous-scores ≥ 90), IELTS 6.0 (≥ 5.5), TOEFL iBT 4.0 (ou 70), CAEL 50, PTE 50",
+      "languageRequirementsEn": "English: Duolingo 105 (subscores ≥ 90), IELTS 6.0 (≥ 5.5), TOEFL iBT 4.0 (or 70), CAEL 50, PTE 50",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "1 160 – 1 400 CAD par crédit selon la faculté (≈ 34 800 – 42 000 CAD pour 30 crédits, internationaux 2026-2027)",
+      "tuitionLabelEn": "CAD 1,160 – 1,400 per credit by faculty (≈ CAD 34,800 – 42,000 for 30 credits, international 2026-2027)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bcompsc-computer-science",
+          "nameFr": "Computer Science (BCompSc)",
+          "nameEn": "Computer Science (BCompSc)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 à 4 ans",
+          "durationEn": "3 to 4 years",
+          "tuitionFr": "38 550 CAD/an (30 crédits × 1 285 CAD (génie et informatique), internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 38,550/year (30 credits × CAD 1,285 (engineering and computer science), international 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 38550,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+          ],
+          "requirementsEn": [
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+          ],
+          "sourceUrl": "https://www.concordia.ca/academics/undergraduate/computer-science.html"
+        },
+        {
+          "slug": "beng-software-engineering",
+          "nameFr": "Software Engineering (BEng)",
+          "nameEn": "Software Engineering (BEng)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 à 5 ans",
+          "durationEn": "4 to 5 years",
+          "tuitionFr": "38 550 CAD/an (30 crédits × 1 285 CAD (génie et informatique), internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 38,550/year (30 credits × CAD 1,285 (engineering and computer science), international 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 38550,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+          ],
+          "requirementsEn": [
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+          ],
+          "sourceUrl": "https://www.concordia.ca/academics/undergraduate/software-engineering.html"
+        },
+        {
+          "slug": "beng-mechanical-engineering",
+          "nameFr": "Mechanical Engineering (BEng)",
+          "nameEn": "Mechanical Engineering (BEng)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "4 à 5 ans",
+          "durationEn": "4 to 5 years",
+          "tuitionFr": "38 550 CAD/an (30 crédits × 1 285 CAD (génie et informatique), internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 38,550/year (30 credits × CAD 1,285 (engineering and computer science), international 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 38550,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+          ],
+          "requirementsEn": [
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+          ],
+          "sourceUrl": "https://www.concordia.ca/academics/undergraduate/mechanical-engineering.html"
+        },
+        {
+          "slug": "bcomm-finance",
+          "nameFr": "Finance (BComm)",
+          "nameEn": "Finance (BComm)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "3 à 4 ans",
+          "durationEn": "3 to 4 years",
+          "tuitionFr": "42 000 CAD/an (30 crédits × 1 400 CAD (John Molson School of Business), internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 42,000/year (30 credits × CAD 1,400 (John Molson School of Business), international 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 42000,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+          ],
+          "requirementsEn": [
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+          ],
+          "sourceUrl": "https://www.concordia.ca/academics/undergraduate/finance.html"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-york",
+      "countryId": "can",
+      "nameFr": "Université York",
+      "nameEn": "York University",
+      "acronym": "York",
+      "locationFr": "Toronto, Ontario",
+      "locationEn": "Toronto, Ontario",
+      "websiteUrl": "https://www.yorku.ca/",
+      "sourceUrl": "https://futurestudents.yorku.ca/financing-your-degree/tuition-fees",
+      "overviewFr": "Grande université de Toronto, en anglais sur le campus Keele et bilingue (français-anglais) sur le campus Glendon. Glendon participe au programme pilote fédéral pour les étudiants francophones hors Québec (PPECFSM). Pour 2026-2027, York estime les droits des internationaux autour de 38 000 à 47 000 CAD par an selon le programme.\n\nFrais de candidature : 140 CAD (formulaire de York).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large Toronto university, in English at the Keele campus and bilingual (French-English) at the Glendon campus. Glendon takes part in the federal Francophone Minority Communities Student Pilot. For 2026-2027, York estimates international tuition at about CAD 38,000 – 47,000 a year depending on the programme.\n\nApplication fee: CAD 140 (York application).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : TOEFL iBT 4.5 (ou 88), IELTS Academic 6.5, PTE 60, CAEL 60, Cambridge C1 180 ou Duolingo 120 ; admission conditionnelle via YUELI",
+      "languageRequirementsEn": "English: TOEFL iBT 4.5 (or 88), IELTS Academic 6.5, PTE 60, CAEL 60, Cambridge C1 180 or Duolingo 120; conditional admission through YUELI",
+      "applicationFee": {
+        "amount": 140,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "140 CAD (formulaire de York)",
+      "applicationFeeEn": "CAD 140 (York application)",
+      "tuitionLabelFr": "≈ 38 000 – 47 000 CAD/an selon le programme (estimation York 2026-2027 ; Glendon ≈ 40 574 CAD)",
+      "tuitionLabelEn": "≈ CAD 38,000 – 47,000/year by programme (York 2026-2027 estimate; Glendon ≈ CAD 40,574)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "en",
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "computer-science",
+          "nameFr": "Computer Science",
+          "nameEn": "Computer Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "38 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
+          "tuitionEn": "CAD 38,000/year (York estimate, 30 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 38000,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 88), IELTS Academic 6.5, PTE 60, CAEL 60 ou Duolingo 120 ; sinon admission conditionnelle via l'institut d'anglais de York (YUELI)",
+            "Frais de candidature : 140 CAD",
+            "Diplômes : BA, iBA, BSc ou iBSc (campus Keele)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 88), IELTS Academic 6.5, PTE 60, CAEL 60 or Duolingo 120; otherwise conditional admission through the York University English Language Institute (YUELI)",
+            "Application fee: CAD 140",
+            "Degrees: BA, iBA, BSc or iBSc (Keele campus)"
+          ],
+          "sourceUrl": "https://futurestudents.yorku.ca/program/computer-science"
+        },
+        {
+          "slug": "data-science",
+          "nameFr": "Data Science",
+          "nameEn": "Data Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "40 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
+          "tuitionEn": "CAD 40,000/year (York estimate, 30 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 40000,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 88), IELTS Academic 6.5, PTE 60, CAEL 60 ou Duolingo 120 ; sinon admission conditionnelle via l'institut d'anglais de York (YUELI)",
+            "Frais de candidature : 140 CAD",
+            "Diplômes : BA ou BSc (campus Keele) ; rentrée possible en septembre, janvier ou mai"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 88), IELTS Academic 6.5, PTE 60, CAEL 60 or Duolingo 120; otherwise conditional admission through the York University English Language Institute (YUELI)",
+            "Application fee: CAD 140",
+            "Degrees: BA or BSc (Keele campus); start in September, January or May"
+          ],
+          "sourceUrl": "https://futurestudents.yorku.ca/program/data-science"
+        },
+        {
+          "slug": "mechanical-engineering",
+          "nameFr": "Mechanical Engineering",
+          "nameEn": "Mechanical Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "47 000 CAD/an (estimation York, 36 crédits en 1re année, 2026-2027)",
+          "tuitionEn": "CAD 47,000/year (York estimate, 36 first-year credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 47000,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 88), IELTS Academic 6.5, PTE 60, CAEL 60 ou Duolingo 120 ; sinon admission conditionnelle via l'institut d'anglais de York (YUELI)",
+            "Frais de candidature : 140 CAD",
+            "Diplôme : BEng (campus Keele)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 88), IELTS Academic 6.5, PTE 60, CAEL 60 or Duolingo 120; otherwise conditional admission through the York University English Language Institute (YUELI)",
+            "Application fee: CAD 140",
+            "Degree: BEng (Keele campus)"
+          ],
+          "sourceUrl": "https://futurestudents.yorku.ca/program/mechanical-engineering"
+        },
+        {
+          "slug": "international-studies-glendon",
+          "nameFr": "International Studies / Études internationales",
+          "nameEn": "International Studies / Études internationales",
+          "level": "Bachelor",
+          "fieldId": "d07",
+          "language": "bi",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "40 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
+          "tuitionEn": "CAD 40,000/year (York estimate, 30 credits, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 40000,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : TOEFL iBT 4.5 (ou 88), IELTS Academic 6.5, PTE 60, CAEL 60 ou Duolingo 120 ; sinon admission conditionnelle via l'institut d'anglais de York (YUELI)",
+            "Frais de candidature : 140 CAD",
+            "Diplôme : BA bilingue (campus Glendon)"
+          ],
+          "requirementsEn": [
+            "English: TOEFL iBT 4.5 (or 88), IELTS Academic 6.5, PTE 60, CAEL 60 or Duolingo 120; otherwise conditional admission through the York University English Language Institute (YUELI)",
+            "Application fee: CAD 140",
+            "Degree: bilingual BA (Glendon campus)"
+          ],
+          "sourceUrl": "https://futurestudents.yorku.ca/program/international-studies"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-memorial",
+      "countryId": "can",
+      "nameFr": "Université Memorial de Terre-Neuve (MUN)",
+      "nameEn": "Memorial University of Newfoundland (MUN)",
+      "acronym": "MUN",
+      "locationFr": "St. John's, Terre-Neuve-et-Labrador",
+      "locationEn": "St. John's, Newfoundland and Labrador",
+      "websiteUrl": "https://www.mun.ca/",
+      "sourceUrl": "https://www.mun.ca/undergrad/money-matters/",
+      "overviewFr": "Université anglophone de St. John's (Terre-Neuve-et-Labrador), parmi les moins chères du Canada pour les internationaux : 22 500 CAD de droits pour une année de 10 cours en 2026-2027 (tarifs gelés au niveau de 2025-2026). Tu peux commencer en septembre, en janvier ou en mai selon le programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language university in St. John's, Newfoundland and Labrador, among the least expensive in Canada for international students: CAD 22,500 tuition for a 10-course year in 2026-2027 (rates frozen at 2025-2026 levels). You can start in September, January or May depending on the programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60, PTE 60, Cambridge 176 ; plus élevé en génie",
+      "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60, PTE 60, Cambridge 176; higher for engineering",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "22 500 CAD/an pour 10 cours (internationaux, 2026-2027, hors frais)",
+      "tuitionLabelEn": "CAD 22,500/year for 10 courses (international, 2026-2027, before fees)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bachelor-of-engineering",
+          "nameFr": "Bachelor of Engineering",
+          "nameEn": "Bachelor of Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 22500,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (6 en lecture et écriture), TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60 ou PTE 60",
+            "Candidature au moins 12 semaines avant la rentrée visée",
+            "Régime coopératif : jusqu'à deux ans d'expérience professionnelle rémunérée"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (6 in reading and writing), TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60 or PTE 60",
+            "Apply at least 12 weeks before your intended start",
+            "Co-op: up to two years of paid work experience"
+          ],
+          "sourceUrl": "https://www.mun.ca/undergrad/programs/engineering/"
+        },
+        {
+          "slug": "bachelor-of-commerce-coop",
+          "nameFr": "Bachelor of Commerce (Co-operative)",
+          "nameEn": "Bachelor of Commerce (Co-operative)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "5 ans, dont 3 stages obligatoires",
+          "durationEn": "5 years, including 3 mandatory work terms",
+          "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 22500,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (6 en lecture et écriture), TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60 ou PTE 60",
+            "Candidature au moins 12 semaines avant la rentrée visée"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (6 in reading and writing), TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60 or PTE 60",
+            "Apply at least 12 weeks before your intended start"
+          ],
+          "sourceUrl": "https://www.mun.ca/undergrad/programs/business/bachelor-of-commerce-co-operative/"
+        },
+        {
+          "slug": "bachelor-of-commerce",
+          "nameFr": "Bachelor of Commerce",
+          "nameEn": "Bachelor of Commerce",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 22500,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (6 en lecture et écriture), TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60 ou PTE 60",
+            "Candidature au moins 12 semaines avant la rentrée visée"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (6 in reading and writing), TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60 or PTE 60",
+            "Apply at least 12 weeks before your intended start"
+          ],
+          "sourceUrl": "https://www.mun.ca/undergrad/programs/business/bachelor-of-commerce/"
+        },
+        {
+          "slug": "bachelor-of-science",
+          "nameFr": "Bachelor of Science (B.Sc.)",
+          "nameEn": "Bachelor of Science (B.Sc.)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
+          "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 22500,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (6 en lecture et écriture), TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60 ou PTE 60",
+            "Candidature au moins 12 semaines avant la rentrée visée"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (6 in reading and writing), TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60 or PTE 60",
+            "Apply at least 12 weeks before your intended start"
+          ],
+          "sourceUrl": "https://www.mun.ca/undergrad/programs/science/bachelor-of-science/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-laval",
+      "countryId": "can",
+      "nameFr": "Université Laval",
+      "nameEn": "Université Laval",
+      "acronym": "ULaval",
+      "locationFr": "Québec, Québec",
+      "locationEn": "Quebec City, Quebec",
+      "websiteUrl": "https://www.ulaval.ca/",
+      "sourceUrl": "https://www.ulaval.ca/en/academics/tuition/international-students/undergraduate-programs/fall-2026-winter-2027",
+      "overviewFr": "Grande université francophone de la ville de Québec. Au baccalauréat, une session de 15 crédits coûte 14 116 CAD aux étudiants internationaux en 2026-2027 (droits, supplément et frais). Beaucoup de programmes ouvrent en automne et en hiver.\n\nFrais de candidature : 101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large French-language university in Quebec City. For a bachelor's, a 15-credit term costs international students CAD 14,116 in 2026-2027 (tuition, supplement and fees). Many programmes start in fall and winter.\n\nApplication fee: CAD 101.49 (fall 2026), CAD 104.53 from winter 2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : TCF tout public si tes études primaires ou secondaires ne se sont pas faites en français (DELF, TFI, TEF acceptés)",
+      "languageRequirementsEn": "French: TCF tout public if your primary or secondary schooling was not in French (DELF, TFI, TEF accepted)",
+      "applicationFee": {
+        "amount": 101.49,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027",
+      "applicationFeeEn": "CAD 101.49 (fall 2026), CAD 104.53 from winter 2027",
+      "tuitionLabelFr": "≈ 28 233 CAD/an (2 sessions de 15 crédits, internationaux 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 28,233/year (2 terms of 15 credits, international 2026-2027)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "3 ans (90 crédits)",
+          "durationEn": "3 years (90 credits)",
+          "tuitionFr": "28 233 CAD/an (2 sessions de 15 crédits (droits, supplément international et frais), automne 2026 – hiver 2027)",
+          "tuitionEn": "CAD 28,233/year (2 terms of 15 credits (tuition, international supplement and fees), fall 2026 – winter 2027)",
+          "tuitionAnnual": {
+            "amount": 28233,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Si tes études primaires ou secondaires ne se sont pas faites en français : TCF tout public (DELF, TFI ou TEF acceptés avec expression écrite), passé il y a moins de 2 ans",
+            "Frais d'analyse du dossier : 101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027"
+          ],
+          "requirementsEn": [
+            "If your primary or secondary schooling was not in French: TCF tout public (DELF, TFI or TEF accepted with a writing component), taken less than 2 years ago",
+            "Application review fee: CAD 101.49 (fall 2026), CAD 104.53 from winter 2027"
+          ],
+          "sourceUrl": "https://www.ulaval.ca/etudes/programmes/baccalaureat-en-informatique"
+        },
+        {
+          "slug": "baccalaureat-genie-logiciel",
+          "nameFr": "Baccalauréat en génie logiciel",
+          "nameEn": "Bachelor's in Software Engineering (Baccalauréat en génie logiciel)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
+          "tuitionFr": "28 233 CAD/an (2 sessions de 15 crédits (droits, supplément international et frais), automne 2026 – hiver 2027)",
+          "tuitionEn": "CAD 28,233/year (2 terms of 15 credits (tuition, international supplement and fees), fall 2026 – winter 2027)",
+          "tuitionAnnual": {
+            "amount": 28233,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Si tes études primaires ou secondaires ne se sont pas faites en français : TCF tout public (DELF, TFI ou TEF acceptés avec expression écrite), passé il y a moins de 2 ans",
+            "Frais d'analyse du dossier : 101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027"
+          ],
+          "requirementsEn": [
+            "If your primary or secondary schooling was not in French: TCF tout public (DELF, TFI or TEF accepted with a writing component), taken less than 2 years ago",
+            "Application review fee: CAD 101.49 (fall 2026), CAD 104.53 from winter 2027"
+          ],
+          "sourceUrl": "https://www.ulaval.ca/etudes/programmes/baccalaureat-en-genie-logiciel"
+        },
+        {
+          "slug": "baa-administration-affaires",
+          "nameFr": "Baccalauréat en administration des affaires",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration des affaires)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "3 ans (90 crédits)",
+          "durationEn": "3 years (90 credits)",
+          "tuitionFr": "28 233 CAD/an (2 sessions de 15 crédits (droits, supplément international et frais), automne 2026 – hiver 2027)",
+          "tuitionEn": "CAD 28,233/year (2 terms of 15 credits (tuition, international supplement and fees), fall 2026 – winter 2027)",
+          "tuitionAnnual": {
+            "amount": 28233,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Si tes études primaires ou secondaires ne se sont pas faites en français : TCF tout public (DELF, TFI ou TEF acceptés avec expression écrite), passé il y a moins de 2 ans",
+            "Frais d'analyse du dossier : 101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027",
+            "Admission possible en automne, en hiver et en été"
+          ],
+          "requirementsEn": [
+            "If your primary or secondary schooling was not in French: TCF tout public (DELF, TFI or TEF accepted with a writing component), taken less than 2 years ago",
+            "Application review fee: CAD 101.49 (fall 2026), CAD 104.53 from winter 2027",
+            "Start in fall, winter or summer"
+          ],
+          "sourceUrl": "https://www.ulaval.ca/etudes/programmes/baccalaureat-en-administration-des-affaires"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
+          "tuitionFr": "28 233 CAD/an (2 sessions de 15 crédits (droits, supplément international et frais), automne 2026 – hiver 2027)",
+          "tuitionEn": "CAD 28,233/year (2 terms of 15 credits (tuition, international supplement and fees), fall 2026 – winter 2027)",
+          "tuitionAnnual": {
+            "amount": 28233,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Si tes études primaires ou secondaires ne se sont pas faites en français : TCF tout public (DELF, TFI ou TEF acceptés avec expression écrite), passé il y a moins de 2 ans",
+            "Frais d'analyse du dossier : 101,49 CAD (automne 2026), 104,53 CAD dès l'hiver 2027"
+          ],
+          "requirementsEn": [
+            "If your primary or secondary schooling was not in French: TCF tout public (DELF, TFI or TEF accepted with a writing component), taken less than 2 years ago",
+            "Application review fee: CAD 101.49 (fall 2026), CAD 104.53 from winter 2027"
+          ],
+          "sourceUrl": "https://www.ulaval.ca/etudes/programmes/baccalaureat-en-genie-mecanique"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-montreal",
+      "countryId": "can",
+      "nameFr": "Université de Montréal (UdeM)",
+      "nameEn": "Université de Montréal (UdeM)",
+      "acronym": "UdeM",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.umontreal.ca/",
+      "sourceUrl": "https://registraire.umontreal.ca/droits-de-scolarite/couts/",
+      "overviewFr": "Grande université francophone de Montréal. Au baccalauréat, les droits des internationaux sont de 1 025,76 CAD par crédit (barème du registraire ; une hausse de 3 % est annoncée à l'automne 2026). La bourse d'exemption UdeM, attribuée à l'excellence du dossier, peut les réduire jusqu'à 14 436 CAD par an. Plusieurs baccalauréats ouvrent en janvier 2027 : demande d'admission jusqu'au 1er novembre 2026.\n\nFrais de candidature : 83,40 CAD + 23,35 CAD par programme choisi.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large French-language university in Montreal. For a bachelor's, international tuition is CAD 1,025.76 per credit (registrar's rate; a 3% increase is announced for fall 2026). The UdeM exemption scholarship, awarded on academic excellence, can lower it by up to CAD 14,436 a year. Several bachelor's programmes start in January 2027: apply by 1 November 2026.\n\nApplication fee: CAD 83.40 + CAD 23.35 per programme chosen.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : exigence de français de l'UdeM à satisfaire (preuve ou test selon ton parcours, voir la fiche du programme)",
+      "languageRequirementsEn": "French: the UdeM French-language requirement must be met (proof or test depending on your background, see the programme page)",
+      "applicationFee": {
+        "amount": 106.75,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "83,40 CAD + 23,35 CAD par programme choisi",
+      "applicationFeeEn": "CAD 83.40 + CAD 23.35 per programme chosen",
+      "tuitionLabelFr": "≈ 30 773 CAD/an (30 crédits × 1 026 CAD, internationaux, avant bourse d'exemption)",
+      "tuitionLabelEn": "≈ CAD 30,773/year (30 credits × CAD 1,026, international, before exemption scholarship)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Août 2027"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "30 773 CAD/an (30 crédits × 1 026 CAD, barème international du registraire ; hausse de 3 % annoncée à l'automne 2026)",
+          "tuitionEn": "CAD 30,773/year (30 credits × CAD 1,026, registrar's international rate; 3% increase announced for fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30773,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Satisfaire à l'exigence de français de l'UdeM (dates sur la fiche du programme)",
+            "Frais d'admission : 83,40 CAD + 23,35 CAD par programme choisi ; dépôt de 1 000 CAD après l'acceptation de l'offre"
+          ],
+          "requirementsEn": [
+            "Meet the UdeM French-language requirement (dates on the programme page)",
+            "Application fee: CAD 83.40 + CAD 23.35 per programme chosen; CAD 1,000 deposit after accepting the offer"
+          ],
+          "sourceUrl": "https://admission.umontreal.ca/programmes/baccalaureat-en-informatique/",
+          "offerings": [
+            {
+              "campus": "Montréal",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Montréal",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "baccalaureat-mathematiques-informatique",
+          "nameFr": "Baccalauréat en mathématiques et informatique",
+          "nameEn": "Bachelor's in Mathematics and Computer Science (Baccalauréat en mathématiques et informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "91 crédits",
+          "durationEn": "91 credits",
+          "tuitionFr": "30 773 CAD/an (30 crédits × 1 026 CAD, barème international du registraire ; hausse de 3 % annoncée à l'automne 2026)",
+          "tuitionEn": "CAD 30,773/year (30 credits × CAD 1,026, registrar's international rate; 3% increase announced for fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30773,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Satisfaire à l'exigence de français de l'UdeM (dates sur la fiche du programme)",
+            "Frais d'admission : 83,40 CAD + 23,35 CAD par programme choisi ; dépôt de 1 000 CAD après l'acceptation de l'offre"
+          ],
+          "requirementsEn": [
+            "Meet the UdeM French-language requirement (dates on the programme page)",
+            "Application fee: CAD 83.40 + CAD 23.35 per programme chosen; CAD 1,000 deposit after accepting the offer"
+          ],
+          "sourceUrl": "https://admission.umontreal.ca/programmes/baccalaureat-en-mathematiques-et-informatique/",
+          "offerings": [
+            {
+              "campus": "Montréal",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Montréal",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "baccalaureat-sciences-economiques",
+          "nameFr": "Baccalauréat en sciences économiques",
+          "nameEn": "Bachelor's in Economics (Baccalauréat en sciences économiques)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "30 773 CAD/an (30 crédits × 1 026 CAD, barème international du registraire ; hausse de 3 % annoncée à l'automne 2026)",
+          "tuitionEn": "CAD 30,773/year (30 credits × CAD 1,026, registrar's international rate; 3% increase announced for fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30773,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Satisfaire à l'exigence de français de l'UdeM (dates sur la fiche du programme)",
+            "Frais d'admission : 83,40 CAD + 23,35 CAD par programme choisi ; dépôt de 1 000 CAD après l'acceptation de l'offre"
+          ],
+          "requirementsEn": [
+            "Meet the UdeM French-language requirement (dates on the programme page)",
+            "Application fee: CAD 83.40 + CAD 23.35 per programme chosen; CAD 1,000 deposit after accepting the offer"
+          ],
+          "sourceUrl": "https://admission.umontreal.ca/programmes/baccalaureat-en-sciences-economiques/",
+          "offerings": [
+            {
+              "campus": "Montréal",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Montréal",
+              "intake": "08/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "baccalaureat-sciences-biomedicales",
+          "nameFr": "Baccalauréat en sciences biomédicales",
+          "nameEn": "Bachelor's in Biomedical Sciences (Baccalauréat en sciences biomédicales)",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "30 773 CAD/an (30 crédits × 1 026 CAD, barème international du registraire ; hausse de 3 % annoncée à l'automne 2026)",
+          "tuitionEn": "CAD 30,773/year (30 credits × CAD 1,026, registrar's international rate; 3% increase announced for fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30773,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Satisfaire à l'exigence de français de l'UdeM (dates sur la fiche du programme)",
+            "Frais d'admission : 83,40 CAD + 23,35 CAD par programme choisi ; dépôt de 1 000 CAD après l'acceptation de l'offre",
+            "Capacité d'accueil limitée ; rentrée d'août 2027"
+          ],
+          "requirementsEn": [
+            "Meet the UdeM French-language requirement (dates on the programme page)",
+            "Application fee: CAD 83.40 + CAD 23.35 per programme chosen; CAD 1,000 deposit after accepting the offer",
+            "Limited intake; August 2027 start"
+          ],
+          "sourceUrl": "https://admission.umontreal.ca/programmes/baccalaureat-en-sciences-biomedicales/"
+        },
+        {
+          "slug": "maitrise-sante-publique",
+          "nameFr": "Maîtrise en santé publique",
+          "nameEn": "Master's in Public Health (Maîtrise en santé publique)",
+          "level": "Master",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "45 crédits",
+          "durationEn": "45 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Demande d'admission du 1er août 2026 au 1er février 2027, pour août 2027",
+            "Exigence de français de l'UdeM à satisfaire"
+          ],
+          "requirementsEn": [
+            "Apply from 1 August 2026 to 1 February 2027, for an August 2027 start",
+            "UdeM French-language requirement must be met"
+          ],
+          "sourceUrl": "https://admission.umontreal.ca/programmes/maitrise-en-sante-publique/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-sherbrooke",
+      "countryId": "can",
+      "nameFr": "Université de Sherbrooke",
+      "nameEn": "Université de Sherbrooke",
+      "acronym": "UdeS",
+      "locationFr": "Sherbrooke, Québec",
+      "locationEn": "Sherbrooke, Quebec",
+      "websiteUrl": "https://www.usherbrooke.ca/",
+      "sourceUrl": "https://www.usherbrooke.ca/admission/couts-et-aide-financiere/frais-scolarite/personnes-etudiantes-internationales",
+      "overviewFr": "Université francophone de Sherbrooke, connue pour son régime coopératif (stages rémunérés en alternance). À l'automne 2026, un trimestre de 15 crédits en génie, informatique ou gestion coûte 15 080 CAD aux internationaux (16 070 CAD en trimestre d'études d'un programme avec stages). Une bourse d'admission de 2 000 CAD est déduite du premier trimestre au baccalauréat.\n\nFrais de candidature : 106 CAD.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Sherbrooke, known for its co-op system (paid work terms alternating with study). In fall 2026, a 15-credit term in engineering, computing or management costs international students CAD 15,080 (CAD 16,070 for a study term in a co-op programme). A CAD 2,000 admission scholarship is deducted from the first bachelor's term.\n\nApplication fee: CAD 106.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : exigence de langue française à l'admission selon le programme, sauf dispense",
+      "languageRequirementsEn": "French: French-language requirement at admission depending on the programme, unless exempted",
+      "applicationFee": {
+        "amount": 106,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "106 CAD",
+      "applicationFeeEn": "CAD 106",
+      "tuitionLabelFr": "11 975 – 16 070 CAD par trimestre de 15 crédits selon le domaine (internationaux, automne 2026)",
+      "tuitionLabelEn": "CAD 11,975 – 16,070 per 15-credit term by field (international, fall 2026)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "30 160 CAD/an (2 trimestres de 15 crédits sans stage (16 070 CAD par trimestre d'études en régime coopératif), automne 2026)",
+          "tuitionEn": "CAD 30,160/year (2 terms of 15 credits without co-op (CAD 16,070 per study term in co-op), fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30160,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Exigence de langue française à l'admission si le programme l'exige et sans dispense",
+            "Bourse d'admission de 2 000 CAD au 1er trimestre (baccalauréat à temps complet)",
+            "Frais d'ouverture du dossier : 106 CAD",
+            "Admission en automne ou en hiver ; régime régulier ou coopératif"
+          ],
+          "requirementsEn": [
+            "French-language requirement at admission when the programme requires it, unless exempted",
+            "CAD 2,000 admission scholarship in the first term (full-time bachelor's)",
+            "Application file fee: CAD 106",
+            "Start in fall or winter; regular or co-op"
+          ],
+          "sourceUrl": "https://www.usherbrooke.ca/admission/programme/220/baccalaureat-en-informatique/"
+        },
+        {
+          "slug": "baccalaureat-genie-informatique",
+          "nameFr": "Baccalauréat en génie informatique",
+          "nameEn": "Bachelor's in Computer Engineering (Baccalauréat en génie informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "30 160 CAD/an (2 trimestres de 15 crédits sans stage (16 070 CAD par trimestre d'études en régime coopératif), automne 2026)",
+          "tuitionEn": "CAD 30,160/year (2 terms of 15 credits without co-op (CAD 16,070 per study term in co-op), fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30160,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Exigence de langue française à l'admission si le programme l'exige et sans dispense",
+            "Bourse d'admission de 2 000 CAD au 1er trimestre (baccalauréat à temps complet)",
+            "Frais d'ouverture du dossier : 106 CAD",
+            "Admission en automne ; régime coopératif"
+          ],
+          "requirementsEn": [
+            "French-language requirement at admission when the programme requires it, unless exempted",
+            "CAD 2,000 admission scholarship in the first term (full-time bachelor's)",
+            "Application file fee: CAD 106",
+            "Fall start; co-op"
+          ],
+          "sourceUrl": "https://www.usherbrooke.ca/admission/programme/236/baccalaureat-en-genie-informatique/"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "30 160 CAD/an (2 trimestres de 15 crédits sans stage (16 070 CAD par trimestre d'études en régime coopératif), automne 2026)",
+          "tuitionEn": "CAD 30,160/year (2 terms of 15 credits without co-op (CAD 16,070 per study term in co-op), fall 2026)",
+          "tuitionAnnual": {
+            "amount": 30160,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Exigence de langue française à l'admission si le programme l'exige et sans dispense",
+            "Bourse d'admission de 2 000 CAD au 1er trimestre (baccalauréat à temps complet)",
+            "Frais d'ouverture du dossier : 106 CAD",
+            "Admission en automne ; régime régulier ou coopératif"
+          ],
+          "requirementsEn": [
+            "French-language requirement at admission when the programme requires it, unless exempted",
+            "CAD 2,000 admission scholarship in the first term (full-time bachelor's)",
+            "Application file fee: CAD 106",
+            "Fall start; regular or co-op"
+          ],
+          "sourceUrl": "https://www.usherbrooke.ca/admission/programme/215/baccalaureat-en-genie-mecanique/"
+        },
+        {
+          "slug": "maitrise-informatique",
+          "nameFr": "Maîtrise en informatique",
+          "nameEn": "Master's in Computer Science (Maîtrise en informatique)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "45 crédits",
+          "durationEn": "45 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Admission en automne, en hiver ou en été",
+            "Frais d'ouverture du dossier : 106 CAD"
+          ],
+          "requirementsEn": [
+            "Start in fall, winter or summer",
+            "Application file fee: CAD 106"
+          ],
+          "sourceUrl": "https://www.usherbrooke.ca/admission/programme/654/maitrise-en-informatique/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-uqam",
+      "countryId": "can",
+      "nameFr": "Université du Québec à Montréal (UQAM)",
+      "nameEn": "Université du Québec à Montréal (UQAM)",
+      "acronym": "UQAM",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://uqam.ca/",
+      "sourceUrl": "https://etudier.uqam.ca/frais-admission",
+      "overviewFr": "Université publique francophone du centre-ville de Montréal, membre du réseau de l'Université du Québec. Les internationaux paient les droits de base et un montant forfaitaire par crédit, qui varie selon le cycle et le programme. Si ton pays a signé une entente de mobilité étudiante avec le Québec, une exemption de ces droits supplémentaires peut être accordée par le gouvernement, dans la limite des places.\n\nFrais de candidature : 155 CAD (candidats internationaux, 2026).\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language public university in downtown Montreal, part of the Université du Québec network. International students pay base tuition plus a per-credit lump sum that varies by level and programme. If your country has a student mobility agreement with Quebec, the government may grant an exemption from these extra fees, subject to available places.\n\nApplication fee: CAD 155 (international applicants, 2026).\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français ; exigences propres à chaque programme",
+      "languageRequirementsEn": "French: programmes taught in French; requirements set by each programme",
+      "applicationFee": {
+        "amount": 155,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "155 CAD (candidats internationaux, 2026)",
+      "applicationFeeEn": "CAD 155 (international applicants, 2026)",
+      "tuitionLabelFr": "Droits de base + montant forfaitaire par crédit pour les internationaux (montant 2026-2027 à confirmer)",
+      "tuitionLabelEn": "Base tuition + per-credit lump sum for international students (2026-2027 amount to be confirmed)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique-genie-logiciel",
+          "nameFr": "Baccalauréat en informatique et génie logiciel",
+          "nameEn": "Bachelor's in Computer Science and Software Engineering (Baccalauréat en informatique et génie logiciel)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits (96 en régime coopératif)",
+          "durationEn": "90 credits (96 in co-op)",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux",
+            "Admission en automne ou en hiver ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "2026 application fee: CAD 155 for international applicants",
+            "Start in fall or winter; open-enrolment programme"
+          ],
+          "sourceUrl": "https://etudier.uqam.ca/programme?code=7316"
+        },
+        {
+          "slug": "baccalaureat-systemes-informatiques-electroniques",
+          "nameFr": "Baccalauréat en systèmes informatiques et électroniques",
+          "nameEn": "Bachelor's in Computer and Electronic Systems (Baccalauréat en systèmes informatiques et électroniques)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux",
+            "Admission en automne ou en hiver ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "2026 application fee: CAD 155 for international applicants",
+            "Start in fall or winter; open-enrolment programme"
+          ],
+          "sourceUrl": "https://etudier.uqam.ca/programme?code=6526"
+        },
+        {
+          "slug": "baccalaureat-informatique-gestion",
+          "nameFr": "Baccalauréat en informatique de gestion",
+          "nameEn": "Bachelor's in Management Information Systems (Baccalauréat en informatique de gestion)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "96 crédits",
+          "durationEn": "96 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+          ],
+          "requirementsEn": [
+            "2026 application fee: CAD 155 for international applicants"
+          ],
+          "sourceUrl": "https://etudier.uqam.ca/programme?code=7116"
+        },
+        {
+          "slug": "maitrise-informatique",
+          "nameFr": "Maîtrise en informatique",
+          "nameEn": "Master's in Computer Science (Maîtrise en informatique)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "45 crédits",
+          "durationEn": "45 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+          ],
+          "requirementsEn": [
+            "2026 application fee: CAD 155 for international applicants"
+          ],
+          "sourceUrl": "https://etudier.uqam.ca/programme?code=3792"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-uqac",
+      "countryId": "can",
+      "nameFr": "Université du Québec à Chicoutimi (UQAC)",
+      "nameEn": "Université du Québec à Chicoutimi (UQAC)",
+      "acronym": "UQAC",
+      "locationFr": "Saguenay, Québec",
+      "locationEn": "Saguenay, Quebec",
+      "websiteUrl": "https://www.uqac.ca/",
+      "sourceUrl": "https://international.uqac.ca/etudier-a-luqac/preparer-son-sejour/budget/",
+      "overviewFr": "Université francophone de Saguenay, membre du réseau de l'Université du Québec. Tes droits de scolarité annuels figurent sur ton attestation d'admission, et tu dois être inscrit à temps complet en automne et en hiver. Attention : le programme d'exemption des droits supplémentaires « selon le programme d'études et la région » n'est pas reconduit à partir de 2026-2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Saguenay, part of the Université du Québec network. Your annual tuition is shown on your letter of admission, and you must study full-time in fall and winter. Note: the extra-fee exemption programme based on the programme and region is not renewed from 2026-2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français",
+      "languageRequirementsEn": "French: programmes taught in French",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "Fixés par le gouvernement du Québec ; montant annuel indiqué sur l'attestation d'admission",
+      "tuitionLabelEn": "Set by the Quebec government; annual amount shown on the letter of admission",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Concentration possible en intelligence artificielle appliquée",
+            "Exigences en mathématiques (calcul différentiel et intégral, algèbre linéaire)"
+          ],
+          "requirementsEn": [
+            "Optional concentration in applied artificial intelligence",
+            "Mathematics prerequisites (calculus, linear algebra)"
+          ],
+          "sourceUrl": "https://programmes.uqac.ca/7833"
+        },
+        {
+          "slug": "baccalaureat-science-donnees-intelligence-affaires",
+          "nameFr": "Baccalauréat en informatique de la science des données et de l'intelligence d'affaires",
+          "nameEn": "Bachelor's in Data Science and Business Intelligence (Baccalauréat en informatique de la science des données et de l'intelligence d'affaires)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Exigence en mathématiques : algèbre linéaire et géométrie vectorielle"
+          ],
+          "requirementsEn": [
+            "Mathematics prerequisite: linear algebra and vector geometry"
+          ],
+          "sourceUrl": "https://programmes.uqac.ca/6710"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Admission en automne ou en hiver ; programme non contingenté",
+            "Jusqu'à cinq stages rémunérés"
+          ],
+          "requirementsEn": [
+            "Start in fall or winter; open-enrolment programme",
+            "Up to five paid internships"
+          ],
+          "sourceUrl": "https://programmes.uqac.ca/7947"
+        },
+        {
+          "slug": "maitrise-informatique-ia",
+          "nameFr": "Maîtrise en informatique (intelligence artificielle)",
+          "nameEn": "Master's in Computer Science – Artificial Intelligence (Maîtrise en informatique (intelligence artificielle))",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "45 crédits",
+          "durationEn": "45 credits",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Baccalauréat en informatique (ou domaine proche), moyenne d'au moins 3,0 sur 4,3",
+            "Admission en automne, en hiver ou en été"
+          ],
+          "requirementsEn": [
+            "Bachelor's in computer science (or related field), average of at least 3.0/4.3",
+            "Start in fall, winter or summer"
+          ],
+          "sourceUrl": "https://programmes.uqac.ca/2139"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-moncton",
+      "countryId": "can",
+      "nameFr": "Université de Moncton",
+      "nameEn": "Université de Moncton",
+      "acronym": "UMoncton",
+      "locationFr": "Moncton, Nouveau-Brunswick",
+      "locationEn": "Moncton, New Brunswick",
+      "websiteUrl": "https://www.umoncton.ca/",
+      "sourceUrl": "https://www.umoncton.ca/couts-annee-universitaire",
+      "overviewFr": "Plus grande université francophone hors Québec, avec des campus à Moncton, Edmundston et Shippagan (Nouveau-Brunswick). En 2026-2027, les droits de scolarité d'un baccalauréat à temps plein sont de 15 761 CAD pour les internationaux. Elle participe au programme pilote fédéral pour les étudiants francophones en situation minoritaire (PPECFSM), une voie de permis d'études propre aux établissements francophones hors Québec.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Largest French-language university outside Quebec, with campuses in Moncton, Edmundston and Shippagan, New Brunswick. In 2026-2027, full-time bachelor's tuition is CAD 15,761 for international students. It takes part in the federal Francophone Minority Communities Student Pilot, a study permit route for French-language institutions outside Quebec.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français (au moins 6 crédits de français dans chaque programme)",
+      "languageRequirementsEn": "French: programmes taught in French (at least 6 credits of French in every programme)",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "15 761 CAD/an en 1er cycle (internationaux, 2026-2027) ; ≈ 17 728 – 17 839 CAD avec frais et assurances",
+      "tuitionLabelEn": "CAD 15,761/year for undergraduate (international, 2026-2027); ≈ CAD 17,728 – 17,839 with fees and insurance",
+      "intakePeriods": [
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique-appliquee",
+          "nameFr": "Baccalauréat en informatique appliquée",
+          "nameEn": "Bachelor's in Applied Computer Science (Baccalauréat en informatique appliquée)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
+          "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 15761,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Quatre ans à Moncton (les premières années aussi à Edmundston ou Shippagan)"
+          ],
+          "requirementsEn": [
+            "Four years in Moncton (first years also in Edmundston or Shippagan)"
+          ],
+          "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25207.pdf"
+        },
+        {
+          "slug": "baa-finance",
+          "nameFr": "Baccalauréat en administration des affaires (finance)",
+          "nameEn": "Bachelor of Business Administration – Finance (Baccalauréat en administration des affaires (finance))",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
+          "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 15761,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Version coopérative aussi proposée"
+          ],
+          "requirementsEn": [
+            "Co-op version also offered"
+          ],
+          "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25234.pdf"
+        },
+        {
+          "slug": "bing-genie-mecanique",
+          "nameFr": "Baccalauréat en ingénierie (génie mécanique)",
+          "nameEn": "Bachelor of Engineering – Mechanical (Baccalauréat en ingénierie (génie mécanique))",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 15761,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Version coopérative aussi proposée"
+          ],
+          "requirementsEn": [
+            "Co-op version also offered"
+          ],
+          "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25194.pdf"
+        },
+        {
+          "slug": "bing-genie-civil",
+          "nameFr": "Baccalauréat en ingénierie (génie civil)",
+          "nameEn": "Bachelor of Engineering – Civil (Baccalauréat en ingénierie (génie civil))",
+          "level": "Bachelor",
+          "fieldId": "d05",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 15761,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Version coopérative aussi proposée"
+          ],
+          "requirementsEn": [
+            "Co-op version also offered"
+          ],
+          "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25192.pdf"
+        }
+      ],
+      "institutionType": "universite_publique"
+    }
+  ]
+}

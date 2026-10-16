@@ -20,8 +20,10 @@ import {
   programNameKey,
   schoolNameKey,
 } from './catalog-dedupe';
+import { mockCatalog } from '../../common/data/mock-catalog';
 import { PARTNER_INSTITUTION_SEEDS } from './data/partner-schools.seed';
 import { IGENSIA_SCHOOLS, parseIgensiaSources } from './igensia-import';
+import { type NaSource, naProgramId } from './north-america-import';
 import {
   formatLevel,
   normalizeFormationName,
@@ -40,8 +42,8 @@ import {
 
 /**
  * TEST-GARDE du catalogue : sur TOUS les seeds et imports (automne OMNES,
- * printemps OMNES, IGENSIA, seed des écoles partenaires, liste blanche
- * d'import-partners, catalogue unique), aucune paire de formations d'une même
+ * printemps OMNES, IGENSIA, Amérique du Nord, seed des écoles partenaires,
+ * liste blanche d'import-partners, catalogue unique, catalogue de démo), aucune paire de formations d'une même
  * école n'a le même nom normalisé et le même niveau, et aucune école n'est en
  * double par son nom normalisé.
  *
@@ -68,6 +70,9 @@ function fallRows(): GridRow[] {
 }
 
 const FALL = fallRows();
+const NORTH_AMERICA = JSON.parse(
+  fs.readFileSync(path.join(DATA, 'amerique-du-nord-2027.json'), 'utf8'),
+) as NaSource;
 const SPRING = parseOmnesSpringCsv(fs.readFileSync(path.join(DATA, 'omnes_spring_27.csv'), 'utf8')).rows;
 
 function omnesRecords(rows: readonly GridRow[], source: string, resolve: boolean): NamedRecord[] {
@@ -137,6 +142,14 @@ describe('catalogue — aucune formation en double dans une école', () => {
     ).toEqual([]);
   });
 
+  it('Amérique du Nord : aucune formation en double', () => {
+    const records = NORTH_AMERICA.institutions.flatMap((i) =>
+      i.programs.map((p) => ({ school: i.id, id: naProgramId(i.id, p.slug), name: p.nameFr, level: p.level })),
+    );
+    expect(records.length).toBeGreaterThan(0);
+    expect(findProgramDuplicates(records)).toEqual([]);
+  });
+
   it('seed des écoles partenaires et catalogue unique : aucune formation en double', () => {
     const partner = PARTNER_INSTITUTION_SEEDS.flatMap((i) =>
       i.programs.map((p) => ({ school: i.id, id: p.id, name: p.nameFr, level: p.levelFr })),
@@ -175,6 +188,17 @@ describe('catalogue — aucune école en double', () => {
   for (const s of PARTNER_INSTITUTION_SEEDS) schools.set(s.id, s.nameFr);
   for (const s of TARGETS) schools.set(s.id, s.nameFr);
   for (const s of catalogueUniqueInstitutions) schools.set(s.id, s.nameFr);
+  // Les deux noms d'un établissement (« Université McGill » / « McGill
+  // University ») : aucun ne doit rejoindre une école déjà connue. Le nom
+  // anglais n'est compté que s'il diffère du français.
+  const both = (id: string, fr: string, en: string) => {
+    schools.set(id, fr);
+    if (schoolNameKey(en) !== schoolNameKey(fr)) schools.set(`${id}#en`, en);
+  };
+  for (const s of mockCatalog.institutions) both(s.id, s.name.fr, s.name.en);
+  // Sans le sigle final (« … (UQAM) ») : c'est la clé d'homonymie de l'import.
+  const bare = (n: string) => n.replace(/\s*\([^()]*\)\s*$/, '');
+  for (const s of NORTH_AMERICA.institutions) both(s.id, bare(s.nameFr), bare(s.nameEn));
 
   it('pas deux ids pour un même nom normalisé', () => {
     const byKey = new Map<string, string[]>();
@@ -183,6 +207,11 @@ describe('catalogue — aucune école en double', () => {
       byKey.set(key, [...(byKey.get(key) ?? []), id]);
     }
     expect([...byKey.entries()].filter(([, ids]) => ids.length > 1)).toEqual([]);
+  });
+
+  it('Amérique du Nord : l’Université d’Ottawa reste la seule fiche `uottawa`', () => {
+    const keys = [...schools.entries()].filter(([, n]) => schoolNameKey(n).includes('ottawa'));
+    expect(keys.map(([id]) => id.replace(/#en$/, ''))).toEqual(['uottawa', 'uottawa']);
   });
 
   it('IGENSIA : quatre écoles distinctes d’ESA Casablanca, pas d’école « IGENSIA » seule', () => {

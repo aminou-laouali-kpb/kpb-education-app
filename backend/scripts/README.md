@@ -74,6 +74,18 @@ on the school. Re-running after `--apply` writes nothing. Sources and the
 extraction tool (`extract-catalog-sources.py`) are described in
 `docs/runbook-rentrees-partenaires.md`.
 
+## 6b) Catalogue Amérique du Nord (non-partner universities, create-only)
+
+```bash
+npm --prefix backend run import:north-america               # simulation
+npm --prefix backend run import:north-america -- --apply    # 20 universities, 97 programs
+```
+
+Source `scripts/data/amerique-du-nord-2027.json` (provenance:
+`amerique-du-nord-2027.sources.md`). Creates `na-ca-*` / `na-us-*` rows with
+`isPartner: false`; never rewrites an existing row; refuses a namesake already
+in the database. Runbook: `docs/runbook-catalogue-amerique-du-nord.md`.
+
 ## Seed safety: create-only, production guard
 
 `seed:omnes` and `seed:partners` are **create-only** and never delete:

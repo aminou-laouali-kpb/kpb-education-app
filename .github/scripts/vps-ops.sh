@@ -900,6 +900,30 @@ case "$ACTION" in
     fi
     ;;
 
+  import-north-america)
+    # Crée des universités NON partenaires (`isPartner: false`) du Canada et
+    # des États-Unis et leurs formations phares, depuis
+    # `backend/scripts/data/amerique-du-nord-2027.json` (provenance fait par
+    # fait : `amerique-du-nord-2027.sources.md` ; sélection et critères :
+    # docs/catalogue-amerique-du-nord.md).
+    #
+    # CRÉATION SEULE : une ligne déjà en base n'est jamais réécrite (seuls les
+    # ids des formations manquantes sont ajoutés à `programIds`), un homonyme
+    # déjà en base sous un autre id (Université d'Ottawa, `uottawa`) bloque la
+    # création. Rejouable : « 0 écriture » une fois appliqué. Runbook :
+    # docs/runbook-catalogue-amerique-du-nord.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:north-america
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:north-america -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   backfill-tuition-eur)
     # Renseigne `Program.tuitionMinEur` depuis le libellé `tuitionFr`.
     #
