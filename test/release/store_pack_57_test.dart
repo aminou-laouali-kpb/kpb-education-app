@@ -545,7 +545,7 @@ void main() {
       const required = <String, List<String>>{
         'Appareil-1': ['3G', '360', '2 Go'],
         'Texte-1': ['1.0'],
-        'Texte-2': ['1.5', '1,3'],
+        'Texte-2': ['1.5', '1,5'],
         'Lecteur-1': ['Onboarding'],
         'Lecteur-3': ['test'],
         'Lecteur-7': ['Détail'],
@@ -596,8 +596,8 @@ void main() {
     });
 
     test('la fiche dit ce que le code fait vraiment', () {
-      // Le plafond de texte agrandi : 1,3 (main.dart).
-      expect(_read('lib/main.dart'), contains('maxScaleFactor: 1.3'));
+      // Le plafond de texte agrandi : 1,5 (main.dart, chantier L).
+      expect(_read('lib/main.dart'), contains('maxScaleFactor: 1.5'));
       // L'app tuée passe par `getInitialMessage`.
       expect(
         _read('lib/app/core/services/push_service.dart'),

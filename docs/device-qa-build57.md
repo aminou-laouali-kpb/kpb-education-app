@@ -34,8 +34,8 @@
 >   d'accès bridé ; iOS, *Network Link Conditioner* → « 3G ». Noter le profil utilisé.
 > - **Taille de texte** : réglage système à **1.0** (par défaut) puis à **1.5** (Android : Taille de
 >   police au maximum utile ; iOS : Taille du texte, sans les tailles d'accessibilité les plus
->   grandes, puis avec). **L'app plafonne l'agrandissement à 1,3** (`maxScaleFactor: 1.3`,
->   `lib/main.dart`) : à 1.5, l'attendu est le rendu à 1,3, sans troncature.
+>   grandes, puis avec). **L'app plafonne l'agrandissement à 1,5** (`maxScaleFactor: 1.5`,
+>   `lib/main.dart`, relevé de 1,3 au chantier L) : à 1.5, l'attendu est le rendu à 1,5, sans troncature.
 > - **Lecteurs d'écran** : TalkBack (Android), VoiceOver (iOS).
 >
 > **Langue.** La build soumise est en français seulement (`kShippedLocale = 'fr'`,
@@ -68,7 +68,7 @@
 | # | À vérifier | Attendu | iPhone | Android |
 |---|---|---|---|---|
 | Texte-1 | **1.0** : onboarding, accueil, liste et fiche des bourses, « Mes suivis », notifications | Référence : tout est lisible, rien n'est tronqué | ☐ | ☐ |
-| Texte-2 | **1.5** : onboarding (les trois étapes, et l'onboarding V2 en fenêtre de recette) | Rendu plafonné à 1,3 ; aucun bouton sorti de l'écran ; les erreurs s'écrivent sous le champ, entières | ☐ | ☐ |
+| Texte-2 | **1.5** : onboarding (les trois étapes, et l'onboarding V2 en fenêtre de recette) | Rendu à 1,5 (plafond de l'app) ; aucun bouton sorti de l'écran ; les erreurs s'écrivent sous le champ, entières | ☐ | ☐ |
 | Texte-3 | **1.5** : accueil « Ta prochaine étape » | Titre, sous-titre et bouton d'action entiers ; la carte grandit au lieu de couper | ☐ | ☐ |
 | Texte-4 | **1.5** : liste et fiche des bourses, feuille « Filtrer », feuille de tri | Ligne de statut et « Clôture proche · J-n » entières ; feuilles défilables jusqu'au bouton de validation | ☐ | ☐ |
 | Texte-5 | **1.5** : « Mes suivis », écran des notifications, feuille d'explication avant la demande d'autorisation | Aucun texte coupé ; bouton « Activer » ou équivalent atteignable | ☐ | ☐ |
