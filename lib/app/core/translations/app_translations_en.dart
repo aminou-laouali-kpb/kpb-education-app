@@ -1370,6 +1370,8 @@ const Map<String, String> appTranslationsEn = {
   // --- KPB-89 batch ---
   'country_study_in': 'Study in @country',
   'program_available_on_campuses': 'Available on @count campuses',
+  'program_available_on_one_campus': 'Available on 1 campus',
+  'program_recognition': 'Degree recognition',
   'quiz_title_with_country': 'Quiz · @country',
   'quiz_question_progress': 'Question @current/@total',
   'quiz_enrollment_with_program': 'Enrollment — @program',
@@ -2193,6 +2195,12 @@ const Map<String, String> appTranslationsEn = {
   'parent_create_invite': 'Create an invite code',
   'salon_rsvp_error': 'Could not update your RSVP.',
   'intake_label': 'Intake',
+  'offering_intake_spring_month': 'Spring intake · @month @year',
+  'offering_intake_spring_year': 'Spring intake · @year',
+  'offering_intake_fall_month': '@month @year intake',
+  'offering_intake_fall_year': 'Fall @year intake',
+  'offering_rhythm_alternance': 'Work-study',
+  'offering_rhythm_initiale': 'Full-time study',
   'turnaround_label': 'Turnaround',
   'home_find_school_desc':
       'Find your private school in France based on your budget and goals. Chat instantly!',

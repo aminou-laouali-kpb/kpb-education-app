@@ -1517,6 +1517,8 @@ const Map<String, String> appTranslationsFr = {
   // --- KPB-89 batch ---
   'country_study_in': 'Étudier en @country',
   'program_available_on_campuses': 'Disponible sur @count campus',
+  'program_available_on_one_campus': 'Disponible sur 1 campus',
+  'program_recognition': 'Reconnaissance du diplôme',
   'quiz_title_with_country': 'Quiz · @country',
   'quiz_question_progress': 'Question @current/@total',
   'quiz_enrollment_with_program': 'Inscription — @program',
@@ -2413,6 +2415,12 @@ const Map<String, String> appTranslationsFr = {
   'parent_create_invite': 'Créer un code d\'invitation',
   'salon_rsvp_error': 'Impossible de mettre à jour l\'inscription.',
   'intake_label': 'Rentrée',
+  'offering_intake_spring_month': 'Rentrée décalée · @month @year',
+  'offering_intake_spring_year': 'Rentrée décalée · @year',
+  'offering_intake_fall_month': 'Rentrée @month @year',
+  'offering_intake_fall_year': 'Rentrée d\'automne @year',
+  'offering_rhythm_alternance': 'Alternance',
+  'offering_rhythm_initiale': 'Formation initiale',
   'turnaround_label': 'Délai',
   'home_find_school_desc':
       'Trouve ton école privée en France selon ton budget et tes objectifs. Discute instantanément !',

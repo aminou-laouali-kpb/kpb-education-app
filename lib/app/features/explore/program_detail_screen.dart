@@ -21,6 +21,7 @@ import '../cases/case_tunnel_flow.dart';
 import '../search/match_explanation_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
+import '../../core/utils/intake_label.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +84,14 @@ class ProgramDetailScreen extends StatelessWidget {
 
     final description =
         institution != null ? controller.resolve(institution.overview) : '';
+    // Une formation peut avoir deux offres sur le même campus (rentrée
+    // d'automne et rentrée décalée) : on compte les CAMPUS, et on range les
+    // offres par campus puis par date.
+    final offerings = sortedOfferings(program.campusOfferings);
+    final campusCount = distinctCampusCount(offerings);
+    final recognition = program.recognition != null
+        ? controller.resolve(program.recognition!)
+        : '';
     final fit = controller.programFit(program);
 
     final applicationSteps = [
@@ -177,21 +186,36 @@ class ProgramDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (program.campusOfferings.isNotEmpty) ...[
+                  if (recognition.isNotEmpty) ...[
                     const SizedBox(height: 13),
                     _Section(
-                      title: 'program_available_on_campuses'.trParams(
-                          {'count': '${program.campusOfferings.length}'}),
+                      title: 'program_recognition'.tr,
+                      icon: Icons.workspace_premium_outlined,
+                      child: Text(
+                        recognition,
+                        style: const TextStyle(
+                          fontSize: KpbFontSize.sm,
+                          height: 1.55,
+                          color: KpbColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (offerings.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: campusCount == 1
+                          ? 'program_available_on_one_campus'.tr
+                          : 'program_available_on_campuses'
+                              .trParams({'count': '$campusCount'}),
                       icon: Icons.location_city_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (var i = 0;
-                              i < program.campusOfferings.length;
-                              i++) ...[
+                          for (var i = 0; i < offerings.length; i++) ...[
                             if (i > 0) const Divider(height: 18),
                             _CampusOfferingRow(
-                              offering: program.campusOfferings[i],
+                              offering: offerings[i],
                               localeCode: controller.localeCode,
                             ),
                           ],
@@ -694,7 +718,12 @@ class _CampusOfferingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final intake = offering.intake;
+    // « Rentrée décalée · mars 2027 · Alternance » : la rentrée en toutes
+    // lettres, puis le rythme quand la source le donne.
+    final details = [
+      offeringIntakeLabel(offering, localeCode),
+      offeringRhythmLabel(offering),
+    ].whereType<String>().join(' · ');
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -713,9 +742,9 @@ class _CampusOfferingRow extends StatelessWidget {
                   color: KpbColors.brandNavy,
                 ),
               ),
-              if (intake != null && intake.isNotEmpty)
+              if (details.isNotEmpty)
                 Text(
-                  '${'intake_label'.tr} $intake',
+                  details,
                   style:
                       const TextStyle(fontSize: 11, color: KpbColors.textMuted),
                 ),

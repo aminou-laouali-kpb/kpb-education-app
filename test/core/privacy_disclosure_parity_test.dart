@@ -138,6 +138,12 @@ const _nonProcessorSuffixes = <String>[
   // vérifier une fiche, jamais un destinataire de ses données.
   'essec.edu',
   'uottawa.ca',
+  // Écoles du groupe IGENSIA Education (chantier E/J) : le catalogue cite
+  // leur page de candidature en ligne (`websiteUrl`, `sourceUrl`). Des liens
+  // que l'étudiant OUVRE, jamais des destinataires de ses données.
+  'igensia-school-of-business.fr',
+  'igensiatech.fr',
+  'igensia-rh.com',
   // Portails de l'État français dont vient le catalogue « Études en France ».
   // data.enseignementsup-recherche.gouv.fr publie les jeux ouverts que la
   // collecte interroge — depuis un poste d'exploitation, jamais depuis
