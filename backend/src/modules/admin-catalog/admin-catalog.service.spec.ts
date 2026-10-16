@@ -811,6 +811,54 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
         }),
       ).rejects.toThrow(/campusOfferings\[0\]\.tuitionUpfront/);
     });
+
+    // Chantier E/J : une retouche dans l'admin ne doit pas effacer la rentrée
+    // décalée — l'app en tire son libellé, et l'import de printemps reconnaît
+    // une offre déjà là à sa session.
+    it('keeps a known session and rhythm, drops an unknown one', async () => {
+      const { service, creates } = makeService();
+      await service.createProgram({
+        ...required,
+        campusOfferings: [
+          { campus: 'Paris', intake: '01/03/2027', session: 'spring', rhythm: 'alternance' },
+          { campus: 'Lyon', intake: '01/10/2026', session: 'hiver', rhythm: 'mi-temps' },
+        ],
+      });
+      expect(creates[0].campusOfferings).toEqual([
+        {
+          campus: 'Paris',
+          tuitionUpfront: null,
+          tuitionInstallments: null,
+          intake: '01/03/2027',
+          session: 'spring',
+          rhythm: 'alternance',
+        },
+        {
+          campus: 'Lyon',
+          tuitionUpfront: null,
+          tuitionInstallments: null,
+          intake: '01/10/2026',
+        },
+      ]);
+    });
+  });
+
+  describe('recognition', () => {
+    it('persists the recognition labels, EN falling back to FR', async () => {
+      const { service, creates } = makeService();
+      await service.createProgram({ ...required, recognitionFr: ' Titre RNCP ' });
+      expect(creates[0].recognitionFr).toBe('Titre RNCP');
+      expect(creates[0].recognitionEn).toBe('Titre RNCP');
+    });
+
+    it('leaves recognition untouched on an update that omits it, clears it on null', async () => {
+      const { service, updates } = makeService();
+      await service.updateProgram('prog-1', { nameFr: 'Bachelor' });
+      expect('recognitionFr' in updates[0].data).toBe(false);
+      await service.updateProgram('prog-1', { recognitionFr: null, recognitionEn: '' });
+      expect(updates[1].data.recognitionFr).toBeNull();
+      expect(updates[1].data.recognitionEn).toBeNull();
+    });
   });
 
   // L'import « Études en France » se publie par UNE porte : l'écran « Publication

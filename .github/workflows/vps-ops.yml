@@ -76,6 +76,8 @@ on:
           - publish-catalog
           - recreate-clamav
           - import-partners
+          - import-omnes-spring
+          - import-igensia
           - backfill-tuition-eur
           - fix-mundiapolis-levels
           - import-universiapolis
@@ -87,7 +89,7 @@ on:
           - eef-reconcile
           - reviews-purge-orphans
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, import-omnes-spring, import-igensia, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true

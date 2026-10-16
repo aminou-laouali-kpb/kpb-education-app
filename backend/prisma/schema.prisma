@@ -1119,8 +1119,17 @@ model Program {
   // per-campus price/intake live here instead of duplicating the row.
   // Null for single-campus programs. Shape:
   // [{ campus: string, tuitionUpfront: number|null,
-  //    tuitionInstallments: number|null, intake: string|null }]
+  //    tuitionInstallments: number|null, intake: string|null,
+  //    session?: 'fall'|'spring', rhythm?: 'initiale'|'alternance' }]
+  // Une même formation peut avoir plusieurs offres sur un même campus (rentrée
+  // d'automne et rentrée décalée), chacune à son prix — voir
+  // src/modules/catalog/campus-offerings.ts.
   campusOfferings      Json?
+  // Reconnaissance du diplôme, telle que la grille de l'école la publie
+  // (« Titre RNCP », « Grade de licence », « Diplôme visé (VISA) »). NULL =
+  // non renseignée (migration program_recognition, chantier E/J).
+  recognitionFr        String?
+  recognitionEn        String?
   // ── Match scoring inputs (Phase 0 / P0-D, kit matching_algorithm.md) ──────
   // Nullable on purpose: the scoring service treats a missing value as a
   // neutral 0.5 factor and flags the match `isEstimate`, so no backfill is

@@ -201,9 +201,9 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     languageSectionEn:
       'DELF/DALF/TCF B2 for French tracks. IELTS 6.5+ or TOEFL iBT 85+ for English tracks.',
     partnerSchoolsFr:
-      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub), ICN, Schiller Paris, IGENSIA — 747 programmes disponibles dans l\'app.',
+      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub, HEIP), ICN, Schiller Paris, IGENSIA Education (IGENSIA School of Business, IGENSIA Tech, IGENSIA RH, American Business College). Certaines formations ouvrent aussi en rentrée décalée, de janvier à mars.',
     partnerSchoolsEn:
-      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub), ICN, Schiller Paris, IGENSIA — 747 programs in-app.',
+      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub, HEIP), ICN, Schiller Paris, IGENSIA Education (IGENSIA School of Business, IGENSIA Tech, IGENSIA RH, American Business College). Some programmes also offer a January–March intake.',
     scholarshipsSectionFr:
       'Bourses partielles possibles via partenaires et dispositifs locaux. KPB t\'aide à identifier les options.',
     scholarshipsSectionEn:

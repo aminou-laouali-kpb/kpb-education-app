@@ -51,6 +51,21 @@ npm --prefix backend run seed:omnes             # 292 formations, 5 schools
 npm --prefix backend run seed:partners          # 76 programmes, 7 schools
 ```
 
+## 6) Rentrée décalée OMNES + groupe IGENSIA Education (additifs)
+
+```bash
+npm --prefix backend run import:omnes-spring             # simulation
+npm --prefix backend run import:omnes-spring -- --apply  # 37 formations créées, 90 complétées, 286 offres
+npm --prefix backend run import:igensia                  # simulation
+npm --prefix backend run import:igensia -- --apply       # 4 écoles, 22 formations, 34 offres
+```
+
+Both only ADD: missing offerings (campus + intake) appended to
+`campusOfferings`, missing programs created, intake dates / program ids pushed
+on the school. Re-running after `--apply` writes nothing. Sources and the
+extraction tool (`extract-catalog-sources.py`) are described in
+`docs/runbook-rentrees-partenaires.md`.
+
 ## Seed safety: create-only, production guard
 
 `seed:omnes` and `seed:partners` are **create-only** and never delete:

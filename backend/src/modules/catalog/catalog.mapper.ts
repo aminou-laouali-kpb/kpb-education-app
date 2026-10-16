@@ -152,7 +152,15 @@ export function mapProgram(row: Program) {
     language: localized(row.languageFr, row.languageEn),
     requirements: localizedList(row.requirementsFr, row.requirementsEn),
     // Multi-campus formations (OMNES): per-campus price/intake. Null otherwise.
+    // Une offre peut porter `session` ('fall' | 'spring') et `rhythm`
+    // ('initiale' | 'alternance') — voir campus-offerings.ts.
     campusOfferings: row.campusOfferings ?? null,
+    // Reconnaissance du diplôme (« Titre RNCP »…). Nulle quand la fiche n'en
+    // dit rien : l'app n'affiche alors aucune ligne.
+    recognition:
+      row.recognitionFr || row.recognitionEn
+        ? localized(row.recognitionFr, row.recognitionEn)
+        : null,
     // Match-scoring inputs (P0-D). Nullable — missing values score as neutral
     // estimates server-side; exposed here so clients can show data provenance.
     minGpaRequired: row.minGpaRequired,
@@ -172,6 +180,8 @@ export function mapProgram(row: Program) {
     languageEn: row.languageEn,
     requirementsFr: row.requirementsFr,
     requirementsEn: row.requirementsEn,
+    recognitionFr: row.recognitionFr,
+    recognitionEn: row.recognitionEn,
     lastVerifiedAt: row.lastVerifiedAt,
     sourceUrl: row.sourceUrl,
     verifiedById: row.verifiedById,

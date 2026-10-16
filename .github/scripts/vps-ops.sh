@@ -788,6 +788,59 @@ case "$ACTION" in
     fi
     ;;
 
+  import-omnes-spring)
+    # Ajoute la rentrée décalée OMNES (grille « SPRING 27 », janvier – mars
+    # 2027 : ECE, ESCE, INSEEC) depuis `backend/scripts/data/omnes_spring_27.csv`.
+    #
+    # ADDITIF : une formation déjà en base reçoit ses offres de printemps
+    # manquantes (campus + date, rythme, prix propre à l'offre) à la FIN de
+    # `campusOfferings` ; ses offres d'automne et le reste de sa fiche ne sont
+    # pas touchés. Une formation inconnue est créée aux conventions de
+    # `seed:omnes`. L'école reçoit ses nouvelles dates et formations (`push`).
+    #
+    # Chaque fiche n'est réécrite que si elle n'a pas bougé depuis la lecture
+    # (`WHERE updatedAt = …`) : une retouche faite dans l'admin pendant
+    # l'opération est gardée, et la relance la complète. Rejouer après
+    # application : « 0 écriture ».
+    #
+    # Garde de production : la première application passe (aucune offre de
+    # printemps en base) ; une relance qui aurait encore quelque chose à écrire
+    # est refusée sans KPB_ALLOW_PRODUCTION_SEED=1 — c'est voulu, on regarde
+    # d'abord pourquoi. Runbook : docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:omnes-spring
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:omnes-spring -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
+  import-igensia)
+    # Crée les écoles du groupe IGENSIA Education (IGENSIA School of Business,
+    # IGENSIA Tech, IGENSIA RH, American Business College) et leurs formations,
+    # depuis `backend/scripts/data/igensia_2027.csv` et `abc_2027.csv`.
+    #
+    # Même mécanique qu'`import-omnes-spring` : une école déjà en base n'est
+    # jamais réécrite (seules ses rentrées et formations manquantes sont
+    # ajoutées), une formation déjà en base ne reçoit que ses offres
+    # manquantes. ESA Casablanca (`partner-esa-casa`) n'est pas touchée.
+    # Rejouable : « 0 écriture » une fois appliqué.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:igensia
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:igensia -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   backfill-tuition-eur)
     # Renseigne `Program.tuitionMinEur` depuis le libellé `tuitionFr`.
     #

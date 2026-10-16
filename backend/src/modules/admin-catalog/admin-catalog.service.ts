@@ -32,6 +32,12 @@ import {
   EEF_PROGRAM_ID_PREFIX,
 } from '../../common/eef-provenance';
 import type { AdminSessionUser } from '../auth/auth.service';
+import {
+  OFFERING_RHYTHMS,
+  OFFERING_SESSIONS,
+  type OfferingRhythm,
+  type OfferingSession,
+} from '../catalog/campus-offerings';
 import { programSearchText } from '../etudes-en-france/catalog/eef-search-text';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -282,6 +288,20 @@ export class AdminCatalogService {
     return parsed;
   }
 
+  /// Texte facultatif : absent = inchangé, `null` ou chaîne vide = effacé.
+  private pickNullableStr(
+    input: Record<string, unknown>,
+    key: string,
+  ): string | null | undefined {
+    const v = input[key];
+    if (v === undefined) return undefined;
+    if (v === null) return null;
+    if (typeof v !== 'string') {
+      throw new BadRequestException(`Field "${key}" must be a string or null.`);
+    }
+    return v.trim() || null;
+  }
+
   private pickStrArr(
     input: Record<string, unknown>,
     key: string,
@@ -302,8 +322,14 @@ export class AdminCatalogService {
   }
 
   /// Multi-campus offerings. Shape is pinned by the `Program.campusOfferings`
-  /// schema comment: [{ campus, tuitionUpfront, tuitionInstallments, intake }].
-  /// Unknown keys are dropped so a malformed payload can't reshape the column.
+  /// schema comment: [{ campus, tuitionUpfront, tuitionInstallments, intake,
+  /// session?, rhythm? }]. Unknown keys are dropped so a malformed payload
+  /// can't reshape the column.
+  ///
+  /// `session` et `rhythm` sont GARDÉS quand ils portent une valeur connue :
+  /// les perdre à la première retouche dans l'admin effacerait le libellé
+  /// « Rentrée décalée » de l'app, et l'import de printemps (qui reconnaît une
+  /// offre déjà là à sa session) la croirait absente.
   private pickCampusOfferings(
     input: Record<string, unknown>,
     key: string,
@@ -334,6 +360,12 @@ export class AdminCatalogService {
           `${key}[${i}].tuitionInstallments`,
         ),
         intake: this.nonEmptyStr(row.intake) ?? null,
+        ...(OFFERING_SESSIONS.includes(row.session as OfferingSession)
+          ? { session: row.session as OfferingSession }
+          : {}),
+        ...(OFFERING_RHYTHMS.includes(row.rhythm as OfferingRhythm)
+          ? { rhythm: row.rhythm as OfferingRhythm }
+          : {}),
       };
     }) as Prisma.InputJsonValue;
   }
@@ -788,6 +820,11 @@ export class AdminCatalogService {
       languageEn: this.str(input.languageEn) ?? this.str(input.languageFr) ?? '',
       requirementsFr: this.strArr(input.requirementsFr) ?? [],
       requirementsEn: this.strArr(input.requirementsEn) ?? [],
+      recognitionFr: this.nonEmptyStr(input.recognitionFr) ?? null,
+      recognitionEn:
+        this.nonEmptyStr(input.recognitionEn) ??
+        this.nonEmptyStr(input.recognitionFr) ??
+        null,
       // Match-scoring inputs. Absent stays absent (the scorer then treats the
       // factor as neutral and flags the match `isEstimate`).
       minGpaRequired: this.pickNumOrNull(input, 'minGpaRequired'),
@@ -832,6 +869,8 @@ export class AdminCatalogService {
       languageEn: this.str(input.languageEn),
       requirementsFr: this.strArr(input.requirementsFr),
       requirementsEn: this.strArr(input.requirementsEn),
+      recognitionFr: this.pickNullableStr(input, 'recognitionFr'),
+      recognitionEn: this.pickNullableStr(input, 'recognitionEn'),
       minGpaRequired: this.pickNumOrNull(input, 'minGpaRequired'),
       tuitionMinEur: this.pickNumOrNull(input, 'tuitionMinEur', { int: true }),
       applicationDeadline: this.pickDateOrNull(input, 'applicationDeadline'),

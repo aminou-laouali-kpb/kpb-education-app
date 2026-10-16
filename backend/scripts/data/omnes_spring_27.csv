@@ -1,0 +1,287 @@
+Ecole / School,Type_Programme / Type of program,Niveau_Etude_ / Level of studies,Niveau Admission / Admission Level,Langue / Language,Rythme / Rythm,Campus,NOM / NAME,Payment Comptant / Payment Upfront,Paiement Echelonné / With installments (2),Date_de_Rentrée / Intake Date
+ECE,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,ECE - Paris - B1 - Cybersécurité et réseaux,6690,7025,01/03/2027
+ECE,Licence,Bac+3,Bachelor 1ère année,EN,CLA,Paris,ECE - Paris - B1 - Artificial Intelligence - 100% English,6690,7025,01/03/2027
+ECE,Licence,Bac+3,Bachelor 1ère année,FR,CLA,Paris,ECE - Paris - B1 - Intelligence Artificielle,6690,7025,01/03/2027
+ECE,Licence,Bac+3,Bachelor 3ème année,EN,CLA,Paris,ECE - Paris - B3 - Artificial Intelligence -100% English,10090,10595,04/01/2027
+ECE,Licence,Bac+3,Bachelor 3ème année,FR,CLA,Paris,ECE - Paris - B3 - Intelligence Artificielle,10090,10595,04/01/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,EN,CLA,Paris,ECE - MSc CGE Paris - M1 - Artificial Intelligence (100% English),12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,EN,CLA,Paris,ECE - MSc CGE - Paris - M1 - Cybersecurity Manager - 100% English,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,EN,CLA,Paris,ECE - MSc CGE - Paris - M1 - Data Management & AI - 100% English,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,MX,CLA,Paris,ECE - MSc CGE - Paris - M1 - Data Management & AI -  Mixte Français / Anglais,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,MX,CLA,Paris,ECE - MSc CGE - Paris - M1 - Intelligence Artificielle - Mixte Français / Anglais,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 1ère année,MX,CLA,Paris,ECE - MSc - Paris - M1 - Manager de la Cybersécurité - Mixte Français / Anglais,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,EN,CLA,Paris,ECE - MSc CGE - Paris - M2 - Artificial Intelligence - 100% English,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,EN,CLA,Paris,ECE - MSc CGE - Paris - M2 - Cybersecurity Manager - 100% English,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,EN,CLA,Paris,ECE - MSc CGE - Paris - M2 - Data Management & AI - 100% English,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,MX,CLA,Paris,ECE - MSc CGE - Paris - M2 - Data Management,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,MX,CLA,Paris,ECE - MSc CGE - Paris - M2 - Intelligence Artificielle,12990,13640,01/03/2027
+ECE,MScCGE,Bac+5,MSc 2ème année,MX,CLA,Paris,ECE - MSc CGE - Paris - M2 - Manager de la Cybersécurité,12990,13640,01/03/2027
+ECE,PGE,Bac+5,Programme Grande Ecole L1 Prépa ingénieur,FR,CLA,Paris,ECE - PGE - Paris - Ing1 - Première année,8690,9125,01/03/2027
+ESCE,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,ESCE - Bachelor - Paris - B1 - 1ère année ESCE rentrée décalée,7650,8033,15/02/2027
+ESCE,Bachelor,Bac+3,Bachelor 3ème année,FR,CLA,Paris,ESCE - Bachelor - Paris - B3 - Management des Organisations,7690,8075,01/02/2027
+ESCE,Grande Ecole,Bac+5,Programme Grande Ecole M1,EN,CLA,Paris,ESCE - Paris - AN4 - Digital & Sustainable Supply Chain (100% English),12890,13535,18/01/2027
+ESCE,Grande Ecole,Bac+5,Programme Grande Ecole M1,EN,CLA,Paris,ESCE - Paris - AN4 - International Business Development (100% English),12890,13535,18/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - Paris - M1 - AI-Driven Marketing & Innovation,10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - Paris - M1 - French Luxury & Global Marketing,10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - MSc - Paris - M1 - Global Supply Chain Management (100% English),10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - MSc - Paris - M1 - International Business Development - 100% English,10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - MSc - Paris - M1 - International Corporate Finance - 100% English,10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,EN,CLA,Paris,ESCE - Paris - M1 - International Management & Business Intelligence,10650,11183,15/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 1ère année,FR,CLA,Paris,ESCE - Paris - M1 - Stratégie des Entreprises et Management international,10650,11183,16/02/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - Paris - M2  - AI-Driven Marketing & Innovation - Fast Track,10690,11225,11/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - Paris - M2 - French Luxury & Global Marketing,10690,11225,11/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - MSc - Paris - M2 - Global Supply Chain Management - Fast Track (100% English),10690,11225,11/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - MSc - Paris - M2 - International Business Developpement - Fast Track - 100% English,10690,11225,11/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - MSc - Paris - M2 - International Corporate Finance - Fast Track - 100% English,10690,11225,11/01/2027
+ESCE,Visa (Bac +5),Bac+5,MSc 2ème année,EN,CLA,Paris,ESCE - Paris - M2 - International Management & Business Intelligence - Fast Track,10690,11225,11/01/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,EN,CLA,Paris,BCh - Paris - B1 - International Business - 100% English,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Banque Assurance,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Business Développement & Start-up – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Activités commerciales à l'International,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Finance d'entreprise,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh- Bordeaux - B1 - Luxe et services personnalisés – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Digital,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Marketing Comm et Développement de produits,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Evénementiel,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Sport Business,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Bordeaux,BCh - Bordeaux - B1 - Vins & Spiritueux,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Banque Assurance,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Business Développement & Start-up – Resp. d’activités commerciales,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Activités Commerciales à l'International,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Finance d'Entreprise,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Digital,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Marketing Comm et Développement de produits,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Evénementiel,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Chambéry,BCh - Chambéry - B1 - Sport Business,8350,8768,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Banque Assurance,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Business Développement & Start-up – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Finance d'entreprise,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Activités Commerciales à l'International,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Digital,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Marketing Comm et Développement de produits,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Evénementiel,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Luxe et services personnalisés – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Sport Business,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Lyon,BCh - Lyon - B1 - Vins & Spiritueux,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Banque Assurance,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Business Développement & Start-up – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Finance d'entreprise,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Digital,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Marketing Comm et Développement de produits,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Evénementiel,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 -  Luxe et services personnalisés – Resp. d’activités commerciales,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 1ère année,FR,CLA,Paris,BCh - Paris - B1 - Sport Business,10050,10553,01/03/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,EN,ALT,Paris,BCh - Paris - B3 - International Business - 100% English,11090,11645,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Beaune,BCh - Beaune - B3 - Business Développement & Start-up – Resp. d’activités commerciales,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Beaune,BCh - Beaune - B3 - Distribution/Export,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Beaune,BCh - Beaune - B3 - Oenotourisme,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Beaune,"BCh - Beaune - B3 - Sommellerie, Gastronomie",10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Banque Assurance,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Business Développement & Start-up – Resp. d’activités commerciales,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Activités Commerciales à l'International,11090,11645,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Web Marketing,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,"BCh - Bordeaux - B3 - Digital Business, IA et Data",10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Community Management et Réseaux Sociaux,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Finance d'entreprise,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Luxe et services personnalisés,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Développement de produits,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Evénementiel,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Sport Business,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,BCh - Bordeaux - B3 - Distribution/Export,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Bordeaux,"BCh - Bordeaux - B3 - Sommellerie, Gastronomie",10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Banque Assurance,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Business Développement & Start-up – Resp. d’activités commerciales,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Activités commerciales à l'International,11090,11645,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Web Marketing,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,"BCh - Lyon - B3 - Digital Business, IA et Data",10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Community Management et Réseaux Sociaux,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Finance d'entreprise,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Luxe,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Développement de produits,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Evénementiel,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Sport Business,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Lyon,BCh - Lyon - B3 - Distribution/Export,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Business Développement & Start-up – Resp. d’activités commerciales,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Activités Commerciales à l'International,11090,11645,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Web Marketing,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Finance d'entreprise,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Luxe,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Développement de produits,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Evénementiel,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Marseille,BCh - Marseille - B3 - Sport Business,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Banque Assurance,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Business Développement & Start-up – Resp. d’activités commerciales,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Web Marketing,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,"BCh - Paris - B3 - Digital Business, IA et Data",10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Community Management et Réseaux Sociaux,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Finance d'entreprise,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Luxe,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Développement de produits,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Evénementiel,10690,11225,08/02/2027
+INSEEC,Bachelor,Bac+3,Bachelor 3ème année,FR,ALT,Paris,BCh - Paris - B3 - Sport Business,10690,11225,08/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Bordeaux,IMSc - Bordeaux - M1 - International Business Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Bordeaux,IMSc - Bordeaux - M1 - Marketing & Brand Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Lyon,IMSc - Lyon - M1 - International Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Lyon,IMSc - Lyon - M1 - Marketing & Brand Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Paris,IMSc - Paris - M1 - International Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,EN,ALT,Paris,IMSc - Paris - M1 - Marketing & Brand Management - 100% English,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Analyse Financière Internationale,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Audit & Contrôle de Gestion,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Banque d’Affaires & Ingénierie Financière,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Business Development - Trade Marketing & Distribution,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Communication, Marketing d'Influence & RP",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Communication, Publicité & Stratégie Digitale",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Directeur des Etablissements de Santé,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Finance d’Entreprise & Ingénierie Financière,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Fiscalité, Droit des Affaires, Conseil & Gestion d’Entreprise",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Management de Projet & Ingénierie Commerciale,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Management, Conseil & Stratégie",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Manager des Ressources Humaines,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Manager du Développement Durable & de la Transition Ecologique,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Manager en Data Marketing,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Manager Financier, Banque & Assurance",12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,IMSc - Bordeaux - M1 - Marketing Digital & E-Commerce,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Analyse Financière Internationale,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Audit & Contrôle de Gestion,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,"IMSc - Lyon - M1 - Communication, Marketing d'Influence & RP",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,"IMSc - Lyon - M1 - Communication, Publicité & Stratégie Digitale",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Directeur des Etablissements de Santé,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Finance d’Entreprise & Ingénierie Financière,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Gestionnaire de Patrimoine,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Management de Projet & Ingénierie Commerciale,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,"IMSc - Lyon - M1 - Management, Conseil & Stratégie",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Manager des Ressources Humaines,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Manager en Data Marketing,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,IMSc - Lyon - M1 - Marketing Digital & E-Commerce,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Lyon,"IMSc - Lyon - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,IMSc - Marseille - M1 - Audit & Contrôle de Gestion,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,IMSc - Marseille - M1 - Business Development - Trade Marketing & Distribution,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,IMSc - Marseille - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,IMSc - Marseille - M1 - Finance d’Entreprise & Ingénierie Financière,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,"IMSc - Marseille - M1 - Manager Financier, Banque & Assurance",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Marseille,"IMSc - Marseille - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Audit & Contrôle de Gestion,12990,13640,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Directeur des Etablissements de Santé,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Finance d’Entreprise & Ingénierie Financière,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Gestionnaire de Patrimoine,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Management de Projet & Ingénierie Commerciale,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Manager des Ressources Humaines,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Manager en Data Marketing,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,IMSc - Paris - M1 - Marketing Digital & E-Commerce,12090,12695,24/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Paris,"IMSc - Paris - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,IMSc - Rennes - M1 - Audit & Contrôle de Gestion,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,IMSc - Rennes - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,"IMSc - Rennes - M1 - Management, Conseil & Stratégie",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,IMSc - Rennes - M1 - Manager des Ressources Humaines,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,IMSc - Rennes - M1 - Marketing Digital & E-Commerce,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Rennes,"IMSc - Rennes - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,IMSc - Toulouse - M1 - Audit & Contrôle de Gestion,12990,13640,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,IMSc - Toulouse - M1 - Business Development & Ingénierie d'Affaires,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,IMSc - Toulouse - M1 - Management de Projet & Ingénierie Commerciale,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,"IMSc - Toulouse - M1 - Management, Conseil & Stratégie",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,IMSc - Toulouse - M1 - Manager des Ressources Humaines,12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,FR,ALT,Toulouse,"IMSc - Toulouse - M1 - Marketing, Communication & Stratégie de Marque",12090,12695,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Bordeaux,IMSc - Bordeaux - M1 - Achats & Supply Chain Management,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Lyon,IMSc - Lyon - M1 - Achats & Supply Chain Management,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Marseille,IMSc - Marseille - M1 - Achats & Supply Chain Management,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Marseille,IMSc - Marseille - M1 - Management International,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Paris,IMSc - Paris - M1 - Achats & Supply Chain Management,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Toulouse,IMSc - Toulouse - M1 - Achats & Supply Chain Management,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 1ère année,MX,ALT,Toulouse,IMSc - Toulouse - M1 - Management International,13350,14018,22/02/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Bordeaux,IMSc - Bordeaux - M2 - International Business Management - 100% English,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Bordeaux,IMSc - Bordeaux - M2 - Marketing & Brand Management - 100% English,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Bordeaux,IMSc - Bordeaux - M2 - Wine Marketing & Business Development - 100% English,17250,18113,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Lyon,IMSc - Lyon - M2 - International Business Management - 100% English,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Lyon,IMSc - Lyon - M2 - Marketing & Brand Management - 100% English,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Marseille,IMSc - Marseille - M2 - International Business Management - 100% English,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - Digital Marketing & E-Business - 100% English,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - International Business Management - 100% English,14850,15593,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - International Financial Analyst - 100% English,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - Luxury and Fashion Marketing & Customer Experience - 100% English,17250,18113,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - Marketing & Brand Management - 100% English,14850,15593,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,EN,ALT,Paris,IMSc - Paris - M2 - Wine Marketing & Business Development - 100% English,17250,18113,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Analyse Financière Internationale,12990,13640,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Audit & Contrôle de Gestion,12990,13640,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Banque d’Affaires & Ingénierie Financière,12990,13640,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Business Development - Trade Marketing & Distribution,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Business Development & Ingénierie d’affaires,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Communication, Marketing d'Influence & RP",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Communication, Publicité & Stratégie Digitale",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Directeur des Etablissements de Santé,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Expert en management immobilier,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Finance d’Entreprise & Ingénierie Financière,12990,13640,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Fiscalité, Droit des Affaires, Conseil & Gestion d’Entreprise",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Gestionnaire de Patrimoine,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Management de Projet & Ingénierie Commerciale,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Management, Conseil & Stratégie",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Manager des Ressources Humaines,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Manager du Développement Durable & de la Transition Ecologique,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Manager en Data Marketing,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Manager Financier, Banque & Assurance",12990,13640,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,IMSc - Bordeaux - M2 - Marketing Digital & E-Commerce,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Bordeaux,"IMSc - Bordeaux - M2 - Marketing, Communication & Stratégie de Marque",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Analyse Financière Internationale,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Audit & Contrôle de Gestion,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Business Development & Ingénierie d’affaires,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,"IMSc - Lyon - M2 - Communication, Marketing d'Influence & RP",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,"IMSc - Lyon - M2 - Communication, Publicité & Stratégie Digitale",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Directeur des Etablissements de Santé,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Finance d’Entreprise & Ingénierie Financière,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Gestionnaire de Patrimoine,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Management de Projet & Ingénierie Commerciale,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,"IMSc - Lyon - M2 - Management, Conseil & Stratégie",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Manager des Ressources Humaines,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Manager en Data Marketing,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Marketing Digital & E-Commerce,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,IMSc - Lyon - M2 - Marketing du Sport & Expérience Client,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Lyon,"IMSc - Lyon - M2 - Marketing, Communication & Stratégie de Marque",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Audit & Contrôle de Gestion,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2  - Business Development - Trade Marketing & Distribution,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Business Development & Ingénierie d’affaires,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,"IMSc - Marseille - M2 - Communication, Publicité & Stratégie Digitale",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Directeur des Etablissements de Santé,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Finance d’Entreprise & Ingénierie Financière,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Gestionnaire de Patrimoine,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,"IMSc - Marseille - M2 - Management, Conseil & Stratégie",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,IMSc - Marseille - M2 - Manager des Ressources Humaines,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Marseille,"IMSc - Marseille - M2 - Marketing, Communication & Stratégie de Marque",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Analyse Financière Internationale,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Audit & Contrôle de Gestion,14690,15425,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Banque d’Affaires & Ingénierie Financière,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Business Development - Trade Marketing & Distribution,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Business Development & Ingénierie d’affaires,14150,14858,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Communication, Marketing d'Influence & RP",14150,14858,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Communication, Publicité & Stratégie Digitale",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Directeur des Etablissements de Santé,14150,14858,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Expert en Management Immobilier,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Finance d’Entreprise & Ingénierie Financière,14690,15425,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Fiscalité, Droit des Affaires, Conseil & Gestion d’Entreprise",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Gestionnaire de Patrimoine,14150,14858,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Human Resources Manager,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Management de Projet & Ingénierie Commerciale,14150,14858,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Management, Conseil & Stratégie",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Manager des Ressources Humaines,14150,14858,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Manager en Data Marketing,14150,14858,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Manager Financier, Banque & Assurance",14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Marchés Financiers, Trading & Risk Management",14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Marketing Digital & E-Commerce,14150,14858,03/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Marketing du Luxe et de la Mode & Expérience Client,14150,14858,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Marketing du Sport & Expérience Client,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Marketing, Communication & Stratégie de Marque",14150,14858,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,"IMSc - Paris - M2 - Risk Management, Contrôle & Compliance",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Paris,IMSc - Paris - M2 - Start-Up & Transformation Digitale,14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Toulouse,IMSc - Toulouse - M2 - Audit & Contrôle de Gestion,14690,15425,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Toulouse,"IMSc - Toulouse - M2 - Management, Conseil & Stratégie",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,FR,ALT,Toulouse,"IMSc - Toulouse - M2 - Marketing, Communication & Stratégie de Marque",14150,14858,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Bordeaux,IMSc - Bordeaux - M2 - Achats & Supply Chain Management,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Bordeaux,IMSc - Bordeaux - M2 - Management Commercial & Marketing du Vin,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Bordeaux,IMSc - Bordeaux - M2 - Spirits Marketing & Business Development,17250,18113,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Lyon,IMSc - Lyon - M2 - Achats & Supply Chain Management,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Lyon,IMSc - Lyon - M2 - Management Commercial & Marketing du Vin,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Marseille,IMSc - Marseille - M2 - Achats & Supply Chain Management,14850,15593,22/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Paris,IMSc - Paris - M2 - Achats & Supply Chain Management,14850,15593,01/03/2027
+INSEEC,MSc,Bac+5,MSc 2ème année,MX,ALT,Paris,"IMSc - Paris - M2 - Hospitality Management, Marketing du Tourisme & Expérience Client",14850,15593,22/03/2027

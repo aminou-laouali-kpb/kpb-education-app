@@ -26,11 +26,24 @@
 import { loadEnvFile } from 'node:process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { createHash } from 'node:crypto';
 
 import { Prisma, PrismaClient } from '@prisma/client';
 
 import { checkProductionSeed, linkedProgramIds } from '../src/common/seed-safety';
+import {
+  OMNES_INSTITUTION_ID_PREFIX as INSTITUTION_ID_PREFIX,
+  OMNES_PROGRAM_ID_PREFIX as PROGRAM_ID_PREFIX,
+  type OmnesRow,
+  formatDuration,
+  formatLevel,
+  formatTuitionSummary,
+  inferFieldId,
+  intakeLabel,
+  normalizeFormationName,
+  omnesInstitutionId as institutionId,
+  omnesProgramId as programId,
+  studyLevelsFor,
+} from '../src/modules/catalog/omnes-conventions';
 import { M5_COUNTRY_SEEDS } from '../src/modules/countries/data/m5-countries.seed';
 
 // Compose supplies DATABASE_URL (and NODE_ENV) to the API container, whose
@@ -41,21 +54,6 @@ if (fs.existsSync('.env')) loadEnvFile?.('.env');
 const prisma = new PrismaClient();
 
 const FRANCE_COUNTRY_ID = 'fra';
-const INSTITUTION_ID_PREFIX = 'omnes-';
-const PROGRAM_ID_PREFIX = 'omnes-p-';
-
-type OmnesRow = {
-  school: string;
-  campus: string;
-  programName: string;
-  programFamily: string;
-  degreeLevel: string;
-  admissionLevel: string;
-  language: string;
-  paymentUpfront: number | null;
-  paymentInstallments: number | null;
-  intakeDate: string | null;
-};
 
 /** One campus on which a formation is available, with its own price/intake. */
 type CampusOffering = {
@@ -64,156 +62,6 @@ type CampusOffering = {
   tuitionInstallments: number | null;
   intake: string | null;
 };
-
-function slugify(value: string, max = 40): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, max);
-}
-
-/** Institution = school (campus-agnostic). e.g. "INSEEC" -> "omnes-inseec". */
-function institutionId(school: string): string {
-  return `${INSTITUTION_ID_PREFIX}${slugify(school)}`;
-}
-
-/**
- * Strip the campus from a programme name so the same formation collapses to one
- * row across campuses. OMNES names follow "School - Type - Campus - Code -
- * Specialty"; the campus is one " - "-delimited segment, so we drop exactly
- * that segment (safe against a city name also appearing inside the specialty).
- */
-function normalizeFormationName(name: string, campus: string): string {
-  const parts = name.split(' - ');
-  const target = campus.trim().toLowerCase();
-  const idx = parts.findIndex((p) => p.trim().toLowerCase() === target);
-  if (idx !== -1) parts.splice(idx, 1);
-  return parts.join(' - ').replace(/\s+/g, ' ').trim();
-}
-
-/** Stable id for a formation, identical across all its campuses. */
-function programId(school: string, formationName: string): string {
-  const key = `${school}|${formationName}`;
-  const hash = createHash('sha256').update(key).digest('hex').slice(0, 16);
-  return `${PROGRAM_ID_PREFIX}${hash}`;
-}
-
-/// Field ids of the d01..d12 taxonomy (src/modules/orientation/
-/// orientation-fields.data.ts) — the one the app filters on and the catalog
-/// scores against. The former 'computer_science' / 'engineering' / 'business'
-/// are the three demo fields of prisma/seed.ts: a formation filed under them
-/// never surfaced under any real field.
-function inferFieldId(row: OmnesRow): string {
-  const text = `${row.programName} ${row.programFamily}`.toLowerCase();
-  if (
-    /informat|computer|cyber|data|digital|développeur|developpeur|ia\b|intelligence artificielle|dev\b|software/.test(
-      text,
-    )
-  ) {
-    return 'd01'; // Informatique & Intelligence Artificielle
-  }
-  if (/engineer|ingenier|ingénier|aeronaut|aéronaut/.test(text)) {
-    return 'd03'; // Ingénierie & Sciences
-  }
-  return 'd02'; // Commerce & Management
-}
-
-function studyLevelsFor(row: OmnesRow): string[] {
-  const levels = new Set<string>();
-  const family = row.programFamily.toLowerCase();
-  if (family.includes('bachelor') || family.includes('bba')) levels.add('Bachelor');
-  if (family.includes('msc') || family.includes('master') || family.includes('pge')) {
-    levels.add('Master');
-  }
-  if (family.includes('grande ecole') || family.includes('visa')) {
-    levels.add('Master');
-    levels.add('Grande École');
-  }
-  if (levels.size === 0) levels.add(row.programFamily);
-  return [...levels];
-}
-
-/// Normalise a raw OMNES family + degree level to a clean canonical degree
-/// label (Bachelor · BBA · Master · MBA / DBA · Doctorat · Bac+2). Mirrors the
-/// Flutter `programLevelLabel` (lib/app/core/utils/study_level.dart) so the
-/// catalogue shows consistent, épuré labels instead of "MSc · Bac+5", "PGE"…
-function normalizeDegreeLevel(raw: string): string {
-  const s = raw.toLowerCase();
-  if (s.includes('doctorat') || s.includes('phd') || s.includes('bac+8')) {
-    return 'Doctorat';
-  }
-  if (s.includes('mba') || s.includes('dba')) return 'MBA / DBA';
-  if (
-    s.includes('bac+5') || s.includes('bac +5') || s.includes('master') ||
-    s.includes('msc') || s.includes('pge') || s.includes('grande ecole') ||
-    s.includes('grande école') || s.includes('mastere') || s.includes('visa')
-  ) {
-    return 'Master';
-  }
-  if (s.includes('bba') || s.includes('bac+4') || s.includes('bac +4')) {
-    return 'BBA';
-  }
-  if (
-    s.includes('bac+3') || s.includes('bac +3') || s.includes('bachelor') ||
-    s.includes('licence')
-  ) {
-    return 'Bachelor';
-  }
-  if (s.includes('bac+2') || s.includes('bac +2')) return 'Bac+2';
-  return raw.trim();
-}
-
-function formatLevel(row: OmnesRow): { fr: string; en: string } {
-  const label = normalizeDegreeLevel(
-    `${row.programFamily} ${row.degreeLevel}`.trim(),
-  );
-  return { fr: label, en: label };
-}
-
-function formatDuration(row: OmnesRow): { fr: string; en: string } {
-  const level = row.degreeLevel.toLowerCase();
-  if (level.includes('bac+5') || level.includes('bac +5')) {
-    return { fr: '5 ans', en: '5 years' };
-  }
-  if (level.includes('bac+3') || level.includes('bac +3')) {
-    return { fr: '3 ans', en: '3 years' };
-  }
-  if (level.includes('bac+2') || level.includes('bac +2')) {
-    return { fr: '2 ans', en: '2 years' };
-  }
-  return { fr: row.degreeLevel || '—', en: row.degreeLevel || '—' };
-}
-
-function euro(value: number): string {
-  return `${Math.round(value).toLocaleString('fr-FR')} €`;
-}
-
-/**
- * Headline tuition for a formation across its campuses. A single price when all
- * campuses align, otherwise a "min – max … selon le campus" range. Per-campus
- * detail lives in `campusOfferings`.
- */
-function formatTuitionSummary(offerings: CampusOffering[]): { fr: string; en: string } {
-  const prices = offerings
-    .map((o) => o.tuitionUpfront)
-    .filter((p): p is number => typeof p === 'number' && !Number.isNaN(p));
-  if (prices.length === 0) return { fr: 'Sur demande', en: 'On request' };
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  if (min === max) return { fr: `${euro(min)}/an`, en: `${euro(min)}/year` };
-  return {
-    fr: `${euro(min)} – ${euro(max)}/an selon le campus`,
-    en: `${euro(min)} – ${euro(max)}/year by campus`,
-  };
-}
-
-function intakeLabel(intakeDate: string | null): string[] {
-  if (!intakeDate) return ['Rentrée automne'];
-  return [intakeDate];
-}
 
 async function ensureFranceCountry() {
   const seed = M5_COUNTRY_SEEDS.find((item) => item.id === FRANCE_COUNTRY_ID);
