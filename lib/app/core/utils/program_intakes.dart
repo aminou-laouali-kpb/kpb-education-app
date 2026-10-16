@@ -42,6 +42,14 @@ import 'intake_label.dart';
 //     juin, comme côté serveur) porte la mention « (décalée) ».
 //  6. Un texte que l'app ne sait pas dater (« Septembre », texte libre de
 //     l'admin) est repris tel quel, après les dates, et n'est jamais filtré.
+//     « Septembre 2026 » / « March 2027 » (mois en toutes lettres et année)
+//     est une date, au mois près.
+//
+// La MÊME règle sert partout où une rentrée s'affiche : les rentrées d'une
+// école (`schoolIntakeSummary`, comparateur, repli de la fiche), le libellé
+// de rentrée d'un pays (`upcomingIntakeText`), les offres de la fiche détail
+// (`offeringIsPast`). Une date brute d'école (« 01/10/2026 ») s'écrit en
+// toutes lettres (« octobre 2026 ») sans que la base soit réécrite.
 //
 // L'horloge est injectable ([ProgramIntakes.clock]) : aucun test ne peut
 // attendre le 1er octobre.
@@ -70,6 +78,20 @@ class IntakeDate {
     final String base;
     if (month != null) {
       base = '${(en ? _shortEn : _shortFr)[month! - 1]} $year';
+    } else {
+      base = spring
+          ? '$year'
+          : 'program_intake_fall_year_short'.trParams({'year': '$year'});
+    }
+    return spring ? '$base (${'program_intake_spring_tag'.tr})' : base;
+  }
+
+  /// « octobre 2026 », « mars 2027 (décalée) » : le libellé lisible des
+  /// tableaux (comparateur, fiche).
+  String longLabel(String localeCode) {
+    final String base;
+    if (month != null) {
+      base = '${intakeMonthName(month!, localeCode)} $year';
     } else {
       base = spring
           ? '$year'
@@ -197,6 +219,27 @@ class ProgramIntakeSummary {
     return '${_prefix()} ${shown.join(' · ')}$tail';
   }
 
+  /// Les rentrées à venir en toutes lettres, SANS préfixe (« octobre 2027 ·
+  /// mars 2027 (décalée) ») — pour une cellule de tableau qui porte déjà son
+  /// titre. « Prochaine rentrée non publiée » quand tout est passé ; null
+  /// quand rien n'est connu.
+  String? longLabel(String localeCode) {
+    if (isEmpty) return null;
+    if (count == 0) return 'program_intakes_none_upcoming'.tr;
+    final entries = [
+      for (final d in dates) d.longLabel(localeCode),
+      ...rawLabels,
+    ];
+    final shown = entries.length > maxShown
+        ? entries.take(maxShown - 1).toList()
+        : entries;
+    final hidden = entries.length - shown.length;
+    final tail = hidden > 0
+        ? ' ${'program_intakes_more'.trParams({'count': '$hidden'})}'
+        : '';
+    return '${shown.join(' · ')}$tail';
+  }
+
   /// Le libellé COMPLET lu par les lecteurs d'écran : toutes les rentrées,
   /// mois en toutes lettres, sans « + n ».
   String? semanticsLabel(String localeCode) {
@@ -219,6 +262,60 @@ class ProgramIntakes {
 }
 
 final _dayMonthYear = RegExp(r'^(?:(\d{1,2})/)?(\d{1,2})/(\d{4})$');
+
+/// « Septembre 2026 », « mars 2027 », « March 2027 », « sept. 2027 ».
+final _monthNameYear = RegExp(
+  r'^([a-zA-Zéèûôàç]+)\.?\s+(20\d{2})$',
+  caseSensitive: false,
+);
+
+const _monthNames = <String, int>{
+  'janvier': 1,
+  'janv': 1,
+  'january': 1,
+  'jan': 1,
+  'fevrier': 2,
+  'février': 2,
+  'fevr': 2,
+  'févr': 2,
+  'february': 2,
+  'feb': 2,
+  'mars': 3,
+  'march': 3,
+  'mar': 3,
+  'avril': 4,
+  'avr': 4,
+  'april': 4,
+  'apr': 4,
+  'mai': 5,
+  'may': 5,
+  'juin': 6,
+  'june': 6,
+  'jun': 6,
+  'juillet': 7,
+  'juil': 7,
+  'july': 7,
+  'jul': 7,
+  'aout': 8,
+  'août': 8,
+  'august': 8,
+  'aug': 8,
+  'septembre': 9,
+  'sept': 9,
+  'september': 9,
+  'sep': 9,
+  'octobre': 10,
+  'oct': 10,
+  'october': 10,
+  'novembre': 11,
+  'nov': 11,
+  'november': 11,
+  'decembre': 12,
+  'décembre': 12,
+  'dec': 12,
+  'déc': 12,
+  'december': 12,
+};
 final _yearOnly = RegExp(r'\b(20\d{2})\b');
 final _springWords = RegExp(r'\b(spring|printemps)\b', caseSensitive: false);
 final _fallWords = RegExp(r'\b(fall|autumn|automne)\b', caseSensitive: false);
@@ -243,6 +340,22 @@ _Candidate? _parse(String part, String? declaredSession) {
       ),
       day: day,
     );
+  }
+  // « Septembre 2026 » : un mois en toutes lettres et une année.
+  final named = _monthNameYear.firstMatch(part);
+  if (named != null) {
+    final month = _monthNames[named.group(1)!.toLowerCase()];
+    if (month != null) {
+      return (
+        date: IntakeDate(
+          year: int.parse(named.group(2)!),
+          month: month,
+          spring: declaredSession == 'spring' ||
+              (declaredSession != 'fall' && month <= 6),
+        ),
+        day: null,
+      );
+    }
   }
   // « FALL 2027 » (ABC) : une année et une session, déclarée ou écrite.
   final year = _yearOnly.firstMatch(part)?.group(1);
@@ -374,4 +487,47 @@ ProgramIntakeSummary cachedProgramIntakeSummary(
   );
   _cache[program] = (day: day, institution: institution, summary: summary);
   return summary;
+}
+
+/// Les rentrées d'un ÉTABLISSEMENT (`intakePeriods`), à venir et lisibles :
+/// « 01/10/2026 » devient « octobre 2026 », une date passée disparaît. Pour le
+/// comparateur et le repli de la fiche formation.
+ProgramIntakeSummary schoolIntakeSummary(
+  List<String> periods, {
+  DateTime? now,
+}) {
+  if (periods.isEmpty) return ProgramIntakeSummary.empty;
+  return _summarize(
+    [for (final p in periods) (text: p, session: null)],
+    fromSchool: true,
+    now: now ?? ProgramIntakes.clock(),
+  );
+}
+
+/// Un libellé de rentrée libre (celui d'un pays : « Septembre 2026 »), ou
+/// null s'il annonce une date PASSÉE — il n'est alors plus une rentrée
+/// disponible. Un texte sans date (« Rentrée de septembre ») est rendu tel
+/// quel.
+String? upcomingIntakeText(String label, {DateTime? now}) {
+  final text = label.trim();
+  if (text.isEmpty) return null;
+  final summary = _summarize(
+    [(text: text, session: null)],
+    fromSchool: false,
+    now: now ?? ProgramIntakes.clock(),
+  );
+  return summary.allPast ? null : text;
+}
+
+/// Vrai quand TOUTES les rentrées datées d'une offre sont passées (et qu'elle
+/// en a au moins une) : l'offre n'est plus disponible. Une offre sans date, ou
+/// au texte libre, n'est jamais tenue pour passée.
+bool offeringIsPast(CampusOffering offering, {DateTime? now}) {
+  final raw = offering.intake?.trim() ?? '';
+  if (raw.isEmpty) return false;
+  return _summarize(
+    [(text: raw, session: offering.session)],
+    fromSchool: false,
+    now: now ?? ProgramIntakes.clock(),
+  ).allPast;
 }

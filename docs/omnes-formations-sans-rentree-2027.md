@@ -1,0 +1,204 @@
+# Formations OMNES sans rentrée à venir (au 16/10/2026)
+
+Formations OMNES dont **toutes** les rentrées publiées sont celles de
+septembre / octobre 2026, une fois appliqués `dedupe-omnes` et
+`import-omnes-spring` (grille SPRING 27). L'app ne leur affiche plus aucune
+rentrée disponible (« Prochaine rentrée non publiée ») ; celles marquées
+« encore affichée jusqu'au … » disparaissent à cette date. **À demander à
+OMNES : la grille de l'automne 2027 de ces formations.**
+
+Comptes : 186 formations — ECE 46, ESCE 31, HEIP 10, INSEEC 73, Sup de Pub 26
+(202 avant le dédoublonnage : les 16 de plus étaient des doublons
+d'intitulé). Intitulé — campus — dates de rentrée publiées.
+
+### ECE (46)
+- ECE - B1 - Computer Science - 100% English — Paris — 01/10/2026
+- ECE - B1 - Développeur d'Applications — Paris — 01/10/2026
+- ECE - B1 - Développeur en intelligence artificielle — Bordeaux, Lyon, Paris — 01/10/2026
+- ECE - B2 - Computer Science - 100% English — Paris — 14/09/2026
+- ECE - B2 - Cybersécurité et réseaux — Paris — 14/09/2026
+- ECE - B2 - Développeur d'Applications — Paris — 14/09/2026
+- ECE - B2 - Développeur en Intelligence Artificielle — Bordeaux, Lyon, Paris — 14/09/2026
+- ECE - B3 - Computer Science - 100% English — Paris — 05/10/2026
+- ECE - B3 - Cybersécurité et réseaux — Paris — 01/10/2026
+- ECE - B3 - Développeur d'Applications — Paris — 01/10/2026
+- ECE - B3 - Développeur en intelligence artificielle — Bordeaux, Lyon, Paris — 14/09/2026, 01/10/2026
+- ECE - ING4 - PGE - Cybersécurité — Paris — 01/09/2026
+- ECE - ING4 - PGE - Environnement et durabilité - 100% English — Paris — 31/08/2026
+- ECE - ING4 - PGE - Finance Corporate — Paris — 31/08/2026
+- ECE - ING4 - PGE - Finance de Marché — Paris — 31/08/2026
+- ECE - ING4 - PGE - Fintech et macroéconomie — Paris — 31/08/2026
+- ECE - ING4 - PGE - Transition énergétique — Paris — 31/08/2026
+- ECE - MSc CGE - M1 - AI for Business Transformation - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Data Management - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Data Management - Mixte Français / Anglais — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Embedded AI & Edge Intelligence - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Information Systems & Digital Sovereignty - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Manager de la Cybersécurité — Paris — 01/10/2026
+- ECE - MSc CGE - M1 - Sustainable Energy Futures (100% English) — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - AI for Business Transformation - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - Artificial Intelligence — Lyon, Paris — 21/09/2026
+- ECE - MSc CGE - M2 - Data Management - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - Embedded AI & Edge Intelligence - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - Information Systems & Digital Sovereignty - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - Sustainable Energy Futures - 100% English — Paris — 01/10/2026
+- ECE - MSc CGE - M2 - Technology Management and International Entrepreneurship - 100% English — Paris — 01/10/2026
+- ECE - PGE - ING1 — Bordeaux, Lyon, Marseille, Paris, Rennes — 01/09/2026
+- ECE - PGE - ING2 — Bordeaux, Lyon, Paris — 31/08/2026
+- ECE - PGE - ING3 — Bordeaux, Lyon, Paris — 11/09/2026
+- ECE - PGE - ING4 - Cybersécurité — Paris — 31/08/2026
+- ECE - PGE - ING4 - Data & AI - 100% English — Paris — 31/08/2026
+- ECE - PGE - ING4 - Data & IA — Paris — 31/08/2026
+- ECE - PGE - ING4 - Défense & Technologie — Paris — 31/08/2026
+- ECE - PGE - ING4 - Embedded Systems - 100% English — Paris — 31/08/2026
+- ECE - PGE - ING4 - Environnement et durabilité — Paris — 31/08/2026
+- ECE - PGE - Ing4 - Santé & Technologie — Paris — 31/08/2026
+- ECE - PGE - ING4 - Système aéronautique et spatial — Bordeaux — 31/08/2026
+- ECE - PGE - ING4 - Systèmes d'Energie Nucléaire (50% English - 50% Français) — Lyon — 31/08/2026
+- ECE - PGE - ING4 - Systèmes Embarqués — Paris — 31/08/2026
+- ECE - PGE - ING4 - Transition énergétique - 100% English — Paris — 31/08/2026
+- ECE - PGE - ING4 - Véhicules Connectés Autonomes — Paris — 01/09/2026
+### ESCE (31)
+- ESCE - Bachelor - B1 — Paris — 14/09/2026
+- ESCE - Bachelor - B1 - 100% English — Paris — 14/09/2026
+- ESCE - Bachelor - B2 — Paris — 01/10/2026
+- ESCE - Bachelor - B2 - 100% English — Paris — 01/10/2026
+- ESCE - Bachelor - B3 - Corporate Finance — Paris — 14/09/2026
+- ESCE - Bachelor - B3 - International Business - 100% English — Paris — 14/09/2026
+- ESCE - M1 - Geopolitics for Business Development — Paris — 15/09/2026
+- ESCE - M1 - Risk management & International Business Compliance — Paris — 15/09/2026
+- ESCE - M1 - Trade Finance — Paris — 15/09/2026
+- ESCE - M1 - Visa (Bac +5) - Développement commercial international — Paris — 16/09/2026
+- ESCE - M2 - Geopolitics for Business Development — Paris — 17/09/2026
+- ESCE - M2 - Risk management & International Business Compliance - Fast Track — Paris — 17/09/2026
+- ESCE - M2 - Trade Finance - Fast Track — Paris — 17/09/2026
+- ESCE - MSc - M2 - Technology Management and International Entrepreneurship - Fast Track - 100% English — Paris — 22/09/2026
+- ESCE - PGE - AN1 - International business (standard track) — Lyon, Paris — 15/09/2026
+- ESCE - PGE - AN1 - International business (standard track) - 100% English — Lyon, Paris — 15/09/2026
+- ESCE - PGE - AN1 - Management international, IA et Data — Paris — 15/09/2026
+- ESCE - PGE - AN1 - Sciences politiques internationales — Lyon, Paris — 15/09/2026
+- ESCE - PGE - AN2 - Cursus expert America/Asia/Europe — Lyon, Paris — 07/09/2026
+- ESCE - PGE - AN2 - Cursus expert America/Asia/Europe - 100% English — Paris — 07/09/2026
+- ESCE - PGE - AN2 - International business (standard track) — Lyon, Paris — 07/09/2026
+- ESCE - PGE - AN2 - International business (standard track) - 100% English — Lyon, Paris — 07/09/2026
+- ESCE - PGE - AN2 - Sciences politiques internationales — Lyon, Paris — 07/09/2026
+- ESCE - PGE - AN4 - Communication, Luxury and Prestige Marketing - 100% English — Paris — 14/09/2026
+- ESCE - PGE - AN4 - Digital & Sustainable Supply Chain - 100% English — Paris — 14/09/2026
+- ESCE - PGE - AN4 - Finance Investment & Banking, parcours Corporate Finance - 100% English — Paris — 14/09/2026
+- ESCE - PGE - AN4 - Finance Investment & Banking, parcours Financial Markets - 100% English — Paris — 14/09/2026
+- ESCE - PGE - AN4 - Ingénierie d'affaires — Lyon, Paris — 14/09/2026
+- ESCE - PGE - AN4 - International Digital Marketing - 100% English — Paris — 14/09/2026
+- ESCE - PGE - AN4 - International Entrepreneurship & Consulting (50% English - 50% Français) — Paris — 14/09/2026
+- ESCE - PGE - AN4 - Trade Finance — Paris — 14/09/2026
+### HEIP (10)
+- HEIP - B1 - Relations Internationales et Sciences Politiques — Bordeaux, Lyon, Paris — 17/09/2026
+- HEIP - B2 - Relations Internationales et Sciences Politiques — Bordeaux, Lyon, Paris — 18/09/2026
+- HEIP - B3 - Bachelor of Arts in Humanities - 100% English — Paris — 14/09/2026
+- HEIP - B3 - Relations Internationales et Sciences Politiques — Bordeaux, Lyon, Paris — 11/09/2026
+- HEIP - M1 - Diplomatie économique et développement international des entreprises — Lyon, Paris — 10/09/2026
+- HEIP - M1 - Manager des institutions et des affaires publiques — Lyon, Paris — 10/09/2026
+- HEIP - M1 - Politiques et coopérations internationales de défense et de sécurité — Paris — 10/09/2026
+- HEIP - M2 - Diplomatie économique et développement international des entreprises — Lyon, Paris — 14/09/2026
+- HEIP - M2 - Manager des institutions et des affaires publiques — Lyon, Paris — 14/09/2026
+- HEIP - M2 - Politiques et coopérations internationales de défense et de sécurité — Paris — 14/09/2026
+### INSEEC (73)
+- BBA - AN1 — Bordeaux, Lyon, Paris — 16/09/2026
+- BBA - AN1 - 100% English — Bordeaux, Lyon, Paris — 16/09/2026
+- BBA - AN2 — Bordeaux, Lyon, Paris — 14/09/2026
+- BBA - AN2 - 100% English — Lyon, Paris — 14/09/2026
+- BBA - AN3 — Bordeaux, Lyon, Paris — 09/09/2026
+- BBA - AN3 - 100% English — Bordeaux, Lyon, Paris — 09/09/2026
+- BCh - B1 - Activités commerciales à l'International - 100% English — Paris — 16/09/2026
+- BCh - B1 - Business Développement & Start-up — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 01/09/2026, 08/09/2026, 15/09/2026, 16/09/2026, 21/09/2026
+- BCh - B1 - Luxe — Bordeaux, Lyon, Marseille, Paris — 08/09/2026, 15/09/2026, 16/09/2026, 21/09/2026
+- BCh - B1 - Marketing Comm en Digital — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 01/09/2026, 08/09/2026, 15/09/2026, 16/09/2026, 21/09/2026
+- BCh - B1 - Sport Business - Fall 2026 — Toulouse — 15/09/2026
+- BCh - B2 - Activités commerciales à l'International — Bordeaux, Chambéry, Lyon, Marseille, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Activités commerciales à l'International - 100% English — Paris — 09/09/2026
+- BCh - B2 - Banque Assurance — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Business Développement & Start-up — Bordeaux, Chambéry, Lyon, Paris, Rennes — 03/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Evénementiel — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Finance d'entreprise — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Luxe — Bordeaux, Lyon, Marseille, Paris — 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Marketing Comm en Digital — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Marketing Comm et Développement de produits — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 03/09/2026, 08/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Responsable des activités commerciales en Business Development — Toulouse — 08/09/2026
+- BCh - B2 - Sport Business — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes — 03/09/2026, 09/09/2026, 14/09/2026, 15/09/2026
+- BCh - B2 - Vins & Spiritueux — Bordeaux, Lyon — 14/09/2026, 15/09/2026
+- BCh - B3 - Activités commerciales à l'International - 100% English — Paris — 23/09/2026
+- BCh - B3 - Business Développement & Start-up — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 21/09/2026, 22/09/2026, 28/09/2026, 29/09/2026
+- BCh - B3 - Corporate Finance — Paris — 23/09/2026
+- BCh - B3 - Marketing Comm et Développement de produits — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 21/09/2026, 22/09/2026, 28/09/2026, 29/09/2026
+- IMSc - M1 - Chef de Projet Marketing & IA — Bordeaux, Lyon, Paris — 28/09/2026
+- IMSc - M1 - Data Management & AI for Business — Paris — 28/09/2026
+- IMSc - M1 - Data Management & Finance — Paris — 12/10/2026
+- IMSc - M1 - Digital Marketing & E-Commerce - 100% English — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Digital Supply Chain, Achats & IA — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Expert en management immobilier — Bordeaux, Chambéry, Lyon, Marseille, Paris — 12/10/2026
+- IMSc - M1 - Food & Beverage Management — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Hospitality Management, Marketing du Tourisme & Expérience Client — Bordeaux, Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Human Resources Manager — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - International Business Management — Bordeaux, Lyon, Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - International Financial Analyst — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Luxury and Fashion Marketing & Customer Experience — Bordeaux, Lyon, Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Management & Conseil en Transformation Digitale & IA — Paris — 28/09/2026
+- IMSc - M1 - Management & Marketing des Industries Agroalimentaires — Paris — 05/10/2026
+- IMSc - M1 - Management & Marketing des Industries Pharmaceutiques — Paris — 05/10/2026
+- IMSc - M1 - Management Commercial & Marketing du Vin — Bordeaux — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Marchés Financiers, Trading & Risk Management — Paris — 12/10/2026
+- IMSc - M1 - Marketing & Brand Management — Bordeaux, Lyon, Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Marketing de la Santé & Innovation — Paris — 05/10/2026
+- IMSc - M1 - Marketing du Luxe et de la Mode & Expérience Client — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Marketing du Sport & Expérience Client — Bordeaux, Chambéry, Lyon, Marseille, Paris — 28/09/2026
+- IMSc - M1 - Marketing du Sport Outdoor & Expérience Client — Chambéry — 07/09/2026
+- IMSc - M1 - Project Management — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Purchasing & Supply Chain Management — Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - QHSE - Management de la Qualité & Gestion de Projet — Paris — 05/10/2026
+- IMSc - M1 - Risk Management, Contrôle & Compliance — Paris — 12/10/2026
+- IMSc - M1 - Spirits Marketing & Business Development — Bordeaux — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M1 - Start-Up & Transformation Digitale — Bordeaux, Lyon, Marseille, Paris — 05/10/2026
+- IMSc - M1 - Wine Marketing & Business Development — Bordeaux, Paris — 19/10/2026 (encore affichée jusqu’au 19/10/2026)
+- IMSc - M2 - Digital Marketing & E-Commerce — Paris — 05/10/2026
+- IMSc - M2 - International Business Management — Bordeaux, Chambéry, Lyon, Marseille, Paris, Rennes, Toulouse — 05/10/2026
+- IMSc - M2 - International Financial Analyst — Paris — 05/10/2026
+- IMSc - M2 - Luxury and Fashion Marketing & Customer Experience — Bordeaux, Lyon, Paris — 05/10/2026
+- IMSc - M2 - Marketing & Brand Management — Bordeaux, Lyon, Paris — 21/09/2026, 05/10/2026
+- IMSc - M2 - Marketing du Sport Outdoor & Expérience Client — Chambéry — 21/09/2026
+- IMSc - M2 - Wine Marketing & Business Development — Bordeaux, Paris — 05/10/2026
+- INSEEC - AN4 - MScCGE - Sustainable Tourism — Paris — 01/09/2026
+- INSEEC MSc CGE - AN5 - International Business Management - 100% English — Paris — 04/09/2026
+- INSEEC MSc CGE - AN5 - Sustainable Tourism — Paris — 04/09/2026
+- INSEEC MSc CGE / PGE - AN4 - International Business Management - 100% English (Double diplôme) — Paris — 01/09/2026
+- PGE - AN3 — Bordeaux, Lyon, Paris — 03/09/2026, 04/09/2026
+- PGE - AN4 - 100% English - Pré spécialisation Finance — Paris — 01/09/2026
+- PGE - AN4 - 100% English - Pré spécialisation Management — Paris — 01/09/2026
+- PGE - AN4 - Pré spécialisation Finance — Bordeaux, Lyon, Paris — 01/09/2026
+- PGE - AN4 - Pré spécialisation Management — Bordeaux, Lyon, Paris — 01/09/2026
+- PGE - AN4 - Pré spécialisation Marketing — Bordeaux, Lyon, Paris — 01/09/2026
+### Sup de Pub (26)
+- SDP - SP1 - Communication, Marketing Digital et Création — Bordeaux, Lyon, Paris — 29/09/2026
+- SDP - SP4 - Brand Experience & Event - 100% English — Paris — 02/10/2026
+- SDP - SP4 - Communication and Media Strategy - Luxury - 100% English — Paris — 02/10/2026
+- SDP - SP4 - Communication du Luxe — Paris — 02/10/2026
+- SDP - SP4 - Communication et Marketing des Industries Culturelles et Créatives — Lyon, Paris — 02/10/2026
+- SDP - SP4 - Communication Publicitaire et Stratégie Média — Bordeaux, Lyon, Marseille, Paris, Rennes, Toulouse — 02/10/2026
+- SDP - SP4 - E-business et Data marketing — Lyon, Paris — 02/10/2026
+- SDP - SP4 - Expérience de Marque et Evénementiel — Bordeaux, Lyon, Marseille, Paris, Rennes, Toulouse — 02/10/2026
+- SDP - SP4 - Marketing digital et Stratégie Social Média — Bordeaux, Lyon, Paris, Rennes, Toulouse — 02/10/2026
+- SDP - SP4 - Production visuelle - Communication Publicitaire et Stratégie Média - Classe dédiée — Bordeaux, Lyon, Paris, Rennes, Toulouse — 18/09/2026, 02/10/2026
+- SDP - SP4 - Relations Publics et Influence — Bordeaux, Lyon, Paris — 02/10/2026
+- SDP - SP4 - Stratégie Créative et Planning Stratégique — Bordeaux, Lyon, Paris — 02/10/2026
+- SDP - SP4 - Stratégie de Contenus et Conception Rédaction — Bordeaux, Paris — 02/10/2026
+- SDP - SP4 - Traffic Management et Régie Média — Lyon, Paris — 02/10/2026
+- SDP - SP5 - Communication Corporate et Relations Publics — Bordeaux, Lyon, Paris — 25/09/2026
+- SDP - SP5 - Communication des Industries Culturelles et Créatives — Lyon, Paris — 25/09/2026
+- SDP - SP5 - Communication du Luxe et de la Mode — Paris — 25/09/2026
+- SDP - SP5 - Communication et Production Visuelle — Bordeaux, Paris, Rennes, Toulouse — 25/09/2026
+- SDP - SP5 - Communication et Stratégie Média — Bordeaux, Lyon, Paris — 25/09/2026
+- SDP - SP5 - Creative strategies and strategic planning - 100% English — Paris — 25/09/2026
+- SDP - SP5 - Data Marketing et IA — Lyon, Paris — 25/09/2026
+- SDP - SP5 - Marketing digital et e-commerce — Lyon, Paris — 25/09/2026
+- SDP - SP5 - Planning Stratégique et Stratégie Créative — Lyon, Paris — 25/09/2026
+- SDP - SP5 - Stratégie de Contenu et Brand Culture — Bordeaux, Lyon, Paris — 25/09/2026
+- SDP - SP5 - Stratégie digitale et social média — Lyon, Paris, Rennes — 25/09/2026
+- SDP - SP5 - Stratégie et Production Evénementielle — Bordeaux, Lyon, Paris, Rennes, Toulouse — 25/09/2026

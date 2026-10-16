@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/program_intakes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/analytics_service.dart';
@@ -63,7 +64,10 @@ class CountriesCatalogGrid extends StatelessWidget {
         }
 
         final country = countries[index - 1];
-        final intake = controller.resolve(country.nextIntakeLabel);
+        // Un libellé de rentrée PASSÉ (« Septembre 2026 ») n'est pas affiché.
+        final intake =
+            upcomingIntakeText(controller.resolve(country.nextIntakeLabel)) ??
+                '';
         final tuition = controller.resolve(country.tuitionRange);
         final popularFields = country.popularFieldIds.take(2).map((id) {
           try {

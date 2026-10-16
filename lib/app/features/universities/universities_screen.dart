@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/program_intakes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/program_filter_service.dart';
@@ -518,7 +519,10 @@ class _DestinationCarousel extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
             final country = destinations[index];
-            final intake = controller.resolve(country.nextIntakeLabel);
+            // Un libellé de rentrée PASSÉ n'est pas affiché.
+            final intake = upcomingIntakeText(
+                    controller.resolve(country.nextIntakeLabel)) ??
+                '';
             final tuition = controller.resolve(country.tuitionRange);
             final sub = intake.isNotEmpty ? intake : tuition;
             return _DestinationCard(

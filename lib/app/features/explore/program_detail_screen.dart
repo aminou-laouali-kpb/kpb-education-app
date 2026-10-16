@@ -23,6 +23,7 @@ import '../search/match_explanation_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
 import '../../core/utils/intake_label.dart';
+import '../../core/utils/program_intakes.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -74,21 +75,37 @@ class ProgramDetailScreen extends StatelessWidget {
     final language = controller.resolve(program.language);
 
     // No dedicated "deadline" field exists on the catalog → surface the real
-    // intake instead (never fabricate a date).
-    final intake =
-        country != null ? controller.resolve(country.nextIntakeLabel) : '';
-    final intakeValue = intake.isNotEmpty
-        ? intake
-        : (institution != null && institution.intakePeriods.isNotEmpty
-            ? institution.intakePeriods.join(' · ')
-            : 'school_intake_on_request'.tr);
+    // intake instead (never fabricate a date). D'abord les rentrées À VENIR de
+    // la formation (ses offres, sinon celles de l'école, en toutes lettres) —
+    // même règle que les cartes (program_intakes.dart) : une date passée
+    // n'est jamais annoncée. Puis le libellé du pays, s'il n'est pas passé.
+    final intakeSummary = programIntakeSummary(
+      program,
+      institution: institution,
+    );
+    final countryIntake = country != null
+        ? upcomingIntakeText(controller.resolve(country.nextIntakeLabel))
+        : null;
+    final intakeValue = intakeSummary.count > 0
+        ? intakeSummary.longLabel(controller.localeCode)!
+        : intakeSummary.allPast
+            ? 'program_intakes_none_upcoming'.tr
+            : countryIntake ?? 'school_intake_on_request'.tr;
 
     final description =
         institution != null ? controller.resolve(institution.overview) : '';
     // Une formation peut avoir deux offres sur le même campus (rentrée
     // d'automne et rentrée décalée) : on compte les CAMPUS, et on range les
     // offres par campus puis par date.
-    final offerings = sortedOfferings(program.campusOfferings);
+    // Une offre dont la rentrée est passée n'est plus disponible : elle n'est
+    // pas listée (ni comptée dans « Disponible sur n campus »). Quand toutes
+    // le sont, la section le dit au lieu de les présenter comme ouvertes.
+    final allOfferings = sortedOfferings(program.campusOfferings);
+    final offerings =
+        allOfferings.where((o) => !offeringIsPast(o)).toList(growable: false);
+    final pastCampuses = offerings.isEmpty
+        ? allOfferings.map((o) => o.campus).toSet().join(', ')
+        : '';
     final campusCount = distinctCampusCount(offerings);
     final recognition = program.recognition != null
         ? controller.resolve(program.recognition!)
@@ -221,6 +238,22 @@ class ProgramDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ],
+                      ),
+                    ),
+                  ],
+                  if (offerings.isEmpty && allOfferings.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: 'program_intakes_none_upcoming'.tr,
+                      icon: Icons.event_busy_outlined,
+                      child: Text(
+                        'program_offerings_all_past'
+                            .trParams({'campuses': pastCampuses}),
+                        style: const TextStyle(
+                          fontSize: KpbFontSize.sm,
+                          height: 1.55,
+                          color: KpbColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],

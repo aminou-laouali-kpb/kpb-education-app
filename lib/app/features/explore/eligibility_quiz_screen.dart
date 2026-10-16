@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/program_intakes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/kpb_components.dart';
@@ -414,7 +415,11 @@ class _ResultView extends StatelessWidget {
                     style: const TextStyle(fontSize: 28),
                   ),
                   title: Text(controller.resolve(alt.name)),
-                  subtitle: controller.resolve(alt.nextIntakeLabel).isNotEmpty
+                  // Un libellé de rentrée PASSÉ n'est pas affiché.
+                  subtitle: upcomingIntakeText(
+                            controller.resolve(alt.nextIntakeLabel),
+                          ) !=
+                          null
                       ? Text(controller.resolve(alt.nextIntakeLabel))
                       : null,
                   trailing: const Icon(Icons.chevron_right_rounded),

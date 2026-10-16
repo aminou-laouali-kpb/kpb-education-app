@@ -2427,6 +2427,8 @@ const Map<String, String> appTranslationsFr = {
   'program_intakes_school_many': 'Rentrées de l\'école :',
   'program_intakes_more': '+ @count',
   'program_intakes_none_upcoming': 'Prochaine rentrée non publiée',
+  'program_offerings_all_past':
+      'Les rentrées publiées (@campuses) sont passées. La prochaine date n’est pas encore publiée : demande-la à ton conseiller KPB.',
   'program_intake_spring_tag': 'décalée',
   'program_intake_spring_a11y': 'rentrée décalée',
   'program_intake_fall_year_short': 'automne @year',

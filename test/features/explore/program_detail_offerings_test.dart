@@ -9,6 +9,7 @@ import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/app_search_service.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/core/utils/intake_label.dart';
+import 'package:karatou/app/core/utils/program_intakes.dart';
 import 'package:karatou/app/features/explore/program_detail_screen.dart';
 
 import '../../widget_test_helpers.dart';
@@ -182,11 +183,19 @@ void main() {
   });
 
   group('ProgramDetailScreen — plusieurs rentrées sur un campus', () {
+    late DateTime Function() previousClock;
     setUp(() {
       TestWidgetsFlutterBinding.ensureInitialized();
       resetGetxSingleton();
+      // Avant le 1er octobre 2026 : les deux rentrées sont encore à venir (une
+      // rentrée passée n'est plus listée, voir past_intakes_test.dart).
+      previousClock = ProgramIntakes.clock;
+      ProgramIntakes.clock = () => DateTime(2026, 9, 1);
     });
-    tearDown(resetGetxSingleton);
+    tearDown(() {
+      ProgramIntakes.clock = previousClock;
+      resetGetxSingleton();
+    });
 
     testWidgets('montre les deux rentrées de Paris, chacune avec son prix',
         (tester) async {

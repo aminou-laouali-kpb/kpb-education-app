@@ -2207,6 +2207,8 @@ const Map<String, String> appTranslationsEn = {
   'program_intakes_school_many': 'School intakes:',
   'program_intakes_more': '+ @count',
   'program_intakes_none_upcoming': 'Next intake not yet published',
+  'program_offerings_all_past':
+      'The published intakes (@campuses) have passed. The next date is not published yet: ask your KPB advisor.',
   'program_intake_spring_tag': 'spring',
   'program_intake_spring_a11y': 'spring intake',
   'program_intake_fall_year_short': 'Fall @year',
