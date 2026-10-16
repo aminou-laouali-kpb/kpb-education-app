@@ -2212,6 +2212,13 @@ const Map<String, String> appTranslationsEn = {
   'program_intake_spring_tag': 'spring',
   'program_intake_spring_a11y': 'spring intake',
   'program_intake_fall_year_short': 'Fall @year',
+  'offering_intake_estimated_note':
+      'Date carried over from @year, to be confirmed · @tuitionYear fee',
+  'offering_intake_estimated_a11y':
+      'Date carried over from the @year intake, to be confirmed by the school. Fee for @tuitionYear.',
+  'offering_intake_estimated_plain': 'Date and fee to be confirmed',
+  'program_intake_estimated_tag': 'to be confirmed',
+  'program_intake_estimated_a11y': 'date to be confirmed',
   'turnaround_label': 'Turnaround',
   'home_find_school_desc':
       'Find your private school in France based on your budget and goals. Chat instantly!',

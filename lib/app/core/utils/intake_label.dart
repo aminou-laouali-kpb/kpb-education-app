@@ -117,6 +117,31 @@ String? offeringIntakeLabel(CampusOffering offering, String localeCode) {
   return '${'intake_label'.tr} $raw';
 }
 
+/// « Date reconduite de 2026, à confirmer · tarif 2026-2027 » sous une offre
+/// reconduite (rentrée d'automne 2026 passée en 2027, décision du 16/10/2026),
+/// « Date et tarif à confirmer » sans date d'origine ; null pour une offre
+/// publiée par l'école.
+String? offeringEstimateNote(CampusOffering offering) {
+  if (!offering.isIntakeEstimated) return null;
+  final year = offering.rolledFromYear;
+  if (year == null) return 'offering_intake_estimated_plain'.tr;
+  return 'offering_intake_estimated_note'.trParams({
+    'year': '$year',
+    'tuitionYear': '$year-${year + 1}',
+  });
+}
+
+/// La même mention, en phrases, pour les lecteurs d'écran.
+String? offeringEstimateSemantics(CampusOffering offering) {
+  if (!offering.isIntakeEstimated) return null;
+  final year = offering.rolledFromYear;
+  if (year == null) return 'offering_intake_estimated_plain'.tr;
+  return 'offering_intake_estimated_a11y'.trParams({
+    'year': '$year',
+    'tuitionYear': '$year-${year + 1}',
+  });
+}
+
 /// « Alternance » / « Formation initiale », ou null.
 String? offeringRhythmLabel(CampusOffering offering) {
   switch (offering.rhythm) {

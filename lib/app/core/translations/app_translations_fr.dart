@@ -2432,6 +2432,13 @@ const Map<String, String> appTranslationsFr = {
   'program_intake_spring_tag': 'décalée',
   'program_intake_spring_a11y': 'rentrée décalée',
   'program_intake_fall_year_short': 'automne @year',
+  'offering_intake_estimated_note':
+      'Date reconduite de @year, à confirmer · tarif @tuitionYear',
+  'offering_intake_estimated_a11y':
+      'Date reconduite de la rentrée @year, à confirmer par l\'école. Tarif de l\'année @tuitionYear.',
+  'offering_intake_estimated_plain': 'Date et tarif à confirmer',
+  'program_intake_estimated_tag': 'à confirmer',
+  'program_intake_estimated_a11y': 'date à confirmer',
   'turnaround_label': 'Délai',
   'home_find_school_desc':
       'Trouve ton école privée en France selon ton budget et tes objectifs. Discute instantanément !',

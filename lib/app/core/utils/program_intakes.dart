@@ -39,7 +39,11 @@ import 'intake_label.dart';
 //     date au mois (« 03/2027 », IGENSIA) le reste jusqu'à la fin du mois ;
 //     une année seule (« FALL 2027 ») jusqu'à la fin de l'année.
 //  5. Une rentrée décalée (session `spring`, ou à défaut un mois de janvier à
-//     juin, comme côté serveur) porte la mention « (décalée) ».
+//     juin, comme côté serveur) porte la mention « (décalée) ». Une rentrée
+//     reconduite d'un an, que l'école n'a pas encore publiée (offre
+//     `intakeEstimated` / `rolledFromIntake`, automne 2026 → 2027), porte
+//     « (à confirmer) » — sauf si une autre offre annonce le même mois pour de
+//     bon.
 //  6. Un texte que l'app ne sait pas dater (« Septembre », texte libre de
 //     l'admin) est repris tel quel, après les dates, et n'est jamais filtré.
 //     « Septembre 2026 » / « March 2027 » (mois en toutes lettres et année)
@@ -58,7 +62,12 @@ import 'intake_label.dart';
 /// Une rentrée datée : un mois d'une année, ou une année seule (« FALL 2027 »).
 @immutable
 class IntakeDate {
-  const IntakeDate({required this.year, this.month, required this.spring});
+  const IntakeDate({
+    required this.year,
+    this.month,
+    required this.spring,
+    this.estimated = false,
+  });
 
   final int year;
 
@@ -67,6 +76,25 @@ class IntakeDate {
 
   /// Rentrée décalée (printemps).
   final bool spring;
+
+  /// Date reconduite, à confirmer par l'école.
+  final bool estimated;
+
+  /// « (décalée) », « (à confirmer) », « (décalée, à confirmer) » ou rien.
+  String _tags() {
+    final tags = [
+      if (spring) 'program_intake_spring_tag'.tr,
+      if (estimated) 'program_intake_estimated_tag'.tr,
+    ];
+    return tags.isEmpty ? '' : ' (${tags.join(', ')})';
+  }
+
+  IntakeDate _withEstimated(bool value) => IntakeDate(
+        year: year,
+        month: month,
+        spring: spring,
+        estimated: value,
+      );
 
   /// Clé de tri et de dédoublonnage : l'année, puis le mois (une année seule
   /// se range à son mois type — mars pour une décalée, septembre sinon).
@@ -83,7 +111,7 @@ class IntakeDate {
           ? '$year'
           : 'program_intake_fall_year_short'.trParams({'year': '$year'});
     }
-    return spring ? '$base (${'program_intake_spring_tag'.tr})' : base;
+    return '$base${_tags()}';
   }
 
   /// « octobre 2026 », « mars 2027 (décalée) » : le libellé lisible des
@@ -97,7 +125,7 @@ class IntakeDate {
           ? '$year'
           : 'program_intake_fall_year_short'.trParams({'year': '$year'});
     }
-    return spring ? '$base (${'program_intake_spring_tag'.tr})' : base;
+    return '$base${_tags()}';
   }
 
   /// « octobre 2026 », « mars 2027, rentrée décalée » : ce que lit TalkBack.
@@ -110,7 +138,11 @@ class IntakeDate {
           ? '$year'
           : 'program_intake_fall_year_short'.trParams({'year': '$year'});
     }
-    return spring ? '$base, ${'program_intake_spring_a11y'.tr}' : base;
+    return [
+      base,
+      if (spring) 'program_intake_spring_a11y'.tr,
+      if (estimated) 'program_intake_estimated_a11y'.tr,
+    ].join(', ');
   }
 
   @override
@@ -118,13 +150,15 @@ class IntakeDate {
       other is IntakeDate &&
       other.year == year &&
       other.month == month &&
-      other.spring == spring;
+      other.spring == spring &&
+      other.estimated == estimated;
 
   @override
-  int get hashCode => Object.hash(year, month, spring);
+  int get hashCode => Object.hash(year, month, spring, estimated);
 
   @override
-  String toString() => 'IntakeDate($year, $month, spring: $spring)';
+  String toString() =>
+      'IntakeDate($year, $month, spring: $spring, estimated: $estimated)';
 }
 
 const _shortFr = [
@@ -384,7 +418,7 @@ bool _isPast(_Candidate c, DateTime today) {
 }
 
 ProgramIntakeSummary _summarize(
-  Iterable<({String text, String? session})> sources, {
+  Iterable<({String text, String? session, bool estimated})> sources, {
   required bool fromSchool,
   required DateTime now,
 }) {
@@ -396,19 +430,23 @@ ProgramIntakeSummary _summarize(
     for (final piece in source.text.split('·')) {
       final part = piece.trim();
       if (part.isEmpty) continue;
-      final parsed = _parse(part, source.session);
-      if (parsed == null) {
+      final read = _parse(part, source.session);
+      if (read == null) {
         raw.putIfAbsent(part.toLowerCase(), () => part);
         continue;
       }
       sawDate = true;
-      if (_isPast(parsed, today)) continue;
-      final key = parsed.date.sortKey;
+      if (_isPast(read, today)) continue;
+      final date = read.date._withEstimated(source.estimated);
+      final key = date.sortKey;
       final known = upcoming[key];
-      // Même mois annoncé deux fois : décalée si l'une des deux l'est.
-      upcoming[key] = known == null || (!known.spring && parsed.date.spring)
-          ? parsed.date
-          : known;
+      // Même mois annoncé deux fois : décalée si l'une des deux l'est, à
+      // confirmer seulement si les deux le sont.
+      final kept =
+          known == null || (!known.spring && date.spring) ? date : known;
+      upcoming[key] = known == null
+          ? kept
+          : kept._withEstimated(known.estimated && date.estimated);
     }
   }
   final dates = upcoming.values.toList()
@@ -438,7 +476,11 @@ ProgramIntakeSummary programIntakeSummary(
       [
         for (final o in program.campusOfferings)
           if ((o.intake ?? '').trim().isNotEmpty)
-            (text: o.intake!, session: o.session),
+            (
+              text: o.intake!,
+              session: o.session,
+              estimated: o.isIntakeEstimated,
+            ),
       ],
       fromSchool: false,
       now: at,
@@ -450,7 +492,7 @@ ProgramIntakeSummary programIntakeSummary(
   final periods = institution?.intakePeriods ?? const <String>[];
   if (periods.isEmpty) return ProgramIntakeSummary.empty;
   return _summarize(
-    [for (final p in periods) (text: p, session: null)],
+    [for (final p in periods) (text: p, session: null, estimated: false)],
     fromSchool: true,
     now: at,
   );
@@ -498,7 +540,7 @@ ProgramIntakeSummary schoolIntakeSummary(
 }) {
   if (periods.isEmpty) return ProgramIntakeSummary.empty;
   return _summarize(
-    [for (final p in periods) (text: p, session: null)],
+    [for (final p in periods) (text: p, session: null, estimated: false)],
     fromSchool: true,
     now: now ?? ProgramIntakes.clock(),
   );
@@ -512,7 +554,7 @@ String? upcomingIntakeText(String label, {DateTime? now}) {
   final text = label.trim();
   if (text.isEmpty) return null;
   final summary = _summarize(
-    [(text: text, session: null)],
+    [(text: text, session: null, estimated: false)],
     fromSchool: false,
     now: now ?? ProgramIntakes.clock(),
   );
@@ -526,7 +568,7 @@ bool offeringIsPast(CampusOffering offering, {DateTime? now}) {
   final raw = offering.intake?.trim() ?? '';
   if (raw.isEmpty) return false;
   return _summarize(
-    [(text: raw, session: offering.session)],
+    [(text: raw, session: offering.session, estimated: false)],
     fromSchool: false,
     now: now ?? ProgramIntakes.clock(),
   ).allPast;

@@ -464,6 +464,8 @@ class CampusOffering {
     this.intake,
     this.session,
     this.rhythm,
+    this.rolledFromIntake,
+    this.intakeEstimated = false,
   });
 
   final String campus;
@@ -476,6 +478,24 @@ class CampusOffering {
 
   /// `initiale` | `alternance`, or null when the source did not say.
   final String? rhythm;
+
+  /// Rentrée d'origine d'une offre reconduite (« 01/10/2026 ») : la date
+  /// affichée en est la reconduction d'un an, non publiée par l'école
+  /// (backend/src/modules/catalog/omnes-fall-roll.ts).
+  final String? rolledFromIntake;
+
+  /// Date (et tarif) à confirmer par l'école.
+  final bool intakeEstimated;
+
+  /// L'offre annonce une rentrée que l'école n'a pas encore publiée.
+  bool get isIntakeEstimated => intakeEstimated || rolledFromIntake != null;
+
+  /// L'année de la rentrée d'origine (2026 pour « 14/09/2026 · 01/10/2026 »),
+  /// ou null.
+  int? get rolledFromYear {
+    final m = RegExp(r'(\d{4})').firstMatch(rolledFromIntake ?? '');
+    return m == null ? null : int.parse(m.group(1)!);
+  }
 
   /// Localized headline tuition for this campus, e.g. "12 690 €/an".
   String tuitionLabel(String localeCode) {
@@ -504,6 +524,8 @@ class CampusOffering {
         intake: json['intake'] as String?,
         session: json['session'] as String?,
         rhythm: json['rhythm'] as String?,
+        rolledFromIntake: json['rolledFromIntake'] as String?,
+        intakeEstimated: json['intakeEstimated'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -513,6 +535,8 @@ class CampusOffering {
         'intake': intake,
         if (session != null) 'session': session,
         if (rhythm != null) 'rhythm': rhythm,
+        if (rolledFromIntake != null) 'rolledFromIntake': rolledFromIntake,
+        if (intakeEstimated) 'intakeEstimated': true,
       };
 }
 

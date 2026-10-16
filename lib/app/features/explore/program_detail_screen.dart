@@ -767,7 +767,9 @@ class _CampusOfferingRow extends StatelessWidget {
       offeringIntakeLabel(offering, localeCode),
       offeringRhythmLabel(offering),
     ].whereType<String>().join(' · ');
-    return Row(
+    // Rentrée reconduite (automne 2026 → 2027) : date et tarif à confirmer.
+    final estimate = offeringEstimateNote(offering);
+    final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.location_on_outlined,
@@ -791,6 +793,15 @@ class _CampusOfferingRow extends StatelessWidget {
                   style:
                       const TextStyle(fontSize: 11, color: KpbColors.textMuted),
                 ),
+              if (estimate != null)
+                Text(
+                  estimate,
+                  style: const TextStyle(
+                    fontSize: KpbFontSize.xs,
+                    fontStyle: FontStyle.italic,
+                    color: KpbColors.textMuted,
+                  ),
+                ),
             ],
           ),
         ),
@@ -804,6 +815,20 @@ class _CampusOfferingRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+    if (estimate == null) return row;
+    // TalkBack lit la mention en phrases, après le campus, la rentrée et le
+    // prix (« Date reconduite de la rentrée 2026, à confirmer par l'école.
+    // Tarif de l'année 2026-2027. »).
+    return Semantics(
+      container: true,
+      label: [
+        offering.campus,
+        if (details.isNotEmpty) details,
+        offering.tuitionLabel(localeCode),
+        offeringEstimateSemantics(offering),
+      ].whereType<String>().join(', '),
+      child: ExcludeSemantics(child: row),
     );
   }
 }
