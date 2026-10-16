@@ -157,8 +157,10 @@ describe('import:omnes-spring — lecture de la grille SPRING 27', () => {
 describe('import:omnes-spring — regroupement et identifiants', () => {
   const formations = groupSpringFormations(parseOmnesSpringCsv(SPRING_CSV).rows);
 
-  it('regroupe 286 lignes en 127 formations portant 286 offres de printemps', () => {
-    expect(formations).toHaveLength(127);
+  it('regroupe 286 lignes en 122 formations portant 286 offres de printemps', () => {
+    // 127 avant la table de rapprochement : 5 variantes d'écriture (casse,
+    // campus dans le nom) faisaient chacune une fiche de plus.
+    expect(formations).toHaveLength(122);
     const offers = formations.flatMap((f) => f.offerings);
     expect(offers).toHaveLength(286);
     expect(offers.every((o) => o.session === 'spring')).toBe(true);
@@ -172,6 +174,19 @@ describe('import:omnes-spring — regroupement et identifiants', () => {
     expect(cyber?.id).toBe('omnes-p-dc41accace3b7cf8');
     expect(cyber?.institutionId).toBe('omnes-ece');
     expect(new Set(formations.map((f) => f.id)).size).toBe(formations.length);
+  });
+
+  it('fait retomber une variante d’écriture sur la fiche d’automne existante', () => {
+    // Printemps : « Activités Commerciales » ; automne : « commerciales ».
+    const ids = (needle: RegExp) => formations.filter((f) => needle.test(f.name)).map((f) => f.id);
+    expect(ids(/^BCh - B1 - Activités commerciales à l'International$/i)).toEqual([
+      'omnes-p-5b5225f2346bc062',
+    ]);
+    // « BCh- Bordeaux - B1 - Luxe… » : le campus ne reste pas dans le nom.
+    const luxe = formations.filter((f) => /B1 - Luxe et services/.test(f.name));
+    expect(luxe.map((f) => f.id)).toEqual(['omnes-p-c9a108240d695bd0']);
+    expect(luxe[0].name).toBe('BCh - B1 - Luxe et services personnalisés – Resp. d’activités commerciales');
+    expect(luxe[0].offerings.map((o) => o.campus)).toContain('Bordeaux');
   });
 
   it('range chaque formation dans un domaine d01..d12', () => {
@@ -196,14 +211,14 @@ describe('import:omnes-spring — regroupement et identifiants', () => {
 describe('import:omnes-spring — plan contre l’état laissé par le seed d’automne', () => {
   const formations = groupSpringFormations(parseOmnesSpringCsv(SPRING_CSV).rows);
 
-  it('complète 90 formations connues (224 offres) et en crée 37 (62 offres)', () => {
+  it('complète 94 formations connues (238 offres) et en crée 28 (48 offres)', () => {
     const { programs, institutions } = fallState();
     const plan = planOmnesSpring(formations, programs, institutions);
     expect(plan.errors).toEqual([]);
-    expect(plan.additions).toHaveLength(90);
-    expect(plan.additions.reduce((n, a) => n + a.added.length, 0)).toBe(224);
-    expect(plan.creations).toHaveLength(37);
-    expect(plan.creations.reduce((n, c) => n + c.campusOfferings.length, 0)).toBe(62);
+    expect(plan.additions).toHaveLength(94);
+    expect(plan.additions.reduce((n, a) => n + a.added.length, 0)).toBe(238);
+    expect(plan.creations).toHaveLength(28);
+    expect(plan.creations.reduce((n, c) => n + c.campusOfferings.length, 0)).toBe(48);
     expect(plan.unchanged).toEqual([]);
     // Chaque nouvelle formation est rattachée à son école et listée chez elle.
     const listed = plan.institutions.flatMap((i) => i.addProgramIds);
@@ -216,7 +231,7 @@ describe('import:omnes-spring — plan contre l’état laissé par le seed d’
     applyInMemory(planOmnesSpring(formations, programs, institutions), programs, institutions);
     const replay = planOmnesSpring(formations, programs, institutions);
     expect(planWriteCount(replay)).toBe(0);
-    expect(replay.unchanged).toHaveLength(127);
+    expect(replay.unchanged).toHaveLength(122);
   });
 
   it('ne modifie jamais une offre existante ni une fiche retouchée (additivité)', () => {
@@ -246,6 +261,23 @@ describe('import:omnes-spring — plan contre l’état laissé par le seed d’
     const plan = planOmnesSpring(formations, programs, institutions);
     expect(plan.skipped.map((s) => s.id)).toEqual([id]);
     expect(plan.additions.some((a) => a.id === id)).toBe(false);
+  });
+
+  it('ne crée pas une formation dont une homonyme est déjà en base sous un autre id', () => {
+    const { programs, institutions } = fallState();
+    const plan0 = planOmnesSpring(formations, programs, institutions);
+    const target = plan0.creations[0];
+    // Fiche saisie à la main dans l'admin : autre id, même nom à la casse près.
+    const manual = {
+      id: 'cl-admin-123',
+      institutionId: target.institutionId,
+      nameFr: target.nameFr.toUpperCase(),
+      levelFr: target.levelFr,
+    };
+    const plan = planOmnesSpring(formations, programs, institutions, [manual]);
+    expect(plan.creations.map((c) => c.id)).not.toContain(target.id);
+    expect(plan.skipped.find((s) => s.id === target.id)?.reason).toMatch(/homonyme.*cl-admin-123/);
+    expect(plan.institutions.flatMap((i) => i.addProgramIds)).not.toContain(target.id);
   });
 
   it('refuse de travailler sans les écoles du seed d’automne', () => {

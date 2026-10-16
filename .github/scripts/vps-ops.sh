@@ -819,6 +819,32 @@ case "$ACTION" in
     fi
     ;;
 
+  dedupe-omnes)
+    # Fusionne les doublons OMNES déjà en base : la grille d'automne 2026
+    # écrivait parfois la même formation de deux façons (casse, accent, campus
+    # resté dans l'intitulé : « BCh- Rennes - B1 - Banque Assurance »), d'où
+    # deux fiches. Table EXPLICITE alias → fiche canonique :
+    # backend/src/modules/catalog/catalog-dedupe.ts (OMNES_PROGRAM_ID_ALIASES).
+    #
+    # La fiche canonique reçoit, à la FIN de `campusOfferings`, les offres de
+    # ses alias qu'elle n'a pas, et perd le campus resté collé dans son
+    # intitulé ; chaque alias passe hors ligne (`isActive = false`), rien n'est
+    # supprimé. Les ids d'automne ne bougent pas. Écriture sous
+    # `WHERE updatedAt = …` (retouche de l'admin gardée). Rejouable : « 0
+    # écriture ». À passer AVANT `import-omnes-spring`. Runbook :
+    # docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run dedupe:omnes
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run dedupe:omnes -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   import-igensia)
     # Crée les écoles du groupe IGENSIA Education (IGENSIA School of Business,
     # IGENSIA Tech, IGENSIA RH, American Business College) et leurs formations,
@@ -827,7 +853,10 @@ case "$ACTION" in
     # Même mécanique qu'`import-omnes-spring` : une école déjà en base n'est
     # jamais réécrite (seules ses rentrées et formations manquantes sont
     # ajoutées), une formation déjà en base ne reçoit que ses offres
-    # manquantes. ESA Casablanca (`partner-esa-casa`) n'est pas touchée.
+    # manquantes. Les faits relevés sur les sites officiels (fiche RNCP,
+    # langue, durée et admission d'ABC — backend/scripts/data/
+    # igensia_2027.sources.md) COMBLENT une colonne déjà en base seulement si
+    # elle est vide ou telle que la première version l'avait écrite. ESA Casablanca (`partner-esa-casa`) n'est pas touchée.
     # Rejouable : « 0 écriture » une fois appliqué.
     if [ "$DRY_RUN" = "true" ]; then
       echo "── SIMULATION (rien n'est écrit) ──"

@@ -89,7 +89,13 @@ async function main() {
     ).map((i) => [i.id, i]),
   );
 
-  const plan = planOmnesSpring(formations, programs, institutions);
+  // Toutes les fiches des écoles visées : une formation à créer qui a déjà une
+  // homonyme sous un autre id (fiche créée à la main) n'est pas créée.
+  const siblings = await prisma.program.findMany({
+    where: { institutionId: { in: [...new Set(formations.map((f) => f.institutionId))] } },
+    select: { id: true, institutionId: true, nameFr: true, levelFr: true },
+  });
+  const plan = planOmnesSpring(formations, programs, institutions, siblings);
   if (plan.errors.length) {
     console.error('\nERREURS — rien ne sera écrit :');
     for (const e of plan.errors) console.error(`  ✗ ${e}`);

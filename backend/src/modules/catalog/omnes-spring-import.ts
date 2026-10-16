@@ -33,12 +33,11 @@ import {
   formatLevel,
   formatTuitionSummary,
   inferFieldId,
-  normalizeFormationName,
   normalizeOmnesLanguage,
   omnesInstitutionId,
-  omnesProgramId,
   toNumberOrNull,
 } from './omnes-conventions';
+import { findHomonym, omnesFormationIdentity } from './catalog-dedupe';
 import { parseCsv } from './partner-import';
 
 export const FRANCE_COUNTRY_ID = 'fra';
@@ -150,14 +149,18 @@ export type SpringFormation = {
   offerings: CampusOffering[];
 };
 
-/** Regroupe les lignes par formation, comme le seed d'automne. */
+/**
+ * Regroupe les lignes par formation, comme le seed d'automne. L'id passe par
+ * la table de rapprochement (catalog-dedupe.ts) : une variante d'écriture
+ * (« Activités Commerciales », campus resté dans le nom…) retombe sur la fiche
+ * d'automne existante au lieu d'en créer une seconde.
+ */
 export function groupSpringFormations(
   rows: readonly OmnesSpringRow[],
 ): SpringFormation[] {
   const byId = new Map<string, SpringFormation>();
   for (const row of rows) {
-    const name = normalizeFormationName(row.programName, row.campus);
-    const id = omnesProgramId(row.school, name);
+    const { id, name, isAlias } = omnesFormationIdentity(row.school, row.programName, row.campus);
     const formation = byId.get(id) ?? {
       id,
       institutionId: omnesInstitutionId(row.school),
@@ -171,6 +174,7 @@ export function groupSpringFormations(
       requirements: [],
       offerings: [],
     };
+    if (!isAlias) formation.name = name;
     if (row.language && !formation.languages.includes(row.language)) {
       formation.languages.push(row.language);
     }
@@ -239,6 +243,16 @@ export type ExistingInstitutionState = {
   programIds: string[];
 };
 
+/// Toutes les fiches des écoles visées (id, nom, niveau) : une formation à
+/// créer qui a déjà une homonyme en base sous un autre id (fiche créée dans
+/// l'admin…) n'est pas créée.
+export type SiblingProgram = {
+  id: string;
+  institutionId: string;
+  nameFr: string;
+  levelFr: string;
+};
+
 export type OfferingAddition = {
   id: string;
   name: string;
@@ -279,6 +293,7 @@ export function planOmnesSpring(
   formations: readonly SpringFormation[],
   programs: ReadonlyMap<string, ExistingProgramState>,
   institutions: ReadonlyMap<string, ExistingInstitutionState>,
+  siblings: readonly SiblingProgram[] = [],
 ): OmnesSpringPlan {
   const plan: OmnesSpringPlan = {
     additions: [],
@@ -309,7 +324,17 @@ export function planOmnesSpring(
 
     const existing = programs.get(formation.id);
     if (!existing) {
-      plan.creations.push(springProgramCreateData(formation));
+      const data = springProgramCreateData(formation);
+      const homonym = findHomonym(data, siblings);
+      if (homonym) {
+        plan.skipped.push({
+          id: formation.id,
+          name: formation.name,
+          reason: `fiche homonyme déjà en base (${homonym}) — à rapprocher dans l’admin, rien n’est créé`,
+        });
+        continue;
+      }
+      plan.creations.push(data);
       const list = createdBySchool.get(formation.institutionId) ?? [];
       list.push(formation.id);
       createdBySchool.set(formation.institutionId, list);

@@ -39,11 +39,10 @@ import {
   formatTuitionSummary,
   inferFieldId,
   intakeLabel,
-  normalizeFormationName,
   omnesInstitutionId as institutionId,
-  omnesProgramId as programId,
   studyLevelsFor,
 } from '../src/modules/catalog/omnes-conventions';
+import { omnesFormationIdentity } from '../src/modules/catalog/catalog-dedupe';
 import { M5_COUNTRY_SEEDS } from '../src/modules/countries/data/m5-countries.seed';
 
 // Compose supplies DATABASE_URL (and NODE_ENV) to the API container, whose
@@ -187,8 +186,15 @@ async function main() {
 
   for (const row of rows) {
     const instId = institutionId(row.school);
-    const formationName = normalizeFormationName(row.programName, row.campus);
-    const progId = programId(row.school, formationName);
+    // Id historique (production), rapproché par la table de catalog-dedupe.ts :
+    // une variante d'écriture de la grille (casse, accent, campus resté dans
+    // l'intitulé) retombe sur la fiche canonique au lieu d'en créer une
+    // seconde. Le nom affiché est l'intitulé sans campus.
+    const { id: progId, name: formationName, isAlias } = omnesFormationIdentity(
+      row.school,
+      row.programName,
+      row.campus,
+    );
     const campus = row.campus || '—';
 
     // --- institution-level aggregation ---
@@ -219,6 +225,8 @@ async function main() {
       requirements: new Set<string>(),
       offerings: new Map<string, OfferingAcc>(),
     };
+    // Le nom d'une ligne canonique l'emporte sur celui d'une variante.
+    if (!isAlias) formation.name = formationName;
     if (row.language) formation.languages.add(row.language);
     if (row.admissionLevel) formation.requirements.add(row.admissionLevel);
 
