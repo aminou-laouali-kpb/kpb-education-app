@@ -28,7 +28,7 @@
 //     `pumpTestApp` les met à zéro.
 //
 //  4. LE CLAMP DE POLICE. La production borne l'échelle de texte de l'OS à
-//     [1,0 ; 1,3] (lib/main.dart:256-266). Un harnais qui rend tout à 1,0 ne voit
+//     [1,0 ; 1,5] (le `builder:` de lib/main.dart). Un harnais qui rend tout à 1,0 ne voit
 //     jamais ce que voit un parent de 55 ans qui a grossi la police de son
 //     téléphone — c'est-à-dire une bonne partie du public de cette app.
 //
@@ -109,12 +109,13 @@ const kpbPhoneViewports = <KpbViewport>[iphone14, compactAndroid];
 /// constante dupliquée sans garde est une bombe à retardement ; avec garde, c'est
 /// juste une constante.
 const kpbMinTextScale = 1.0;
-const kpbMaxTextScale = 1.3;
+const kpbMaxTextScale = 1.5;
 
-/// Les échelles de texte à éprouver. 1,0 est le défaut ; 1,3 est le plafond de
-/// l'app ; 1,1 est le cran qui casse en premier (les cartes de destination
+/// Les échelles de texte à éprouver. 1,0 est le défaut ; 1,5 est le plafond de
+/// l'app depuis la build 57 (1,3 avant, gardé comme cran intermédiaire) ; 1,1
+/// est le cran qui casse en premier (les cartes de destination
 /// débordent de 3 px à 1,1, de 19 px à 1,3 — c'est à 1,1 que le défaut naît).
-const kpbTextScales = <double>[1.0, 1.1, 1.3];
+const kpbTextScales = <double>[1.0, 1.1, 1.3, 1.5];
 
 /// L'échelle telle que la production la calcule : la demande de l'OS, bornée.
 TextScaler kpbClampedScaler(double requested) =>
@@ -255,7 +256,7 @@ Future<KpbScreenReport> pumpKpbScreen(
         // ci-dessous, lui, ne couvre que l'écran — une feuille modale poussée
         // dessus reprend alors la taille, la police (1,0) et les encoches de la
         // VUE de test, pas celles du téléphone éprouvé. Un test de feuille doit
-        // passer [routesShareMediaQuery] : sinon son « ×1,3 » ne mesure que
+        // passer [routesShareMediaQuery] : sinon son « ×1,5 » ne mesure que
         // l'écran, et la feuille est mesurée à 1,0.
         //
         // Désactivé par défaut : les ~20 fichiers existants ont des feuilles et

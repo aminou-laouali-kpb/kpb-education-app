@@ -370,6 +370,13 @@ class KpbEducationApp extends StatelessWidget {
           // it up) but clamp it so extreme scales don't shatter fixed-size
           // chips/badges. Respect — never ignore — text scaling.
           //
+          // Plafond 1,5 depuis la build 57 (1,3 avant) : à 1,3, les plus
+          // grands réglages d'Android 14+ (jusqu'à 2,0) et les tailles
+          // « accessibilité » d'iOS étaient tous ramenés au même cran. Les
+          // 22 surfaces de test/core/ui/screen_matrix_test.dart ont été
+          // éprouvées à 1,5 sur les deux téléphones : aucun débordement
+          // (après correction du bouton de l'écran « aha »).
+          //
           // Le bandeau hors ligne vit ICI, au-dessus du Navigator : il couvre
           // toutes les routes (onboarding, fiches, test, dossiers, feuilles),
           // pas seulement les onglets du shell. Il est placé SOUS le
@@ -378,7 +385,7 @@ class KpbEducationApp extends StatelessWidget {
             final mq = MediaQuery.of(context);
             final scaled = mq.textScaler.clamp(
               minScaleFactor: 1.0,
-              maxScaleFactor: 1.3,
+              maxScaleFactor: 1.5,
             );
             return MediaQuery(
               data: mq.copyWith(textScaler: scaled),

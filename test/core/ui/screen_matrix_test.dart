@@ -1,4 +1,4 @@
-// LA MATRICE D'ÉCRANS RÉELS — 20 surfaces × 2 téléphones × 3 échelles de texte.
+// LA MATRICE D'ÉCRANS RÉELS — 22 surfaces × 2 téléphones × 4 échelles de texte.
 //
 // Ce fichier n'est PAS tagué `golden`. Il tourne donc dans le portillon de fusion
 // (`flutter test --exclude-tags="golden || known-defect"`, flutter-ci.yml), ce qui
@@ -22,7 +22,7 @@
 //     d'autre chose, en restant verte ;
 //   · le CANARI : un Column volontairement 10 px trop haut qui DOIT être
 //     signalé — s'il se taît, les 106 cas « sans débordement » ne valent rien ;
-//   · le CLAMP SURVEILLÉ : les bornes [1,0 ; 1,3] sont recopiées du `builder:` de
+//   · le CLAMP SURVEILLÉ : les bornes [1,0 ; 1,5] sont recopiées du `builder:` de
 //     lib/main.dart, qu'un test ne peut pas atteindre. On relit donc le fichier
 //     source et on échoue si les nombres ont divergé.
 
@@ -42,6 +42,8 @@ import 'package:karatou/app/features/cases/cases_screen.dart';
 import 'package:karatou/app/features/france/france_private_admission_screen.dart';
 import 'package:karatou/app/features/home/home_screen.dart';
 import 'package:karatou/app/features/housing/housing_estimator_screen.dart';
+import 'package:karatou/app/features/matches/aha_moment_screen.dart';
+import 'package:karatou/app/features/onboarding/onboarding_screen.dart';
 import 'package:karatou/app/features/profile/profile_screen.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 import 'package:karatou/app/features/shell/kpb_tools_drawer.dart';
@@ -144,6 +146,21 @@ Map<String, Future<Widget> Function()> buildScreenSpecs() {
       return const FrancePrivateAdmissionScreen();
     },
     'HousingEstimatorScreen': () async => const HousingEstimatorScreen(),
+    // Deux routes HORS shell, ajoutées avec le plafond de police à 1,5
+    // (build 57) : le parcours d'entrée d'un nouvel élève. L'écran « aha »
+    // débordait de 153 px sur Android 360 dès ×1,0 dans ce harnais (libellé
+    // « Voir toutes les universités » non flexible) — et réellement dès ×1,3
+    // en français avec la police système.
+    'OnboardingScreen': () async {
+      await seedKpbController();
+      return const OnboardingScreen();
+    },
+    'AhaMomentScreen': () async {
+      // Le client simulé ne répond pas : l'écran prend son repli local, trois
+      // écoles du catalogue — l'état que voit un élève hors ligne.
+      await seedKpbController();
+      return const AhaMomentScreen();
+    },
   };
 
   for (final tool in KpbToolsDrawer.toolsForTest) {

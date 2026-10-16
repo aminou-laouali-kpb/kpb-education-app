@@ -81,7 +81,7 @@ Les ~30 écrans « déjà beaux » n'ont **pas besoin de redesign**, seulement d
 
 ### 2.4 État des fondations (`main`)
 
-- `lib/main.dart` : `GetMaterialApp`, `theme: AppTheme.buildTheme()`, `themeMode: ThemeMode.light`, `darkTheme` **non branché** ; `textScaler` clampé **1.0–1.3** (déjà conforme à l'exigence a11y du plan) ; transition Cupertino 280 ms.
+- `lib/main.dart` : `GetMaterialApp`, `theme: AppTheme.buildTheme()`, `themeMode: ThemeMode.light`, `darkTheme` **non branché** ; `textScaler` clampé **1.0–1.5** (1.3 jusqu’à la build 56 ; déjà conforme à l'exigence a11y du plan) ; transition Cupertino 280 ms.
 - `app_theme.dart` : `ThemeData` M3 complet (light + dark builders) — AppBar, Card, Chip, Input, 3 boutons, NavigationBar, Divider, ListTile, BottomSheet, Switch, Checkbox, Progress, TextTheme — mais sur l'**ancienne palette** (`primary #004AAD`, scaffold `#F4F6FB`). Sous-thèmes absents : SnackBar, Dialog, TabBar, Tooltip, PopupMenu, Radio, Slider, Drawer, FAB, SegmentedButton, IconButton, ElevatedButton.
 - `app_tokens.dart` : `KpbColors` (brand, sémantique AA, neutres gray, dark surfaces, field accents d01..d12, gradients), `KpbSpacing`, `KpbRadius`, `KpbShadow`, `KpbTextStyles` (PJS titres + Inter corps, **déjà branchés** sur `main`).
 - `kpb_theme_ext.dart` : `KpbThemeColors` switch light/dark avec **25 hex dupliqués** — c'est la duplication à éliminer (§8).
