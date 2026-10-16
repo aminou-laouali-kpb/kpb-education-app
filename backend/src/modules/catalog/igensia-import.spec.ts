@@ -149,14 +149,17 @@ describe('import:igensia — lecture des sources', () => {
       levelFr: 'Bachelor',
       durationFr: '3 ans, entrée en 1re année (B1)',
       tuitionMinEur: 9400,
-      recognitionFr: 'Grade de licence',
       procedureType: 'eef',
       admissionModes: ['Parcoursup', 'Études en France', 'Concours école'],
-      sourceUrl: 'https://www.igensia-school-of-business.fr/candidature-en-ligne',
-      // La source ne dit pas la langue d'enseignement : rien n'est écrit.
+      // La page officielle de la formation (igensia-enrichment.ts).
+      sourceUrl:
+        'https://www.igensia-school-of-business.fr/formations/commerce-vente-achats/bachelor-en-sciences-du-management-event-management',
+      // Ni la source ni la page officielle ne disent la langue : rien n'est écrit.
       languageFr: '',
       teachingLanguages: [],
     });
+    // Le libellé de la source, puis la fiche RNCP qui le porte.
+    expect(data.recognitionFr).toMatch(/^Grade de licence — RNCP39556 « DipViGrL - Responsable du développement commercial et marketing », niveau 6/);
     // `toLocaleString('fr-FR')` sépare les milliers d'une espace fine insécable.
     expect(data.tuitionFr).toMatch(/^9\s400 €\/an$/);
     expect(data.requirementsFr).toHaveLength(data.requirementsEn.length);
@@ -171,13 +174,20 @@ describe('import:igensia — lecture des sources', () => {
       tuitionMinEur: 12900,
       teachingLanguages: ['en'],
       languageFr: 'Anglais',
-      durationFr: '',
-      recognitionFr: null,
-      procedureType: null,
-      admissionModes: [],
-      sourceUrl: null,
-      requirementsFr: [],
+      // Le portefeuille ABC ne disait ni durée, ni reconnaissance, ni
+      // admission : relevées sur le site officiel de l'école.
+      durationFr: '4 ans (8 semestres + stage de fin d’études de 6 mois)',
+      procedureType: 'hors_eef',
+      admissionModes: ['Dossier', 'Entretien'],
+      applicationFeeEur: 60,
+      sourceUrl:
+        'https://www.american-business-college-paris.com/programs/bachelor-degree/bachelor-of-business-administration',
     });
+    expect(abcData.recognitionFr).toMatch(/IACBE.*RNCP41361 « Manager international », niveau 7/);
+    expect(abcData.requirementsFr.join(' ')).toMatch(/IELTS 6\.0/);
+    expect(abcData.requirementsFr).toHaveLength(abcData.requirementsEn.length);
+    // Les prix restent ceux de la source du propriétaire.
+    expect(abcData.campusOfferings.map((o) => o.tuitionUpfront)).toEqual([12900]);
   });
 
   it('écrit des textes d’école tutoyés, FR et EN, sans promesse d’admission', () => {

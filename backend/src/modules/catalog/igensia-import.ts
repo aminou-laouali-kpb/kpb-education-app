@@ -12,9 +12,11 @@
 // `campusOfferings`. Une formation ouverte en mars ET en septembre est UNE
 // fiche avec deux offres (ou plus, une par campus), pas deux fiches.
 //
-// Tout ce qui n'est pas dans les sources reste vide : langue d'enseignement
-// des programmes ISB / Tech / RH, durée et modalités d'admission d'ABC (voir
-// les « À VALIDER » ci-dessous). Les intitulés de formation sont recopiés tels
+// Ce que les deux sources ne disent pas (langue d'enseignement, fiche RNCP,
+// durée et admission d'ABC…) vient des sites officiels des écoles et de France
+// Compétences, fait par fait avec son URL : igensia-enrichment.ts et
+// scripts/data/igensia_2027.sources.md. Tarifs et rentrées restent ceux des
+// sources du propriétaire. Ce qui reste introuvable reste vide. Les intitulés de formation sont recopiés tels
 // quels, fautes comprises (« Sales Stategy ») ; seule la coquille « IGENISA »
 // du NOM des écoles est corrigée, dans la table `SCHOOL_BY_LABEL`.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,6 +27,12 @@ import {
   mergeCampusOfferings,
   readCampusOfferings,
 } from './campus-offerings';
+import { findHomonym } from './catalog-dedupe';
+import {
+  IGENSIA_FORMATION_FACTS,
+  type IgensiaFormationFacts,
+  recognitionWithFacts,
+} from './igensia-enrichment';
 import { euro, formatTuitionSummary, normalizeDegreeLevel } from './omnes-conventions';
 import { parseCsv, stableId } from './partner-import';
 
@@ -41,8 +49,15 @@ export type IgensiaSchool = {
   id: string;
   nameFr: string;
   nameEn: string;
-  /// Lien de candidature en ligne publié dans la source ; nul s'il n'y en a pas.
+  /// Lien de candidature en ligne (source du propriétaire, ou site officiel).
   applicationUrl: string | null;
+  /// Site de l'école, quand il diffère de la page de candidature.
+  websiteUrl?: string;
+  /// Processus d'admission propre à l'école (site officiel), FR / EN.
+  admissionFr?: string[];
+  admissionEn?: string[];
+  languageRequirementsFr?: string;
+  languageRequirementsEn?: string;
   /// Les écoles ISB / Tech / RH partagent le processus d'admission du groupe
   /// (PDF IGENSIA). ABC n'y figure pas : on ne le lui prête pas.
   groupAdmissionProcess: boolean;
@@ -90,15 +105,48 @@ export const IGENSIA_SCHOOLS: IgensiaSchool[] = [
     // qui ne lit que le nom et la ville de l'établissement.
     nameFr: 'American Business College (ABC)',
     nameEn: 'American Business College (ABC)',
-    // À VALIDER (propriétaire) : aucun lien de candidature dans le portefeuille ABC.
-    applicationUrl: null,
+    // Le portefeuille ABC ne donne pas de lien : page de candidature du site
+    // officiel (consultée le 16/10/2026).
+    applicationUrl: 'https://www.american-business-college-paris.com/online-application',
+    websiteUrl: 'https://www.american-business-college-paris.com/',
     groupAdmissionProcess: false,
+    admissionFr: [
+      'Comment candidater. Tu candidates en ligne, directement sur le site de l’école : formulaire, passeport ou pièce d’identité, relevés de notes et diplômes, lettre de motivation et un test d’anglais (une lettre de recommandation est facultative). Tu reçois une confirmation sous 3 jours ouvrés. Après l’étude de ton dossier, tu as un court échange (Teams ou téléphone), puis un entretien d’admission en anglais, et l’école te donne sa décision.',
+      'Candidats hors UE : dépose ton dossier avant le 1er juillet pour la rentrée d’automne. Frais de candidature : 60 € ; acompte d’inscription : 1 500 €, à la signature du contrat.',
+      'Une question ? Écris à admission-abc-paris@igensia.com. L’admission reste la décision de l’école.',
+    ],
+    admissionEn: [
+      'How to apply. You apply online, directly on the school website: form, passport or ID, transcripts and diplomas, cover letter and an English test (a recommendation letter is optional). You get a confirmation within 3 business days. Once your file is reviewed, you have a short call (Teams or phone), then an admission interview in English, and the school gives you its decision.',
+      'Non-EU applicants: apply before 1 July for the fall intake. Application fee: €60; enrolment deposit: €1,500, paid when you sign the agreement.',
+      'Questions? Write to admission-abc-paris@igensia.com. Admission remains the school’s decision.',
+    ],
+    languageRequirementsFr:
+      'Anglais : IELTS 6.0, TOEFL iBT 70, PTE Academic 54, Duolingo 100 ou Cambridge B2 First pour les bachelors ; un test d’anglais pour tous les programmes',
+    languageRequirementsEn:
+      'English: IELTS 6.0, TOEFL iBT 70, PTE Academic 54, Duolingo 100 or Cambridge B2 First for bachelor programmes; an English test for every programme',
     introFr:
       'American Business College (ABC) est une école du groupe IGENSIA Education, à Paris. Ses programmes sont enseignés en anglais.',
     introEn:
       'American Business College (ABC) is a school of the IGENSIA Education group, in Paris. Its programmes are taught in English.',
   },
 ];
+
+/**
+ * L'école telle que la première version de l'import l'écrivait (sources du
+ * propriétaire seules) : sans les faits du site officiel. Référence du
+ * comblement des fiches déjà en base.
+ */
+export function firstVersionOf(school: IgensiaSchool): IgensiaSchool {
+  const {
+    websiteUrl: _w,
+    admissionFr: _af,
+    admissionEn: _ae,
+    languageRequirementsFr: _lf,
+    languageRequirementsEn: _le,
+    ...rest
+  } = school;
+  return { ...rest, applicationUrl: school.id === 'igensia-abc' ? null : school.applicationUrl };
+}
 
 /// Colonne « ECOLES » → école. Table FERMÉE. La source écrit « IGENISA » :
 /// coquille corrigée ici, pour le nom de l'école seulement.
@@ -205,6 +253,13 @@ export const LANGUAGE_BY_LABEL: Record<string, { fr: string; en: string; codes: 
   ANG: { fr: 'Anglais', en: 'English', codes: ['en'] },
 };
 
+function languageFromFacts(
+  facts: IgensiaFormationFacts | undefined,
+): { fr: string; en: string; codes: string[] } | null {
+  if (!facts?.language) return null;
+  return { fr: facts.language.fr, en: facts.language.en, codes: [...facts.language.codes] };
+}
+
 function fold(value: string): string {
   return value
     .normalize('NFD')
@@ -258,6 +313,8 @@ export type IgensiaFormation = {
   duration: { fr: string; en: string };
   recognition: { fr: string; en: string } | null;
   language: { fr: string; en: string; codes: string[] } | null;
+  /// Vrai quand la langue vient du site officiel, pas de la source.
+  languageFromWeb?: boolean;
   entry: { fr: string; en: string } | null;
   prerequisite: { fr: string; en: string } | null;
   channels: AdmissionChannel[];
@@ -365,7 +422,10 @@ export function parseIgensiaSources(
         level,
         duration,
         recognition: recognition!,
-        language: null, // À VALIDER : la source ne dit pas la langue d'enseignement.
+        // La source ne dit pas la langue : celle de la page officielle, quand
+        // elle la donne (igensia-enrichment.ts), sinon vide.
+        language: languageFromFacts(IGENSIA_FORMATION_FACTS[`${schoolId}|${name}`]),
+        languageFromWeb: true,
         entry: { fr: entry!.fr, en: entry!.en },
         prerequisite: prerequisite!,
         channels: channels!,
@@ -495,12 +555,34 @@ export function requirementsFor(formation: IgensiaFormation): { fr: string[]; en
   return { fr, en };
 }
 
-export function igensiaProgramCreateData(formation: IgensiaFormation, school: IgensiaSchool) {
+/** Les faits relevés sur le web pour cette formation (igensia-enrichment.ts). */
+export function factsFor(formation: Pick<IgensiaFormation, 'schoolId' | 'name'>) {
+  return IGENSIA_FORMATION_FACTS[`${formation.schoolId}|${formation.name}`];
+}
+
+/**
+ * La fiche d'une formation. `withWebFacts: false` rend la fiche telle que la
+ * première version de l'import l'écrivait (sources du propriétaire seules) :
+ * c'est la référence du comblement (`igensiaProgramFills`).
+ */
+export function igensiaProgramCreateData(
+  formation: IgensiaFormation,
+  school: IgensiaSchool,
+  { withWebFacts = true }: { withWebFacts?: boolean } = {},
+) {
+  const facts = withWebFacts ? factsFor(formation) : undefined;
   const tuition = formatTuitionSummary(formation.offerings);
   const prices = formation.offerings
     .map((o) => o.tuitionUpfront)
     .filter((p): p is number => typeof p === 'number');
-  const requirements = requirementsFor(formation);
+  const base = requirementsFor(formation);
+  const requirements = facts?.requirements
+    ? { fr: [...base.fr, ...facts.requirements.fr], en: [...base.en, ...facts.requirements.en] }
+    : base;
+  const language = withWebFacts || !formation.languageFromWeb ? formation.language : null;
+  const duration = facts?.duration ?? formation.duration;
+  const recognition = recognitionWithFacts(formation.recognition, facts);
+  const admissionModes = facts?.admissionModes ?? [...formation.channels];
   return {
     id: formation.id,
     institutionId: formation.schoolId,
@@ -510,22 +592,24 @@ export function igensiaProgramCreateData(formation: IgensiaFormation, school: Ig
     nameEn: formation.name,
     levelFr: formation.level,
     levelEn: formation.level,
-    durationFr: formation.duration.fr,
-    durationEn: formation.duration.en,
+    durationFr: duration.fr,
+    durationEn: duration.en,
     tuitionFr: tuition.fr,
     tuitionEn: tuition.en,
-    languageFr: formation.language?.fr ?? '',
-    languageEn: formation.language?.en ?? '',
-    teachingLanguages: formation.language?.codes ?? [],
+    languageFr: language?.fr ?? '',
+    languageEn: language?.en ?? '',
+    teachingLanguages: language ? [...language.codes] : [],
     requirementsFr: requirements.fr,
     requirementsEn: requirements.en,
-    recognitionFr: formation.recognition?.fr ?? null,
-    recognitionEn: formation.recognition?.en ?? null,
-    admissionModes: [...formation.channels],
-    procedureType: procedureTypeFor(formation.channels),
+    recognitionFr: recognition?.fr ?? null,
+    recognitionEn: recognition?.en ?? null,
+    admissionModes,
+    procedureType: facts?.procedureType ?? procedureTypeFor(formation.channels),
+    applicationFeeEur: facts?.applicationFeeEur ?? null,
     tuitionMinEur: prices.length ? Math.round(Math.min(...prices)) : null,
     campusOfferings: formation.offerings,
-    sourceUrl: school.applicationUrl,
+    // La page officielle de la formation quand on l'a, sinon la candidature.
+    sourceUrl: facts?.pageUrl ?? (withWebFacts ? school : firstVersionOf(school)).applicationUrl,
     lastVerifiedAt: IGENSIA_SOURCE_DATE,
     isActive: true,
   };
@@ -565,6 +649,9 @@ export function schoolOverview(
       'Enrolment: you choose to pay your tuition in one go or in 3 instalments, then you pay a €3,000 deposit. Note: €390 of application fees are kept, even if the deposit is refunded. You then sign your study contract online (DocuSign). The International Admissions team follows your visa application with its partner.',
       `Questions? Write to ${IGENSIA_CONTACT_EMAIL}. Admission remains the school’s decision.`,
     );
+  } else if (school.admissionFr?.length && school.admissionEn?.length) {
+    fr.push(...school.admissionFr);
+    en.push(...school.admissionEn);
   } else {
     fr.push('L’admission reste la décision de l’école.');
     en.push('Admission remains the school’s decision.');
@@ -609,16 +696,16 @@ export function igensiaInstitutionCreateData(
     studyLevels: [...new Set(own.map((f) => f.level))],
     tuitionLabelFr: tuition.fr,
     tuitionLabelEn: tuition.en,
-    languageRequirementsFr: school.groupAdmissionProcess
-      ? 'B2 minimum dans la langue du programme (français ou anglais)'
-      : '',
-    languageRequirementsEn: school.groupAdmissionProcess
-      ? 'B2 minimum in the programme language (French or English)'
-      : '',
+    languageRequirementsFr:
+      school.languageRequirementsFr ??
+      (school.groupAdmissionProcess ? 'B2 minimum dans la langue du programme (français ou anglais)' : ''),
+    languageRequirementsEn:
+      school.languageRequirementsEn ??
+      (school.groupAdmissionProcess ? 'B2 minimum in the programme language (French or English)' : ''),
     intakePeriods: periods,
     programIds: own.map((f) => f.id),
     isPartner: true,
-    websiteUrl: school.applicationUrl,
+    websiteUrl: school.websiteUrl ?? school.applicationUrl,
     sourceUrl: school.applicationUrl,
     lastVerifiedAt: IGENSIA_SOURCE_DATE,
     isActive: true,
@@ -632,16 +719,83 @@ export function intakePeriodsFor(formations: readonly IgensiaFormation[]): strin
   return order.filter((i) => used.has(i.intake)).map((i) => i.periodFr);
 }
 
+/// Colonnes d'une fiche formation que l'import COMBLE quand elle est déjà en
+/// base : seulement si la valeur est vide, ou encore exactement celle que la
+/// première version de l'import avait écrite (jamais une retouche de l'admin).
+export const PROGRAM_FILLABLE = [
+  'durationFr',
+  'durationEn',
+  'languageFr',
+  'languageEn',
+  'teachingLanguages',
+  'requirementsFr',
+  'requirementsEn',
+  'recognitionFr',
+  'recognitionEn',
+  'admissionModes',
+  'procedureType',
+  'applicationFeeEur',
+  'sourceUrl',
+] as const;
+
+export const INSTITUTION_FILLABLE = [
+  'overviewFr',
+  'overviewEn',
+  'languageRequirementsFr',
+  'languageRequirementsEn',
+  'websiteUrl',
+  'sourceUrl',
+] as const;
+
 export type IgensiaExistingProgram = {
   id: string;
   campusOfferings: unknown;
   updatedAt: Date;
-};
+} & Partial<Record<(typeof PROGRAM_FILLABLE)[number], unknown>>;
 
 export type IgensiaExistingInstitution = {
   id: string;
   intakePeriods: string[];
   programIds: string[];
+  updatedAt?: Date;
+} & Partial<Record<(typeof INSTITUTION_FILLABLE)[number], unknown>>;
+
+function sameValue(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
+
+function isBlankValue(v: unknown): boolean {
+  return v == null || v === '' || (Array.isArray(v) && v.length === 0);
+}
+
+/**
+ * Les colonnes à combler sur une ligne déjà en base : celles que la ligne lue
+ * contient, vides ou identiques à la première version, et que la version
+ * enrichie change. Une colonne absente de la lecture n'est jamais comblée.
+ */
+export function fillsFor<K extends string>(
+  keys: readonly K[],
+  existing: Partial<Record<K, unknown>>,
+  previous: Record<K, unknown>,
+  fresh: Record<K, unknown>,
+): Partial<Record<K, unknown>> {
+  const out: Partial<Record<K, unknown>> = {};
+  for (const key of keys) {
+    if (!(key in existing)) continue;
+    const current = existing[key];
+    if (sameValue(current, fresh[key])) continue;
+    if (isBlankValue(fresh[key])) continue;
+    if (isBlankValue(current) || sameValue(current, previous[key])) out[key] = fresh[key];
+  }
+  return out;
+}
+
+/// Toutes les fiches des écoles visées, pour refuser une homonyme.
+export type IgensiaSiblingProgram = {
+  id: string;
+  institutionId: string;
+  nameFr: string;
+  levelFr: string;
 };
 
 export type IgensiaPlan = {
@@ -657,14 +811,20 @@ export type IgensiaPlan = {
     addIntakePeriods: string[];
     addProgramIds: string[];
   }[];
-  /// Formation déjà là : offres manquantes ajoutées à la fin.
+  /// Formation déjà là : offres manquantes ajoutées à la fin (et colonnes
+  /// comblées dans la même écriture).
   offeringAdditions: {
     id: string;
     name: string;
     expectedUpdatedAt: Date;
     merged: unknown[];
     added: CampusOffering[];
+    fills?: Record<string, unknown>;
   }[];
+  /// Formation déjà là, sans offre à ajouter : colonnes comblées seules.
+  programFills: { id: string; name: string; expectedUpdatedAt: Date; data: Record<string, unknown> }[];
+  /// École déjà là : colonnes comblées (texte, liens).
+  institutionFills: { id: string; expectedUpdatedAt: Date; data: Record<string, unknown> }[];
   unchanged: string[];
   skipped: { id: string; name: string; reason: string }[];
 };
@@ -673,11 +833,14 @@ export function planIgensia(
   formations: readonly IgensiaFormation[],
   programs: ReadonlyMap<string, IgensiaExistingProgram>,
   institutions: ReadonlyMap<string, IgensiaExistingInstitution>,
+  siblings: readonly IgensiaSiblingProgram[] = [],
 ): IgensiaPlan {
   const plan: IgensiaPlan = {
     newSchools: [],
     schoolAdditions: [],
     offeringAdditions: [],
+    programFills: [],
+    institutionFills: [],
     unchanged: [],
     skipped: [],
   };
@@ -695,8 +858,34 @@ export function planIgensia(
       // Une formation déjà en base sous une école absente (cas d'école) est
       // traitée comme les autres formations existantes, plus bas.
     }
-    const missing = own.filter((f) => !programs.has(f.id));
+    // Une formation à créer dont une homonyme (même nom normalisé, même
+    // niveau) est déjà en base dans l'école sous un autre id n'est pas créée.
+    const missing = own.filter((f) => {
+      if (programs.has(f.id)) return false;
+      const homonym = findHomonym(
+        { id: f.id, institutionId: f.schoolId, nameFr: f.name, levelFr: f.level },
+        siblings,
+      );
+      if (!homonym) return true;
+      plan.skipped.push({
+        id: f.id,
+        name: f.name,
+        reason: `fiche homonyme déjà en base (${homonym}) — à rapprocher dans l’admin, rien n’est créé`,
+      });
+      return false;
+    });
     if (existingSchool) {
+      if (existingSchool.updatedAt) {
+        const data = fillsFor(
+          INSTITUTION_FILLABLE,
+          existingSchool,
+          igensiaInstitutionCreateData(firstVersionOf(school), own),
+          igensiaInstitutionCreateData(school, own),
+        );
+        if (Object.keys(data).length) {
+          plan.institutionFills.push({ id: school.id, expectedUpdatedAt: existingSchool.updatedAt, data });
+        }
+      }
       const periods = intakePeriodsFor(own).filter(
         (p) => !existingSchool.intakePeriods.includes(p),
       );
@@ -710,9 +899,24 @@ export function planIgensia(
         });
       }
     }
+    if (!existingSchool) {
+      // Écarte aussi des créations les homonymes (cas d'une école absente
+      // dont une fiche aurait été saisie à la main).
+      const created = plan.newSchools[plan.newSchools.length - 1];
+      if (created?.institution.id === school.id) {
+        created.programs = created.programs.filter((p) => missing.some((f) => f.id === p.id));
+      }
+    }
     for (const formation of own) {
       const existing = programs.get(formation.id);
       if (!existing) continue;
+      const fills = fillsFor(
+        PROGRAM_FILLABLE,
+        existing,
+        igensiaProgramCreateData(formation, school, { withWebFacts: false }),
+        igensiaProgramCreateData(formation, school),
+      ) as Record<string, unknown>;
+      const hasFills = Object.keys(fills).length > 0;
       const current = readCampusOfferings(existing.campusOfferings);
       if (current === null) {
         plan.skipped.push({
@@ -724,7 +928,16 @@ export function planIgensia(
       }
       const { merged, added } = mergeCampusOfferings(current, formation.offerings);
       if (!added.length) {
-        plan.unchanged.push(formation.id);
+        if (hasFills) {
+          plan.programFills.push({
+            id: formation.id,
+            name: formation.name,
+            expectedUpdatedAt: existing.updatedAt,
+            data: fills,
+          });
+        } else {
+          plan.unchanged.push(formation.id);
+        }
         continue;
       }
       plan.offeringAdditions.push({
@@ -733,6 +946,7 @@ export function planIgensia(
         expectedUpdatedAt: existing.updatedAt,
         merged,
         added,
+        ...(hasFills ? { fills } : {}),
       });
     }
   }
@@ -743,6 +957,8 @@ export function igensiaPlanWriteCount(plan: IgensiaPlan): number {
   return (
     plan.newSchools.length +
     plan.schoolAdditions.length +
-    plan.offeringAdditions.length
+    plan.offeringAdditions.length +
+    plan.programFills.length +
+    plan.institutionFills.length
   );
 }

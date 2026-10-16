@@ -32,6 +32,8 @@ import {
   IGENSIA_INSTITUTION_ID_PREFIX,
   IGENSIA_PROGRAM_ID_PREFIX,
   IGENSIA_SCHOOLS,
+  INSTITUTION_FILLABLE,
+  PROGRAM_FILLABLE,
   type IgensiaExistingInstitution,
   type IgensiaExistingProgram,
   igensiaPlanWriteCount,
@@ -84,19 +86,38 @@ async function main() {
     (
       await prisma.program.findMany({
         where: { id: { in: formations.map((f) => f.id) } },
-        select: { id: true, campusOfferings: true, updatedAt: true },
+        select: {
+          id: true,
+          campusOfferings: true,
+          updatedAt: true,
+          // Les colonnes que l'import sait combler (vides ou encore telles que
+          // la première version les avait écrites).
+          ...Object.fromEntries(PROGRAM_FILLABLE.map((k) => [k, true])),
+        },
       })
-    ).map((p) => [p.id, p]),
+    ).map((p) => [p.id, p as IgensiaExistingProgram]),
   );
   const institutions = new Map<string, IgensiaExistingInstitution>(
     (
       await prisma.institution.findMany({
         where: { id: { in: IGENSIA_SCHOOLS.map((s) => s.id) } },
-        select: { id: true, intakePeriods: true, programIds: true },
+        select: {
+          id: true,
+          intakePeriods: true,
+          programIds: true,
+          updatedAt: true,
+          ...Object.fromEntries(INSTITUTION_FILLABLE.map((k) => [k, true])),
+        },
       })
-    ).map((i) => [i.id, i]),
+    ).map((i) => [i.id, i as IgensiaExistingInstitution]),
   );
-  const plan = planIgensia(formations, programs, institutions);
+  // Toutes les fiches des écoles visées : une formation à créer qui a une
+  // homonyme sous un autre id (fiche saisie à la main) n'est pas créée.
+  const siblings = await prisma.program.findMany({
+    where: { institutionId: { in: IGENSIA_SCHOOLS.map((s) => s.id) } },
+    select: { id: true, institutionId: true, nameFr: true, levelFr: true },
+  });
+  const plan = planIgensia(formations, programs, institutions, siblings);
 
   console.log(`\n${formations.length} formation(s) dans les sources.\n`);
   for (const school of IGENSIA_SCHOOLS) {
@@ -105,6 +126,10 @@ async function main() {
     const extra = plan.schoolAdditions.find((a) => a.id === school.id);
     const created = [...(fresh?.programs ?? []), ...(extra?.programs ?? [])];
     const completed = plan.offeringAdditions.filter((a) => own.some((f) => f.id === a.id));
+    const filled = [
+      ...plan.programFills.filter((a) => own.some((f) => f.id === a.id)).map((a) => ({ id: a.id, data: a.data })),
+      ...completed.filter((a) => a.fills).map((a) => ({ id: a.id, data: a.fills! })),
+    ];
     const offers =
       created.reduce((n, p) => n + p.campusOfferings.length, 0) +
       completed.reduce((n, a) => n + a.added.length, 0);
@@ -115,6 +140,10 @@ async function main() {
       `   formations inchangées  : ${plan.unchanged.filter((id) => own.some((f) => f.id === id)).length}`,
     );
     console.log(`   offres ajoutées        : ${offers}`);
+    console.log(`   fiches comblées        : ${filled.length}`);
+    for (const f of filled) console.log(`     ~ ${f.id} : ${Object.keys(f.data).join(', ')}`);
+    const instFill = plan.institutionFills.find((f) => f.id === school.id);
+    if (instFill) console.log(`   école comblée          : ${Object.keys(instFill.data).join(', ')}`);
     for (const p of created) {
       console.log(
         `     + ${p.levelFr.padEnd(9)} ${p.nameFr.slice(0, 64)} — ${p.campusOfferings
@@ -186,6 +215,16 @@ async function main() {
     if (done) written += 1;
   }
 
+  // Comblements d'école AVANT les ajouts (`push` rafraîchit updatedAt).
+  for (const f of plan.institutionFills) {
+    const { count } = await prisma.institution.updateMany({
+      where: { id: f.id, updatedAt: f.expectedUpdatedAt },
+      data: f.data as Prisma.InstitutionUpdateManyMutationInput,
+    });
+    if (count) written += 1;
+    else console.log(`   ${f.id} : modifiée entre-temps, laissée intacte — relancer`);
+  }
+
   for (const add of plan.schoolAdditions) {
     await prisma.$transaction(
       async (tx) => {
@@ -211,10 +250,22 @@ async function main() {
   for (const a of plan.offeringAdditions) {
     const { count } = await prisma.program.updateMany({
       where: { id: a.id, updatedAt: a.expectedUpdatedAt },
-      data: { campusOfferings: a.merged as Prisma.InputJsonValue },
+      data: {
+        ...((a.fills ?? {}) as Prisma.ProgramUpdateManyMutationInput),
+        campusOfferings: a.merged as Prisma.InputJsonValue,
+      },
     });
     if (count) written += 1;
     else console.log(`   ${a.id} : modifiée entre-temps, laissée intacte — relancer`);
+  }
+
+  for (const f of plan.programFills) {
+    const { count } = await prisma.program.updateMany({
+      where: { id: f.id, updatedAt: f.expectedUpdatedAt },
+      data: f.data as Prisma.ProgramUpdateManyMutationInput,
+    });
+    if (count) written += 1;
+    else console.log(`   ${f.id} : modifiée entre-temps, laissée intacte — relancer`);
   }
 
   console.log(`\n── ÉCRIT : ${written} écriture(s). ──`);

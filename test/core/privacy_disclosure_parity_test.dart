@@ -144,6 +144,12 @@ const _nonProcessorSuffixes = <String>[
   'igensia-school-of-business.fr',
   'igensiatech.fr',
   'igensia-rh.com',
+  // American Business College (groupe IGENSIA) : page de programme et de
+  // candidature citée comme SOURCE ; France Compétences : fiche RNCP citée
+  // comme source de la reconnaissance d'un diplôme. Des liens que l'étudiant
+  // OUVRE, jamais des destinataires de ses données.
+  'american-business-college-paris.com',
+  'francecompetences.fr',
   // Portails de l'État français dont vient le catalogue « Études en France ».
   // data.enseignementsup-recherche.gouv.fr publie les jeux ouverts que la
   // collecte interroge — depuis un poste d'exploitation, jamais depuis
