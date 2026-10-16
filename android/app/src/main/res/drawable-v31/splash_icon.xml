@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône de l'écran de lancement Android 12+ (windowSplashScreenAnimatedIcon).
+     Le système l'étire sur 288 dp puis n'en garde qu'un cercle de 192 dp de
+     diamètre : posée telle quelle, l'image de lancement (logo de 15 % à 91 % de
+     sa largeur) aurait la toque et la maison rognées. Rentrée de 29 % de chaque
+     côté, elle occupe ~120 dp au centre — la taille du logo d'Android 11 et
+     moins et d'iOS — et le logo entier tient dans le cercle. Les fractions
+     d'inset demandent l'API 28 : d'où le dossier drawable-v31. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/launch_image"
+    android:inset="29%" />

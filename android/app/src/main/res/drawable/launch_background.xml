@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Écran de lancement KPB (Android 11 et moins) : le logo KPB centré sur le
+     blanc de marque. Android 12+ ignore ce fichier et dessine son propre écran
+     système à partir de values-v31/styles.xml. Les images launch_image.png
+     (drawable-mdpi … drawable-xxhdpi, 120 dp) sont tirées de
+     assets/icon/icon.png, comme les LaunchImage iOS. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/white" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item android:drawable="@color/kpb_launch_background" />
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@drawable/launch_image" />
+    </item>
 </layer-list>
