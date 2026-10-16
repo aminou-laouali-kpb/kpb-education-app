@@ -79,7 +79,14 @@ void main() {
       );
 
       expect(find.byType(HomeScreen), findsOneWidget);
+      // Chantier K : KPB Intelligence n'a plus qu'UNE entrée, dans le corps
+      // de l'accueil (l'en-tête n'en porte plus de copie).
       expect(find.byIcon(Icons.smart_toy_rounded), findsOneWidget);
+      expect(
+          find.descendant(
+              of: find.byType(SliverAppBar),
+              matching: find.byIcon(Icons.smart_toy_rounded)),
+          findsNothing);
       // Chantier G : « Mes suivis » prend la place du raccourci Profil (déjà
       // dans la barre d'onglets).
       expect(find.byKey(const ValueKey<String>('home-followed-entry')),
@@ -119,7 +126,7 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     });
 
-    testWidgets('renders the progress gauge card and the WhatsApp CTA',
+    testWidgets('renders the next-step card and the WhatsApp CTA',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(1440, 2560));
       final profile = createTestProfile();
@@ -135,11 +142,16 @@ void main() {
         initialSnapshot: snapshot,
       );
 
-      // Profile isn't 100% complete (no monthly budget) → the readiness ring
-      // + its "progress gauge" eyebrow render (App-engagement handoff).
+      // Chantier K : l'anneau du héros, « Mon plan » et « Parcours
+      // découverte » ne font plus qu'UNE carte « Ta prochaine étape ».
       // `.tr` resolves to the raw key in this harness (no translations
       // loaded), matching the convention used across this test suite.
-      expect(find.text('home_gauge_eyebrow'), findsOneWidget);
+      expect(find.text('home_next_step_eyebrow'), findsOneWidget);
+      expect(find.text('home_gauge_eyebrow'), findsNothing);
+      expect(find.text('my_plan_title'), findsNothing);
+      expect(find.text('home_design_discovery_title'), findsNothing);
+      expect(find.byKey(const ValueKey<String>('home-next-step-cta')),
+          findsOneWidget);
 
       // The "Talk to a KPB counselor" WhatsApp hand-off card is always on
       // Home now — real WhatsApp routing, no in-app checkout.

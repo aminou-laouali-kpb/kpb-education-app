@@ -3701,6 +3701,23 @@ const Map<String, String> appTranslationsFr = {
   'home_match_title': 'Tes bourses',
   'home_match_see_all': 'Voir mes @count bourses',
   'home_match_see_all_one': 'Voir ma bourse',
+  // ── Accueil « Ta prochaine étape » (chantier K) ──
+  'home_next_step_eyebrow': 'TA PROCHAINE ÉTAPE',
+  'home_next_step_plan_a11y': 'Ton plan : @value sur 100',
+  'home_next_step_label_deadline': 'Clôture proche',
+  'home_next_step_subtitle_profile_test':
+      'Le test des bourses (2 min) complète ton profil et trie les bourses pour toi.',
+  'home_next_step_cta_case': 'Ouvrir le dossier',
+  'home_next_step_cta_scholarship': 'Voir la bourse',
+  'home_next_step_cta_test': 'Faire le test',
+  'home_next_step_cta_profile': 'Compléter mon profil',
+  'home_next_step_cta_orientation': 'Commencer le test',
+  'home_next_step_cta_start_case': 'Démarrer mon dossier',
+  'home_next_step_cta_explore': 'Explorer',
+  'home_deadlines_title': 'Tes échéances',
+  'home_intelligence_title': 'KPB Intelligence',
+  'home_intelligence_body':
+      'Pose tes questions sur les écoles, les bourses ou le budget.',
   'scholarship_match_assessment_title': 'Ton résultat au test',
   'scholarship_match_assessment_date': 'D\'après ton test du @date',
   'scholarship_match_assessment_not_in_run':

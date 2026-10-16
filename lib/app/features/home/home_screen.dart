@@ -5,47 +5,44 @@ import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/config/app_routes.dart';
-import '../../core/navigation/scholarship_navigation.dart';
-import '../../core/navigation/shell_tabs.dart';
-import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/data/my_plan_engine.dart';
 import '../../core/models/app_models.dart';
 import '../../core/models/scholarship_match.dart';
+import '../../core/navigation/scholarship_navigation.dart';
+import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/services/scholarship_match_store.dart';
-import '../../core/ui/kpb_components.dart';
 import '../../core/ui/components/update_recommended_banner.dart';
+import '../../core/ui/kpb_components.dart';
 import '../../core/ui/skeleton.dart';
 import '../../core/utils/country_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
+import '../ai_advisor/ai_consent.dart';
 import '../cases/case_composer_sheet.dart';
 import '../cases/case_detail_screen.dart';
-import '../community/community_screen.dart';
 import '../destinations/destinations_screen.dart';
-import '../orientation/orientation_screen.dart';
-import '../ai_advisor/ai_consent.dart';
-import '../explore/country_detail_screen.dart';
 import '../etudes_en_france/eef_home_card.dart';
 import '../notifications/notifications_screen.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../orientation/orientation_screen.dart';
 import '../parcours/parcours_screen.dart';
 import '../parcours/parcours_story_screen.dart';
+import '../partners/partners_strip.dart';
 import '../scholarship_match/match_format.dart';
 import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarship_match/scholarship_match_entry_card.dart';
+import '../scholarship_match/scholarship_match_flow_screen.dart';
 import '../scholarship_match/scholarship_match_results_screen.dart';
+import '../scholarships/scholarship_urgency.dart';
 import '../scholarships/widgets/follow_scholarship_button.dart';
-import '../tools/student_tools_screen.dart';
-import 'counsellor_testimonials_carousel.dart';
-import 'daily_scholarship_card.dart';
-import 'story_of_week_card.dart';
-import 'my_plan_card.dart';
 import 'home_impact_proof.dart';
+import 'home_next_step.dart';
 
 part 'home_screen/header.dart';
 part 'home_screen/hero.dart';
 part 'home_screen/cards.dart';
-part 'home_screen/abroad.dart';
 part 'home_screen/engagement.dart';
 part 'home_screen/scholarships.dart';
 
@@ -60,6 +57,9 @@ String _flag(String id) => countryFlag(id);
 /// of `KpbSpacing.xs` → a 48 pt `IconButton`), so it occupies x ∈ [4, 52] in
 /// the same vertical band as the toolbar. 56 pt clears it with 4 pt of air.
 const double _kHomeDrawerGutter = 56;
+
+/// Côté des boutons de l'en-tête : la cible tactile minimale (48 dp).
+const double _kHomeHeaderButton = 48;
 
 /// Test hook: the greeting occupies this slot in the home app bar. Its measured
 /// width IS the budget the salutation gets, so the regression guard asserts it
@@ -80,19 +80,86 @@ String _greetingFirstName(String? fullName) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Couleurs : tokens sémantiques centraux (KpbColors — architecture §6/§10.2).
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HomeScreen — light premium, momentum-first
+// Accueil « Ta prochaine étape » (chantier K)
 //
-// One job per screen: "Où en es-tu ? Quelle est ta prochaine étape ?"
-//   1. AppBar  — greeting + search / saved / profile
-//   2. Hero    — brand banner + animated progress ring (momentum)
-//   3. ⚡ Prochaine étape — smart next-best-action card
-//   4. 🗂 Quick actions — 4 light tiles
-//   5. 🤖 Assistant d'Orientation IA · 🌍 Inscriptions à l'Étranger · 🛠 Outils
-//   6. 📁 Dossiers actifs · ⏰ Deadline · 🏛 Universités · 🏆 Bourses · 📰 Articles
+// Une question : « Quelle est ma prochaine étape ? ». Sept blocs au plus,
+// chacun derrière un interrupteur (`RemoteFeatureFlags.homeBlockEnabled`),
+// dans cet ordre :
+//
+//   0. en tête : la carte « prochaine étape » (élève) — UNE action, voir
+//      home_next_step.dart — ou le héros de rôle (parent, partenaire,
+//      invité), inchangé. L'espace « Études en France » s'y accroche
+//      (carte saisonnière, drapeau serveur, masquée par défaut) ;
+//   1. « Tes bourses » (run du test, carte du test, ou liste neutre — H) ;
+//   2. « Tes échéances » : date urgente (calcul unique de
+//      scholarship_urgency.dart) et dossiers actifs — élève seulement ;
+//   3. écoles partenaires (`PartnersStrip`) et preuve d'impact ;
+//   4. KPB Intelligence — l'unique entrée de l'accueil ;
+//   5. Parcours (« Ils l'ont fait avant toi ») ;
+//   6. conseiller WhatsApp.
+//
+// Pas de raccourci qui double un onglet (Bourses, Dossiers, Écoles, Profil),
+// pas d'animation en cascade. Tout bloc qui dépend d'un appel réseau se
+// REPLIE (hauteur nulle, espacement compris) quand l'appel échoue ou ne rend
+// rien : jamais de trou ni d'erreur au milieu de l'accueil.
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Les blocs de l'accueil.
+enum HomeBlock {
+  nextStep('homeNextStep'),
+  roleHero(null),
+  eef(null),
+  scholarships('homeScholarships'),
+  deadlines('homeDeadlines'),
+  partners('homePartners'),
+  intelligence('homeIntelligence'),
+  parcours('homeParcours'),
+  counselor('homeCounselor');
+
+  const HomeBlock(this.flagKey);
+
+  /// Clé de l'interrupteur serveur ; null : toujours là (le héros de rôle
+  /// porte l'appel à l'action d'un parent, d'un partenaire ou d'un invité ;
+  /// « Études en France » a ses propres drapeaux).
+  final String? flagKey;
+
+  /// Clé de test du bloc rendu.
+  ValueKey<String> get key => ValueKey<String>('home-block-$name');
+}
+
+/// Les blocs de l'accueil, dans l'ordre, pour ce compte.
+///
+/// - élève : prochaine étape, Études en France, bourses, échéances,
+///   partenaires, KPB Intelligence, Parcours, conseiller ;
+/// - parent : son héros (« Consultation »), puis la liste NEUTRE des bourses
+///   — aucune carte élève (ni prochaine étape, ni échéances) ;
+/// - invité : son héros (« Trouve tes bourses »), sans liste de bourses (le
+///   catalogue reste derrière le mur invité) ;
+/// - partenaire : son héros, inchangé, sans contenu élève.
+@visibleForTesting
+List<HomeBlock> homeBlocksFor(
+  AppController controller, {
+  RemoteFeatureFlags? flags,
+}) {
+  final f = flags ?? RemoteFeatureFlags.instance;
+  final student = controller.isStudent;
+  final parent = controller.isParent;
+  final guest = controller.isGuestMode;
+  final blocks = <HomeBlock>[
+    student ? HomeBlock.nextStep : HomeBlock.roleHero,
+    HomeBlock.eef,
+    if (student || parent) HomeBlock.scholarships,
+    if (student) HomeBlock.deadlines,
+    HomeBlock.partners,
+    HomeBlock.intelligence,
+    if (student || parent || guest) HomeBlock.parcours,
+    HomeBlock.counselor,
+  ];
+  return blocks.where((b) {
+    final key = b.flagKey;
+    return key == null || f.homeBlockEnabled(key);
+  }).toList(growable: false);
+}
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -119,23 +186,7 @@ class HomeScreen extends StatelessWidget {
           );
         }
 
-        final profile = controller.profile;
-        final firstName = _greetingFirstName(profile?.fullName);
-
-        // Data — limited, curated
-        final institutions = controller.institutions.take(4).toList();
-        final scholarships = _homeScholarships(controller);
-        final articles = controller.publishedArticles.take(2).toList();
-        final activeCases = controller.cases
-            .where((c) =>
-                c.status != CaseStatus.completed &&
-                c.status != CaseStatus.cancelled &&
-                c.status != CaseStatus.rejected)
-            .take(2)
-            .toList();
-        // Toute la liste, pas seulement les 3 cartes affichées.
-        final urgentScholarship =
-            _findUrgentDeadline(controller.scholarshipsByDeadline);
+        final firstName = _greetingFirstName(controller.profile?.fullName);
 
         return Container(
           color: KpbColors.canvas,
@@ -143,330 +194,18 @@ class HomeScreen extends StatelessWidget {
             onRefresh: controller.pullToRefresh,
             child: CustomScrollView(
               slivers: [
-                // ── App Bar ───────────────────────────────────────────
-                SliverAppBar(
-                  floating: true,
-                  snap: true,
-                  pinned: false,
-                  toolbarHeight: 72,
-
-                  // OPAQUE, deliberately. This bar is `floating`, so it
-                  // re-enters over content that is already scrolled. With
-                  // `Colors.transparent` the section titles underneath
-                  // ("Tes meilleures chances", "Voir tout") showed straight
-                  // through and collided with the greeting and the action
-                  // buttons — unreadable as soon as you scrolled (revue vidéo
-                  // TestFlight). The colour matches the page canvas set on the
-                  // wrapping Container, so at rest it is invisible; the shadow
-                  // only appears once content is scrolled under it.
-                  backgroundColor: KpbColors.canvas,
-                  surfaceTintColor: Colors.transparent,
-                  elevation: 0,
-                  scrolledUnderElevation: 3,
-                  shadowColor: KpbColors.brandNavy.withValues(alpha: 0.12),
-
-                  // The hamburger at the top-left belongs to AppShell (an
-                  // overlay in its Stack), NOT to this bar. But because an
-                  // ancestor Scaffold DOES have a drawer, AppBar's
-                  // `automaticallyImplyLeading` was silently rendering a second
-                  // DrawerButton underneath it: an invisible 56 pt twin. On top
-                  // of that, `titleSpacing` is counted TWICE by
-                  // NavigationToolbar (`size.width - leading - trailing -
-                  // middleSpacing * 2`), so `titleSpacing: 60` cost 120 pt.
-                  // Budget on a 393 pt screen was 393 − 56 − 136 − 120 = 81 pt,
-                  // i.e. "Salut, …" no matter how short the first name.
-                  //
-                  // Fix: no implied leading, a zero-width leading that reserves
-                  // the overlay's gutter exactly ONCE via `leadingWidth`, and
-                  // `titleSpacing: 0` so nothing is double-counted. Budget
-                  // becomes 393 − 56 − 136 = 201 pt.
-                  automaticallyImplyLeading: false,
-                  leading: const SizedBox.shrink(),
-                  leadingWidth: _kHomeDrawerGutter,
-                  titleSpacing: 0,
-                  title: _HomeGreetingHeader(firstName: firstName),
-                  actions: [
-                    _NotifBellChip(
-                      // Le point s'allume aussi pour les non-lus du fil
-                      // serveur (« bourse ouverte »), pas seulement pour
-                      // l'activité des dossiers.
-                      hasUnread: hasDerivedNotifications(controller) ||
-                          controller.serverUnreadNotifications > 0,
-                      onTap: () async {
-                        await Get.to<void>(() => const NotificationsScreen());
-                        unawaited(
-                          controller.refreshServerUnreadCount(force: true),
-                        );
-                      },
-                      onMounted: controller.refreshServerUnreadCount,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _HomeCopilotButton(
-                        onTap: () => openAiChatIfConsented(context, controller),
-                      ),
-                    ),
-                    // « Mes suivis » prend la place du raccourci Profil (déjà
-                    // dans la barre d'onglets) : la largeur de la salutation
-                    // ne change pas. Drapeau coupé → l'ancien raccourci.
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: RemoteFeatureFlags
-                              .instance.homeFollowedEntryEnabled
-                          ? _HomeFollowedButton(
-                              onTap: () => Get.toNamed<void>(AppRoutes.saved),
-                            )
-                          : _HomeProfileButton(
-                              onTap: () =>
-                                  controller.goToTab(StudentShellTab.profile),
-                            ),
-                    ),
-                  ],
+                _appBar(controller, firstName),
+                // Un drapeau servi pendant que l'accueil est ouvert retire
+                // (ou rend) son bloc sans attendre une autre mise à jour ;
+                // le magasin du test change la prochaine étape (test fermé
+                // par le serveur → l'onboarding).
+                ListenableBuilder(
+                  listenable: Listenable.merge(<Listenable>[
+                    RemoteFeatureFlags.instance.flagsVersion,
+                    ScholarshipMatchStore.instance,
+                  ]),
+                  builder: (context, _) => _body(controller),
                 ),
-
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(KpbSpacing.pagePad,
-                        KpbSpacing.sm, KpbSpacing.pagePad, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── 0. Invitation douce à mettre à jour ─────
-                        // Self-hiding: rien tant que le serveur ne recommande
-                        // pas de version plus récente, et fermable. Le levier
-                        // dur (`minVersion`) reste l'affaire d'AppVersionGate.
-                        const UpdateRecommendedBanner(),
-
-                        // ── 1. Hero ─────────────────────────────────
-                        StaggeredSlide(
-                          index: 0,
-                          child: _HeroCard(controller: controller),
-                        ),
-                        const SizedBox(height: KpbSpacing.lg),
-
-                        // ── 1.5 Preuve sociale vérifiable & datée ────
-                        // Self-hides until real impact data is available.
-                        const HomeImpactProof(),
-
-                        // ── 1.6 Avis publiés (preuve sociale) ────────
-                        // Self-hides until real published reviews exist.
-                        const StaggeredSlide(
-                          index: 1,
-                          child: CounsellorTestimonialsCarousel(),
-                        ),
-
-                        // ── 1.7 Mon plan (KPB-164) ───────────────────
-                        // Unified progress + THE next action. Self-hides for
-                        // guests and once the plan is complete.
-                        if (controller.isStudent)
-                          const StaggeredSlide(
-                            index: 2,
-                            child: MyPlanCard(),
-                          ),
-
-                        // ── 1.8 Espace « Études en France » ─────────
-                        // S'auto-masque quand le module est éteint (drapeau
-                        // SERVEUR), donc l'accueil ne porte aucune condition et
-                        // la bascule du jour J n'a pas besoin d'un binaire neuf.
-                        // Espacement du bas dans la carte : pas de trou quand
-                        // elle se masque.
-                        const StaggeredSlide(
-                          index: 2,
-                          child: EefHomeCard(),
-                        ),
-
-                        // ── 2. Prochaine étape ──────────────────────
-                        if (controller.isStudent) ...[
-                          StaggeredSlide(
-                            index: 2,
-                            child: _NextStepCard(
-                              controller: controller,
-                              activeCases: activeCases,
-                            ),
-                          ),
-                          const SizedBox(height: KpbSpacing.lg),
-                        ],
-
-                        // ── 2.5 Bourse du jour (KPB-162) ────────────
-                        // Self-fetching + self-hiding (bottom spacing lives in
-                        // the card so there's no gap when nothing is featured).
-                        if (controller.isStudent)
-                          const StaggeredSlide(
-                            index: 2,
-                            child: DailyScholarshipCard(),
-                          ),
-
-                        // ── 2.6 Récit de la semaine (KPB-169) ───────
-                        // Self-fetching + self-hiding: no featured story, no
-                        // card. Shown to guests too — it is free content and
-                        // one of the few reasons to come back before signing up.
-                        const StaggeredSlide(
-                          index: 2,
-                          child: StoryOfWeekCard(),
-                        ),
-
-                        // ── 3. Quick Actions ────────────────────────
-                        StaggeredSlide(
-                          index: 3,
-                          child: _QuickActions(controller: controller),
-                        ),
-                        const SizedBox(height: KpbSpacing.lg),
-
-                        // ── 3.5 Assistant d'Orientation IA ──────────
-                        const StaggeredSlide(
-                          index: 4,
-                          child: _AiAdvisorBanner(),
-                        ),
-                        const SizedBox(height: KpbSpacing.lg),
-
-                        // ── 3.6 Inscriptions à l'Étranger ───────────
-                        StaggeredSlide(
-                          index: 5,
-                          child: _AbroadEnrollmentCard(controller: controller),
-                        ),
-                        const SizedBox(height: KpbSpacing.lg),
-
-                        // ── 3.7 Outils étudiants ────────────────────
-                        if (controller.isStudent)
-                          StaggeredSlide(
-                            index: 6,
-                            child: _StudentToolsBanner(),
-                          ),
-                        const SizedBox(height: KpbSpacing.xl),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── 4. Dossiers actifs ────────────────────────────────
-                if (activeCases.isNotEmpty && controller.isStudent) ...[
-                  SliverToBoxAdapter(
-                    child: SectionHeader(
-                      title: 'home_active_cases_title'.tr,
-                      actionLabel: 'see_all'.tr,
-                      onAction: () => controller.goToTab(StudentShellTab.cases),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.sm)),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: KpbSpacing.pagePad),
-                    sliver: SliverList.separated(
-                      itemCount: activeCases.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: KpbSpacing.sm),
-                      itemBuilder: (ctx, i) => _ActiveCaseCard(
-                        item: activeCases[i],
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.xl)),
-                ],
-
-                // ── 5. Deadline urgente ───────────────────────────────
-                if (urgentScholarship != null && controller.isStudent)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(KpbSpacing.pagePad, 0,
-                          KpbSpacing.pagePad, KpbSpacing.xl),
-                      child: _UrgentDeadlineCard(
-                        scholarship: urgentScholarship,
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-
-                // ── 5.5 Universités recommandées ───────────────────────
-                if (institutions.isNotEmpty &&
-                    (controller.isStudent || controller.isParent)) ...[
-                  SliverToBoxAdapter(
-                    child: HScrollSection(
-                      title: 'home_recommended_universities_title'.tr,
-                      actionLabel: 'see_all'.tr,
-                      onAction: () =>
-                          controller.goToTab(StudentShellTab.universities),
-                      itemCount: institutions.length,
-                      height: 168,
-                      itemWidth: 210,
-                      itemBuilder: (ctx, i) {
-                        final institution = institutions[i];
-                        return _InstitutionCard(
-                          name: controller.resolve(institution.name),
-                          flag: _flag(institution.countryId),
-                          location: controller.resolve(institution.location),
-                          tuition: controller.resolve(institution.tuitionLabel),
-                          isPartner: institution.isPartner,
-                          fit: controller.institutionFit(institution),
-                          onTap: () =>
-                              controller.goToTab(StudentShellTab.universities),
-                        );
-                      },
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.xl)),
-                ],
-
-                // ── 5.7 Ils l'ont fait avant toi (Parcours & Témoignages) ──
-                // Real stories from the existing Parcours feature (PR #109) —
-                // just surfaced here, not rebuilt.
-                if (controller.isStudent || controller.isParent) ...[
-                  const SliverToBoxAdapter(child: _ParcoursHomeCarousel()),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.xl)),
-                ],
-
-                // ── 6. Bourses : « Tes bourses » (run du test), « Fais le
-                // test », ou la liste neutre (parents, invités, drapeau
-                // fermé) — voir _HomeScholarshipsSection.
-                if (controller.isStudent || controller.isParent)
-                  SliverToBoxAdapter(
-                    child: _HomeScholarshipsSection(
-                      controller: controller,
-                      neutral: scholarships,
-                    ),
-                  ),
-
-                // ── 7. Articles récents ───────────────────────────────
-                // Community/articles is a V1.1+ module (hidden under MVP lock).
-                if (!AppConfig.mvpOnly && articles.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: SectionHeader(
-                      title: 'latest_articles'.tr,
-                      actionLabel: 'see_all'.tr,
-                      onAction: () => Get.to(() => const CommunityScreen()),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: KpbSpacing.sm)),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: KpbSpacing.pagePad),
-                    sliver: SliverList.separated(
-                      itemCount: articles.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: KpbSpacing.sm),
-                      itemBuilder: (ctx, i) => _ArticleCard(
-                        article: articles[i],
-                        controller: controller,
-                      ),
-                    ),
-                  ),
-                ],
-
-                // ── 8. Parler à un conseiller KPB (WhatsApp) ──────────
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                        KpbSpacing.pagePad, 0, KpbSpacing.pagePad, 0),
-                    child: _CounselorWhatsAppCard(),
-                  ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
               ],
             ),
           ),
@@ -475,29 +214,164 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Les 3 cartes de la liste NEUTRE de l'accueil : clôture confirmée la
-  /// plus proche d'abord, sans aucun palier de compatibilité (voir
-  /// [AppController.scholarshipsByDeadline]).
-  ///
-  /// C'est la liste des parents, des invités et de tout le monde tant que le
-  /// test « Mes 10 bourses » est fermé. Un ÉLÈVE qui a un run voit à la place
-  /// « Tes bourses » (3 cartes du run), et sans run la carte « Fais le test » :
-  /// le choix se fait dans [_HomeScholarshipsSection], qui lit le drapeau et
-  /// le magasin du test. [_findUrgentDeadline] n'en dépend pas.
-  List<ScholarshipModel> _homeScholarships(AppController controller) =>
-      controller.scholarshipsByDeadline.take(3).toList();
+  SliverAppBar _appBar(AppController controller, String firstName) {
+    return SliverAppBar(
+      floating: true,
+      snap: true,
+      pinned: false,
+      toolbarHeight: 72,
 
-  /// Nearest scholarship whose CONFIRMED deadline falls within 30 days.
-  ScholarshipModel? _findUrgentDeadline(List<ScholarshipModel> scholarships) {
-    ScholarshipModel? nearest;
-    var nearestDays = 31;
-    for (final s in scholarships) {
-      final days = s.daysUntilDeadline();
-      if (days != null && days <= 30 && days < nearestDays) {
-        nearestDays = days;
-        nearest = s;
+      // OPAQUE, deliberately. This bar is `floating`, so it re-enters over
+      // content that is already scrolled. With `Colors.transparent` the
+      // section titles underneath showed straight through and collided with
+      // the greeting and the action buttons (revue vidéo TestFlight). The
+      // colour matches the page canvas set on the wrapping Container, so at
+      // rest it is invisible; the shadow only appears once content is
+      // scrolled under it.
+      backgroundColor: KpbColors.canvas,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 3,
+      shadowColor: KpbColors.brandNavy.withValues(alpha: 0.12),
+
+      // The hamburger at the top-left belongs to AppShell (an overlay in its
+      // Stack), NOT to this bar. Because an ancestor Scaffold DOES have a
+      // drawer, `automaticallyImplyLeading` would silently render a second,
+      // invisible DrawerButton; and `titleSpacing` is counted TWICE by
+      // NavigationToolbar. No implied leading, a zero-width leading that
+      // reserves the overlay's gutter exactly ONCE via `leadingWidth`, and
+      // `titleSpacing: 0` so nothing is double-counted.
+      automaticallyImplyLeading: false,
+      leading: const SizedBox.shrink(),
+      leadingWidth: _kHomeDrawerGutter,
+      titleSpacing: 0,
+      title: _HomeGreetingHeader(firstName: firstName),
+      // Deux boutons de 48 dp : la cloche et « Mes suivis » (ou Profil,
+      // drapeau coupé). KPB Intelligence n'a plus de doublon ici : son entrée
+      // unique est un bloc de l'accueil.
+      actions: [
+        _NotifBellChip(
+          // Le point s'allume aussi pour les non-lus du fil serveur
+          // (« bourse ouverte »), pas seulement pour l'activité des dossiers.
+          hasUnread: hasDerivedNotifications(controller) ||
+              controller.serverUnreadNotifications > 0,
+          onTap: () async {
+            await Get.to<void>(() => const NotificationsScreen());
+            unawaited(controller.refreshServerUnreadCount(force: true));
+          },
+          onMounted: controller.refreshServerUnreadCount,
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: KpbSpacing.sm),
+          child: RemoteFeatureFlags.instance.homeFollowedEntryEnabled
+              ? _HomeFollowedButton(
+                  onTap: () => Get.toNamed<void>(AppRoutes.saved),
+                )
+              : _HomeProfileButton(
+                  onTap: () => controller.goToTab(StudentShellTab.profile),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _body(AppController controller) {
+    final blocks = homeBlocksFor(controller);
+    final activeCases = homeActiveCases(controller.cases);
+    final nextStep = controller.isStudent
+        ? resolveHomeNextStep(
+            activeCases: activeCases,
+            followedScholarships: controller.scholarships
+                .where((s) => controller.isFollowingScholarship(s.id)),
+            needsProfileCompletion: controller.needsProfileCompletionBanner,
+            scholarshipTestAvailable: _testAvailable(controller),
+            hasOrientationResult: controller.latestOrientationSession != null,
+          )
+        : null;
+
+    Widget? build(HomeBlock block) {
+      switch (block) {
+        case HomeBlock.nextStep:
+          return _NextStepCard(controller: controller, step: nextStep!);
+        case HomeBlock.roleHero:
+          return _RoleHeroCard(controller: controller);
+        case HomeBlock.eef:
+          // Espacement du bas dans la carte : rien quand elle se masque.
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: KpbSpacing.pagePad),
+            child: EefHomeCard(),
+          );
+        case HomeBlock.scholarships:
+          return _HomeScholarshipsSection(
+            controller: controller,
+            neutral: controller.scholarshipsByDeadline.take(3).toList(),
+            // La prochaine étape ouvre déjà le test : pas une seconde carte
+            // « Fais le test » juste en dessous.
+            hideEntryCard:
+                nextStep?.kind == HomeNextStepKind.completeProfileTest,
+          );
+        case HomeBlock.deadlines:
+          final deadlines = resolveHomeDeadlines(
+            activeCases: activeCases,
+            catalog: controller.scholarshipsByDeadline,
+            isFollowing: controller.isFollowingScholarship,
+            nextStep: nextStep,
+          );
+          if (deadlines.isEmpty) return null;
+          return _HomeDeadlinesSection(
+            controller: controller,
+            deadlines: deadlines,
+          );
+        case HomeBlock.partners:
+          return const _HomeTrustSection();
+        case HomeBlock.intelligence:
+          return const _KpbIntelligenceCard();
+        case HomeBlock.parcours:
+          return const _ParcoursHomeCarousel();
+        case HomeBlock.counselor:
+          return const _CounselorWhatsAppCard();
       }
     }
-    return nearest;
+
+    final children = <Widget>[
+      // Invitation douce à mettre à jour : rien tant que le serveur ne
+      // recommande pas de version plus récente.
+      const Padding(
+        padding: EdgeInsets.fromLTRB(
+            KpbSpacing.pagePad, KpbSpacing.sm, KpbSpacing.pagePad, 0),
+        child: UpdateRecommendedBanner(),
+      ),
+      for (final block in blocks)
+        if (build(block) case final Widget child)
+          KeyedSubtree(key: block.key, child: child),
+      const SizedBox(height: 100),
+    ];
+    return SliverList.list(children: children);
   }
+
+  /// Le test « Mes 10 bourses » est-il ouvert à CET élève (drapeau, compte
+  /// élève, serveur) ?
+  static bool _testAvailable(AppController controller) =>
+      switch (scholarshipMatchEntryVariant(controller)) {
+        ScholarshipMatchEntryVariant.noRun ||
+        ScholarshipMatchEntryVariant.hasRun ||
+        ScholarshipMatchEntryVariant.stale =>
+          true,
+        ScholarshipMatchEntryVariant.hidden ||
+        ScholarshipMatchEntryVariant.guest =>
+          false,
+      };
 }
+
+/// Un bloc visible de l'accueil : marges de page et espace du bas. Les blocs
+/// qui se replient n'appellent PAS ceci dans leur état replié — l'espace part
+/// avec eux.
+Widget _homeBlockPadding(Widget child, {bool gutter = true}) => Padding(
+      padding: EdgeInsets.fromLTRB(
+        gutter ? KpbSpacing.pagePad : 0,
+        0,
+        gutter ? KpbSpacing.pagePad : 0,
+        KpbSpacing.xl,
+      ),
+      child: child,
+    );

@@ -354,6 +354,15 @@ export class AppConfigController {
           process.env.KPB_FOLLOWED_SCHOLARSHIP_OPT_OUT_ENABLED,
         ),
         homeFollowedEntry: notDisabled(process.env.KPB_HOME_FOLLOWED_ENTRY_ENABLED),
+        // Blocs de l'accueil (chantier K), OUVERTS par défaut : seul `false`
+        // coupe un bloc sur les téléphones installés.
+        homeNextStep: notDisabled(process.env.KPB_HOME_NEXT_STEP_ENABLED),
+        homeScholarships: notDisabled(process.env.KPB_HOME_SCHOLARSHIPS_ENABLED),
+        homeDeadlines: notDisabled(process.env.KPB_HOME_DEADLINES_ENABLED),
+        homePartners: notDisabled(process.env.KPB_HOME_PARTNERS_ENABLED),
+        homeIntelligence: notDisabled(process.env.KPB_HOME_INTELLIGENCE_ENABLED),
+        homeParcours: notDisabled(process.env.KPB_HOME_PARCOURS_ENABLED),
+        homeCounselor: notDisabled(process.env.KPB_HOME_COUNSELOR_ENABLED),
         // « Mes 10 bourses » (chantier D) : le test d'éligibilité et ses
         // résultats. FERMÉ par défaut — livré éteint, ouvert à la bascule. La
         // même variable coupe les routes `/scholarships/match/*` (404

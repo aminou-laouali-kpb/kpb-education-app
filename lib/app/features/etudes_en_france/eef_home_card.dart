@@ -9,14 +9,14 @@ import 'eef_entry.dart';
 
 /// La carte d'accueil de l'espace « Études en France ».
 ///
-/// **Elle s'auto-masque**, comme `DailyScholarshipCard` et `StoryOfWeekCard` à
-/// côté d'elle : quand le module est éteint, elle rend un `SizedBox.shrink()` et
-/// l'accueil n'a aucune condition à porter. C'est ce qui fait qu'une bascule
-/// serveur suffit — l'accueil n'a pas besoin de savoir qu'il existe un drapeau.
+/// **Elle s'auto-masque**, comme les autres blocs de l'accueil : quand le
+/// module est éteint, elle rend un `SizedBox.shrink()` et l'accueil n'a aucune
+/// condition à porter. C'est ce qui fait qu'une bascule serveur suffit —
+/// l'accueil n'a pas besoin de savoir qu'il existe un drapeau.
 ///
 /// L'espacement du bas vit DANS la carte, pas autour : sinon l'accueil garderait
-/// un trou de 24 px quand la carte se masque. Le commentaire de
-/// `DailyScholarshipCard` fait la même remarque, pour la même raison.
+/// un trou de 24 px quand la carte se masque (même règle pour tous les blocs de
+/// l'accueil, chantier K).
 class EefHomeCard extends StatelessWidget {
   const EefHomeCard({super.key});
 
