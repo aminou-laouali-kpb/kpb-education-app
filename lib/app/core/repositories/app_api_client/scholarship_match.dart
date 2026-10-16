@@ -20,10 +20,10 @@ ScholarshipMatchFailure classifyScholarshipMatchError(Object error) {
       return ScholarshipMatchFailure.timeout;
     case DioExceptionType.connectionError:
       return ScholarshipMatchFailure.offline;
-    case DioExceptionType.badCertificate:
-    case DioExceptionType.cancel:
-    case DioExceptionType.badResponse:
-    case DioExceptionType.unknown:
+    // badCertificate, cancel, badResponse, unknown — et toute valeur future
+    // de Dio : le statut HTTP tranche. Volontairement non exhaustif, pour
+    // qu'un `pub upgrade` ne casse pas la compilation.
+    default:
       break;
   }
   final status = error.response?.statusCode;

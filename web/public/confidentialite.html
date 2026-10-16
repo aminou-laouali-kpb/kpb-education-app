@@ -27,11 +27,14 @@
       <li>Date de naissance (étudiants) ; nom et contact du tuteur si vous avez moins de 18 ans</li>
       <li>Photo de profil, si vous en ajoutez une (caméra ou photothèque)</li>
       <li>Profil académique : niveau d'études, niveau cible, compétences linguistiques, notes, filières d'intérêt, pays de destination</li>
+      <!-- Test « Mes 10 bourses » (drapeau features.scholarshipMatch, fermé) : la collecte de la nationalité attend une validation juridique — À VALIDER (propriétaire), voir docs/data-inventory.md. -->
+      <li>Test « Mes 10 bourses », si vous le passez (fonction ouverte progressivement) : nationalité(s), pays de résidence, date de naissance, plus haut diplôme, niveau de bourse visé, domaines, tranche de moyenne sur 20, niveaux d'anglais et de français, scores de tests de langue, tranche d'expérience professionnelle et, si vous avez 16 ou 17 ans, l'accord de votre représentant légal. Rien ne vous oblige à répondre : sans ces réponses, le test ne calcule pas de résultat, et le reste de l'app reste utilisable</li>
+      <li>Bourses suivies et notifications : les bourses que vous suivez, vos réglages d'alerte, les notifications reçues dans l'app et le moment où vous en ouvrez une</li>
       <li>Messages de dossier et textes soumis au coach (KPB Intelligence)</li>
       <li>Dictée vocale : le micro capte votre voix, l'app demande à votre téléphone de la convertir en texte sur l'appareil et n'en garde que le texte ; l'enregistrement audio ne nous est jamais transmis. Sur iPhone, si la reconnaissance locale est indisponible, la dictée ne démarre pas. Sur Android, la reconnaissance locale n'est qu'une préférence : sans modèle local installé, le service de reconnaissance de votre téléphone (Google) peut traiter votre voix hors de l'appareil</li>
       <li>Documents (passeport, relevés, pièces de dossier) : l'envoi depuis l'application est masqué. Ces pièces passent par WhatsApp vers votre conseiller, pas par un téléversement in-app</li>
       <li>Données d'utilisation : résultats d'orientation, éléments sauvegardés, historique de recherche</li>
-      <li>Données techniques : jeton de notifications de l'appareil, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée</li>
+      <li>Données techniques : jeton de notifications de l'appareil, version et numéro de build de l'app utilisée, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée</li>
       <li>Analytique : Firebase Analytics et PostHog ; enregistrements de session PostHog (textes et images masqués)</li>
       <li>Diagnostics : Firebase Crashlytics ; métriques agrégées de synchronisation</li>
     </ul>
@@ -41,7 +44,8 @@
     <ul>
       <li>Personnaliser vos recommandations de filières, pays et bourses</li>
       <li>Gérer vos dossiers de candidature et vos rendez-vous</li>
-      <li>Vous envoyer des notifications pertinentes (mises à jour de dossier, deadlines)</li>
+      <li>Vous envoyer des notifications pertinentes (mises à jour de dossier, deadlines, ouverture et dates limites des bourses que vous suivez ; nouvelles bourses compatibles avec votre test seulement si vous l'activez)</li>
+      <li>Pour le test « Mes 10 bourses » : comparer vos réponses aux conditions officielles des bourses (nationalité, âge, niveau, notes, langues, expérience) et vous montrer jusqu'à 10 bourses compatibles ou à vérifier. Le résultat est indicatif : aucune décision n'est prise à votre place, et seul l'organisme de la bourse décide de votre candidature</li>
       <li>Vous envoyer par email les nouvelles bourses d'études disponibles, uniquement si vous y avez consenti (case à cocher — désinscription possible à tout moment depuis votre profil ou le lien de désinscription des emails)</li>
       <li>Améliorer nos services via des statistiques agrégées et anonymisées</li>
       <li>Communiquer avec vous dans le cadre de vos démarches</li>
@@ -53,6 +57,7 @@
       <li>Consentement : vous acceptez cette politique lors de la création de votre compte</li>
       <li>Exécution du contrat : le traitement est nécessaire pour fournir nos services</li>
       <li>Intérêt légitime : amélioration de nos services et sécurité de la plateforme</li>
+      <li>Mineurs de 16 et 17 ans : l'accord déclaré d'un représentant légal (nom et contact) est demandé avant de compléter le profil, d'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L'application n'est pas destinée aux moins de 16 ans</li>
     </ul>
 
     <h2>5. Partage des données</h2>
@@ -72,6 +77,7 @@
       <li>Mautic (outil d'emailing auto-hébergé par KPB) pour la newsletter bourses, uniquement si vous y avez consenti</li>
       <li>PayDunya et CinetPay : intentions de paiement si vous souscrivez un accompagnement payant</li>
       <li>Nos conseillers internes pour le suivi de vos dossiers, et notre équipe commerciale pour les déclarations d'intérêt que vous avez faites. Dès qu'une demande de dossier est déposée, les coordonnées du compte (nom, e-mail, téléphone, WhatsApp et, le cas échéant, le contact du responsable légal) sont envoyées par e-mail aux commerciaux actifs</li>
+      <li>Votre nationalité, votre date de naissance et vos autres réponses au test « Mes 10 bourses » ne sont transmises à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne partent ni dans l'analytique ni dans les notifications. Quand vous ouvrez un dossier depuis une bourse, votre conseiller voit la bourse concernée, pas vos réponses. Le test peut mettre à jour des champs de votre profil déjà utilisés ailleurs (pays de résidence, niveau d'anglais, moyenne) : ils suivent alors les règles de cette section</li>
       <li>Nos partenaires institutionnels (universités) uniquement avec votre accord explicite lors de la soumission d'un dossier</li>
       <li>Les autorités compétentes si la loi l'exige</li>
     </ul>
@@ -83,6 +89,9 @@
     <ul>
       <li>Données de profil : conservées tant que votre compte est actif</li>
       <li>Données de dossier : conservées tant que le dossier est ouvert, puis supprimées avec le compte</li>
+      <li>Réponses au test « Mes 10 bourses » : gardées sur votre profil tant que votre compte est actif, et modifiables en refaisant le test ; seuls vos 5 derniers résultats sont conservés, les plus anciens s'effacent automatiquement</li>
+      <li>Bourses suivies et notifications reçues dans l'app : conservées tant que votre compte est actif</li>
+      <li>Sur votre téléphone : le brouillon du test s'efface à la fin du test et à la déconnexion ; les bourses gardées pour une consultation hors ligne s'effacent à la déconnexion</li>
       <li>Données analytiques : agrégées et anonymisées, conservées indéfiniment</li>
       <li>En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours</li>
     </ul>
@@ -106,6 +115,7 @@
       <li>De vous opposer au traitement</li>
       <li>De portabilité de vos données</li>
     </ul>
+    <p>L'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats et vos alertes de bourses.</p>
     <p>Pour exercer ces droits, contactez-nous à : <a href="mailto:privacy@kpbeducation.com">privacy@kpbeducation.com</a></p>
 
     <h2>9. Analytique produit &amp; enregistrement de session</h2>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ (API 31) : le système dessine LUI-MÊME l'écran de lancement
+         et n'utilise plus android:windowBackground pour cela. On lui donne le
+         fond de marque et le logo KPB (drawable-v31/splash_icon.xml : l'image
+         de lancement, rentrée pour tenir dans le cercle que le système
+         découpe). values-night-v31 doit rester identique.
+         Garde : test/release/launch_screen_test.dart. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">@color/kpb_launch_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/kpb_launch_background</item>
+    </style>
+</resources>

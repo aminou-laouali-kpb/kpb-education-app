@@ -25,7 +25,54 @@ String kpbFreshnessLabel(DateTime? lastSynced, {DateTime? now}) {
       .trParams({'date': '${lastSynced.day}/${lastSynced.month}'});
 }
 
-/// Slim, reactive "you are offline" banner for the app shell.
+/// Monte [KpbOfflineBanner] AU-DESSUS de toutes les routes de l'app.
+///
+/// Posé dans le `builder:` de `GetMaterialApp` (lib/main.dart), donc au-dessus
+/// du Navigator : le bandeau couvre l'onboarding, les fiches, le test, les
+/// dossiers, les feuilles et les boîtes de dialogue — pas seulement les onglets
+/// du shell, où il vivait jusqu'à la build 56. Une seule instance pour toute
+/// l'app : le shell ne le monte plus.
+///
+/// La structure de l'arbre est la MÊME en ligne et hors ligne (une `Column`
+/// dont le bandeau se réduit à rien en ligne) : basculer d'une structure à
+/// l'autre reparenterait le Navigator à chaque coupure réseau.
+///
+/// Quand le bandeau est visible, il absorbe lui-même l'encoche (son
+/// `SafeArea`) : on retire donc le haut du `padding` pour les routes en
+/// dessous, sinon chaque AppBar redescendrait d'une barre de statut entière.
+class KpbOfflineBannerHost extends StatelessWidget {
+  const KpbOfflineBannerHost({super.key, required this.child});
+
+  /// Le Navigator de l'app (le `child` du `builder:`).
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final connectivity = ConnectivityService.instance;
+    return StreamBuilder<bool>(
+      stream: connectivity.onConnectivityChanged,
+      initialData: connectivity.isOnline,
+      builder: (context, snapshot) {
+        final online = snapshot.data ?? true;
+        return Column(
+          children: [
+            const KpbOfflineBanner(),
+            Expanded(
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: !online,
+                child: child,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Slim, reactive "you are offline" banner, mounted once for the whole app by
+/// [KpbOfflineBannerHost].
 ///
 /// Renders nothing when online (zero layout impact), so it can sit above the
 /// page body in a [Column] without affecting the online experience. When

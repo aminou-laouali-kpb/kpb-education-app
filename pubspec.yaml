@@ -194,19 +194,25 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
+  # ── ALLÈGEMENT DU BUNDLE (chantier L1, build 57) ────────────────────────────
+  # On ne déclare QUE ce que l'app lit à l'exécution. Neuf dossiers étaient
+  # déclarés, dont `assets/services/` (4,2 Mo de visuels de l'ancienne app
+  # Karatou), `assets/gifs/`, `assets/svgs/`, `assets/images/bg_imgs/` et
+  # `assets/images/on_boarding_img/` : aucun fichier n'était lu nulle part —
+  # ni dans lib/ (aucun `Image.asset`/`AssetImage` hors du logo, aucun chemin
+  # construit), ni dans test/, ni par le natif iOS/Android/web, ni par une fiche
+  # store ou une doc. Avec icon.png et trois logos en double, 5 391 749 octets
+  # (≈ 5,4 Mo) partaient dans chaque APK/IPA ; les fichiers morts sont retirés
+  # du disque (l'historique git les garde).
+  #
+  # `assets/icon/icon.png` RESTE sur le disque mais HORS du bundle : il n'est lu
+  # que par flutter_launcher_icons (bloc plus haut), jamais par l'app.
+  # Les polices sont déclarées plus bas, fichier par fichier.
+  #
+  # Garde : test/release/asset_budget_test.dart — chaque entrée déclarée existe,
+  # chaque fichier embarqué est référencé dans lib/, et le total a un plafond.
   assets:
-    - assets/
-    - assets/svgs/
-    - assets/images/
-    - assets/services/
-    - assets/icon/
     - assets/images/logo/
-    - assets/images/bg_imgs/
-    - assets/images/on_boarding_img/
-    - assets/gifs/
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -3,6 +3,9 @@
 // MESURÉ le 14/08/2026 sur Flutter 3.44.1, par
 // test/core/ui/screen_matrix_test.dart : 20 surfaces × 2 téléphones × 3 échelles
 // de texte = 120 cas. Les 108 cas absents de cette table valent zéro.
+// (16/10/2026, build 57 : plafond de police relevé de 1,3 à 1,5, quatrième
+// échelle ajoutée, OnboardingScreen et AhaMomentScreen ajoutés → 22 surfaces,
+// 176 cas, tous à zéro après correction du bouton de l'écran « aha ».)
 // (Revérifié le 15/08/2026 après les masquages M1/M2 : mêmes 20 surfaces, mêmes
 // 14 cas budgétés.)
 //
@@ -25,8 +28,8 @@
 //     second test : une oscillation de 3 à 2 due aux métriques de police ne doit
 //     pas rougir la CI.
 //
-// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 20
-// surfaces × 2 téléphones × 3 échelles = 120 cas sont à zéro.
+// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 22
+// surfaces × 2 téléphones × 4 échelles = 176 cas sont à zéro.
 //
 // AuthWelcomeScreen (trouvailles du harnais, 44 px / 38 px à l'échelle 1,3)
 // a été corrigé au lot 9 : colonne défilable, plus de Spacer dans une hauteur
@@ -37,7 +40,7 @@
 // aujourd'hui, les 4 écrans IA masqués par M1 (retirés de la navigation, gardés
 // sous mesure), le tiroir lui-même, les deux écrans de lien magique, le chat —
 // et les trois écrans corrigés par le lot 8 ne débordent à aucune taille ni
-// aucune échelle. Et aucune des 120 combinaisons n'affiche de clé de
+// aucune échelle. Et aucune des 176 combinaisons n'affiche de clé de
 // traduction brute.
 //
 // LE COMPTE EST RESTÉ À 20 SURFACES À TRAVERS LE MASQUAGE, et ce n'est pas une
@@ -50,7 +53,7 @@
 /// Nombre d'objets de rendu qui débordent, par cas. Absent = 0.
 /// Lot 9 : AuthWelcomeScreen ne déborde plus (colonne défilable, plus de Spacer
 /// non borné). Le cliquet exige que ce tableau soit vide — un retour du
-/// débordement à l'échelle 1,3 ferait échouer la matrice, et un budget
+/// débordement à l'échelle 1,3 ou 1,5 ferait échouer la matrice, et un budget
 /// laissé à 1 après un zéro mesuré ferait échouer avec « abaissez le budget ».
 const screenOverflowBudget = <String, int>{};
 
@@ -62,4 +65,4 @@ const screenOverflowKnownCauses = <String, String>{};
 
 /// Le total, pour que le message de synthèse ne puisse pas être approximatif.
 const screenOverflowCaseCount = 0;
-const screenMatrixCaseCount = 120;
+const screenMatrixCaseCount = 176;

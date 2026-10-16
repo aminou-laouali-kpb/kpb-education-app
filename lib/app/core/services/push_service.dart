@@ -268,5 +268,8 @@ PushPermissionStatus pushPermissionStatusOf(AuthorizationStatus status) =>
       AuthorizationStatus.provisional =>
         PushPermissionStatus.granted,
       AuthorizationStatus.denied => PushPermissionStatus.denied,
-      AuthorizationStatus.notDetermined => PushPermissionStatus.notDetermined,
+      // `notDetermined`, et toute valeur qu'un `pub upgrade` de
+      // firebase_messaging ajouterait : on redemandera, sans casser la
+      // compilation sur un switch exhaustif.
+      _ => PushPermissionStatus.notDetermined,
     };

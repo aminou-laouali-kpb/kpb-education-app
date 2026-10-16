@@ -200,7 +200,16 @@ class _AhaMomentScreenState extends State<AhaMomentScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('aha_see_all_cta'.tr),
+                                // Flexible : « Voir toutes les universités »
+                                // dépasse les 264 pt du bouton dès ×1,3 sur un
+                                // Android 360 dp. Le libellé passe à la ligne,
+                                // jamais coupé ni débordant.
+                                Flexible(
+                                  child: Text(
+                                    'aha_see_all_cta'.tr,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
                                 const Icon(Icons.arrow_forward_rounded,
                                     size: 17),

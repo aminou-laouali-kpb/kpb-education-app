@@ -49,8 +49,10 @@ SyncErrorKind classifySyncError(Object error) {
       return error.error == null
           ? SyncErrorKind.other
           : SyncErrorKind.connection;
-    case DioExceptionType.badCertificate:
-    case DioExceptionType.cancel:
+    // badCertificate, cancel — et toute valeur que Dio ajouterait : jamais
+    // passagère. Volontairement non exhaustif, pour qu'un `pub upgrade` ne
+    // casse pas la compilation.
+    default:
       return SyncErrorKind.other;
   }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de l'écran de lancement KPB : le blanc de `KpbColors.surface`
+         (lib/app/core/ui/app_tokens.dart). C'est aussi le fond de
+         assets/icon/icon.png et des LaunchImage iOS : le logo se pose sur sa
+         propre couleur, sans carré visible. L'app est en thème clair seul
+         (`themeMode: ThemeMode.light`, lib/main.dart), donc pas de variante
+         nuit. Garde : test/release/launch_screen_test.dart. -->
+    <color name="kpb_launch_background">#FFFFFF</color>
+</resources>
