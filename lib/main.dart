@@ -24,6 +24,7 @@ import 'app/core/services/catalog_cache_service.dart';
 import 'app/core/services/connectivity_service.dart';
 import 'app/core/translations/app_translations.dart';
 import 'app/core/ui/app_theme.dart';
+import 'app/core/ui/components/kpb_offline_banner.dart';
 import 'app/core/ui/portrait_lock.dart';
 import 'app/core/navigation/app_boot_screen.dart';
 import 'app/core/services/auth_service.dart';
@@ -368,6 +369,11 @@ class KpbEducationApp extends StatelessWidget {
           // parents and low-vision users on budget Android phones often crank
           // it up) but clamp it so extreme scales don't shatter fixed-size
           // chips/badges. Respect — never ignore — text scaling.
+          //
+          // Le bandeau hors ligne vit ICI, au-dessus du Navigator : il couvre
+          // toutes les routes (onboarding, fiches, test, dossiers, feuilles),
+          // pas seulement les onglets du shell. Il est placé SOUS le
+          // MediaQuery borné, pour que son texte suive le même plafond.
           builder: (context, child) {
             final mq = MediaQuery.of(context);
             final scaled = mq.textScaler.clamp(
@@ -376,7 +382,9 @@ class KpbEducationApp extends StatelessWidget {
             );
             return MediaQuery(
               data: mq.copyWith(textScaler: scaled),
-              child: child ?? const SizedBox.shrink(),
+              child: KpbOfflineBannerHost(
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
           home: const AppBootScreen(),

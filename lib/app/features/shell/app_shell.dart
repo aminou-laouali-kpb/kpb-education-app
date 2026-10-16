@@ -7,7 +7,6 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/ui/app_tokens.dart';
-import '../../core/ui/components/kpb_offline_banner.dart';
 import '../../core/ui/components/kpb_sample_data_banner.dart';
 import '../../core/ui/kpb_haptics.dart';
 import '../../core/ui/kpb_theme_ext.dart';
@@ -103,6 +102,11 @@ class _AppShellState extends State<AppShell> {
           // (tab content AND the floating hamburger) down instead of colliding
           // with the top-left drawer button. Both banners collapse to zero
           // height when inactive, so this has no effect in the normal case.
+          //
+          // Le bandeau HORS LIGNE n'est plus ici : il est monté une seule fois
+          // pour toute l'app, au-dessus du Navigator (`KpbOfflineBannerHost`
+          // dans le `builder:` de lib/main.dart). Quand il est visible, il a
+          // déjà retiré le haut du padding pour tout ce qui est en dessous.
           body: StreamBuilder<bool>(
             stream: ConnectivityService.instance.onConnectivityChanged,
             initialData: ConnectivityService.instance.isOnline,
@@ -119,11 +123,10 @@ class _AppShellState extends State<AppShell> {
               final staleCatalog = online &&
                   controller.catalogDataState == CatalogDataState.offline;
               final bannerVisible =
-                  !online || controller.catalogIsSampleData || staleCatalog;
+                  controller.catalogIsSampleData || staleCatalog;
 
               return Column(
                 children: [
-                  const KpbOfflineBanner(),
                   // Honest signal when we're still on the bundled sample
                   // catalog (backend unreachable/empty, no cache) rather than
                   // real data.

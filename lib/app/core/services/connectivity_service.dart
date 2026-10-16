@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../ui/components/kpb_toast.dart';
@@ -45,6 +46,16 @@ class ConnectivityService {
         _reconnectDebounce?.cancel();
       }
     });
+  }
+
+  /// Couture de test : pose l'état réseau et le diffuse, SANS le toast de
+  /// `_setOnline` (il demande un Overlay) ni sonde DNS. Un test qui l'appelle
+  /// remet `true` dans son tearDown : le service est un singleton.
+  @visibleForTesting
+  void debugSetOnline(bool online) {
+    if (_isOnline == online) return;
+    _isOnline = online;
+    _controller.add(online);
   }
 
   void dispose() {
