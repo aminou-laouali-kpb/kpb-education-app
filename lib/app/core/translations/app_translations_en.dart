@@ -1389,6 +1389,8 @@ const Map<String, String> appTranslationsEn = {
   'program_step_eligibility_choice': 'Eligibility quiz & program choice',
   'program_step_build_file': 'Building your file with KPB',
   'program_step_submission': 'Submission to the partner school',
+  'program_step_submission_direct':
+      'Sending your application to the institution (not a KPB partner)',
   'program_step_admission_letter': 'Receiving the admission letter',
   'program_step_visa_departure': 'Visa & departure preparation',
   'badge_kpb_partner': 'KPB Partner',

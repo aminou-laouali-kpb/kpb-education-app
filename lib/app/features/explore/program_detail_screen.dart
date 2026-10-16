@@ -115,7 +115,12 @@ class ProgramDetailScreen extends StatelessWidget {
     final applicationSteps = [
       'program_step_eligibility_choice'.tr,
       'program_step_build_file'.tr,
-      'program_step_submission'.tr,
+      // Seule une école PARTENAIRE reçoit le dossier « de KPB » ; pour les
+      // autres (catalogue Amérique du Nord, catalogue général), l'élève
+      // candidate lui-même auprès de l'établissement.
+      (institution?.isPartner ?? false)
+          ? 'program_step_submission'.tr
+          : 'program_step_submission_direct'.tr,
       'program_step_admission_letter'.tr,
       'program_step_visa_departure'.tr,
     ];
@@ -805,15 +810,20 @@ class _CampusOfferingRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          offering.tuitionLabel(localeCode),
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            color: KpbColors.actionPrimary,
+        // Sans prix propre à l'offre (frais en USD / CAD, que `tuitionUpfront`
+        // — lu en euros — ne porte pas), rien : le prix de la formation est
+        // dans la tuile « Frais » en tête de fiche, pas « Sur demande ».
+        if (offering.tuitionUpfront != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            offering.tuitionLabel(localeCode),
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: KpbColors.actionPrimary,
+            ),
           ),
-        ),
+        ],
       ],
     );
     if (estimate == null) return row;
