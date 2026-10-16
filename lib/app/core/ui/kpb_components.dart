@@ -29,5 +29,6 @@ export 'components/anti_fraud_notice.dart';
 export 'components/coming_soon_screen.dart';
 export 'components/scholarship_status_badge.dart';
 export 'components/source_link.dart';
+export 'components/program_intake_line.dart';
 export 'components/verified_badge.dart';
 export 'components/verified_advisor_sheet.dart';

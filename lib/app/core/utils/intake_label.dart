@@ -48,6 +48,10 @@ const _monthsEn = [
   'December',
 ];
 
+/// Le nom complet du mois (1–12) dans la langue demandée : « mars », « March ».
+String intakeMonthName(int month, String localeCode) =>
+    localeCode.startsWith('en') ? _monthsEn[month - 1] : _monthsFr[month - 1];
+
 /// « de septembre », « d'octobre » : l'élision devant une voyelle.
 String _ofMonthFr(int month) {
   final name = _monthsFr[month - 1];

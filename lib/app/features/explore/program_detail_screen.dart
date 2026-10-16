@@ -10,6 +10,7 @@ import '../../core/services/analytics_service.dart';
 import '../../core/services/share_card_service.dart';
 import '../../core/ui/components/log_once.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
+import '../../core/ui/components/program_intake_line.dart';
 import '../../core/ui/components/source_link.dart';
 import '../../core/ui/components/verified_badge.dart';
 import '../../core/utils/country_utils.dart';
@@ -442,6 +443,15 @@ class _Header extends StatelessWidget {
                         fontSize: 11.5,
                         color: KpbColors.textFaint,
                       ),
+                    ),
+                    // Les rentrées disponibles de la formation, en résumé,
+                    // avant le détail par campus plus bas.
+                    const SizedBox(height: 6),
+                    ProgramIntakeLine(
+                      program: program,
+                      institution: institution,
+                      color: KpbColors.decorSky,
+                      localeCode: controller.localeCode,
                     ),
                   ],
                 ),

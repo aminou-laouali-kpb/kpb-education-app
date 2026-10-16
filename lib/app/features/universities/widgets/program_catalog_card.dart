@@ -20,6 +20,7 @@ class ProgramCatalogCard extends StatelessWidget {
     required this.isPartner,
     required this.onSave,
     required this.onTap,
+    this.intake,
   });
 
   final String name;
@@ -33,6 +34,9 @@ class ProgramCatalogCard extends StatelessWidget {
   final bool isPartner;
   final VoidCallback onSave;
   final VoidCallback onTap;
+
+  /// La ligne des rentrées ([ProgramIntakeLine]), ou null.
+  final Widget? intake;
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +70,10 @@ class ProgramCatalogCard extends StatelessWidget {
                 if (institution != null) ...[
                   const SizedBox(height: 3),
                   Text(institution!, style: KpbTextStyles.caption),
+                ],
+                if (intake != null) ...[
+                  const SizedBox(height: 6),
+                  intake!,
                 ],
                 const SizedBox(height: 8),
                 Wrap(

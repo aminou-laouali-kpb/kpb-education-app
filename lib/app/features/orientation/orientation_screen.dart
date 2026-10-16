@@ -601,6 +601,10 @@ class _ResultsViewState extends State<_ResultsView>
                                   SavedItemType.program, program.id),
                               onTap: () => Get.to(() =>
                                   ProgramDetailScreen(programId: program.id)),
+                              intake: ProgramIntakeLine(
+                                program: program,
+                                institution: institution,
+                              ),
                             ),
                           );
                         }),

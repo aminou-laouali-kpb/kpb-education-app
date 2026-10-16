@@ -7,6 +7,7 @@ import '../../core/data/match_api_codec.dart';
 import '../../core/models/app_models.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
+import '../../core/ui/components/program_intake_line.dart';
 import '../../core/ui/app_tokens.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
@@ -283,6 +284,11 @@ class _MatchCard extends StatelessWidget {
         institution == null ? '' : ctrl.resolve(institution.location);
     final fees =
         institution == null ? '' : ctrl.resolve(institution.tuitionLabel);
+    // La formation du match, quand le catalogue local la connaît : ses
+    // rentrées (le repli de secours n'a pas de formation, donc pas de ligne).
+    final program = match.programId.isEmpty
+        ? null
+        : ctrl.programByIdOrNull(match.programId);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -340,6 +346,16 @@ class _MatchCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+          ],
+          if (program != null) ...[
+            const SizedBox(height: 4),
+            ProgramIntakeLine(
+              program: program,
+              institution: institution,
+              color: KpbColors.textMuted,
+              localeCode: locale,
+            ),
+            const SizedBox(height: 2),
           ],
           Text(_zoneKey.tr,
               style: const TextStyle(fontSize: 11, color: KpbColors.textFaint)),

@@ -435,6 +435,11 @@ class _SavedScreenState extends State<SavedScreen> {
                           title: controller.resolve(program.name),
                           subtitle:
                               '${programLevelLabel(controller.resolve(program.level))} · ${controller.resolve(program.duration)}',
+                          extra: ProgramIntakeLine(
+                            program: program,
+                            institution: controller
+                                .institutionByIdOrNull(program.institutionId),
+                          ),
                           onTap: () => Get.to(
                             () => ProgramDetailScreen(programId: program.id),
                           ),
@@ -635,6 +640,7 @@ class _SavedTile extends StatelessWidget {
     required this.onRemove,
     this.badge,
     this.onTap,
+    this.extra,
   });
 
   final Widget leading;
@@ -643,6 +649,9 @@ class _SavedTile extends StatelessWidget {
   final String? badge;
   final VoidCallback onRemove;
   final VoidCallback? onTap;
+
+  /// Une ligne de plus sous le sous-titre (les rentrées d'une formation).
+  final Widget? extra;
 
   @override
   Widget build(BuildContext context) {
@@ -682,6 +691,10 @@ class _SavedTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (extra != null) ...[
+                    const SizedBox(height: 4),
+                    extra!,
+                  ],
                 ],
               ),
             ),

@@ -460,6 +460,11 @@ class _InstitutionDetailSheet extends StatelessWidget {
                                         style: KpbTextStyles.titleMd),
                                     Text(controller.resolve(prog.level),
                                         style: KpbTextStyles.caption),
+                                    const SizedBox(height: 4),
+                                    ProgramIntakeLine(
+                                      program: prog,
+                                      institution: institution,
+                                    ),
                                   ],
                                 ),
                               ),

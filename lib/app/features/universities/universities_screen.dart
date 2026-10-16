@@ -458,6 +458,10 @@ class _Body extends StatelessWidget {
             subtitle: city.isNotEmpty ? '$level · $city' : level,
             feesLabel: tuition,
             feesEquivalent: tuitionEquivalent,
+            intake: ProgramIntakeLine(
+              program: program,
+              institution: institution,
+            ),
             fit: controller.programFit(program),
             saved: controller.isSaved(SavedItemType.program, program.id),
             onSave: () =>
@@ -902,6 +906,7 @@ class _SchoolRow extends StatelessWidget {
     required this.subtitle,
     required this.feesLabel,
     this.feesEquivalent,
+    this.intake,
     required this.fit,
     required this.saved,
     required this.onSave,
@@ -923,6 +928,9 @@ class _SchoolRow extends StatelessWidget {
   /// ligne, ni même en deux, dans les ~200 pt de large de cette colonne. Coller
   /// les deux moitiés forçait un ellipsis qui mangeait justement le prix ajouté.
   final String? feesEquivalent;
+
+  /// La ligne des rentrées de la formation ([ProgramIntakeLine]), ou null.
+  final Widget? intake;
 
   /// Qualitative profile fit — null (no badge) without a student profile.
   final ProfileFit? fit;
@@ -978,6 +986,10 @@ class _SchoolRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (intake != null) ...[
+                    const SizedBox(height: 3),
+                    intake!,
+                  ],
                   if (feesLabel.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
