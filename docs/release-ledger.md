@@ -452,8 +452,8 @@ une **release unique** : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifi
   `eefPrivateSchools` à `false`, aucune clé des chantiers G, K, D, I.
 
 **Ce que la 57 impose :**
-- **version marketing `2.4.0`** (ITMS-90062 : 2.3.0 est approuvée ; et `isVersionBelow` ignore le
-  numéro de build, `lib/app/core/utils/version_utils.dart`) — À VALIDER (propriétaire) ;
+- **version marketing `2.3.1`** (ITMS-90062 : 2.3.0 est approuvée ; et `isVersionBelow` ignore le
+  numéro de build, `lib/app/core/utils/version_utils.dart`) — décidée par le propriétaire le 16/10/2026 ;
 - **couplage `requires-new`** : la 57 n'embarque plus le SDK OneSignal ; sans le backend de #351 et
   `FCM_SERVICE_ACCOUNT_JSON`, elle ne reçoit aucune notification. Ordre : serveur (six migrations
   additives), puis admin, puis app ; préflight `backend_coupling=requires-new` ;
@@ -473,7 +473,7 @@ confidentialité mise à jour (in-app FR + EN, et `web/public/confidentialite.ht
 
 **Reste au propriétaire** : la validation juridique de la collecte de la nationalité (le drapeau
 `scholarshipMatch` reste fermé d'ici là), la relecture des textes de la politique AVANT l'archive
-(texte compilé), le choix 2.4.0, la PR de préparation (version, préflights, registre), les seuils
+(texte compilé), la PR de préparation (version, préflights, registre), les seuils
 des paliers, XC-06 et D5.
 
 ### Ce que 52 embarque

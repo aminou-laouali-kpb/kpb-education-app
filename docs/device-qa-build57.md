@@ -1,7 +1,7 @@
 # Fiche de QA appareil — build 57 : petit appareil, texte agrandi, lecteurs d'écran, notifications, hors ligne
 
 > **Pour qui.** Le propriétaire (ou un testeur désigné), sur **un iPhone et un Android physiques**,
-> avec la **build soumise** `2.4.0 (57)` installée depuis TestFlight / Play Internal — pas un build
+> avec la **build soumise** `2.3.1 (57)` installée depuis TestFlight / Play Internal — pas un build
 > de debug : le contrat de soumission exige que la preuve vienne de l'artefact. Cette fiche est la
 > **suite** des fiches 54, 55 et 56 (toujours valables pour l'espace « Études en France ») ; elle
 > couvre ce que la 57 ajoute : « Suivre », « Mes suivis » et les notifications par FCM (chantiers C
@@ -157,13 +157,13 @@ fiche 54.
 | Drapeau-2 | **Un interrupteur d'urgence coupé** (par exemple `KPB_HOME_PARCOURS_ENABLED=false`, en recette) | Après relance, le bloc disparaît ; remis à `true`, il revient | ☐ | ☐ |
 | Drapeau-3 | **`KPB_FOLLOW_PUSH_PRIMER_ENABLED=false`** (en recette) | Le premier « Suivre » demande directement l'autorisation, sans feuille ; jamais à l'onboarding | ☐ | ☐ |
 | Drapeau-4 | **`KPB_ONBOARDING_V2_ENABLED=true`** (fenêtre de recette) | Aucun champ prérempli sans choix ; « Passer » dès la page 1, sans contourner le plancher de 16 ans ; refermé avant la soumission | ☐ | ☐ |
-| Drapeau-5 | **Bandeau de mise à jour** (`recommendedVersion` au-dessus de 2.4.0, en recette seulement) | Bandeau fermable sur la 57 ; fermé, il ne revient pas dans la session ; remis à vide ensuite | ☐ | ☐ |
+| Drapeau-5 | **Bandeau de mise à jour** (`recommendedVersion` au-dessus de 2.3.1, en recette seulement) | Bandeau fermable sur la 57 ; fermé, il ne revient pas dans la session ; remis à vide ensuite | ☐ | ☐ |
 
 ## Gardes de boutiques
 
 | # | À vérifier | Attendu | iPhone | Android |
 |---|---|---|---|---|
-| Boutique-1 | **L'installation est la build soumise** | TestFlight : **2.4.0 (57)** ; Play Console / `adb shell dumpsys package com.karatou.android \| grep versionCode` → 57 | ☐ | ☐ |
+| Boutique-1 | **L'installation est la build soumise** | TestFlight : **2.3.1 (57)** ; Play Console / `adb shell dumpsys package com.karatou.android \| grep versionCode` → 57 | ☐ | ☐ |
 | Boutique-2 | **Aucun pourcentage, aucune « chance »** | Liste, fiche, accueil, résultats du test : ni « % » de compatibilité, ni « chances » | ☐ | ☐ |
 | Boutique-3 | **Aucune permission neuve** | Aucune invite système en dehors de l'autorisation des notifications au premier « Suivre » | ☐ | ☐ |
 | Boutique-4 | **Politique de confidentialité in-app** | Elle nomme le test (nationalité, date de naissance), dit l'absence de transmission aux écoles, la conservation et les mineurs de 16 et 17 ans, comme `web/public/confidentialite.html` | ☐ | ☐ |

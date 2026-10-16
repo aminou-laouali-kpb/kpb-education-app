@@ -1,4 +1,4 @@
-# Mise à jour 2.4.0 (57) — la checklist du 16/10/2026
+# Mise à jour 2.3.1 (57) — la checklist du 16/10/2026
 
 > **Ce que ce fichier est.** L'ordre exact des opérations pour préparer, déployer, archiver,
 > vérifier, soumettre et déployer **par étapes** la 57, avec les commandes. Il **succède** à
@@ -27,7 +27,7 @@
 
 ## Ce qui change par rapport à la checklist de la 56
 
-- **Version attendue : `2.4.0 (57)`** — la 2.3.0 est en vente, une 57 en 2.3.0 serait refusée
+- **Version attendue : `2.3.1 (57)`** — la 2.3.0 est en vente, une 57 en 2.3.0 serait refusée
   (ITMS-90062) et indiscernable de la 56 pour le bandeau de mise à jour (pack §1.2).
 - **Couplage backend : `requires-new`**, plus `tolerates-old`. La 57 n'embarque plus le SDK
   OneSignal : sans le backend de #351 et `FCM_SERVICE_ACCOUNT_JSON`, elle ne reçoit aucune
@@ -48,7 +48,7 @@
 
 | | Décision | Conséquence sur l'archive |
 |---|---|---|
-| **a** | **Version marketing** : `2.4.0` (recommandé) ou `2.3.1` — À VALIDER (propriétaire) | Elle est compilée : à poser dans la PR de préparation (§0.2). Si `2.3.1` est retenue, remplacer `2.4.0` par `2.3.1` dans ce fichier |
+| **a** | **Version marketing** : `2.3.1` — décidée par le propriétaire le 16/10/2026 | Elle est compilée : à poser dans la PR de préparation (§0.2) |
 | **b** | **Textes de la politique de confidentialité** (in-app, compilés) sur le test, la nationalité, les mineurs de 16 et 17 ans, la conservation | Relus par le juridique **avant l'archive** : après, le texte in-app ne change qu'avec une 58. La page web, elle, se republie seule (`deploy.yml`, `scope=web`) |
 | **c** | **Collecte de la nationalité** — À VALIDER (propriétaire) | Ne bloque pas l'archive : `features.scholarshipMatch` part fermé. Bloque l'ouverture du drapeau |
 | **d** | **`FCM_SERVICE_ACCOUNT_JSON`** présent dans le `.env` de production | Bloque le lancement : sans lui, la 57 ne reçoit aucune notification |
@@ -58,14 +58,14 @@
 Ce dépôt **ne pose pas** la version : elle se pose le jour où l'on prépare l'archive, dans **une**
 PR, fusionnée avant de relever `RELEASE` :
 
-1. `pubspec.yaml` : `version: 2.4.0+57`.
-2. `scripts/preflight-ios-archive.sh` : `EXPECTED_BUILD="57"`, `EXPECTED_VERSION="2.4.0"` ;
-   `scripts/preflight-android-aab.sh` : `EXPECTED_VERSION_NAME="2.4.0"`,
+1. `pubspec.yaml` : `version: 2.3.1+57`.
+2. `scripts/preflight-ios-archive.sh` : `EXPECTED_BUILD="57"`, `EXPECTED_VERSION="2.3.1"` ;
+   `scripts/preflight-android-aab.sh` : `EXPECTED_VERSION_NAME="2.3.1"`,
    `EXPECTED_VERSION_CODE="57"` (gardés par `test/release/artifact_signing_contract_test.dart`).
 3. `docs/release-ledger.md` :
    - « Version marketing EN VENTE : `2.3.0` (depuis le 07/10/2026) » (le test
      `test/release/build_number_test.dart` exige alors une version de `pubspec.yaml` strictement
-     supérieure : d'où 2.4.0) ;
+     supérieure : d'où 2.3.1) ;
    - la ligne `56` passe sous **Consommés**, avec ce qui s'est réellement passé — date de
      téléversement, SHA archivé, mise en vente (À VALIDER (propriétaire) : ces trois faits ne sont
      pas dans le dépôt) ;
@@ -94,7 +94,7 @@ test "$(git rev-parse origin/main)" = "$RELEASE" && echo "RELEASE = tête de mai
 ```
 
 ```bash
-git show "$RELEASE:pubspec.yaml" | grep '^version:'        # version: 2.4.0+57
+git show "$RELEASE:pubspec.yaml" | grep '^version:'        # version: 2.3.1+57
 git merge-base --is-ancestor 28ac82d "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
 git log --oneline 28ac82d.."$RELEASE" -- backend admin docker-compose.yml   # #351, #353, #356, #357, #358, #360, #361 (relevé du 16/10/2026)
 # Dépendances et manifestes depuis la 56 : #351 SEULEMENT (FCM à la place de OneSignal).
@@ -104,7 +104,7 @@ git diff --stat c9a5ef6 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle
 #   attendu : AndroidManifest.xml, Info.plist, pubspec.lock — rien d'autre (PrivacyInfo et build.gradle inchangés)
 git diff -U0 c9a5ef6 "$RELEASE" -- pubspec.yaml | grep '^[+-]' | grep -v '^[+-]#' | grep -v '^+++\|^---'
-#   exactement six lignes : -version: 2.3.0+56, +version: 2.4.0+57, les deux lignes de commentaire
+#   exactement six lignes : -version: 2.3.0+56, +version: 2.3.1+57, les deux lignes de commentaire
 #   « + # Push : FCM en direct… » et « + # garde les jetons… », +firebase_messaging: ^16.2.0,
 #   -onesignal_flutter: ^5.0.0 (relevé du 16/10/2026 sans la ligne version, qui n'est pas encore posée)
 git ls-tree -r --name-only "$RELEASE" | grep -c '^pubspec_overrides.yaml$'   # 0 : le fichier ne doit pas être suivi
@@ -173,11 +173,11 @@ test "$(git rev-parse HEAD)" = "$RELEASE" && git status --porcelain     # rien �
 ## 3. Android — l'AAB signé (≈ 15 min, sans toi) 🔒
 
 1. Actions → **Flutter CI** → *Run workflow* → branche `main`, cocher **`release_android`**. Ne pas
-   pousser de tag `v2.4.0`. Vérifier en tête de l'exécution que le commit est bien `RELEASE`.
+   pousser de tag `v2.3.1`. Vérifier en tête de l'exécution que le commit est bien `RELEASE`.
 2. Journal « Verify App Bundle signature » : comparer l'empreinte SHA-256 au **certificat de la clé
    d'importation** de Play Console (Intégrité de l'app).
 3. Journal « Run strict Android store-artifact preflight » :
-   `Préflight Android OK — 2.4.0 (57), com.karatou.android, SDK 36, …`.
+   `Préflight Android OK — 2.3.1 (57), com.karatou.android, SDK 36, …`.
 4. Télécharger l'artefact **`app-release-android-aab`** de **cette** exécution.
 
    **NE PAS importer un AAB plus ancien** : ni celui de la 55 (Flutter CI, run **37322572087**), ni
@@ -187,7 +187,7 @@ test "$(git rev-parse HEAD)" = "$RELEASE" && git status --porcelain     # rien �
    ```bash
    BUNDLETOOL_JAR=/chemin/bundletool-all-1.18.1.jar scripts/preflight-android-aab.sh \
      --aab app-release.aab --expected-cert-sha256 "<empreinte SHA-256 de Play Console>"
-   # → « Préflight Android OK — 2.4.0 (57), … certificat Play concordant, AD_ID absent. »
+   # → « Préflight Android OK — 2.3.1 (57), … certificat Play concordant, AD_ID absent. »
    ```
 
 ## 4. iOS — l'archive (sur le Mac) 🔒
@@ -228,7 +228,7 @@ flutter build ios --release \
   --dart-define=KPB_APP_ENV=prod \
   --dart-define=KPB_WHATSAPP_NUMBER=+33768674292 \
   --dart-define=POSTHOG_API_KEY="$POSTHOG_API_KEY"
-grep -E '^FLUTTER_BUILD_(NAME|NUMBER)=' ios/Flutter/Generated.xcconfig   # FLUTTER_BUILD_NAME=2.4.0 / FLUTTER_BUILD_NUMBER=57
+grep -E '^FLUTTER_BUILD_(NAME|NUMBER)=' ios/Flutter/Generated.xcconfig   # FLUTTER_BUILD_NAME=2.3.1 / FLUTTER_BUILD_NUMBER=57
 ```
 
 *4. Le contrôle APRÈS la construction.*
@@ -256,11 +256,11 @@ scripts/preflight-ios-archive.sh --xcconfig ios/Flutter/Generated.xcconfig --pos
   ```bash
   unzip -q Runner.ipa -d ipa
   scripts/preflight-ios-archive.sh --xcconfig ios/Flutter/Generated.xcconfig --app ipa/Payload/Runner.app
-  # → « Préflight iOS OK — 2.4.0 (57) »
+  # → « Préflight iOS OK — 2.3.1 (57) »
   ```
   Envoyer **cette** IPA par Transporter — seulement avec le feu vert du propriétaire.
 - Rejets connus : **90474**, **90101** (contrôlés par le préflight) ; **ITMS-90062** ne se produit pas
-  si la version est 2.4.0 (> 2.3.0 en vente).
+  si la version est 2.3.1 (> 2.3.0 en vente).
 
 ## 5. Préflight de release (≈ 5 min, lecture seule)
 
@@ -294,7 +294,7 @@ gh workflow run release-preflight.yml --ref main \
 ## 6. Recette sur appareil (TestFlight + Play Internal) 🔒
 
 1. IPA par Transporter → TestFlight ; AAB → Play Console → **Tests internes** (feu vert du
-   propriétaire pour chacun). Installer **la ligne `2.4.0 (57)`** ; Android : `versionCode` 57.
+   propriétaire pour chacun). Installer **la ligne `2.3.1 (57)`** ; Android : `versionCode` 57.
 2. Dérouler **`docs/device-qa-build57.md`** en entier, sur l'artefact. Les cas « Mes 10 bourses » et
    onboarding V2 se jouent hors production (préproduction ou fenêtre décrite dans la fiche) : **ne
    jamais** ouvrir `scholarshipMatch` en production pour la recette.
@@ -313,7 +313,7 @@ gh workflow run release-preflight.yml --ref main \
 
 ## 8. Soumettre 🔒
 
-- **App Store** : créer la version **2.4.0**, y rattacher la build `57`. « Nouveautés » = pack 57 §2 ;
+- **App Store** : créer la version **2.3.1**, y rattacher la build `57`. « Nouveautés » = pack 57 §2 ;
   *Notes for Review* = le texte **complet** du pack 57 §3, à coller **seul** (décompte refait par
   `test/release/store_pack_57_test.dart` ; si l'adresse ou la méthode du compte de démonstration
   dépasse sa réserve de 40 ou 120 caractères, recompter). Cocher **« Phased release for automatic
@@ -337,7 +337,7 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    synchro pas au-dessus de 9,6 % ; aucun retour bloquant. Sinon : suspendre, couper
    l'interrupteur en cause (pack §5), corriger dans une 58.
 2. **iOS** : publication progressive (phased release) sur sept jours, mêmes critères, pause possible.
-3. **`KPB_RECOMMENDED_APP_VERSION=2.4.0`** — la **version marketing**, jamais le numéro de build :
+3. **`KPB_RECOMMENDED_APP_VERSION=2.3.1`** — la **version marketing**, jamais le numéro de build :
    `isVersionBelow` l'ignore (`lib/app/core/utils/version_utils.dart`, `_parseVersion` coupe au
    `+`), et `AppVersionGate` compare `PackageInfo.version`
    (`lib/app/core/services/app_version_gate.dart`). Quand Play est à 100 % et la publication iOS
@@ -353,7 +353,7 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    `KPB_PUSH_OUTBOX_ENABLED=false` arrête le worker en urgence.
 6. **`KPB_SCHOLARSHIP_MATCH_ENABLED=true`** en dernier, après la validation juridique de la
    nationalité, la porte des 90 % de couverture et la recette en préproduction (pack §5, étape 4).
-7. **`KPB_MIN_APP_VERSION`** reste `0.0.0`. Le passer à `2.4.0` seulement au-delà d'**environ 85 %**
-   des comptes actifs en 2.4.0 ou plus (`GET /admin/app-builds`), jamais pendant un palier Play :
+7. **`KPB_MIN_APP_VERSION`** reste `0.0.0`. Le passer à `2.3.1` seulement au-delà d'**environ 85 %**
+   des comptes actifs en 2.3.1 ou plus (`GET /admin/app-builds`), jamais pendant un palier Play :
    il enferme sinon les 53 et 56 derrière un écran sans sortie.
-8. Ne jamais poser `KPB_EEF_ENABLED=true`. Aucun tag `v2.4.0` poussé pendant la release.
+8. Ne jamais poser `KPB_EEF_ENABLED=true`. Aucun tag `v2.3.1` poussé pendant la release.

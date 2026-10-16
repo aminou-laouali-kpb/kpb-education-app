@@ -3,7 +3,7 @@
 // notifications ou un écran bloquant pour tout le parc.
 //
 // Contexte (constat du 16/10/2026) : la 2.3.0 est en vente ; la 57 doit donc
-// partir en 2.4.0 (ITMS-90062), et elle n'embarque plus le SDK OneSignal — sans
+// partir en 2.3.1 (ITMS-90062), et elle n'embarque plus le SDK OneSignal — sans
 // le backend de #351, elle ne reçoit aucune notification. D'où un couplage
 // `requires-new` et l'ordre serveur → admin → app.
 //
@@ -51,7 +51,7 @@ void main() {
     final doc = _read(_path);
     final flat = doc.replaceAll(RegExp(r'\s+'), ' ');
 
-    test('porte la version 2.4.0 (57) et plus aucun contrôle sur 56', () {
+    test('porte la version 2.3.1 (57) et plus aucun contrôle sur 56', () {
       final shipping = _pubspec();
       expect(
         ['56', '57'],
@@ -61,13 +61,13 @@ void main() {
       );
       if (shipping.build == '57') {
         // La PR de préparation est faite : la checklist doit nommer la version
-        // réellement posée (2.4.0, ou 2.3.1 si le propriétaire l'a choisie).
+        // réellement posée (2.3.1, choisie par le propriétaire).
         expect(doc, contains('${shipping.name} (57)'));
         expect(doc, contains('version: ${shipping.name}+57'));
       }
       expect(doc, contains('FLUTTER_BUILD_NUMBER=57'));
-      expect(doc, contains('Préflight iOS OK — 2.4.0 (57)'));
-      expect(doc, contains('Préflight Android OK — 2.4.0 (57)'));
+      expect(doc, contains('Préflight iOS OK — 2.3.1 (57)'));
+      expect(doc, contains('Préflight Android OK — 2.3.1 (57)'));
       expect(doc, contains('../kpb-release-57'));
       for (final stale in [
         'FLUTTER_BUILD_NUMBER=56',
@@ -85,11 +85,11 @@ void main() {
       }
     });
 
-    test('la version marketing est 2.4.0 parce que 2.3.0 est en vente', () {
+    test('la version marketing est 2.3.1 parce que 2.3.0 est en vente', () {
       expect(flat, contains('ITMS-90062'));
       expect(flat, contains('**2.3.0 en vente**'));
       final prep = _section(doc, '### 0.2');
-      expect(prep, contains('`version: 2.4.0+57`'));
+      expect(prep, contains('`version: 2.3.1+57`'));
       expect(prep, contains('EXPECTED_BUILD="57"'));
       expect(prep, contains('EXPECTED_VERSION_CODE="57"'));
       // Le registre : version en vente, 56 consommée, 57 courante — et ce qui
@@ -257,7 +257,7 @@ void main() {
 
     test('recommendedVersion = version marketing ; minVersion à 85 %', () {
       final rollout = _section(doc, '## 9.').replaceAll(RegExp(r'\s+'), ' ');
-      expect(rollout, contains('**`KPB_RECOMMENDED_APP_VERSION=2.4.0`**'));
+      expect(rollout, contains('**`KPB_RECOMMENDED_APP_VERSION=2.3.1`**'));
       expect(
         rollout,
         contains('la **version marketing**, jamais le numéro de build'),
@@ -342,7 +342,7 @@ void main() {
     expect(first, _pubspec().build);
     final entry = ledger.substring(ledger.indexOf('### Chantier L'));
     expect(entry, contains('`requires-new`'));
-    expect(entry, contains('2.4.0'));
+    expect(entry, contains('2.3.1'));
     expect(entry, contains('À VALIDER (propriétaire)'));
   });
 }

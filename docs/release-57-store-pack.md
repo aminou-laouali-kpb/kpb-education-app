@@ -72,14 +72,13 @@ notification** tant que le backend de #351 n'est pas déployé **et** que
 `FCM_SERVICE_ACCOUNT_JSON` n'est pas posé. D'où l'ordre imposé : **serveur, puis admin, puis app**
 (§6.1), et un préflight en `backend_coupling=requires-new` (la production sert `RELEASE`).
 
-### 1.2 Version marketing : 2.4.0
+### 1.2 Version marketing : 2.3.1
 
 La 2.3.0 est en vente (mesure ci-dessus). App Store Connect refuse toute build dont la version
 marketing n'est pas **strictement supérieure** à la dernière approuvée (**ITMS-90062**) : la 57 ne
-peut pas rester en 2.3.0. Ce pack retient **2.4.0** (la 57 ajoute « Suivre », les notifications
-FCM, l'accueil et le test « Mes 10 bourses », livré fermé — un numéro mineur ; `.env.example`
-annonçait déjà « 2.3.0 → 2.4.0 »). À VALIDER (propriétaire) : 2.4.0, ou 2.3.1. Ce pack ne touche
-pas à `pubspec.yaml` : la version `2.4.0+57` se pose dans la PR de préparation (checklist §0.2).
+peut pas rester en 2.3.0. Le propriétaire a retenu **2.3.1** le 16/10/2026 (strictement supérieure à 2.3.0, donc
+acceptée ; le test « Mes 10 bourses » part fermé). Ce pack ne touche
+pas à `pubspec.yaml` : la version `2.3.1+57` se pose dans la PR de préparation (checklist §0.2).
 
 Le choix compte aussi pour le bandeau de mise à jour : `isVersionBelow` **ignore le numéro de
 build** — `_parseVersion` coupe tout ce qui suit `+` (`lib/app/core/utils/version_utils.dart`), et
@@ -380,7 +379,7 @@ possible (30 jours au total au plus) depuis App Store Connect.
 
 ### 6.4 `KPB_RECOMMENDED_APP_VERSION` et `KPB_MIN_APP_VERSION`
 
-- **`KPB_RECOMMENDED_APP_VERSION=2.4.0`** — la **version marketing** de la 57, jamais `2.4.0+57`
+- **`KPB_RECOMMENDED_APP_VERSION=2.3.1`** — la **version marketing** de la 57, jamais `2.3.1+57`
   ni `57` : le serveur n'accepte qu'un `x.y.z` (`recommendedVersion()`), et l'app ignore le numéro
   de build (`lib/app/core/utils/version_utils.dart`, §1.2). À poser quand la 57 est **à 100 % sur
   Play et au 7e jour de la publication iOS** : pendant un palier Play, un utilisateur hors du
@@ -388,9 +387,9 @@ possible (30 jours au total au plus) depuis App Store Connect.
   les 2.3.0 (54 et suivantes) ; **aucun** chez les 2.2.0 (53), qui ne lisent pas la clé. Mécanique :
   une PR change `RECOMMENDED_APP_VERSION` dans `.github/scripts/vps-ops.sh`, puis l'action
   `recommended-version-set` (simulation, puis application).
-- **`KPB_MIN_APP_VERSION`** — reste `0.0.0`. Le relever (à `2.4.0`) bloque toute version inférieure
+- **`KPB_MIN_APP_VERSION`** — reste `0.0.0`. Le relever (à `2.3.1`) bloque toute version inférieure
   derrière un écran qu'on ne ferme pas, **53 comprise** (elle lit `minVersion`). Seulement quand
-  **environ 85 %** des comptes actifs sont en 2.4.0 ou plus, mesuré sur `GET /admin/app-builds`
+  **environ 85 %** des comptes actifs sont en 2.3.1 ou plus, mesuré sur `GET /admin/app-builds`
   (« part des comptes actifs sur cette build ou une plus récente » ; un compte vu sans en-tête est
   compté plus ancien). La mesure ne commence qu'au déploiement du backend de B : le déployer tôt
   donne une base. Jamais pendant un palier Play.
@@ -401,7 +400,7 @@ possible (30 jours au total au plus) depuis App Store Connect.
 
 | | Décision | Recommandation | Où |
 |---|---|---|---|
-| **a** | Version marketing de la 57 | **2.4.0** (2.3.0 est en vente : ITMS-90062) | §1.2 ; checklist §0.2 |
+| **a** | Version marketing de la 57 | **2.3.1** (2.3.0 est en vente : ITMS-90062) | §1.2 ; checklist §0.2 |
 | **b** | État réel de la 56 à consigner au registre | Date de téléversement, SHA archivé, « en vente depuis le 07/10/2026 » (App Store) — À VALIDER (propriétaire) | `docs/release-ledger.md` |
 | **c** | Collecte de la nationalité | À VALIDER (propriétaire) — validation juridique ; `scholarshipMatch` fermé d'ici là | §4.3 ; `docs/data-inventory.md` §5 |
 | **d** | Moment de déclarer le test dans les consoles | Dès la soumission de la 57 | §4 |

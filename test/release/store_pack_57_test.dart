@@ -359,7 +359,7 @@ void main() {
     });
 
     test('KPB_RECOMMENDED_APP_VERSION = version marketing ; MIN à 85 %', () {
-      expect(deploy, contains('**`KPB_RECOMMENDED_APP_VERSION=2.4.0`**'));
+      expect(deploy, contains('**`KPB_RECOMMENDED_APP_VERSION=2.3.1`**'));
       expect(deploy, contains('la **version marketing**'));
       expect(deploy, contains('`lib/app/core/utils/version_utils.dart`'));
       expect(pack, contains('`lib/app/core/services/app_version_gate.dart`'));
@@ -557,7 +557,7 @@ void main() {
         'HorsLigne-1': ['Démarrage à froid hors ligne'],
         'HorsLigne-2': ['Bandeau hors ligne global'],
         'Accueil-1': ['TA PROCHAINE ÉTAPE'],
-        'Boutique-1': ['2.4.0 (57)'],
+        'Boutique-1': ['2.3.1 (57)'],
       };
       required.forEach((id, needles) {
         final row = rows[id];
