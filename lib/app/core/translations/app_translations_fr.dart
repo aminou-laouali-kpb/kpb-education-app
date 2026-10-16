@@ -684,6 +684,12 @@ const Map<String, String> appTranslationsFr = {
       '• Date de naissance (étudiants) ; nom et contact du tuteur si vous avez moins de 18 ans\n'
       '• Photo de profil, si vous en ajoutez une (caméra ou photothèque)\n'
       '• Profil académique : niveau d\'études, niveau cible, compétences linguistiques, notes, filières d\'intérêt, pays de destination\n'
+      // Chantier D/H : les réponses du test vivent sur le profil (écrites par
+      // POST /scholarships/match/runs seulement). Le test est derrière
+      // `features.scholarshipMatch`, fermé tant que la collecte de la
+      // nationalité n'est pas validée (docs/data-inventory.md).
+      '• Test « Mes 10 bourses », si vous le passez (fonction ouverte progressivement) : nationalité(s), pays de résidence, date de naissance, plus haut diplôme, niveau de bourse visé, domaines, tranche de moyenne sur 20, niveaux d\'anglais et de français, scores de tests de langue, tranche d\'expérience professionnelle et, si vous avez 16 ou 17 ans, l\'accord de votre représentant légal. Rien ne vous oblige à répondre : sans ces réponses, le test ne calcule pas de résultat, et le reste de l\'app reste utilisable\n'
+      '• Bourses suivies et notifications : les bourses que vous suivez, vos réglages d\'alerte, les notifications reçues dans l\'app et le moment où vous en ouvrez une\n'
       '• Messages de dossier et textes soumis au coach (KPB Intelligence)\n'
       // Le repli réseau est NOMMÉ parce qu'il subsiste dans le code.
       // `SpeechInputService.startListening` demande bien la
@@ -698,13 +704,14 @@ const Map<String, String> appTranslationsFr = {
       '• Dictée vocale : le micro capte votre voix, l\'app demande à votre téléphone de la convertir en texte sur l\'appareil et n\'en garde que le texte ; l\'enregistrement audio ne nous est jamais transmis. Sur iPhone, si la reconnaissance locale est indisponible, la dictée ne démarre pas. Sur Android, la reconnaissance locale n\'est qu\'une préférence : sans modèle local installé, le service de reconnaissance de votre téléphone (Google) peut traiter votre voix hors de l\'appareil\n'
       '• Documents (passeport, relevés, pièces de dossier) : l\'envoi depuis l\'application est masqué. Ces pièces passent par WhatsApp vers votre conseiller, pas par un téléversement in-app\n'
       '• Données d\'utilisation : résultats d\'orientation, éléments sauvegardés, historique de recherche\n'
-      '• Données techniques : jeton de notifications de l\'appareil, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée\n'
+      '• Données techniques : jeton de notifications de l\'appareil, version et numéro de build de l\'app utilisée, biométrie locale (verrouillage), localisation déclarée dans la configuration iOS mais jamais demandée ni utilisée\n'
       '• Analytique : Firebase Analytics et PostHog ; enregistrements de session PostHog (textes et images masqués)\n'
       '• Diagnostics : Firebase Crashlytics ; métriques agrégées de synchronisation',
   'privacy_s3_body': 'Vos données sont utilisées pour :\n\n'
       '• Personnaliser vos recommandations de filières, pays et bourses\n'
       '• Gérer vos dossiers de candidature et vos rendez-vous\n'
-      '• Vous envoyer des notifications pertinentes (mises à jour de dossier, deadlines)\n'
+      '• Vous envoyer des notifications pertinentes (mises à jour de dossier, deadlines, ouverture et dates limites des bourses que vous suivez ; nouvelles bourses compatibles avec votre test seulement si vous l\'activez)\n'
+      '• Pour le test « Mes 10 bourses » : comparer vos réponses aux conditions officielles des bourses (nationalité, âge, niveau, notes, langues, expérience) et vous montrer jusqu\'à 10 bourses compatibles ou à vérifier. Le résultat est indicatif : aucune décision n\'est prise à votre place, et seul l\'organisme de la bourse décide de votre candidature\n'
       '• Vous envoyer par email les nouvelles bourses d\'études disponibles, uniquement si vous y avez consenti (case à cocher — désinscription possible à tout moment depuis votre profil ou le lien de désinscription des emails)\n'
       '• Améliorer nos services via des statistiques agrégées et anonymisées\n'
       '• Communiquer avec vous dans le cadre de vos démarches\n'
@@ -712,7 +719,8 @@ const Map<String, String> appTranslationsFr = {
   'privacy_s4_body':
       '• Consentement : vous acceptez cette politique lors de la création de votre compte\n'
           '• Exécution du contrat : le traitement est nécessaire pour fournir nos services\n'
-          '• Intérêt légitime : amélioration de nos services et sécurité de la plateforme',
+          '• Intérêt légitime : amélioration de nos services et sécurité de la plateforme\n'
+          '• Mineurs de 16 et 17 ans : l\'accord déclaré d\'un représentant légal (nom et contact) est demandé avant de compléter le profil, d\'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L\'application n\'est pas destinée aux moins de 16 ans',
   'privacy_s5_body': 'Vos données ne sont PAS vendues à des tiers.\n\n'
       'Elles peuvent être partagées avec :\n'
       '• Notre backend KPB (VPS Hostinger, api.kpbeducation.cloud) pour faire fonctionner l\'application\n'
@@ -742,12 +750,16 @@ const Map<String, String> appTranslationsFr = {
       '• Mautic (outil d\'emailing auto-hébergé par KPB) pour la newsletter bourses, uniquement si vous y avez consenti\n'
       '• PayDunya et CinetPay : intentions de paiement si vous souscrivez un accompagnement payant\n'
       '• Nos conseillers internes pour le suivi de vos dossiers, et notre équipe commerciale pour les déclarations d\'intérêt que vous avez faites. Dès qu\'une demande de dossier est déposée, les coordonnées du compte (nom, e-mail, téléphone, WhatsApp et, le cas échéant, le contact du responsable légal) sont envoyées par e-mail aux commerciaux actifs\n'
+      '• Votre nationalité, votre date de naissance et vos autres réponses au test « Mes 10 bourses » ne sont transmises à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne partent ni dans l\'analytique ni dans les notifications. Quand vous ouvrez un dossier depuis une bourse, votre conseiller voit la bourse concernée, pas vos réponses. Le test peut mettre à jour des champs de votre profil déjà utilisés ailleurs (pays de résidence, niveau d\'anglais, moyenne) : ils suivent alors les règles de cette section\n'
       '• Nos partenaires institutionnels (universités) uniquement avec votre accord explicite lors de la soumission d\'un dossier\n'
       '• Les autorités compétentes si la loi l\'exige',
   'privacy_transfers_body':
       'Certains destinataires sont établis aux États-Unis (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — YouTube et les services de reconnaissance vocale compris — et Wikimedia). Le transfert repose sur votre consentement à cette politique et, le cas échéant, sur les clauses contractuelles types du sous-traitant. Vous pouvez refuser l\'analytique depuis Profil → « Analyse d\'usage » et refuser KPB Intelligence : le reste de l\'app reste utilisable.',
   'privacy_s6_body': '• Données de profil : conservées tant que votre compte est actif\n'
       '• Données de dossier : conservées tant que le dossier est ouvert, puis supprimées avec le compte\n'
+      '• Réponses au test « Mes 10 bourses » : gardées sur votre profil tant que votre compte est actif, et modifiables en refaisant le test ; seuls vos 5 derniers résultats sont conservés, les plus anciens s\'effacent automatiquement\n'
+      '• Bourses suivies et notifications reçues dans l\'app : conservées tant que votre compte est actif\n'
+      '• Sur votre téléphone : le brouillon du test s\'efface à la fin du test et à la déconnexion ; les bourses gardées pour une consultation hors ligne s\'effacent à la déconnexion\n'
       '• Données analytiques : agrégées et anonymisées, conservées indéfiniment\n'
       '• En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours',
   'privacy_s7_body': '• Communication chiffrée via HTTPS/TLS\n'
@@ -763,6 +775,7 @@ const Map<String, String> appTranslationsFr = {
           '• De limiter le traitement\n'
           '• De vous opposer au traitement\n'
           '• De portabilité de vos données\n\n'
+          'L\'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats et vos alertes de bourses.\n\n'
           'Pour exercer ces droits, contactez-nous à : privacy@kpbeducation.com',
   'privacy_s9_body': 'Nous utilisons Firebase Analytics (Google) et PostHog pour comprendre l\'usage de l\'application et l\'améliorer :\n\n'
       '• Écrans consultés, actions effectuées (orientation, recherche, sauvegarde)\n'

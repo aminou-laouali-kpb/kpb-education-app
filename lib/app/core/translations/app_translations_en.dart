@@ -637,27 +637,30 @@ const Map<String, String> appTranslationsEn = {
       '• Date of birth (students); guardian name and contact if you are under 18\n'
       '• Profile photo, if you add one (camera or photo library)\n'
       '• Academic profile: current level, target level, language skills, grades, fields of interest, destination countries\n'
+      '• "My 10 scholarships" test, if you take it (feature being opened gradually): nationality or nationalities, country of residence, date of birth, highest diploma, scholarship level sought, fields, grade band out of 20, English and French levels, language test scores, work experience band and, if you are 16 or 17, your legal guardian\'s agreement. You are never required to answer: without these answers the test computes no result, and the rest of the app stays usable\n'
+      '• Followed scholarships and notifications: the scholarships you follow, your alert settings, the notifications received in the app and when you open one\n'
       '• Case messages and texts submitted to the coach (KPB Intelligence)\n'
       // Voir le commentaire du bloc `fr` : le repli réseau d'Android est
       // nommé parce qu'il subsiste dans le greffon.
       '• Voice dictation: the microphone captures your voice, the app asks your phone to turn it into text on the device and keeps only that text; the audio recording is never sent to us. On iPhone, if on-device recognition is unavailable, dictation does not start. On Android, on-device recognition is only a preference: without a local model installed, your phone\'s recognition service (Google) may process your voice off the device\n'
       '• Documents (passport, transcripts, case files): in-app upload is masked. These files reach your advisor over WhatsApp, not through an in-app upload\n'
       '• Usage data: orientation results, saved items, search history\n'
-      '• Technical data: device push token, local biometrics (app lock), location declared in the iOS configuration but never requested or used\n'
+      '• Technical data: device push token, version and build number of the app in use, local biometrics (app lock), location declared in the iOS configuration but never requested or used\n'
       '• Analytics: Firebase Analytics and PostHog; PostHog session recordings (text and images masked)\n'
       '• Diagnostics: Firebase Crashlytics; aggregated sync metrics',
   'privacy_s3_body': 'Your data is used to:\n\n'
       '• Personalise programme, country and scholarship recommendations\n'
       '• Manage your applications and appointments\n'
-      '• Send relevant notifications (case updates, deadlines)\n'
+      '• Send relevant notifications (case updates, deadlines, openings and deadlines of the scholarships you follow; new scholarships matching your test only if you turn it on)\n'
+      '• For the "My 10 scholarships" test: compare your answers with the official conditions of scholarships (nationality, age, level, grades, languages, experience) and show you up to 10 matching or to-check scholarships. The result is indicative: no decision is made for you, and only the scholarship body decides on your application\n'
       '• Email newly listed scholarships only if you opted in (checkbox — unsubscribe any time from your profile or the email footer)\n'
       '• Improve our services through aggregated, anonymised statistics\n'
       '• Communicate with you about your applications\n'
       '• Contact you about a space or a guidance offer you declared an interest in, where you agreed to it when declaring. That declaration is readable by our counsellors and our sales team, and you can withdraw it at any time from the screen where you made it',
-  'privacy_s4_body':
-      '• Consent: you accept this policy when you create an account\n'
-          '• Contract: processing is required to provide the service\n'
-          '• Legitimate interest: improving the service and securing the platform',
+  'privacy_s4_body': '• Consent: you accept this policy when you create an account\n'
+      '• Contract: processing is required to provide the service\n'
+      '• Legitimate interest: improving the service and securing the platform\n'
+      '• Minors aged 16 and 17: the declared agreement of a legal guardian (name and contact) is required before completing the profile, using KPB Intelligence or taking the "My 10 scholarships" test. The app is not intended for anyone under 16',
   'privacy_s5_body': 'Your data is NOT sold to third parties.\n\n'
       'It may be shared with:\n'
       '• Our KPB backend (Hostinger VPS, api.kpbeducation.cloud) to run the app\n'
@@ -676,12 +679,16 @@ const Map<String, String> appTranslationsEn = {
       '• Mautic (email tool self-hosted by KPB) for the scholarship newsletter, only if you opted in\n'
       '• PayDunya and CinetPay: payment intents if you buy paid accompaniment\n'
       '• Our internal advisors for case follow-up, and our sales team for the interest declarations you made. When a case request is submitted, the account contact details (name, email, phone, WhatsApp and, where provided, the guardian contact) are emailed to the active sales team\n'
+      '• Your nationality, date of birth and other answers to the "My 10 scholarships" test are not sent to any school, scholarship body or our sales team, and never go into analytics or notifications. When you open a case from a scholarship, your advisor sees that scholarship, not your answers. The test may update profile fields already used elsewhere (country of residence, English level, grades): they then follow the rules of this section\n'
       '• Institutional partners (universities) only with your explicit agreement when you submit a case\n'
       '• Competent authorities if the law requires it',
   'privacy_transfers_body':
       'Some recipients are established in the United States (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — including YouTube and the speech recognition services — and Wikimedia). The transfer rests on your consent to this policy and, where applicable, the processor\'s standard contractual clauses. You can turn analytics off in Profile → "Usage analytics" and decline KPB Intelligence: the rest of the app stays usable.',
   'privacy_s6_body': '• Profile data: kept while your account is active\n'
       '• Case data: kept while the case is open, then deleted with the account\n'
+      '• "My 10 scholarships" test answers: kept on your profile while your account is active, and editable by taking the test again; only your last 5 results are kept, older ones are erased automatically\n'
+      '• Followed scholarships and in-app notifications: kept while your account is active\n'
+      '• On your phone: the test draft is erased when you finish the test and when you sign out; scholarships kept for offline viewing are erased when you sign out\n'
       '• Analytics data: aggregated and anonymised, kept indefinitely\n'
       '• If you delete your account: personal data is erased within 30 days',
   'privacy_s7_body': '• Encrypted transport via HTTPS/TLS\n'
@@ -697,6 +704,7 @@ const Map<String, String> appTranslationsEn = {
           '• Restrict processing\n'
           '• Object to processing\n'
           '• Data portability\n\n'
+          'The export of your data includes your "My 10 scholarships" test answers, your latest results and your scholarship alerts.\n\n'
           'To exercise these rights, contact us at: privacy@kpbeducation.com',
   'privacy_s9_body': 'We use Firebase Analytics (Google) and PostHog to understand and improve the app:\n\n'
       '• Screens viewed, actions taken (orientation, search, save)\n'

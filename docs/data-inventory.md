@@ -5,8 +5,10 @@ l’inscription. Chaque ligne cite le fichier qui **prouve** le flux. Les docs
 existants ne font pas autorité : si ce fichier et le code divergent, c’est le
 code qui gagne, et ce fichier doit être mis à jour.
 
-Dernière lecture du dépôt : 2026-08-24 (après l'alignement des trois
-politiques : YouTube et le service de reconnaissance vocale nommés).
+Dernière lecture du dépôt : 2026-10-16 (chantier L, préparation de la build 57 :
+test « Mes 10 bourses », « Suivre » et notifications, caches hors ligne ; §5).
+Lecture précédente : 2026-08-24 (alignement des trois politiques : YouTube et le
+service de reconnaissance vocale nommés).
 
 ## 1. Destinataires tiers (10 + paiements)
 
@@ -38,7 +40,13 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Nom, e-mail, téléphone, WhatsApp | Onboarding | Postgres ; e-mail aussi Supabase Auth | Le nom n’est **pas** envoyé à Groq — coach et outils depuis le lot 11, **orientation seulement depuis le 18/08** (elle envoyait tout le profil). Les outils IA restent masqués jusqu’au déploiement couplé 49 |
 | Date de naissance | Onboarding (étudiants) | Postgres + snapshot local | Plancher 16 ans (lot 9) ; tuteur si &lt; 18 |
 | Nom / contact / consentement du tuteur | Onboarding (mineurs déclarés) | Postgres | Contact tuteur non persisté sur l’appareil |
-| Réponses du test « Mes 10 bourses » (nationalité(s), résidence, date de naissance, diplôme, niveau visé, domaines, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience) | Assistant du test (drapeau `features.scholarshipMatch`, fermé tant que la collecte de la nationalité n'est pas validée) | Postgres (`POST /scholarships/match/runs` seulement, jamais le PATCH du profil) ; sur l'appareil : brouillon Hive `kpb.scholarship_match.v1` (sans le nom ni le contact du tuteur), par compte, effacé à la fin du test et à la déconnexion, et le dernier run (sans les réponses) | Jamais dans l'analytique ni dans le push (liste fermée des propriétés `scholarship_match_*`) |
+| Réponses du test « Mes 10 bourses » (nationalité(s), résidence, date de naissance, accord du tuteur pour un mineur, diplôme, niveau visé, domaines, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience) | Assistant du test (drapeau `features.scholarshipMatch`, fermé tant que la collecte de la nationalité n'est pas validée) | Postgres, colonnes de `UserProfile` (`nationalityCode`, `secondNationalityCode`, `highestDiploma`, `scholarshipTargetLevel`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests`, `workExperienceBand`, `scholarshipProfileConfirmedAt`, plus `birthDate` et les champs tuteur existants), écrites par `POST /scholarships/match/runs` seulement, jamais par le PATCH du profil (`backend/src/modules/scholarship-match/match-answers.ts`) ; sur l'appareil : brouillon Hive `kpb.scholarship_match.v1` (sans le nom ni le contact du tuteur), par compte, effacé à la fin du test (`scholarship_match_flow_screen.dart`, `clearDraft`) et à la déconnexion, et le dernier run (sans les réponses) | Jamais dans l'analytique ni dans le push (liste fermée des propriétés `scholarship_match_*`). **Écritures de compatibilité** : l'anglais et la moyenne recopient `languageLevel` / `gradeRange`, la résidence `countryOfResidence` (`legacyCompatibilityWrites`) — ces champs anciens suivent ensuite leurs propres flux (la résidence figure dans l'e-mail commercial d'un dossier). Transmission, conservation, export : §5 |
+| Passages du moteur (`ScholarshipMatchRun`) | Chaque `POST /scholarships/match/runs` | Postgres ; **5 derniers par élève** (`prune`), cascade à la suppression du compte | `inputsSummary` **minimisé** : niveau visé, nombre de domaines, booléens, jamais la nationalité, la date de naissance ni la moyenne (`match-presenter.ts`, `RunInputsSummary`) ; `items` = bourses retenues et raisons rendues ; empreinte SHA-256 du profil normalisé (`profileHash`) |
+| Opt-in « nouvelles bourses compatibles » | Résultats du test | Postgres (`UserProfile.scholarshipMatchAlertsOptInAt`) | Horodatage seul. **Aucun envoi n'est implémenté à ce jour** (aucune tâche planifiée ne lit la colonne, relevé du 16/10/2026) |
+| Bourses suivies (« Suivre ») et alertes d'ouverture | Bouton « Suivre », cloche, « Mes suivis » (chantiers C et G) | Postgres : favori `SavedItem` + `ScholarshipAlertSubscription` (`pushEnabled`, `inAppEnabled`, `mutedAt`, `impliedFollow`), cascade à la suppression du compte ; sur l'appareil : cache Hive `kpb.followed.cache` par compte, vidé à la déconnexion (`followed_scholarships_store.dart`) | Interrupteurs serveur ouverts par défaut (`features.follow*`, `followedScholarships`…). Désinscription globale par la clé `followed_scholarship_updates` de `disabledNotificationTypes` |
+| Notifications in-app et file d'envoi | Annonce d'ouverture, rappels de date limite (`backend/src/modules/scholarships-index/opening/`) | Postgres `UserNotification` (titre, corps FR/EN, route, état d'envoi `push*`), cascade à la suppression du compte ; aucune purge par âge | **Absente de l'export** `GET /profiles/me/export` (relevé du 16/10/2026, §5) |
+| Ouverture d'une notification | Tap sur un push (`POST /me/push-opens`, `backend/src/modules/notifications/push-opens.controller.ts`) | Postgres `NotificationDelivery.openedAt` ; un rappel tapé passe en lu (`UserNotification.readAt`) | Mesure de l'utilité des campagnes (`opened` / `openRate` dans l'admin) |
+| Bourses gardées pour le hors-ligne | Liste et fiches consultées (chantier I) | Appareil seulement : Hive `kpb.scholarships.cache` (première page par jeu de filtres, 60 fiches au plus) | Données publiques du catalogue ; vidé à la déconnexion et à la perte de session, jamais relu après un 401 / 403 |
 | Photo de profil | Profil | Stockage backend, scan antivirus, pas d’URL publique | Caméra / photothèque |
 | Documents de dossier | WhatsApp (pas l’app) | — | `KPB_DOCUMENT_UPLOAD_ENABLED=false` (M2) : l’app n’envoie aucun fichier. Les pièces (passeport, relevés…) passent par WhatsApp vers le conseiller. Fichiers d’anciennes builds encore en stockage. |
 | Messages de dossier | In-app | Postgres | |
@@ -50,6 +58,11 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés |
 
 ## 3. Permissions (ce que l’OS affiche)
+
+Aucune permission nouvelle avec la build 57 : `POST_NOTIFICATIONS` (Android 13+)
+et l'autorisation iOS des notifications existaient déjà. Le SDK OneSignal est
+retiré, Firebase Cloud Messaging le remplace (#351) ; deux `meta-data` FCM
+(icône, canal `kpb_default`) s'ajoutent au manifeste Android, aucune permission.
 
 ### Android (`android/app/src/main/AndroidManifest.xml`)
 
@@ -82,3 +95,39 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
   bloc Hostinger FR (`whois` : netname `HOSTINGER-HOSTING`, `country: FR`) — à
   confirmer dans le panneau Hostinger, mais l'hébergement des données est donc
   en **UE**, les sous-traitants américains étant nommés séparément.
+
+## 5. Build 57 — transmission, conservation, export des nouvelles données (relevé du 16/10/2026)
+
+Lu dans `backend/prisma/schema.prisma`, `backend/src/modules/scholarship-match/`,
+`backend/src/modules/cases/` et `backend/src/modules/profiles/profiles.service.ts`.
+
+| Question | Réponse tirée du code | Preuve |
+|---|---|---|
+| Les réponses du test partent-elles **chez une école** ou un organisme de bourse ? | **Non.** Aucun code n'écrit vers un établissement. Un dossier ouvert depuis une bourse porte seulement `Case.scholarshipId` (clé étrangère `SET NULL`) ; la vue staff du dossier montre le nom et les liens officiels de la bourse, **pas** les réponses du test | `cases.service.ts` (`mapDbCase`, `CASE_SCHOLARSHIP_SELECT`) |
+| Partent-elles dans l'**e-mail commercial** d'un dossier ? | **Non** pour la nationalité, la date de naissance, les notes et les langues. L'e-mail porte nom, e-mail, téléphone, WhatsApp, pays de résidence, langue, niveaux actuel et visé (`targetLevel`, distinct de `scholarshipTargetLevel`), contact du tuteur | `case-lead-mail.service.ts` (`CaseLeadUser`, `leadBody`) |
+| L'**admin** les voit-il ? | Pas par une route : aucune route admin ne sert `nationalityCode` ni les autres réponses. « Tester un profil » (`POST /admin/scholarships/match-preview`) prend un profil **saisi par l'équipe**, rien n'est lu ni écrit sur un élève | `admin-catalog/scholarship-eligibility-admin.service.ts` |
+| Analytique, push, IA ? | Non : propriétés `scholarship_match_*` en liste fermée ; aucune réponse dans une charge de push ; aucune dans une invite IA | `docs/analytics-event-contract.md` ; `scholarship-match.service.ts` |
+| **Export** (`GET /profiles/me/export`) | Les colonnes du profil (réponses comprises, sans la clé de stockage de la photo), les `ScholarshipMatchRun`, les `ScholarshipAlertSubscription`, les favoris `SavedItem`. **Écart : `UserNotification` et `NotificationDelivery` n'y figurent pas** — à ajouter dans un chantier serveur ; la politique ne promet que les réponses, les résultats et les alertes | `profiles.service.ts` (`exportMe`) |
+| **Suppression du compte** | Cascade sur `ScholarshipMatchRun`, `ScholarshipAlertSubscription`, `UserNotification` ; les colonnes du profil partent avec la ligne | `schema.prisma` (`onDelete: Cascade`) |
+| **Durée de conservation** | Réponses : tant que le compte est actif (modifiables en refaisant le test ; aucune action « effacer mes réponses » dédiée) ; runs : 5 derniers ; notifications et suivis : tant que le compte est actif, aucune purge par âge ; brouillon local : fin du test ou déconnexion ; caches hors ligne : déconnexion | ci-dessus |
+| **Mineurs de 16 et 17 ans** | Le test exige l'accord du représentant légal (`readiness` : `guardianConsent` requis sous 18 ans) ; plancher de 16 ans (`MINIMUM_ACCOUNT_AGE`, `parseBirthDate` refuse en dessous) ; le niveau « lycée » n'est proposé qu'en dessous d'un âge plafond (`SECONDARY_MAX_AGE`) | `match-inputs.ts`, `match-answers.ts`, `profiles/profile-age.policy.ts` |
+
+**Ce que ce relevé ne tranche pas** (le drapeau `features.scholarshipMatch` reste
+**fermé** tant que ces points ne sont pas validés) :
+
+- À VALIDER (propriétaire) : la **collecte de la nationalité** elle-même — validation
+  juridique attendue avant toute ouverture du drapeau (registre, entrée du 15/10/2026
+  « chantier D », point 5). La nationalité n'est pas une catégorie « sensible » au sens
+  des consoles (Apple : *Sensitive Info* = origine raciale ou ethnique, opinions,
+  religion, santé…), mais son traitement pour exclure des bourses mérite l'avis du
+  juridique.
+- À VALIDER (propriétaire) : la **base légale** de ce traitement (consentement explicite
+  au test, ou exécution du service demandé) ; la politique ne la précise pas pour le
+  test et dit « Rien ne vous oblige à répondre ».
+- À VALIDER (propriétaire) : une **durée de conservation propre** à la nationalité et aux
+  notes (aujourd'hui : celle du profil) et une action « effacer mes réponses au test ».
+- À VALIDER (propriétaire) : le texte de la politique sur les mineurs de 16 et 17 ans
+  (« accord déclaré d'un représentant légal ») face au droit des pays visés (Sénégal,
+  Côte d'Ivoire, Niger…).
+- Écart à corriger côté serveur (pas un point juridique) : notifications absentes de
+  l'export (ligne « Export » ci-dessus).

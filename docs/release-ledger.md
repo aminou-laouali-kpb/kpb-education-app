@@ -434,6 +434,48 @@ décisions), `docs/device-qa-build56.md` (recette appareil, jamais jouée),
 `docs/CONSOLE_ANSWERS.md` (ligne WhatsApp / Meta). Les papiers de la 55 portent un
 bandeau « REMPLACÉE par la 56 ».
 
+### Chantier L (16/10/2026) — préparation de la build 57 : conformité et pack de release, numéro NON posé
+
+**État : papiers prêts, numéro non posé.** `pubspec.yaml` porte toujours `2.3.0+56` et la ligne
+courante reste celle de la 56 (le test `test/release/build_number_test.dart` les lie). La 57 est
+une **release unique** : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifications par FCM
+(#351), correctifs #349 et #350. Rien n'est déployé, archivé ni soumis par ce chantier.
+
+**Constat du 16/10/2026 (mesures en lecture seule), que ce registre ne disait pas :**
+- la **2.3.0 est en vente** : App Store (fiche FR, mise en ligne le 07/10/2026) et Google Play.
+  La ligne « Version marketing EN VENTE » ci-dessus (2.2.0) et la ligne `56` (« non téléversée »)
+  n'ont pas suivi l'envoi. À VALIDER (propriétaire) : que la build en vente est la 56, sa date de
+  téléversement et son SHA archivé — à reporter dans la PR de préparation de la 57, pas avant
+  (le test exige alors une version de `pubspec.yaml` strictement supérieure à 2.3.0) ;
+- backend de production `28ac82dab0c2` (démarré le 12/10/2026), **sans** #351 ni les chantiers B à
+  K ; `features.eefSpace=true` (l'espace « Études en France » est ouvert), `eefHelpBubble` et
+  `eefPrivateSchools` à `false`, aucune clé des chantiers G, K, D, I.
+
+**Ce que la 57 impose :**
+- **version marketing `2.4.0`** (ITMS-90062 : 2.3.0 est approuvée ; et `isVersionBelow` ignore le
+  numéro de build, `lib/app/core/utils/version_utils.dart`) — À VALIDER (propriétaire) ;
+- **couplage `requires-new`** : la 57 n'embarque plus le SDK OneSignal ; sans le backend de #351 et
+  `FCM_SERVICE_ACCOUNT_JSON`, elle ne reçoit aucune notification. Ordre : serveur (six migrations
+  additives), puis admin, puis app ; préflight `backend_coupling=requires-new` ;
+- tous les drapeaux nouveaux à leur défaut au lancement : interrupteurs d'urgence des chantiers G
+  et K **ouverts**, `scholarshipMatch` et `onboardingV2` **fermés**,
+  `KPB_SCHOLARSHIP_OPENING_MODE=legacy`.
+
+**Papiers** : `docs/release-57-store-pack.md` (notes de version, « Notes for Review » recomptées,
+Data Safety et App Privacy, tableau des drapeaux, paliers Play 10 % → 50 % → 100 % et publication
+progressive iOS, `KPB_RECOMMENDED_APP_VERSION` / `KPB_MIN_APP_VERSION`, bascule
+`legacy` → `outbox_alerts` → `outbox_followers`), `docs/mise-a-jour-57-checklist.md` (l'ordre des
+opérations, dont la PR de préparation de la version), `docs/device-qa-build57.md` (recette appareil,
+jamais jouée ; ferme A9 de la fiche 54), `docs/data-inventory.md` (§2 et §5 : test « Mes 10
+bourses », suivis, notifications, transmission, conservation, export). Politique de
+confidentialité mise à jour (in-app FR + EN, et `web/public/confidentialite.html`). Tests :
+`test/release/store_pack_57_test.dart`, `test/release/mise_a_jour_57_checklist_test.dart`.
+
+**Reste au propriétaire** : la validation juridique de la collecte de la nationalité (le drapeau
+`scholarshipMatch` reste fermé d'ici là), la relecture des textes de la politique AVANT l'archive
+(texte compilé), le choix 2.4.0, la PR de préparation (version, préflights, registre), les seuils
+des paliers, XC-06 et D5.
+
 ### Ce que 52 embarque
 
 - **Liste d'attente Karatou Premium (PR #258).** Point 8 de la revue du build
