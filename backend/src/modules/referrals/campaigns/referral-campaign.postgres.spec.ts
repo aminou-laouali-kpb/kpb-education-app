@@ -367,7 +367,17 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
   it('la suppression du compte d’un filleul purge sa ligne de campagne et ses empreintes', async () => {
     const storage = { keyFromUrl: () => null, delete: jest.fn() } as unknown as StorageService;
     const profiles = new ProfilesService(prismaService, storage);
-    await profiles.deleteMe(ids.r1);
+    // La CI renseigne SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY : la suppression
+    // appelle alors l'API d'administration Supabase. On simule sa réponse (200)
+    // pour tester la purge en base sans dépendre du réseau.
+    const fetchSpy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
+    try {
+      await profiles.deleteMe(ids.r1);
+    } finally {
+      fetchSpy.mockRestore();
+    }
     expect(
       await prisma.referralCampaignReferral.count({ where: { refereeProfileId: ids.r1 } }),
     ).toBe(0);
