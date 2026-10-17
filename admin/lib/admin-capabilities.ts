@@ -83,6 +83,21 @@ export enum AdminCapability {
    * elle désactive le bouton, le serveur reste seul juge.
    */
   SendLargeScholarshipOpening = 'send_large_scholarship_opening',
+  /**
+   * Suivre la compétition ambassadeurs (campagnes, classement, filleuls).
+   *
+   * Miroir du `@Roles(Admin, SuperAdmin, Commercial)` de classe de
+   * `AdminReferralCampaignsController` : l'équipe qui recrute les ambassadeurs
+   * suit le classement.
+   */
+  ViewReferralCampaigns = 'view_referral_campaigns',
+  /**
+   * Créer, lancer, geler, clore une campagne ; activer un ambassadeur ;
+   * exclure ou valider un filleul ; valider le podium ; noter un versement ;
+   * exporter. Miroir des `@Roles(Admin, SuperAdmin)` de méthode du même
+   * contrôleur. Présentation seulement : le serveur reste seul juge.
+   */
+  ManageReferralCampaigns = 'manage_referral_campaigns',
 }
 
 const ALL_ROLES = Object.freeze([
@@ -109,6 +124,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewAiAggregateCosts,
   ]),
   [InternalRole.Commercial]: Object.freeze([
+    AdminCapability.ViewReferralCampaigns,
     AdminCapability.ViewInterestList,
     AdminCapability.ViewReviewRequestMetadata,
     AdminCapability.ConvertReviewToCase,
@@ -154,6 +170,8 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewAiQualityAggregates,
     AdminCapability.ViewAiOperations,
     AdminCapability.ExportPersonalData,
+    AdminCapability.ViewReferralCampaigns,
+    AdminCapability.ManageReferralCampaigns,
   ]),
   [InternalRole.SuperAdmin]: Object.freeze(
     Object.values(AdminCapability),

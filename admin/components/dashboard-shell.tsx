@@ -31,6 +31,8 @@ const ICON_PATHS: Record<string, string> = {
   eef: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18M3 12h18M12 3c2.5 2.4 2.5 15.6 0 18M12 3c-2.5 2.4-2.5 15.6 0 18',
   readiness:
     'M4 20V7l8-4 8 4v13M8 11h8M8 15h5M16 15l1.5 1.5L20 14',
+  // Un podium : la compétition ambassadeurs.
+  referral: 'M3 20h18M5 20v-6h4v6M10 20V9h4v11M15 20v-8h4v8M12 3l1 2 2 .3-1.5 1.4.4 2.1L12 7.8 10.1 8.8l.4-2.1L9 5.3l2-.3z',
   logout: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10',
 };
 
@@ -106,6 +108,14 @@ const NAV_LINKS: readonly NavLinkDefinition[] = [
     // ContentManager : il édite le catalogue mais ne signe pas sa publication).
     visibleForRole: (role) =>
       hasAdminCapability(role, AdminCapability.PublishEefCatalog),
+  },
+  {
+    href: '/parrainage',
+    labelKey: 'nav.referralCampaigns',
+    icon: 'referral',
+    // `AdminReferralCampaignsController` : Admin, SuperAdmin, Commercial.
+    visibleForRole: (role) =>
+      hasAdminCapability(role, AdminCapability.ViewReferralCampaigns),
   },
   { href: '/service-sales', labelKey: 'nav.serviceSales', icon: 'serviceSales' },
   { href: '/community', labelKey: 'nav.community', icon: 'community' },
