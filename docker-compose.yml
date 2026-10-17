@@ -206,6 +206,11 @@ services:
       # /community/* (404 `{ disabled: true }` tant qu'il est coupé). FERMÉ par
       # défaut : à n'ouvrir qu'avec les déclarations stores mises à jour.
       - KPB_COMMUNITY_ENABLED=${KPB_COMMUNITY_ENABLED:-false}
+      # Bot « Vérif » de la communauté (C3) : `review` (défaut) = le bot prépare,
+      # un admin publie ; `auto` = publie seul les brouillons sûrs ; `off` = rien.
+      # Voir docs/runbook-bot-verif.md. Reformulation LLM : fermée par défaut.
+      - KPB_COMMUNITY_VERIF_BOT_MODE=${KPB_COMMUNITY_VERIF_BOT_MODE:-review}
+      - KPB_COMMUNITY_VERIF_BOT_LLM=${KPB_COMMUNITY_VERIF_BOT_LLM:-false}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.

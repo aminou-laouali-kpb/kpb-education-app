@@ -331,3 +331,26 @@ export class FilterTestDto {
   @MaxLength(COMMUNITY_LIMITS.postBodyMax)
   text!: string;
 }
+
+// ── Bot « Vérif » (C3, révision 2 du contrat, §8.9) ────────────────────────
+
+export const BOT_DRAFT_LIST_STATUSES = ['proposed', 'published', 'rejected', 'obsolete', 'skipped', 'queued', 'all'] as const;
+
+export class BotDraftsQueryDto extends PageQueryDto {
+  @IsOptional()
+  @IsIn(BOT_DRAFT_LIST_STATUSES)
+  status?: (typeof BOT_DRAFT_LIST_STATUSES)[number];
+}
+
+export class BotPublishDto {
+  /** Texte modifié par l'admin ; absent = le texte proposé tel quel. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(COMMUNITY_LIMITS.replyBodyMax + 1000)
+  text?: string;
+
+  /** « Publier et marquer vérifiée » : « Réponse vérifiée par KPB ». */
+  @IsOptional()
+  @IsBoolean()
+  verified?: boolean;
+}

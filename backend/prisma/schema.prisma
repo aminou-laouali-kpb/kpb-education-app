@@ -3480,6 +3480,23 @@ enum CommunityAuthorKind {
   member
   kpb_team
   kpb_advisor
+  // Bot « Vérif » (C3) : réponse « Assistant KPB » préparée depuis les données
+  // vérifiées du catalogue, publiée par un admin (ou seule en mode `auto`).
+  kpb_assistant
+}
+
+// Cycle de vie d'un brouillon du bot « Vérif » (C3).
+enum CommunityBotDraftStatus {
+  // Publication repérée, traitement asynchrone pas encore fait.
+  queued
+  // Pas une question de vérification, ou aucune entité sûre : pas de texte.
+  skipped
+  // Texte prêt, en attente d'un admin.
+  proposed
+  published
+  rejected
+  // La publication n'est plus visible, ou les faits ont changé avant publication.
+  obsolete
 }
 
 enum CommunityEntityType {
@@ -3598,6 +3615,7 @@ model CommunityPost {
   hashtags          CommunityPostHashtag[]
   follows           CommunityFollow[]
   reports           CommunityReport[]
+  botDraft          CommunityBotDraft?
 
   // Fils « Récents » et « Pour toi » (fenêtre de 60 jours) : filtre + ordre.
   @@index([status, createdAt(sort: Desc), id(sort: Desc)])
@@ -3609,32 +3627,37 @@ model CommunityPost {
 }
 
 model CommunityReply {
-  id                String                 @id @default(cuid())
-  postId            String
-  body              String
-  authorKind        CommunityAuthorKind    @default(member)
-  authorMemberId    String?
-  authorAdminId     String?
-  authorAdminName   String?
-  status            CommunityContentStatus @default(visible)
-  statusReason      String?
-  statusChangedAt   DateTime?
-  filterFlags       String[]               @default([])
-  helpfulCount      Int                    @default(0)
-  openReportCount   Int                    @default(0)
+  id                  String                 @id @default(cuid())
+  postId              String
+  body                String
+  authorKind          CommunityAuthorKind    @default(member)
+  authorMemberId      String?
+  authorAdminId       String?
+  authorAdminName     String?
+  status              CommunityContentStatus @default(visible)
+  statusReason        String?
+  statusChangedAt     DateTime?
+  filterFlags         String[]               @default([])
+  helpfulCount        Int                    @default(0)
+  openReportCount     Int                    @default(0)
   // « Réponse vérifiée par KPB » : une seule par publication.
-  isVerified        Boolean                @default(false)
-  verifiedAt        DateTime?
-  verifiedByAdminId String?
-  editedAt          DateTime?
-  deletedAt         DateTime?
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  post              CommunityPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author            CommunityMember?       @relation(fields: [authorMemberId], references: [id], onDelete: Cascade)
-  reactions         CommunityReaction[]
-  mentions          CommunityMention[]
-  reports           CommunityReport[]
+  isVerified          Boolean                @default(false)
+  verifiedAt          DateTime?
+  verifiedByAdminId   String?
+  // Réponse « Assistant KPB » (bot Vérif, C3) : le brouillon d'origine (sans
+  // clé étrangère) et la date de vérification des données citées, montrée
+  // sous la réponse dans l'app.
+  botDraftId          String?
+  botSourceVerifiedAt DateTime?
+  editedAt            DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  post                CommunityPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author              CommunityMember?       @relation(fields: [authorMemberId], references: [id], onDelete: Cascade)
+  reactions           CommunityReaction[]
+  mentions            CommunityMention[]
+  reports             CommunityReport[]
 
   @@index([postId, status, createdAt])
   @@index([authorMemberId, createdAt])
@@ -3788,4 +3811,49 @@ model CommunityFilterEntry {
   createdAt        DateTime            @default(now())
 
   @@unique([kind, value])
+}
+
+// Brouillon du bot « Vérif » (C3) : au plus UN par publication (`postId`
+// unique). Les faits sont extraits du catalogue publié, sérialisés avec leurs
+// sources ; le texte proposé est assemblé depuis ces faits seulement. Aucune
+// donnée personnelle : ni le texte de la question, ni l'auteur ne sont copiés.
+// Cascade avec la publication (purge à 30 jours, suppression du compte).
+model CommunityBotDraft {
+  id                 String                  @id @default(cuid())
+  postId             String                  @unique
+  status             CommunityBotDraftStatus @default(queued)
+  // skipped : not_question | no_intent | no_entity | ambiguous_entity |
+  // entity_not_public | team_post | error ; obsolete : post_not_visible |
+  // facts_changed.
+  statusReason       String?
+  lang               String                  @default("fr")
+  intents            String[]                @default([])
+  // [{ type, id, label, resolvedBy: "mention" | "name" }]
+  entities           Json                    @default("[]")
+  facts              Json?
+  factsHash          String?
+  proposedText       String?
+  // template | llm
+  writer             String?
+  llmFallbackReason  String?
+  // high | medium | low
+  confidence         String?
+  // Tous les faits demandés sont renseignés ET frais (condition du mode auto).
+  complete           Boolean                 @default(false)
+  scamCaution        Boolean                 @default(false)
+  attempts           Int                     @default(0)
+  lastError          String?
+  generatedAt        DateTime?
+  processedAt        DateTime?
+  processedByAdminId String?
+  processedByName    String?
+  rejectReason       String?
+  publishedReplyId   String?
+  publishedVerified  Boolean                 @default(false)
+  autoPublished      Boolean                 @default(false)
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  post               CommunityPost           @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
 }

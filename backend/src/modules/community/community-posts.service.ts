@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { Prisma, type CommunityContentStatus, type CommunityPostType } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -30,6 +30,7 @@ import { CommunityErrors } from './community-errors';
 import { CommunityFilterConfigService } from './community-filter-config.service';
 import { forYouReasons, forYouSql, type ForYouReason, type ForYouRow } from './community-for-you';
 import { CommunityNotificationsService } from './community-notifications.service';
+import { CommunityVerifBotQueueService } from './community-verif-bot-queue.service';
 import {
   POST_INCLUDE,
   REPLY_INCLUDE,
@@ -106,6 +107,9 @@ export class CommunityPostsService {
     private readonly filterConfig: CommunityFilterConfigService,
     private readonly notifications: CommunityNotificationsService,
     private readonly catalog: CommunityCatalogService,
+    // Bot « Vérif » (C3) : file asynchrone, jamais bloquante. Absente des
+    // tests qui ne la fournissent pas.
+    @Optional() private readonly verifBotQueue?: CommunityVerifBotQueueService,
   ) {}
 
   // ── Présentation ──────────────────────────────────────────────────────────
@@ -638,6 +642,7 @@ export class CommunityPostsService {
         return post.id;
       }),
     );
+    if (decision.status === 'visible') await this.verifBotQueue?.enqueue(postId);
     const row = await runDb(this.prisma, (db) =>
       db.communityPost.findUniqueOrThrow({ where: { id: postId }, include: POST_INCLUDE }),
     );
@@ -712,6 +717,8 @@ export class CommunityPostsService {
         await this.composer.writeHashtags(tx, postId, prepared.hashtags);
       }),
     );
+    // Texte modifié : le brouillon du bot (s'il n'est ni publié ni rejeté) est refait.
+    if (next.status === 'visible') await this.verifBotQueue?.enqueue(postId, { reset: true });
     const row = await runDb(this.prisma, (db) =>
       db.communityPost.findUniqueOrThrow({ where: { id: postId }, include: POST_INCLUDE }),
     );
