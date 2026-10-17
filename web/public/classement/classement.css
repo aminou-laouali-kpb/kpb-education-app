@@ -1,0 +1,85 @@
+/* Classement public des ambassadeurs (classes seulement : la CSP du site
+   bloque les attributs style=). Palette de /styles.css. */
+.lb-status { color: var(--muted); margin: 4px 0 16px; }
+.lb-countdown { text-align: center; }
+.lb-countdown-label { margin: 0; font-weight: 600; }
+.lb-countdown-value { margin: 4px 0 0; font-size: 26px; font-weight: 800; color: var(--navy); }
+.lb-provisional {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+.lb-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+  align-items: end;
+}
+.lb-step {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  min-width: 0;
+}
+.lb-step-1 { order: 2; border-color: #facc15; padding-top: 22px; }
+.lb-step-2 { order: 1; }
+.lb-step-3 { order: 3; }
+.lb-medal {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: #e2e8f0;
+  color: var(--navy);
+}
+.lb-step-1 .lb-medal { background: #facc15; }
+.lb-step-2 .lb-medal { background: #cbd5e1; }
+.lb-step-3 .lb-medal { background: #fdba74; }
+.lb-step-name { overflow-wrap: anywhere; }
+.lb-step-city, .lb-step-count { color: var(--muted); font-size: 13px; }
+.lb-step-prize { font-weight: 700; color: var(--blue); font-size: 14px; }
+.lb-tools { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.lb-field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--slate); flex: 1 1 200px; }
+.lb-field input, .lb-field select {
+  font: inherit;
+  font-size: 15px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+}
+.lb-list { list-style: none; padding: 0; margin: 0; }
+.lb-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 4px;
+  border-top: 1px solid var(--border);
+}
+.lb-row:first-child { border-top: none; }
+.lb-rank { font-weight: 800; color: var(--navy); text-align: center; }
+.lb-who { min-width: 0; overflow-wrap: anywhere; }
+.lb-city { color: var(--muted); }
+.lb-count { font-weight: 800; color: var(--blue); }
+.lb-empty, .lb-updated, .lb-share-done { color: var(--muted); font-size: 13px; }
+.lb-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.lb-share { border: none; cursor: pointer; font: inherit; font-weight: 600; }
+.lb-secondary { background: #ffffff; color: var(--blue); border: 1px solid var(--blue); }
+@media (max-width: 420px) {
+  .lb-podium { grid-template-columns: 1fr; }
+  .lb-step-1, .lb-step-2, .lb-step-3 { order: 0; }
+}

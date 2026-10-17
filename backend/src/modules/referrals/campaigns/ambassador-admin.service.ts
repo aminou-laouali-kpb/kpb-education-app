@@ -144,7 +144,17 @@ export class AmbassadorAdminService {
             },
           });
         } else {
-          const code = ambassadorCodeFor(profile.id, displayName);
+          // Le suffixe vient d'un hachage 32 bits de l'id : une collision est
+          // rare mais possible. On essaie l'id salé avant de créer.
+          let code = ambassadorCodeFor(profile.id, displayName);
+          for (let salt = 1; salt <= 5; salt += 1) {
+            const taken = await tx.ambassador.findFirst({
+              where: { OR: [{ code }, { codeNormalized: normalizeReferralCode(code) }] },
+              select: { id: true },
+            });
+            if (!taken) break;
+            code = ambassadorCodeFor(`${profile.id}:${salt}`, displayName);
+          }
           row = await tx.ambassador.create({
             data: {
               userProfileId: profile.id,
