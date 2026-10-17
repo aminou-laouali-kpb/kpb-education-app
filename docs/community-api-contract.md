@@ -1,6 +1,8 @@
 # Communauté KPB — contrat d'API (C1 + C2)
 
-Version du contrat : **community-api v1 — 17/10/2026**. Statut : **stable** — l'app (Flutter) et
+Version du contrat : **community-api v1 — 17/10/2026** (révision 1 le même jour : identité réelle
+réservée à Admin/SuperAdmin, liste des sanctions, classement des signalements d'un membre,
+lecture des discussions pour le conseiller, valeurs du journal, deux indicateurs de tableau de bord). Statut : **stable** — l'app (Flutter) et
 l'admin (Next.js) se construisent sur ce document. Toute évolution est **additive** (champ
 nouveau, valeur d'énumération nouvelle tolérée par les clients) ; une rupture exige une v2.
 
@@ -74,7 +76,7 @@ Les erreurs de validation de forme (ValidationPipe, `forbidNonWhitelisted`) sont
 | 403 | `community_charter_required` | écriture sans charte acceptée (ou version périmée) | `{ charterVersion }` |
 | 409 | `community_charter_outdated` | `POST /community/charter/accept` avec une autre version que la courante | `{ charterVersion }` |
 | 403 | `community_read_only` | membre en lecture seule ou banni | `{ kind: "read_only" \| "ban", until: string \| null }` |
-| 429 | `community_rate_limited` | quota dépassé (§4.3) ; en-tête `Retry-After` | `{ scope, limit, retryAfterSeconds }` |
+| 429 | `community_rate_limited` | quota dépassé (§4.3) — le délai est dans `details.retryAfterSeconds` (pas d'en-tête `Retry-After`, réservé au limiteur HTTP) | `{ scope, limit, retryAfterSeconds }` |
 | 404 | `community_post_not_found` | publication absente, supprimée, invisible pour ce lecteur, ou d'un membre bloqué | — |
 | 404 | `community_reply_not_found` | idem pour une réponse | — |
 | 404 | `community_member_not_found` | membre inconnu ou relation de blocage | — |
@@ -432,7 +434,8 @@ L'opt-out des notifications passe par le mécanisme existant (`PATCH /profiles/m
 - `for_you` : score du §10, fenêtre de 60 jours, **hors publications du lecteur**.
 - Réponse : `{ "tab", "items": PostSummary[], "nextCursor", "pinned": PostSummary[] }` —
   `pinned` (≤ 3, épinglées visibles, plus récentes d'abord) **seulement sur la première page**
-  (sans `cursor`) ; ailleurs `[]`. Les épinglées ne sont pas répétées dans `items` de cette page.
+  (sans `cursor`) ; ailleurs `[]`. Une publication épinglée n'apparaît **jamais** dans `items`
+  (sur aucune page de ce fil), seulement dans `pinned`.
 
 ### 7.3 Espaces d'entités et compteurs
 
@@ -468,7 +471,7 @@ Réponse : liste de `PostSummary`.
 | `GET /community/posts/:id` | — | 200 `{ "post": Post, "replies": { "items": Reply[], "nextCursor" } }` (première page des réponses) |
 | `GET /community/posts/:id/replies?cursor&limit` | — | 200 liste de `Reply` |
 | `PATCH /community/posts/:id` | `{ "type"?, "title"?, "body"? }` (au moins un) | 200 `Post` ; 403 `community_not_author` / `community_edit_window_closed` |
-| `DELETE /community/posts/:id` | — | **204** (statut `deleted` ; les réponses disparaissent avec) |
+| `DELETE /community/posts/:id` | — | **204** (statut `deleted` ; les réponses disparaissent avec ; les signalements ouverts sur la publication et ses réponses sont classés `dismissed`) |
 
 ### 7.7 Réponses
 
@@ -521,13 +524,18 @@ de modération, une ligne `ForumModerationAction` (journal lisible par l'équipe
 
 Rôles : **R** = Moderator, ContentManager, Admin, SuperAdmin (lecture, actions sur contenu,
 réponse d'équipe, vérification, épinglage). **S** = Moderator, Admin, SuperAdmin (sanctions).
-**C** = Admin, SuperAdmin (configuration du filtre). La réponse « en tant que conseiller » accepte
-aussi le rôle Counselor.
+**C** = Admin, SuperAdmin (configuration du filtre). Le rôle **Counselor** (conseiller) a accès à
+`GET /admin/community/posts`, `GET /admin/community/posts/:id` (lire les discussions) et
+`POST /admin/community/posts/:id/replies` (répondre) — **jamais** à la file, aux membres, aux
+sanctions, aux statistiques ni au filtre.
 
 ### 8.1 Modèles admin
 
-`AdminAuthor` = `Author` + `{ "userId": string | null, "fullName": string | null, "email": string | null, "isMinor": boolean | null, "accountCreatedAt": ISO | null, "adminId": string | null }`
-(identité réelle **réservée à l'équipe** ; `isMinor` d'après la date de naissance, `null` si inconnue).
+`AdminAuthor` = `Author` + `{ "userId": string | null, "fullName": string | null, "email": string | null, "isMinor": boolean | null, "isNewAccount": boolean | null, "accountCreatedAt": ISO | null, "adminId": string | null }`.
+**`fullName` et `email` ne sont renseignés que pour Admin et SuperAdmin** ; pour Moderator,
+ContentManager et Counselor ils valent `null` (ils gardent nom public, pays, badges et les drapeaux).
+`isMinor` d'après la date de naissance (`null` si inconnue) ; `isNewAccount` = compte de moins de
+7 jours (§4.3) ; `null` pour un contenu de l'équipe.
 
 `AdminPost` = `Post` (sans `viewer`, avec `author: AdminAuthor`) + `{ "status", "statusReason", "filterFlags": string[], "openReportCount", "deletedAt", "pinnedAt" }`.
 `AdminReply` = `Reply` (idem) + `{ "status", "statusReason", "filterFlags", "openReportCount", "deletedAt" }`.
@@ -543,6 +551,22 @@ aussi le rôle Counselor.
 `Sanction` = `{ "id", "kind": "warning" | "read_only" | "ban", "reason", "endsAt": ISO | null, "createdAt", "createdBy": { "adminId", "name" }, "revokedAt": ISO | null, "revokedBy": string | null, "active": boolean }`.
 
 `ModerationLogEntry` = `{ "id", "action", "targetType": "post" | "reply" | "member", "targetId", "reason", "moderatorName", "moderatorRole", "createdAt", "postId": string | null }`.
+
+Valeurs de `action` (journal `ForumModerationAction`, actions humaines seulement ; un client affiche
+une valeur inconnue telle quelle) :
+
+| `action` | Cible | Origine |
+|---|---|---|
+| `restore`, `hide`, `delete`, `dismiss_reports` | post / reply | §8.4 |
+| `verify_answer`, `unverify_answer` | reply | §8.6 |
+| `sanction_warning`, `sanction_read_only`, `sanction_ban` | member | §8.5 |
+| `sanction_revoke` | member | §8.5 |
+| `member_reports_dismissed` | member | §8.5 |
+
+Les réponses et publications d'équipe, l'épinglage et le filtre ne vont **pas** dans ce journal
+(ce ne sont pas des décisions de modération) ; ils sont tracés dans `AdminAuditEvent`
+(`action` = `community.team_reply`, `community.team_post`, `community.pin`, `community.unpin`,
+`community.filter_add`, `community.filter_delete`, et `community.<action du journal>` pour le reste).
 
 ### 8.2 File de modération
 
@@ -586,8 +610,8 @@ Pour une réponse : `reply` renseigné et `parentPost` = `{ id, title, status }`
 
 | Méthode et chemin | Rôle | Réponse |
 |---|---|---|
-| `GET /admin/community/posts?status=&type=&q=&cursor&limit` | R | liste d'`AdminPost` (tous états), récents d'abord |
-| `GET /admin/community/posts/:id` | R | `{ "post": AdminPost, "replies": AdminReply[] (tous états, ordre chronologique), "reports": AdminReport[], "log": ModerationLogEntry[] }` |
+| `GET /admin/community/posts?status=&type=&q=&cursor&limit` | R + Counselor | liste d'`AdminPost` (tous états), récents d'abord |
+| `GET /admin/community/posts/:id` | R + Counselor | `{ "post": AdminPost, "replies": AdminReply[] (tous états, ordre chronologique), "reports": AdminReport[], "log": ModerationLogEntry[] }` |
 | `GET /admin/community/members/:memberId` | R | `AdminMember` + `{ "recentPosts": AdminPost[] (10), "recentReplies": AdminReply[] (10) }` |
 | `GET /admin/community/moderation-log?cursor&limit` | R | liste de `ModerationLogEntry`, récents d'abord |
 | `GET /admin/community/stats?days=30` | R | §8.7 |
@@ -616,11 +640,14 @@ pour rétablir un contenu supprimé par son auteur.
 | Méthode et chemin | Rôle | Corps | Réponse |
 |---|---|---|---|
 | `POST /admin/community/members/:memberId/sanctions` | S | `{ "kind": "warning" \| "read_only" \| "ban", "reason", "durationDays"?: 1..365, "hideContent"?: boolean }` | 201 `Sanction` |
-| `POST /admin/community/sanctions/:id/revoke` | S | `{ "reason" }` | 200 `Sanction` |
+| `POST /admin/community/sanctions/:id/revoke` | S | `{ "reason" }` | 200 `Sanction` ; 409 `community_invalid_transition` si déjà levée |
+| `GET /admin/community/sanctions?status=active\|all&cursor&limit` | R | — | 200 liste de `Sanction` + `{ "member": AdminAuthor }`, récentes d'abord ; `active` (défaut) = lecture seule / bannissement non levés et non échus |
+| `POST /admin/community/members/:memberId/reports/dismiss` | S | `{ "reason" }` | 200 `{ "memberId", "dismissed": number }` — classe **sans suite** les signalements ouverts visant le membre, sans sanction |
 
 `durationDays` **obligatoire** pour `read_only` (400 sinon), interdit pour les autres.
 `hideContent` (bannissement seulement) : masque (`hidden`) tous les contenus visibles du membre.
-Chaque sanction notifie le membre (`community_moderation`, motif inclus).
+Chaque sanction notifie le membre (`community_moderation`, motif inclus) et **clôt en `actioned`**
+tous les signalements ouverts visant ce membre (pas ceux visant ses contenus, traités par §8.4).
 
 ### 8.6 Équipe KPB : réponses, vérification, épinglage, publications
 
@@ -628,7 +655,7 @@ Chaque sanction notifie le membre (`community_moderation`, motif inclus).
 |---|---|---|---|
 | `POST /admin/community/posts/:id/replies` | R + Counselor | `{ "body", "as": "kpb_team" \| "kpb_advisor", "verified"?: boolean }` | 201 `AdminReply` — jamais filtrée ; mentions et hashtags traités comme pour un membre ; notifie l'auteur et les abonnés |
 | `PUT /admin/community/replies/:id/verified` | R | `{ "verified": boolean }` | 200 `AdminReply` — « Réponse vérifiée par KPB » (une par publication) ; poser notifie l'auteur de la publication et ses abonnés (`community_verified_answer`) |
-| `PUT /admin/community/posts/:id/pin` | R | `{ "pinned": boolean }` | 200 `AdminPost` ; 409 `community_pin_limit` au-delà de 3 |
+| `PUT /admin/community/posts/:id/pin` | R | `{ "pinned": boolean }` | 200 `AdminPost` ; 409 `community_pin_limit` au-delà de 3 ; 409 `community_invalid_transition` pour épingler un contenu non visible |
 | `POST /admin/community/posts` | R | `{ "type", "title", "body", "as": "kpb_team" \| "kpb_advisor", "pinned"?: boolean }` | 201 `AdminPost` (point d'entrée du futur bot « Vérif », C3 : il prépare, un admin publie) |
 
 Une réponse « en tant que conseiller » affiche « Prénom I. » de l'admin connecté et le badge
@@ -647,7 +674,9 @@ Une réponse « en tant que conseiller » affiche « Prénom I. » de l'admin co
   "helpfulReactions": 530,
   "reports": { "opened": 14, "open": 3, "resolved": 11, "medianResolutionHours": 6.5 },
   "autoHidden": 9,
+  "autoHiddenMedianHandlingHours": 3.5,
   "unansweredQuestions": 12,
+  "unansweredOver48h": 4,
   "verifiedAnswers": 21,
   "activeMembers": 85,
   "newMembers": 40,
@@ -656,7 +685,13 @@ Une réponse « en tant que conseiller » affiche « Prénom I. » de l'admin co
 }
 ```
 
-Tout sur la fenêtre, sauf `reports.open`, `unansweredQuestions` et `activeSanctions` (instantané).
+Tout sur la fenêtre, sauf `reports.open`, `unansweredQuestions`, `unansweredOver48h` et
+`activeSanctions` (instantané). `unansweredOver48h` = questions visibles sans réponse créées il y a
+plus de 48 h. `autoHiddenMedianHandlingHours` = médiane, sur les décisions de la fenêtre
+(`restore`, `hide`, `delete`), du délai entre la création d'un contenu masqué automatiquement et la
+première décision humaine ; `null` sans donnée (comme `reports.medianResolutionHours`).
+*Réglage des seuils et de la version de la charte depuis l'admin : non livré (constantes serveur,
+`community.constants.ts`).*
 `activeMembers` = membres ayant publié, répondu ou réagi dans la fenêtre. `daily` en jours UTC.
 
 ### 8.8 Configuration du filtre
@@ -748,7 +783,9 @@ Index : `CommunityPost(status, createdAt DESC, id)`, `CommunityMention(entityTyp
 
 Écrites dans le fil in-app existant (`UserNotification`, lu par `GET /me/notifications`) et
 poussées par le chemin existant (`NotificationDispatchService` : heures calmes, plafond
-quotidien). `route` = `/community/posts/<postId>` ; `data` = `{ "postId", "replyId"?, "count"? }`.
+quotidien). `route` = `/community/posts/<postId>` (ou `/community` pour une sanction ou une suppression par l'équipe) ; `data` =
+`{ "postId"?, "replyId"?, "count"?, "event"? }`, **toutes des chaînes** (charge push) — `count` = nombre
+de réponses regroupées, `event` (modération) ∈ `hidden | restored | deleted | warning | read_only | ban`.
 
 | `kind` | Destinataire | Déclencheur | Regroupement |
 |---|---|---|---|
