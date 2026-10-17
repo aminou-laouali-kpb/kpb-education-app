@@ -207,6 +207,37 @@ void main() {
     }
   });
 
+  // Bot « Passerelle » (C3 bis) : réglage SERVEUR, lu par
+  // `assist-bridge.config.ts` (et, pour la seule clé `features.assistBridge`,
+  // par `/config/app` via cette fonction). Il passe par compose avec les
+  // défauts décidés : `shadow` (détecte sans rien envoyer) et la source coach
+  // FERMÉE — une valeur `on` ou `true` écrite dans compose ouvrirait l'envoi
+  // ou la lecture des messages privés au premier redéploiement.
+  test('le bot Passerelle est lu, relayé (défauts shadow / false) et documenté',
+      () {
+    const configPath =
+        'backend/src/modules/assist-bridge/assist-bridge.config.ts';
+    final readByBot = _read(_envRead, configPath);
+    final compose = File('docker-compose.yml').readAsStringSync();
+    for (final (variable, fallback) in [
+      ('KPB_ASSIST_BRIDGE_MODE', 'shadow'),
+      ('KPB_ASSIST_BRIDGE_COACH', 'false'),
+    ]) {
+      expect(readByBot, contains(variable),
+          reason: '$configPath ne lit plus $variable.');
+      expect(compose, contains('- $variable=\${$variable:-$fallback}'),
+          reason: '$variable doit être relayée avec le défaut `$fallback`.');
+      expect(documented, contains(variable),
+          reason: '$variable n\'est pas documentée dans .env.example.');
+      expect(File('docs/api-contracts.md').readAsStringSync(),
+          contains('`$variable`'),
+          reason: '$variable doit être documentée dans api-contracts.');
+    }
+    expect(File(controllerPath).readAsStringSync(),
+        contains("assistBridge: assistBridgeMode() === 'on'"),
+        reason: '`features.assistBridge` ne doit s\'ouvrir qu\'en mode on.');
+  });
+
   // Visas étudiants américains (décision du 17/10/2026) : la liste est
   // PILOTABLE sans build. Défauts VIDES dans compose — le serveur sert alors la
   // liste vérifiée et datée ; une liste écrite dans compose serait figée dans le

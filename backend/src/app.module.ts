@@ -43,6 +43,10 @@ import { CommunityVerifBotController } from './modules/community/community-verif
 import { CommunityVerifBotCronService } from './modules/community/community-verif-bot-cron.service';
 import { CommunityVerifBotQueueService } from './modules/community/community-verif-bot-queue.service';
 import { CommunityVerifBotService } from './modules/community/community-verif-bot.service';
+import { AssistBridgeAdminController, AssistBridgeStudentController } from './modules/assist-bridge/assist-bridge.controller';
+import { AssistBridgeCronService } from './modules/assist-bridge/assist-bridge-cron.service';
+import { AssistBridgeQueueService } from './modules/assist-bridge/assist-bridge-queue.service';
+import { AssistBridgeService } from './modules/assist-bridge/assist-bridge.service';
 import { CommunityEnabledGuard } from './modules/community/community.feature';
 import { ContentController } from './modules/content/content.controller';
 import { ContentService } from './modules/content/content.service';
@@ -246,6 +250,10 @@ import { SalonService } from './modules/salon/salon.service';
     CommunityAdminController,
     // Bot « Vérif » (C3) : file des brouillons /admin/community/bot/*.
     CommunityVerifBotController,
+    // Bot « Passerelle » (C3 bis) : console /admin/community/assist-bridge/* et
+    // suivi des clics /me/assist-bridge/*.
+    AssistBridgeAdminController,
+    AssistBridgeStudentController,
     ContentController,
     ParcoursController,
     DeviceTokensController,
@@ -349,6 +357,9 @@ import { SalonService } from './modules/salon/salon.service';
     CommunityVerifBotCatalogService,
     CommunityVerifBotService,
     CommunityVerifBotCronService,
+    AssistBridgeQueueService,
+    AssistBridgeService,
+    AssistBridgeCronService,
     CommunityEnabledGuard,
     ContentService,
     ParcoursService,

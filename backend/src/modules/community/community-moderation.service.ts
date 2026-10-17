@@ -10,6 +10,7 @@ import {
 } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
+import { AssistBridgeQueueService } from '../assist-bridge/assist-bridge-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { publicNameFromFullName } from '../referrals/referral-code';
 import {
@@ -116,6 +117,9 @@ export class CommunityModerationService {
     private readonly posts: CommunityPostsService,
     // Bot « Vérif » (C3) : une publication rétablie repasse par la file.
     @Optional() private readonly verifBotQueue?: CommunityVerifBotQueueService,
+    // Bot « Passerelle » (C3 bis) : un contenu de membre rétabli (souvent un
+    // nouveau compte relu par l'équipe) est analysé comme à sa création.
+    @Optional() private readonly assistBridgeQueue?: AssistBridgeQueueService,
   ) {}
 
   // ── Signaler (élève, §7.10) ───────────────────────────────────────────────
@@ -871,6 +875,7 @@ export class CommunityModerationService {
     if (targetType === 'post' && next?.status === 'visible') {
       await this.verifBotQueue?.enqueue(id, { reset: true });
     }
+    if (next?.status === 'visible') await this.assistBridgeQueue?.enqueueCommunity(targetType, id);
     if (event && input.notifyAuthor !== false && current.authorMemberId) {
       await this.notifications.moderation({
         memberId: current.authorMemberId,

@@ -211,6 +211,13 @@ services:
       # Voir docs/runbook-bot-verif.md. Reformulation LLM : fermée par défaut.
       - KPB_COMMUNITY_VERIF_BOT_MODE=${KPB_COMMUNITY_VERIF_BOT_MODE:-review}
       - KPB_COMMUNITY_VERIF_BOT_LLM=${KPB_COMMUNITY_VERIF_BOT_LLM:-false}
+      # Bot « Passerelle » (C3 bis) : besoin repéré dans ce que l'élève écrit →
+      # notification PRIVÉE vers la fonction de l'app, puis WhatsApp. `shadow`
+      # (défaut) = détecte et journalise sans rien envoyer ; `on` = envoie ;
+      # `off` = rien. Source coach (messages privés au coach IA) FERMÉE par
+      # défaut. Voir docs/runbook-bot-passerelle.md.
+      - KPB_ASSIST_BRIDGE_MODE=${KPB_ASSIST_BRIDGE_MODE:-shadow}
+      - KPB_ASSIST_BRIDGE_COACH=${KPB_ASSIST_BRIDGE_COACH:-false}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.

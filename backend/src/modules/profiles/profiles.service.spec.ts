@@ -68,6 +68,7 @@ describe('ProfilesService — account deletion & export', () => {
     'studentCredential',
     'scholarshipMatchRun',
     'scholarshipAlertSubscription',
+    'assistBridgeEvent',
     'referralCampaignParticipant',
     'referralCampaignReferral',
     'referralAttributionSignal',
@@ -445,6 +446,9 @@ describe('ProfilesService — account deletion & export', () => {
     expect(
       (out as { scholarshipAlertSubscriptions?: unknown }).scholarshipAlertSubscriptions,
     ).toEqual([]);
+    // Bot « Passerelle » (C3 bis) : les besoins repérés et les suggestions.
+    // Clé présente même vide.
+    expect((out as { assistBridgeEvents?: unknown }).assistBridgeEvents).toEqual([]);
   });
 
   it('never puts the avatar storage key in the GDPR export', async () => {
