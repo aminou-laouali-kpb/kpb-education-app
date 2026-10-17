@@ -16,8 +16,6 @@ import 'package:get/get.dart';
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/data/notification_opt_out.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
-import 'package:karatou/app/core/translations/app_translations_en.dart';
-import 'package:karatou/app/core/translations/app_translations_fr.dart';
 import 'package:karatou/app/features/assist_bridge/assist_bridge_sheet.dart';
 
 Map<String, dynamic> _data({
