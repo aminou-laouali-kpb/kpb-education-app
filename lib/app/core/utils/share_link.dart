@@ -16,13 +16,17 @@ import '../config/app_config.dart';
 
 /// Where a shared card came from — becomes the campaign, so PostHog can report
 /// the share rate per result type.
-enum ShareSource { eligibility, match, budget }
+///
+/// `competition` : le lien partagé depuis l'écran « Compétition ambassadeurs »
+/// (build 57). `invite.html` ignore `s` ; seul `ref` y est lu.
+enum ShareSource { eligibility, match, budget, competition }
 
 extension ShareSourceName on ShareSource {
   String get wireName => switch (this) {
         ShareSource.eligibility => 'eligibility',
         ShareSource.match => 'match',
         ShareSource.budget => 'budget',
+        ShareSource.competition => 'competition',
       };
 }
 

@@ -41,6 +41,10 @@ Single source of truth for **custom event names** and **parameter keys** is [`li
 | `whatsapp_handoff` | `source` (call site, e.g. `program_detail`, `scholarship_official_form_failed`), `context_type` (e.g. `program`, `destination`, `case`, `case_documents`, `blocked_build`, `fraud_report`, `community_group`), `success` (0/1) | Lead→advisor-contact hand-off; `success = 0` means WhatsApp could not be opened (lost conversion). `success = 0` is now **trustworthy on Android 11+**: the hand-off attempts the launch instead of asking `canLaunchUrl`, which package visibility could make lie. |
 | `referral_invite_shared` | — | Invite shared via WhatsApp (KPB-69) |
 | `referral_redeemed` | — | Referral code redeemed by a referee (KPB-69) |
+| `referral_code_prompt_viewed` | `surface` (`onboarding`/`referral_screen`), `prefill` (`install_referrer`/`typed`/`none`) | Build 57 (2.3.1) : le champ « code de ton parrain » est montré — étape de fin d'onboarding (drapeau `referralOnboardingCode`), ou écran Parrainage quand un code en attente y est prérempli. Jamais le code saisi ou prérempli : il désigne le parrain. |
+| `referral_code_submitted` | `surface`, `prefill`, `result` (`attributed`/`already_referred`/`unknown_code`/`self_referral`/`not_allowed`/`rate_limited`/`offline`/`error`) | « Valider le code » : l'issue FERMÉE de `POST /referrals/redeem`. `referral_redeemed` part toujours en plus sur `attributed`. |
+| `referral_code_skipped` | `surface`, `prefill` | « Passer » sur l'étape de fin d'onboarding. `prefill` = `install_referrer` dit combien de codes venus d'un lien d'invitation sont ignorés. |
+| `referral_competition_viewed` | `campaign_phase` (`upcoming`/`running`/`ended`/`none`) | L'écran « Compétition ambassadeurs » (drapeau `referralLeaderboard`) est ouvert ; `none` = non-participant. Ni rang, ni compteur, ni nom public. |
 
 ## Acquisition, onboarding & auth (KPB-156 / KPB-158)
 

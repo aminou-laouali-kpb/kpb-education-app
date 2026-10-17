@@ -43,6 +43,10 @@ part 'app_api_client/community.dart';
 /// fixing the five call sites alone would let the next one reintroduce it.
 String _normalizePath(String path) => path.startsWith('/') ? path : '/$path';
 
+/// L'en-tête de l'identifiant d'installation, envoyé sur `POST /referrals/redeem`
+/// SEULEMENT (lu par `referrals.controller.ts`).
+const referralDeviceIdHeader = 'X-KPB-Device-Id';
+
 /// Vrai quand [error] dit « cette route n'existe pas sur ce backend » (404,
 /// 405, 501) — le cas d'une build plus récente que le serveur. Pas une panne :
 /// l'écran masque la fonction au lieu d'afficher une erreur, et réessaiera à la

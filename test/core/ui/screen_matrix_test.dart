@@ -48,6 +48,8 @@ import 'package:karatou/app/features/housing/housing_estimator_screen.dart';
 import 'package:karatou/app/features/matches/aha_moment_screen.dart';
 import 'package:karatou/app/features/onboarding/onboarding_screen.dart';
 import 'package:karatou/app/features/profile/profile_screen.dart';
+import 'package:karatou/app/features/onboarding/onboarding_referral_step.dart';
+import 'package:karatou/app/features/referral/ambassador_competition_screen.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 import 'package:karatou/app/features/shell/kpb_tools_drawer.dart';
 import 'package:karatou/app/features/universities/universities_screen.dart';
@@ -190,6 +192,48 @@ Map<String, Future<Widget> Function()> buildScreenSpecs() {
   specs['CommunityPostScreen'] = () async {
     await seedCommunity();
     return const CommunityPostScreen(postId: 'cp_1', source: 'matrix');
+  };
+
+  // Parrainage côté app (build 57) : l'écran de la compétition (participant,
+  // en cours, non classable — le cas le plus chargé : notices provisoire et
+  // « pas encore classé », trois compteurs, code, liens) et l'étape « code de
+  // ton parrain » de fin d'onboarding.
+  specs['AmbassadorCompetitionScreen'] = () async {
+    final api = MockApiClient();
+    when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async => {
+          'participating': true,
+          'campaign': {
+            'slug': 'ambassadeurs-novembre-2026',
+            'nameFr': 'Compétition des ambassadeurs — novembre 2026',
+            'nameEn': 'Ambassador competition — November 2026',
+            'status': 'live',
+            'phase': 'running',
+            'startsAt': '2026-10-31T23:00:00.000Z',
+            'endsAt': '2099-11-10T23:00:00.000Z',
+            'provisional': true,
+          },
+          'me': {
+            'publicName': 'Mouhamadou D.',
+            'city': 'Ouagadougou',
+            'code': 'KTOU-MD-1a2b3c',
+            'rank': null,
+            'qualified': 128,
+            'toReview': 12,
+            'pending': 45,
+            'rankable': false,
+          },
+          'serverTime': DateTime.now().toUtc().toIso8601String(),
+        });
+    when(() => api.getPublicCampaignLeaderboard(any()))
+        .thenAnswer((_) async => {
+              'campaign': {'rulesUrl': 'https://kpbeducation.cloud/reglement'},
+            });
+    await seedKpbController(apiClient: api);
+    return const AmbassadorCompetitionScreen();
+  };
+  specs['OnboardingReferralStep'] = () async {
+    await seedKpbController();
+    return OnboardingReferralStep(onFinished: () {});
   };
 
   for (final tool in KpbToolsDrawer.toolsForTest) {

@@ -14,6 +14,7 @@ import '../../core/utils/currency_utils.dart';
 import '../legal/legal_pages.dart';
 import '../matches/aha_moment_screen.dart';
 import 'onboarding_m2_constants.dart';
+import 'onboarding_referral_step.dart';
 
 part 'onboarding_screen/chrome.dart';
 part 'onboarding_screen/pages.dart';
@@ -176,6 +177,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   /// parcours, inchangé.
   late final bool _v2;
 
+  /// Étape facultative « code de ton parrain » après la synchro du profil
+  /// (`features.referralOnboardingCode`, build 57), lue UNE fois à l'ouverture
+  /// comme [_v2]. Indépendante de [_v2] : elle suit les deux parcours.
+  late final bool _referralStep;
+
   // State
   AccountType _accountType = AccountType.student;
   String _language = 'fr';
@@ -275,6 +281,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _v2 = RemoteFeatureFlags.instance.onboardingV2Enabled;
+    _referralStep = RemoteFeatureFlags.instance.referralOnboardingCodeEnabled;
     if (!_v2) {
       // Ancien parcours (drapeau fermé) : ses valeurs par défaut historiques,
       // à l'identique.
@@ -709,7 +716,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         // reach _submit, so they keep landing on home.
         await _ctrl.completeOnboardingSynced(profile);
         if (!mounted) return;
-        unawaited(Get.offAll(() => const AhaMomentScreen()));
+        if (_referralStep) {
+          // Le code du parrain APRÈS la synchro du profil, avant l'écran
+          // « aha ». L'onboarding est déjà terminé : quitter l'app sur cette
+          // étape ne fait rien perdre (le code reste proposé dans Parrainage).
+          unawaited(Get.offAll(() => OnboardingReferralStep(
+                onFinished: () => Get.offAll(() => const AhaMomentScreen()),
+              )));
+        } else {
+          unawaited(Get.offAll(() => const AhaMomentScreen()));
+        }
       } else {
         _ctrl.completeOnboarding(profile);
         unawaited(Get.offAllNamed(AppRoutes.home));
