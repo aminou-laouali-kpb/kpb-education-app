@@ -165,6 +165,16 @@ notifications, RGPD — vit dans **[`docs/community-api-contract.md`](community-
   `GET /admin/community/queue`, actions sur contenu, sanctions, réponse « Équipe KPB » /
   conseiller, « Réponse vérifiée par KPB », épinglage, statistiques, filtre (liste blanche de
   liens, termes bloqués).
+- **Bot « Vérif » (C3, révision 2 du contrat, §8.9 et §14)** : repère les questions de
+  vérification (« cette bourse est-elle ouverte ? », « date limite ? », « cette école est
+  partenaire ? »), extrait les faits du catalogue vérifié et prépare une réponse « Assistant KPB »
+  (auteur et badge `kpb_assistant`, champ `Reply.assistant.sourceVerifiedAt`). File admin
+  `GET /admin/community/bot/drafts`, détail, `POST …/drafts/:id/publish` (texte modifiable,
+  « marquer vérifiée »), `…/reject`, `…/regenerate`, `GET /admin/community/bot/stats` (rôle R,
+  audit `AdminAuditEvent`). Réglage serveur (pas dans `/config/app`), relayé par compose :
+  `KPB_COMMUNITY_VERIF_BOT_MODE` = `review` (**défaut** : un admin publie) | `auto` (publie seul les
+  brouillons sûrs) | `off` ; `KPB_COMMUNITY_VERIF_BOT_LLM` = `false` (défaut) | `true`
+  (reformulation contrainte aux faits). Runbook : `docs/runbook-bot-verif.md`.
 
 Routes historiques, inchangées et dépréciées (taxonomie de l'ancien écran, jamais livré) :
 

@@ -1,8 +1,10 @@
-# Communauté KPB — contrat d'API (C1 + C2)
+# Communauté KPB — contrat d'API (C1 + C2, bot Vérif C3)
 
 Version du contrat : **community-api v1 — 17/10/2026** (révision 1 le même jour : identité réelle
 réservée à Admin/SuperAdmin, liste des sanctions, classement des signalements d'un membre,
-lecture des discussions pour le conseiller, valeurs du journal, deux indicateurs de tableau de bord). Statut : **stable** — l'app (Flutter) et
+lecture des discussions pour le conseiller, valeurs du journal, deux indicateurs de tableau de bord ;
+**révision 2** le même jour, additive : bot « Vérif » C3 — auteur et badge `kpb_assistant`, champ
+`Reply.assistant`, routes `/admin/community/bot/*` (§8.9), deux codes d'erreur, §14). Statut : **stable** — l'app (Flutter) et
 l'admin (Next.js) se construisent sur ce document. Toute évolution est **additive** (champ
 nouveau, valeur d'énumération nouvelle tolérée par les clients) ; une rupture exige une v2.
 
@@ -11,7 +13,8 @@ Serveur : `backend/src/modules/community/` (NestJS 11, Prisma 6). Préfixe globa
 
 Sommaire : §1 principes · §2 drapeau et portes · §3 erreurs · §4 pagination et limites ·
 §5 modèles JSON · §6 visibilité · §7 routes élève · §8 routes admin · §9 modération et
-anti-arnaque · §10 fil « Pour toi » · §11 notifications · §12 RGPD · §13 ce qui ne change pas.
+anti-arnaque · §10 fil « Pour toi » · §11 notifications · §12 RGPD · §13 ce qui ne change pas ·
+§14 bot « Vérif » (révision 2).
 
 ---
 
@@ -94,6 +97,8 @@ Les erreurs de validation de forme (ValidationPipe, `forbidNonWhitelisted`) sont
 | 400 | `community_cannot_block_team` | bloquer l'équipe KPB (contenu admin) | — |
 | 409 | `community_pin_limit` | (admin) plus de 3 publications épinglées | `{ max: 3 }` |
 | 409 | `community_invalid_transition` | (admin) action impossible dans l'état courant (ex. rétablir un contenu supprimé par son auteur) | `{ status }` |
+| 404 | `community_bot_draft_not_found` | (admin, révision 2) brouillon du bot inconnu | — |
+| 409 | `community_bot_draft_obsolete` | (admin, révision 2) publier un brouillon dont la publication n'est plus visible ou dont les faits ont changé depuis sa rédaction (le brouillon passe `obsolete`) | `{ reason: "post_not_visible" \| "facts_changed" \| … }` |
 
 ## 4. Pagination, limites, quotas
 
@@ -158,16 +163,19 @@ masquer un contenu visible. Suppression par l'auteur : **toujours** possible.
 
 | Champ | Type | Sens |
 |---|---|---|
-| `kind` | `"member" \| "kpb_team" \| "kpb_advisor"` | membre, « Équipe KPB », conseiller KPB |
+| `kind` | `"member" \| "kpb_team" \| "kpb_advisor" \| "kpb_assistant"` | membre, « Équipe KPB », conseiller KPB, « Assistant KPB » (bot Vérif, révision 2 — §14) |
 | `memberId` | `string \| null` | identifiant public du membre (`null` pour l'équipe) — sert aux routes membre / blocage / signalement |
-| `displayName` | `string` | « Prénom I. » pour un membre ; `"Équipe KPB"` ; « Prénom I. » du conseiller |
+| `displayName` | `string` | « Prénom I. » pour un membre ; `"Équipe KPB"` ; « Prénom I. » du conseiller ; `"Assistant KPB"` (non traduit, comme « Équipe KPB ») |
 | `countryName` | `string \| null` | pays de résidence déclaré, tel que saisi (ex. `"Niger"`, `"Côte d'Ivoire"`) ; `null` pour l'équipe |
-| `badges` | `Badge[]` | ordre stable : `kpb_team`, `kpb_advisor`, `verified_alumni`, `ambassador` |
+| `badges` | `Badge[]` | ordre stable : `kpb_team`, `kpb_advisor`, `kpb_assistant`, `verified_alumni`, `ambassador` |
 
 `Badge` : `"kpb_team"` (contenu de l'équipe), `"kpb_advisor"` (conseiller KPB),
 `"verified_alumni"` (`UserProfile.alumniStatus = approved` et badge visible),
-`"ambassador"` (ambassadeur activé par l'équipe, `Ambassador.approvedAt` posé).
-Les clients **ignorent** une valeur inconnue.
+`"ambassador"` (ambassadeur activé par l'équipe, `Ambassador.approvedAt` posé),
+`"kpb_assistant"` (révision 2 : réponse préparée par le bot Vérif depuis les données vérifiées du
+catalogue). Les clients **ignorent** une valeur inconnue de badge ; un `kind` inconnu se lit
+`member` — un client d'avant la révision 2 affiche donc « Assistant KPB » comme un nom, sans badge,
+sans profil ni blocage (`memberId = null`).
 
 ### 5.2 `Mention`
 
@@ -290,10 +298,16 @@ les **publications** (titre + corps) ; dans une réponse ils sont rendus mais pa
   "helpfulCount": 3,
   "isVerified": true,
   "verifiedAt": "…",
+  "assistant": null,
   "viewer": { "isAuthor": false, "hasMarkedHelpful": true, "canEdit": false, "canDelete": false, "editableUntil": null },
   "moderation": null
 }
 ```
+
+`assistant` (révision 2) : `null`, sauf pour une réponse de l'« Assistant KPB » (`author.kind =
+"kpb_assistant"`) : `{ "sourceVerifiedAt": ISO | null }` = date de vérification la plus ancienne
+des fiches citées. L'app l'affiche sous la réponse : « Réponse préparée à partir des données
+vérifiées de KPB · vérifié le JJ/MM/AAAA ». Un client plus ancien ignore le champ.
 
 `isVerified` : « Réponse vérifiée par KPB » (une seule par publication ; la poser sur une autre
 réponse la retire de la précédente). Ordre des réponses : la réponse vérifiée **en tête**, puis
@@ -537,6 +551,9 @@ ContentManager et Counselor ils valent `null` (ils gardent nom public, pays, bad
 `isMinor` d'après la date de naissance (`null` si inconnue) ; `isNewAccount` = compte de moins de
 7 jours (§4.3) ; `null` pour un contenu de l'équipe.
 
+Pour une réponse de l'« Assistant KPB », `adminId` = l'admin qui l'a publiée, ou
+`"kpb-verif-bot"` pour une publication automatique (mode `auto`, §14).
+
 `AdminPost` = `Post` (sans `viewer`, avec `author: AdminAuthor`) + `{ "status", "statusReason", "filterFlags": string[], "openReportCount", "deletedAt", "pinnedAt" }`.
 `AdminReply` = `Reply` (idem) + `{ "status", "statusReason", "filterFlags", "openReportCount", "deletedAt" }`.
 
@@ -567,6 +584,9 @@ Les réponses et publications d'équipe, l'épinglage et le filtre ne vont **pas
 (ce ne sont pas des décisions de modération) ; ils sont tracés dans `AdminAuditEvent`
 (`action` = `community.team_reply`, `community.team_post`, `community.pin`, `community.unpin`,
 `community.filter_add`, `community.filter_delete`, et `community.<action du journal>` pour le reste).
+Révision 2 (bot Vérif, `entityType = community_bot_draft`) : `community.bot_publish`,
+`community.bot_auto_publish` (`actorAdminId = null`), `community.bot_reject`,
+`community.bot_regenerate`. « Publier et marquer vérifiée » écrit en plus `verify_answer` au journal.
 
 ### 8.2 File de modération
 
@@ -656,7 +676,7 @@ tous les signalements ouverts visant ce membre (pas ceux visant ses contenus, tr
 | `POST /admin/community/posts/:id/replies` | R + Counselor | `{ "body", "as": "kpb_team" \| "kpb_advisor", "verified"?: boolean }` | 201 `AdminReply` — jamais filtrée ; mentions et hashtags traités comme pour un membre ; notifie l'auteur et les abonnés |
 | `PUT /admin/community/replies/:id/verified` | R | `{ "verified": boolean }` | 200 `AdminReply` — « Réponse vérifiée par KPB » (une par publication) ; poser notifie l'auteur de la publication et ses abonnés (`community_verified_answer`) |
 | `PUT /admin/community/posts/:id/pin` | R | `{ "pinned": boolean }` | 200 `AdminPost` ; 409 `community_pin_limit` au-delà de 3 ; 409 `community_invalid_transition` pour épingler un contenu non visible |
-| `POST /admin/community/posts` | R | `{ "type", "title", "body", "as": "kpb_team" \| "kpb_advisor", "pinned"?: boolean }` | 201 `AdminPost` (point d'entrée du futur bot « Vérif », C3 : il prépare, un admin publie) |
+| `POST /admin/community/posts` | R | `{ "type", "title", "body", "as": "kpb_team" \| "kpb_advisor", "pinned"?: boolean }` | 201 `AdminPost` (publication de l'équipe ; le bot « Vérif » a ses propres routes, §8.9) |
 
 Une réponse « en tant que conseiller » affiche « Prénom I. » de l'admin connecté et le badge
 `kpb_advisor` ; « Équipe KPB » affiche `"Équipe KPB"` et `kpb_team`. Seule une réponse
@@ -706,6 +726,61 @@ première décision humaine ; `null` sans donnée (comme `reports.medianResoluti
 `FilterEntry` = `{ "id", "kind", "value", "createdAt", "createdBy": string | null }`. Domaine : hôte
 nu (`univ-lyon1.fr`) ou suffixe (`*.univ-lyon1.fr`), en minuscules ; terme : 2 à 60 caractères,
 comparé sans accents ni casse, en mot entier. La liste intégrée n'est pas modifiable (code).
+
+### 8.9 Bot « Vérif » — file des brouillons (révision 2)
+
+Rôle **R** (jamais le conseiller seul). Comportement du bot : §14.
+
+`BotDraft` :
+
+```json
+{
+  "id": "cbd_…",
+  "postId": "cp_…",
+  "status": "proposed",
+  "statusReason": null,
+  "lang": "fr",
+  "intents": ["status", "deadline"],
+  "entities": [{ "type": "scholarship", "id": "clx…", "label": "Bourse Eiffel", "resolvedBy": "mention" }],
+  "facts": { "version": 1, "checkedAt": "…", "entities": [ { "kind": "scholarship", "…": "…" } ], "usVisa": null },
+  "sources": [{ "type": "scholarship", "id": "clx…", "label": "Bourse Eiffel", "url": "https://www.campusfrance.org/…", "verifiedAt": "…", "stale": false }],
+  "factsHash": "…",
+  "proposedText": "Bonjour ! Voici ce que disent les données vérifiées de KPB.\n\n…",
+  "writer": "template",
+  "llmFallbackReason": null,
+  "confidence": "high",
+  "complete": true,
+  "scamCaution": false,
+  "createdAt": "…", "generatedAt": "…", "processedAt": null,
+  "processedBy": null,
+  "rejectReason": null,
+  "publishedReplyId": null, "publishedVerified": false, "autoPublished": false,
+  "post": { "id": "cp_…", "title": "…", "type": "question", "status": "visible", "createdAt": "…" }
+}
+```
+
+| Champ | Sens |
+|---|---|
+| `status` | `queued` (en file) · `skipped` (pas de brouillon, `statusReason` dit pourquoi) · `proposed` · `published` · `rejected` · `obsolete` — valeur inconnue : l'afficher brute |
+| `statusReason` | `skipped` : `not_question` \| `no_intent` \| `no_entity` \| `ambiguous_entity` \| `entity_not_public` \| `team_post` \| `error` ; `obsolete` : `post_not_visible` \| `facts_changed` |
+| `intents` | motifs repérés : `status`, `deadline`, `truth`, `scam`, `fees`, `partner`, `exists`, `documents`, `intake`, `visa` |
+| `facts` | faits extraits du catalogue (§14.2), avec leur source ; `null` hors `proposed` / `published` / `obsolete` |
+| `sources` | une ligne par fiche citée : lien officiel (cliquable dans la console), date de vérification, `stale` (> seuil) |
+| `writer` | `template` (modèle déterministe) \| `llm` (reformulation acceptée par le contrôle) ; `llmFallbackReason` dit pourquoi le LLM a été écarté |
+| `confidence` / `complete` | §14.3 |
+| `post` | présent dans la liste seulement |
+
+| Méthode et chemin | Corps | Réponse |
+|---|---|---|
+| `GET /admin/community/bot/drafts?status=proposed\|published\|rejected\|obsolete\|skipped\|queued\|all&cursor&limit` | — | 200 `{ "mode", "items": BotDraft[], "nextCursor" }` — défaut `proposed`, récents d'abord ; marque d'abord `obsolete` les brouillons dont la publication n'est plus visible |
+| `GET /admin/community/bot/drafts/:id` | — | 200 `{ "mode", "draft": BotDraft, "post": AdminPost, "live": { "postVisible", "factsChanged" } }` — `live` re-vérifie les faits à l'instant (indicateur « obsolète » avant publication) |
+| `POST /admin/community/bot/drafts/:id/publish` | `{ "text"?: string, "verified"?: boolean }` | 200 `{ "draft": BotDraft, "reply": AdminReply }` — `text` : texte modifié par l'admin (2 à 3 000, mentions validées), sinon le texte proposé ; `verified` : « Réponse vérifiée par KPB ». Faits **re-vérifiés** : changés ou publication plus visible ⇒ 409 `community_bot_draft_obsolete`. Hors `proposed` ⇒ 409 `community_invalid_transition` |
+| `POST /admin/community/bot/drafts/:id/reject` | `{ "reason" }` (3 à 500) | 200 `BotDraft` (`rejected`) — depuis `proposed` ou `obsolete` |
+| `POST /admin/community/bot/drafts/:id/regenerate` | — | 200 `BotDraft` — refait détection, faits et texte (jamais publié seul) ; interdit sur `published` (409) |
+| `GET /admin/community/bot/stats?days=1..365` | — | 200 `{ "mode", "llmEnabled", "window", "current": { queued, skipped, proposed, published, rejected, obsolete }, "created": {… sur la fenêtre}, "autoPublished", "publishedVerified", "llmWritten", "medianHandlingHours" }` — délai humain médian brouillon prêt → décision |
+
+La réponse publiée : `authorKind = kpb_assistant`, jamais filtrée, notifie l'auteur et les abonnés
+comme une réponse d'équipe (`community_reply`, et `community_verified_answer` si vérifiée).
 
 ## 9. Modération et anti-arnaque
 
@@ -822,7 +897,8 @@ aucune notification de mention.
   (tous états, texte complet), ses réactions et suivis (ids), ses blocages (id public du membre
   bloqué), ses signalements (motif, détail, statut), ses sanctions (motif, dates). Les
   signalements **visant** l'élève ne lui sont pas rendus (protection des signaleurs).
-- Inventaire : `docs/data-inventory.md` §7.
+- Inventaire : `docs/data-inventory.md` §7 (et §7 bis pour le bot Vérif : le brouillon ne recopie
+  aucune donnée de l'élève ; il part avec la publication, en cascade).
 
 ## 13. Ce qui ne change pas
 
@@ -836,3 +912,52 @@ aucune notification de mention.
   `GET /admin/forum-moderation` (ancienne file en lecture) continue de la lire.
 - L'écran communauté actuel de l'app reste masqué par `KPB_MVP_ONLY` ; la nouvelle communauté
   dépend du **drapeau distant** `features.community`.
+
+## 14. Bot « Vérif » (révision 2)
+
+Décision du propriétaire : **validation humaine d'abord** — le bot prépare depuis les données
+vérifiées du catalogue, un admin publie en un clic ; l'automatique viendra plus tard par réglage.
+Exploitation : `docs/runbook-bot-verif.md`.
+
+### 14.1 Détection
+
+Asynchrone : la publication d'une **question visible d'un membre** (création, modification,
+rétablissement) écrit une ligne `queued` (au plus un brouillon par publication, `postId` unique) ;
+une tâche à la minute fait le travail. Jamais bloquant pour la publication ; jamais sur un contenu
+masqué ou en attente de revue, ni sur une publication de l'équipe ; les réponses ne sont pas
+analysées (une réponse du bot par publication). Une question de **vérification** = type
+`question` + au moins un motif FR/EN (« ouvert », « date limite », « deadline », « c'est vrai »,
+« arnaque », « frais », « gratuit », « partenaire », « existe », « documents », « rentrée »,
+« visa »…) + au moins une **entité** : mentionnée, sinon retrouvée en toutes lettres avec un seuil
+strict (nom complet en mots entiers, sigle exact, cœur d'un nom de bourse ≥ 5 lettres quand le
+texte parle de bourse ; un seul candidat par famille — sinon `ambiguous_entity`, pas de brouillon).
+Langue de la réponse : celle de la question (FR par défaut).
+
+### 14.2 Faits
+
+Extraits **déterministiquement** des fiches publiques, sans rien inventer : bourse — statut servi
+(mêmes règles que l'app : jamais « ouverte » avant `opensAt`, « fermée » sur une clôture confirmée
+seulement, date estimée au mois près), lien officiel, financement, documents, `lastVerifiedAt`,
+source (celle du cycle d'abord) ; école — partenaire ou non, rentrées à venir (dates passées
+masquées, reconduction « à confirmer »), frais publiés, site ; formation — école et partenariat,
+rentrées, date limite, frais de scolarité et de candidature, pièces ; pays — prochaine rentrée ;
+avis visa USA (`usVisaSuspension`, même source que `/config/app`) pour une entité des États-Unis.
+Une fiche vérifiée il y a plus de **30 jours** (bourse) ou **180 jours** (école, formation, pays)
+est dite « à revérifier » ; une donnée absente est dite « non renseignée ».
+
+### 14.3 Rédaction, confiance, modes
+
+Modèle déterministe (tutoiement, niveau B1, aucune promesse, aucun pourcentage) + pied fixe :
+« Fiche @… : vérifié le JJ/MM/AAAA, source : … », phrase de prudence standard si la question parle
+d'argent ou d'arnaque, rappel de confirmer sur le site officiel. Option LLM
+(`KPB_COMMUNITY_VERIF_BOT_LLM=true`) : seul le corps est reformulé, à partir du texte
+déterministe (jamais la question de l'élève) ; un chiffre, un mois, un lien ou une mention absents
+du modèle, un « % » ou une promesse ⇒ repli sur le modèle (`llmFallbackReason`).
+
+`complete` = tous les motifs ont un fait renseigné ET aucune fiche n'est périmée.
+`confidence` : `high` = entités toutes mentionnées et `complete` ; `low` = aucun motif de fond
+renseigné, ou fiches toutes périmées ; `medium` sinon.
+
+`KPB_COMMUNITY_VERIF_BOT_MODE` : `review` (**défaut**) — tout attend un admin ; `auto` — publie seul
+un brouillon `high` + `complete` (jamais « vérifiée » : c'est un geste humain), le reste attend un
+admin ; `off` — aucune détection. Toute autre valeur vaut `review`.

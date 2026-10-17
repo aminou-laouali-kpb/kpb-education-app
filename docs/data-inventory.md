@@ -197,3 +197,23 @@ qu'il l'est, aucune de ces données ne naît.
   `confidentialite.html`, `conditions.html` et la politique in-app avant ouverture ; base légale
   (exécution du service) et âge minimal pour publier (16 ans, celui du compte).
 
+### 7 bis. Bot « Vérif » (C3, relevé du 17/10/2026)
+
+Migration `20261024120000_community_verif_bot`, `backend/src/modules/community/community-verif-bot*.ts`,
+runbook `docs/runbook-bot-verif.md`. Réglage `KPB_COMMUNITY_VERIF_BOT_MODE` (défaut `review`).
+
+| Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
+|---|---|---|---|---|
+| Brouillon du bot (statut, motifs repérés, langue, entités du catalogue citées, **faits du catalogue** sérialisés avec leurs sources, texte proposé, confiance, admin qui a traité, motif de rejet) | Tâche de la minute, sur une question visible d'un membre | `CommunityBotDraft` (un au plus par publication) | L'équipe (rôle R) | Avec la publication (cascade : purge à 30 jours d'un contenu supprimé, suppression du compte de l'auteur) |
+| Réponse « Assistant KPB » publiée | Clic « Publier » d'un admin, ou mode `auto` | `CommunityReply` (`authorKind = kpb_assistant`, `botDraftId`, `botSourceVerifiedAt`) | Comme toute réponse visible | Comme toute réponse |
+
+- **Aucune donnée personnelle copiée** : le brouillon ne recopie ni le texte de la question, ni
+  l'auteur, ni son profil ; il ne contient que des faits du catalogue publié. `processedByAdminId`
+  / `processedByName` désignent l'admin (pas l'élève).
+- **LLM (option, fermée par défaut — `KPB_COMMUNITY_VERIF_BOT_LLM`)** : seul le texte déterministe
+  bâti sur les faits du catalogue part vers le fournisseur existant (`llm.service.ts`,
+  OpenRouter en rétention nulle, repli Groq) — **jamais** la question de l'élève ni rien de son
+  compte. Destinataire déjà inventorié (coach IA).
+- **Export RGPD** : rien de neuf pour l'élève (le brouillon n'est pas une donnée le concernant ;
+  la réponse publiée est un contenu de l'équipe, comme une réponse « Équipe KPB »).
+
