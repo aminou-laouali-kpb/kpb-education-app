@@ -4,9 +4,12 @@
 //
 // Demande du propriétaire (16/10/2026) : ajouter au catalogue des universités
 // NON partenaires (`isPartner: false`) du Canada et des États-Unis, choisies
-// pour les étudiants d'Afrique francophone. La sélection et ses critères sont
+// pour les étudiants d'Afrique francophone. Seconde passe Canada (17/10/2026) :
+// réseau UQ et écoles québécoises, Nouveau-Brunswick, collèges de l'Ontario
+// avec programme de langue en amont. La sélection et ses critères sont
 // justifiés dans docs/catalogue-amerique-du-nord.md ; chaque fait vient d'une
-// page officielle consultée le 16/10/2026 (provenance, fait par fait, dans
+// page officielle consultée à la date de l'établissement (`consultedAt`,
+// sinon celle du document ; provenance, fait par fait, dans
 // scripts/data/amerique-du-nord-2027.sources.md). Ce qui est resté introuvable
 // est vide, jamais deviné.
 //
@@ -31,12 +34,24 @@ export const NA_COUNTRIES: Record<string, { prefix: string; countryId: string }>
 };
 
 /// Niveaux admis, déjà à la convention `normalizeDegreeLevel` (mêmes libellés
-/// que l'app : lib/app/core/utils/study_level.dart).
-export const NA_LEVELS = ['Bachelor', 'BBA', 'Master'] as const;
+/// que l'app : lib/app/core/utils/study_level.dart). Les deux niveaux de
+/// collège (certificat postdiplôme de l'Ontario, diplôme / diplôme avancé de
+/// l'Ontario ou du CCNB) s'affichent tels quels dans l'app.
+export const NA_LEVELS = ['Bachelor', 'BBA', 'Master', 'Graduate certificate', 'Diplôme collégial'] as const;
 
 export const NA_FIELD_IDS = [
   'd01', 'd02', 'd03', 'd04', 'd05', 'd06', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12',
 ] as const;
+
+/// Statut de l'établissement dans la fiche (`institutionType`) → libellé.
+/// Table FERMÉE.
+export const NA_INSTITUTION_TYPES: Record<string, { fr: string; en: string }> = {
+  universite_publique: { fr: 'université publique', en: 'public university' },
+  // Polytechnique Montréal, HEC Montréal, ÉTS : écoles universitaires publiques.
+  ecole_universitaire: { fr: 'école universitaire publique', en: 'public university-level school' },
+  // Collèges publics de l'Ontario, CCNB.
+  college_public: { fr: 'collège public', en: 'public college' },
+};
 
 /// Langue d'enseignement d'une formation. Table FERMÉE.
 export const NA_LANGUAGES: Record<string, { fr: string; en: string; codes: string[] }> = {
@@ -73,9 +88,25 @@ export type NaProgramSource = {
   offerings?: NaOffering[];
 };
 
+/// Programme de langue en amont (anglais ou français) publié par
+/// l'établissement : documenté ici, écrit dans les exigences linguistiques.
+export type NaLanguagePathway = {
+  nameFr: string;
+  nameEn: string;
+  durationFr: string;
+  durationEn: string;
+  costFr: string;
+  costEn: string;
+  sourceUrl: string;
+};
+
 export type NaInstitutionSource = {
   id: string;
   countryId: string;
+  /// Date de consultation propre à l'établissement (« 2026-10-17 ») ; à
+  /// défaut, celle du document.
+  consultedAt?: string;
+  languagePathway?: NaLanguagePathway | null;
   nameFr: string;
   nameEn: string;
   acronym?: string | null;
@@ -105,9 +136,16 @@ export type NaSource = {
   institutions: NaInstitutionSource[];
 };
 
-/** Date de consultation des sources : `lastVerifiedAt` de chaque ligne. */
-export function naVerifiedAt(doc: Pick<NaSource, 'consultedAt'>): Date {
-  return new Date(`${doc.consultedAt}T00:00:00.000Z`);
+/**
+ * Date de consultation des sources : `lastVerifiedAt` de chaque ligne. Celle
+ * de l'établissement quand il en porte une (seconde passe), sinon celle du
+ * document.
+ */
+export function naVerifiedAt(
+  doc: Pick<NaSource, 'consultedAt'>,
+  inst?: Pick<NaInstitutionSource, 'consultedAt'>,
+): Date {
+  return new Date(`${inst?.consultedAt || doc.consultedAt}T00:00:00.000Z`);
 }
 
 export function naProgramId(institutionId: string, slug: string): string {
@@ -179,6 +217,22 @@ export function validateNaSource(doc: NaSource): string[] {
     if (!ID_RE.test(inst.id ?? '')) errors.push(`${where} : id hors convention na-<pays>-<slug>`);
     else if (country && !inst.id.startsWith(country.prefix)) errors.push(`${where} : préfixe ≠ pays ${inst.countryId}`);
     if (ids.has(inst.id)) errors.push(`${where} : id en double`);
+    if (inst.consultedAt !== undefined) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(inst.consultedAt)) errors.push(`${where} : consultedAt illisible`);
+      else if (inst.consultedAt < doc.consultedAt) errors.push(`${where} : consultedAt antérieur au document`);
+    }
+    if (!NA_INSTITUTION_TYPES[inst.institutionType]) errors.push(`${where} : type d'établissement inconnu « ${inst.institutionType} »`);
+    const lp = inst.languagePathway;
+    if (lp) {
+      for (const k of ['nameFr', 'nameEn', 'durationFr', 'durationEn'] as const) {
+        if (!String(lp[k] ?? '').trim()) errors.push(`${where} : programme de langue — ${k} vide`);
+      }
+      if (Boolean(lp.costFr) !== Boolean(lp.costEn)) errors.push(`${where} : programme de langue — coût FR/EN incohérent`);
+      if (!/^https:\/\//.test(lp.sourceUrl ?? '')) errors.push(`${where} : programme de langue — sourceUrl non https`);
+      if (!inst.languageRequirementsFr.includes(lp.nameFr) || !inst.languageRequirementsEn.includes(lp.nameEn)) {
+        errors.push(`${where} : programme de langue absent des exigences linguistiques`);
+      }
+    }
     ids.add(inst.id);
     for (const name of [inst.nameFr, inst.nameEn]) {
       const key = naSchoolKey(name ?? '');
@@ -250,13 +304,8 @@ export function validateNaSource(doc: NaSource): string[] {
   return errors;
 }
 
-/// Statut de l'établissement dans la fiche (`institutionType`) → libellé.
-const TYPE_LABEL: Record<string, { fr: string; en: string }> = {
-  universite_publique: { fr: 'université publique', en: 'public university' },
-};
-
 export function naInstitutionCreateData(inst: NaInstitutionSource, doc: NaSource) {
-  const verifiedAt = naVerifiedAt(doc);
+  const verifiedAt = naVerifiedAt(doc, inst);
   return {
     id: inst.id,
     nameFr: inst.nameFr,
@@ -275,7 +324,7 @@ export function naInstitutionCreateData(inst: NaInstitutionSource, doc: NaSource
     programIds: inst.programs.map((p) => naProgramId(inst.id, p.slug)),
     // NON partenaire : ni badge, ni « S'inscrire via KPB » dans l'app.
     isPartner: false,
-    institutionType: TYPE_LABEL[inst.institutionType] ? inst.institutionType : null,
+    institutionType: NA_INSTITUTION_TYPES[inst.institutionType] ? inst.institutionType : null,
     acronym: inst.acronym ?? null,
     websiteUrl: inst.websiteUrl,
     sourceUrl: inst.sourceUrl,
@@ -333,7 +382,7 @@ export function naProgramCreateData(p: NaProgramSource, inst: NaInstitutionSourc
     campusCity: city,
     searchText: programSearchText(p.nameFr, city),
     sourceUrl: p.sourceUrl,
-    lastVerifiedAt: naVerifiedAt(doc),
+    lastVerifiedAt: naVerifiedAt(doc, inst),
     isActive: true,
   };
 }

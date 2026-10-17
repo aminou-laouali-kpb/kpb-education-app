@@ -1,5 +1,5 @@
 {
-  "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 — voir amerique-du-nord-2027.sources.md",
+  "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 (seconde passe Canada : 17/10/2026) — voir amerique-du-nord-2027.sources.md",
   "consultedAt": "2026-10-16",
   "exchangeRates": {
     "date": "2026-10-16",
@@ -3368,6 +3368,2963 @@
         }
       ],
       "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-humber",
+      "countryId": "can",
+      "nameFr": "Humber Polytechnic",
+      "nameEn": "Humber Polytechnic",
+      "acronym": "Humber",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Toronto, Ontario",
+      "locationEn": "Toronto, Ontario",
+      "websiteUrl": "https://humber.ca/",
+      "sourceUrl": "https://humber.ca/international/admissions-financial-aid/how-to-apply/admissions-road-map",
+      "overviewFr": "Grand collège public de Toronto (campus North et Lakeshore). Beaucoup de diplômes et de certificats postdiplôme ouvrent en janvier, mai et septembre, et la fiche de chaque programme dit s'il est admissible au permis de travail post-diplôme (PGWP). Si ton anglais n'atteint pas encore le niveau demandé, le programme English for Academic Purposes (EAP) de Humber remplit l'exigence d'anglais une fois réussi.\n\nFrais de candidature : 100 CAD (jusqu'à 2 choix de programme).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large public college in Toronto (North and Lakeshore campuses). Many diplomas and graduate certificates start in January, May and September, and each programme page says whether it is eligible for the Post-Graduation Work Permit (PGWP). If your English is not yet at the required level, Humber's English for Academic Purposes (EAP) programme meets the English requirement once you pass it.\n\nApplication fee: CAD 100 (up to 2 programme choices).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 4 (2026) ou 80, Duolingo 105 ou PTE 53 pour les certificats et diplômes ; IELTS 6.5 et Duolingo 115 pour les baccalauréats ; IELTS 6.5 et Duolingo 125 pour les certificats postdiplôme ; programme de langue en amont : General Arts and Science – English for Academic Purposes (EAP) (certificat de 2 semestres ; réussi avec 60 % au semestre 2, il remplit l'exigence d'anglais des diplômes, 15 437 CAD pour 2 semestres (internationaux, 2026-2027), non admissible au PGWP)",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 4 (2026) or 80, Duolingo 105 or PTE 53 for certificates and diplomas; IELTS 6.5 and Duolingo 115 for bachelor's degrees; IELTS 6.5 and Duolingo 125 for graduate certificates; upstream language programme: General Arts and Science – English for Academic Purposes (EAP) (2-semester certificate; passed with 60% in semester 2, it meets the English requirement for diplomas, CAD 15,437 for 2 semesters (international, 2026-2027), not PGWP-eligible)",
+      "languagePathway": {
+        "nameFr": "General Arts and Science – English for Academic Purposes (EAP)",
+        "nameEn": "General Arts and Science – English for Academic Purposes (EAP)",
+        "durationFr": "certificat de 2 semestres ; réussi avec 60 % au semestre 2, il remplit l'exigence d'anglais des diplômes",
+        "durationEn": "2-semester certificate; passed with 60% in semester 2, it meets the English requirement for diplomas",
+        "costFr": "15 437 CAD pour 2 semestres (internationaux, 2026-2027), non admissible au PGWP",
+        "costEn": "CAD 15,437 for 2 semesters (international, 2026-2027), not PGWP-eligible",
+        "sourceUrl": "https://humber.ca/explore-programs/programs/general-arts-and-science-english-for-academic-purposes"
+      },
+      "applicationFee": {
+        "amount": 100,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "100 CAD (jusqu'à 2 choix de programme)",
+      "applicationFeeEn": "CAD 100 (up to 2 programme choices)",
+      "tuitionLabelFr": "≈ 20 868 – 24 765 CAD par année de 2 semestres selon le programme (internationaux, 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 20,868 – 24,765 per 2-semester year by programme (international, 2026-2027)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "computer-programming",
+          "nameFr": "Computer Programming",
+          "nameEn": "Computer Programming",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 semestres (diplôme de l'Ontario)",
+          "durationEn": "4 semesters (Ontario College Diploma)",
+          "tuitionFr": "21 736 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 21,736/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21736,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études secondaires (OSSD ou équivalent) avec anglais et mathématiques de 12e année",
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4 (2026) ou 80, Duolingo 105, PTE 53",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0201)"
+          ],
+          "requirementsEn": [
+            "Secondary school diploma (OSSD or equivalent) with Grade 12 English and Mathematics",
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4 (2026) or 80, Duolingo 105, PTE 53",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0201)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/computer-programming",
+          "offerings": [
+            {
+              "campus": "North",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "North",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "North",
+              "intake": "09/2027",
+              "session": "fall"
+            },
+            {
+              "campus": "Downtown (IGS)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "computer-engineering-technology",
+          "nameFr": "Computer Engineering Technology",
+          "nameEn": "Computer Engineering Technology",
+          "level": "Diplôme collégial",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "6 semestres (diplôme avancé de l'Ontario)",
+          "durationEn": "6 semesters (Ontario College Advanced Diploma)",
+          "tuitionFr": "21 330 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 21,330/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21330,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études secondaires (OSSD ou équivalent) avec anglais et mathématiques de 12e année",
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4 (2026) ou 80, Duolingo 105, PTE 53",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 15.1201)"
+          ],
+          "requirementsEn": [
+            "Secondary school diploma (OSSD or equivalent) with Grade 12 English and Mathematics",
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4 (2026) or 80, Duolingo 105, PTE 53",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 15.1201)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/computer-engineering-technology",
+          "offerings": [
+            {
+              "campus": "North",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "North",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "practical-nursing",
+          "nameFr": "Practical Nursing",
+          "nameEn": "Practical Nursing",
+          "level": "Diplôme collégial",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "4 semestres (diplôme de l'Ontario)",
+          "durationEn": "4 semesters (Ontario College Diploma)",
+          "tuitionFr": "20 868 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 20,868/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 20868,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études secondaires (OSSD ou équivalent) avec anglais, mathématiques, biologie et chimie",
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4 (2026) ou 80, Duolingo 105, PTE 53",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 51.3901)"
+          ],
+          "requirementsEn": [
+            "Secondary school diploma (OSSD or equivalent) with English, Mathematics, Biology and Chemistry",
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4 (2026) or 80, Duolingo 105, PTE 53",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 51.3901)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/practical-nursing",
+          "offerings": [
+            {
+              "campus": "North",
+              "intake": "09/2027",
+              "session": "fall"
+            },
+            {
+              "campus": "Humber Height (Off Campus)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "artificial-intelligence-with-machine-learning",
+          "nameFr": "Artificial Intelligence with Machine Learning",
+          "nameEn": "Artificial Intelligence with Machine Learning",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 semestres (certificat postdiplôme de l'Ontario)",
+          "durationEn": "2 semesters (Ontario Graduate Certificate)",
+          "tuitionFr": "20 993 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 20,993/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 20993,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Baccalauréat, diplôme avancé ou diplôme, de préférence en programmation, génie logiciel ou informatique, avec un cours avancé de mathématiques et un cours de programmation",
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 88, Duolingo 125, PTE 61",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0102)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree, advanced diploma or diploma, preferably in computer programming, software engineering or computer science, with one advanced mathematics course and one programming course",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 88, Duolingo 125, PTE 61",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0102)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/artificial-intelligence-with-machine-learning",
+          "offerings": [
+            {
+              "campus": "North",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "North",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "North",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "data-analytics",
+          "nameFr": "Data Analytics",
+          "nameEn": "Data Analytics",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 semestres (certificat postdiplôme de l'Ontario)",
+          "durationEn": "2 semesters (Ontario Graduate Certificate)",
+          "tuitionFr": "22 781 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 22,781/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 22781,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Baccalauréat dans toute discipline, ou diplôme (avancé) dans un domaine proche (affaires, mathématiques / statistique, programmation)",
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 88, Duolingo 125, PTE 61",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 30.7101)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree in any discipline, or (advanced) diploma in a related field (business, mathematics / statistics, programming)",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 88, Duolingo 125, PTE 61",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 30.7101)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/data-analytics",
+          "offerings": [
+            {
+              "campus": "Lakeshore",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Lakeshore",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Lakeshore",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "business-insights-and-analytics",
+          "nameFr": "Business Insights and Analytics",
+          "nameEn": "Business Insights and Analytics",
+          "level": "Graduate certificate",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "4 semestres (certificat postdiplôme de l'Ontario), stage de 220 heures",
+          "durationEn": "4 semesters (Ontario Graduate Certificate), 220-hour placement",
+          "tuitionFr": "24 765 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 24,765/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24765,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Baccalauréat dans toute discipline, ou diplôme (avancé) dans un domaine proche (affaires, mathématiques / statistique, programmation)",
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 88, Duolingo 125, PTE 61",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 52.1301)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree in any discipline, or (advanced) diploma in a related field (business, mathematics / statistics, programming)",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 88, Duolingo 125, PTE 61",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 52.1301)"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/business-insights-and-analytics",
+          "offerings": [
+            {
+              "campus": "Lakeshore",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Lakeshore",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Lakeshore",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bachelor-computer-science-cybersecurity",
+          "nameFr": "Bachelor of Computer Science - Cybersecurity",
+          "nameEn": "Bachelor of Computer Science - Cybersecurity",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "8 semestres (baccalauréat spécialisé)",
+          "durationEn": "8 semesters (Honours Bachelor's Degree)",
+          "tuitionFr": "24 096 CAD/an (2 semestres, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 24,096/year (2 semesters, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 24096,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études secondaires avec anglais, physique, calcul et vecteurs de 12e année (65 % minimum par cours exigé)",
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 84, Duolingo 115",
+            "Rentrée de septembre 2027 ; tout baccalauréat est admissible au PGWP selon Humber"
+          ],
+          "requirementsEn": [
+            "Secondary school diploma with Grade 12 English, Physics, Calculus and Vectors (at least 65% in each required course)",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 84, Duolingo 115",
+            "September 2027 start; every bachelor's degree is PGWP-eligible according to Humber"
+          ],
+          "sourceUrl": "https://humber.ca/explore-programs/programs/bachelor-of-computer-science-cybersecurity"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-seneca",
+      "countryId": "can",
+      "nameFr": "Seneca Polytechnic",
+      "nameEn": "Seneca Polytechnic",
+      "acronym": "Seneca",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Toronto, Ontario",
+      "locationEn": "Toronto, Ontario",
+      "websiteUrl": "https://www.senecapolytechnic.ca/",
+      "sourceUrl": "https://www.senecapolytechnic.ca/international/fees/tuition.html",
+      "overviewFr": "Collège polytechnique public de Toronto (campus Newnham pour l'informatique). Pour les internationaux, plusieurs programmes ouvrent en janvier et en mai 2027 ; les rentrées de septembre 2027 n'étaient pas encore publiées le 17/10/2026. Si ton anglais est insuffisant, tu peux recevoir une admission conditionnelle et commencer par l'English Language Institute (ELI) : une fois le niveau 8 réussi (60 % pour un diplôme), tu entres dans ton programme sans nouveau test.\n\nFrais de candidature : 90 CAD, reversés sur ton compte étudiant après l'acceptation et le paiement du 1er semestre.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public polytechnic in Toronto (Newnham campus for computing). For international students, several programmes start in January and May 2027; September 2027 intakes were not yet published on 17/10/2026. If your English is not strong enough, you can receive conditional acceptance and start with the English Language Institute (ELI): once you pass Level 8 (60% for a diploma), you enter your programme with no new test.\n\nApplication fee: CAD 90, credited to your student account after acceptance and first-semester payment.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL 4 sur 6 par compétence, Duolingo 105 à 110 ou PTE 58 pour les diplômes ; IELTS 6.5 et Duolingo 115 à 120 pour les baccalauréats, 120 à 125 pour les certificats postdiplôme ; programme de langue en amont : English Language Institute (ELI) (8 niveaux de 7 semaines ; admission conditionnelle, niveau 8 réussi à 60 % pour un diplôme, 3 269,25 CAD de frais de scolarité par niveau de 7 semaines (hors frais annexes))",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL 4 out of 6 per skill, Duolingo 105 to 110 or PTE 58 for diplomas; IELTS 6.5 and Duolingo 115 to 120 for degrees, 120 to 125 for graduate certificates; upstream language programme: English Language Institute (ELI) (8 levels of 7 weeks; conditional acceptance, Level 8 passed with 60% for a diploma, CAD 3,269.25 tuition per 7-week level (before ancillary fees))",
+      "languagePathway": {
+        "nameFr": "English Language Institute (ELI)",
+        "nameEn": "English Language Institute (ELI)",
+        "durationFr": "8 niveaux de 7 semaines ; admission conditionnelle, niveau 8 réussi à 60 % pour un diplôme",
+        "durationEn": "8 levels of 7 weeks; conditional acceptance, Level 8 passed with 60% for a diploma",
+        "costFr": "3 269,25 CAD de frais de scolarité par niveau de 7 semaines (hors frais annexes)",
+        "costEn": "CAD 3,269.25 tuition per 7-week level (before ancillary fees)",
+        "sourceUrl": "https://www.senecapolytechnic.ca/international/eli/fees-expenses.html"
+      },
+      "applicationFee": {
+        "amount": 90,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "90 CAD, reversés sur ton compte étudiant après l'acceptation et le paiement du 1er semestre",
+      "applicationFeeEn": "CAD 90, credited to your student account after acceptance and first-semester payment",
+      "tuitionLabelFr": "≈ 16 809 – 22 064 CAD de frais de scolarité en 1re année selon le programme (internationaux, hors frais annexes, 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 16,809 – 22,064 first-year tuition by programme (international, before ancillary fees, 2026-2027)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "computer-programming",
+          "nameFr": "Computer Programming (CPP)",
+          "nameEn": "Computer Programming (CPP)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 semestres (2 ans), diplôme de l'Ontario",
+          "durationEn": "4 semesters (2 years), Ontario College Diploma",
+          "tuitionFr": "16 989 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 16,989/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 16989,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune compétence sous 5.5), TOEFL 4 sur 6 dans chaque compétence, Duolingo 105 à 110, PTE 58",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0201)",
+            "Format hybride au campus Newnham"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no skill below 5.5), TOEFL 4 out of 6 in each skill, Duolingo 105 to 110, PTE 58",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0201)",
+            "Hybrid delivery at Newnham Campus"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/CPP.html",
+          "offerings": [
+            {
+              "campus": "Newnham",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Newnham",
+              "intake": "05/2027",
+              "session": "spring"
+            }
+          ]
+        },
+        {
+          "slug": "computer-programming-analysis",
+          "nameFr": "Computer Programming & Analysis (CPA)",
+          "nameEn": "Computer Programming & Analysis (CPA)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "6 semestres (3 ans), diplôme avancé de l'Ontario",
+          "durationEn": "6 semesters (3 years), Ontario College Advanced Diploma",
+          "tuitionFr": "16 809 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 16,809/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 16809,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune compétence sous 5.5), TOEFL 4 sur 6 dans chaque compétence, Duolingo 105 à 110, PTE 58",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0201)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no skill below 5.5), TOEFL 4 out of 6 in each skill, Duolingo 105 to 110, PTE 58",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0201)"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/CPA.html",
+          "offerings": [
+            {
+              "campus": "Newnham",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Newnham",
+              "intake": "05/2027",
+              "session": "spring"
+            }
+          ]
+        },
+        {
+          "slug": "computer-engineering-technology",
+          "nameFr": "Computer Engineering Technology (ECT)",
+          "nameEn": "Computer Engineering Technology (ECT)",
+          "level": "Diplôme collégial",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "6 semestres (3 ans), diplôme avancé de l'Ontario",
+          "durationEn": "6 semesters (3 years), Ontario College Advanced Diploma",
+          "tuitionFr": "16 809 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 16,809/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 16809,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune compétence sous 5.5), TOEFL 4 sur 6 dans chaque compétence, Duolingo 105 à 110, PTE 58",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 15.1201)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no skill below 5.5), TOEFL 4 out of 6 in each skill, Duolingo 105 to 110, PTE 58",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 15.1201)"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/ECT.html",
+          "offerings": [
+            {
+              "campus": "Newnham",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Newnham",
+              "intake": "05/2027",
+              "session": "spring"
+            }
+          ]
+        },
+        {
+          "slug": "artificial-intelligence",
+          "nameFr": "Artificial Intelligence (AIG)",
+          "nameEn": "Artificial Intelligence (AIG)",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 semestres (8 mois), certificat postdiplôme de l'Ontario",
+          "durationEn": "2 semesters (8 months), Ontario College Graduate Certificate",
+          "tuitionFr": "22 064 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 22,064/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 22064,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune compétence sous 6.0), TOEFL 4.5 sur 6 dans chaque compétence, Duolingo 120 à 125, PTE 60",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0102)",
+            "Rentrée internationale ouverte : janvier 2027"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no skill below 6.0), TOEFL 4.5 out of 6 in each skill, Duolingo 120 to 125, PTE 60",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0102)",
+            "International intake open: January 2027"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/AIG.html"
+        },
+        {
+          "slug": "cybersecurity-threat-management",
+          "nameFr": "Cybersecurity & Threat Management (CYT)",
+          "nameEn": "Cybersecurity & Threat Management (CYT)",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 semestres (8 mois), certificat postdiplôme de l'Ontario",
+          "durationEn": "2 semesters (8 months), Ontario College Graduate Certificate",
+          "tuitionFr": "17 019 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 17,019/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 17019,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune compétence sous 6.0), TOEFL 4.5 sur 6 dans chaque compétence, Duolingo 120 à 125, PTE 60",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.1003)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no skill below 6.0), TOEFL 4.5 out of 6 in each skill, Duolingo 120 to 125, PTE 60",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.1003)"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/CYT.html",
+          "offerings": [
+            {
+              "campus": "Newnham",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Newnham",
+              "intake": "05/2027",
+              "session": "spring"
+            }
+          ]
+        },
+        {
+          "slug": "bachelor-engineering-software-engineering",
+          "nameFr": "Bachelor of Engineering (Software Engineering)",
+          "nameEn": "Bachelor of Engineering (Software Engineering)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "8 semestres (4 ans)",
+          "durationEn": "8 semesters (4 years)",
+          "tuitionFr": "19 691 CAD/an (frais de scolarité seuls de la 1re année, internationaux, rentrées 2026-2027)",
+          "tuitionEn": "CAD 19,691/year (first-year tuition only, international, 2026-2027 intakes)",
+          "tuitionAnnual": {
+            "amount": 19691,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune compétence sous 6.0), TOEFL 4.5 sur 6 par compétence, Duolingo 115 à 120, PTE 60",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 14.0903)",
+            "Rentrée internationale ouverte : janvier 2027"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no skill below 6.0), TOEFL 4.5 out of 6 per skill, Duolingo 115 to 120, PTE 60",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 14.0903)",
+            "International intake open: January 2027"
+          ],
+          "sourceUrl": "https://www.senecapolytechnic.ca/programs/fulltime/BSA.html"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-conestoga",
+      "countryId": "can",
+      "nameFr": "Conestoga College",
+      "nameEn": "Conestoga College",
+      "acronym": "Conestoga",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Kitchener-Waterloo, Ontario",
+      "locationEn": "Kitchener-Waterloo, Ontario",
+      "websiteUrl": "https://www.conestogac.on.ca/",
+      "sourceUrl": "https://www.conestogac.on.ca/international/apply-to-conestoga/admission-requirements",
+      "overviewFr": "Collège public de la région de Kitchener-Waterloo (campus de Waterloo pour l'informatique, Cambridge pour l'ingénierie). Chaque fiche de programme publie le coût exact d'une année de deux trimestres pour les internationaux, frais annexes compris. Si ton anglais ne permet pas l'entrée directe, tu peux commencer par le programme English Language Studies du collège.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in the Kitchener-Waterloo region (Waterloo campus for computing, Cambridge for engineering). Each programme page publishes the exact cost of a two-term year for international students, ancillary fees included. If your English does not allow direct entry, you can start with the college's English Language Studies programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL 4.5 (2026) ou 80, Duolingo 110 ou PTE 53 pour les diplômes ; IELTS 6.5, TOEFL 5 ou 88, Duolingo 120 ou PTE 58 pour les baccalauréats et certificats postdiplôme (plus élevé pour certains programmes d'informatique et d'ingénierie) ; programme de langue en amont : General Arts and Science – English Language Studies (1 an (2 trimestres), rentrées en janvier, mai et septembre, 11 330 CAD de frais de scolarité (14 346 CAD avec frais annexes) pour 2 trimestres, 2026-2027)",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL 4.5 (2026) or 80, Duolingo 110 or PTE 53 for diplomas; IELTS 6.5, TOEFL 5 or 88, Duolingo 120 or PTE 58 for degrees and graduate certificates (higher for some IT and engineering programmes); upstream language programme: General Arts and Science – English Language Studies (1 year (2 terms), January, May and September intakes, CAD 11,330 tuition (CAD 14,346 with ancillary fees) for 2 terms, 2026-2027)",
+      "languagePathway": {
+        "nameFr": "General Arts and Science – English Language Studies",
+        "nameEn": "General Arts and Science – English Language Studies",
+        "durationFr": "1 an (2 trimestres), rentrées en janvier, mai et septembre",
+        "durationEn": "1 year (2 terms), January, May and September intakes",
+        "costFr": "11 330 CAD de frais de scolarité (14 346 CAD avec frais annexes) pour 2 trimestres, 2026-2027",
+        "costEn": "CAD 11,330 tuition (CAD 14,346 with ancillary fees) for 2 terms, 2026-2027",
+        "sourceUrl": "https://www.conestogac.on.ca/fulltime/general-arts-and-science-english-language-studies"
+      },
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 18 226 – 21 041 CAD par année de 2 trimestres selon le programme (internationaux, frais annexes compris, 2026-2027) ; dépôt non remboursable de 2 500 CAD",
+      "tuitionLabelEn": "≈ CAD 18,226 – 21,041 per 2-term year by programme (international, ancillary fees included, 2026-2027); CAD 2,500 non-refundable deposit",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "computer-programming",
+          "nameFr": "Computer Programming",
+          "nameEn": "Computer Programming",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 ans (diplôme de l'Ontario)",
+          "durationEn": "2 years (Ontario College Diploma)",
+          "tuitionFr": "18 226 CAD/an (2 trimestres, frais de scolarité et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,226/year (2 terms, tuition and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18226,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL 4.5 (2026) ou 80, Duolingo 110, PTE 53",
+            "Rentrées de janvier et mai en format accéléré (« AD — Accelerated Delivery »)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL 4.5 (2026) or 80, Duolingo 110, PTE 53",
+            "January and May intakes in accelerated delivery (\"AD\")"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/computer-programming",
+          "offerings": [
+            {
+              "campus": "Waterloo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "computer-programming-and-analysis",
+          "nameFr": "Computer Programming and Analysis",
+          "nameEn": "Computer Programming and Analysis",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 ans (diplôme avancé de l'Ontario), stage coop facultatif",
+          "durationEn": "3 years (Ontario College Advanced Diploma), optional co-op",
+          "tuitionFr": "18 226 CAD/an (2 trimestres, frais de scolarité et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,226/year (2 terms, tuition and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18226,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL 4.5 (2026) ou 80, Duolingo 110, PTE 53",
+            "Rentrées de janvier et mai en format accéléré (« AD — Accelerated Delivery »)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL 4.5 (2026) or 80, Duolingo 110, PTE 53",
+            "January and May intakes in accelerated delivery (\"AD\")"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/computer-programming-and-analysis",
+          "offerings": [
+            {
+              "campus": "Waterloo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "cybersecurity-response-planning",
+          "nameFr": "Cybersecurity Response Planning",
+          "nameEn": "Cybersecurity Response Planning",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "1 an (2 trimestres + 1 trimestre coop facultatif), certificat postdiplôme de l'Ontario",
+          "durationEn": "1 year (2 academic terms + 1 optional co-op term), Ontario College Graduate Certificate",
+          "tuitionFr": "19 558 CAD/an (2 trimestres, frais de scolarité et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 19,558/year (2 terms, tuition and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 19558,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/cybersecurity-response-planning",
+          "offerings": [
+            {
+              "campus": "Waterloo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "applied-artificial-intelligence-machine-learning",
+          "nameFr": "Applied Artificial Intelligence and Machine Learning",
+          "nameEn": "Applied Artificial Intelligence and Machine Learning",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "1 an (2 trimestres + 1 trimestre coop facultatif), certificat postdiplôme de l'Ontario",
+          "durationEn": "1 year (2 academic terms + 1 optional co-op term), Ontario College Graduate Certificate",
+          "tuitionFr": "19 908 CAD/an (2 trimestres sans coop, frais annexes compris, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 19,908/year (2 terms without co-op, ancillary fees included, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 19908,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58",
+            "Rentrée internationale ouverte : septembre 2027 (janvier et mai suspendus)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58",
+            "International intake open: September 2027 (January and May suspended)"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/applied-artificial-intelligence-machine-learning"
+        },
+        {
+          "slug": "bachelor-of-computer-science-honours",
+          "nameFr": "Bachelor of Computer Science (Honours)",
+          "nameEn": "Bachelor of Computer Science (Honours)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans, dont 2 stages coop rémunérés",
+          "durationEn": "4 years, including two paid co-op terms",
+          "tuitionFr": "20 176 CAD/an (2 trimestres, frais de scolarité et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 20,176/year (2 terms, tuition and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 20176,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/bachelor-of-computer-science-honours",
+          "offerings": [
+            {
+              "campus": "Waterloo",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Waterloo",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bachelor-of-engineering-mechanical-systems-engineering",
+          "nameFr": "Bachelor of Engineering - Mechanical Systems Engineering",
+          "nameEn": "Bachelor of Engineering - Mechanical Systems Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "4 ans",
+          "durationEn": "4 years",
+          "tuitionFr": "21 041 CAD/an (2 trimestres, frais de scolarité et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 21,041/year (2 terms, tuition and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 21041,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58",
+            "Rentrée d'août 2027 au campus de Cambridge (Fountain Street) ; 1re année commune à tous les baccalauréats en génie"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58",
+            "August 2027 start at Cambridge (Fountain Street) campus; common first year across all engineering degrees"
+          ],
+          "sourceUrl": "https://www.conestogac.on.ca/fulltime/bachelor-of-engineering-mechanical-systems-engineering"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-centennial",
+      "countryId": "can",
+      "nameFr": "Centennial College",
+      "nameEn": "Centennial College",
+      "acronym": "Centennial",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Toronto, Ontario",
+      "locationEn": "Toronto, Ontario",
+      "websiteUrl": "https://www.centennialcollege.ca/",
+      "sourceUrl": "https://www.centennialcollege.ca/international-education/how-to-apply-to-centennial-college",
+      "overviewFr": "Collège public de Toronto (campus Progress pour l'informatique et l'ingénierie, Morningside pour la santé). La plupart des programmes retenus ouvrent en janvier et en septembre, certains aussi en mai. Si ton anglais est insuffisant, le programme English Language Learning (ELL) du collège te prépare : le niveau 5 réussi à 60 % te donne accès à la plupart des programmes sans nouveau test.\n\nFrais de candidature : 125 CAD.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in Toronto (Progress campus for computing and engineering, Morningside for health). Most programmes listed here start in January and September, some also in May. If your English is not strong enough, the college's English Language Learning (ELL) programme prepares you: passing Level 5 with 60% gives access to most programmes with no new test.\n\nApplication fee: CAD 125.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 67, Duolingo 105 à 114 pour les certificats et diplômes ; IELTS 6.5, TOEFL iBT 81, Duolingo 125 pour les diplômes avancés « COMM 170 », les certificats postdiplôme et les baccalauréats ; programme de langue en amont : English Language Learning (ELL) (jusqu'à 5 niveaux, semestres de 15 semaines ; niveau 5 réussi à 60 % (80 % pour un certificat postdiplôme), 4 397,50 CAD de frais de scolarité par semestre de 15 semaines (barème dès l'automne 2025))",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 67, Duolingo 105 to 114 for certificates and diplomas; IELTS 6.5, TOEFL iBT 81, Duolingo 125 for \"COMM 170\" advanced diplomas, graduate certificates and degrees; upstream language programme: English Language Learning (ELL) (up to 5 levels, 15-week semesters; Level 5 passed with 60% (80% for a graduate certificate), CAD 4,397.50 tuition per 15-week semester (rates from fall 2025))",
+      "languagePathway": {
+        "nameFr": "English Language Learning (ELL)",
+        "nameEn": "English Language Learning (ELL)",
+        "durationFr": "jusqu'à 5 niveaux, semestres de 15 semaines ; niveau 5 réussi à 60 % (80 % pour un certificat postdiplôme)",
+        "durationEn": "up to 5 levels, 15-week semesters; Level 5 passed with 60% (80% for a graduate certificate)",
+        "costFr": "4 397,50 CAD de frais de scolarité par semestre de 15 semaines (barème dès l'automne 2025)",
+        "costEn": "CAD 4,397.50 tuition per 15-week semester (rates from fall 2025)",
+        "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/english-language-learning"
+      },
+      "applicationFee": {
+        "amount": 125,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "125 CAD",
+      "applicationFeeEn": "CAD 125",
+      "tuitionLabelFr": "≈ 20 611 – 21 382 CAD par année de 2 semestres selon le programme (internationaux, frais annexes compris, dès l'automne 2026) ; dépôt d'inscription de 2 000 CAD",
+      "tuitionLabelEn": "≈ CAD 20,611 – 21,382 per 2-semester year by programme (international, ancillary fees included, from fall 2026); CAD 2,000 registration deposit",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "software-engineering-technician",
+          "nameFr": "Software Engineering Technician",
+          "nameEn": "Software Engineering Technician",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 ans / 4 semestres (diplôme de l'Ontario)",
+          "durationEn": "2 years / 4 semesters (Ontario College Diploma)",
+          "tuitionFr": "21 382 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 21,382/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 21382,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 67, Duolingo 105 à 114, PTE 51 pour les programmes débutant en COMM 160",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 15.1204)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 67, Duolingo 105 to 114, PTE 51 for programmes starting at COMM 160",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 15.1204)"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/software-engineering-technician",
+          "offerings": [
+            {
+              "campus": "Progress",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Progress",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "software-engineering-technology",
+          "nameFr": "Software Engineering Technology (Optional Co-op)",
+          "nameEn": "Software Engineering Technology (Optional Co-op)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 ans / 6 semestres (diplôme avancé de l'Ontario)",
+          "durationEn": "3 years / 6 semesters (Ontario College Advanced Diploma)",
+          "tuitionFr": "21 382 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 21,382/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 21382,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 à 60 pour les diplômes avancés débutant en COMM 170 et les certificats postdiplôme (voir la fiche du programme)",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 15.1204)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 to 60 for advanced diplomas starting at COMM 170 and graduate certificates (see the programme page)",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 15.1204)"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/software-engineering-technology",
+          "offerings": [
+            {
+              "campus": "Progress",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Progress",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "artificial-intelligence-software-engineering-technology",
+          "nameFr": "Artificial Intelligence - Software Engineering Technology (Optional Co-op)",
+          "nameEn": "Artificial Intelligence - Software Engineering Technology (Optional Co-op)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 ans / 6 semestres (diplôme avancé de l'Ontario)",
+          "durationEn": "3 years / 6 semesters (Ontario College Advanced Diploma)",
+          "tuitionFr": "21 294 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 21,294/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 21294,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 à 60 pour les diplômes avancés débutant en COMM 170 et les certificats postdiplôme (voir la fiche du programme)",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.0102)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 to 60 for advanced diplomas starting at COMM 170 and graduate certificates (see the programme page)",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.0102)"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/artificial-intelligence",
+          "offerings": [
+            {
+              "campus": "Progress",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Progress",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Progress",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "mechanical-engineering-technology-design",
+          "nameFr": "Mechanical Engineering Technology - Design and Industrial (Optional Co-op)",
+          "nameEn": "Mechanical Engineering Technology - Design and Industrial (Optional Co-op)",
+          "level": "Diplôme collégial",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "3 ans / 6 semestres (diplôme avancé de l'Ontario)",
+          "durationEn": "3 years / 6 semesters (Ontario College Advanced Diploma)",
+          "tuitionFr": "21 374 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 21,374/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 21374,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 à 60 pour les diplômes avancés débutant en COMM 170 et les certificats postdiplôme (voir la fiche du programme)",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 15.0805)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 to 60 for advanced diplomas starting at COMM 170 and graduate certificates (see the programme page)",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 15.0805)"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/mechanical-engineering-technology-design",
+          "offerings": [
+            {
+              "campus": "Progress",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Progress",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "practical-nursing",
+          "nameFr": "Practical Nursing",
+          "nameEn": "Practical Nursing",
+          "level": "Diplôme collégial",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "2 ans / 4 semestres (diplôme de l'Ontario)",
+          "durationEn": "2 years / 4 semesters (Ontario College Diploma)",
+          "tuitionFr": "20 611 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 20,611/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 20611,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Exigences d'anglais propres au programme (plus élevées), voir la fiche",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 51.3901)"
+          ],
+          "requirementsEn": [
+            "Programme-specific (higher) English requirements, see the programme page",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 51.3901)"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/practical-nursing",
+          "offerings": [
+            {
+              "campus": "Morningside",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Morningside",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "cybersecurity",
+          "nameFr": "Cybersecurity",
+          "nameEn": "Cybersecurity",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "1 an / 2 semestres (certificat postdiplôme de l'Ontario)",
+          "durationEn": "1 year / 2 semesters (Ontario College Graduate Certificate)",
+          "tuitionFr": "21 101 CAD/an (2 semestres dès l'automne 2026, frais de scolarité et frais annexes, internationaux)",
+          "tuitionEn": "CAD 21,101/year (2 semesters from fall 2026, tuition and ancillary fees, international)",
+          "tuitionAnnual": {
+            "amount": 21101,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 à 60 pour les diplômes avancés débutant en COMM 170 et les certificats postdiplôme (voir la fiche du programme)",
+            "Admissible au permis de travail post-diplôme (PGWP) selon l'établissement (code CIP 11.1003)",
+            "Rentrée internationale ouverte : septembre 2027"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 81, Duolingo 125, PTE 58 to 60 for advanced diplomas starting at COMM 170 and graduate certificates (see the programme page)",
+            "Post-Graduation Work Permit (PGWP) eligible according to the institution (CIP code 11.1003)",
+            "International intake open: September 2027"
+          ],
+          "sourceUrl": "https://www.centennialcollege.ca/programs-courses/full-time/cybersecurity"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-fanshawe",
+      "countryId": "can",
+      "nameFr": "Fanshawe College",
+      "nameEn": "Fanshawe College",
+      "acronym": "Fanshawe",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "London, Ontario",
+      "locationEn": "London, Ontario",
+      "websiteUrl": "https://www.fanshawec.ca/",
+      "sourceUrl": "https://www.fanshawec.ca/international/applicants/international-tuition-fees",
+      "overviewFr": "Collège public de London (Ontario). Les certificats postdiplôme en intelligence artificielle et en analyse de données ouvrent en janvier, mai et septembre ; les diplômes avancés en janvier et septembre. Fanshawe propose un programme English for Academic Purposes (EAP) en 10 niveaux ; avec les écoles de langue partenaires, une lettre d'admission conditionnelle peut t'être délivrée si tu remplis les autres conditions.\n\nFrais de candidature : dépôt de 100 CAD avec la candidature, déduit des frais de scolarité.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in London, Ontario. Graduate certificates in artificial intelligence and data analytics start in January, May and September; advanced diplomas in January and September. Fanshawe offers a 10-level English for Academic Purposes (EAP) programme; with partner language schools, a conditional letter of admission can be issued if you meet the other requirements.\n\nApplication fee: CAD 100 deposit with the application, applied to tuition.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 ou PTE 53 pour les diplômes ; IELTS 6.5, TOEFL 5, Duolingo 120 ou PTE 58 pour les certificats postdiplôme ; programme de langue en amont : English for Academic Purposes (EAP) (10 niveaux de 8 semaines (2 niveaux par semestre), 3 411,36 CAD de frais de scolarité par niveau (4 011,43 CAD avec frais annexes), 2026-2027)",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 4.5 (2026) or 79, Duolingo 105 or PTE 53 for diplomas; IELTS 6.5, TOEFL 5, Duolingo 120 or PTE 58 for graduate certificates; upstream language programme: English for Academic Purposes (EAP) (10 levels of 8 weeks (2 levels per semester), CAD 3,411.36 tuition per level (CAD 4,011.43 with ancillary fees), 2026-2027)",
+      "languagePathway": {
+        "nameFr": "English for Academic Purposes (EAP)",
+        "nameEn": "English for Academic Purposes (EAP)",
+        "durationFr": "10 niveaux de 8 semaines (2 niveaux par semestre)",
+        "durationEn": "10 levels of 8 weeks (2 levels per semester)",
+        "costFr": "3 411,36 CAD de frais de scolarité par niveau (4 011,43 CAD avec frais annexes), 2026-2027",
+        "costEn": "CAD 3,411.36 tuition per level (CAD 4,011.43 with ancillary fees), 2026-2027",
+        "sourceUrl": "https://www.fanshawec.ca/international/applicants/eap"
+      },
+      "applicationFee": {
+        "amount": 100,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "dépôt de 100 CAD avec la candidature, déduit des frais de scolarité",
+      "applicationFeeEn": "CAD 100 deposit with the application, applied to tuition",
+      "tuitionLabelFr": "≈ 18 212 – 18 920 CAD par année de 2 trimestres selon le programme (internationaux, 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 18,212 – 18,920 per 2-term year by programme (international, 2026-2027)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "cpa3-computer-programming-and-analysis-co-op",
+          "nameFr": "Computer Programming and Analysis (Co-op)",
+          "nameEn": "Computer Programming and Analysis (Co-op)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "90 semaines (diplôme avancé de l'Ontario), stage coop rémunéré",
+          "durationEn": "90 weeks (Ontario College Advanced Diploma), paid co-op",
+          "tuitionFr": "18 212 CAD/an (2 trimestres, frais de scolarité et frais obligatoires, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,212/year (2 terms, tuition and mandatory fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18212,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026) or 79, Duolingo 105 (no score below 95), PTE 53"
+          ],
+          "sourceUrl": "https://www.fanshawec.ca/programs/cpa3-computer-programming-and-analysis-co-op/next",
+          "offerings": [
+            {
+              "campus": "London",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "cyb1-cyber-security-co-op",
+          "nameFr": "Cyber Security (Co-op)",
+          "nameEn": "Cyber Security (Co-op)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "90 semaines (diplôme avancé de l'Ontario)",
+          "durationEn": "90 weeks (Ontario College Advanced Diploma)",
+          "tuitionFr": "18 212 CAD/an (2 trimestres, frais de scolarité et frais obligatoires, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,212/year (2 terms, tuition and mandatory fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18212,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026) or 79, Duolingo 105 (no score below 95), PTE 53"
+          ],
+          "sourceUrl": "https://www.fanshawec.ca/programs/cyb1-cyber-security-co-op/next",
+          "offerings": [
+            {
+              "campus": "London",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "aim1-artificial-intelligence-and-machine-learning",
+          "nameFr": "Artificial Intelligence and Machine Learning",
+          "nameEn": "Artificial Intelligence and Machine Learning",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "45 semaines (certificat postdiplôme de l'Ontario, 3 trimestres)",
+          "durationEn": "45 weeks (Ontario College Graduate Certificate, 3 terms)",
+          "tuitionFr": "18 920 CAD/an (2 trimestres, frais de scolarité et frais obligatoires, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,920/year (2 terms, tuition and mandatory fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18920,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5, Duolingo 120 (no score below 105), PTE 58"
+          ],
+          "sourceUrl": "https://www.fanshawec.ca/programs/aim1-artificial-intelligence-and-machine-learning/next",
+          "offerings": [
+            {
+              "campus": "London",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "daa1-data-analytics",
+          "nameFr": "Data Analytics",
+          "nameEn": "Data Analytics",
+          "level": "Graduate certificate",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "30 semaines (certificat postdiplôme de l'Ontario, 2 trimestres)",
+          "durationEn": "30 weeks (Ontario College Graduate Certificate, 2 terms)",
+          "tuitionFr": "18 607 CAD/an (2 trimestres, frais de scolarité et frais obligatoires, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 18,607/year (2 terms, tuition and mandatory fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 18607,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5, Duolingo 120 (no score below 105), PTE 58"
+          ],
+          "sourceUrl": "https://www.fanshawec.ca/programs/daa1-data-analytics/next",
+          "offerings": [
+            {
+              "campus": "London",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "London",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "na-ca-sheridan",
+      "countryId": "can",
+      "nameFr": "Sheridan College",
+      "nameEn": "Sheridan College",
+      "acronym": "Sheridan",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Oakville, Ontario",
+      "locationEn": "Oakville, Ontario",
+      "websiteUrl": "https://www.sheridancollege.ca/",
+      "sourceUrl": "https://www.sheridancollege.ca/admissions/how-to-apply/admission-requirements/english-language",
+      "overviewFr": "Collège public de la région de Toronto (campus Trafalgar à Oakville, Davis à Brampton, Hazel McCallion à Mississauga). Les prix publiés pour 2026-2027 incluent l'assurance santé et les frais annexes. Si ton anglais n'est pas encore au niveau, ta lettre d'offre peut indiquer ton niveau de placement dans le programme English for Academic Purposes (EAP) de Sheridan, à réussir avant ton programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in the Toronto region (Trafalgar campus in Oakville, Davis in Brampton, Hazel McCallion in Mississauga). Published 2026-2027 prices include health insurance and ancillary fees. If your English is not yet at the required level, your offer letter can show your placement level in Sheridan's English for Academic Purposes (EAP) programme, to pass before your programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 4 (2026) ou 80, Duolingo 105 ou PTE 58 pour les certificats et diplômes ; IELTS 6.5, TOEFL iBT 4.5 ou 88, Duolingo 115 ou PTE 60 pour les baccalauréats et certificats postdiplôme ; programme de langue en amont : English for Academic Purposes (EAP) (5 niveaux de 14 semaines ; niveau 5 réussi à 70 % (diplômes) ou 75 % (baccalauréats), 16 836,44 CAD pour 2 semestres (internationaux, 2026-2027))",
+      "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 4 (2026) or 80, Duolingo 105 or PTE 58 for certificates and diplomas; IELTS 6.5, TOEFL iBT 4.5 or 88, Duolingo 115 or PTE 60 for degrees and graduate certificates; upstream language programme: English for Academic Purposes (EAP) (5 levels of 14 weeks; Level 5 passed with 70% (diplomas) or 75% (degrees), CAD 16,836.44 for 2 semesters (international, 2026-2027))",
+      "languagePathway": {
+        "nameFr": "English for Academic Purposes (EAP)",
+        "nameEn": "English for Academic Purposes (EAP)",
+        "durationFr": "5 niveaux de 14 semaines ; niveau 5 réussi à 70 % (diplômes) ou 75 % (baccalauréats)",
+        "durationEn": "5 levels of 14 weeks; Level 5 passed with 70% (diplomas) or 75% (degrees)",
+        "costFr": "16 836,44 CAD pour 2 semestres (internationaux, 2026-2027)",
+        "costEn": "CAD 16,836.44 for 2 semesters (international, 2026-2027)",
+        "sourceUrl": "https://www.sheridancollege.ca/programs/english-for-academic-purposes"
+      },
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 19 700 – 25 792 CAD pour les 2 premiers semestres selon le programme (internationaux, assurance et frais compris, 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 19,700 – 25,792 for the first 2 semesters by programme (international, insurance and fees included, 2026-2027)",
+      "intakePeriods": [
+        "Janvier 2027",
+        "Mai 2027",
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "computer-programming",
+          "nameFr": "Computer Programming",
+          "nameEn": "Computer Programming",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2 ans (diplôme de l'Ontario)",
+          "durationEn": "2 years (Ontario College Diploma)",
+          "tuitionFr": "19 700 CAD/an (2 premiers semestres, scolarité, assurance santé et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 19,700/year (first 2 semesters, tuition, health insurance and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 19700,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4 (2026) ou 80, Duolingo 105, PTE 58",
+            "Programme aligné sur le PGWP selon Sheridan"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4 (2026) or 80, Duolingo 105, PTE 58",
+            "PGWP-aligned programme according to Sheridan"
+          ],
+          "sourceUrl": "https://www.sheridancollege.ca/programs/computer-programming",
+          "offerings": [
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "09/2027",
+              "session": "fall"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "computer-systems-technology-software-development-network-engineering",
+          "nameFr": "Computer Systems Technology – Software Development and Network Engineering",
+          "nameEn": "Computer Systems Technology – Software Development and Network Engineering",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 ans (diplôme avancé de l'Ontario)",
+          "durationEn": "3 years (Ontario College Advanced Diploma)",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4 (2026) ou 80, Duolingo 105, PTE 58",
+            "Programme aligné sur le PGWP selon Sheridan"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4 (2026) or 80, Duolingo 105, PTE 58",
+            "PGWP-aligned programme according to Sheridan"
+          ],
+          "sourceUrl": "https://www.sheridancollege.ca/programs/computer-systems-technology-software-development-and-network-engineering",
+          "offerings": [
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "09/2027",
+              "session": "fall"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "practical-nursing",
+          "nameFr": "Practical Nursing",
+          "nameEn": "Practical Nursing",
+          "level": "Diplôme collégial",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "2 ans (diplôme de l'Ontario)",
+          "durationEn": "2 years (Ontario College Diploma)",
+          "tuitionFr": "25 792 CAD/an (2 premiers semestres, scolarité, assurance santé et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 25,792/year (first 2 semesters, tuition, health insurance and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 25792,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme aligné sur le PGWP selon Sheridan",
+            "Rentrée de janvier 2027 fermée aux internationaux"
+          ],
+          "requirementsEn": [
+            "PGWP-aligned programme according to Sheridan",
+            "January 2027 intake closed to international students"
+          ],
+          "sourceUrl": "https://www.sheridancollege.ca/programs/practical-nursing",
+          "offerings": [
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "05/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "honours-bachelor-computer-science",
+          "nameFr": "Honours Bachelor of Computer Science",
+          "nameEn": "Honours Bachelor of Computer Science",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans, stage coop ou en entreprise",
+          "durationEn": "4 years, co-op or internship",
+          "tuitionFr": "23 010 CAD/an (2 premiers semestres, scolarité, assurance santé et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 23,010/year (first 2 semesters, tuition, health insurance and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 23010,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 88, Duolingo 115, PTE 60",
+            "Programme aligné sur le PGWP selon Sheridan",
+            "Spécialisation au choix (plusieurs codes de programme)"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 88, Duolingo 115, PTE 60",
+            "PGWP-aligned programme according to Sheridan",
+            "Choice of specialization (several programme codes)"
+          ],
+          "sourceUrl": "https://www.sheridancollege.ca/programs/bachelor-computer-science",
+          "offerings": [
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        },
+        {
+          "slug": "bachelor-cyber-security",
+          "nameFr": "Bachelor of Cyber Security",
+          "nameEn": "Bachelor of Cyber Security",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (baccalauréat spécialisé)",
+          "durationEn": "4 years (Honours Baccalaureate Degree)",
+          "tuitionFr": "23 823 CAD/an (2 premiers semestres, scolarité, assurance santé et frais annexes, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 23,823/year (first 2 semesters, tuition, health insurance and ancillary fees, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 23823,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 4.5 (2026) ou 88, Duolingo 115, PTE 60",
+            "Programme aligné sur le PGWP selon Sheridan"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 4.5 (2026) or 88, Duolingo 115, PTE 60",
+            "PGWP-aligned programme according to Sheridan"
+          ],
+          "sourceUrl": "https://www.sheridancollege.ca/programs/bachelor-information-sciences-cyber-security",
+          "offerings": [
+            {
+              "campus": "Davis (Brampton)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "01/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Trafalgar (Oakville)",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "na-ca-uqtr",
+      "countryId": "can",
+      "nameFr": "Université du Québec à Trois-Rivières (UQTR)",
+      "nameEn": "Université du Québec à Trois-Rivières (UQTR)",
+      "acronym": "UQTR",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Trois-Rivières, Québec",
+      "locationEn": "Trois-Rivières, Quebec",
+      "websiteUrl": "https://www.uqtr.ca/",
+      "sourceUrl": "https://oraprdnt.uqtr.uquebec.ca/portail/docs/GSC932/O0007294965_2027_2028___R_pertoire_International.pdf",
+      "overviewFr": "Université francophone de Trois-Rivières, à mi-chemin entre Montréal et Québec, membre du réseau de l'Université du Québec ; elle compte 3 035 étudiants internationaux sur 15 129. Pour un baccalauréat à temps complet (15 crédits par trimestre), la calculette officielle estime un trimestre à environ 13 650 CAD pour un étudiant non canadien à l'automne 2026, frais compris. Pour l'automne 2027, la demande d'admission internationale se fait avant le 1er avril 2027.\n\nFrais de candidature : 54,87 CAD.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Trois-Rivières, halfway between Montreal and Quebec City, part of the Université du Québec network; it has 3,035 international students out of 15,129. For a full-time bachelor's (15 credits per term), the official calculator estimates a term at about CAD 13,650 for a non-Canadian student in fall 2026, fees included. For fall 2027, international applications are due by 1 April 2027.\n\nApplication fee: CAD 54.87.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français ; ta lettre d'admission indique si tu dois passer le TIFEI (test institutionnel de français de l'UQTR)",
+      "languageRequirementsEn": "French: programmes taught in French; your letter of admission says whether you must take the TIFEI (UQTR's French test)",
+      "applicationFee": {
+        "amount": 54.87,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "54,87 CAD",
+      "applicationFeeEn": "CAD 54.87",
+      "tuitionLabelFr": "≈ 27 300 CAD/an (2 trimestres de 15 crédits, frais compris, calculette officielle, automne 2026) ; 17 000 – 25 500 CAD/an selon le répertoire international 2027-2028",
+      "tuitionLabelEn": "≈ CAD 27,300/year (2 terms of 15 credits, fees included, official calculator, fall 2026); CAD 17,000 – 25,500/year according to the 2027-2028 international directory",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "27 300 CAD/an (2 trimestres de 15 crédits, frais compris, calculette officielle de l'UQTR, automne 2026, programme 7833)",
+          "tuitionEn": "CAD 27,300/year (2 terms of 15 credits, fees included, UQTR official calculator, fall 2026, programme 7833)",
+          "tuitionAnnual": {
+            "amount": 27300,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent (études hors Québec : voir les conditions du programme)",
+            "Ta lettre d'admission indique si tu dois passer le Test institutionnel de français pour étudiants internationaux (TIFEI)",
+            "Dates limites internationales : 1er avril (automne), 1er août (hiver)",
+            "Admission à l'automne et à l'hiver ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent (studies outside Quebec: see the programme requirements)",
+            "Your letter of admission says whether you must take the UQTR French test for international students (TIFEI)",
+            "International deadlines: 1 April (fall), 1 August (winter)",
+            "Fall and winter admission; open-enrolment programme"
+          ],
+          "sourceUrl": "https://oraprdnt.uqtr.uquebec.ca/portail/triw082.afficher?owa_cd_pgm=7833"
+        },
+        {
+          "slug": "baccalaureat-genie-informatique",
+          "nameFr": "Baccalauréat en génie informatique",
+          "nameEn": "Bachelor's in Computer Engineering (Baccalauréat en génie informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
+          "tuitionFr": "27 360 CAD/an (2 trimestres de 15 crédits, frais compris, calculette officielle de l'UQTR, automne 2026, programme 6581)",
+          "tuitionEn": "CAD 27,360/year (2 terms of 15 credits, fees included, UQTR official calculator, fall 2026, programme 6581)",
+          "tuitionAnnual": {
+            "amount": 27360,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent (études hors Québec : voir les conditions du programme)",
+            "Ta lettre d'admission indique si tu dois passer le Test institutionnel de français pour étudiants internationaux (TIFEI)",
+            "Dates limites internationales : 1er avril (automne), 1er août (hiver)",
+            "Admission à l'automne et à l'hiver ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent (studies outside Quebec: see the programme requirements)",
+            "Your letter of admission says whether you must take the UQTR French test for international students (TIFEI)",
+            "International deadlines: 1 April (fall), 1 August (winter)",
+            "Fall and winter admission; open-enrolment programme"
+          ],
+          "sourceUrl": "https://oraprdnt.uqtr.uquebec.ca/portail/triw082.afficher?owa_cd_pgm=6581"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "27 370 CAD/an (2 trimestres de 15 crédits, frais compris, calculette officielle de l'UQTR, automne 2026, programme 7947)",
+          "tuitionEn": "CAD 27,370/year (2 terms of 15 credits, fees included, UQTR official calculator, fall 2026, programme 7947)",
+          "tuitionAnnual": {
+            "amount": 27370,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent (études hors Québec : voir les conditions du programme)",
+            "Ta lettre d'admission indique si tu dois passer le Test institutionnel de français pour étudiants internationaux (TIFEI)",
+            "Dates limites internationales : 1er avril (automne), 1er août (hiver)",
+            "Admission à l'automne et à l'hiver ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent (studies outside Quebec: see the programme requirements)",
+            "Your letter of admission says whether you must take the UQTR French test for international students (TIFEI)",
+            "International deadlines: 1 April (fall), 1 August (winter)",
+            "Fall and winter admission; open-enrolment programme"
+          ],
+          "sourceUrl": "https://oraprdnt.uqtr.uquebec.ca/portail/triw082.afficher?owa_cd_pgm=7947"
+        },
+        {
+          "slug": "baa-administration-affaires",
+          "nameFr": "Baccalauréat en administration des affaires",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration des affaires)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "27 350 CAD/an (2 trimestres de 15 crédits, frais compris, calculette officielle de l'UQTR, automne 2026, programme 7264)",
+          "tuitionEn": "CAD 27,350/year (2 terms of 15 credits, fees included, UQTR official calculator, fall 2026, programme 7264)",
+          "tuitionAnnual": {
+            "amount": 27350,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent (études hors Québec : voir les conditions du programme)",
+            "Ta lettre d'admission indique si tu dois passer le Test institutionnel de français pour étudiants internationaux (TIFEI)",
+            "Dates limites internationales : 1er avril (automne), 1er août (hiver)",
+            "Admission à l'automne, à l'hiver et à l'été ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent (studies outside Quebec: see the programme requirements)",
+            "Your letter of admission says whether you must take the UQTR French test for international students (TIFEI)",
+            "International deadlines: 1 April (fall), 1 August (winter)",
+            "Fall, winter and summer admission; open-enrolment programme"
+          ],
+          "sourceUrl": "https://oraprdnt.uqtr.uquebec.ca/portail/triw082.afficher?owa_cd_pgm=7264"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-uqar",
+      "countryId": "can",
+      "nameFr": "Université du Québec à Rimouski (UQAR)",
+      "nameEn": "Université du Québec à Rimouski (UQAR)",
+      "acronym": "UQAR",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Rimouski, Québec",
+      "locationEn": "Rimouski, Quebec",
+      "websiteUrl": "https://www.uqar.ca/",
+      "sourceUrl": "https://www.uqar.ca/programmes-formations-et-admission/admission/etudiant-es-etrangers/admission-pour-etudiants-internationaux/",
+      "overviewFr": "Université francophone de l'Est-du-Québec, membre du réseau de l'Université du Québec, avec deux campus : Rimouski et Lévis (face à la ville de Québec). Pour un baccalauréat à temps complet, l'UQAR indique environ 24 552 CAD pour la 1re année d'un étudiant international (montants indicatifs de l'automne 2026). Les demandes internationales pour l'hiver 2027 sont closes ; pour l'automne 2027, tu as jusqu'au 1er mars 2027.\n\nFrais de candidature : 90,28 CAD.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Eastern Quebec, part of the Université du Québec network, with two campuses: Rimouski and Lévis (across from Quebec City). For a full-time bachelor's, UQAR indicates about CAD 24,552 for an international student's first year (indicative fall 2026 amounts). International applications for winter 2027 are closed; for fall 2027, you have until 1 March 2027.\n\nApplication fee: CAD 90.28.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : avec un diplôme étranger, TEF ou TCF (seuil 460) ou Bright Language (3,5) à joindre à la demande, puis examen de français de l'UQAR au premier trimestre",
+      "languageRequirementsEn": "French: with a foreign diploma, TEF or TCF (460) or Bright Language (3.5) to attach to the application, then the UQAR French exam in the first term",
+      "applicationFee": {
+        "amount": 90.28,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "90,28 CAD",
+      "applicationFeeEn": "CAD 90.28",
+      "tuitionLabelFr": "≈ 24 552 CAD en 1re année (2 trimestres de 15 crédits, internationaux, automne 2026), puis ≈ 25 288 CAD en 2e année",
+      "tuitionLabelEn": "≈ CAD 24,552 in first year (2 terms of 15 credits, international, fall 2026), then ≈ CAD 25,288 in second year",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "24 552 CAD/an (1re année, 2 trimestres de 15 crédits, internationaux, montants indicatifs de l'automne 2026)",
+          "tuitionEn": "CAD 24,552/year (first year, 2 terms of 15 credits, international, indicative fall 2026 amounts)",
+          "tuitionAnnual": {
+            "amount": 24552,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme étranger : test de français à joindre à la demande (TEF ou TCF 460, ou Bright Language 3,5), puis examen de français de l'UQAR à l'arrivée",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027",
+            "Campus de Lévis et de Rimouski ; admission à l'automne ; programme contingenté"
+          ],
+          "requirementsEn": [
+            "Foreign diploma: French test to attach to the application (TEF or TCF 460, or Bright Language 3.5), then the UQAR French exam on arrival",
+            "International deadline for fall 2027: 1 March 2027",
+            "Lévis and Rimouski campuses; fall admission; limited-enrolment programme"
+          ],
+          "sourceUrl": "https://www.uqar.ca/programmes-domaines-detudes/baccalaureat-en-informatique/"
+        },
+        {
+          "slug": "baccalaureat-genie-electrique",
+          "nameFr": "Baccalauréat en génie électrique",
+          "nameEn": "Bachelor's in Electrical Engineering (Baccalauréat en génie électrique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "24 552 CAD/an (1re année, 2 trimestres de 15 crédits, internationaux, montants indicatifs de l'automne 2026)",
+          "tuitionEn": "CAD 24,552/year (first year, 2 terms of 15 credits, international, indicative fall 2026 amounts)",
+          "tuitionAnnual": {
+            "amount": 24552,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme étranger : test de français à joindre à la demande (TEF ou TCF 460, ou Bright Language 3,5), puis examen de français de l'UQAR à l'arrivée",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027",
+            "Base DEC préuniversitaire ou l'équivalent ; admission à l'automne et à l'hiver"
+          ],
+          "requirementsEn": [
+            "Foreign diploma: French test to attach to the application (TEF or TCF 460, or Bright Language 3.5), then the UQAR French exam on arrival",
+            "International deadline for fall 2027: 1 March 2027",
+            "Pre-university DEC or equivalent; fall and winter admission"
+          ],
+          "sourceUrl": "https://www.uqar.ca/etudes/etudier-a-l-uqar/programmes-d-etudes/79n4"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "24 552 CAD/an (1re année, 2 trimestres de 15 crédits, internationaux, montants indicatifs de l'automne 2026)",
+          "tuitionEn": "CAD 24,552/year (first year, 2 terms of 15 credits, international, indicative fall 2026 amounts)",
+          "tuitionAnnual": {
+            "amount": 24552,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme étranger : test de français à joindre à la demande (TEF ou TCF 460, ou Bright Language 3,5), puis examen de français de l'UQAR à l'arrivée",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027",
+            "Base DEC préuniversitaire ou l'équivalent ; admission à l'automne et à l'hiver"
+          ],
+          "requirementsEn": [
+            "Foreign diploma: French test to attach to the application (TEF or TCF 460, or Bright Language 3.5), then the UQAR French exam on arrival",
+            "International deadline for fall 2027: 1 March 2027",
+            "Pre-university DEC or equivalent; fall and winter admission"
+          ],
+          "sourceUrl": "https://www.uqar.ca/etudes/etudier-a-l-uqar/programmes-d-etudes/79n7"
+        },
+        {
+          "slug": "baccalaureat-administration",
+          "nameFr": "Baccalauréat en administration",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "24 552 CAD/an (1re année, 2 trimestres de 15 crédits, internationaux, montants indicatifs de l'automne 2026)",
+          "tuitionEn": "CAD 24,552/year (first year, 2 terms of 15 credits, international, indicative fall 2026 amounts)",
+          "tuitionAnnual": {
+            "amount": 24552,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme étranger : test de français à joindre à la demande (TEF ou TCF 460, ou Bright Language 3,5), puis examen de français de l'UQAR à l'arrivée",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027",
+            "Campus de Lévis et de Rimouski ; admission à l'automne, à l'hiver et à l'été ; programme non contingenté"
+          ],
+          "requirementsEn": [
+            "Foreign diploma: French test to attach to the application (TEF or TCF 460, or Bright Language 3.5), then the UQAR French exam on arrival",
+            "International deadline for fall 2027: 1 March 2027",
+            "Lévis and Rimouski campuses; fall, winter and summer admission; open-enrolment programme"
+          ],
+          "sourceUrl": "https://www.uqar.ca/etudes/etudier-a-l-uqar/programmes-d-etudes/7464"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-uqo",
+      "countryId": "can",
+      "nameFr": "Université du Québec en Outaouais (UQO)",
+      "nameEn": "Université du Québec en Outaouais (UQO)",
+      "acronym": "UQO",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Gatineau, Québec",
+      "locationEn": "Gatineau, Quebec",
+      "websiteUrl": "https://uqo.ca/",
+      "sourceUrl": "https://uqo.ca/frais-de-scolarite/etudiants-internationaux",
+      "overviewFr": "Université francophone de Gatineau, en face d'Ottawa, membre du réseau de l'Université du Québec, avec un second campus à Saint-Jérôme. Au 1er cycle, un étudiant international paie 824,56 CAD par crédit en 2026-2027 (droits de scolarité et montant forfaitaire), plus les frais afférents. Depuis l'automne 2026, la totalité des frais d'un trimestre doit être payée avant son début.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Gatineau, across from Ottawa, part of the Université du Québec network, with a second campus in Saint-Jérôme. At undergraduate level, an international student pays CAD 824.56 per credit in 2026-2027 (tuition and lump sum), plus related fees. Since fall 2026, a term's fees must be paid in full before it starts.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : maîtrise du français attestée (épreuve ministérielle, test du ministère ou tests exigés par les universités francophones)",
+      "languageRequirementsEn": "French: attested French proficiency (ministry exam, ministry test or tests required by French-language universities)",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 24 737 CAD/an (30 crédits au tarif international du 1er cycle, 2026-2027, hors frais afférents)",
+      "tuitionLabelEn": "≈ CAD 24,737/year (30 credits at the international undergraduate rate, 2026-2027, before related fees)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-informatique",
+          "nameFr": "Baccalauréat en informatique",
+          "nameEn": "Bachelor's in Computer Science (Baccalauréat en informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "24 737 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), automne 2026, hors frais afférents)",
+          "tuitionEn": "CAD 24,737/year (30 credits at the international undergraduate rate (tuition and lump sum), fall 2026, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24737,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent",
+            "Maîtrise du français attestée par un test exigé par les universités francophones",
+            "Cours collégiaux de calcul différentiel, calcul intégral et algèbre linéaire (ou cours d'appoint)",
+            "Campus de Gatineau et de Saint-Jérôme ; admission à l'automne et à l'hiver"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent",
+            "French proficiency attested by a test required by French-language universities",
+            "College courses in differential calculus, integral calculus and linear algebra (or remedial courses)",
+            "Gatineau and Saint-Jérôme campuses; fall and winter admission"
+          ],
+          "sourceUrl": "https://uqo.ca/programmes/7833"
+        },
+        {
+          "slug": "baccalaureat-genie-informatique",
+          "nameFr": "Baccalauréat en génie informatique",
+          "nameEn": "Bachelor's in Computer Engineering (Baccalauréat en génie informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "24 737 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), automne 2026, hors frais afférents)",
+          "tuitionEn": "CAD 24,737/year (30 credits at the international undergraduate rate (tuition and lump sum), fall 2026, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24737,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent",
+            "Maîtrise du français attestée par un test exigé par les universités francophones",
+            "Campus de Gatineau ; admission à l'automne"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent",
+            "French proficiency attested by a test required by French-language universities",
+            "Gatineau campus; fall admission"
+          ],
+          "sourceUrl": "https://uqo.ca/programmes/7643"
+        },
+        {
+          "slug": "baccalaureat-cybersecurite",
+          "nameFr": "Baccalauréat en cybersécurité",
+          "nameEn": "Bachelor's in Cybersecurity (Baccalauréat en cybersécurité)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "24 737 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), automne 2026, hors frais afférents)",
+          "tuitionEn": "CAD 24,737/year (30 credits at the international undergraduate rate (tuition and lump sum), fall 2026, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24737,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent",
+            "Maîtrise du français attestée par un test exigé par les universités francophones",
+            "Campus de Gatineau ; admission à l'automne et à l'hiver ; version coopérative contingentée"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent",
+            "French proficiency attested by a test required by French-language universities",
+            "Gatineau campus; fall and winter admission; limited-enrolment co-op version"
+          ],
+          "sourceUrl": "https://uqo.ca/programmes/6784"
+        },
+        {
+          "slug": "baccalaureat-administration",
+          "nameFr": "Baccalauréat en administration",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
+          "tuitionFr": "24 737 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), automne 2026, hors frais afférents)",
+          "tuitionEn": "CAD 24,737/year (30 credits at the international undergraduate rate (tuition and lump sum), fall 2026, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24737,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Diplôme d'études collégiales (DEC) ou l'équivalent",
+            "Maîtrise du français attestée par un test exigé par les universités francophones",
+            "Campus de Gatineau ; admission à l'automne, à l'hiver et à l'été"
+          ],
+          "requirementsEn": [
+            "Quebec college diploma (DEC) or equivalent",
+            "French proficiency attested by a test required by French-language universities",
+            "Gatineau campus; fall, winter and summer admission"
+          ],
+          "sourceUrl": "https://uqo.ca/programmes/7127"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-uqat",
+      "countryId": "can",
+      "nameFr": "Université du Québec en Abitibi-Témiscamingue (UQAT)",
+      "nameEn": "Université du Québec en Abitibi-Témiscamingue (UQAT)",
+      "acronym": "UQAT",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Rouyn-Noranda, Québec",
+      "locationEn": "Rouyn-Noranda, Quebec",
+      "websiteUrl": "https://www.uqat.ca/",
+      "sourceUrl": "https://www.uqat.ca/admission/frais-de-scolarite/internationaux/",
+      "overviewFr": "Université francophone de l'Abitibi-Témiscamingue (Rouyn-Noranda), membre du réseau de l'Université du Québec, avec un campus à Montréal pour la création numérique. Au 1er cycle, un étudiant international paie 807,68 CAD par crédit en 2026-2027 (droits et montant forfaitaire), plus les frais afférents. En génie, des bourses de l'École de génie peuvent couvrir jusqu'à 25 % des frais majorés de la 1re année.\n\nFrais de candidature : 161,50 CAD (85 CAD crédités sur les droits si tu t'inscris).\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Abitibi-Témiscamingue (Rouyn-Noranda), part of the Université du Québec network, with a Montreal campus for digital creation. At undergraduate level, an international student pays CAD 807.68 per credit in 2026-2027 (tuition and lump sum), plus related fees. In engineering, School of Engineering scholarships can cover up to 25% of the first year's higher fees.\n\nApplication fee: CAD 161.50 (CAD 85 credited to tuition if you enrol).\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : TFI, TCF, DELF, DALF ou TEF (C1 ou C2) acceptés ; sans test, évaluation à l'UQAT et cours de rattrapage au besoin",
+      "languageRequirementsEn": "French: TFI, TCF, DELF, DALF or TEF (C1 or C2) accepted; without a test, assessment at UQAT and remedial courses if needed",
+      "applicationFee": {
+        "amount": 161.5,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "161,50 CAD (85 CAD crédités sur les droits si tu t'inscris)",
+      "applicationFeeEn": "CAD 161.50 (CAD 85 credited to tuition if you enrol)",
+      "tuitionLabelFr": "≈ 24 230 CAD/an (30 crédits au tarif international du 1er cycle, 2026-2027, hors frais afférents)",
+      "tuitionLabelEn": "≈ CAD 24,230/year (30 credits at the international undergraduate rate, 2026-2027, before related fees)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-genie-electrique",
+          "nameFr": "Baccalauréat en génie électrique",
+          "nameEn": "Bachelor's in Electrical Engineering (Baccalauréat en génie électrique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
+          "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24230,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Niveau de français : TFI, TCF, DELF, DALF ou TEF (C1 ou C2) acceptés ; sinon test à l'UQAT et cours de rattrapage au besoin",
+            "Programme offert à temps complet aux internationaux",
+            "Bourses de l'École de génie : pour les internationaux, jusqu'à 25 % des frais majorés la 1re année"
+          ],
+          "requirementsEn": [
+            "French level: TFI, TCF, DELF, DALF or TEF (C1 or C2) accepted; otherwise a test at UQAT and remedial courses if needed",
+            "Programme open full-time to international students",
+            "School of Engineering scholarships: for international students, up to 25% of the higher fees in the first year"
+          ],
+          "sourceUrl": "https://www.uqat.ca/etudes/ecole-de-genie/baccalaureat-en-genie-electrique/"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
+          "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24230,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Niveau de français : TFI, TCF, DELF, DALF ou TEF (C1 ou C2) acceptés ; sinon test à l'UQAT et cours de rattrapage au besoin",
+            "Programme offert à temps complet aux internationaux",
+            "Bourses de l'École de génie : pour les internationaux, jusqu'à 25 % des frais majorés la 1re année"
+          ],
+          "requirementsEn": [
+            "French level: TFI, TCF, DELF, DALF or TEF (C1 or C2) accepted; otherwise a test at UQAT and remedial courses if needed",
+            "Programme open full-time to international students",
+            "School of Engineering scholarships: for international students, up to 25% of the higher fees in the first year"
+          ],
+          "sourceUrl": "https://www.uqat.ca/etudes/ecole-de-genie/baccalaureat-en-genie-mecanique/"
+        },
+        {
+          "slug": "baccalaureat-administration",
+          "nameFr": "Baccalauréat en administration",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
+          "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24230,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Niveau de français : TFI, TCF, DELF, DALF ou TEF (C1 ou C2) acceptés ; sinon test à l'UQAT et cours de rattrapage au besoin",
+            "Programme offert à temps complet aux internationaux"
+          ],
+          "requirementsEn": [
+            "French level: TFI, TCF, DELF, DALF or TEF (C1 or C2) accepted; otherwise a test at UQAT and remedial courses if needed",
+            "Programme open full-time to international students"
+          ],
+          "sourceUrl": "https://www.uqat.ca/etudes/gestion/baccalaureat-en-administration/"
+        },
+        {
+          "slug": "baccalaureat-sciences-comptables",
+          "nameFr": "Baccalauréat en sciences comptables",
+          "nameEn": "Bachelor's in Accounting (Baccalauréat en sciences comptables)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "",
+          "durationEn": "",
+          "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
+          "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
+          "tuitionAnnual": {
+            "amount": 24230,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Niveau de français : TFI, TCF, DELF, DALF ou TEF (C1 ou C2) acceptés ; sinon test à l'UQAT et cours de rattrapage au besoin",
+            "Programme offert à temps complet aux internationaux"
+          ],
+          "requirementsEn": [
+            "French level: TFI, TCF, DELF, DALF or TEF (C1 or C2) accepted; otherwise a test at UQAT and remedial courses if needed",
+            "Programme open full-time to international students"
+          ],
+          "sourceUrl": "https://www.uqat.ca/etudes/gestion/baccalaureat-en-sciences-comptables/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-ets",
+      "countryId": "can",
+      "nameFr": "École de technologie supérieure (ÉTS)",
+      "nameEn": "École de technologie supérieure (ÉTS)",
+      "acronym": "ÉTS",
+      "institutionType": "ecole_universitaire",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.etsmtl.ca/",
+      "sourceUrl": "https://www.etsmtl.ca/etudier-a-lets/bourses-finance-et-budget/cout-des-etudes",
+      "overviewFr": "École d'ingénierie francophone du centre-ville de Montréal, membre du réseau de l'Université du Québec, connue pour ses baccalauréats en génie avec stages coopératifs obligatoires en entreprise. En 2026-2027, un crédit coûte 1 171,18 CAD à un étudiant international au 1er cycle (montant forfaitaire compris), soit environ 38 950 CAD par an selon l'ÉTS ; pendant les stages, des bourses de stage sont créditées à ton compte étudiant.\n\nFrais de candidature : 141 CAD (candidats internationaux).\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language engineering school in downtown Montreal, part of the Université du Québec network, known for engineering bachelor's degrees with mandatory paid co-op terms. In 2026-2027, one credit costs an international undergraduate CAD 1,171.18 (lump sum included), about CAD 38,950 a year according to ÉTS; during co-op terms, co-op scholarships are credited to your student account.\n\nApplication fee: CAD 141 (international applicants).\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français ; relevés et diplômes rédigés dans une autre langue que le français ou l'anglais à faire traduire",
+      "languageRequirementsEn": "French: programmes taught in French; transcripts and diplomas in a language other than French or English must be translated",
+      "applicationFee": {
+        "amount": 141,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "141 CAD (candidats internationaux)",
+      "applicationFeeEn": "CAD 141 (international applicants)",
+      "tuitionLabelFr": "≈ 38 950 CAD/an en moyenne (30 crédits de cours + 9 crédits de stage, internationaux, 2026-2027)",
+      "tuitionLabelEn": "≈ CAD 38,950/year on average (30 course credits + 9 co-op credits, international, 2026-2027)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-genie-logiciel",
+          "nameFr": "Baccalauréat en génie logiciel",
+          "nameEn": "Bachelor's in Software Engineering (Baccalauréat en génie logiciel)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "116 crédits de cours et 27 crédits de stage",
+          "durationEn": "116 course credits and 27 co-op credits",
+          "tuitionFr": "38 950 CAD/an (moyenne annuelle publiée par l'ÉTS : 30 crédits de cours + 9 crédits de stage, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 38,950/year (annual average published by ÉTS: 30 course credits + 9 co-op credits, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 38950,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Dates limites internationales : 1er mars (automne), 1er juillet (hiver)",
+            "27 crédits de stages coopératifs obligatoires (des frais de scolarité s'appliquent pendant les stages)"
+          ],
+          "requirementsEn": [
+            "International deadlines: 1 March (fall), 1 July (winter)",
+            "27 mandatory co-op credits (tuition applies during co-op terms)"
+          ],
+          "sourceUrl": "https://www.etsmtl.ca/programmes-formations/baccalaureat-genie-logiciel"
+        },
+        {
+          "slug": "baccalaureat-genie-electrique",
+          "nameFr": "Baccalauréat en génie électrique",
+          "nameEn": "Bachelor's in Electrical Engineering (Baccalauréat en génie électrique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "115 à 120 crédits de cours et 27 crédits de stage",
+          "durationEn": "115 to 120 course credits and 27 co-op credits",
+          "tuitionFr": "38 950 CAD/an (moyenne annuelle publiée par l'ÉTS : 30 crédits de cours + 9 crédits de stage, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 38,950/year (annual average published by ÉTS: 30 course credits + 9 co-op credits, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 38950,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Dates limites internationales : 1er mars (automne), 1er juillet (hiver)",
+            "27 crédits de stages coopératifs obligatoires (des frais de scolarité s'appliquent pendant les stages)"
+          ],
+          "requirementsEn": [
+            "International deadlines: 1 March (fall), 1 July (winter)",
+            "27 mandatory co-op credits (tuition applies during co-op terms)"
+          ],
+          "sourceUrl": "https://www.etsmtl.ca/programmes-formations/baccalaureat-genie-electrique"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "115 crédits de cours et 27 crédits de stage",
+          "durationEn": "115 course credits and 27 co-op credits",
+          "tuitionFr": "38 950 CAD/an (moyenne annuelle publiée par l'ÉTS : 30 crédits de cours + 9 crédits de stage, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 38,950/year (annual average published by ÉTS: 30 course credits + 9 co-op credits, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 38950,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Dates limites internationales : 1er mars (automne), 1er juillet (hiver)",
+            "27 crédits de stages coopératifs obligatoires (des frais de scolarité s'appliquent pendant les stages)"
+          ],
+          "requirementsEn": [
+            "International deadlines: 1 March (fall), 1 July (winter)",
+            "27 mandatory co-op credits (tuition applies during co-op terms)"
+          ],
+          "sourceUrl": "https://www.etsmtl.ca/programmes-formations/baccalaureat-genie-mecanique"
+        },
+        {
+          "slug": "baccalaureat-genie-construction",
+          "nameFr": "Baccalauréat en génie de la construction",
+          "nameEn": "Bachelor's in Construction Engineering (Baccalauréat en génie de la construction)",
+          "level": "Bachelor",
+          "fieldId": "d05",
+          "language": "fr",
+          "durationFr": "116 à 119 crédits de cours et 27 crédits de stage",
+          "durationEn": "116 to 119 course credits and 27 co-op credits",
+          "tuitionFr": "38 950 CAD/an (moyenne annuelle publiée par l'ÉTS : 30 crédits de cours + 9 crédits de stage, internationaux, 2026-2027)",
+          "tuitionEn": "CAD 38,950/year (annual average published by ÉTS: 30 course credits + 9 co-op credits, international, 2026-2027)",
+          "tuitionAnnual": {
+            "amount": 38950,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Dates limites internationales : 1er mars (automne), 1er juillet (hiver)",
+            "27 crédits de stages coopératifs obligatoires (des frais de scolarité s'appliquent pendant les stages)"
+          ],
+          "requirementsEn": [
+            "International deadlines: 1 March (fall), 1 July (winter)",
+            "27 mandatory co-op credits (tuition applies during co-op terms)"
+          ],
+          "sourceUrl": "https://www.etsmtl.ca/programmes-formations/baccalaureat-genie-construction"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-polytechnique",
+      "countryId": "can",
+      "nameFr": "Polytechnique Montréal",
+      "nameEn": "Polytechnique Montréal",
+      "acronym": "Polytechnique",
+      "institutionType": "ecole_universitaire",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.polymtl.ca/",
+      "sourceUrl": "https://etudiant.polymtl.ca/etudes/droits-de-scolarite/cout-des-etudes/baccalaureat",
+      "overviewFr": "Grande école d'ingénierie francophone de Montréal, sur le campus de l'Université de Montréal. Ses baccalauréats en ingénierie comptent 120 crédits et sont agréés par Ingénieurs Canada. En 2026-2027, un crédit coûte 1 127,57 CAD à un étudiant international (montant forfaitaire compris), plus une assurance maladie obligatoire de 900 CAD par an. Pour l'automne 2027, la demande internationale se fait avant le 1er février 2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Major French-language engineering school in Montreal, on the Université de Montréal campus. Its engineering bachelor's degrees have 120 credits and are accredited by Engineers Canada. In 2026-2027, one credit costs an international student CAD 1,127.57 (lump sum included), plus mandatory health insurance of CAD 900 a year. For fall 2027, international applications are due by 1 February 2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : connaissance suffisante de la langue française exigée (règlement des études du baccalauréat, article 14)",
+      "languageRequirementsEn": "French: sufficient knowledge of French required (bachelor's study regulations, section 14)",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 33 827 CAD/an (30 crédits au tarif international, 2026-2027, hors frais et assurance)",
+      "tuitionLabelEn": "≈ CAD 33,827/year (30 credits at the international rate, 2026-2027, before fees and insurance)",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "baccalaureat-genie-informatique",
+          "nameFr": "Baccalauréat en génie informatique",
+          "nameEn": "Bachelor's in Computer Engineering (Baccalauréat en génie informatique)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "33 827 CAD/an (30 crédits au tarif international du baccalauréat (base et montant forfaitaire), automne 2026 – été 2027, hors frais)",
+          "tuitionEn": "CAD 33,827/year (30 credits at the international bachelor's rate (base and lump sum), fall 2026 – summer 2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 33827,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme agréé par le Bureau canadien d'agrément des programmes de génie",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)",
+            "Connaissance suffisante de la langue française exigée (règlement des études, article 14)"
+          ],
+          "requirementsEn": [
+            "Programme accredited by the Canadian Engineering Accreditation Board",
+            "International deadlines: 1 February (fall), 1 June (winter)",
+            "Sufficient knowledge of French required (study regulations, section 14)"
+          ],
+          "sourceUrl": "https://share.polymtl.ca/alfresco/service/api/node/content/workspace/SpacesStore/2aa44c99-8875-4d86-85a5-c6e46bcbbf3c?a=false&guest=true"
+        },
+        {
+          "slug": "baccalaureat-genie-logiciel",
+          "nameFr": "Baccalauréat en génie logiciel",
+          "nameEn": "Bachelor's in Software Engineering (Baccalauréat en génie logiciel)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "33 827 CAD/an (30 crédits au tarif international du baccalauréat (base et montant forfaitaire), automne 2026 – été 2027, hors frais)",
+          "tuitionEn": "CAD 33,827/year (30 credits at the international bachelor's rate (base and lump sum), fall 2026 – summer 2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 33827,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme agréé par le Bureau canadien d'agrément des programmes de génie",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)",
+            "Connaissance suffisante de la langue française exigée (règlement des études, article 14)"
+          ],
+          "requirementsEn": [
+            "Programme accredited by the Canadian Engineering Accreditation Board",
+            "International deadlines: 1 February (fall), 1 June (winter)",
+            "Sufficient knowledge of French required (study regulations, section 14)"
+          ],
+          "sourceUrl": "https://share.polymtl.ca/alfresco/service/api/node/content/workspace/SpacesStore/2aa44c99-8875-4d86-85a5-c6e46bcbbf3c?a=false&guest=true"
+        },
+        {
+          "slug": "baccalaureat-genie-electrique",
+          "nameFr": "Baccalauréat en génie électrique",
+          "nameEn": "Bachelor's in Electrical Engineering (Baccalauréat en génie électrique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "33 827 CAD/an (30 crédits au tarif international du baccalauréat (base et montant forfaitaire), automne 2026 – été 2027, hors frais)",
+          "tuitionEn": "CAD 33,827/year (30 credits at the international bachelor's rate (base and lump sum), fall 2026 – summer 2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 33827,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme agréé par le Bureau canadien d'agrément des programmes de génie",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)",
+            "Connaissance suffisante de la langue française exigée (règlement des études, article 14)"
+          ],
+          "requirementsEn": [
+            "Programme accredited by the Canadian Engineering Accreditation Board",
+            "International deadlines: 1 February (fall), 1 June (winter)",
+            "Sufficient knowledge of French required (study regulations, section 14)"
+          ],
+          "sourceUrl": "https://share.polymtl.ca/alfresco/service/api/node/content/workspace/SpacesStore/2aa44c99-8875-4d86-85a5-c6e46bcbbf3c?a=false&guest=true"
+        },
+        {
+          "slug": "baccalaureat-genie-mecanique",
+          "nameFr": "Baccalauréat en génie mécanique",
+          "nameEn": "Bachelor's in Mechanical Engineering (Baccalauréat en génie mécanique)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "33 827 CAD/an (30 crédits au tarif international du baccalauréat (base et montant forfaitaire), automne 2026 – été 2027, hors frais)",
+          "tuitionEn": "CAD 33,827/year (30 credits at the international bachelor's rate (base and lump sum), fall 2026 – summer 2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 33827,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme agréé par le Bureau canadien d'agrément des programmes de génie",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)",
+            "Connaissance suffisante de la langue française exigée (règlement des études, article 14)"
+          ],
+          "requirementsEn": [
+            "Programme accredited by the Canadian Engineering Accreditation Board",
+            "International deadlines: 1 February (fall), 1 June (winter)",
+            "Sufficient knowledge of French required (study regulations, section 14)"
+          ],
+          "sourceUrl": "https://share.polymtl.ca/alfresco/service/api/node/content/workspace/SpacesStore/2aa44c99-8875-4d86-85a5-c6e46bcbbf3c?a=false&guest=true"
+        },
+        {
+          "slug": "baccalaureat-genie-biomedical",
+          "nameFr": "Baccalauréat en génie biomédical",
+          "nameEn": "Bachelor's in Biomedical Engineering (Baccalauréat en génie biomédical)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
+          "tuitionFr": "33 827 CAD/an (30 crédits au tarif international du baccalauréat (base et montant forfaitaire), automne 2026 – été 2027, hors frais)",
+          "tuitionEn": "CAD 33,827/year (30 credits at the international bachelor's rate (base and lump sum), fall 2026 – summer 2027, before fees)",
+          "tuitionAnnual": {
+            "amount": 33827,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Programme agréé par le Bureau canadien d'agrément des programmes de génie",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)",
+            "Connaissance suffisante de la langue française exigée (règlement des études, article 14)"
+          ],
+          "requirementsEn": [
+            "Programme accredited by the Canadian Engineering Accreditation Board",
+            "International deadlines: 1 February (fall), 1 June (winter)",
+            "Sufficient knowledge of French required (study regulations, section 14)"
+          ],
+          "sourceUrl": "https://share.polymtl.ca/alfresco/service/api/node/content/workspace/SpacesStore/2aa44c99-8875-4d86-85a5-c6e46bcbbf3c?a=false&guest=true"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-hec",
+      "countryId": "can",
+      "nameFr": "HEC Montréal",
+      "nameEn": "HEC Montréal",
+      "acronym": "HEC",
+      "institutionType": "ecole_universitaire",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Montréal, Québec",
+      "locationEn": "Montreal, Quebec",
+      "websiteUrl": "https://www.hec.ca/",
+      "sourceUrl": "https://www.hec.ca/en/students/tuition-fees/pdf/tuition-fees-baa.pdf",
+      "overviewFr": "École de gestion francophone de Montréal, sur le campus de l'Université de Montréal, titulaire des agréments AMBA, AACSB et EQUIS. Le B.A.A. (90 crédits) se suit en français ou en cheminement bilingue français-anglais, avec 15 spécialisations dont la science des données et l'analytique d'affaires. Au tarif international, un crédit du B.A.A. coûte 1 077,43 CAD en 2026-2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language business school in Montreal, on the Université de Montréal campus, holding AMBA, AACSB and EQUIS accreditations. The B.A.A. (90 credits) is taught in French or in a French-English bilingual track, with 15 specializations including data science and business analytics. At the international rate, one B.A.A. credit costs CAD 1,077.43 in 2026-2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : cours en français (B.A.A. aussi en cheminement bilingue) ; en maîtrise, niveau intermédiaire-avancé à un test reconnu si ta scolarité n'atteste pas que tu es francophone",
+      "languageRequirementsEn": "French: courses in French (B.A.A. also in a bilingual track); for master's, intermediate-advanced level on a recognized test if your schooling does not show you are French-speaking",
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 32 323 CAD/an au B.A.A. (30 crédits au tarif international, 2026-2027, hors frais) ; 34 500 – 39 000 CAD pour une M. Sc. complète",
+      "tuitionLabelEn": "≈ CAD 32,323/year for the B.A.A. (30 credits at the international rate, 2026-2027, before fees); CAD 34,500 – 39,000 for a full M.Sc.",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "fr",
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "baa",
+          "nameFr": "Baccalauréat en administration des affaires (B.A.A.)",
+          "nameEn": "Bachelor of Business Administration (Baccalauréat en administration des affaires, B.A.A.)",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "bi",
+          "durationFr": "90 crédits, dont 3 stages crédités et rémunérés possibles",
+          "durationEn": "90 credits, with up to 3 paid credit internships",
+          "tuitionFr": "32 323 CAD/an (30 crédits au tarif international du B.A.A., automne 2026 – hiver 2027, hors frais institutionnels et assurance)",
+          "tuitionEn": "CAD 32,323/year (30 credits at the B.A.A. international rate, fall 2026 – winter 2027, before institutional fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 32323,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "En français ou en cheminement bilingue français-anglais (mention trilingue avec l'espagnol, sous conditions)",
+            "Les Français et Belges francophones paient le tarif canadien (entente entre gouvernements)"
+          ],
+          "requirementsEn": [
+            "In French or in a French-English bilingual track (trilingual mention with Spanish, under conditions)",
+            "French and Belgian Francophone students pay the Canadian rate (intergovernmental agreement)"
+          ],
+          "sourceUrl": "https://www.hec.ca/programmes/baccalaureat/baa"
+        },
+        {
+          "slug": "msc-science-donnees-analytique-affaires",
+          "nameFr": "Maîtrise en gestion (M. Sc.) – science des données et analytique d'affaires",
+          "nameEn": "Master of Science (MSc) – Data Science and Business Analytics",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "45 crédits, 16 à 24 mois",
+          "durationEn": "45 credits, 16 to 24 months",
+          "tuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
+          "tuitionEn": "CAD 34,500 – 39,000 for the full 45-credit programme (international, thesis or supervised project)",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Baccalauréat d'au moins 90 crédits (ou l'équivalent) ; disciplines quantitatives prioritaires selon la spécialisation",
+            "Français : niveau intermédiaire-avancé à un test reconnu si ta scolarité n'atteste pas que tu es francophone",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree of at least 90 credits (or equivalent); quantitative fields preferred depending on the specialization",
+            "French: intermediate-advanced level on a recognized test if your schooling does not show you are French-speaking",
+            "International deadlines: 1 February (fall), 1 June (winter)"
+          ],
+          "sourceUrl": "https://www.hec.ca/programmes/maitrises/maitrise-science-donnees-analytique-affaires"
+        },
+        {
+          "slug": "msc-intelligence-affaires",
+          "nameFr": "Maîtrise en gestion (M. Sc.) – intelligence d'affaires",
+          "nameEn": "Master of Science (MSc) – Business Intelligence (Maîtrise en gestion – intelligence d'affaires)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "45 crédits, 16 à 24 mois",
+          "durationEn": "45 credits, 16 to 24 months",
+          "tuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
+          "tuitionEn": "CAD 34,500 – 39,000 for the full 45-credit programme (international, thesis or supervised project)",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Baccalauréat d'au moins 90 crédits (ou l'équivalent) ; disciplines quantitatives prioritaires selon la spécialisation",
+            "Français : niveau intermédiaire-avancé à un test reconnu si ta scolarité n'atteste pas que tu es francophone",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree of at least 90 credits (or equivalent); quantitative fields preferred depending on the specialization",
+            "French: intermediate-advanced level on a recognized test if your schooling does not show you are French-speaking",
+            "International deadlines: 1 February (fall), 1 June (winter)"
+          ],
+          "sourceUrl": "https://www.hec.ca/programmes/maitrises/maitrise-intelligence-affaires"
+        },
+        {
+          "slug": "msc-finance",
+          "nameFr": "Maîtrise en gestion (M. Sc.) – finance",
+          "nameEn": "Master of Science (MSc) – Finance (Maîtrise en gestion – finance)",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "45 crédits",
+          "durationEn": "45 credits",
+          "tuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
+          "tuitionEn": "CAD 34,500 – 39,000 for the full 45-credit programme (international, thesis or supervised project)",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Baccalauréat d'au moins 90 crédits (ou l'équivalent) ; disciplines quantitatives prioritaires selon la spécialisation",
+            "Français : niveau intermédiaire-avancé à un test reconnu si ta scolarité n'atteste pas que tu es francophone",
+            "Dates limites internationales : 1er février (automne), 1er juin (hiver)"
+          ],
+          "requirementsEn": [
+            "Bachelor's degree of at least 90 credits (or equivalent); quantitative fields preferred depending on the specialization",
+            "French: intermediate-advanced level on a recognized test if your schooling does not show you are French-speaking",
+            "International deadlines: 1 February (fall), 1 June (winter)"
+          ],
+          "sourceUrl": "https://www.hec.ca/programmes/maitrises/maitrise-finance"
+        }
+      ]
+    },
+    {
+      "id": "na-ca-bishops",
+      "countryId": "can",
+      "nameFr": "Université Bishop's",
+      "nameEn": "Bishop's University",
+      "acronym": "Bishop's",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Sherbrooke, Québec",
+      "locationEn": "Sherbrooke, Quebec",
+      "websiteUrl": "https://www.ubishops.ca/",
+      "sourceUrl": "https://www.ubishops.ca/future-students/fees-and-funding/tuition-and-fees/",
+      "overviewFr": "Petite université anglophone du Québec, dans l'arrondissement de Lennoxville à Sherbrooke. En 2026-2027, un crédit coûte 983,68 CAD à un étudiant international de la cohorte 2026, soit 29 510 CAD pour 30 crédits avant les frais obligatoires. Si ton anglais est insuffisant mais que tu remplis les autres conditions, une lettre d'admission conditionnelle est possible avec un programme de langue d'une école partenaire (ILSC, Lambton College, Universitas…).\n\nFrais de candidature : 75 CAD.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Small English-language university in Quebec, in the Lennoxville borough of Sherbrooke. In 2026-2027, one credit costs an international student of the 2026 cohort CAD 983.68, i.e. CAD 29,510 for 30 credits before compulsory fees. If your English is not strong enough but you meet the other requirements, a conditional letter of admission is possible with a partner school's language programme (ILSC, Lambton College, Universitas…).\n\nApplication fee: CAD 75.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 90, Duolingo 115, PTE 65, Cambridge 176 ; programme de langue en amont : Programmes de langue des écoles partenaires (English Language School Pathway) (admission conditionnelle sur preuve d'inscription dans une école partenaire (Brescia, East Coast Language College, Lambton College, Universitas Language Centre Montreal, Halifax Language Institute, ILSC))",
+      "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 90, Duolingo 115, PTE 65, Cambridge 176; upstream language programme: Partner English Language School Pathway programmes (conditional admission with proof of enrolment at a partner school (Brescia, East Coast Language College, Lambton College, Universitas Language Centre Montreal, Halifax Language Institute, ILSC))",
+      "languagePathway": {
+        "nameFr": "Programmes de langue des écoles partenaires (English Language School Pathway)",
+        "nameEn": "Partner English Language School Pathway programmes",
+        "durationFr": "admission conditionnelle sur preuve d'inscription dans une école partenaire (Brescia, East Coast Language College, Lambton College, Universitas Language Centre Montreal, Halifax Language Institute, ILSC)",
+        "durationEn": "conditional admission with proof of enrolment at a partner school (Brescia, East Coast Language College, Lambton College, Universitas Language Centre Montreal, Halifax Language Institute, ILSC)",
+        "costFr": "",
+        "costEn": "",
+        "sourceUrl": "https://www.ubishops.ca/admissions/admission-requirements/english-language-school-pathway-students/"
+      },
+      "applicationFee": {
+        "amount": 75,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "75 CAD",
+      "applicationFeeEn": "CAD 75",
+      "tuitionLabelFr": "≈ 29 510 CAD/an (30 crédits, internationaux, cohorte 2026) ; 32 221 CAD avec les frais obligatoires",
+      "tuitionLabelEn": "≈ CAD 29,510/year (30 credits, international, 2026 cohort); CAD 32,221 with compulsory fees",
+      "intakePeriods": [
+        "Automne 2027",
+        "Janvier (hiver)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bsc-computer-science",
+          "nameFr": "Computer Science (B.Sc.)",
+          "nameEn": "Computer Science (B.Sc.)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 ou 4 ans",
+          "durationEn": "3 or 4 years",
+          "tuitionFr": "29 510 CAD/an (30 crédits, cohorte 2026, internationaux, avant frais obligatoires (32 221 CAD avec))",
+          "tuitionEn": "CAD 29,510/year (30 credits, 2026 cohort, international, before compulsory fees (CAD 32,221 with them))",
+          "tuitionAnnual": {
+            "amount": 29510,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune composante sous 6.0), TOEFL iBT 4.5 (2026) ou 90, Duolingo 115 (aucun sous-score sous 90), PTE 65",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027 ; rentrées d'automne et d'hiver"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no component below 6.0), TOEFL iBT 4.5 (2026) or 90, Duolingo 115 (no sub-score below 90), PTE 65",
+            "International deadline for fall 2027: 1 March 2027; fall and winter entry"
+          ],
+          "sourceUrl": "https://www.ubishops.ca/program/computer-science/"
+        },
+        {
+          "slug": "bba-business-technology-analytics",
+          "nameFr": "Business Technology and Analytics (B.B.A.)",
+          "nameEn": "Business Technology and Analytics (B.B.A.)",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "3 ou 4 ans",
+          "durationEn": "3 or 4 years",
+          "tuitionFr": "29 510 CAD/an (30 crédits, cohorte 2026, internationaux, avant frais obligatoires (32 221 CAD avec))",
+          "tuitionEn": "CAD 29,510/year (30 credits, 2026 cohort, international, before compulsory fees (CAD 32,221 with them))",
+          "tuitionAnnual": {
+            "amount": 29510,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune composante sous 6.0), TOEFL iBT 4.5 (2026) ou 90, Duolingo 115 (aucun sous-score sous 90), PTE 65",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027 ; rentrées d'automne et d'hiver"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no component below 6.0), TOEFL iBT 4.5 (2026) or 90, Duolingo 115 (no sub-score below 90), PTE 65",
+            "International deadline for fall 2027: 1 March 2027; fall and winter entry"
+          ],
+          "sourceUrl": "https://www.ubishops.ca/program/business-technology-and-analytics/"
+        },
+        {
+          "slug": "bba-finance",
+          "nameFr": "Finance (B.B.A.)",
+          "nameEn": "Finance (B.B.A.)",
+          "level": "BBA",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "3 ou 4 ans",
+          "durationEn": "3 or 4 years",
+          "tuitionFr": "29 510 CAD/an (30 crédits, cohorte 2026, internationaux, avant frais obligatoires (32 221 CAD avec))",
+          "tuitionEn": "CAD 29,510/year (30 credits, 2026 cohort, international, before compulsory fees (CAD 32,221 with them))",
+          "tuitionAnnual": {
+            "amount": 29510,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5 (aucune composante sous 6.0), TOEFL iBT 4.5 (2026) ou 90, Duolingo 115 (aucun sous-score sous 90), PTE 65",
+            "Date limite internationale pour l'automne 2027 : 1er mars 2027 ; rentrées d'automne et d'hiver"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5 (no component below 6.0), TOEFL iBT 4.5 (2026) or 90, Duolingo 115 (no sub-score below 90), PTE 65",
+            "International deadline for fall 2027: 1 March 2027; fall and winter entry"
+          ],
+          "sourceUrl": "https://www.ubishops.ca/program/finance/"
+        },
+        {
+          "slug": "msc-computer-science",
+          "nameFr": "Computer Science (M.Sc.)",
+          "nameEn": "Computer Science (M.Sc.)",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "2,5 ans (stage, cours ou mémoire)",
+          "durationEn": "2.5 years (internship, course-based or thesis)",
+          "tuitionFr": "29 510 CAD/an (30 crédits, maîtrise par cours, cohorte 2026, internationaux, avant frais obligatoires)",
+          "tuitionEn": "CAD 29,510/year (30 credits, course-based master's, 2026 cohort, international, before compulsory fees)",
+          "tuitionAnnual": {
+            "amount": 29510,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Rentrées d'automne et d'hiver"
+          ],
+          "requirementsEn": [
+            "Fall and winter entry"
+          ],
+          "sourceUrl": "https://www.ubishops.ca/program/computer-science-msc/"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-unb",
+      "countryId": "can",
+      "nameFr": "Université du Nouveau-Brunswick (UNB)",
+      "nameEn": "University of New Brunswick (UNB)",
+      "acronym": "UNB",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Fredericton, Nouveau-Brunswick",
+      "locationEn": "Fredericton, New Brunswick",
+      "websiteUrl": "https://www.unb.ca/",
+      "sourceUrl": "https://www.unb.ca/international/admission/english.html",
+      "overviewFr": "Université publique anglophone du Nouveau-Brunswick, avec des campus à Fredericton et Saint John. En 2026-2027, les frais de scolarité d'une année en informatique à Fredericton sont de 22 514 CAD pour un étudiant international (25 871 CAD en génie). Si tu n'as pas encore le score d'anglais demandé, tu peux être admis à condition de suivre d'abord le parcours PAEP (Program of Academic English Preparation) ; dès IELTS 5.5 ou 6.0, tu suis déjà certains cours de ton programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language public university in New Brunswick, with campuses in Fredericton and Saint John. In 2026-2027, a year of computer science tuition in Fredericton is CAD 22,514 for an international student (CAD 25,871 in engineering). If you do not yet have the required English score, you can be admitted on condition that you first follow the PAEP pathway (Program of Academic English Preparation); from IELTS 5.5 or 6.0, you already take some courses in your programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 85, Duolingo 115, CAEL 60, PTE 59 (IELTS 7.0 et Duolingo 130 en sciences infirmières) ; programme de langue en amont : Program of Academic English Preparation (PAEP) (admission conditionnelle ; anglais académique à temps complet, avec des cours du programme dès IELTS 5.5–6.0, frais de scolarité de premier cycle à temps complet de UNB)",
+      "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 85, Duolingo 115, CAEL 60, PTE 59 (IELTS 7.0 and Duolingo 130 for Nursing); upstream language programme: Program of Academic English Preparation (PAEP) (conditional admission; full-time academic English, with programme courses from IELTS 5.5–6.0, UNB full-time undergraduate tuition)",
+      "languagePathway": {
+        "nameFr": "Program of Academic English Preparation (PAEP)",
+        "nameEn": "Program of Academic English Preparation (PAEP)",
+        "durationFr": "admission conditionnelle ; anglais académique à temps complet, avec des cours du programme dès IELTS 5.5–6.0",
+        "durationEn": "conditional admission; full-time academic English, with programme courses from IELTS 5.5–6.0",
+        "costFr": "frais de scolarité de premier cycle à temps complet de UNB",
+        "costEn": "UNB full-time undergraduate tuition",
+        "sourceUrl": "https://www.unb.ca/elp/english/paep.html"
+      },
+      "applicationFee": null,
+      "applicationFeeFr": "",
+      "applicationFeeEn": "",
+      "tuitionLabelFr": "≈ 22 514 – 25 871 CAD/an selon la faculté à Fredericton (internationaux, 2026-2027, hors frais et assurances)",
+      "tuitionLabelEn": "≈ CAD 22,514 – 25,871/year by faculty in Fredericton (international, 2026-2027, before fees and insurance)",
+      "intakePeriods": [
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bachelor-computer-science",
+          "nameFr": "Bachelor of Computer Science (BCS)",
+          "nameEn": "Bachelor of Computer Science (BCS)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "8 trimestres d'études (au moins 133 heures-crédits)",
+          "durationEn": "8 study terms (at least 133 credit hours)",
+          "tuitionFr": "22 514 CAD/an (2 trimestres, internationaux, 2026-2027 ; 24 365 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 22,514/year (2 terms, international, 2026-2027; CAD 24,365 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 22514,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 85, Duolingo 115, CAEL 60, PTE 59",
+            "Admission conditionnelle possible avec le parcours d'anglais PAEP de UNB Fredericton",
+            "Programme coop ou PEP (expérience professionnelle) facultatif"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 85, Duolingo 115, CAEL 60, PTE 59",
+            "Conditional admission possible through UNB Fredericton's PAEP English pathway",
+            "Optional co-op or PEP (professional experience)"
+          ],
+          "sourceUrl": "https://www.unb.ca/academics/calendar/undergraduate/current/frederictonprograms/bachelorofcomputerscience.html"
+        },
+        {
+          "slug": "bsc-software-engineering",
+          "nameFr": "Bachelor of Science in Software Engineering (BScSwE)",
+          "nameEn": "Bachelor of Science in Software Engineering (BScSwE)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 ans (5 avec coop ou PEP), au moins 160 heures-crédits",
+          "durationEn": "4 years (5 with co-op or PEP), at least 160 credit hours",
+          "tuitionFr": "",
+          "tuitionEn": "",
+          "tuitionAnnual": null,
+          "requirementsFr": [
+            "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 85, Duolingo 115, CAEL 60, PTE 59",
+            "Admission conditionnelle possible avec le parcours d'anglais PAEP de UNB Fredericton"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 85, Duolingo 115, CAEL 60, PTE 59",
+            "Conditional admission possible through UNB Fredericton's PAEP English pathway"
+          ],
+          "sourceUrl": "https://www.unb.ca/academics/calendar/undergraduate/current/frederictonprograms/bachelorofscienceinsoftwarenegineering.html"
+        },
+        {
+          "slug": "bsce-mechanical-engineering",
+          "nameFr": "Bachelor of Science in Engineering – Mechanical Engineering",
+          "nameEn": "Bachelor of Science in Engineering – Mechanical Engineering",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "160 heures-crédits",
+          "durationEn": "160 credit hours",
+          "tuitionFr": "25 871 CAD/an (2 trimestres, internationaux, 2026-2027 ; 27 722 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 25,871/year (2 terms, international, 2026-2027; CAD 27,722 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 25871,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 85, Duolingo 115, CAEL 60, PTE 59",
+            "Admission conditionnelle possible avec le parcours d'anglais PAEP de UNB Fredericton"
+          ],
+          "requirementsEn": [
+            "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 85, Duolingo 115, CAEL 60, PTE 59",
+            "Conditional admission possible through UNB Fredericton's PAEP English pathway"
+          ],
+          "sourceUrl": "https://www.unb.ca/academics/calendar/undergraduate/current/frederictonprograms/bachelorofscienceinengineering/mechanicalengineering.html"
+        },
+        {
+          "slug": "bachelor-of-nursing",
+          "nameFr": "Bachelor of Nursing (BN)",
+          "nameEn": "Bachelor of Nursing (BN)",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "4 ans",
+          "durationEn": "4 years",
+          "tuitionFr": "22 959 CAD/an (2 trimestres, internationaux, 2026-2027 ; 24 810 CAD avec frais et assurances)",
+          "tuitionEn": "CAD 22,959/year (2 terms, international, 2026-2027; CAD 24,810 with fees and insurance)",
+          "tuitionAnnual": {
+            "amount": 22959,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Anglais : IELTS 7.0, TOEFL iBT 5 (2026) ou 100, Duolingo 130, CAEL 80, PTE 68",
+            "Offert à Fredericton et à Saint John"
+          ],
+          "requirementsEn": [
+            "English: IELTS 7.0, TOEFL iBT 5 (2026) or 100, Duolingo 130, CAEL 80, PTE 68",
+            "Offered in Fredericton and Saint John"
+          ],
+          "sourceUrl": "https://www.unb.ca/academics/calendar/undergraduate/current/frederictonprograms/bachelorofnursing.html"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "na-ca-ccnb",
+      "countryId": "can",
+      "nameFr": "Collège communautaire du Nouveau-Brunswick (CCNB)",
+      "nameEn": "Collège communautaire du Nouveau-Brunswick (CCNB)",
+      "acronym": "CCNB",
+      "institutionType": "college_public",
+      "consultedAt": "2026-10-17",
+      "locationFr": "Bathurst, Nouveau-Brunswick",
+      "locationEn": "Bathurst, New Brunswick",
+      "websiteUrl": "https://ccnb.ca/",
+      "sourceUrl": "https://ccnb.ca/frais-et-financement/droits-de-scolarite/",
+      "overviewFr": "Collège public francophone du Nouveau-Brunswick, avec des campus à Bathurst, Campbellton, Dieppe, Edmundston et dans la Péninsule acadienne. Un programme d'un an (30 à 40 semaines) coûte 10 258 CAD aux étudiants internationaux. Le CCNB participe au programme pilote fédéral pour les étudiants francophones en situation minoritaire (PPECFSM) et précise qu'il ne travaille avec aucune agence de recrutement : ne paie pas d'intermédiaire.\n\nFrais de candidature : 100 CAD (1 ou 2 choix de programme par année) ; frais de confirmation de 500 CAD + 4 644 CAD une fois admis.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language public college in New Brunswick, with campuses in Bathurst, Campbellton, Dieppe, Edmundston and the Acadian Peninsula. A one-year programme (30 to 40 weeks) costs international students CAD 10,258. CCNB takes part in the federal Francophone Minority Communities Student Pilot and states that it works with no recruitment agency: do not pay intermediaries.\n\nApplication fee: CAD 100 (1 or 2 programme choices per year); CAD 500 + CAD 4,644 confirmation fee once admitted.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes enseignés en français ; réussite du test d'admission du CCNB",
+      "languageRequirementsEn": "French: programmes taught in French; passing the CCNB admission test",
+      "applicationFee": {
+        "amount": 100,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "100 CAD (1 ou 2 choix de programme par année) ; frais de confirmation de 500 CAD + 4 644 CAD une fois admis",
+      "applicationFeeEn": "CAD 100 (1 or 2 programme choices per year); CAD 500 + CAD 4,644 confirmation fee once admitted",
+      "tuitionLabelFr": "10 258 CAD/an (programme de 30 à 40 semaines, internationaux) ; 301 CAD par semaine pour les autres durées",
+      "tuitionLabelEn": "CAD 10,258/year (30- to 40-week programme, international); CAD 301 per week for other lengths",
+      "intakePeriods": [
+        "Automne 2027"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "programmation-developpement-applications",
+          "nameFr": "Programmation et développement d'applications",
+          "nameEn": "Programming and Application Development (Programmation et développement d'applications)",
+          "level": "Diplôme collégial",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "60 semaines",
+          "durationEn": "60 weeks",
+          "tuitionFr": "10 258 CAD/an (droit fixe annuel d'un programme de 30 à 40 semaines, internationaux)",
+          "tuitionEn": "CAD 10,258/year (annual flat fee for a 30- to 40-week programme, international)",
+          "tuitionAnnual": {
+            "amount": 10258,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Personne candidate internationale : diplôme d'études secondaires ou l'équivalent, et réussite du test d'admission du CCNB",
+            "Liste des programmes ouverts au programme pilote PPECFSM pour l'automne 2027",
+            "Campus de Bathurst"
+          ],
+          "requirementsEn": [
+            "International applicant: secondary school diploma or equivalent, and passing the CCNB admission test",
+            "Listed among programmes open under the FMC Student Pilot for fall 2027",
+            "Bathurst campus"
+          ],
+          "sourceUrl": "https://ccnb.ca/programmes/programmation-et-developpement-dapplications/"
+        },
+        {
+          "slug": "techniques-de-comptabilite",
+          "nameFr": "Techniques de comptabilité",
+          "nameEn": "Accounting Techniques (Techniques de comptabilité)",
+          "level": "Diplôme collégial",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "60 semaines",
+          "durationEn": "60 weeks",
+          "tuitionFr": "10 258 CAD/an (droit fixe annuel d'un programme de 30 à 40 semaines, internationaux)",
+          "tuitionEn": "CAD 10,258/year (annual flat fee for a 30- to 40-week programme, international)",
+          "tuitionAnnual": {
+            "amount": 10258,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Personne candidate internationale : diplôme d'études secondaires ou l'équivalent, et réussite du test d'admission du CCNB",
+            "Liste des programmes ouverts au programme pilote PPECFSM pour l'automne 2027",
+            "Campus de Bathurst et de Dieppe"
+          ],
+          "requirementsEn": [
+            "International applicant: secondary school diploma or equivalent, and passing the CCNB admission test",
+            "Listed among programmes open under the FMC Student Pilot for fall 2027",
+            "Bathurst and Dieppe campuses"
+          ],
+          "sourceUrl": "https://ccnb.ca/programmes/techniques-de-comptabilite/"
+        },
+        {
+          "slug": "technologie-instrumentation-automatisation",
+          "nameFr": "Technologie de l'instrumentation et de l'automatisation",
+          "nameEn": "Instrumentation and Automation Technology (Technologie de l'instrumentation et de l'automatisation)",
+          "level": "Diplôme collégial",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "74 semaines, stage compris",
+          "durationEn": "74 weeks, internship included",
+          "tuitionFr": "10 258 CAD/an (droit fixe annuel d'un programme de 30 à 40 semaines, internationaux)",
+          "tuitionEn": "CAD 10,258/year (annual flat fee for a 30- to 40-week programme, international)",
+          "tuitionAnnual": {
+            "amount": 10258,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Personne candidate internationale : diplôme d'études secondaires ou l'équivalent, et réussite du test d'admission du CCNB",
+            "Liste des programmes ouverts au programme pilote PPECFSM pour l'automne 2027",
+            "Campus de Bathurst"
+          ],
+          "requirementsEn": [
+            "International applicant: secondary school diploma or equivalent, and passing the CCNB admission test",
+            "Listed among programmes open under the FMC Student Pilot for fall 2027",
+            "Bathurst campus"
+          ],
+          "sourceUrl": "https://ccnb.ca/programmes/technologie-de-linstrumentation-et-de-lautomatisation/"
+        },
+        {
+          "slug": "techniques-en-pharmacie",
+          "nameFr": "Techniques en pharmacie",
+          "nameEn": "Pharmacy Techniques (Techniques en pharmacie)",
+          "level": "Diplôme collégial",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "60 semaines, stage compris",
+          "durationEn": "60 weeks, internship included",
+          "tuitionFr": "10 258 CAD/an (droit fixe annuel d'un programme de 30 à 40 semaines, internationaux)",
+          "tuitionEn": "CAD 10,258/year (annual flat fee for a 30- to 40-week programme, international)",
+          "tuitionAnnual": {
+            "amount": 10258,
+            "currency": "CAD"
+          },
+          "requirementsFr": [
+            "Personne candidate internationale : diplôme d'études secondaires ou l'équivalent, et réussite du test d'admission du CCNB",
+            "Liste des programmes ouverts au programme pilote PPECFSM pour l'automne 2027",
+            "Campus de Campbellton"
+          ],
+          "requirementsEn": [
+            "International applicant: secondary school diploma or equivalent, and passing the CCNB admission test",
+            "Listed among programmes open under the FMC Student Pilot for fall 2027",
+            "Campbellton campus"
+          ],
+          "sourceUrl": "https://ccnb.ca/programmes/techniques-en-pharmacie/"
+        }
+      ]
     }
   ]
 }

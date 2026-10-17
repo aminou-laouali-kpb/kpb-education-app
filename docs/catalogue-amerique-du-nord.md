@@ -8,9 +8,12 @@ provenance fait par fait : `backend/scripts/data/amerique-du-nord-2027.sources.m
 Import : `npm run import:north-america` (runbook :
 `docs/runbook-catalogue-amerique-du-nord.md`).
 
-**Livré : 20 établissements (10 au Canada, 10 aux États-Unis), 97 formations.**
-L'objectif était de 12 à 15 par pays : les candidats écartés et la raison sont
-listés plus bas, et la liste peut être complétée par une seconde passe.
+**Livré : 36 établissements (26 au Canada, 10 aux États-Unis), 172 formations.**
+Première passe (16/10/2026) : 20 établissements, 97 formations. Seconde passe
+Canada (17/10/2026, décisions du propriétaire) : 16 établissements, 75
+formations — Québec d'abord, Nouveau-Brunswick, collèges de l'Ontario à
+admission plus accessible avec programme de langue en amont (section
+« Canada — seconde passe » ci-dessous).
 
 ## Critères de sélection
 
@@ -35,6 +38,83 @@ sur le site de chaque établissement :
    déjà au catalogue (`uottawa`) — elle n'est pas recréée ; aucun autre
    établissement retenu n'existe dans les seeds, les imports, le catalogue
    unique, le CSV des partenaires ni le catalogue EEF (France).
+
+## Canada — seconde passe (17/10/2026)
+
+Décisions du propriétaire : **prioriser le Québec** (réseau UQ et établissements
+très demandés par les élèves d'Afrique francophone), **compléter le
+Nouveau-Brunswick**, puis, côté anglophone, des **collèges à admission plus
+accessible avec un programme de langue en amont**. Relevés du 17/10/2026 ;
+provenance : section « Canada — seconde passe » de
+`backend/scripts/data/amerique-du-nord-2027.sources.md`.
+
+### Critères (vérifiables sur le site de l'établissement)
+
+1. **Québec / francophonie** : enseignement en français, établissements du
+   réseau de l'Université du Québec hors UQAM / UQAC (déjà là), écoles
+   d'ingénieurs et de gestion de Montréal, Bishop's (anglophone, au Québec) ;
+   au Nouveau-Brunswick, l'université anglophone (UNB) et le collège
+   francophone participant au **PPECFSM** (CCNB).
+2. **Collèges de l'Ontario** (tous publics) : un **programme d'anglais en
+   amont** publié (nom, durée, coût) qui remplit l'exigence d'anglais ou ouvre
+   une admission conditionnelle ; frais internationaux 2026-2027 publiés par
+   programme ; **rentrées de janvier et/ou mai** ouvertes aux internationaux le
+   17/10/2026 ; **programmes alignés sur le PGWP** (code CIP affiché quand la
+   fiche le donne) ; domaines demandés (informatique / IA, data, cybersécurité,
+   technologie du génie, soins infirmiers auxiliaires, analytique d'affaires).
+3. **Pas de doublon** : LaSalle College Montréal est déjà au catalogue unique
+   (`lasalle_college_montreal`) ; aucun établissement retenu n'existe dans les
+   seeds, les imports, le catalogue de démo, le CSV des partenaires ni le
+   catalogue EEF (test-garde `catalog-duplicates.spec.ts`).
+
+### Québec (8)
+
+| Établissement | Ville | Type | Langue | Frais intl 2026-2027 | Langue en amont | Formations |
+|---|---|---|---|---|---|---|
+| UQTR | Trois-Rivières | université publique (UQ) | français | ≈ 27 300 CAD/an (calculette, frais compris) | non (TIFEI si la lettre l'exige) | 4 |
+| UQAR | Rimouski / Lévis | université publique (UQ) | français | 24 552 CAD en 1re année | non (TEF / TCF 460) | 4 |
+| UQO | Gatineau | université publique (UQ) | français | 824,56 CAD/crédit (≈ 24 737 CAD/an) | non | 4 |
+| UQAT | Rouyn-Noranda | université publique (UQ) | français | 807,68 CAD/crédit (≈ 24 230 CAD/an) | non (test UQAT + rattrapage) | 4 |
+| ÉTS | Montréal | école universitaire (UQ) | français | 1 171,18 CAD/crédit (≈ 38 950 CAD/an avec stages) | non | 4 |
+| Polytechnique Montréal | Montréal | école universitaire | français | 1 127,57 CAD/crédit (≈ 33 827 CAD/an) | non | 5 |
+| HEC Montréal | Montréal | école universitaire | français (B.A.A. bilingue) | 1 077,43 CAD/crédit au B.A.A. ; 34 500 – 39 000 CAD la M. Sc. | non | 4 |
+| Université Bishop's | Sherbrooke | université publique | anglais | 983,68 CAD/crédit (29 510 CAD/an) | oui (écoles partenaires, admission conditionnelle) | 4 |
+
+### Nouveau-Brunswick (2)
+
+| Établissement | Ville | Type | Langue | Frais intl 2026-2027 | Langue en amont | Formations |
+|---|---|---|---|---|---|---|
+| Université du Nouveau-Brunswick (UNB) | Fredericton | université publique | anglais | 22 514 – 25 871 CAD/an selon la faculté | oui : PAEP (admission conditionnelle) | 4 |
+| CCNB | Bathurst (5 campus) | collège public | français | 10 258 CAD/an | non (test d'admission du CCNB) | 4 |
+
+### Collèges de l'Ontario (6)
+
+| Collège | Ville | Frais intl (2 semestres) | Programme d'anglais en amont | Rentrées intl ouvertes | Formations |
+|---|---|---|---|---|---|
+| Humber Polytechnic | Toronto | 20 868 – 24 765 CAD | EAP, 2 semestres, 15 437 CAD | janv. / mai / sept. 2027 | 7 |
+| Seneca Polytechnic | Toronto | 16 809 – 22 064 CAD (scolarité seule) | ELI, 8 niveaux de 7 semaines, 3 269,25 CAD/niveau, admission conditionnelle | janv. / mai 2027 | 6 |
+| Conestoga College | Kitchener-Waterloo | 18 226 – 21 041 CAD (frais compris) | English Language Studies, 1 an, 11 330 CAD | janv. / mai / sept. 2027 | 6 |
+| Centennial College | Toronto | 20 611 – 21 382 CAD (frais compris) | ELL, jusqu'à 5 niveaux de 15 semaines, 4 397,50 CAD/semestre | janv. / mai / sept. 2027 | 6 |
+| Fanshawe College | London | 18 212 – 18 920 CAD | EAP, 10 niveaux de 8 semaines, 3 411,36 CAD/niveau | janv. / mai / sept. 2027 | 4 |
+| Sheridan College | Oakville / Brampton | 19 700 – 25 792 CAD (assurance et frais compris) | EAP, 5 niveaux de 14 semaines, 16 836,44 CAD / 2 semestres | janv. / mai / sept. 2027 | 5 |
+
+Niveaux : les diplômes et diplômes avancés de l'Ontario et les diplômes du
+CCNB sont écrits **« Diplôme collégial »**, les certificats postdiplôme de
+l'Ontario **« Graduate certificate »** (`normalizeDegreeLevel`, backend et
+admin). L'app les affiche tels quels ; dans son filtre par niveau, ils tombent
+dans « Autre » (voir « À VALIDER »).
+
+### Écartés en seconde passe
+
+- **George Brown Polytechnic** : site officiel inaccessible (HTTP 403).
+- **Algonquin College** : disponibilités et frais seulement via icônes et
+  calculateur, non lisibles.
+- **Niagara College** : pages de programmes introuvables (404) ce jour-là.
+- **INRS** : uniquement des cycles supérieurs de recherche.
+- **Cégeps** (DEC / AEC) : aucune grille internationale 2026-2027 publiée par
+  cégep (le règlement de Matane ne donne pas les montants) ; le programme
+  d'exemption PEDSS vise les DEC techniques. À compléter avec des sources
+  directes (voir « À VALIDER »).
 
 ## Contexte à connaître avant de recommander les États-Unis
 
@@ -113,13 +193,14 @@ pays de citoyenneté demeurent (Sherbrooke, UQAM).
 - **Université de Saint-Boniface** : grille 2026-2027 publiée sous forme de
   « majoration » sans que le total international soit explicite — à compléter
   avec l'établissement (voir « À VALIDER »).
-- **Carleton, UQTR, Université d'Ottawa** : Ottawa existe déjà ; Carleton et
-  UQTR n'ont pas été instruites dans cette passe.
+- **Carleton, Université d'Ottawa** : Ottawa existe déjà ; Carleton n'a pas
+  été instruite (UQTR est ajoutée en seconde passe).
 
 ## Conversion en euros
 
 `tuitionMinEur` et `applicationFeeEur` sont calculés à l'import depuis le
-montant annuel du JSON, au **taux de référence BCE du 16/10/2026** :
+montant annuel du JSON, au **taux de référence BCE du 16/10/2026** (aussi pour
+la seconde passe : le 17/10/2026 est un samedi, sans fixing BCE) :
 1 € = 1,1253 USD ; 1 € = 1,5935 CAD (versionné dans le JSON,
 `exchangeRates`). Ce sont des valeurs machine (score budgétaire, filtre) : les
 fiches affichent la devise d'origine. Le montant annuel retenu est indiqué en
@@ -142,6 +223,23 @@ clair dans chaque libellé de frais (base de calcul comprise).
 
 ## Faits manquants (laissés vides)
 
+Seconde passe :
+
+- Frais de candidature : Conestoga, Sheridan, UQO, Polytechnique, HEC, UNB.
+- Frais internationaux : Sheridan « Software Development and Network
+  Engineering », UNB « Software Engineering » (libellé de l'établissement
+  repris), M. Sc. de HEC (coût du programme complet seulement, pas de
+  `tuitionMinEur`).
+- Crédits des quatre baccalauréats de l'UQAT.
+- Codes CIP / mention PGWP : Conestoga, Fanshawe (non affichés sur les fiches
+  lues).
+- Rentrées internationales de septembre 2027 de Seneca (non publiées) ; dates
+  limites internationales chiffrées de l'UQO ; date limite du B.A.A. de HEC.
+- Pages de programme de Polytechnique (site protégé) : intitulés et 120
+  crédits pris dans le règlement des études 2026-2027.
+
+Première passe :
+
 - Montant des droits internationaux 2026-2027 : **UQAM**, **UQAC** (et la
   maîtrise en santé publique de l'UdeM, la maîtrise en informatique de
   Sherbrooke).
@@ -156,6 +254,24 @@ clair dans chaque libellé de frais (base de calcul comprise).
   « Automne 2027 »).
 
 ## À VALIDER (propriétaire)
+
+Seconde passe :
+
+1. **Filtre par niveau de l'app** : « Diplôme collégial » et « Graduate
+   certificate » tombent dans « Autre » (`lib/app/core/utils/study_level.dart`
+   n'a pas été modifié dans ce chantier) ; faut-il un filtre « Collège » ?
+2. **Garde de production** : si la première passe est déjà en production,
+   l'application est refusée sans `KPB_ALLOW_PRODUCTION_SEED=1` (l'opération
+   vps-ops ne sait pas le passer) — voir le runbook.
+3. **Taille du catalogue** : +75 formations (172 au total) ; vérifier la marge
+   sous la limite de 1 000 en production avant d'appliquer.
+4. **Cégeps** : souhaites-tu une passe dédiée (sources directes des cégeps) ?
+5. HEC Montréal et Polytechnique (≈ 32 000 – 39 000 CAD/an) restent chères
+   pour ce public : les garder ?
+6. Humber, Conestoga : dépôts et frais de candidature à reconfirmer sur la
+   page de candidature au moment de la campagne.
+
+Première passe :
 
 1. Liste des pays visés par les restrictions de visas américains au moment de
    la mise en ligne, et message à tenir aux élèves de ces pays.

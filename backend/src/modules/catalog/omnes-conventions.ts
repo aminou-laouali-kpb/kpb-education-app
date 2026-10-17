@@ -100,7 +100,8 @@ export function studyLevelsFor(row: Pick<OmnesRow, 'programFamily'>): string[] {
 }
 
 /// Normalise a raw OMNES family + degree level to a clean canonical degree
-/// label (Bachelor · BBA · Master · MBA / DBA · Doctorat · Bac+2). Mirrors the
+/// label (Bachelor · BBA · Master · MBA / DBA · Doctorat · Bac+2, plus
+/// Graduate certificate · Diplôme collégial for Canadian colleges). Mirrors the
 /// Flutter `programLevelLabel` (lib/app/core/utils/study_level.dart) so the
 /// catalogue shows consistent, épuré labels instead of "MSc · Bac+5", "PGE"…
 export function normalizeDegreeLevel(raw: string): string {
@@ -124,6 +125,24 @@ export function normalizeDegreeLevel(raw: string): string {
     s.includes('licence')
   ) {
     return 'Bachelor';
+  }
+  // Collèges canadiens (catalogue Amérique du Nord, 17/10/2026) : le
+  // certificat postdiplôme de l'Ontario (« Ontario College Graduate
+  // Certificate ») et les diplômes collégiaux (diplôme / diplôme avancé de
+  // l'Ontario, DEC du Québec, diplôme du CCNB) ne sont ni des licences ni des
+  // masters.
+  if (
+    s.includes('graduate certificate') || s.includes('postgraduate certificate') ||
+    s.includes('post-graduate certificate') || s.includes('certificat postdiplôme')
+  ) {
+    return 'Graduate certificate';
+  }
+  if (
+    s.includes('diplôme collégial') || s.includes('diplome collegial') ||
+    s.includes("diplôme d'études collégiales") || s.includes('college diploma') ||
+    s.includes('advanced diploma')
+  ) {
+    return 'Diplôme collégial';
   }
   if (s.includes('bac+2') || s.includes('bac +2')) return 'Bac+2';
   return raw.trim();

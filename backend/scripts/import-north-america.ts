@@ -19,8 +19,9 @@
  *
  * Garde de production (src/common/seed-safety.ts), à l'application seulement :
  * autorisée tant qu'aucune ligne `na-*` n'est en base, refusée ensuite sauf
- * KPB_ALLOW_PRODUCTION_SEED=1 (une fois la première passe faite, il n'y a de
- * toute façon plus rien à créer).
+ * KPB_ALLOW_PRODUCTION_SEED=1 — nécessaire pour la seconde passe Canada
+ * (17/10/2026) si la première est déjà appliquée : seuls les établissements et
+ * formations absents sont créés.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import * as path from 'node:path';
@@ -62,7 +63,8 @@ async function main() {
   }
   const doc = JSON.parse(readFileSync(SOURCE, 'utf8')) as NaSource;
   const errors = validateNaSource(doc);
-  console.log(`Source : ${SOURCE} (consultée le ${doc.consultedAt}, taux BCE du ${doc.exchangeRates.date})`);
+  const dates = [...new Set(doc.institutions.map((i) => i.consultedAt ?? doc.consultedAt))].sort();
+  console.log(`Source : ${SOURCE} (consultée le ${dates.join(' et le ')}, taux BCE du ${doc.exchangeRates.date})`);
   if (errors.length) {
     console.error('\nERREURS — rien ne sera écrit :');
     for (const e of errors) console.error(`  ✗ ${e}`);
@@ -88,11 +90,11 @@ async function main() {
       const skip = plan.skipped.find((s) => s.id === inst.id);
       const state = fresh ? 'À CRÉER' : skip ? 'IGNORÉ' : extra ? 'à compléter' : 'inchangé';
       const created = fresh?.programs ?? extra?.programs ?? [];
-      console.log(`── ${inst.id}  [${state}]  ${inst.nameFr} — non partenaire`);
+      console.log(`── ${inst.id}  [${state}]  ${inst.nameFr} — non partenaire (relevé du ${inst.consultedAt ?? doc.consultedAt})`);
       console.log(`   formations à créer : ${created.length} / ${inst.programs.length}`);
       for (const p of created) {
         console.log(
-          `     + ${p.levelFr.padEnd(8)} ${p.nameFr.slice(0, 70)}${p.tuitionMinEur ? ` — ${p.tuitionMinEur} €/an (plancher)` : ''}`,
+          `     + ${p.levelFr.padEnd(20)} ${p.nameFr.slice(0, 70)}${p.tuitionMinEur ? ` — ${p.tuitionMinEur} €/an (plancher)` : ''}`,
         );
       }
       if (extra?.addProgramIds.length) console.log(`   + ${extra.addProgramIds.length} id(s) ajouté(s) à programIds`);

@@ -910,7 +910,10 @@ case "$ACTION" in
     # CRÉATION SEULE : une ligne déjà en base n'est jamais réécrite (seuls les
     # ids des formations manquantes sont ajoutés à `programIds`), un homonyme
     # déjà en base sous un autre id (Université d'Ottawa, `uottawa`) bloque la
-    # création. Rejouable : « 0 écriture » une fois appliqué. Runbook :
+    # création. Rejouable : « 0 écriture » une fois appliqué. Seconde passe
+    # Canada (17/10/2026, 16 établissements) : si la première est déjà en base,
+    # la garde de production refuse l'application sans
+    # KPB_ALLOW_PRODUCTION_SEED=1 — procédure dans le runbook :
     # docs/runbook-catalogue-amerique-du-nord.md.
     if [ "$DRY_RUN" = "true" ]; then
       echo "── SIMULATION (rien n'est écrit) ──"
