@@ -146,11 +146,34 @@ Purpose:
 
 ## Community
 
+**Nouvelle communauté (chantier Communauté C1 + C2, 17/10/2026)** : le contrat complet —
+modèles JSON, routes élève `/community/*` et admin `/admin/community/*`, codes d'erreur,
+pagination par curseur, limites, visibilité, filtre anti-arnaque, fil « Pour toi »,
+notifications, RGPD — vit dans **[`docs/community-api-contract.md`](community-api-contract.md)**
+(community-api v1, stable). Résumé :
+
+- Drapeau distant `features.community` (`KPB_COMMUNITY_ENABLED`, **fermé**) : coupé, toute route
+  élève `/community/*` du contrat répond **404** `{statusCode: 404, disabled: true, code: "community_disabled"}`
+  avant l'authentification. Les routes admin ne sont jamais coupées.
+- Élève (`StudentAuthGuard`, comptes `student`) : `GET /community/me`, `POST /community/charter/accept`,
+  `GET /community/feed?tab=for_you|recent|unanswered`, `GET /community/entities/:type/:id`
+  (+ `/count`, `GET /community/entities/counts?refs=`), `GET /community/search`,
+  `GET /community/mentions/suggest`, `GET /community/hashtags/suggest`, publications
+  (`POST|GET|PATCH|DELETE /community/posts…`), réponses, « utile », suivi, signalement,
+  blocage, profil public `GET /community/members/:memberId`.
+- Admin (Moderator, ContentManager, Admin, SuperAdmin ; audit `AdminAuditEvent`) : file
+  `GET /admin/community/queue`, actions sur contenu, sanctions, réponse « Équipe KPB » /
+  conseiller, « Réponse vérifiée par KPB », épinglage, statistiques, filtre (liste blanche de
+  liens, termes bloqués).
+
+Routes historiques, inchangées et dépréciées (taxonomie de l'ancien écran, jamais livré) :
+
 - `GET /community/forum-categories`
 - `GET /community/forum-tags`
 
 Purpose:
-- expose dashboard-managed forum taxonomy to the mobile community layer
+- expose dashboard-managed forum taxonomy to the mobile community layer (gardées par
+  `MvpGuard` / `KPB_MVP_ONLY` ; non utilisées par la nouvelle communauté)
 
 ## Cases
 
@@ -1014,6 +1037,23 @@ comme `false`.
 Indépendant de tout autre drapeau. Gardé par `backend/src/modules/config/app-config.controller.spec.ts`
 et `test/release/config_env_relay_test.dart` (relais compose, défaut `false`). Contrat des routes :
 section « Mes 10 bourses » plus bas.
+
+### Interrupteur « Communauté » dans `features` : `community`
+
+Un booléen **strict**, toujours présent, **`false` par défaut** (seule la valeur `true`, casse
+et espaces tolérés, l'ouvre). Un backend plus ancien ne le sert pas : l'app lit une clé absente
+comme `false`.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.community` | `KPB_COMMUNITY_ENABLED` | La communauté d'entraide (chantier Communauté C1 + C2). La MÊME variable coupe toutes les routes élève `/community/*` du contrat (404 `{disabled: true, code: "community_disabled"}`, avant l'authentification). Les routes admin `/admin/community/*` restent ouvertes. |
+
+Indépendant de `KPB_MVP_ONLY` (qui ne garde que l'ancien écran et ses deux routes de taxonomie).
+**À n'ouvrir qu'avec** les déclarations stores mises à jour (`docs/STORE_READINESS.md`,
+`docs/CONSOLE_ANSWERS.md`), les CGU et la politique de confidentialité. Gardé par
+`backend/src/modules/config/app-config.controller.spec.ts` et
+`test/release/config_env_relay_test.dart` (relais compose, défaut `false`). Contrat des routes :
+[`docs/community-api-contract.md`](community-api-contract.md).
 
 ### Interrupteur « Onboarding la valeur d'abord » dans `features` : `onboardingV2`
 
