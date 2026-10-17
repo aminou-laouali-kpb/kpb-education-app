@@ -621,6 +621,181 @@ class AnalyticsService {
       _logScholarshipMatch(AnalyticsEventName.scholarshipMatchAlertsToggled,
           {AnalyticsParamKey.enabled: enabled});
 
+  // ── Communauté (C1 + C2) ────────────────────────────────────────────────────
+
+  /// Les SEULES clés que les événements `community_*` peuvent porter. Toute
+  /// autre clé est retirée avant l'envoi : le texte d'une publication, d'une
+  /// réponse ou d'une recherche, un nom, un pays ou un identifiant de membre
+  /// ne peuvent donc pas partir, même par erreur d'un appelant.
+  @visibleForTesting
+  static const communityAllowedParams = <String>{
+    AnalyticsParamKey.source,
+    AnalyticsParamKey.tab,
+    AnalyticsParamKey.postType,
+    AnalyticsParamKey.hasHashtag,
+    AnalyticsParamKey.isHashtag,
+    AnalyticsParamKey.resultCount,
+    AnalyticsParamKey.hasVerified,
+    AnalyticsParamKey.hasPrefill,
+    AnalyticsParamKey.mentionCount,
+    AnalyticsParamKey.hashtagCount,
+    AnalyticsParamKey.pendingReview,
+    AnalyticsParamKey.reason,
+    AnalyticsParamKey.target,
+    AnalyticsParamKey.enabled,
+    AnalyticsParamKey.entityType,
+    AnalyticsParamKey.discussionCount,
+    AnalyticsParamKey.isEdit,
+  };
+
+  /// Les paramètres réellement envoyés : clés autorisées, booléens en 0/1,
+  /// textes bornés à 40 (des identifiants fermés, jamais une phrase).
+  @visibleForTesting
+  static Map<String, Object> communityParams(Map<String, Object?> raw) {
+    final out = <String, Object>{};
+    raw.forEach((key, value) {
+      if (!communityAllowedParams.contains(key) || value == null) return;
+      if (value is bool) {
+        out[key] = value ? 1 : 0;
+      } else if (value is num) {
+        out[key] = value;
+      } else {
+        final text = value.toString();
+        out[key] = text.length > 40 ? text.substring(0, 40) : text;
+      }
+    });
+    return out;
+  }
+
+  Future<void> _logCommunity(String name, Map<String, Object?> raw) async {
+    final params = communityParams(raw);
+    try {
+      await _logEvent(name, params);
+      _mirror(name, params);
+    } catch (e, s) {
+      _logError(name, e, s);
+    }
+  }
+
+  /// L'accueil de la communauté s'ouvre ; [source] = la porte (`home_card`,
+  /// `profile`, `notification`, `deep_link`, `entity_section`).
+  Future<void> logCommunityViewed({required String source}) => _logCommunity(
+      AnalyticsEventName.communityViewed, {AnalyticsParamKey.source: source});
+
+  Future<void> logCommunityFeedViewed({
+    required String tab,
+    String? postType,
+    bool hasHashtag = false,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityFeedViewed, {
+        AnalyticsParamKey.tab: tab,
+        AnalyticsParamKey.postType: postType,
+        AnalyticsParamKey.hasHashtag: hasHashtag,
+      });
+
+  /// Une recherche : le nombre de résultats, JAMAIS le texte tapé.
+  Future<void> logCommunitySearched({
+    required int resultCount,
+    required bool isHashtag,
+  }) =>
+      _logCommunity(AnalyticsEventName.communitySearched, {
+        AnalyticsParamKey.resultCount: resultCount,
+        AnalyticsParamKey.isHashtag: isHashtag,
+      });
+
+  Future<void> logCommunityPostOpened({
+    required String source,
+    required String postType,
+    required bool hasVerified,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityPostOpened, {
+        AnalyticsParamKey.source: source,
+        AnalyticsParamKey.postType: postType,
+        AnalyticsParamKey.hasVerified: hasVerified,
+      });
+
+  Future<void> logCommunityComposerOpened({
+    required String source,
+    required bool hasPrefill,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityComposerOpened, {
+        AnalyticsParamKey.source: source,
+        AnalyticsParamKey.hasPrefill: hasPrefill,
+      });
+
+  Future<void> logCommunityPostCreated({
+    required String postType,
+    required int mentionCount,
+    required int hashtagCount,
+    required bool pendingReview,
+    bool isEdit = false,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityPostCreated, {
+        AnalyticsParamKey.postType: postType,
+        AnalyticsParamKey.mentionCount: mentionCount,
+        AnalyticsParamKey.hashtagCount: hashtagCount,
+        AnalyticsParamKey.pendingReview: pendingReview,
+        AnalyticsParamKey.isEdit: isEdit,
+      });
+
+  /// Échec d'une écriture ; [reason] = le `CommunityFailure` (identifiant
+  /// fermé) — sans lui, une panne se lirait comme un abandon.
+  Future<void> logCommunityPostFailed({
+    required String reason,
+    required String target,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityPostFailed, {
+        AnalyticsParamKey.reason: reason,
+        AnalyticsParamKey.target: target,
+      });
+
+  Future<void> logCommunityReplyCreated({
+    required bool pendingReview,
+    required int mentionCount,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityReplyCreated, {
+        AnalyticsParamKey.pendingReview: pendingReview,
+        AnalyticsParamKey.mentionCount: mentionCount,
+      });
+
+  Future<void> logCommunityHelpfulToggled({
+    required String target,
+    required bool enabled,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityHelpfulToggled, {
+        AnalyticsParamKey.target: target,
+        AnalyticsParamKey.enabled: enabled,
+      });
+
+  Future<void> logCommunityFollowToggled({required bool enabled}) =>
+      _logCommunity(AnalyticsEventName.communityFollowToggled,
+          {AnalyticsParamKey.enabled: enabled});
+
+  Future<void> logCommunityReportSent({
+    required String target,
+    required String reason,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityReportSent, {
+        AnalyticsParamKey.target: target,
+        AnalyticsParamKey.reason: reason,
+      });
+
+  Future<void> logCommunityBlockToggled({required bool enabled}) =>
+      _logCommunity(AnalyticsEventName.communityBlockToggled,
+          {AnalyticsParamKey.enabled: enabled});
+
+  Future<void> logCommunityCharterAccepted() =>
+      _logCommunity(AnalyticsEventName.communityCharterAccepted, const {});
+
+  Future<void> logCommunityEntitySectionViewed({
+    required String entityType,
+    required int discussionCount,
+  }) =>
+      _logCommunity(AnalyticsEventName.communityEntitySectionViewed, {
+        AnalyticsParamKey.entityType: entityType,
+        AnalyticsParamKey.discussionCount: discussionCount,
+      });
+
   // ── Daily scholarship (KPB-162) ─────────────────────────────────────────────
 
   Future<void> logDailyScholarshipViewed(String scholarshipId) async {

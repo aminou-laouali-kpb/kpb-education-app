@@ -40,6 +40,7 @@ import '../services/app_search_service.dart';
 import '../data/content_api_codec.dart';
 import '../services/catalog_remote_sync.dart';
 import '../services/catalog_cache_service.dart';
+import '../services/community_store.dart';
 import '../services/push_service.dart';
 import '../services/followed_scholarships_store.dart';
 import '../services/scholarship_match_store.dart';
