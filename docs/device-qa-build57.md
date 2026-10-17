@@ -46,8 +46,8 @@
 > **parent**, et un **second téléphone** avec la **2.3.0 (56)** du store (ou la 2.2.0) connecté à un
 > **autre** compte.
 >
-> **Numérotation.** Neuf préfixes : **Appareil-**, **Texte-**, **Lecteur-**, **Push-**,
-> **HorsLigne-**, **Accueil-**, **Suivi-**, **Drapeau-**, **Boutique-**. Cocher ☐ → ☑ (ou ✗ avec ce
+> **Numérotation.** Dix préfixes : **Appareil-**, **Texte-**, **Lecteur-**, **Push-**,
+> **HorsLigne-**, **Accueil-**, **Suivi-**, **Drapeau-**, **Parrain-**, **Boutique-**. Cocher ☐ → ☑ (ou ✗ avec ce
 > qu'on a vu) ; noter l'appareil et l'heure.
 
 ## Petit appareil, mémoire et réseau lent (360 × 640, 2 Go, 3G)
@@ -153,11 +153,27 @@ fiche 54.
 
 | # | À vérifier | Attendu | iPhone | Android |
 |---|---|---|---|---|
-| Drapeau-1 | **État de soumission** (commande de l'étape 2 de la checklist) | `scholarshipMatch=false`, `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false` ; la carte du test n'apparaît pas ; l'ancien onboarding s'affiche | ☐ | ☐ |
+| Drapeau-1 | **État de soumission** (commande de l'étape 2 de la checklist) | `scholarshipMatch=false`, `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, `referralInstallReferrer=false`, `referralOnboardingCode=false`, `referralLeaderboard=false` ; la carte du test n'apparaît pas ; l'ancien onboarding s'affiche, sans étape « code de ton parrain » | ☐ | ☐ |
 | Drapeau-2 | **Un interrupteur d'urgence coupé** (par exemple `KPB_HOME_PARCOURS_ENABLED=false`, en recette) | Après relance, le bloc disparaît ; remis à `true`, il revient | ☐ | ☐ |
 | Drapeau-3 | **`KPB_FOLLOW_PUSH_PRIMER_ENABLED=false`** (en recette) | Le premier « Suivre » demande directement l'autorisation, sans feuille ; jamais à l'onboarding | ☐ | ☐ |
 | Drapeau-4 | **`KPB_ONBOARDING_V2_ENABLED=true`** (fenêtre de recette) | Aucun champ prérempli sans choix ; « Passer » dès la page 1, sans contourner le plancher de 16 ans ; refermé avant la soumission | ☐ | ☐ |
 | Drapeau-5 | **Bandeau de mise à jour** (`recommendedVersion` au-dessus de 2.3.1, en recette seulement) | Bandeau fermable sur la 57 ; fermé, il ne revient pas dans la session ; remis à vide ensuite | ☐ | ☐ |
+
+## Parrainage (ajout du 17/10/2026, trois drapeaux fermés)
+
+Fenêtre de recette en production ou en préproduction : poser le drapeau dans le `.env`, recréer
+`api`, **tuer et relancer** l'app ; refermer avant la soumission. Lien d'invitation de test :
+`https://kpbeducation.cloud/invite.html?ref=<CODE>` (le bouton Google Play y porte
+`referrer=utm_source=invite&utm_medium=referral&ref=<CODE>`).
+
+| # | À vérifier | Attendu | iPhone | Android |
+|---|---|---|---|---|
+| Parrain-1 | **Install Referrer** (`KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true` et `KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true`), app désinstallée puis installée depuis le bouton Google Play du lien d'invitation (piste de test interne) | À la fin de l'onboarding, l'étape « Tu as un code de parrain ? » montre le code du lien et « Code repris de ton lien d'invitation » ; **rien n'est rattaché** tant qu'on n'appuie pas sur « Valider le code ». iPhone : champ vide (pas de referrer sur iOS) | ☐ | ☐ |
+| Parrain-2 | **Une seule lecture par installation**, et aucune lecture drapeau fermé | Relancer l'app : pas de nouvelle lecture ; drapeau `referralInstallReferrer` fermé : le champ reste vide | ☐ | ☐ |
+| Parrain-3 | **Étape du code : « Passer »**, retour système | On arrive sur l'écran « aha » ; le code du lien est proposé ensuite dans Profil → Parrainer un ami | ☐ | ☐ |
+| Parrain-4 | **Étape du code : erreurs** — code inconnu, son propre code, mode avion | Inconnu / propre code : message DANS le champ, on peut corriger ou passer ; mode avion : « Pas de connexion. Ton code est gardé… », l'onboarding continue ; le code réapparaît dans Parrainage | ☐ | ☐ |
+| Parrain-5 | **Écran « Compétition ambassadeurs »** (`KPB_REFERRAL_LEADERBOARD_ENABLED=true`, compte ambassadeur participant), TalkBack / VoiceOver, texte 1,5 | Phase et compte à rebours, rang (lu « Ton rang : … »), qualifiés / à vérifier / en attente, « provisoire », code, partage, classement public, règlement ; aucun montant ; rien de tronqué à 1,5 sur 360 dp | ☐ | ☐ |
+| Parrain-6 | **Non-participant** (drapeau ouvert) | Espace ambassadeur : l'écran de candidature, inchangé ; écran Parrainage : aucune carte « Compétition » | ☐ | ☐ |
 
 ## Gardes de boutiques
 
@@ -165,7 +181,7 @@ fiche 54.
 |---|---|---|---|---|
 | Boutique-1 | **L'installation est la build soumise** | TestFlight : **2.3.1 (57)** ; Play Console / `adb shell dumpsys package com.karatou.android \| grep versionCode` → 57 | ☐ | ☐ |
 | Boutique-2 | **Aucun pourcentage, aucune « chance »** | Liste, fiche, accueil, résultats du test : ni « % » de compatibilité, ni « chances » | ☐ | ☐ |
-| Boutique-3 | **Aucune permission neuve** | Aucune invite système en dehors de l'autorisation des notifications au premier « Suivre » | ☐ | ☐ |
+| Boutique-3 | **Aucune permission neuve** | Aucune invite système en dehors de l'autorisation des notifications au premier « Suivre » (la permission d'installation Install Referrer d'Android n'affiche rien) | ☐ | ☐ |
 | Boutique-4 | **Politique de confidentialité in-app** | Elle nomme le test (nationalité, date de naissance), dit l'absence de transmission aux écoles, la conservation et les mineurs de 16 et 17 ans, comme `web/public/confidentialite.html` | ☐ | ☐ |
 | Boutique-5 | **Les notes de revue disent la vérité** | Relire le pack 57 §3 point par point contre ce qu'on a vu (espace ouvert ou non, test et onboarding V2 éteints, autorisation au premier « Suivre ») | ☐ | ☐ |
 

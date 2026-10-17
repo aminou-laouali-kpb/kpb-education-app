@@ -126,6 +126,8 @@ servir `RELEASE`.
    dans l'admin** pendant le déploiement.
 2. **`.env` de production** : `FCM_SERVICE_ACCOUNT_JSON` posé (décision d) ;
    `KPB_SCHOLARSHIP_MATCH_ENABLED` et `KPB_ONBOARDING_V2_ENABLED` **absents ou `false`** ;
+   `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` et
+   `KPB_REFERRAL_LEADERBOARD_ENABLED` (parrainage) **absents ou `false`** ;
    `KPB_SCHOLARSHIP_OPENING_MODE` **absent ou `legacy`** ; aucune clé `KPB_FOLLOW_*` /
    `KPB_HOME_*` à `false`.
 3. Actions → **Deploy backend (VPS)** (`deploy.yml`) → `ref` = `RELEASE`, `scope` = `full`. Le
@@ -148,14 +150,18 @@ curl -fsS https://api.kpbeducation.cloud/api/health | jq '.push'   # {configured
 curl -fsS https://api.kpbeducation.cloud/api/config/app \
   | jq '.features | {eef, eefTeaser, eefSpace, eefHelpBubble, eefPrivateSchools, scholarshipMatch, onboardingV2, followPushPrimer, homeNextStep}'
 #   attendu : false, true, true, false, false, false, false, true, true
+curl -fsS https://api.kpbeducation.cloud/api/config/app \
+  | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'
+#   attendu : false, false, false (parrainage, fermé à la soumission)
 curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scholarships/match/state   # 404 (drapeau fermé, avant toute authentification)
 ```
 
 - **Si `push.fcm` vaut `false`** : `FCM_SERVICE_ACCOUNT_JSON` manque ou est illisible — **ne pas
   continuer** (la 57 ne recevrait aucune notification). `push.oneSignal` doit rester `true` : c'est
   le repli des builds 53 et 56.
-- **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** : **ne pas continuer** ; remettre la
-  variable à `false` dans le `.env`, recréer l'`api`, relancer la commande.
+- **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** (ou l'un des trois drapeaux du
+  parrainage) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
+  l'`api`, relancer la commande.
 - **Si `eefSpace` vaut `false`** : la phrase « The "Études en France" space is open » des notes de
   revue est fausse ; prendre la variante du pack §3, point 1, et recompter.
 - Sur le Mac, avant l'étape 4 : `flutter --version` (3.44.1), `python3 --version`,
@@ -299,7 +305,8 @@ gh workflow run release-preflight.yml --ref main \
    onboarding V2 se jouent hors production (préproduction ou fenêtre décrite dans la fiche) : **ne
    jamais** ouvrir `scholarshipMatch` en production pour la recette.
 3. Avant de soumettre, revérifier l'étape 2 (drapeaux) : `scholarshipMatch` et `onboardingV2` à
-   `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`.
+   `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`, `referralInstallReferrer`,
+   `referralOnboardingCode` et `referralLeaderboard` à `false`.
 4. Un ✗ non résolu bloque la soumission.
 
 ## 7. Consoles
@@ -321,8 +328,8 @@ gh workflow run release-preflight.yml --ref main \
 - **Google Play** : production, notes = pack 57 §2 (bloc Google Play), **déploiement par paliers à
   10 %**. L'AAB importé est celui du run de `RELEASE`.
 - Avant d'appuyer : la commande de l'étape 2 (`/config/app`) → `scholarshipMatch=false`,
-  `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, `eefSpace` conforme au
-  texte des notes de revue.
+  `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, les trois drapeaux du
+  parrainage à `false`, `eefSpace` conforme au texte des notes de revue.
 - **Le jour de l'envoi**, reporter dans `docs/release-ledger.md` le SHA de `RELEASE` et « téléversée
   le … » sur la ligne `57` — après l'étape 5, jamais pendant.
 
@@ -357,3 +364,7 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    des comptes actifs en 2.3.1 ou plus (`GET /admin/app-builds`), jamais pendant un palier Play :
    il enferme sinon les 53 et 56 derrière un écran sans sortie.
 8. Ne jamais poser `KPB_EEF_ENABLED=true`. Aucun tag `v2.3.1` poussé pendant la release.
+9. **Parrainage** (compétition du 1er au 10 novembre 2026) : les trois `KPB_REFERRAL_*_ENABLED`
+   s'ouvrent selon `docs/runbook-campagne-ambassadeurs.md` §8, **après** la politique de
+   confidentialité et la Data safety à jour (pack §4.3) et le `rulesUrl` posé sur la campagne.
+   À VALIDER (propriétaire) : l'ordre et les dates.

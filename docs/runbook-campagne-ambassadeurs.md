@@ -132,32 +132,55 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
 6. **Export CSV** (classement ou filleuls) pour archive — fichiers à données personnelles, à
    garder hors des canaux publics.
 
-## 8. Option build 57 (préparée côté serveur, rien d'activé côté app)
+## 8. Parrainage côté app — build 57 (2.3.1), derrière trois drapeaux fermés
 
-Rien n'est obligatoire dans l'app pour la compétition. Ce qui est prêt côté serveur :
+**Révisé le 17/10/2026 (décision du propriétaire)** : les parties app entrent dans la build 57
+(2.3.1), et non plus dans « une build ultérieure ». Elles partent **fermées** ; chacune s'ouvre
+sans build, indépendamment des deux autres, et se referme de même.
 
-- `POST /referrals/redeem` lit l'en-tête facultatif **`X-KPB-Device-Id`** (identifiant
-  d'installation, haché) : un compte qualifié par appareil sans dépendre du jeton push.
-- Le lien Google Play d'`invite.html` porte `referrer=utm_source=invite&utm_medium=referral&ref=<CODE>`.
-- `GET /referrals/campaigns/current` (élève connecté) : campagne en cours, rang, nombre de
-  qualifiés, à vérifier, en attente, compte à rebours.
+| Drapeau (`/config/app`) | Variable | Ce qu'il ouvre dans la 57 |
+|---|---|---|
+| `features.referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | Android : lecture **une fois par installation** du Play Install Referrer (paquet `play_install_referrer` 0.5.0) ; `ref` extrait avec le format strict des codes réels, gardé **en local** pour préremplir le champ. Rien n'est transmis avant la confirmation de l'élève. iOS, échec, absence : rien, saisie manuelle |
+| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrain ? » à la fin de l'onboarding élève, **après** la synchro du profil, préremplie par le referrer, bouton « Passer » ; ne bloque jamais l'entrée dans l'app |
+| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition ambassadeurs » : phase et compte à rebours (heure du serveur), rang, qualifiés / à vérifier / en attente, « un filleul compte quand son profil est complété », code + lien d'invitation à partager, page publique `kpbeducation.cloud/classement/?c=<slug>`, règlement (`rulesUrl` du classement public), mention « provisoire » tant que la campagne n'est pas close |
 
-Non fait dans l'app (choix délibéré : la build 57 a déjà son pack store figé, et ajouter un
-plugin natif change la déclaration des SDK) — à faire dans une build ultérieure, derrière un
-drapeau fermé (`KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `features.referralLeaderboard`) :
+Ce que fait la 57, drapeaux ou non :
 
-1. **Play Install Referrer** : paquet `play_install_referrer` (Android seulement). Au premier
-   lancement, lire `referrer`, extraire `ref`, le garder en local ; à la fin de l'onboarding,
-   proposer le code prérempli dans l'écran Parrainage (l'utilisateur confirme : pas de
-   rattachement silencieux). Déclarer « identifiants d'appareil / source d'installation » dans
-   la fiche Data safety si nécessaire. iOS n'a pas d'équivalent : garder la saisie manuelle.
-2. **Champ « code de ton parrain »** en dernière étape d'onboarding, facultatif, appelant
-   `POST /referrals/redeem` après la synchro du profil.
-3. **Identifiant d'installation** : UUID aléatoire stocké en local (pas l'IMEI, pas l'ID
-   publicitaire), envoyé en `X-KPB-Device-Id` sur `POST /referrals/redeem` seulement.
-4. **Écran classement in-app** : `GET /referrals/campaigns/current` + lien vers la page
-   publique ; le remplacer par l'écran ambassadeur actuel pour un ambassadeur sans espace
-   « cash ».
+- **Identifiant d'installation** : UUID v4 aléatoire stocké sur l'appareil (jamais l'IMEI, jamais
+  l'identifiant publicitaire), envoyé en **`X-KPB-Device-Id` sur `POST /referrals/redeem`
+  seulement** ; un nouveau à chaque réinstallation. Le serveur n'en garde que l'empreinte HMAC
+  (signal `device_duplicate`, jamais bloquant).
+- **Messages clairs** à chaque issue du rattachement (étape d'onboarding et écran Parrainage) :
+  code inconnu (404), propre code (403), refus (403 croisé ou dossier existant), déjà parrainé
+  (succès silencieux), limite horaire (429 `referral_code_rate_limited`), hors ligne. Sur une
+  panne passagère, le code est **gardé** et l'écran Parrainage le repropose.
+- L'écran **Parrainage** préremplit le code en attente (lien d'invitation, ou saisi à
+  l'onboarding sans réseau), toujours à confirmer.
+
+Points d'entrée de l'écran « Compétition » : l'écran Parrainage (une carte, pour un participant
+seulement) et l'**espace ambassadeur** (accès rapide du profil) — pour un ambassadeur **sans
+espace « cash »**, le classement **remplace** l'écran de candidature quand il participe ; un
+non-participant garde la candidature, sans rien de promis (l'API ne lui donne pas le slug, l'app
+ne le code pas en dur : pas de lien vers un classement public). Aucun montant n'est affiché dans
+l'app (ni prix, ni commission) ; la mention « Organisateur : KPB Global L.L.C-FZ. Apple et Google
+ne sont ni organisateurs ni partenaires de cette compétition. » figure en pied d'écran — texte
+À VALIDER (propriétaire).
+
+**Ordre d'ouverture conseillé** — À VALIDER (propriétaire) — (après la 57 à 100 % sur les deux boutiques, et la politique de
+confidentialité / la Data safety à jour — `docs/release-57-store-pack.md` §4 et §5) :
+
+1. `KPB_REFERRAL_LEADERBOARD_ENABLED=true` avant le **1er novembre 2026** (début de la
+   compétition) : les participants voient la phase « à venir » et leur code.
+2. `KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true` en même temps ou juste après : les filleuls
+   saisissent le code dès l'inscription.
+3. `KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true` en dernier, une fois la Data safety Play
+   reportée (lecture du referrer).
+
+Vérification : `curl -s https://api.kpbeducation.cloud/api/config/app | jq '.features |
+{referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'`. Retour arrière :
+remettre la variable à `false` (ou la retirer) dans le `.env` de production et recréer le
+conteneur `api` ; l'app se replie au prochain démarrage. La recette appareil est dans
+`docs/device-qa-build57.md` (section « Parrainage »).
 
 ## 9. Exploitation et données
 

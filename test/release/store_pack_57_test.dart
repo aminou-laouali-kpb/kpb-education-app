@@ -174,6 +174,17 @@ void main() {
       );
       // Le test d'éligibilité est décrit pour ce qu'il collecte.
       expect(block, contains('nationality, date of birth'));
+      // Le parrainage (17/10/2026) : l'étape et la compétition, fermées, et
+      // ce qu'Apple exige d'un concours (5.3.2) dit d'avance.
+      expect(
+        block,
+        matches(RegExp(
+          r'features\.eefPrivateSchools[^\n]*'
+          r'features\.referralOnboardingCode and features\.referralLeaderboard',
+        )),
+      );
+      expect(block, contains('Apple is not a sponsor'));
+      expect(block, contains('official rules'));
     });
 
     test('le texte ne promet rien, ne chiffre rien, sans pourcentage', () {
@@ -317,6 +328,10 @@ void main() {
         'eefHelpBubble',
         'eefPrivateSchools',
         'eef',
+        // Parrainage côté app (17/10/2026) : trois drapeaux, tous fermés.
+        'referralInstallReferrer',
+        'referralOnboardingCode',
+        'referralLeaderboard',
       ]) {
         final cells = rows[key]!.split('|').map((c) => c.trim()).toList();
         expect(
@@ -528,6 +543,7 @@ void main() {
         'Accueil': 6,
         'Suivi': 4,
         'Drapeau': 5,
+        'Parrain': 6,
         'Boutique': 5,
       };
       sizes.forEach((prefix, expected) {
@@ -558,6 +574,12 @@ void main() {
         'HorsLigne-2': ['Bandeau hors ligne global'],
         'Accueil-1': ['TA PROCHAINE ÉTAPE'],
         'Boutique-1': ['2.3.1 (57)'],
+        // Parrainage (17/10/2026) : jamais de rattachement sans l'élève, et
+        // l'étape ne bloque pas.
+        'Parrain-1': ['Install Referrer', 'Valider le code'],
+        'Parrain-3': ['Passer'],
+        'Parrain-5': ['Compétition', '1,5'],
+        'Drapeau-1': ['referralOnboardingCode=false'],
       };
       required.forEach((id, needles) {
         final row = rows[id];
@@ -624,6 +646,7 @@ const _prefixes = [
   'Accueil',
   'Suivi',
   'Drapeau',
+  'Parrain',
   'Boutique',
 ];
 

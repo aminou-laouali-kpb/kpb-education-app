@@ -554,7 +554,10 @@ drapeau) : c'est la ligne « Push identity » qui le couvre.
 For each type: **Linked to the user? Used for tracking? Purpose.**
 Tracking is **No** everywhere — raison : aucun SDK publicitaire, d'attribution ou
 de MMP n'est déclaré dans `pubspec.yaml` (ni `google_mobile_ads`, `appsflyer`,
-`adjust`, `branch`, `facebook_app_events`, `applovin`), et rien dans `lib/` ne
+`adjust`, `branch`, `facebook_app_events`, `applovin` ; `play_install_referrer`,
+ajouté à la 57, est l'API Install Referrer de Google Play, Android seulement, lue
+sur l'appareil pour préremplir un code de parrain — ni MMP ni attribution
+publicitaire, voir « Referral in the app » au §5), et rien dans `lib/` ne
 joint nos données à des données tierces à des fins publicitaires. La permission
 Android `AD_ID` est un sujet **Play** (§4) et ne déclenche pas l'ATT d'Apple ; la
 surface IDFA iOS n'a pas été réauditée dans cette passe, donc cette ligne repose
@@ -917,6 +920,33 @@ Update ToS and privacy policy (web + in-app) **before** opening.
 *À VALIDER (owner): announced moderation delay, contact address shown in the app.*
 
 ---
+
+### Referral in the app (build 57 / 2.3.1) — what changes in the forms
+
+Owner decision of 17/10/2026: the app side of the referral programme ships in build 57
+(`docs/runbook-campagne-ambassadeurs.md` §8), behind three **closed** remote flags
+(`features.referralInstallReferrer`, `referralOnboardingCode`, `referralLeaderboard`).
+
+- **Installation identifier** — a random UUID v4 stored on the device (never the IMEI, never the
+  advertising ID), sent as `X-KPB-Device-Id` on `POST /referrals/redeem` **only**, flags or not;
+  the server keeps an HMAC only (180 days, `docs/data-inventory.md` §6). Play: "Device or other
+  IDs", collected, not shared, purpose **Fraud prevention, security, and compliance** (added).
+  Apple: Identifiers — Device ID (already declared), App Functionality.
+- **Play Install Referrer** (Android only, `play_install_referrer` 0.5.0 wrapping Google's
+  `com.android.installreferrer:installreferrer:2.2`) — read **once per installation** when the
+  flag is open; the referrer URL, click/install timestamps and install version are processed
+  **on the device**; only `ref` is kept locally to prefill a field, sent only when the student
+  confirms. Not an MMP, no ad attribution, no joining with third-party data: **Tracking stays No**
+  (§3). The library adds the normal install-time permission
+  `com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE` to the merged manifest
+  (no user prompt).
+- **Ambassador contest screen** — reads `GET /referrals/campaigns/current`; shows no amount; footer
+  names the organiser (KPB Global L.L.C-FZ) and says Apple and Google are neither organisers nor
+  partners (Apple 5.3.2). No user-to-user interaction, no UGC: age rating unchanged.
+
+Full lines to paste: `docs/release-57-store-pack.md` §4, `docs/CONSOLE_ANSWERS.md` §0septies.
+*À VALIDER (owner): privacy policy (web + in-app) naming the installation identifier, the invite
+link reading and the contest, before submission.*
 
 ## 6. Account deletion & data export (store requirement)
 
