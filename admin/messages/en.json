@@ -1665,6 +1665,7 @@
       "members": "Members",
       "settings": "Settings",
       "log": "Log",
+      "bot": "Fact-check bot",
       "taxonomy": "Categories and tags (legacy)"
     },
     "loading": "Loading…",
@@ -1981,7 +1982,9 @@
       "community_invalid_mention": "Invalid mention: unknown or non-public entity.",
       "community_too_many_mentions": "10 mentions at most.",
       "community_too_many_hashtags": "10 hashtags at most.",
-      "community_invalid_cursor": "Stale list: reload the page."
+      "community_invalid_cursor": "Stale list: reload the page.",
+      "community_bot_draft_not_found": "Draft not found (deleted with its post?).",
+      "community_bot_draft_obsolete": "This draft is out of date (post hidden or facts changed). Regenerate it."
     },
     "enum": {
       "flag": {
@@ -2022,7 +2025,8 @@
         "kpb_team": "KPB Team",
         "kpb_advisor": "KPB advisor",
         "verified_alumni": "Verified alumni",
-        "ambassador": "Ambassador"
+        "ambassador": "Ambassador",
+        "kpb_assistant": "KPB Assistant"
       },
       "postType": {
         "question": "Question",
@@ -2052,6 +2056,131 @@
         "sanction_revoke": "Sanction lifted",
         "member_reports_dismissed": "Member reports dismissed"
       }
+    },
+    "bot": {
+      "filter": "Filter drafts",
+      "selectTitle": "Choose a draft",
+      "selectBody": "The question, the facts with their sources and the proposed text show here.",
+      "modeLabel": "Bot mode:",
+      "llmOn": "AI rewording on (checked against the facts).",
+      "llmOff": "AI rewording off: deterministic template.",
+      "emptyTitle": "No draft",
+      "emptyBody": "The bot has prepared nothing in this category.",
+      "auto": "Auto-published",
+      "status": {
+        "queued": "Queued",
+        "skipped": "No draft",
+        "proposed": "Proposed",
+        "published": "Published",
+        "rejected": "Rejected",
+        "obsolete": "Out of date"
+      },
+      "mode": {
+        "review": "Human review",
+        "auto": "Automatic",
+        "off": "Off"
+      },
+      "modeHint": {
+        "review": "The bot prepares, the team publishes. Nothing goes out without a click.",
+        "auto": "The bot publishes high-confidence drafts with complete, fresh facts on its own; the rest waits for the team.",
+        "off": "No detection: the queue stays readable, nothing new comes in."
+      },
+      "stats": {
+        "title": "Bot statistics",
+        "proposed": "To review",
+        "published": "Published (30 d)",
+        "rejected": "Rejected (30 d)",
+        "obsolete": "Out of date",
+        "delay": "Median delay",
+        "window": "Over {days} days: {auto} auto-published, {verified} published as a verified answer."
+      },
+      "confidence": {
+        "high": "High confidence",
+        "medium": "Medium confidence",
+        "low": "Low confidence"
+      },
+      "confidenceLabel": "{level}",
+      "reason": {
+        "not_question": "Not a question",
+        "no_intent": "Not a fact-check question",
+        "no_entity": "No catalogue entity recognised",
+        "ambiguous_entity": "Ambiguous entity (several candidates)",
+        "entity_not_public": "Entity not in the public catalogue",
+        "team_post": "Team post",
+        "error": "Repeated technical error",
+        "post_not_visible": "The post is no longer visible",
+        "facts_changed": "The catalogue facts changed since the draft was written"
+      },
+      "staleTitle": "Out-of-date draft:",
+      "staleBody": "Regenerate it before publishing.",
+      "question": "Question",
+      "complete": "Complete, fresh facts",
+      "incomplete": "Incomplete facts or to be re-checked",
+      "scamCaution": "Anti-scam caution sentence",
+      "intents": "What is asked:",
+      "intent": {
+        "status": "Status",
+        "deadline": "Deadline",
+        "truth": "True or false",
+        "scam": "Scam / money",
+        "fees": "Fees",
+        "partner": "Partnership",
+        "exists": "Existence",
+        "documents": "Documents",
+        "intake": "Intake",
+        "visa": "Visa"
+      },
+      "facts": "Verified facts",
+      "factsHint": "Taken from the published catalogue. Links open the official sources.",
+      "entity": {
+        "scholarship": "Scholarship",
+        "institution": "School",
+        "program": "Programme",
+        "country": "Country"
+      },
+      "resolvedBy": {
+        "mention": "mentioned by the student",
+        "name": "found by its name"
+      },
+      "verifiedOn": "Checked on {date}",
+      "noVerifiedDate": "No verification date",
+      "staleSource": "To re-check",
+      "noSource": "No official source recorded",
+      "rawFacts": "Serialised facts (detail)",
+      "text": "Proposed answer",
+      "writer": {
+        "template": "Written by the deterministic template",
+        "llm": "Reworded by AI (checked)"
+      },
+      "llmFallback": "AI discarded: {reason}",
+      "llmReason": {
+        "llm_unavailable": "service unavailable",
+        "llm_error": "error",
+        "unknown_number": "number not in the facts",
+        "unknown_month": "month not in the facts",
+        "unknown_link": "link not in the facts",
+        "percent": "percentage",
+        "promise": "promise",
+        "mention": "added mention",
+        "length": "length",
+        "not_text": "unreadable answer"
+      },
+      "textLabel": "Text published as “KPB Assistant” (editable)",
+      "textHint": "{n} / {max} characters. Keep dates and sources as they are.",
+      "publish": "Publish",
+      "publishVerified": "Publish and mark verified",
+      "reject": "Reject",
+      "regenerate": "Regenerate",
+      "reset": "Back to the proposed text",
+      "donePublished": "Answer published.",
+      "donePublishedVerified": "Answer published and marked “Verified by KPB”.",
+      "doneRegenerated": "Draft regenerated on current data.",
+      "doneRejected": "Draft rejected.",
+      "rejectTitle": "Reject this draft?",
+      "rejectBody": "Nothing is published. The reason stays in the bot history.",
+      "publishedAuto": "Auto-published on {date}.",
+      "publishedBy": "Published on {date} by {name}.",
+      "rejectedBy": "Rejected on {date} by {name}: {reason}"
     }
   }
 }

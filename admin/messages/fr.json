@@ -1665,6 +1665,7 @@
       "members": "Membres",
       "settings": "Réglages",
       "log": "Journal",
+      "bot": "Bot Vérif",
       "taxonomy": "Catégories et tags (ancien)"
     },
     "loading": "Chargement…",
@@ -1981,7 +1982,9 @@
       "community_invalid_mention": "Mention invalide : entité inconnue ou non publique.",
       "community_too_many_mentions": "10 mentions au plus.",
       "community_too_many_hashtags": "10 hashtags au plus.",
-      "community_invalid_cursor": "Liste périmée : rechargez la page."
+      "community_invalid_cursor": "Liste périmée : rechargez la page.",
+      "community_bot_draft_not_found": "Brouillon introuvable (supprimé avec sa publication ?).",
+      "community_bot_draft_obsolete": "Ce brouillon n'est plus à jour (publication masquée ou faits changés). Régénérez-le."
     },
     "enum": {
       "flag": {
@@ -2022,7 +2025,8 @@
         "kpb_team": "Équipe KPB",
         "kpb_advisor": "Conseiller KPB",
         "verified_alumni": "Alumni vérifié",
-        "ambassador": "Ambassadeur"
+        "ambassador": "Ambassadeur",
+        "kpb_assistant": "Assistant KPB"
       },
       "postType": {
         "question": "Question",
@@ -2052,6 +2056,131 @@
         "sanction_revoke": "Sanction levée",
         "member_reports_dismissed": "Signalements du membre classés"
       }
+    },
+    "bot": {
+      "filter": "Filtrer les brouillons",
+      "selectTitle": "Choisissez un brouillon",
+      "selectBody": "La question, les faits avec leurs sources et le texte proposé s'affichent ici.",
+      "modeLabel": "Mode du bot :",
+      "llmOn": "Reformulation par l'IA activée (contrôlée sur les faits).",
+      "llmOff": "Reformulation par l'IA désactivée : modèle déterministe.",
+      "emptyTitle": "Aucun brouillon",
+      "emptyBody": "Le bot n'a rien préparé dans cette catégorie.",
+      "auto": "Publié seul",
+      "status": {
+        "queued": "En file",
+        "skipped": "Sans brouillon",
+        "proposed": "Proposés",
+        "published": "Publiés",
+        "rejected": "Rejetés",
+        "obsolete": "Obsolètes"
+      },
+      "mode": {
+        "review": "Validation humaine",
+        "auto": "Automatique",
+        "off": "Éteint"
+      },
+      "modeHint": {
+        "review": "Le bot prépare, l'équipe publie. Rien ne part sans un clic.",
+        "auto": "Le bot publie seul les brouillons de confiance haute aux faits complets et frais ; le reste attend l'équipe.",
+        "off": "Aucune détection : la file reste lisible, rien de nouveau n'arrive."
+      },
+      "stats": {
+        "title": "Statistiques du bot",
+        "proposed": "À traiter",
+        "published": "Publiés (30 j)",
+        "rejected": "Rejetés (30 j)",
+        "obsolete": "Obsolètes",
+        "delay": "Délai médian",
+        "window": "Sur {days} jours : {auto} publié(s) seul(s), {verified} publié(s) comme réponse vérifiée."
+      },
+      "confidence": {
+        "high": "Confiance haute",
+        "medium": "Confiance moyenne",
+        "low": "Confiance faible"
+      },
+      "confidenceLabel": "{level}",
+      "reason": {
+        "not_question": "Pas une question",
+        "no_intent": "Pas une question de vérification",
+        "no_entity": "Aucune entité du catalogue reconnue",
+        "ambiguous_entity": "Entité ambiguë (plusieurs candidats)",
+        "entity_not_public": "Entité absente du catalogue public",
+        "team_post": "Publication de l'équipe",
+        "error": "Erreur technique répétée",
+        "post_not_visible": "La publication n'est plus visible",
+        "facts_changed": "Les faits du catalogue ont changé depuis la rédaction"
+      },
+      "staleTitle": "Brouillon obsolète :",
+      "staleBody": "Régénérez-le avant de publier.",
+      "question": "Question",
+      "complete": "Faits complets et frais",
+      "incomplete": "Faits incomplets ou à revérifier",
+      "scamCaution": "Phrase de prudence anti-arnaque",
+      "intents": "Ce qui est demandé :",
+      "intent": {
+        "status": "Statut",
+        "deadline": "Date limite",
+        "truth": "Vrai ou faux",
+        "scam": "Arnaque / argent",
+        "fees": "Frais",
+        "partner": "Partenariat",
+        "exists": "Existence",
+        "documents": "Documents",
+        "intake": "Rentrée",
+        "visa": "Visa"
+      },
+      "facts": "Faits vérifiés",
+      "factsHint": "Extraits du catalogue publié. Les liens ouvrent les sources officielles.",
+      "entity": {
+        "scholarship": "Bourse",
+        "institution": "École",
+        "program": "Formation",
+        "country": "Pays"
+      },
+      "resolvedBy": {
+        "mention": "mentionnée par l'élève",
+        "name": "retrouvée par son nom"
+      },
+      "verifiedOn": "Vérifiée le {date}",
+      "noVerifiedDate": "Date de vérification non renseignée",
+      "staleSource": "À revérifier",
+      "noSource": "Aucune source officielle enregistrée",
+      "rawFacts": "Faits sérialisés (détail)",
+      "text": "Réponse proposée",
+      "writer": {
+        "template": "Rédigée par le modèle déterministe",
+        "llm": "Reformulée par l'IA (contrôlée)"
+      },
+      "llmFallback": "IA écartée : {reason}",
+      "llmReason": {
+        "llm_unavailable": "service indisponible",
+        "llm_error": "erreur",
+        "unknown_number": "chiffre absent des faits",
+        "unknown_month": "mois absent des faits",
+        "unknown_link": "lien absent des faits",
+        "percent": "pourcentage",
+        "promise": "promesse",
+        "mention": "mention ajoutée",
+        "length": "longueur",
+        "not_text": "réponse illisible"
+      },
+      "textLabel": "Texte publié sous le nom « Assistant KPB » (modifiable)",
+      "textHint": "{n} / {max} caractères. Gardez les dates et les sources telles quelles.",
+      "publish": "Publier",
+      "publishVerified": "Publier et marquer vérifiée",
+      "reject": "Rejeter",
+      "regenerate": "Régénérer",
+      "reset": "Revenir au texte proposé",
+      "donePublished": "Réponse publiée.",
+      "donePublishedVerified": "Réponse publiée et marquée « Réponse vérifiée par KPB ».",
+      "doneRegenerated": "Brouillon régénéré sur les données du moment.",
+      "doneRejected": "Brouillon rejeté.",
+      "rejectTitle": "Rejeter ce brouillon ?",
+      "rejectBody": "Rien n'est publié. Le motif reste dans l'historique du bot.",
+      "publishedAuto": "Publié automatiquement le {date}.",
+      "publishedBy": "Publié le {date} par {name}.",
+      "rejectedBy": "Rejeté le {date} par {name} : {reason}"
     }
   }
 }
