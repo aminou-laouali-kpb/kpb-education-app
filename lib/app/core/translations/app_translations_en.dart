@@ -3587,4 +3587,21 @@ const Map<String, String> appTranslationsEn = {
   'us_visa_notice_whatsapp_cta': 'Talk about it on WhatsApp',
   'us_visa_whatsapp_prefill':
       'Hello KPB Education, I\'m looking at studying in the United States and I\'d like to know if the student visa suspension affects me.',
+  // ── Universities: Partners / All view (owner decision, 17/10/2026) ───────
+  'uni_view_switch_label': 'Universities to show',
+  'uni_view_partners': 'Partners',
+  'uni_view_all': 'All',
+  'uni_view_count_semantics': '@label: @count program(s)',
+  'uni_partner_notice_title': 'KPB partner universities',
+  // Owner's text, translated faithfully (decision of 17/10/2026). See the FR
+  // file and honest_labels_guard_test.dart for the named exception.
+  'uni_partner_notice_body':
+      'This view shows KPB Education\'s partner universities. With them, KPB can speed up your application by up to 70% and can even get you admission guarantees.',
+  'uni_partner_notice_caveat': 'Important: this depends on your application.',
+  'uni_partner_notice_switch_hint':
+      'To see all universities and choose any destination, switch to the “All” tab.',
+  'uni_partner_notice_cta': 'See all universities',
+  'uni_partner_notice_close': 'Close this message',
+  'uni_partner_reminder': 'You\'re only seeing partner universities.',
+  'uni_partner_reminder_cta': 'See all',
 };

@@ -39,6 +39,20 @@ const _percentAllowed = <String, String>{
   'kpb_offer_partner_discount': 'remise tarifaire (−30 %)',
 };
 
+/// DÉCISION EXPLICITE DU PROPRIÉTAIRE du 17/10/2026 — l'avis « vue
+/// Partenaires » de l'écran Universités, texte voulu mot pour mot : « KPB peut
+/// accélérer ton dossier jusqu'à 70 % plus vite et peut même t'obtenir des
+/// garanties d'admission ». Ce « % » n'est pas une compatibilité calculée,
+/// mais c'est une promesse : l'exception est limitée à CETTE clé, et la
+/// mention « Attention : cela dépend de ton dossier » est exigée juste après
+/// (test plus bas, et partner_view_notice_test.dart pour l'affichage).
+/// Risques store / conformité signalés au propriétaire (voir
+/// docs/kpb-competition-readiness-claim-evidence-matrix.md).
+const _ownerDecisionKeys = <String, String>{
+  'uni_partner_notice_body': 'décision du propriétaire du 17/10/2026 : '
+      '« jusqu\'à 70 % plus vite », « garanties d\'admission »',
+};
+
 /// Clés où « chance(s) » / « odds » figure dans une NÉGATION explicite.
 const _chanceAllowed = <String, String>{
   'success_lab_progress_disclaimer': 'dit que la progression n\'est PAS '
@@ -78,6 +92,7 @@ void main() {
         keys[lang]!.forEach((key, value) {
           if (_officialQuoteKeys.contains(key)) return;
           if (_percentAllowed.containsKey(key)) return;
+          if (_ownerDecisionKeys.containsKey(key)) return;
           if (value.contains('%')) offenders.add('$key: $value');
         });
         expect(offenders, isEmpty,
@@ -115,6 +130,33 @@ void main() {
                   'l\'exception');
         }
       }
+    });
+
+    test('décision du propriétaire : exception limitée, mise en garde exigée',
+        () {
+      expect(_ownerDecisionKeys.keys, ['uni_partner_notice_body'],
+          reason: 'L\'exception du 17/10/2026 ne couvre qu\'une clé.');
+      for (final lang in const ['fr', 'en']) {
+        final body = keys[lang]!['uni_partner_notice_body'];
+        expect(body, isNotNull, reason: '$lang : l\'avis a disparu');
+        expect(body, contains('%'),
+            reason: '$lang : plus de « % » — retire l\'exception');
+      }
+      // La mention obligatoire, au mot près en français.
+      expect(keys['fr']!['uni_partner_notice_caveat'],
+          'Attention : cela dépend de ton dossier.');
+      expect(keys['en']!['uni_partner_notice_caveat'],
+          contains('depends on your application'));
+      // Et l'écran ne peut pas afficher l'un sans l'autre : ils vivent dans le
+      // même paragraphe.
+      final source = _codeWithoutComments(
+          'lib/app/features/universities/widgets/partner_view_notice.dart');
+      final body = source.indexOf("'uni_partner_notice_body'.tr");
+      final caveat = source.indexOf("'uni_partner_notice_caveat'.tr");
+      expect(body, greaterThan(0));
+      expect(caveat, greaterThan(body));
+      expect(caveat - body, lessThan(400),
+          reason: 'La mise en garde doit suivre le texte, dans le même bloc.');
     });
 
     test('la règle sait rougir (auto-test du motif)', () {

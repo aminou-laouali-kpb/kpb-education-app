@@ -3866,4 +3866,23 @@ const Map<String, String> appTranslationsFr = {
   'us_visa_notice_whatsapp_cta': 'En parler sur WhatsApp',
   'us_visa_whatsapp_prefill':
       'Bonjour KPB Education, je regarde les études aux États-Unis et j\'aimerais savoir si la suspension des visas étudiants me concerne.',
+  // ── Universités : vue Partenaires / Tous (décision du 17/10/2026) ──────────
+  'uni_view_switch_label': 'Universités à afficher',
+  'uni_view_partners': 'Partenaires',
+  'uni_view_all': 'Tous',
+  'uni_view_count_semantics': '@label : @count formation(s)',
+  'uni_partner_notice_title': 'Universités partenaires de KPB',
+  // Texte du PROPRIÉTAIRE, repris mot pour mot (décision du 17/10/2026). Le
+  // « 70 % » et la « garantie d'admission » y sont autorisés par une exception
+  // NOMMÉE de honest_labels_guard_test.dart, limitée à cette clé, et toujours
+  // affichés avec `uni_partner_notice_caveat` juste après.
+  'uni_partner_notice_body':
+      'Cette vue montre les universités partenaires de KPB Éducation. Avec elles, KPB peut accélérer ton dossier jusqu\'à 70 % plus vite et peut même t\'obtenir des garanties d\'admission.',
+  'uni_partner_notice_caveat': 'Attention : cela dépend de ton dossier.',
+  'uni_partner_notice_switch_hint':
+      'Pour voir toutes les universités et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».',
+  'uni_partner_notice_cta': 'Voir toutes les universités',
+  'uni_partner_notice_close': 'Fermer ce message',
+  'uni_partner_reminder': 'Tu vois seulement les universités partenaires.',
+  'uni_partner_reminder_cta': 'Voir tout',
 };
