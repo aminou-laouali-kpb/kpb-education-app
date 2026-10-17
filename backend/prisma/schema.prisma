@@ -445,6 +445,11 @@ model UserProfile {
   // Last time the profile-completion nudge (KPB-76) was sent — throttles the
   // re-engagement push so an incomplete profile is reminded at most monthly.
   profileNudgedAt               DateTime?
+  // Compétition ambassadeurs : instant où le profil est devenu « complété »
+  // au sens de `referrals/campaigns/profile-completion.ts` (posé une seule fois,
+  // par le serveur, au PATCH du profil ou au recalcul d'une campagne). Sert à
+  // dater la qualification d'un filleul ; NULL = jamais observé complet.
+  profileCompletedAt            DateTime?
   // Dernière build de l'app vue pour ce compte (en-têtes X-KPB-App-Version /
   // X-KPB-App-Build, envoyés depuis la build 54). Écrites par
   // AppBuildInterceptor, au plus une fois par 6 h par compte (plus tôt après une
@@ -2132,12 +2137,28 @@ model Ambassador {
   totalReferrals       Int              @default(0)
   totalCommissionsFCFA Int              @default(0)
   activatedAt          DateTime         @default(now())
+  // Code sans tirets ni casse (« KTOU-AB-1a2b3c » → « KTOUAB1A2B3C ») : c'est
+  // la clé de recherche de `POST /referrals/redeem`, l'app mettant le code saisi
+  // en majuscules. NULL seulement pour une collision au rattrapage (voir la
+  // migration 20261022120000_referral_campaigns).
+  codeNormalized       String?          @unique
+  // Activation par l'équipe (admin). Seul un ambassadeur activé ainsi compte
+  // dans une compétition ; une ligne créée par l'ancienne auto-activation garde
+  // `approvedAt` NULL.
+  approvedAt           DateTime?
+  approvedByAdminId    String?
+  // L'écran « cash » (soldes FCFA, retraits) de l'app installée s'affiche pour
+  // `dashboard.activated == true`. Les lignes antérieures à la compétition
+  // restent à true (rattrapage) ; un ambassadeur activé pour la compétition
+  // reste à false : il ne doit pas voir de commissions promises.
+  cashProgramEnabled   Boolean          @default(false)
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
 
-  referrals   AmbassadorReferral[]
-  commissions Commission[]
-  withdrawals Withdrawal[]
+  referrals      AmbassadorReferral[]
+  commissions    Commission[]
+  withdrawals    Withdrawal[]
+  participations ReferralCampaignParticipant[]
 
   @@index([city])
 }
@@ -3234,4 +3255,178 @@ model PremiumWaitlistEntry {
   // Le seul usage réel est « combien, et depuis quand » : l'index porte donc
   // sur la date de création, qui est la colonne du dénombrement et du tri.
   @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compétition ambassadeurs (parrainage, novembre 2026)
+//
+// Une campagne classe des ambassadeurs (`Ambassador` activés par l'équipe) selon
+// le nombre de filleuls QUALIFIÉS pendant sa fenêtre. Le rattachement d'un
+// filleul reste la table `Referral` (POST /referrals/redeem, code personnel OU
+// code ambassadeur) : les lignes `ReferralCampaignReferral` en sont un calcul
+// rejouable (`ReferralCampaignService.recompute`), jamais une saisie.
+// Règlement, comptage et anti-fraude : docs/runbook-campagne-ambassadeurs.md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ReferralCampaignStatus {
+  draft // invisible du public, modifiable
+  live // comptage en cours (tâche planifiée toutes les 5 min)
+  frozen // fin de fenêtre : plus de recalcul planifié, revue et podium
+  closed // podium validé, résultats définitifs, versements notés
+}
+
+model ReferralCampaign {
+  id                       String                        @id @default(cuid())
+  slug                     String                        @unique
+  nameFr                   String
+  nameEn                   String
+  // Fuseau dans lequel les JOURS de la campagne sont lus (Africa/Lagos = UTC+1,
+  // sans heure d'été). `startsAt` / `endsAt` sont les instants UTC calculés.
+  timeZone                 String                        @default("Africa/Lagos")
+  startsAt                 DateTime
+  // Borne EXCLUSIVE : minuit local du lendemain du dernier jour.
+  endsAt                   DateTime
+  status                   ReferralCampaignStatus        @default(draft)
+  // [{ rank, amountFcfa, label? }]
+  prizes                   Json                          @default("[]")
+  rulesText                String?
+  rulesUrl                 String?
+  eligibleCities           String[]                      @default([])
+  eligibleCountries        String[]                      @default([])
+  // Seuils de comptage et d'anti-fraude (voir campaign-rules.ts) ; {} = défauts.
+  qualificationRule        Json                          @default("{}")
+  lastComputedAt           DateTime?
+  launchedAt               DateTime?
+  frozenAt                 DateTime?
+  podiumValidatedAt        DateTime?
+  podiumValidatedByAdminId String?
+  closedAt                 DateTime?
+  createdByAdminId         String?
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
+  participants             ReferralCampaignParticipant[]
+  referrals                ReferralCampaignReferral[]
+  prizeAwards              ReferralCampaignPrizeAward[]
+
+  @@index([status])
+}
+
+model ReferralCampaignParticipant {
+  id                            String                       @id @default(cuid())
+  campaignId                    String
+  ambassadorId                  String
+  // Nom PUBLIC « Prénom I. » ; la ville s'affiche à côté (« Aïcha K. — Niamey »).
+  publicName                    String
+  city                          String                       @default("")
+  country                       String                       @default("")
+  // active | withdrawn | disqualified
+  status                        String                       @default("active")
+  statusReason                  String?
+  // adult | minor | unknown — dérivé de la date de naissance à l'inscription,
+  // corrigeable par l'équipe. `unknown` n'est PAS classable.
+  minorStatus                   String                       @default("unknown")
+  // not_required | pending | verified | refused. Un mineur n'est classé et
+  // primé qu'avec `verified` (autorisation parentale signée, vérifiée).
+  parentalAuthStatus            String                       @default("not_required")
+  parentalAuthVerifiedAt        DateTime?
+  parentalAuthVerifiedByAdminId String?
+  parentalAuthNote              String?
+  // Compteurs dénormalisés, réécrits par chaque recalcul.
+  qualifiedCount                Int                          @default(0)
+  flaggedCount                  Int                          @default(0)
+  pendingCount                  Int                          @default(0)
+  excludedCount                 Int                          @default(0)
+  // Instant où le compte actuel a été atteint (départage : le plus tôt gagne).
+  reachedCountAt                DateTime?
+  rank                          Int?
+  enrolledAt                    DateTime                     @default(now())
+  enrolledByAdminId             String?
+  updatedAt                     DateTime                     @updatedAt
+  campaign                      ReferralCampaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ambassador                    Ambassador                   @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  referrals                     ReferralCampaignReferral[]
+  prizeAwards                   ReferralCampaignPrizeAward[]
+
+  @@unique([campaignId, ambassadorId])
+  @@index([campaignId, rank])
+}
+
+model ReferralCampaignReferral {
+  id                     String                      @id @default(cuid())
+  campaignId             String
+  participantId          String
+  // Référence « plate » au filleul (purgée nommément par la suppression de
+  // compte, comme `AmbassadorReferral`).
+  refereeProfileId       String
+  attachedAt             DateTime
+  accountCreatedAt       DateTime
+  profileCompletedAt     DateTime?
+  qualifiedAt            DateTime?
+  // pending | qualified | flagged | excluded
+  status                 String                      @default("pending")
+  // Signaux automatiques (« à vérifier ») : disposable_email, device_duplicate,
+  // ip_burst, ip_block_burst, velocity_burst, referee_is_participant.
+  flags                  String[]                    @default([])
+  // Décision de l'équipe : validated (lève les signaux) | excluded (motif requis).
+  adminDecision          String?
+  adminDecisionReason    String?
+  adminDecisionByAdminId String?
+  adminDecisionAt        DateTime?
+  createdAt              DateTime                    @default(now())
+  updatedAt              DateTime                    @updatedAt
+  campaign               ReferralCampaign            @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  participant            ReferralCampaignParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, refereeProfileId])
+  @@index([participantId, status])
+}
+
+// Signaux anti-fraude relevés au rattachement (POST /referrals/redeem). Aucune
+// adresse IP ni aucun jeton en clair : des HMAC (clé serveur). Purgés après
+// `REFERRAL_SIGNAL_RETENTION_DAYS` (180 j par défaut — durée À VALIDER).
+model ReferralAttributionSignal {
+  id                String   @id @default(cuid())
+  refereeProfileId  String   @unique
+  referrerProfileId String
+  // personal | ambassador
+  codeKind          String
+  ipHash            String?
+  // HMAC du /24 (IPv4) ou du /48 (IPv6) : rafales depuis une même plage.
+  ipBlockHash       String?
+  // HMAC des jetons push (DeviceToken) du filleul au rattachement : un même
+  // téléphone qui recrée un compte garde son jeton FCM.
+  deviceHashes      String[] @default([])
+  // HMAC de l'identifiant d'installation envoyé par la build 57+ (en-tête
+  // `X-KPB-Device-Id`) ; NULL pour l'app installée (2.3.0), qui ne l'envoie pas.
+  clientDeviceHash  String?
+  createdAt         DateTime @default(now())
+
+  @@index([referrerProfileId, createdAt])
+  @@index([createdAt])
+}
+
+model ReferralCampaignPrizeAward {
+  id                 String                       @id @default(cuid())
+  campaignId         String
+  rank               Int
+  // SET NULL : le versement reste tracé même si le compte du lauréat disparaît.
+  participantId      String?
+  publicNameSnapshot String
+  amountFcfa         Int
+  // ambassador | parent (mineur : prix versé au parent)
+  recipient          String                       @default("ambassador")
+  // pending | paid
+  payoutStatus       String                       @default("pending")
+  payoutMethod       String                       @default("wave")
+  payoutReference    String?
+  paidAmountFcfa     Int?
+  paidAt             DateTime?
+  paidByAdminId      String?
+  note               String?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  campaign           ReferralCampaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  participant        ReferralCampaignParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, rank])
 }

@@ -4,33 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KPB Education — Tu es invité·e</title>
-  <meta name="description" content="Un ami t'invite sur Karatou (KPB Education) : orientation, universités, bourses et suivi de dossier pour étudier à l'étranger.">
+  <meta name="description" content="Un ami t'invite sur KPB Education : orientation, universités, bourses et suivi de dossier pour étudier à l'étranger.">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <header><div class="wrap"><a class="brand" href="/">KPB <span>Education</span></a></div></header>
   <main>
-    <h1>Tu es invité·e sur Karatou</h1>
-    <p>Karatou (KPB Education) accompagne les étudiants d'Afrique francophone : test d'orientation, universités et filières, bourses avec leurs échéances, et suivi de dossier avec un conseiller.</p>
+    <h1>Tu es invité·e sur KPB Education</h1>
+    <p>KPB Education accompagne les étudiants d'Afrique francophone : test d'orientation, universités et filières, bourses avec leurs échéances, et suivi de dossier avec un conseiller.</p>
 
-    <div class="card" id="ref-card" hidden>
+    <div class="card ref-card" id="ref-card" hidden>
       <h2 class="first">Ton code de parrainage</h2>
-      <p>Saisis ce code dans l'application, à l'écran <strong>Parrainage</strong>, pour que la personne qui t'a invité·e soit créditée :</p>
       <p><strong class="ref-code" id="ref-code"></strong></p>
+      <p><button type="button" class="btn ref-copy" id="ref-copy">Copier le code</button></p>
+      <p class="ref-copied" id="ref-copied" hidden>Code copié. Colle-le dans l'application.</p>
+      <ol class="ref-steps">
+        <li>Télécharge l'application (boutons ci-dessous).</li>
+        <li>Crée ton compte avec ton e-mail et complète ton profil.</li>
+        <li>Après ton inscription, ouvre <strong>Profil → « Parrainer un ami »</strong> (écran Parrainage), puis saisis ce code sous « Tu as un code de parrainage ? ».</li>
+      </ol>
     </div>
 
     <div class="card">
       <h2 class="first">Télécharger l'application</h2>
-      <ul>
-        <li><a id="android" href="https://play.google.com/store/apps/details?id=com.karatou.android">Android — Google Play</a></li>
-        <li><a id="ios" href="https://apps.apple.com/app/id1128659292">iPhone — App Store</a></li>
-      </ul>
-      <p>Déjà installée ? Ouvre l'application, puis entre le code ci-dessus dans l'écran Parrainage.</p>
+      <p class="store-buttons">
+        <a class="btn" id="android" href="https://play.google.com/store/apps/details?id=com.karatou.android">Android — Google&nbsp;Play</a>
+        <a class="btn" id="ios" href="https://apps.apple.com/app/id1128659292">iPhone — App&nbsp;Store</a>
+      </p>
+      <p>Déjà installée ? Ouvre l'application, puis saisis le code ci-dessus dans l'écran <strong>Parrainage</strong> après ton inscription.</p>
     </div>
 
     <div class="card">
       <h2 class="first">En savoir plus</h2>
       <ul>
+        <li><a href="/classement/">Classement de la compétition des ambassadeurs</a></li>
         <li><a href="/">À propos de KPB Education</a></li>
         <li><a href="/confidentialite.html">Politique de confidentialité</a></li>
       </ul>

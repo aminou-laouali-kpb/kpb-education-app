@@ -135,6 +135,17 @@ import { ReferralsController } from './modules/referrals/referrals.controller';
 import { ReferralsService } from './modules/referrals/referrals.service';
 import { AmbassadorController } from './modules/referrals/ambassador.controller';
 import { AmbassadorService } from './modules/referrals/ambassador.service';
+import {
+  AdminAmbassadorsController,
+  AdminReferralCampaignsController,
+} from './modules/referrals/campaigns/admin-referral-campaigns.controller';
+import { AmbassadorAdminService } from './modules/referrals/campaigns/ambassador-admin.service';
+import {
+  PublicCampaignsController,
+  StudentCampaignsController,
+} from './modules/referrals/campaigns/public-campaigns.controller';
+import { ReferralCampaignCronService } from './modules/referrals/campaigns/referral-campaign-cron.service';
+import { ReferralCampaignService } from './modules/referrals/campaigns/referral-campaign.service';
 import { AdminScholarshipsController, ScholarshipsController } from './modules/scholarships-index/admin-scholarships.controller';
 import { ScholarshipsIndexService } from './modules/scholarships-index/scholarships-index.service';
 import { DailyScholarshipService } from './modules/scholarships-index/daily-scholarship.service';
@@ -248,6 +259,13 @@ import { SalonService } from './modules/salon/salon.service';
     ParentLinksController,
     ReferralsController,
     AmbassadorController,
+    // Compétition ambassadeurs : `referrals/campaigns/current` (élève),
+    // `public/campaigns/*` (sans authentification), `admin/referral-campaigns`
+    // et `admin/ambassadors` (équipe).
+    StudentCampaignsController,
+    PublicCampaignsController,
+    AdminReferralCampaignsController,
+    AdminAmbassadorsController,
     // Annonce d'ouverture (chantier C). Déclaré AVANT AdminScholarshipsController :
     // ses routes à segment fixe (`opening-todo`, `opening-overview`) ne doivent
     // jamais être lues comme un `:id` de bourse.
@@ -356,6 +374,9 @@ import { SalonService } from './modules/salon/salon.service';
     PremiumWaitlistService,
     AdminPremiumWaitlistService,
     AmbassadorService,
+    ReferralCampaignService,
+    ReferralCampaignCronService,
+    AmbassadorAdminService,
     ReferralCreditsService,
     ReferralCreditsReconcileCronService,
     ScholarshipsIndexService,

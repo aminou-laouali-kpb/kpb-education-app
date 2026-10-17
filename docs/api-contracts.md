@@ -1944,3 +1944,119 @@ Réponse : `{items, total, limit, offset, hasMore, fieldFilterRelaxed, databaseU
   sur la page reçue, ne montre pas de total, et masque le bouton « Trier » (un tri
   qu'elle ne peut pas obtenir du serveur ne s'affiche pas).
 - Chaque item porte déjà `countryId` (alpha-3, sert au drapeau) et `lastVerifiedAt`.
+
+## Compétition ambassadeurs (parrainage, novembre 2026)
+
+Code : `backend/src/modules/referrals/` (`referrals.service.ts`, `campaigns/`). Exploitation :
+`docs/runbook-campagne-ambassadeurs.md`. Migration additive
+`20261022120000_referral_campaigns`.
+
+### `POST /referrals/redeem` (existante, étendue — compatible avec l'app 2.3.0)
+
+Corps inchangé `{ code }` (4 à 16 caractères), réponse inchangée `{attributed, alreadyReferred}`.
+
+- **Codes unifiés** : `code` peut être le code personnel (`UserProfile.referralCode`) OU le code
+  ambassadeur (`Ambassador.code`, « KTOU-AB-1a2b3c »). Recherche sur la forme normalisée
+  (majuscules, sans espace, tiret, point ni soulignement) : l'app met le texte en majuscules ;
+  `ktou-ab-1a2b3c`, `KTOUAB1A2B3C`, `k7pq-2mza` sont acceptés. Les codes existants restent
+  valides (rattrapage `Ambassador.codeNormalized`).
+- Le filleul est rattaché au **profil** du parrain (`Referral`, seule source du comptage) ; si ce
+  parrain a une ligne `Ambassador`, une `AmbassadorReferral` est créée (`refereeName` =
+  « Prénom I. ») et `totalReferrals` incrémenté.
+- Inchangé : 404 code inconnu, 403 auto-parrainage, 403 parrainage croisé, 403 si un dossier
+  existe, idempotent (`alreadyReferred`).
+- **Nouveau** : **429** `{code: "referral_code_rate_limited"}` au-delà de
+  `REFERRAL_CODE_HOURLY_LIMIT` (30) rattachements au même parrain dans l'heure ; rien n'est créé.
+- **Nouveau** : empreintes anti-fraude relevées au mieux (jamais bloquantes) dans
+  `ReferralAttributionSignal` : HMAC de l'IP, de sa plage (/24, /48), des jetons push déjà
+  enregistrés du filleul, et de l'en-tête facultatif `X-KPB-Device-Id` (build 57+ ; absent de
+  l'app installée).
+
+### `POST /referrals/ambassador/activate` (existante, gardée)
+
+- Ligne `Ambassador` existante → tableau de bord, comme avant (aucune écriture).
+- Sinon **403** `{code: "ambassador_activation_admin_only"}`, sauf
+  `AMBASSADOR_SELF_ACTIVATION_ENABLED=true` (programme rémunéré rouvert). L'app installée
+  n'appelle pas cette route (aucun bouton tant que `KPB_AMBASSADOR_CASH_ENABLED` est faux).
+
+### `GET /referrals/dashboard` (existante)
+
+`activated: true` seulement si la ligne `Ambassador` a `cashProgramEnabled = true` (toutes les
+lignes antérieures à la migration). Un ambassadeur activé pour la compétition reçoit l'aperçu
+non activé : l'app affiche l'écran de candidature, jamais des commissions promises.
+`POST /referrals/withdraw` refuse (400) sans `cashProgramEnabled`.
+
+### `GET /referrals/campaigns/current` (élève, préparée pour la build 57)
+
+`{participating: false}` ou `{participating: true, campaign: {slug, nameFr, nameEn, status,
+phase, startsAt, endsAt, provisional}, me: {publicName, city, code, rank, qualified, toReview,
+pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
+
+### `GET /public/campaigns/:slug/leaderboard` — sans authentification
+
+- `Cache-Control: public, max-age=30` (et cache serveur de 30 s), **30 requêtes / min / IP**,
+  `Access-Control-Allow-Origin: *` (lu par `kpbeducation.cloud/classement/`, sans cookie).
+- 404 pour un slug inconnu ou une campagne `draft`. `?city=` filtre (sans accents ni casse).
+- Réponse — liste de champs **fermée** :
+
+```json
+{
+  "campaign": {
+    "slug": "ambassadeurs-novembre-2026", "nameFr": "…", "nameEn": "…",
+    "status": "live", "phase": "upcoming|running|ended", "timeZone": "Africa/Lagos",
+    "startDate": "2026-11-01", "endDate": "2026-11-10",
+    "startsAt": "2026-10-31T23:00:00.000Z", "endsAt": "2026-11-10T23:00:00.000Z",
+    "prizes": [{"rank": 1, "amountFcfa": 100000}],
+    "rulesUrl": "https://…" , "provisional": true, "updatedAt": "…"
+  },
+  "serverTime": "…",
+  "cities": ["Maradi", "Niamey"],
+  "entries": [{"rank": 1, "name": "Aïcha K.", "city": "Niamey", "qualified": 12}]
+}
+```
+
+  Jamais d'e-mail, d'identifiant interne, de code, de compteur « à vérifier » ni de donnée de
+  filleul. Seuls les participants **classables** apparaissent (actif, ambassadeur activé, âge
+  connu, mineur avec autorisation parentale `verified`). `rank` est null à 0 qualifié.
+  `provisional` vaut false seulement quand la campagne est `closed`.
+
+### Qualification (calcul, `campaigns/campaign-qualification.ts`)
+
+Un filleul est **qualifié** à `qualifiedAt = max(rattachement, création du compte, complétion
+du profil)` si : rattachement (`Referral.createdAt`) dans `[startsAt, endsAt[` ; compte créé dans
+la fenêtre (règle par défaut `requireAccountCreatedInWindow`) ; e-mail vérifié (profil relié à
+Supabase, `supabaseUserId`) ; profil complété (`campaigns/profile-completion.ts` : élève,
+consentement, téléphone, date de naissance, ≥ 1 domaine, ≥ 1 pays visé, accord du tuteur si
+mineur — les champs obligatoires de l'onboarding de la build 56 ; le pays de résidence n'en fait
+pas partie) ; et `qualifiedAt < endsAt`. `UserProfile.profileCompletedAt` est posé une fois, au
+`PATCH /profiles/me` qui complète le profil (ou au recalcul). Statuts : `pending`, `qualified`,
+`flagged` (signal automatique, ne compte pas), `excluded` (décision de l'équipe). Signaux :
+`disposable_email`, `device_duplicate`, `ip_burst`, `ip_block_burst`, `velocity_burst`,
+`referee_is_participant`. Classement : qualifiés décroissants, puis instant où le compte a été
+atteint, puis inscription. Recalcul toutes les 5 min (campagnes `live`, gel automatique à
+`endsAt`) et à la demande ; n'écrit que les différences.
+
+### Routes de l'équipe — `admin/referral-campaigns`, `admin/ambassadors`
+
+Lecture : Admin, SuperAdmin, Commercial. Écriture, décisions, versements, export : Admin,
+SuperAdmin. `Cache-Control: private, no-store`. Chaque écriture crée un `AdminAuditEvent`
+(`purposeCode = "referral_campaign"`) et renvoie `X-Request-Id`.
+
+| Route | Effet |
+|---|---|
+| `GET /admin/referral-campaigns` | Liste + compteurs |
+| `POST /admin/referral-campaigns` | Création (`draft`) : `{slug, nameFr, nameEn, startDate, endDate, timeZone?, prizes?, rulesText?, rulesUrl?, eligibleCities?, eligibleCountries?, qualificationRule?}` — jours inclusifs lus dans `timeZone` (défaut `Africa/Lagos`). 409 slug pris |
+| `GET/PATCH /admin/referral-campaigns/:id` | Lecture / édition ; `live` et `frozen` : noms et règlement seulement (400 `campaign_field_locked`) |
+| `POST /admin/referral-campaigns/:id/transition` | `{action: launch\|freeze\|unfreeze\|validate_podium\|close}` ; 409 si impossible. `close` exige le podium validé ; `validate_podium` refusé après un versement |
+| `POST /admin/referral-campaigns/:id/recompute` | Recalcul : `{created, updated, deleted, unchanged, participantsUpdated, profilesStamped, skipped?}` |
+| `GET /admin/referral-campaigns/:id/leaderboard?city=&country=` | Classement complet (non classables compris, `unrankableReason`) |
+| `POST /admin/referral-campaigns/:id/participants` | `{ambassadorId \| email, publicName?, city?, country?, minorStatus?}` ; ambassadeur activé exigé, ville/pays éligibles, nom public sans e-mail ni numéro |
+| `PATCH /admin/referral-campaigns/:id/participants/:pid` | Nom public, ville, pays, statut (+ motif), âge, autorisation parentale (`verified` pose date et admin), note |
+| `GET /admin/referral-campaigns/:id/participants/:pid/referrals` | Filleuls : nom, e-mail, dates, statut, signaux, décision |
+| `POST /admin/referral-campaigns/:id/referrals/:rid/decision` | `{decision: validated\|excluded\|clear, reason?}` — motif requis pour exclure |
+| `GET /admin/referral-campaigns/:id/prizes` | Lauréats figés au podium |
+| `POST /admin/referral-campaigns/:id/prizes/:rank/payout` | `{payoutReference, paidAt?, paidAmountFcfa?, recipient?, payoutMethod?, note?}` ; lauréat mineur → `recipient: parent` exigé |
+| `GET /admin/referral-campaigns/:id/export.csv?scope=leaderboard\|referrals` | CSV (BOM, cellules neutralisées) |
+| `GET /admin/ambassadors?search=&approved=yes\|no` | Ambassadeurs |
+| `POST /admin/ambassadors` | `{email, city, displayName?, campus?}` : crée ou reprend la ligne `Ambassador`, `approvedAt`, codes ambassadeur et personnel, `cashProgramEnabled` false à la création |
+| `POST /admin/ambassadors/:id/revoke` | `{reason}` : retire l'activation (non classé ensuite) |

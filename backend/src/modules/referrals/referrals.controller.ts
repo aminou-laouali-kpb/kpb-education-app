@@ -23,10 +23,17 @@ export class ReferralsController {
     return this.referralsService.getMine(req.studentUser!.id);
   }
 
-  /** Attribute the caller to the owner of an 8-char referral code. */
+  /**
+   * Attribute the caller to the owner of a referral code — personal 8-char
+   * code OR ambassador code (« KTOU-AB-1a2b3c »), case and dashes ignored.
+   */
   @Post('redeem')
   redeem(@Req() req: AuthedReq, @Body() body: RedeemReferralDto) {
-    return this.referralsService.redeem(req.studentUser!.id, body.code);
+    const device = req.headers['x-kpb-device-id'];
+    return this.referralsService.redeem(req.studentUser!.id, body.code, {
+      ip: req.ip,
+      clientDeviceId: Array.isArray(device) ? device[0] : device,
+    });
   }
 
   /** Caller's no-cash reward balance + recent ledger entries (KPB-77). */

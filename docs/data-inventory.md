@@ -5,8 +5,9 @@ l’inscription. Chaque ligne cite le fichier qui **prouve** le flux. Les docs
 existants ne font pas autorité : si ce fichier et le code divergent, c’est le
 code qui gagne, et ce fichier doit être mis à jour.
 
-Dernière lecture du dépôt : 2026-10-16 (chantier L, préparation de la build 57 :
-test « Mes 10 bourses », « Suivre » et notifications, caches hors ligne ; §5).
+Dernière lecture du dépôt : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
+web, sans nouvelle build ; §6). Lecture précédente : 2026-10-16 (chantier L, préparation de
+la build 57 : test « Mes 10 bourses », « Suivre » et notifications, caches hors ligne ; §5).
 Lecture précédente : 2026-08-24 (alignement des trois politiques : YouTube et le
 service de reconnaissance vocale nommés).
 
@@ -131,3 +132,34 @@ Lu dans `backend/prisma/schema.prisma`, `backend/src/modules/scholarship-match/`
   Côte d'Ivoire, Niger…).
 - Écart à corriger côté serveur (pas un point juridique) : notifications absentes de
   l'export (ligne « Export » ci-dessus).
+
+## 6. Compétition ambassadeurs (relevé du 17/10/2026)
+
+Lu dans `backend/prisma/schema.prisma` (migration `20261022120000_referral_campaigns`),
+`backend/src/modules/referrals/` et `web/public/classement/`. **Aucune collecte nouvelle dans
+l'app installée** : tout vient de données déjà présentes (profil, rattachement par code, jeton
+push) ou de la saisie de l'équipe.
+
+| Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
+|---|---|---|---|---|
+| Nom public « Prénom I. », ville, pays d'un ambassadeur participant | Calculé du nom du compte à l'inscription par l'équipe, modifiable par elle | Postgres `ReferralCampaignParticipant` | **Public** (`/classement/`, `GET /public/campaigns/:slug/leaderboard`) avec le nombre de filleuls qualifiés et le rang — seulement si le participant est classable | Tant que le compte existe ; cascade à la suppression du compte (via `Ambassador`) |
+| Âge (majeur / mineur / inconnu) et **autorisation parentale** (statut, date de vérification, admin qui l'a vérifiée, note libre) | Date de naissance du profil ; saisie de l'équipe à la réception du formulaire signé | `ReferralCampaignParticipant` | Équipe (Admin, SuperAdmin, Commercial en lecture) | Idem. **Le formulaire signé lui-même n'est pas stocké par l'app** (reçu hors app, WhatsApp) : À VALIDER (propriétaire) où et combien de temps il est gardé |
+| Activation ambassadeur (`approvedAt`, admin) et espace « cash » (`cashProgramEnabled`) | Action de l'équipe | `Ambassador` | Équipe | Avec la ligne `Ambassador` |
+| Statut de chaque filleul dans une campagne (rattachement, création du compte, complétion du profil, qualification, signaux, décision et motif de l'équipe) | Calcul du serveur (`ReferralCampaignService.recompute`) ; décision de l'équipe | `ReferralCampaignReferral` (référence plate au filleul) | Équipe (nom et e-mail du filleul affichés dans l'admin et l'export CSV) ; **jamais public** ; l'ambassadeur voit dans l'app le seul nombre d'amis inscrits (écran Parrainage, existant) | Tant que la campagne existe ; purgé nommément à la suppression du compte du filleul ; cascade avec le participant |
+| Instant de complétion du profil (`UserProfile.profileCompletedAt`) | Serveur, au `PATCH /profiles/me` qui complète le profil | `UserProfile` | Serveur (date de qualification) | Avec le profil ; incluse dans l'export (colonne du profil) |
+| **Empreintes anti-fraude** : HMAC de l'adresse IP, de sa plage (/24, /48), des jetons push du filleul, de l'identifiant d'installation (build 57+, en-tête `X-KPB-Device-Id`), horodatage, type de code | `POST /referrals/redeem` | `ReferralAttributionSignal` — **aucune IP ni aucun jeton en clair** (clé `KPB_REFERRAL_SIGNAL_SECRET`, à défaut `KPB_JWT_SECRET`) | Serveur seulement (le calcul des signaux) ; l'équipe ne voit que le signal (« même téléphone », « rafale… ») | **180 jours** (`REFERRAL_SIGNAL_RETENTION_DAYS`, purge quotidienne) — durée **À VALIDER (propriétaire)** ; purgées à la suppression du compte (filleul ou parrain) |
+| Ligne de l'espace ambassadeur (`AmbassadorReferral.refereeName` = « Prénom I. » du filleul) | `POST /referrals/redeem` quand le parrain est ambassadeur | `AmbassadorReferral` | L'ambassadeur ayant l'espace « cash » (aucun pour la compétition) | Purgée à la suppression du compte du filleul (existant) |
+| Prix et versements (rang, nom public figé, montant, bénéficiaire ambassadeur/parent, moyen, référence Wave, date, admin) | Validation du podium et saisie de l'équipe | `ReferralCampaignPrizeAward` | Équipe | **Gardé après suppression du compte** (trace comptable, `participantId` → NULL, nom public figé) — À VALIDER (propriétaire) : durée légale de conservation comptable |
+| Journal des actions de l'équipe | Chaque écriture admin | `AdminAuditEvent` (`purposeCode = referral_campaign`, motif dans `reasonCode`) | Équipe | Comme le reste de l'audit (aucune purge) |
+
+- **Export** (`GET /profiles/me/export`) : `referralCampaigns.asAmbassador` (participations),
+  `asReferee` (statut de filleul, signaux, décision et motif) et `attributionSignals` (empreintes
+  hachées) s'ajoutent.
+- **Suppression du compte** : participations (cascade), lignes de filleul et empreintes (purge
+  nommée) ; seul le prix versé reste, sans lien vers le compte.
+- **Page publique** : statique, sans traceur ; elle appelle l'API sans cookie (CSP
+  `connect-src 'self' https://api.kpbeducation.cloud`).
+- À VALIDER (propriétaire) : mention de la compétition (nom public, autorisation parentale,
+  empreintes anti-fraude) dans `confidentialite.html` et la politique in-app ; base légale du
+  traitement anti-fraude (intérêt légitime) ; durées marquées ci-dessus.
+

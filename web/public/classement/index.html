@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KPB Education — Classement des ambassadeurs</title>
+  <meta name="description" content="Classement en direct de la compétition des ambassadeurs KPB Education : podium, nombre de filleuls, compte à rebours.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="KPB Education">
+  <meta property="og:title" content="Compétition des ambassadeurs KPB Education — le classement">
+  <meta property="og:description" content="Qui invite le plus d'amis sur KPB Education ? Podium, classement par ville et compte à rebours.">
+  <meta property="og:locale" content="fr_FR">
+  <!-- Adresse de l'API lue par classement.js (la CSP autorise cet hôte en connect-src). -->
+  <meta name="kpb-api" content="https://api.kpbeducation.cloud/api">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/classement/classement.css">
+  <!-- Script externe : la CSP du site (default-src 'self') bloque les scripts inline. -->
+  <script src="/classement/classement.js" defer></script>
+</head>
+<body>
+  <header><div class="wrap"><a class="brand" href="/">KPB <span>Education</span></a></div></header>
+  <main>
+    <h1 id="campaign-name">Compétition des ambassadeurs</h1>
+    <p class="lb-status" id="campaign-status">Chargement du classement…</p>
+
+    <div class="card lb-countdown" id="countdown-card" hidden>
+      <p class="lb-countdown-label" id="countdown-label"></p>
+      <p class="lb-countdown-value" id="countdown-value" aria-live="polite"></p>
+    </div>
+
+    <p class="lb-provisional" id="provisional" hidden>
+      Classement provisoire jusqu'à validation par l'équipe KPB (vérification des filleuls et des autorisations parentales).
+    </p>
+
+    <div class="card" id="error-card" hidden>
+      <p id="error-text"></p>
+    </div>
+
+    <section class="lb-podium" id="podium" aria-label="Podium" hidden></section>
+
+    <div class="card" id="board-card" hidden>
+      <div class="lb-tools">
+        <label class="lb-field">Rechercher ton nom
+          <input type="search" id="search" autocomplete="off" placeholder="Ex. Aïcha K.">
+        </label>
+        <label class="lb-field">Ville
+          <select id="city"><option value="">Toutes les villes</option></select>
+        </label>
+      </div>
+      <ol class="lb-list" id="list"></ol>
+      <p class="lb-empty" id="empty" hidden>Aucun ambassadeur ne correspond à ta recherche.</p>
+      <p class="lb-updated" id="updated"></p>
+    </div>
+
+    <div class="card">
+      <h2 class="first">Comment ça marche ?</h2>
+      <p>Un filleul compte quand il crée son compte pendant la compétition, vérifie son e-mail, complète son profil, puis saisit le code de son ambassadeur dans l'écran <strong>Parrainage</strong> de l'application.</p>
+      <p class="lb-actions">
+        <a class="btn" href="/app">Télécharger l'application</a>
+        <button type="button" class="btn lb-share" id="share">Partager le classement</button>
+        <a class="btn lb-secondary" id="rules" href="/" hidden>Lire le règlement</a>
+      </p>
+      <p class="lb-share-done" id="share-done" hidden>Lien copié.</p>
+    </div>
+  </main>
+  <footer>
+    <a href="/">KPB Education</a>
+    <a href="/confidentialite.html">Confidentialité</a>
+    <a href="/conditions.html">Conditions</a>
+  </footer>
+</body>
+</html>

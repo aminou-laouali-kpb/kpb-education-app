@@ -1,7 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { ambassadorCodeFor, normalizeReferralCode } from './referral-code';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ambassadeur program (App-engagement handoff · US-032→035).
@@ -16,6 +21,14 @@ import { PrismaService } from '../prisma/prisma.service';
 // Money movement is intentionally NOT integrated here: `requestWithdrawal`
 // records a `requested` Withdrawal (paid out via Wave within 48h by ops) — it
 // never calls an external transfer API.
+//
+// Compétition ambassadeurs (novembre 2026) : une ligne `Ambassador` peut exister
+// SANS l'espace « cash » (`cashProgramEnabled = false`, cas de tout ambassadeur
+// activé par l'équipe pour la compétition). Pour elle, le tableau de bord reste
+// l'aperçu non activé : l'app installée affiche l'écran de candidature, jamais
+// des commissions promises. L'auto-activation est fermée côté serveur
+// (`AMBASSADOR_SELF_ACTIVATION_ENABLED`, faux par défaut) : seule l'équipe active
+// un ambassadeur (`POST /admin/ambassadors`).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MIN_WITHDRAWAL_FCFA = 20000; // US-035
@@ -144,17 +157,33 @@ export class AmbassadorService {
         where: { userProfileId: profileId },
       });
       if (existing) return existing;
+      // Garde serveur : plus d'auto-activation tant que le programme rémunéré
+      // n'est pas ouvert. L'app installée n'appelle pas cette route (aucun
+      // bouton ne la déclenche quand KPB_AMBASSADOR_CASH_ENABLED est faux) ;
+      // une ancienne build qui l'appellerait reçoit un 403 explicite.
+      if (!selfActivationEnabled()) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          code: 'ambassador_activation_admin_only',
+          message:
+            'L’espace ambassadeur est activé par l’équipe KPB. Écris-nous sur WhatsApp pour candidater.',
+        });
+      }
       try {
+        const code = ambassadorCodeFor(profileId, input.displayName ?? '');
         return await prisma.ambassador.create({
           data: {
             userProfileId: profileId,
             // Code is derived from the (unique) profile id, so it is stable and
             // collision-free across re-activations of the same user.
-            code: this.generateCode(profileId, input.displayName ?? ''),
+            code,
+            codeNormalized: normalizeReferralCode(code),
             displayName: input.displayName ?? '',
             campus: input.campus ?? '',
             city: input.city ?? '',
             payoutAccount: input.payoutAccount ?? '',
+            // L'auto-activation est celle du programme rémunéré.
+            cashProgramEnabled: true,
           },
         });
       } catch (error) {
@@ -189,7 +218,7 @@ export class AmbassadorService {
   // rows → sum 0 → below the floor → the whole transaction rolls back.
   async requestWithdrawal(profileId: string) {
     const amb = await this.loadAmbassadorRaw(profileId);
-    if (!amb) {
+    if (!amb || !amb.cashProgramEnabled) {
       throw new BadRequestException(
         'Active ton espace ambassadeur avant de demander un retrait.',
       );
@@ -288,7 +317,8 @@ export class AmbassadorService {
     | null
   > {
     const row = await this.loadAmbassadorRaw(profileId);
-    if (!row) return null;
+    // Sans l'espace « cash » (ambassadeur de la compétition), aperçu non activé.
+    if (!row || !row.cashProgramEnabled) return null;
 
     const referrals: RefRow[] = row.referrals.map((r) => ({
       name: r.refereeName || 'Filleul',
@@ -473,20 +503,9 @@ export class AmbassadorService {
     const tail = digits.slice(-4);
     return `${account.slice(0, Math.max(0, account.length - 7))}••• ${tail.slice(0, 2)} ${tail.slice(2)}`.trim();
   }
+}
 
-  // Stable code derived from the (unique) profile id — no Date.now(), so the
-  // same user always gets the same code and two different users are extremely
-  // unlikely to collide (6 base-36 chars from a hash of the unique id).
-  // Format: KTOU-XX-######.
-  private generateCode(profileId: string, name: string): string {
-    const ini = this.initials(name).padEnd(2, 'X').slice(0, 2).toUpperCase();
-    const suffix = Math.abs(this.hash(profileId)).toString(36).padStart(6, '0').slice(0, 6);
-    return `KTOU-${ini}-${suffix}`;
-  }
-
-  private hash(s: string): number {
-    let h = 0;
-    for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-    return h;
-  }
+/** `AMBASSADOR_SELF_ACTIVATION_ENABLED=true` rouvre l'auto-activation (programme rémunéré). */
+export function selfActivationEnabled(): boolean {
+  return process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED === 'true';
 }

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 
 import { AmbassadorService } from './ambassador.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -90,6 +90,7 @@ describe('AmbassadorService', () => {
         payoutAccount: '+221770000000',
         monthlyObjective: 15,
         monthlyBonusFCFA: 10000,
+        cashProgramEnabled: true,
         referrals: [
           { id: 'r1', refereeName: 'X', status: 'placed', note: '', signedUpAt: new Date() },
           { id: 'r2', refereeName: 'Y', status: 'signed_up', note: '', signedUpAt: new Date() },
@@ -115,6 +116,7 @@ describe('AmbassadorService', () => {
   describe('requestWithdrawal (full balance only)', () => {
     const ambWithBalance = {
       id: 'amb-1',
+      cashProgramEnabled: true,
       payoutMethod: 'wave',
       payoutAccount: '+221770000000',
       commissions: [{ amountFCFA: 47000, withdrawalId: null }],
@@ -160,6 +162,114 @@ describe('AmbassadorService', () => {
       await expect(svc.requestWithdrawal('p1')).rejects.toBeInstanceOf(
         BadRequestException,
       );
+    });
+  });
+
+  describe('compétition : ambassadeur sans espace « cash »', () => {
+    const competitionAmb = {
+      id: 'amb-c',
+      userProfileId: 'p9',
+      code: 'KTOU-AK-abc123',
+      displayName: 'Aïcha Konaté',
+      campus: '',
+      city: 'Niamey',
+      payoutMethod: 'wave',
+      payoutAccount: '',
+      monthlyObjective: 15,
+      monthlyBonusFCFA: 10000,
+      cashProgramEnabled: false,
+      referrals: [],
+      commissions: [],
+      withdrawals: [],
+    };
+
+    it('garde l’aperçu non activé : l’app installée ne montre aucune commission', async () => {
+      const { prisma } = dbPrisma(competitionAmb);
+      const d = await new AmbassadorService(prisma).getDashboard('p9');
+      expect(d.activated).toBe(false);
+      expect(d.isSample).toBe(true);
+    });
+
+    it('refuse un retrait', async () => {
+      const { prisma } = dbPrisma({ ...competitionAmb, commissions: [{ amountFCFA: 50000, withdrawalId: null }] });
+      await expect(new AmbassadorService(prisma).requestWithdrawal('p9')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('activate — garde serveur', () => {
+    const OLD = process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED;
+    afterEach(() => {
+      if (OLD === undefined) delete process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED;
+      else process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED = OLD;
+    });
+
+    it('refuse l’auto-activation par défaut (403, rien n’est créé)', async () => {
+      delete process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED;
+      const created: unknown[] = [];
+      const client = {
+        ambassador: {
+          findUnique: async () => null,
+          create: async (args: unknown) => {
+            created.push(args);
+            return {};
+          },
+        },
+      };
+      const prisma = {
+        execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService;
+      await expect(new AmbassadorService(prisma).activate('p1', {})).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(created).toHaveLength(0);
+    });
+
+    it('rend le tableau de bord d’une ligne existante sans rien modifier', async () => {
+      delete process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED;
+      const { prisma } = dbPrisma({
+        id: 'amb-1',
+        userProfileId: 'p1',
+        code: 'KTOU-AL-1a2b',
+        displayName: 'Awa Lo',
+        campus: '',
+        city: 'Dakar',
+        payoutMethod: 'wave',
+        payoutAccount: '',
+        monthlyObjective: 15,
+        monthlyBonusFCFA: 10000,
+        cashProgramEnabled: true,
+        referrals: [],
+        commissions: [],
+        withdrawals: [],
+      });
+      const d = await new AmbassadorService(prisma).activate('p1', {});
+      expect(d.activated).toBe(true);
+    });
+
+    it('rouvre l’auto-activation (programme rémunéré) quand le drapeau serveur est posé', async () => {
+      process.env.AMBASSADOR_SELF_ACTIVATION_ENABLED = 'true';
+      const created: Array<{ data: Record<string, unknown> }> = [];
+      const client = {
+        ambassador: {
+          findUnique: async () => null,
+          findMany: async () => [],
+          create: async (args: { data: Record<string, unknown> }) => {
+            created.push(args);
+            return { id: 'amb-n', ...args.data };
+          },
+        },
+      };
+      const prisma = {
+        execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService;
+      await new AmbassadorService(prisma).activate('profile-1', { displayName: 'Awa Lo' });
+      expect(created[0].data.code).toMatch(/^KTOU-AL-[0-9a-z]{6}$/);
+      expect(created[0].data.codeNormalized).toBe(
+        String(created[0].data.code).toUpperCase().replace(/-/g, ''),
+      );
+      expect(created[0].data.cashProgramEnabled).toBe(true);
     });
   });
 });

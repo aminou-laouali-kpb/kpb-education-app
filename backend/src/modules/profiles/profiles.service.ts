@@ -42,6 +42,7 @@ import {
   AVATAR_STORAGE_LABEL,
 } from './profile-avatar.policy';
 import { isAtLeastAge, MINIMUM_ACCOUNT_AGE } from './profile-age.policy';
+import { isProfileComplete } from '../referrals/campaigns/profile-completion';
 import { parseLanguageTests } from '../scholarship-match/match-inputs';
 
 /** The multipart file as produced by multer's memory storage. */
@@ -291,6 +292,16 @@ export class ProfilesService {
     );
 
     if (updated) {
+      // Compétition ambassadeurs : l'instant où le profil devient complet date
+      // la qualification d'un filleul. Posé une seule fois, au mieux.
+      if (!updated.profileCompletedAt && isProfileComplete(updated, new Date())) {
+        await this.prismaService.tryExecute((prisma) =>
+          prisma.userProfile.updateMany({
+            where: { id: updated.id, profileCompletedAt: null },
+            data: { profileCompletedAt: new Date() },
+          }),
+        );
+      }
       // Fire-and-forget: low-latency Mautic push. A failure here is fine —
       // the state stays desired≠synced and the reconciliation cron retries.
       if (input.scholarshipNewsletterOptIn !== undefined) {
@@ -688,6 +699,20 @@ export class ProfilesService {
         prisma.ambassadorReferral.deleteMany({
           where: { refereeProfileId: id },
         }),
+        // (4) Compétition ambassadeurs : l'utilisateur EN TANT QUE filleul dans
+        // une campagne (référence plate, comme ci-dessus) et ses empreintes
+        // anti-fraude, comme filleul ou comme parrain. En tant qu'ambassadeur,
+        // ses participations partent par cascade avec la ligne `Ambassador` ;
+        // un prix déjà versé garde sa trace comptable (`participantId` → NULL,
+        // nom public figé).
+        prisma.referralCampaignReferral.deleteMany({
+          where: { refereeProfileId: id },
+        }),
+        prisma.referralAttributionSignal.deleteMany({
+          where: {
+            OR: [{ refereeProfileId: id }, { referrerProfileId: id }],
+          },
+        }),
         // Competition Readiness technical records do not all have an FK to the
         // profile. Purge them explicitly before the workspace/profile cascade.
         prisma.analyticsEvent.deleteMany({
@@ -1030,6 +1055,9 @@ export class ProfilesService {
         eefInterest,
         scholarshipMatchRuns,
         scholarshipAlertSubscriptions,
+        campaignParticipations,
+        campaignReferrals,
+        referralSignals,
       ] = await Promise.all([
         prisma.case.findMany({
           where: { userId: id },
@@ -1391,6 +1419,48 @@ export class ProfilesService {
           where: { userId: id },
           orderBy: { createdAt: 'asc' },
         }),
+        // Compétition ambassadeurs : participations (comme ambassadeur), lignes
+        // de filleul et empreintes anti-fraude (hachées) relevées au parrainage.
+        prisma.referralCampaignParticipant.findMany({
+          where: { ambassador: { userProfileId: id } },
+          select: {
+            publicName: true,
+            city: true,
+            country: true,
+            status: true,
+            statusReason: true,
+            minorStatus: true,
+            parentalAuthStatus: true,
+            parentalAuthVerifiedAt: true,
+            qualifiedCount: true,
+            rank: true,
+            enrolledAt: true,
+            campaign: { select: { slug: true, nameFr: true, startsAt: true, endsAt: true } },
+          },
+        }),
+        prisma.referralCampaignReferral.findMany({
+          where: { refereeProfileId: id },
+          select: {
+            attachedAt: true,
+            qualifiedAt: true,
+            status: true,
+            flags: true,
+            adminDecision: true,
+            adminDecisionReason: true,
+            campaign: { select: { slug: true, nameFr: true } },
+          },
+        }),
+        prisma.referralAttributionSignal.findMany({
+          where: { refereeProfileId: id },
+          select: {
+            codeKind: true,
+            ipHash: true,
+            ipBlockHash: true,
+            deviceHashes: true,
+            clientDeviceHash: true,
+            createdAt: true,
+          },
+        }),
       ]);
 
       // Les avis que l'étudiant a rédigés sur ses conseillers : son nom, sa note
@@ -1468,6 +1538,11 @@ export class ProfilesService {
         eefInterest: eefInterest[0] ?? null,
         scholarshipMatchRuns,
         scholarshipAlertSubscriptions,
+        referralCampaigns: {
+          asAmbassador: campaignParticipations,
+          asReferee: campaignReferrals,
+          attributionSignals: referralSignals,
+        },
       };
     });
 
