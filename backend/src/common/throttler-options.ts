@@ -64,3 +64,13 @@ export const SCHOLARSHIP_MATCH_RUN_THROTTLE = {
 export const PUBLIC_LEADERBOARD_THROTTLE = {
   [GLOBAL_THROTTLER]: { limit: 30, ttl: 60_000 },
 };
+
+/**
+ * Communauté : toutes les écritures élève (publier, répondre, modifier,
+ * supprimer, « utile », signaler) — 20 par minute, par IP et par route. Les
+ * quotas métier (publications par jour, réponses par heure) sont comptés par
+ * membre dans `CommunityAccessService` ; ce plafond arrête une boucle client.
+ */
+export const COMMUNITY_WRITE_THROTTLE = {
+  [GLOBAL_THROTTLER]: { limit: 20, ttl: 60_000 },
+};

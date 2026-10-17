@@ -156,6 +156,31 @@ void main() {
     );
   });
 
+  // Communauté (C1 + C2) : une variable pour `features.community` ET les routes
+  // élève /community/*. Livrée éteinte : un défaut `true` dans compose ouvrirait
+  // une surface d'échanges entre utilisateurs (mineurs compris) au premier
+  // redéploiement, avant les déclarations stores.
+  test('le drapeau « communauté » est lu, relayé, documenté et fermé', () {
+    const variable = 'KPB_COMMUNITY_ENABLED';
+    expect(read, contains(variable),
+        reason: '$controllerPath ne lit plus $variable.');
+    expect(relayed, contains(variable),
+        reason: '$variable n\'est pas relayée dans docker-compose.yml.');
+    expect(documented, contains(variable),
+        reason: '$variable n\'est pas documentée dans .env.example.');
+    expect(
+      File('docker-compose.yml').readAsStringSync(),
+      contains('- $variable=\${$variable:-false}'),
+      reason:
+          '$variable doit avoir `false` pour défaut dans docker-compose.yml.',
+    );
+    expect(
+      File('docs/api-contracts.md').readAsStringSync(),
+      contains('`features.community`'),
+      reason: 'features.community doit être documenté dans api-contracts.',
+    );
+  });
+
   // Visas étudiants américains (décision du 17/10/2026) : la liste est
   // PILOTABLE sans build. Défauts VIDES dans compose — le serveur sert alors la
   // liste vérifiée et datée ; une liste écrite dans compose serait figée dans le

@@ -44,6 +44,10 @@ import {
 import { isAtLeastAge, MINIMUM_ACCOUNT_AGE } from './profile-age.policy';
 import { isProfileComplete } from '../referrals/campaigns/profile-completion';
 import { parseLanguageTests } from '../scholarship-match/match-inputs';
+import {
+  refreshPostCounters,
+  refreshReplyCounters,
+} from '../community/community-counters';
 
 /** The multipart file as produced by multer's memory storage. */
 export interface UploadedAvatarFile {
@@ -641,6 +645,51 @@ export class ProfilesService {
         ...new Set(authoredReviews.map((r) => r.counsellorId)),
       ];
 
+      // Communauté (C1 + C2) : SUPPRESSION définitive, pas d'anonymisation
+      // (docs/community-api-contract.md §12). La fiche membre part en cascade
+      // avec le profil, et avec elle publications (réponses des autres
+      // comprises), réponses, « utile », mentions, suivis, blocages, charte,
+      // sanctions, et les signalements VISANT ses contenus ou son profil ; ceux
+      // qu'il a RÉDIGÉS restent, sans auteur (SET NULL). On relève AVANT la
+      // suppression les contenus d'autrui dont les compteurs vont bouger
+      // (ses réponses et ses « utile »), recalculés APRÈS.
+      const communityMember = await prisma.communityMember.findUnique({
+        where: { userId: id },
+        select: { id: true },
+      });
+      const communityMemberId = communityMember?.id ?? null;
+      const communityTouched = communityMemberId
+        ? await Promise.all([
+            prisma.communityReply.findMany({
+              where: { authorMemberId: communityMemberId },
+              select: { postId: true },
+            }),
+            prisma.communityReaction.findMany({
+              where: { memberId: communityMemberId },
+              select: { postId: true, replyId: true, reply: { select: { postId: true } } },
+            }),
+          ])
+        : null;
+      const communityPostIds = communityTouched
+        ? [
+            ...new Set([
+              ...communityTouched[0].map((r) => r.postId),
+              ...communityTouched[1].flatMap((r) =>
+                [r.postId, r.reply?.postId].filter((v): v is string => !!v),
+              ),
+            ]),
+          ]
+        : [];
+      const communityReplyIds = communityTouched
+        ? [
+            ...new Set(
+              communityTouched[1]
+                .map((r) => r.replyId)
+                .filter((v): v is string => !!v),
+            ),
+          ]
+        : [];
+
       await prisma.$transaction([
         // Children of Case (no cascade defined).
         prisma.caseMessage.deleteMany({ where: { caseId: { in: caseIds } } }),
@@ -864,8 +913,23 @@ export class ProfilesService {
         prisma.partnerLead.deleteMany({ where: { userId: id } }),
         prisma.studentCredential.deleteMany({ where: { userProfileId: id } }),
         prisma.magicLinkToken.deleteMany({ where: { email: profile.email } }),
+        // Journal de modération : l'action reste (responsabilité de l'équipe),
+        // le lien vers le membre part. Référence plate, sans cascade.
+        ...(communityMemberId
+          ? [
+              prisma.forumModerationAction.updateMany({
+                where: { memberId: communityMemberId },
+                data: { memberId: null },
+              }),
+            ]
+          : []),
         prisma.userProfile.delete({ where: { id } }),
       ]);
+
+      // Compteurs des publications et réponses d'AUTRES membres touchées
+      // (celles du membre sont déjà parties ; les ids absents sont ignorés).
+      await refreshReplyCounters(prisma, communityReplyIds);
+      await refreshPostCounters(prisma, communityPostIds);
 
       // Recompute each affected counsellor's published-review counters, mirroring
       // CounsellorsService (avgRating/reviewCount over isPublished reviews).
@@ -1058,6 +1122,7 @@ export class ProfilesService {
         campaignParticipations,
         campaignReferrals,
         referralSignals,
+        communityMember,
       ] = await Promise.all([
         prisma.case.findMany({
           where: { userId: id },
@@ -1461,6 +1526,46 @@ export class ProfilesService {
             createdAt: true,
           },
         }),
+        // Communauté (C1 + C2) : tout ce que le membre a écrit ou décidé, tous
+        // états confondus. Les signalements VISANT l'élève ne lui sont pas
+        // rendus (protection des signaleurs), seulement ceux qu'il a rédigés.
+        prisma.communityMember.findUnique({
+          where: { userId: id },
+          select: {
+            id: true,
+            charterVersion: true,
+            charterAcceptedAt: true,
+            createdAt: true,
+            charterAcceptances: { select: { version: true, acceptedAt: true }, orderBy: { acceptedAt: 'asc' } },
+            posts: {
+              select: {
+                id: true, type: true, title: true, body: true, status: true, statusReason: true,
+                createdAt: true, editedAt: true, deletedAt: true,
+                mentions: { select: { entityType: true, entityId: true, labelFr: true } },
+                hashtags: { select: { hashtag: { select: { tag: true } } } },
+              },
+              orderBy: { createdAt: 'asc' },
+            },
+            replies: {
+              select: {
+                id: true, postId: true, body: true, status: true, statusReason: true,
+                isVerified: true, createdAt: true, editedAt: true, deletedAt: true,
+              },
+              orderBy: { createdAt: 'asc' },
+            },
+            reactions: { select: { postId: true, replyId: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
+            follows: { select: { postId: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
+            blocksMade: { select: { blockedMemberId: true, createdAt: true }, orderBy: { createdAt: 'asc' } },
+            reportsFiled: {
+              select: { targetType: true, targetKey: true, reason: true, details: true, status: true, createdAt: true, resolvedAt: true },
+              orderBy: { createdAt: 'asc' },
+            },
+            sanctions: {
+              select: { kind: true, reason: true, endsAt: true, createdAt: true, revokedAt: true },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        }),
       ]);
 
       // Les avis que l'étudiant a rédigés sur ses conseillers : son nom, sa note
@@ -1543,6 +1648,27 @@ export class ProfilesService {
           asReferee: campaignReferrals,
           attributionSignals: referralSignals,
         },
+        community: communityMember
+          ? {
+              member: {
+                memberId: communityMember.id,
+                memberSince: communityMember.createdAt,
+                charterVersion: communityMember.charterVersion,
+                charterAcceptedAt: communityMember.charterAcceptedAt,
+              },
+              charterAcceptances: communityMember.charterAcceptances,
+              posts: communityMember.posts.map(({ hashtags, ...post }) => ({
+                ...post,
+                hashtags: hashtags.map((h) => h.hashtag.tag),
+              })),
+              replies: communityMember.replies,
+              helpfulReactions: communityMember.reactions,
+              follows: communityMember.follows,
+              blocks: communityMember.blocksMade,
+              reportsFiled: communityMember.reportsFiled,
+              sanctions: communityMember.sanctions,
+            }
+          : null,
       };
     });
 

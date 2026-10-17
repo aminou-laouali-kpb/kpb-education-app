@@ -202,6 +202,10 @@ services:
       # Onboarding « la valeur d'abord » (chantier I3) : `features.onboardingV2`.
       # FERMÉ par défaut : l'ancien parcours reste servi tant qu'il est coupé.
       - KPB_ONBOARDING_V2_ENABLED=${KPB_ONBOARDING_V2_ENABLED:-false}
+      # Communauté d'entraide (C1 + C2) : `features.community` ET les routes élève
+      # /community/* (404 `{ disabled: true }` tant qu'il est coupé). FERMÉ par
+      # défaut : à n'ouvrir qu'avec les déclarations stores mises à jour.
+      - KPB_COMMUNITY_ENABLED=${KPB_COMMUNITY_ENABLED:-false}
       # Dates VIDES par défaut, jamais une date de repli : le client n'annonce
       # alors aucune date, plutôt qu'une date inventée qu'un étudiant
       # utiliserait pour organiser son dossier.

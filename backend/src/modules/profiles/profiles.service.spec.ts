@@ -71,6 +71,11 @@ describe('ProfilesService — account deletion & export', () => {
     'referralCampaignParticipant',
     'referralCampaignReferral',
     'referralAttributionSignal',
+    // Communauté (C1 + C2) : aucune fiche membre ici (findUnique → null).
+    'communityMember',
+    'communityReply',
+    'communityReaction',
+    'forumModerationAction',
   ] as const;
 
   function makeFakePrisma(profile: unknown) {

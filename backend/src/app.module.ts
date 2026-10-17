@@ -28,6 +28,17 @@ import { CaseMessagingGateway } from './modules/cases/case-messaging.gateway';
 import { CaseReassignmentCronService } from './modules/cases/case-reassignment-cron.service';
 import { CommunityController } from './modules/community/community.controller';
 import { CommunityService } from './modules/community/community.service';
+import { CommunityAccessService } from './modules/community/community-access.service';
+import { CommunityAdminController } from './modules/community/community-admin.controller';
+import { CommunityCatalogService } from './modules/community/community-catalog.service';
+import { CommunityComposerService } from './modules/community/community-composer.service';
+import { CommunityFilterConfigService } from './modules/community/community-filter-config.service';
+import { CommunityModerationService } from './modules/community/community-moderation.service';
+import { CommunityNotificationsService } from './modules/community/community-notifications.service';
+import { CommunityPostsService } from './modules/community/community-posts.service';
+import { CommunityPurgeCronService } from './modules/community/community-purge-cron.service';
+import { CommunityStudentController } from './modules/community/community-student.controller';
+import { CommunityEnabledGuard } from './modules/community/community.feature';
 import { ContentController } from './modules/content/content.controller';
 import { ContentService } from './modules/content/content.service';
 import { ParcoursController } from './modules/parcours/parcours.controller';
@@ -223,6 +234,11 @@ import { SalonService } from './modules/salon/salon.service';
     AppointmentsController,
     CasesController,
     CommunityController,
+    // Communauté C1 + C2 : `community/*` (élève, derrière KPB_COMMUNITY_ENABLED)
+    // et `admin/community/*` (équipe). Aucun chemin commun avec les deux routes
+    // historiques de taxonomie de CommunityController.
+    CommunityStudentController,
+    CommunityAdminController,
     ContentController,
     ParcoursController,
     DeviceTokensController,
@@ -314,6 +330,15 @@ import { SalonService } from './modules/salon/salon.service';
     CaseReassignmentCronService,
     CatalogService,
     CommunityService,
+    CommunityAccessService,
+    CommunityCatalogService,
+    CommunityComposerService,
+    CommunityFilterConfigService,
+    CommunityModerationService,
+    CommunityNotificationsService,
+    CommunityPostsService,
+    CommunityPurgeCronService,
+    CommunityEnabledGuard,
     ContentService,
     ParcoursService,
     ParcoursWeeklyService,

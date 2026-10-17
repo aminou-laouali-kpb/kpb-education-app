@@ -516,6 +516,10 @@ model UserProfile {
   outcomeEvidenceLinks          OutcomeEvidenceLink[]
   impactCohortMemberships       ImpactCohortMembership[]
   scholarshipMatchRuns          ScholarshipMatchRun[]
+  // Communauté (C1 + C2) : la fiche membre naît au premier appel /community/*.
+  // Cascade : supprimer le compte efface tout ce que le membre a écrit (§12 du
+  // contrat docs/community-api-contract.md).
+  communityMember               CommunityMember?
 
   @@index([accountType])
   @@index([createdAt])
@@ -900,6 +904,11 @@ model ForumTopicTag {
   updatedAt     DateTime          @updatedAt
 }
 
+// Journal de modération. Né avec l'ancien écran communauté (jamais livré),
+// RÉUTILISÉ par la communauté C1 + C2 : une ligne par action humaine de
+// l'équipe (rétablir, masquer, supprimer, sanction, vérification…). Colonnes
+// de rattachement nullables et SANS clé étrangère : le journal survit à la
+// purge des contenus ; `memberId` est mis à NULL à la suppression du compte.
 model ForumModerationAction {
   id            String       @id @default(cuid())
   targetType    String
@@ -909,6 +918,15 @@ model ForumModerationAction {
   moderatorName String
   moderatorRole InternalRole
   createdAt     DateTime     @default(now())
+  postId        String?
+  replyId       String?
+  memberId      String?
+  adminId       String?
+  reportId      String?
+
+  @@index([createdAt])
+  @@index([postId])
+  @@index([memberId])
 }
 
 model NotificationTemplate {
@@ -3429,4 +3447,345 @@ model ReferralCampaignPrizeAward {
   participant        ReferralCampaignParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, rank])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Communauté d'entraide (chantier Communauté C1 + C2) — contrat :
+// docs/community-api-contract.md. Tout est derrière `features.community`
+// (KPB_COMMUNITY_ENABLED, fermé par défaut).
+//
+// Suppression du compte = suppression définitive (cascade depuis
+// CommunityMember) ; seuls les signalements RÉDIGÉS par le membre survivent,
+// sans auteur (SetNull).
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum CommunityPostType {
+  question
+  experience
+  advice
+}
+
+enum CommunityContentStatus {
+  visible
+  // Masqué automatiquement (filtre, e-mail jetable, seuil de signalements) :
+  // visible de son seul auteur, en attente de revue par l'équipe.
+  pending_review
+  // Masqué par l'équipe.
+  hidden
+  // Supprimé par l'auteur ou l'équipe ; purgé après 30 jours.
+  deleted
+}
+
+enum CommunityAuthorKind {
+  member
+  kpb_team
+  kpb_advisor
+}
+
+enum CommunityEntityType {
+  scholarship
+  country
+  institution
+  program
+}
+
+enum CommunityReportTarget {
+  post
+  reply
+  member
+}
+
+enum CommunityReportReason {
+  scam
+  harassment
+  inappropriate
+  spam
+  personal_info
+  misinformation
+  other
+}
+
+enum CommunityReportStatus {
+  open
+  actioned
+  dismissed
+}
+
+enum CommunitySanctionKind {
+  warning
+  read_only
+  ban
+}
+
+enum CommunityFilterKind {
+  allowed_domain
+  blocked_term
+}
+
+// La fiche membre : identifiant PUBLIC (`id`, jamais l'id du profil) et charte.
+// Le nom affiché (« Prénom I. »), le pays et les badges sont calculés à la
+// lecture depuis le profil : jamais de copie qui vieillirait.
+model CommunityMember {
+  id                 String                       @id @default(cuid())
+  userId             String                       @unique
+  charterVersion     String?
+  charterAcceptedAt  DateTime?
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+  user               UserProfile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts              CommunityPost[]
+  replies            CommunityReply[]
+  reactions          CommunityReaction[]
+  follows            CommunityFollow[]
+  blocksMade         CommunityBlock[]             @relation("communityBlocker")
+  blocksReceived     CommunityBlock[]             @relation("communityBlocked")
+  reportsFiled       CommunityReport[]            @relation("communityReporter")
+  reportsReceived    CommunityReport[]            @relation("communityReportedMember")
+  sanctions          CommunitySanction[]
+  charterAcceptances CommunityCharterAcceptance[]
+}
+
+// Historique horodaté et versionné des acceptations de la charte (stores).
+model CommunityCharterAcceptance {
+  id         String          @id @default(cuid())
+  memberId   String
+  version    String
+  acceptedAt DateTime        @default(now())
+  member     CommunityMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, version])
+}
+
+model CommunityPost {
+  id                String                 @id @default(cuid())
+  type              CommunityPostType
+  title             String
+  // Texte brut ; les mentions y sont des jetons canoniques
+  // `@[libellé](type:id)` (voir community-text.ts).
+  body              String
+  authorKind        CommunityAuthorKind    @default(member)
+  // NULL pour un contenu de l'équipe (authorAdminId posé, sans clé étrangère).
+  authorMemberId    String?
+  authorAdminId     String?
+  authorAdminName   String?
+  status            CommunityContentStatus @default(visible)
+  // auto_filter | reports_threshold | new_account_review | moderation |
+  // author_deleted | moderation_deleted
+  statusReason      String?
+  statusChangedAt   DateTime?
+  filterFlags       String[]               @default([])
+  // normalizeSearchText(titre + corps + hashtags + libellés des mentions).
+  searchText        String                 @default("")
+  // Compteurs recalculés depuis les tables à chaque écriture (jamais
+  // incrémentés à l'aveugle) : `replyCount` = réponses visibles ;
+  // `answerCount` = réponses visibles d'un autre que l'auteur (équipe incluse),
+  // la définition de « Sans réponse ».
+  replyCount        Int                    @default(0)
+  answerCount       Int                    @default(0)
+  helpfulCount      Int                    @default(0)
+  openReportCount   Int                    @default(0)
+  hasVerifiedAnswer Boolean                @default(false)
+  pinnedAt          DateTime?
+  lastActivityAt    DateTime               @default(now())
+  editedAt          DateTime?
+  deletedAt         DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  author            CommunityMember?       @relation(fields: [authorMemberId], references: [id], onDelete: Cascade)
+  replies           CommunityReply[]
+  reactions         CommunityReaction[]
+  mentions          CommunityMention[]
+  hashtags          CommunityPostHashtag[]
+  follows           CommunityFollow[]
+  reports           CommunityReport[]
+
+  // Fils « Récents » et « Pour toi » (fenêtre de 60 jours) : filtre + ordre.
+  @@index([status, createdAt(sort: Desc), id(sort: Desc)])
+  // « Sans réponse ».
+  @@index([status, type, answerCount, createdAt(sort: Desc)])
+  @@index([authorMemberId, createdAt])
+  @@index([status, pinnedAt])
+  @@index([status, deletedAt])
+}
+
+model CommunityReply {
+  id                String                 @id @default(cuid())
+  postId            String
+  body              String
+  authorKind        CommunityAuthorKind    @default(member)
+  authorMemberId    String?
+  authorAdminId     String?
+  authorAdminName   String?
+  status            CommunityContentStatus @default(visible)
+  statusReason      String?
+  statusChangedAt   DateTime?
+  filterFlags       String[]               @default([])
+  helpfulCount      Int                    @default(0)
+  openReportCount   Int                    @default(0)
+  // « Réponse vérifiée par KPB » : une seule par publication.
+  isVerified        Boolean                @default(false)
+  verifiedAt        DateTime?
+  verifiedByAdminId String?
+  editedAt          DateTime?
+  deletedAt         DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  post              CommunityPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author            CommunityMember?       @relation(fields: [authorMemberId], references: [id], onDelete: Cascade)
+  reactions         CommunityReaction[]
+  mentions          CommunityMention[]
+  reports           CommunityReport[]
+
+  @@index([postId, status, createdAt])
+  @@index([authorMemberId, createdAt])
+  @@index([status, createdAt])
+  @@index([status, deletedAt])
+}
+
+// « Utile », unique par personne et par contenu. Exactement une cible
+// (contrainte CHECK dans la migration).
+model CommunityReaction {
+  id        String          @id @default(cuid())
+  memberId  String
+  postId    String?
+  replyId   String?
+  createdAt DateTime        @default(now())
+  member    CommunityMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  post      CommunityPost?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reply     CommunityReply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, postId])
+  @@unique([memberId, replyId])
+  @@index([postId])
+  @@index([replyId])
+  @@index([createdAt])
+}
+
+// Mention d'une entité du catalogue, jeton structuré { type, id } + libellés
+// FIGÉS. `countryId` et `levels` sont figés aussi : ils servent au score
+// « Pour toi » sans rejoindre le catalogue.
+model CommunityMention {
+  id         String              @id @default(cuid())
+  postId     String?
+  replyId    String?
+  entityType CommunityEntityType
+  entityId   String
+  labelFr    String
+  labelEn    String
+  countryId  String?
+  levels     String[]            @default([])
+  createdAt  DateTime            @default(now())
+  post       CommunityPost?      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reply      CommunityReply?     @relation(fields: [replyId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([countryId])
+  @@index([postId])
+  @@index([replyId])
+}
+
+model CommunityHashtag {
+  id        String                 @id @default(cuid())
+  // Clé normalisée : minuscules, sans accents (« campusfrance »).
+  tag       String                 @unique
+  // Graphie de la première occurrence (« CampusFrance »).
+  display   String
+  createdAt DateTime               @default(now())
+  posts     CommunityPostHashtag[]
+}
+
+model CommunityPostHashtag {
+  postId    String
+  hashtagId String
+  post      CommunityPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   CommunityHashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+  @@index([hashtagId])
+}
+
+model CommunityFollow {
+  id        String          @id @default(cuid())
+  memberId  String
+  postId    String
+  createdAt DateTime        @default(now())
+  member    CommunityMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  post      CommunityPost   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, postId])
+  @@index([postId])
+}
+
+// Blocage : appliqué dans les DEUX sens à la lecture.
+model CommunityBlock {
+  id              String          @id @default(cuid())
+  blockerMemberId String
+  blockedMemberId String
+  createdAt       DateTime        @default(now())
+  blocker         CommunityMember @relation("communityBlocker", fields: [blockerMemberId], references: [id], onDelete: Cascade)
+  blocked         CommunityMember @relation("communityBlocked", fields: [blockedMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerMemberId, blockedMemberId])
+  @@index([blockedMemberId])
+}
+
+model CommunityReport {
+  id                String                @id @default(cuid())
+  // NULL après la suppression du compte du signaleur : le signalement reste.
+  reporterMemberId  String?
+  targetType        CommunityReportTarget
+  // `post:<id>` | `reply:<id>` | `member:<id>` — clé d'unicité par signaleur.
+  targetKey         String
+  postId            String?
+  replyId           String?
+  targetMemberId    String?
+  reason            CommunityReportReason
+  details           String?
+  status            CommunityReportStatus @default(open)
+  resolvedAt        DateTime?
+  resolvedByAdminId String?
+  resolvedByName    String?
+  resolutionNote    String?
+  createdAt         DateTime              @default(now())
+  reporter          CommunityMember?      @relation("communityReporter", fields: [reporterMemberId], references: [id], onDelete: SetNull)
+  post              CommunityPost?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reply             CommunityReply?       @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  targetMember      CommunityMember?      @relation("communityReportedMember", fields: [targetMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterMemberId, targetKey])
+  @@index([status, createdAt])
+  @@index([targetKey, status])
+  @@index([reporterMemberId, createdAt])
+}
+
+model CommunitySanction {
+  id               String                @id @default(cuid())
+  memberId         String
+  kind             CommunitySanctionKind
+  reason           String
+  // NULL = sans fin (bannissement, avertissement).
+  endsAt           DateTime?
+  createdByAdminId String
+  createdByName    String
+  revokedAt        DateTime?
+  revokedByAdminId String?
+  revokedByName    String?
+  revokeReason     String?
+  createdAt        DateTime              @default(now())
+  member           CommunityMember       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId, createdAt])
+}
+
+// Ajouts de l'équipe au filtre : domaines autorisés, termes bloqués. Les
+// listes intégrées vivent dans le code (community-content-filter.ts).
+model CommunityFilterEntry {
+  id               String              @id @default(cuid())
+  kind             CommunityFilterKind
+  value            String
+  createdByAdminId String?
+  createdByName    String?
+  createdAt        DateTime            @default(now())
+
+  @@unique([kind, value])
 }
