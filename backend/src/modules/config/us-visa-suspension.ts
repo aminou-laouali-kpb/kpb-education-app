@@ -53,6 +53,7 @@ export const DEFAULT_US_VISA_SUSPENDED_COUNTRIES: readonly string[] = [
   'MR', // Mauritanie — sec. 5 (F, M, J)
   'BI', // Burundi — sec. 3 (partielle maintenue, F, M, J)
   'TG', // Togo — sec. 3 (partielle maintenue, F, M, J)
+  'NG', // Nigeria — visé par la même proclamation ; ajout du propriétaire le 17/10/2026
 ];
 
 export const DEFAULT_US_VISA_SUSPENSION_VERIFIED_AT = '2026-10-17';

@@ -26,13 +26,13 @@ import '../../support/screen_harness.dart';
 
 LocalizedText _t(String value) => LocalizedText(fr: value, en: value);
 
-/// Le texte voulu par le propriétaire, tel qu'il l'a écrit le 17/10/2026.
+/// Le texte décidé par le propriétaire le 17/10/2026 : le contact direct avec
+/// l'université, sans chiffre ni garantie.
 const _ownerTextFr =
-    'Cette vue montre les universités partenaires de KPB Éducation. Avec '
-    'elles, KPB peut accélérer ton dossier jusqu\'à 70 % plus vite et peut '
-    'même t\'obtenir des garanties d\'admission. Attention : cela dépend de '
-    'ton dossier. Pour voir toutes les universités et choisir n\'importe '
-    'quelle destination, passe sur l\'onglet « Tous ».';
+    'Cette vue montre les universités partenaires de KPB Éducation. KPB est '
+    'en contact direct avec elles pour faciliter et accélérer ta procédure. '
+    'Attention : cela dépend de ton dossier. Pour voir toutes les universités '
+    'et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».';
 
 InstitutionModel _institution(String id, {required bool partner}) =>
     InstitutionModel(
@@ -154,13 +154,9 @@ void main() {
 
     expect(find.byKey(const ValueKey('partner_view_notice')), findsOneWidget);
     expect(_noticeText(tester), _ownerTextFr);
-    // Le seul « % » de l'écran est celui de l'avis du propriétaire.
-    expect(find.textContaining('%'), findsOneWidget);
-    expect(
-        find.descendant(
-            of: find.byKey(const ValueKey('partner_view_notice')),
-            matching: find.textContaining('70 %')),
-        findsOneWidget);
+    // Ni chiffre ni garantie dans l'avis.
+    expect(find.textContaining('%'), findsNothing);
+    expect(find.textContaining('garantie'), findsNothing);
     expect(find.text('Voir toutes les universités'), findsOneWidget);
     expect(find.byTooltip('Fermer ce message'), findsOneWidget);
     // La liste reste sur les partenaires.

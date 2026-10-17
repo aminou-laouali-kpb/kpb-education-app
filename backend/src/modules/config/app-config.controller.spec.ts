@@ -413,7 +413,7 @@ describe('AppConfigController', () => {
     it('sert la liste vérifiée le 17/10/2026 quand rien n’est configuré', () => {
       const served = new AppConfigController().getAppConfig().usVisaSuspension;
       expect(served.countries.map((c) => c.code)).toEqual([
-        'BF', 'ML', 'NE', 'TD', 'CG', 'BJ', 'CI', 'SN', 'GA', 'MR', 'BI', 'TG',
+        'BF', 'ML', 'NE', 'TD', 'CG', 'BJ', 'CI', 'SN', 'GA', 'MR', 'BI', 'TG', 'NG',
       ]);
       expect(served.countries[3]).toEqual({ code: 'TD', nameFr: 'Tchad', nameEn: 'Chad' });
       expect(served.visaTypes).toEqual(['F', 'M', 'J']);
@@ -438,7 +438,7 @@ describe('AppConfigController', () => {
       process.env.KPB_US_VISA_SUSPENDED_COUNTRIES = 'Burkina;Mali';
       expect(
         new AppConfigController().getAppConfig().usVisaSuspension.countries,
-      ).toHaveLength(12);
+      ).toHaveLength(13);
     });
 
     it('une liste personnalisée sans date ne prend pas la date du défaut', () => {

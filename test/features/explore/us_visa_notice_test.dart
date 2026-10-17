@@ -112,7 +112,7 @@ void main() {
       find.text('Les demandes de visa étudiant sont actuellement suspendues '
           'pour les ressortissants de : Burkina Faso, Mali, Niger, Tchad, '
           'Congo, Bénin, Côte d\'Ivoire, Sénégal, Gabon, Mauritanie, Burundi, '
-          'Togo.'),
+          'Togo, Nigeria.'),
       findsOneWidget,
     );
     expect(

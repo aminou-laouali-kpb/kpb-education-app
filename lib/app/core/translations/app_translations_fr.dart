@@ -3872,12 +3872,11 @@ const Map<String, String> appTranslationsFr = {
   'uni_view_all': 'Tous',
   'uni_view_count_semantics': '@label : @count formation(s)',
   'uni_partner_notice_title': 'Universités partenaires de KPB',
-  // Texte du PROPRIÉTAIRE, repris mot pour mot (décision du 17/10/2026). Le
-  // « 70 % » et la « garantie d'admission » y sont autorisés par une exception
-  // NOMMÉE de honest_labels_guard_test.dart, limitée à cette clé, et toujours
-  // affichés avec `uni_partner_notice_caveat` juste après.
+  // Décision du propriétaire du 17/10/2026 : pas de chiffre ni de garantie,
+  // le lien direct avec l'université. Toujours suivi de
+  // `uni_partner_notice_caveat`.
   'uni_partner_notice_body':
-      'Cette vue montre les universités partenaires de KPB Éducation. Avec elles, KPB peut accélérer ton dossier jusqu\'à 70 % plus vite et peut même t\'obtenir des garanties d\'admission.',
+      'Cette vue montre les universités partenaires de KPB Éducation. KPB est en contact direct avec elles pour faciliter et accélérer ta procédure.',
   'uni_partner_notice_caveat': 'Attention : cela dépend de ton dossier.',
   'uni_partner_notice_switch_hint':
       'Pour voir toutes les universités et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».',

@@ -3593,10 +3593,10 @@ const Map<String, String> appTranslationsEn = {
   'uni_view_all': 'All',
   'uni_view_count_semantics': '@label: @count program(s)',
   'uni_partner_notice_title': 'KPB partner universities',
-  // Owner's text, translated faithfully (decision of 17/10/2026). See the FR
-  // file and honest_labels_guard_test.dart for the named exception.
+  // Owner's decision of 17/10/2026: no figure, no guarantee — the direct link
+  // with the university. Always followed by `uni_partner_notice_caveat`.
   'uni_partner_notice_body':
-      'This view shows KPB Education\'s partner universities. With them, KPB can speed up your application by up to 70% and can even get you admission guarantees.',
+      'This view shows KPB Education\'s partner universities. KPB is in direct contact with them to make your application easier and faster.',
   'uni_partner_notice_caveat': 'Important: this depends on your application.',
   'uni_partner_notice_switch_hint':
       'To see all universities and choose any destination, switch to the “All” tab.',

@@ -70,6 +70,7 @@ void main() {
         'République du Congo',
         'Togo',
         'Burundi',
+        'Nigeria',
       ]) {
         expect(list.concerns(typed), isTrue, reason: typed);
       }
@@ -81,7 +82,6 @@ void main() {
         null,
         '',
         '   ',
-        'Nigeria',
         'Cameroun',
         'France',
         'Autre',

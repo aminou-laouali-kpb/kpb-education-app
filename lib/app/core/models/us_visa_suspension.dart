@@ -62,7 +62,7 @@ class UsVisaSuspension {
 
   /// Le défaut serveur, embarqué. Proclamation 10998 (16/12/2025, en vigueur le
   /// 1/1/2026) : les dix pays de la décision du propriétaire, plus le Burundi et
-  /// le Togo, confirmés par sa section 3.
+  /// le Togo, confirmés par sa section 3, et le Nigeria (ajout du 17/10/2026).
   static final fallback = UsVisaSuspension(
     countries: const [
       UsVisaSuspendedCountry(
@@ -81,6 +81,7 @@ class UsVisaSuspension {
           code: 'MR', nameFr: 'Mauritanie', nameEn: 'Mauritania'),
       UsVisaSuspendedCountry(code: 'BI', nameFr: 'Burundi', nameEn: 'Burundi'),
       UsVisaSuspendedCountry(code: 'TG', nameFr: 'Togo', nameEn: 'Togo'),
+      UsVisaSuspendedCountry(code: 'NG', nameFr: 'Nigeria', nameEn: 'Nigeria'),
     ],
     lastVerifiedAt: DateTime(2026, 10, 17),
     sourceUrl: defaultSourceUrl,
