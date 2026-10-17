@@ -156,6 +156,31 @@ void main() {
     );
   });
 
+  // Visas étudiants américains (décision du 17/10/2026) : la liste est
+  // PILOTABLE sans build. Défauts VIDES dans compose — le serveur sert alors la
+  // liste vérifiée et datée ; une liste écrite dans compose serait figée dans le
+  // dépôt, donc périmée à la première évolution de la proclamation.
+  test('la suspension des visas américains est lue, relayée et documentée', () {
+    final compose = File('docker-compose.yml').readAsStringSync();
+    for (final variable in [
+      'KPB_US_VISA_SUSPENDED_COUNTRIES',
+      'KPB_US_VISA_SUSPENSION_VERIFIED_AT',
+      'KPB_US_VISA_SUSPENSION_SOURCE_URL',
+    ]) {
+      expect(read, contains(variable),
+          reason: '$controllerPath ne lit plus $variable.');
+      expect(compose, contains('- $variable=\${$variable:-}'),
+          reason: '$variable doit être relayée avec un défaut VIDE.');
+      expect(documented, contains(variable),
+          reason: '$variable n\'est pas documentée dans .env.example.');
+    }
+    expect(
+      File('docs/api-contracts.md').readAsStringSync(),
+      contains('`usVisaSuspension`'),
+      reason: 'usVisaSuspension doit être documenté dans api-contracts.',
+    );
+  });
+
   test('les drapeaux KPB_EEF_* sont fermés par défaut dans compose', () {
     // Le sens de l'échec, figé. Une vitrine allumée par défaut serait
     // impossible à éteindre sans redéploiement du fichier compose, alors que

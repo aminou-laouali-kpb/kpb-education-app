@@ -3853,4 +3853,17 @@ const Map<String, String> appTranslationsFr = {
   'notifications_push_denied_subtitle':
       'Rallume-les dans les réglages de l\'app pour recevoir les alertes.',
   'notifications_push_settings_action': 'Réglages',
+  // ── Visas étudiants américains suspendus (décision du 17/10/2026) ──────────
+  // La liste des pays vient de /config/app (repli embarqué) : @countries.
+  'us_visa_notice_title': 'Visa étudiant pour les États-Unis',
+  'us_visa_notice_concerned': 'Ton pays est concerné.',
+  'us_visa_notice_body':
+      'Les demandes de visa étudiant sont actuellement suspendues pour les ressortissants de : @countries.',
+  'us_visa_notice_check':
+      'Vérifie ta situation sur travel.state.gov, ou écris-nous sur WhatsApp pour en parler.',
+  'us_visa_notice_verified': 'Liste vérifiée le @date.',
+  'us_visa_notice_official_cta': 'Voir la page officielle',
+  'us_visa_notice_whatsapp_cta': 'En parler sur WhatsApp',
+  'us_visa_whatsapp_prefill':
+      'Bonjour KPB Education, je regarde les études aux États-Unis et j\'aimerais savoir si la suspension des visas étudiants me concerne.',
 };

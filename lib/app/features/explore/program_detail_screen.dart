@@ -25,6 +25,7 @@ import '../../core/utils/external_link.dart';
 import '../../core/utils/intake_label.dart';
 import '../../core/utils/program_intakes.dart';
 import '../../core/ui/components/kpb_toast.dart';
+import '../../core/ui/components/us_visa_notice.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Palette (App-engagement handoff · Student App.dc.html · "Fiche université").
@@ -180,6 +181,16 @@ class ProgramDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Visas étudiants américains suspendus pour certaines
+                  // nationalités (décision du 17/10/2026) : avis sobre, juste
+                  // sous les frais et la rentrée.
+                  if (isUnitedStatesCountryId(program.countryId))
+                    UsVisaNotice(
+                      countryOfResidence:
+                          controller.profile?.countryOfResidence,
+                      localeCode: controller.localeCode,
+                      margin: const EdgeInsets.only(top: 13),
+                    ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 13),
                     _Card(
@@ -902,8 +913,12 @@ class _CounselorCta extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      // Hauteur MINIMALE et non fixe, libellé souple : à l'échelle de texte 1,5
+      // sur 360 pt, la hauteur fixe de 48 et le libellé rigide débordaient de
+      // 84 px (mesuré le 17/10/2026).
       child: Container(
-        height: 48,
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -915,12 +930,15 @@ class _CounselorCta extends StatelessWidget {
           children: [
             const Icon(Icons.chat_rounded, size: 17, color: KpbColors.whatsapp),
             const SizedBox(width: 8),
-            Text(
-              'ask_kpb_counselor'.tr,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: KpbColors.success,
+            Flexible(
+              child: Text(
+                'ask_kpb_counselor'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: KpbColors.success,
+                ),
               ),
             ),
           ],

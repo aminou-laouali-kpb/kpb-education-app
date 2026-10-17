@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 
 import { EEF_CATALOG_ATTRIBUTION } from '../etudes-en-france/catalog/eef-catalog-attribution';
+import { usVisaSuspensionConfig } from './us-visa-suspension';
 
 function enabled(value: string | undefined, defaultValue = false): boolean {
   if (value === undefined) return defaultValue;
@@ -411,6 +412,16 @@ export class AppConfigController {
           process.env.KPB_EEF_SUSPENDED_SOURCES,
         ),
       },
+      // Suspension des visas étudiants américains (F, M, J) par nationalité —
+      // l'avis des fiches États-Unis (décision du 17/10/2026). Toujours servie :
+      // la liste par défaut, vérifiée, quand rien n'est configuré ; `none` la
+      // vide. Voir `us-visa-suspension.ts`. L'app ne renvoie jamais au serveur
+      // ni aux mesures d'audience le pays de l'élève qu'elle y compare.
+      usVisaSuspension: usVisaSuspensionConfig({
+        countries: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
+        verifiedAt: process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
+        sourceUrl: process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL,
+      }),
       // La mention de paternité du catalogue (Licence Ouverte 2.0). Une
       // constante vérifiée contre le manifeste par son spec — voir
       // `eef-catalog-attribution.ts`.

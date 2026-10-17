@@ -3575,4 +3575,16 @@ const Map<String, String> appTranslationsEn = {
   'notifications_push_denied_subtitle':
       'Turn them back on in the app settings to get alerts.',
   'notifications_push_settings_action': 'Settings',
+  // ── US student visas suspended (owner decision, 17/10/2026) ──────────────
+  'us_visa_notice_title': 'Student visa for the United States',
+  'us_visa_notice_concerned': 'Your country is affected.',
+  'us_visa_notice_body':
+      'Student visa applications are currently suspended for nationals of: @countries.',
+  'us_visa_notice_check':
+      'Check your situation on travel.state.gov, or message us on WhatsApp to talk about it.',
+  'us_visa_notice_verified': 'List checked on @date.',
+  'us_visa_notice_official_cta': 'See the official page',
+  'us_visa_notice_whatsapp_cta': 'Talk about it on WhatsApp',
+  'us_visa_whatsapp_prefill':
+      'Hello KPB Education, I\'m looking at studying in the United States and I\'d like to know if the student visa suspension affects me.',
 };

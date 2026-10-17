@@ -210,6 +210,12 @@ services:
       # (bandeau NON bloquant). Vide = aucun bandeau. À ne pas confondre avec
       # KPB_MIN_APP_VERSION, qui bloque l'app derrière un écran qu'on ne ferme pas.
       - KPB_RECOMMENDED_APP_VERSION=${KPB_RECOMMENDED_APP_VERSION:-}
+      # Visas étudiants américains suspendus par nationalité (avis des fiches
+      # États-Unis). VIDES par défaut : le serveur sert alors la liste vérifiée
+      # le 17/10/2026 et la page du Département d'État. `none` retire l'avis.
+      - KPB_US_VISA_SUSPENDED_COUNTRIES=${KPB_US_VISA_SUSPENDED_COUNTRIES:-}
+      - KPB_US_VISA_SUSPENSION_VERIFIED_AT=${KPB_US_VISA_SUSPENSION_VERIFIED_AT:-}
+      - KPB_US_VISA_SUSPENSION_SOURCE_URL=${KPB_US_VISA_SUSPENSION_SOURCE_URL:-}
       - KPB_AI_DIAGNOSTIC_MIN_AGE=${KPB_AI_DIAGNOSTIC_MIN_AGE:-13}
       - KPB_AI_DIAGNOSTIC_PROMPT_VERSION=${KPB_AI_DIAGNOSTIC_PROMPT_VERSION:-success-lab-v1}
       - KPB_AI_DIAGNOSTIC_MAX_INPUT_CHARS=${KPB_AI_DIAGNOSTIC_MAX_INPUT_CHARS:-8000}

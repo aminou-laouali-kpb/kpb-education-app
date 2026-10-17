@@ -1044,6 +1044,40 @@ comme une valeur de repli :
 | `eefCampaign.suspendedSources` | `[{country, url}]` | `KPB_EEF_SUSPENDED_SOURCES` (`Pays\|https://…;Autre\|https://…`) | La page officielle qui justifie la suspension d'un pays. **Un élément par pays de `suspendedCountries` seulement** : la source d'une suspension ne voyage pas sans suspension. Connue sans configuration : le Niger (`ne.diplomatie.gouv.fr/informations-visas`). |
 | `eefCatalog` | `{producer, producerUrl, licence, licenceUrl, sources[], updatedAt, catalogVersion}` | — (constante) | La mention de paternité de la Licence Ouverte 2.0, posée en pied de l'écran catalogue. `updatedAt` est un **jour nu** `AAAA-MM-JJ`. |
 
+### Suspension des visas étudiants américains : `usVisaSuspension` (17/10/2026)
+
+Toujours présente. Sert l'avis des fiches établissement, formation et pays des
+**États-Unis** : « Les demandes de visa étudiant sont actuellement suspendues
+pour les ressortissants de : … ».
+
+```json
+"usVisaSuspension": {
+  "countries": [{ "code": "BF", "nameFr": "Burkina Faso", "nameEn": "Burkina Faso" }, …],
+  "visaTypes": ["F", "M", "J"],
+  "lastVerifiedAt": "2026-10-17",
+  "sourceUrl": "https://travel.state.gov/content/travel/en/News/visas-news/suspension-of-visa-issuance-to-foreign-nationals-to-protect-the-security-of-the-united-states.html"
+}
+```
+
+| Variable d'environnement | Effet |
+|---|---|
+| `KPB_US_VISA_SUSPENDED_COUNTRIES` | Codes ISO alpha-2 séparés par des virgules. **Vide : la liste vérifiée le 17/10/2026** (proclamation 10998 : BF, ML, NE, TD, CG, BJ, CI, SN, GA, MR, BI, TG). `none` : liste vide, l'app ne montre plus l'avis. Une valeur sans aucun code lisible garde le défaut (une faute de frappe ne retire pas l'avis). |
+| `KPB_US_VISA_SUSPENSION_VERIFIED_AT` | Jour `AAAA-MM-JJ` de la vérification. Une liste personnalisée sans date est servie avec `lastVerifiedAt: null`. |
+| `KPB_US_VISA_SUSPENSION_SOURCE_URL` | La page officielle ouverte par le bouton (https seulement). Défaut : la page du Département d'État ci-dessus. |
+
+**Mettre la liste à jour, sans build** : poser les variables dans le `.env` du
+VPS (elles sont relayées par `docker-compose.yml`), recréer le conteneur API,
+puis relire `curl https://…/api/config/app | jq .usVisaSuspension`. L'app
+embarque la même liste par défaut (`lib/app/core/models/us_visa_suspension.dart`)
+pour un serveur plus ancien ou injoignable ; elle la remplace dès que la
+réponse arrive.
+
+**Vie privée** : l'app compare la liste au pays de résidence du profil, **sur le
+téléphone**. Aucun pays, aucune nationalité, aucun « concerné / pas concerné »
+ne part vers le serveur ni vers les mesures d'audience (le renvoi WhatsApp
+mesuré porte une source et un contexte constants : `us_visa_notice` /
+`us_visa`).
+
 **Toute URL servie est `https`, sans identifiants**, sinon elle est écartée :
 ces valeurs sont écrites à la main, et `javascript:` ne doit jamais atteindre un
 bouton « ouvrir ». Côté client, une adresse non ouvrable masque le lien au lieu

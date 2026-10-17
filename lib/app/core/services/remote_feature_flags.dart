@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
 import '../models/eef_catalog_attribution.dart';
+import '../models/us_visa_suspension.dart';
 import '../repositories/app_api_client.dart';
 import '../utils/external_link.dart';
 import '../utils/app_logger.dart';
@@ -265,6 +266,7 @@ class RemoteFeatureFlags {
     instance._iosStoreUrl = null;
     instance._androidStoreUrl = null;
     instance._catalogAttribution = null;
+    instance._usVisaSuspension = UsVisaSuspension.fallback;
     instance._loaded = false;
     instance.flagsVersion.value = 0;
   }
@@ -275,6 +277,7 @@ class RemoteFeatureFlags {
   String? _iosStoreUrl;
   String? _androidStoreUrl;
   EefCatalogAttribution? _catalogAttribution;
+  UsVisaSuspension _usVisaSuspension = UsVisaSuspension.fallback;
   bool _loaded = false;
 
   /// Incrémenté à chaque rafraîchissement réussi. Les écrans qui dépendent d'un
@@ -302,6 +305,18 @@ class RemoteFeatureFlags {
   /// La mention de paternité du catalogue, ou `null` si le serveur ne la sert
   /// pas (plus ancien, ou charge incomplète).
   EefCatalogAttribution? get catalogAttribution => _catalogAttribution;
+
+  /// La suspension des visas étudiants américains (avis des fiches
+  /// États-Unis). [UsVisaSuspension.fallback] — la liste vérifiée embarquée —
+  /// tant que le serveur n'a pas répondu, ou s'il ne sert pas la clé.
+  UsVisaSuspension get usVisaSuspension => _usVisaSuspension;
+
+  /// Pose la suspension sans passer par `refresh`, pour un test d'écran.
+  @visibleForTesting
+  void debugSetUsVisaSuspensionForTest(UsVisaSuspension value) {
+    _usVisaSuspension = value;
+    flagsVersion.value++;
+  }
 
   /// Pose la mention de paternité sans passer par `refresh` — pour qu'un test
   /// d'écran n'ait pas besoin de simuler tout `/config/app`.
@@ -433,6 +448,7 @@ class RemoteFeatureFlags {
       _androidStoreUrl = _readWebUrl(config['androidStoreUrl']);
       _catalogAttribution =
           EefCatalogAttribution.fromJson(config['eefCatalog']);
+      _usVisaSuspension = UsVisaSuspension.fromJson(config['usVisaSuspension']);
       _loaded = true;
       flagsVersion.value++;
     } catch (error) {

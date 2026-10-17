@@ -14,6 +14,7 @@ import '../../core/utils/external_link.dart';
 import '../cases/case_composer_sheet.dart';
 import 'country_detail_screen.dart';
 import 'program_detail_screen.dart';
+import '../../core/ui/components/us_visa_notice.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Country flag lookup (shared with home)
@@ -384,6 +385,15 @@ class _InstitutionDetailSheet extends StatelessWidget {
                   if (fit != null) ...[
                     ProfileFitBadge(fit: fit, fontSize: 14),
                     const SizedBox(height: KpbSpacing.lg),
+                  ],
+
+                  if (isUnitedStatesCountryId(institution.countryId)) ...[
+                    UsVisaNotice(
+                      countryOfResidence:
+                          controller.profile?.countryOfResidence,
+                      localeCode: controller.localeCode,
+                    ),
+                    const SizedBox(height: KpbSpacing.md),
                   ],
 
                   // Overview
