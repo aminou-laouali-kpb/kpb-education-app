@@ -79,6 +79,32 @@ class _PreferencesCard extends StatelessWidget {
               onChanged: controller.toggleAppLock,
             ),
           ),
+          // Communauté : les membres bloqués se gèrent ici (exigence des
+          // stores). Visible seulement drapeau `community` ouvert.
+          ListenableBuilder(
+            listenable: Listenable.merge(<Listenable>[
+              RemoteFeatureFlags.instance.flagsVersion,
+              CommunityStore.instance,
+            ]),
+            builder: (context, _) {
+              if (!CommunityStore.instance.enabled) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                children: [
+                  const _RowDivider(),
+                  _NavRow(
+                    key: const ValueKey<String>('profile-comm-blocked'),
+                    icon: Icons.block_rounded,
+                    color: KpbColors.textSecondary,
+                    label: 'comm_blocked_title'.tr,
+                    onTap: () =>
+                        Get.to(() => const CommunityBlockedMembersScreen()),
+                  ),
+                ],
+              );
+            },
+          ),
           if (kLanguageSwitchVisible) ...[
             const _RowDivider(),
             _SettingRow(
@@ -153,6 +179,7 @@ class _SettingRow extends StatelessWidget {
 
 class _NavRow extends StatelessWidget {
   const _NavRow({
+    super.key,
     required this.icon,
     required this.color,
     required this.label,

@@ -22,6 +22,7 @@ import '../../core/utils/whatsapp_utils.dart';
 import '../ai_advisor/ai_consent.dart';
 import '../cases/case_composer_sheet.dart';
 import '../cases/case_detail_screen.dart';
+import '../community/hub/community_entry.dart';
 import '../destinations/destinations_screen.dart';
 import '../etudes_en_france/eef_home_card.dart';
 import '../notifications/notifications_screen.dart';
@@ -93,6 +94,8 @@ String _greetingFirstName(String? fullName) {
 //   1. « Tes bourses » (run du test, carte du test, ou liste neutre — H) ;
 //   2. « Tes échéances » : date urgente (calcul unique de
 //      scholarship_urgency.dart) et dossiers actifs — élève seulement ;
+//      puis, drapeau distant `community` ouvert, la carte « Communauté »
+//      (élève seulement, community/hub/community_entry.dart) ;
 //   3. écoles partenaires (`PartnersStrip`) et preuve d'impact ;
 //   4. KPB Intelligence — l'unique entrée de l'accueil ;
 //   5. Parcours (« Ils l'ont fait avant toi ») ;
@@ -111,6 +114,9 @@ enum HomeBlock {
   eef(null),
   scholarships('homeScholarships'),
   deadlines('homeDeadlines'),
+
+  /// La communauté d'entraide : seulement drapeau `community` ouvert (élève).
+  community('homeCommunity'),
   partners('homePartners'),
   intelligence('homeIntelligence'),
   parcours('homeParcours'),
@@ -150,6 +156,7 @@ List<HomeBlock> homeBlocksFor(
     HomeBlock.eef,
     if (student || parent) HomeBlock.scholarships,
     if (student) HomeBlock.deadlines,
+    if (student && f.communityEnabled) HomeBlock.community,
     HomeBlock.partners,
     HomeBlock.intelligence,
     if (student || parent || guest) HomeBlock.parcours,
@@ -322,6 +329,9 @@ class HomeScreen extends StatelessWidget {
             controller: controller,
             deadlines: deadlines,
           );
+        case HomeBlock.community:
+          // Se replie seule (hauteur nulle) si le serveur coupe la fonction.
+          return const CommunityHomeCard();
         case HomeBlock.partners:
           return const _HomeTrustSection();
         case HomeBlock.intelligence:

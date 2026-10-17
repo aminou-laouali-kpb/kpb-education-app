@@ -237,7 +237,12 @@ void main() {
       // « Mes 10 bourses » : enregistrée MÊME drapeau fermé (l'écran retombe
       // sur l'onglet Bourses), pour la même raison.
       expect(names, contains(AppRoutes.scholarshipMatch));
-      expect(names.length, equals(25));
+      // Communauté : enregistrée MÊME drapeau fermé — les notifications
+      // `community_*` visent `/community/posts/<id>`, et l'écran dit lui-même
+      // « bientôt » quand le drapeau est fermé.
+      expect(names, contains(AppRoutes.community));
+      expect(names, contains(AppRoutes.communityPost));
+      expect(names.length, equals(27));
     });
   });
 }

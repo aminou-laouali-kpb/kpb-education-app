@@ -6,6 +6,8 @@
 // (16/10/2026, build 57 : plafond de police relevé de 1,3 à 1,5, quatrième
 // échelle ajoutée, OnboardingScreen et AhaMomentScreen ajoutés → 22 surfaces,
 // 176 cas, tous à zéro après correction du bouton de l'écran « aha ».)
+// (17/10/2026, communauté C1 + C2 : CommunityHubScreen, CommunityComposerScreen
+// et CommunityPostScreen ajoutés → 25 surfaces, 200 cas, tous à zéro.)
 // (Revérifié le 15/08/2026 après les masquages M1/M2 : mêmes 20 surfaces, mêmes
 // 14 cas budgétés.)
 //
@@ -28,8 +30,8 @@
 //     second test : une oscillation de 3 à 2 due aux métriques de police ne doit
 //     pas rougir la CI.
 //
-// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 22
-// surfaces × 2 téléphones × 4 échelles = 176 cas sont à zéro.
+// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 25
+// surfaces × 2 téléphones × 4 échelles = 200 cas sont à zéro.
 //
 // AuthWelcomeScreen (trouvailles du harnais, 44 px / 38 px à l'échelle 1,3)
 // a été corrigé au lot 9 : colonne défilable, plus de Spacer dans une hauteur
@@ -65,4 +67,4 @@ const screenOverflowKnownCauses = <String, String>{};
 
 /// Le total, pour que le message de synthèse ne puisse pas être approximatif.
 const screenOverflowCaseCount = 0;
-const screenMatrixCaseCount = 176;
+const screenMatrixCaseCount = 200;

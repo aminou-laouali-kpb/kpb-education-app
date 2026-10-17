@@ -39,6 +39,9 @@ import 'package:karatou/app/features/auth/auth_welcome_screen.dart';
 import 'package:karatou/app/features/auth/magic_link_email_screen.dart';
 import 'package:karatou/app/features/auth/magic_link_verify_screen.dart';
 import 'package:karatou/app/features/cases/cases_screen.dart';
+import 'package:karatou/app/features/community/hub/community_composer_screen.dart';
+import 'package:karatou/app/features/community/hub/community_hub_screen.dart';
+import 'package:karatou/app/features/community/hub/community_post_screen.dart';
 import 'package:karatou/app/features/france/france_private_admission_screen.dart';
 import 'package:karatou/app/features/home/home_screen.dart';
 import 'package:karatou/app/features/housing/housing_estimator_screen.dart';
@@ -51,6 +54,7 @@ import 'package:karatou/app/features/universities/universities_screen.dart';
 
 import '../../support/raw_key_guard.dart';
 import '../../support/screen_harness.dart';
+import '../../features/community/community_test_support.dart';
 import '../../features/scholarships/scholarships_test_support.dart';
 import '../../widget_test_helpers.dart';
 import 'screen_overflow_budget.dart';
@@ -161,6 +165,31 @@ Map<String, Future<Widget> Function()> buildScreenSpecs() {
       await seedKpbController();
       return const AhaMomentScreen();
     },
+  };
+
+  // La communauté (drapeau distant `community` ouvert pour la mesure) :
+  // l'accueil, le compositeur et une discussion complète — badges, réponse
+  // vérifiée, entités citées, barre de réponse. Les libellés FR sont parmi
+  // les plus longs de l'app (« Retour d'expérience », « Réponse vérifiée par
+  // KPB ») : c'est à l'échelle 1,5 qu'ils débordaient sur 360 dp.
+  Future<FakeCommunityApi> seedCommunity() async {
+    resetCommunityWorld();
+    final api = FakeCommunityApi();
+    await seedKpbController(apiClient: api);
+    return api;
+  }
+
+  specs['CommunityHubScreen'] = () async {
+    await seedCommunity();
+    return const CommunityHubScreen(source: 'matrix');
+  };
+  specs['CommunityComposerScreen'] = () async {
+    await seedCommunity();
+    return const CommunityComposerScreen();
+  };
+  specs['CommunityPostScreen'] = () async {
+    await seedCommunity();
+    return const CommunityPostScreen(postId: 'cp_1', source: 'matrix');
   };
 
   for (final tool in KpbToolsDrawer.toolsForTest) {

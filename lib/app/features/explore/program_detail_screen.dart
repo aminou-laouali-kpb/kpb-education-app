@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
+import '../../core/models/community.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/share_card_service.dart';
 import '../../core/ui/components/log_once.dart';
@@ -19,6 +20,7 @@ import '../../core/utils/study_level.dart';
 import '../../core/utils/tuition_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../cases/case_tunnel_flow.dart';
+import '../community/hub/community_entity_section.dart';
 import '../search/match_explanation_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
@@ -353,6 +355,37 @@ class ProgramDetailScreen extends StatelessWidget {
                       source: 'program_detail',
                       contextType: 'program',
                     ),
+                  ),
+                  // Communauté : « Discussions (N) » sur l'ÉCOLE (il n'existe
+                  // pas de fiche école seule : celle-ci la présente). « Poser
+                  // une question » cite l'école ET la formation, pour que la
+                  // discussion vive dans les deux espaces. Sans école connue :
+                  // l'espace de la formation. Hauteur nulle drapeau fermé.
+                  CommunityEntitySection(
+                    entity: institution != null
+                        ? CommunityMention(
+                            type: CommunityEntityType.institution,
+                            id: institution.id,
+                            label: controller.resolve(institution.name),
+                            countryId: program.countryId,
+                          )
+                        : CommunityMention(
+                            type: CommunityEntityType.program,
+                            id: program.id,
+                            label: controller.resolve(program.name),
+                            countryId: program.countryId,
+                          ),
+                    extraPrefill: institution != null
+                        ? <CommunityMention>[
+                            CommunityMention(
+                              type: CommunityEntityType.program,
+                              id: program.id,
+                              label: controller.resolve(program.name),
+                              countryId: program.countryId,
+                            ),
+                          ]
+                        : const <CommunityMention>[],
+                    padding: const EdgeInsets.only(top: 16),
                   ),
                   const SizedBox(height: 20),
                 ],

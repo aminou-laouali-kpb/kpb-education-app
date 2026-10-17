@@ -4,6 +4,8 @@ import '../models/app_models.dart';
 import '../../features/alumni/alumni_directory_screen.dart';
 import '../../features/cases/case_create_screen.dart';
 import '../../features/cases/case_detail_screen.dart';
+import '../../features/community/hub/community_hub_screen.dart';
+import '../../features/community/hub/community_post_screen.dart';
 import '../../features/deadlines/deadline_calendar_screen.dart';
 import '../../features/eligibility/eligibility_simulator_screen.dart';
 import '../../features/etudes_en_france/eef_catalog_screen.dart';
@@ -62,6 +64,16 @@ class AppRoutes {
   /// `normalizeExternalRoute` la rejetait et l'élève restait sur l'accueil.
   static const String parcoursDetail = '/parcours/:slug';
   static const String _parcoursPrefix = '/parcours/';
+
+  /// La communauté (drapeau distant `community`). Les notifications
+  /// `community_*` visent `/community/posts/<postId>` (contrat §11).
+  /// Drapeau fermé : l'écran le dit honnêtement, sans fil vide.
+  static const String community = '/community';
+  static const String communityPost = '/community/posts/:id';
+  static const String _communityPostPrefix = '/community/posts/';
+
+  static String communityPostPath(String postId) =>
+      '$_communityPostPrefix${Uri.encodeComponent(postId)}';
 
   static String parcoursDetailPath(String slug) =>
       '$_parcoursPrefix${Uri.encodeComponent(slug)}';
@@ -140,6 +152,12 @@ class AppRoutes {
       return '$_scholarshipPrefix$scholarshipId';
     }
 
+    if (route.startsWith(_communityPostPrefix)) {
+      final postId = route.substring(_communityPostPrefix.length);
+      if (postId.isEmpty || postId.contains('/')) return null;
+      return '$_communityPostPrefix$postId';
+    }
+
     if (route.startsWith(_parcoursPrefix)) {
       final slug = route.substring(_parcoursPrefix.length);
       if (slug.isEmpty || slug.contains('/')) return null;
@@ -185,6 +203,7 @@ class AppRoutes {
       scholarships,
       scholarshipMatch,
       successLab,
+      community,
     };
     if (known.contains(route)) return route;
     return null;
@@ -224,6 +243,20 @@ class AppRoutes {
           scholarshipId: scholarshipId,
           initialScholarship: initial is LiveScholarshipModel ? initial : null,
         );
+      },
+    ),
+    GetPage(
+      name: community,
+      page: () => const CommunityHubScreen(source: 'deep_link'),
+    ),
+    GetPage(
+      name: communityPost,
+      page: () {
+        final postId = Get.parameters['id'];
+        if (postId == null || postId.isEmpty) {
+          return const CommunityHubScreen(source: 'deep_link');
+        }
+        return CommunityPostScreen(postId: postId, source: 'notification');
       },
     ),
     GetPage(

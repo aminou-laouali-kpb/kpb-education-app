@@ -21,6 +21,8 @@ import 'scholarship_video_player_screen.dart';
 import 'widgets/how_to_apply_sheet.dart';
 import 'widgets/follow_scholarship_button.dart';
 import 'widgets/scholarship_status_line.dart';
+import '../../core/models/community.dart';
+import '../community/hub/community_entity_section.dart';
 import '../../core/utils/external_link.dart';
 import '../../core/utils/whatsapp_utils.dart';
 
@@ -514,6 +516,16 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
           const SizedBox(height: 12),
           _VideosSection(videos: scholarship.videos, onOpen: _openVideo),
         ],
+        // Communauté : « Discussions (N) » sur cette bourse (drapeau distant
+        // `community` ; hauteur nulle sinon).
+        CommunityEntitySection(
+          entity: CommunityMention(
+            type: CommunityEntityType.scholarship,
+            id: scholarship.id,
+            label: scholarship.title,
+          ),
+          padding: const EdgeInsets.only(top: 12),
+        ),
       ],
     );
   }
