@@ -8,11 +8,14 @@
 
 ## 1. Organisateur
 
-À VALIDER (propriétaire) : entité organisatrice — KPB Éducation / Karatou / KPB Global.
+La compétition est organisée par **KPB Global L.L.C-FZ**, société à responsabilité limitée
+de zone franche immatriculée auprès de la Meydan Free Zone (Meydan City Corporation, Émirat
+de Dubaï) sous la licence n° 2537631.01, éditrice de l'application **KPB Education**
+(décision du propriétaire du 17/10/2026 : l'application s'appelle KPB Education ; le volet
+commercial, dont cette compétition, relève de KPB Global L.L.C-FZ).
 
-Pour mémoire, le responsable du traitement des données de l'application est
-KPB Global L.L.C-FZ (voir la politique de confidentialité) ; l'organisateur du jeu peut
-être la même entité ou non.
+KPB Global L.L.C-FZ est aussi le responsable du traitement des données personnelles
+(voir la politique de confidentialité).
 
 ## 2. Dates
 
