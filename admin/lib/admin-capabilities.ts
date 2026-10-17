@@ -98,6 +98,34 @@ export enum AdminCapability {
    * contrôleur. Présentation seulement : le serveur reste seul juge.
    */
   ManageReferralCampaigns = 'manage_referral_campaigns',
+  /**
+   * Communauté : lire la file, les publications, le journal et les
+   * statistiques ; rétablir / masquer / supprimer un contenu ; répondre au nom
+   * de l'équipe ; poser « Réponse vérifiée par KPB » ; épingler. Miroir du rôle
+   * **R** de `docs/community-api-contract.md` §8 (Moderator, ContentManager,
+   * Admin, SuperAdmin).
+   */
+  ModerateCommunity = 'moderate_community',
+  /**
+   * Communauté : avertir, mettre en lecture seule, bannir, lever une sanction.
+   * Rôle **S** du contrat (§8.5) : PAS `ContentManager`, qui gère des contenus
+   * mais ne juge pas des personnes.
+   */
+  SanctionCommunityMembers = 'sanction_community_members',
+  /**
+   * Communauté : ajouter ou retirer un domaine autorisé ou un terme filtré.
+   * Rôle **C** du contrat (§8.8) : Admin, SuperAdmin.
+   */
+  ConfigureCommunityFilters = 'configure_community_filters',
+  /**
+   * Communauté : voir l'identité réelle d'un membre (nom complet, e-mail, date
+   * de création du compte). Le contrat (§8.1, `AdminAuthor`) la sert à tout le
+   * rôle R ; la console la réserve aux administrateurs, par minimisation : un
+   * modérateur juge un contenu, il n'a pas besoin de l'e-mail d'un élève
+   * (parfois mineur). Présentation seulement — le serveur devrait idéalement
+   * ne pas l'envoyer (voir le rapport du chantier).
+   */
+  ViewCommunityIdentity = 'view_community_identity',
 }
 
 const ALL_ROLES = Object.freeze([
@@ -133,11 +161,14 @@ const ROLE_CAPABILITIES = {
     AdminCapability.RecruitPilotParticipants,
   ]),
   [InternalRole.ContentManager]: Object.freeze([
+    AdminCapability.ModerateCommunity,
     AdminCapability.ViewScholarshipContent,
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
   ]),
   [InternalRole.Moderator]: Object.freeze([
+    AdminCapability.ModerateCommunity,
+    AdminCapability.SanctionCommunityMembers,
     AdminCapability.VerifyOutcomes,
     AdminCapability.ViewScholarshipContent,
     AdminCapability.ViewPilotAggregates,
@@ -172,6 +203,10 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ExportPersonalData,
     AdminCapability.ViewReferralCampaigns,
     AdminCapability.ManageReferralCampaigns,
+    AdminCapability.ModerateCommunity,
+    AdminCapability.SanctionCommunityMembers,
+    AdminCapability.ConfigureCommunityFilters,
+    AdminCapability.ViewCommunityIdentity,
   ]),
   [InternalRole.SuperAdmin]: Object.freeze(
     Object.values(AdminCapability),

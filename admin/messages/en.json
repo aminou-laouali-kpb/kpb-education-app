@@ -1653,5 +1653,395 @@
     "payoutReference": "Transaction reference",
     "payoutDate": "Payout date",
     "settingsLocked": "Campaign launched: only names and rules can still change."
+  },
+  "communityAdmin": {
+    "title": "Community",
+    "subtitle": "Moderation, content and settings of the peer-support community.",
+    "tabsLabel": "Community sections",
+    "tab": {
+      "dashboard": "Dashboard",
+      "queue": "Moderation queue",
+      "content": "Content",
+      "members": "Members",
+      "settings": "Settings",
+      "log": "Log",
+      "taxonomy": "Categories and tags (legacy)"
+    },
+    "loading": "Loading…",
+    "loadMore": "Load more",
+    "cancel": "Cancel",
+    "all": "All",
+    "member": "Member",
+    "thePost": "the post",
+    "theReply": "the reply",
+    "replyOn": "Reply on",
+    "mentions": "Mentions:",
+    "flagsLabel": "Filter reasons",
+    "minor": "Minor",
+    "newAccount": "Account under 7 days old",
+    "accountSince": "account created on",
+    "noReports": "No open report.",
+    "reporterDeleted": "Deleted account",
+    "until": "until",
+    "noEnd": "no end",
+    "verified": "Verified answer",
+    "verifiedAnswer": "Answer verified by KPB",
+    "notifyAuthor": "Notify the author",
+    "openDiscussion": "Open the discussion",
+    "openMember": "Member profile",
+    "reasonLabel": "Reason (required, kept in the log)",
+    "reasonPlaceholder": "E.g. WhatsApp number and agent fee request.",
+    "soon": {
+      "badge": "Soon",
+      "title": "This part is coming soon",
+      "body": "The server does not offer this feature yet. Nothing to fix on your side."
+    },
+    "queue": {
+      "kinds": "Filter the queue",
+      "kind": {
+        "all": "All",
+        "auto_hidden": "Auto-hidden",
+        "reported": "Reported",
+        "members": "Reported members"
+      },
+      "sortLabel": "Sort the queue",
+      "sort": {
+        "oldest": "Oldest first",
+        "urgency": "Most urgent first"
+      },
+      "listLabel": "Items to review",
+      "previewLabel": "Item preview",
+      "emptyTitle": "Queue is empty",
+      "emptyBody": "No hidden or reported content to review.",
+      "reports": "{n} report(s)",
+      "openReports": "Open reports: {n}",
+      "waiting": "waiting {h}",
+      "urgency": "Urgency {n}",
+      "urgencyHint": "Scam or contact details +5, serious report +4, each report +1 (max 5), minor author +2, over 24 h +3.",
+      "memberReportsHint": "Member report: it hides nothing. Check the profile, then sanction if needed."
+    },
+    "history": {
+      "title": "Author history",
+      "summary": "{posts} post(s), {replies} visible reply(ies) · {reports} open report(s) · {sanctions} sanction(s)",
+      "active": "active",
+      "revoked": "revoked",
+      "ended": "ended"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "body": "Each action opens a confirmation with a reason: no shortcut acts on its own. Disabled while typing.",
+      "next": "next item",
+      "previous": "previous item",
+      "restore": "restore",
+      "hide": "hide",
+      "delete": "delete",
+      "dismiss_reports": "dismiss reports",
+      "warning": "warn",
+      "read_only": "read-only",
+      "ban": "ban"
+    },
+    "action": {
+      "restore": {
+        "title": "Restore {target}?",
+        "body": "The content becomes visible to everyone again. Open reports are dismissed.",
+        "cta": "Restore",
+        "done": "Content restored."
+      },
+      "hide": {
+        "title": "Hide {target}?",
+        "body": "Only its author will still see it, marked as hidden by moderation. Open reports are actioned.",
+        "cta": "Hide",
+        "done": "Content hidden."
+      },
+      "delete": {
+        "title": "Delete {target}?",
+        "body": "The content disappears for everyone (kept 30 days for the team, then purged). Open reports are actioned.",
+        "cta": "Delete",
+        "done": "Content deleted."
+      },
+      "dismiss_reports": {
+        "title": "Dismiss the reports on {target}?",
+        "body": "The status does not change, except a hide caused only by the report threshold, which is lifted.",
+        "cta": "Dismiss reports",
+        "done": "Reports dismissed."
+      }
+    },
+    "sanction": {
+      "kindLabel": "Sanction",
+      "durationLabel": "Duration (days, 1 to 365)",
+      "hideContent": "Also hide all their visible content",
+      "warning": {
+        "title": "Warn {member}?",
+        "body": "No restriction: the member gets a notification with your reason.",
+        "cta": "Warn",
+        "done": "Warning sent."
+      },
+      "read_only": {
+        "title": "Make {member} read-only?",
+        "body": "The member can read but cannot post, reply or react for the chosen duration.",
+        "cta": "Read-only",
+        "done": "Read-only applied."
+      },
+      "ban": {
+        "title": "Ban {member}?",
+        "body": "No end date, until the team lifts it. The member can read but no longer write.",
+        "cta": "Ban",
+        "done": "Member banned."
+      }
+    },
+    "revoke": {
+      "title": "Lift the sanction?",
+      "cta": "Lift",
+      "done": "Sanction lifted."
+    },
+    "pin": {
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "done": "Post pinned.",
+      "undone": "Post unpinned."
+    },
+    "verify": {
+      "mark": "Mark as verified by KPB",
+      "remove": "Remove verification",
+      "done": "Answer marked as verified (any previous one loses the mark).",
+      "undone": "Verification removed."
+    },
+    "content": {
+      "search": "Search",
+      "searchPlaceholder": "Words from title or body, #hashtag…",
+      "searchCta": "Search",
+      "status": "Status",
+      "type": "Type",
+      "empty": "No post.",
+      "back": "Back to content",
+      "colPost": "Post",
+      "colAuthor": "Author",
+      "colStatus": "Status",
+      "colReplies": "Replies",
+      "colDate": "Date (UTC)",
+      "replies": "Replies ({n})",
+      "noReplies": "No reply.",
+      "reports": "Reports",
+      "log": "Moderation log"
+    },
+    "teamReply": {
+      "title": "Reply on behalf of the team",
+      "hint": "Never filtered. Notifies the author and followers. Friendly tone, no admission promise.",
+      "as": "Sign as",
+      "asAdvisor": "KPB advisor (your first name and initial)",
+      "body": "Reply",
+      "placeholder": "Mention a record with @[Label](scholarship:id) if useful.",
+      "verified": "Mark as verified by KPB right away",
+      "submit": "Post the reply",
+      "done": "Reply posted."
+    },
+    "teamPost": {
+      "open": "New team post",
+      "title": "Team post",
+      "titleLabel": "Title (8 to 120 characters)",
+      "bodyLabel": "Text (20 to 5,000 characters)",
+      "mentionHint": "Mentions: @[Label](type:id), type = scholarship, country, institution or program. Hashtags: #CampusFrance.",
+      "pinned": "Pin at the top of the feed (3 at most)",
+      "submit": "Publish"
+    },
+    "members": {
+      "back": "Back to members",
+      "lookupTitle": "Open a profile",
+      "lookupHint": "Public member id (cm_…), shown in the queue and discussions.",
+      "memberId": "Member id",
+      "open": "Open",
+      "mostReported": "Most reported members",
+      "mostReportedHint": "Members with open reports, most reported first.",
+      "noneReported": "No reported member.",
+      "activeSanctions": "Active sanctions",
+      "activeSanctionsSoon": "Active sanctions list",
+      "activeSanctionsSoonBody": "The server does not list all active sanctions yet. Their count is on the dashboard; each member profile shows its sanctions and lets you lift them.",
+      "colMember": "Member",
+      "colCountry": "Country",
+      "colReports": "Reports",
+      "colRestriction": "Restriction",
+      "summary": "{posts} post(s) · {replies} reply(ies) · {helpful} helpful answer(s) · {reports} open report(s)",
+      "charterAccepted": "Charter {version} accepted on {date}.",
+      "charterNotAccepted": "Charter not accepted yet.",
+      "sanctions": "Sanctions",
+      "noSanctions": "No sanction.",
+      "colKind": "Kind",
+      "colReason": "Reason",
+      "colDate": "Date (UTC)",
+      "colEnds": "Ends",
+      "colState": "State",
+      "recentPosts": "Recent posts",
+      "recentReplies": "Recent replies"
+    },
+    "settings": {
+      "domainsTitle": "Link allowlist",
+      "domainsHint": "A link outside the list hides the message pending review. The {n} official catalogue sites (schools, scholarships) are added.",
+      "builtin": "Built-in list ({n} domains, read-only)",
+      "termsTitle": "Filtered words",
+      "termsHint": "On top of the {n} built-in terms (insults, scams). Matched without accents or case, as whole words.",
+      "noCustom": "No team addition.",
+      "readOnly": "Editing is restricted to administrators.",
+      "add_allowed_domain": "Add a domain",
+      "add_blocked_term": "Add a term",
+      "termPlaceholder": "2 to 60 characters",
+      "addCta": "Add",
+      "added": "Added.",
+      "removed": "Removed.",
+      "removeTitle": "Remove this entry?",
+      "removeCta": "Remove",
+      "testTitle": "Try the filter",
+      "testHint": "Paste a message to see what would hide it. Nothing is saved.",
+      "testLabel": "Text to test",
+      "testCta": "Test",
+      "wouldHide": "Would be hidden pending review:",
+      "wouldPass": "Would pass the filter.",
+      "fixedTitle": "Thresholds and charter",
+      "fixedHint": "Set on the server for now (read-only); editing them from the console is coming soon.",
+      "days": "{n} days",
+      "fixed": {
+        "reportsBeforeHide": "Reports from distinct members before temporary hiding",
+        "newAccount": "An account counts as new for",
+        "postsPerDay": "Posts per day (new / established)",
+        "repliesPerHour": "Replies per hour (new / established)",
+        "reportsPerDay": "Reports per day per member",
+        "editWindow": "Author edit window",
+        "charterVersion": "Charter version"
+      }
+    },
+    "dashboard": {
+      "window": "Period",
+      "days": "{n} days",
+      "openReports": "Open reports",
+      "openedResolved": "{opened} received, {resolved} resolved in the period",
+      "medianDelay": "Median handling time",
+      "sla": "Target: under {h} h",
+      "autoHidden": "Auto-hidden",
+      "pendingNow": "{n} post(s) pending review",
+      "unanswered": "Unanswered questions",
+      "unansweredHint": "No reply from another member or the team (snapshot).",
+      "posts": "Posts",
+      "replies": "Replies",
+      "byTeam": "{n} from the team",
+      "verified": "Verified answers",
+      "members": "Active members",
+      "newMembers": "{n} new",
+      "sanctions": "Active sanctions",
+      "helpful": "{n} helpful marks in the period",
+      "toQueue": "Go to the moderation queue",
+      "dailyTitle": "Daily activity",
+      "dailyHint": "UTC days.",
+      "dailyCaption": "Posts and replies per day",
+      "colDate": "Day",
+      "noActivity": "No activity in the period."
+    },
+    "log": {
+      "empty": "No action recorded.",
+      "colDate": "Date (UTC)",
+      "colAction": "Action",
+      "colTarget": "Target",
+      "colReason": "Reason",
+      "colModerator": "By"
+    },
+    "errors": {
+      "reasonRequired": "A reason is required.",
+      "reasonTooShort": "Reason too short (at least 3 characters).",
+      "reasonTooLong": "Reason too long (500 characters at most).",
+      "durationInvalid": "Duration between 1 and 365 days.",
+      "bodyRequired": "The reply is empty.",
+      "bodyTooLong": "Reply too long (3,000 characters at most).",
+      "titleLength": "Title between 8 and 120 characters.",
+      "postBodyLength": "Text between 20 and 5,000 characters.",
+      "domainInvalid": "Invalid domain: bare host (univ-lyon1.fr) or suffix (*.univ-lyon1.fr).",
+      "termInvalid": "Term between 2 and 60 characters.",
+      "unavailable": "This feature is not available on the server yet.",
+      "forbidden": "Your role does not allow this action.",
+      "rateLimited": "Too many requests: try again in a moment.",
+      "server": "The server did not respond. Try again.",
+      "community_pin_limit": "Already 3 pinned posts: unpin one first.",
+      "community_invalid_transition": "Action not possible in the content's current state (e.g. deleted by its author, or reply not visible).",
+      "community_post_not_found": "Post not found.",
+      "community_reply_not_found": "Reply not found.",
+      "community_member_not_found": "Member not found.",
+      "community_invalid_mention": "Invalid mention: unknown or non-public entity.",
+      "community_too_many_mentions": "10 mentions at most.",
+      "community_too_many_hashtags": "10 hashtags at most.",
+      "community_invalid_cursor": "Stale list: reload the page."
+    },
+    "enum": {
+      "flag": {
+        "phone": "Phone",
+        "email": "Email",
+        "whatsapp": "WhatsApp / Telegram",
+        "money_request": "Money request",
+        "mobile_money": "Mobile money",
+        "external_link": "Non-allowlisted link",
+        "profanity": "Profanity",
+        "blocked_term": "Filtered word",
+        "disposable_email": "Disposable email"
+      },
+      "reportReason": {
+        "scam": "Scam",
+        "harassment": "Harassment",
+        "inappropriate": "Inappropriate",
+        "spam": "Spam",
+        "personal_info": "Personal info",
+        "misinformation": "Misinformation",
+        "other": "Other"
+      },
+      "status": {
+        "visible": "Visible",
+        "pending_review": "Pending review",
+        "hidden": "Hidden",
+        "deleted": "Deleted"
+      },
+      "statusReason": {
+        "auto_filter": "Anti-scam filter",
+        "reports_threshold": "Report threshold",
+        "new_account_review": "Disposable-email account",
+        "moderation": "Hidden by the team",
+        "author_deleted": "Deleted by the author",
+        "moderation_deleted": "Deleted by the team"
+      },
+      "badge": {
+        "kpb_team": "KPB Team",
+        "kpb_advisor": "KPB advisor",
+        "verified_alumni": "Verified alumni",
+        "ambassador": "Ambassador"
+      },
+      "postType": {
+        "question": "Question",
+        "experience": "Experience",
+        "advice": "Advice"
+      },
+      "sanction": {
+        "warning": "Warning",
+        "read_only": "Read-only",
+        "ban": "Ban"
+      },
+      "target": {
+        "post": "Post",
+        "reply": "Reply",
+        "member": "Member"
+      },
+      "logAction": {
+        "restore": "Restored",
+        "hide": "Hidden",
+        "delete": "Deleted",
+        "dismiss_reports": "Reports dismissed",
+        "warning": "Warning",
+        "read_only": "Read-only",
+        "ban": "Ban",
+        "revoke": "Sanction lifted",
+        "verify": "Answer verified",
+        "unverify": "Verification removed",
+        "pin": "Pinned",
+        "unpin": "Unpinned",
+        "team_reply": "Team reply",
+        "team_post": "Team post",
+        "filter_add": "Filter: added",
+        "filter_remove": "Filter: removed"
+      }
+    }
   }
 }
