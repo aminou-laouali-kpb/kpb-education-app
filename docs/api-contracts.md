@@ -38,11 +38,60 @@ paramètre `institutionId` ne la fait pas réapparaître. Une formation dont
 l'ÉTABLISSEMENT est de l'import en est aussi, même saisie à la main (identifiant
 généré, active par défaut) : sans cette règle elle serait servie sur une carte
 sans école, l'école étant, elle, exclue. C'est la surface de
-TOUTES les builds installées, qui la chargent en un seul appel (`limit=1000`,
-trié par nom) ; y laisser des lignes EEF actives aurait évincé des formations
-partenaires de la liste de tout le monde. L'espace « Études en France » a ses
+TOUTES les builds, y compris celles déjà installées qui la chargent en un seul
+appel (`limit=1000`) ; y laisser des lignes EEF actives aurait évincé des
+formations partenaires de la liste de tout le monde. L'espace « Études en France » a ses
 propres routes (`/etudes-en-france/*`). La règle vit en un seul endroit :
 `backend/src/common/eef-provenance.ts`.
+
+### `GET /catalog/programs` : pagination, aucun plafond de catalogue (17/10/2026)
+
+Décision du propriétaire : le maximum de choix, sans plafond de formations.
+Le catalogue n'est plus borné ; seule **une page** l'est (`limit` ≤ 1 000).
+
+| Paramètre | Sens |
+|---|---|
+| `limit` | Taille de page, 1 à 1 000 (défaut et maximum 1 000 ; une valeur non entière est ignorée). |
+| `offset` | Rang de la première ligne (défaut 0). |
+| `q`, `fieldId`, `countryId`, `institutionId` | Filtres inchangés. |
+| `view` | `compact` : chaque formation **sans** les clés à plat dupliquées (`nameFr`, `nameEn`, `levelFr`… `recognitionEn`), les objets localisés (`name: {fr, en}`…) restant servis. Mesuré sur le catalogue amorcé (767 formations) : 1 185 → 780 Kio, gzip 83 → 60 Kio. Toute autre valeur, ou son absence : la forme complète d'avant. |
+
+Réponse : `{ items, total, limit, offset, nextOffset, source }`. `total` compte
+**tout** le catalogue filtré ; `nextOffset` est le rang de la page suivante, ou
+`null` quand tout est servi (clé nouvelle : un client plus ancien l'ignore).
+
+**Ordre (le même pour tous).** Trois tranches disjointes, chacune triée par
+`nameFr` puis `id` (ordre total, pages sans chevauchement) :
+
+1. les formations des établissements **partenaires** publiés (la clause de
+   `/catalog/institutions?partnerOnly=true`) ;
+2. les autres formations dont `applicationDeadline` est **à venir** (≥ minuit
+   UTC du jour) ;
+3. le reste (sans date limite, ou date passée).
+
+Code : `backend/src/modules/catalog/program-snapshot-order.ts`. L'app trie
+elle-même chaque liste affichée ; l'ordre serveur ne décide que de ce qui tombe
+dans la première page.
+
+**Builds récentes** (`lib/app/core/repositories/app_api_client/catalog.dart`) :
+pages de 500 en `view=compact` enchaînées sur `nextOffset` jusqu'à épuisement (garde-fou : 60
+pages), dédoublonnées par `id` ; si `total` change en cours de route (import,
+date limite qui passe à minuit UTC), la lecture recommence une fois. Une page en
+échec fait échouer toute la lecture : le cache Hive précédent reste servi, jamais
+un catalogue tronqué.
+
+**Builds déjà installées** (2.3.x et antérieures) : elles envoient `limit=1000`
+sans `offset` et ne lisent pas `nextOffset`. Au-delà de 1 000 formations
+publiques, elles ne reçoivent que la première page : tous les partenaires, puis
+les formations datées à venir, puis les autres par ordre alphabétique jusqu'à
+1 000. Ce qu'elles ne reçoivent pas n'existe pas pour elles : absent de la liste
+Universités, de la recherche, des filtres et de leurs compteurs (calculés sur la
+liste reçue) ; une fiche ouverte depuis un favori ou un lien affiche « Formation
+introuvable » ; l'aperçu de l'établissement saute la formation ; le comparateur
+compte encore `programIds` (servi complet par `/catalog/institutions`), donc un
+nombre de formations supérieur à ce qu'elles listent. `verify:catalog` imprime
+ce manque à chaque passage, et n'en fait un constat que si les formations
+**partenaires** dépassent à elles seules la première page.
 
 ## Matches (Phase 0 / P0-D — kit US-003/US-004)
 
@@ -994,6 +1043,40 @@ comme une valeur de repli :
 | `eefCampaign.platformUrl` | URL https | `KPB_EEF_PLATFORM_URL` | La plateforme officielle, affichée sous la date et dans la mention de non-affiliation. Repli serveur vérifié : `https://www.campusfrance.org/fr`. |
 | `eefCampaign.suspendedSources` | `[{country, url}]` | `KPB_EEF_SUSPENDED_SOURCES` (`Pays\|https://…;Autre\|https://…`) | La page officielle qui justifie la suspension d'un pays. **Un élément par pays de `suspendedCountries` seulement** : la source d'une suspension ne voyage pas sans suspension. Connue sans configuration : le Niger (`ne.diplomatie.gouv.fr/informations-visas`). |
 | `eefCatalog` | `{producer, producerUrl, licence, licenceUrl, sources[], updatedAt, catalogVersion}` | — (constante) | La mention de paternité de la Licence Ouverte 2.0, posée en pied de l'écran catalogue. `updatedAt` est un **jour nu** `AAAA-MM-JJ`. |
+
+### Suspension des visas étudiants américains : `usVisaSuspension` (17/10/2026)
+
+Toujours présente. Sert l'avis des fiches établissement, formation et pays des
+**États-Unis** : « Les demandes de visa étudiant sont actuellement suspendues
+pour les ressortissants de : … ».
+
+```json
+"usVisaSuspension": {
+  "countries": [{ "code": "BF", "nameFr": "Burkina Faso", "nameEn": "Burkina Faso" }, …],
+  "visaTypes": ["F", "M", "J"],
+  "lastVerifiedAt": "2026-10-17",
+  "sourceUrl": "https://travel.state.gov/content/travel/en/News/visas-news/suspension-of-visa-issuance-to-foreign-nationals-to-protect-the-security-of-the-united-states.html"
+}
+```
+
+| Variable d'environnement | Effet |
+|---|---|
+| `KPB_US_VISA_SUSPENDED_COUNTRIES` | Codes ISO alpha-2 séparés par des virgules. **Vide : la liste vérifiée le 17/10/2026** (proclamation 10998 : BF, ML, NE, TD, CG, BJ, CI, SN, GA, MR, BI, TG). `none` : liste vide, l'app ne montre plus l'avis. Une valeur sans aucun code lisible garde le défaut (une faute de frappe ne retire pas l'avis). |
+| `KPB_US_VISA_SUSPENSION_VERIFIED_AT` | Jour `AAAA-MM-JJ` de la vérification. Une liste personnalisée sans date est servie avec `lastVerifiedAt: null`. |
+| `KPB_US_VISA_SUSPENSION_SOURCE_URL` | La page officielle ouverte par le bouton (https seulement). Défaut : la page du Département d'État ci-dessus. |
+
+**Mettre la liste à jour, sans build** : poser les variables dans le `.env` du
+VPS (elles sont relayées par `docker-compose.yml`), recréer le conteneur API,
+puis relire `curl https://…/api/config/app | jq .usVisaSuspension`. L'app
+embarque la même liste par défaut (`lib/app/core/models/us_visa_suspension.dart`)
+pour un serveur plus ancien ou injoignable ; elle la remplace dès que la
+réponse arrive.
+
+**Vie privée** : l'app compare la liste au pays de résidence du profil, **sur le
+téléphone**. Aucun pays, aucune nationalité, aucun « concerné / pas concerné »
+ne part vers le serveur ni vers les mesures d'audience (le renvoi WhatsApp
+mesuré porte une source et un contexte constants : `us_visa_notice` /
+`us_visa`).
 
 **Toute URL servie est `https`, sans identifiants**, sinon elle est écartée :
 ces valeurs sont écrites à la main, et `javascript:` ne doit jamais atteindre un

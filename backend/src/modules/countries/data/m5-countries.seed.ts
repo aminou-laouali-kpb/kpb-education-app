@@ -9,6 +9,11 @@ export interface M5CountrySeed {
   nameEn: string;
   taglineFr: string;
   taglineEn: string;
+  /// La PROCHAINE rentrée du pays (« Septembre 2027 » depuis la reconduction
+  /// OMNES du 16/10/2026). Ne passe en base que par `npm run seed:countries-m5`
+  /// (qui réécrit le pays) ; `seed:omnes` ne crée la France que si elle
+  /// manque. Modifier ce fichier ne touche pas la production —
+  /// docs/runbook-rentrees-partenaires.md, « Libellé prochaine rentrée ».
   nextIntakeLabelFr: string;
   nextIntakeLabelEn: string;
   mainLanguageFr: string;
@@ -164,8 +169,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'France',
     taglineFr: "Étudier au cœur de l'Europe, dans des écoles privées d'excellence",
     taglineEn: 'Study in Europe through excellent private schools',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Français',
     mainLanguageEn: 'French',
     whyStudyFr:
@@ -201,9 +206,9 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     languageSectionEn:
       'DELF/DALF/TCF B2 for French tracks. IELTS 6.5+ or TOEFL iBT 85+ for English tracks.',
     partnerSchoolsFr:
-      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub), ICN, Schiller Paris, IGENSIA — 747 programmes disponibles dans l\'app.',
+      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub, HEIP), ICN, Schiller Paris, IGENSIA Education (IGENSIA School of Business, IGENSIA Tech, IGENSIA RH, American Business College). Certaines formations ouvrent aussi en rentrée décalée, de janvier à mars.',
     partnerSchoolsEn:
-      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub), ICN, Schiller Paris, IGENSIA — 747 programs in-app.',
+      'OMNES Education (ECE, ESCE, INSEEC, Sup de Pub, HEIP), ICN, Schiller Paris, IGENSIA Education (IGENSIA School of Business, IGENSIA Tech, IGENSIA RH, American Business College). Some programmes also offer a January–March intake.',
     scholarshipsSectionFr:
       'Bourses partielles possibles via partenaires et dispositifs locaux. KPB t\'aide à identifier les options.',
     scholarshipsSectionEn:
@@ -288,8 +293,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'Germany',
     taglineFr: 'Universités publiques quasi gratuites + parcours langue KPB',
     taglineEn: 'Near-free public universities + KPB language track',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Allemand (+ anglais pour certains programmes)',
     mainLanguageEn: 'German (+ English for some programs)',
     whyStudyFr: 'Excellence en ingénierie et frais de scolarité très bas.',
@@ -493,8 +498,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'Morocco',
     taglineFr: 'Option francophone accessible depuis l\'Afrique de l\'Ouest',
     taglineEn: 'Accessible French-speaking option from West Africa',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Français',
     mainLanguageEn: 'French',
     whyStudyFr: 'Coût maîtrisé et proximité culturelle.',
@@ -557,8 +562,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'Turkey',
     taglineFr: 'Campus modernes et coût maîtrisé',
     taglineEn: 'Modern campuses and controlled costs',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Anglais / Turc',
     mainLanguageEn: 'English / Turkish',
     whyStudyFr: 'Programmes anglophones abordables.',
@@ -606,8 +611,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'UAE (Dubai)',
     taglineFr: 'Programmes anglophones professionnalisants',
     taglineEn: 'Career-oriented English programs',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Anglais',
     mainLanguageEn: 'English',
     whyStudyFr: 'Hub business international.',
@@ -704,8 +709,8 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     nameEn: 'Spain',
     taglineFr: 'Programmes internationaux à Madrid',
     taglineEn: 'International programs in Madrid',
-    nextIntakeLabelFr: 'Septembre 2026',
-    nextIntakeLabelEn: 'September 2026',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
     mainLanguageFr: 'Anglais / Espagnol',
     mainLanguageEn: 'English / Spanish',
     whyStudyFr: 'Qualité de vie méditerranéenne.',

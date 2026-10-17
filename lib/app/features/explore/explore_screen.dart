@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/program_intakes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/analytics_service.dart';
@@ -13,6 +14,7 @@ import '../../core/utils/external_link.dart';
 import '../cases/case_composer_sheet.dart';
 import 'country_detail_screen.dart';
 import 'program_detail_screen.dart';
+import '../../core/ui/components/us_visa_notice.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Country flag lookup (shared with home)
@@ -63,7 +65,10 @@ class CountriesCatalogGrid extends StatelessWidget {
         }
 
         final country = countries[index - 1];
-        final intake = controller.resolve(country.nextIntakeLabel);
+        // Un libellé de rentrée PASSÉ (« Septembre 2026 ») n'est pas affiché.
+        final intake =
+            upcomingIntakeText(controller.resolve(country.nextIntakeLabel)) ??
+                '';
         final tuition = controller.resolve(country.tuitionRange);
         final popularFields = country.popularFieldIds.take(2).map((id) {
           try {
@@ -382,6 +387,15 @@ class _InstitutionDetailSheet extends StatelessWidget {
                     const SizedBox(height: KpbSpacing.lg),
                   ],
 
+                  if (isUnitedStatesCountryId(institution.countryId)) ...[
+                    UsVisaNotice(
+                      countryOfResidence:
+                          controller.profile?.countryOfResidence,
+                      localeCode: controller.localeCode,
+                    ),
+                    const SizedBox(height: KpbSpacing.md),
+                  ],
+
                   // Overview
                   KpbCard(
                     child: Column(
@@ -460,6 +474,11 @@ class _InstitutionDetailSheet extends StatelessWidget {
                                         style: KpbTextStyles.titleMd),
                                     Text(controller.resolve(prog.level),
                                         style: KpbTextStyles.caption),
+                                    const SizedBox(height: 4),
+                                    ProgramIntakeLine(
+                                      program: prog,
+                                      institution: institution,
+                                    ),
                                   ],
                                 ),
                               ),

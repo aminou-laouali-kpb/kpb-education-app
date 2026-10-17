@@ -29,6 +29,7 @@ import {
   KNOWN_LEVELS,
   LANGUAGES_BY_LABEL,
   TARGETS,
+  assertTargetsAreSchools,
   type BackfillableKey,
   type PlannedProgram,
   type Target,
@@ -38,6 +39,7 @@ import {
   parseTuitionMinEur,
   stableId,
 } from '../src/modules/catalog/partner-import';
+import { programNameKey } from '../src/modules/catalog/catalog-dedupe';
 
 if (existsSync('.env')) loadEnvFile?.('.env');
 
@@ -60,7 +62,7 @@ async function main() {
   console.log(`Source : ${csvPath} (${rows.length} lignes)\n`);
 
   const targets = TARGETS.filter((t) => !skip.has(t.id));
-  const errors: string[] = [];
+  const errors: string[] = [...assertTargetsAreSchools(targets)];
   const warnings: string[] = [];
   const plan: {
     target: Target;
@@ -104,11 +106,14 @@ async function main() {
         continue;
       }
       const id = stableId('partner-p-', `${target.id}|${nameFr}`);
-      if (seen.has(id)) {
+      // Doublon interne : même id, ou même nom normalisé (casse, accents…).
+      const key = `${programNameKey(nameFr)}#${normalizeLevel(r.Niveau)}`;
+      if (seen.has(id) || seen.has(key)) {
         warnings.push(`${target.id} : doublon interne ignoré — "${nameFr}"`);
         continue;
       }
       seen.add(id);
+      seen.add(key);
 
       const levelFr = normalizeLevel(r.Niveau);
       if (levelFr && !KNOWN_LEVELS.has(levelFr)) {
@@ -172,15 +177,17 @@ async function main() {
     fills: Partial<Record<BackfillableKey, string>>;
   }[] = [];
   for (const { target, exists, programs, overviewFr, fills } of plan) {
+    // Comparaison par nom NORMALISÉ (casse, accents, espaces, tirets) : une
+    // fiche créée à la main dans l'admin sous un autre id n'est pas doublée.
     const present = new Set(
       (
         await prisma.program.findMany({
           where: { institutionId: target.id },
           select: { nameFr: true },
         })
-      ).map((p) => p.nameFr),
+      ).map((p) => programNameKey(p.nameFr)),
     );
-    const fresh = programs.filter((p) => !present.has(p.nameFr));
+    const fresh = programs.filter((p) => !present.has(programNameKey(p.nameFr)));
     creates += fresh.length;
     skipped += programs.length - fresh.length;
     toWrite.push({ target, programs: fresh, overviewFr, fills });

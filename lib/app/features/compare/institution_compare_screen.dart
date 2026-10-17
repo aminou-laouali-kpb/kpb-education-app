@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/utils/country_utils.dart';
+import '../../core/utils/program_intakes.dart';
 import '../cases/case_composer_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
@@ -213,8 +214,8 @@ class _InstitutionCompareScreenState extends State<InstitutionCompareScreen> {
           ),
           _attrRow(
             'compare_row_intakes'.tr,
-            _cellText(_join(inst1.intakePeriods)),
-            _cellText(_join(inst2.intakePeriods)),
+            _cellText(_intakes(inst1)),
+            _cellText(_intakes(inst2)),
           ),
           _attrRow(
             'saved_group_programs'.tr,
@@ -601,6 +602,13 @@ class _InstitutionCompareScreenState extends State<InstitutionCompareScreen> {
 
   String _join(List<String> values) =>
       values.isEmpty ? '—' : values.join(' · ');
+
+  /// Les rentrées À VENIR de l'école, en toutes lettres (« octobre 2026 »,
+  /// pas « 01/10/2026 ») — même règle que les cartes (program_intakes.dart).
+  String _intakes(InstitutionModel inst) =>
+      schoolIntakeSummary(inst.intakePeriods)
+          .longLabel(_controller.localeCode) ??
+      '—';
 
   String _countryName(String countryId) {
     try {

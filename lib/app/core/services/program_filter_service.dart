@@ -61,6 +61,7 @@ const programLevelFilters = <({String key, String labelFr})>[
   (key: 'master', labelFr: 'Master'),
   (key: 'mba', labelFr: 'MBA / DBA'),
   (key: 'doctorate', labelFr: 'Doctorat'),
+  (key: 'college', labelFr: 'Collège'),
   (key: 'other', labelFr: 'Autre'),
 ];
 

@@ -1517,6 +1517,8 @@ const Map<String, String> appTranslationsFr = {
   // --- KPB-89 batch ---
   'country_study_in': 'Étudier en @country',
   'program_available_on_campuses': 'Disponible sur @count campus',
+  'program_available_on_one_campus': 'Disponible sur 1 campus',
+  'program_recognition': 'Reconnaissance du diplôme',
   'quiz_title_with_country': 'Quiz · @country',
   'quiz_question_progress': 'Question @current/@total',
   'quiz_enrollment_with_program': 'Inscription — @program',
@@ -1534,6 +1536,8 @@ const Map<String, String> appTranslationsFr = {
   'program_step_eligibility_choice': 'Quiz d\'éligibilité & choix du programme',
   'program_step_build_file': 'Constitution du dossier avec KPB',
   'program_step_submission': 'Soumission à l\'école partenaire',
+  'program_step_submission_direct':
+      'Envoi de ta candidature à l\'établissement (KPB n\'en est pas partenaire)',
   'program_step_admission_letter': 'Obtention de la lettre d\'admission',
   'program_step_visa_departure': 'Visa & préparation du départ',
   'badge_kpb_partner': 'Partenaire KPB',
@@ -2413,6 +2417,30 @@ const Map<String, String> appTranslationsFr = {
   'parent_create_invite': 'Créer un code d\'invitation',
   'salon_rsvp_error': 'Impossible de mettre à jour l\'inscription.',
   'intake_label': 'Rentrée',
+  'offering_intake_spring_month': 'Rentrée décalée · @month @year',
+  'offering_intake_spring_year': 'Rentrée décalée · @year',
+  'offering_intake_fall_month': 'Rentrée @month @year',
+  'offering_intake_fall_year': 'Rentrée d\'automne @year',
+  'offering_rhythm_alternance': 'Alternance',
+  'offering_rhythm_initiale': 'Formation initiale',
+  'program_intakes_one': 'Rentrée :',
+  'program_intakes_many': 'Rentrées :',
+  'program_intakes_school_one': 'Rentrée de l\'école :',
+  'program_intakes_school_many': 'Rentrées de l\'école :',
+  'program_intakes_more': '+ @count',
+  'program_intakes_none_upcoming': 'Prochaine rentrée non publiée',
+  'program_offerings_all_past':
+      'Les rentrées publiées (@campuses) sont passées. La prochaine date n’est pas encore publiée : demande-la à ton conseiller KPB.',
+  'program_intake_spring_tag': 'décalée',
+  'program_intake_spring_a11y': 'rentrée décalée',
+  'program_intake_fall_year_short': 'automne @year',
+  'offering_intake_estimated_note':
+      'Date reconduite de @year, à confirmer · tarif @tuitionYear',
+  'offering_intake_estimated_a11y':
+      'Date reconduite de la rentrée @year, à confirmer par l\'école. Tarif de l\'année @tuitionYear.',
+  'offering_intake_estimated_plain': 'Date et tarif à confirmer',
+  'program_intake_estimated_tag': 'à confirmer',
+  'program_intake_estimated_a11y': 'date à confirmer',
   'turnaround_label': 'Délai',
   'home_find_school_desc':
       'Trouve ton école privée en France selon ton budget et tes objectifs. Discute instantanément !',
@@ -3825,4 +3853,35 @@ const Map<String, String> appTranslationsFr = {
   'notifications_push_denied_subtitle':
       'Rallume-les dans les réglages de l\'app pour recevoir les alertes.',
   'notifications_push_settings_action': 'Réglages',
+  // ── Visas étudiants américains suspendus (décision du 17/10/2026) ──────────
+  // La liste des pays vient de /config/app (repli embarqué) : @countries.
+  'us_visa_notice_title': 'Visa étudiant pour les États-Unis',
+  'us_visa_notice_concerned': 'Ton pays est concerné.',
+  'us_visa_notice_body':
+      'Les demandes de visa étudiant sont actuellement suspendues pour les ressortissants de : @countries.',
+  'us_visa_notice_check':
+      'Vérifie ta situation sur travel.state.gov, ou écris-nous sur WhatsApp pour en parler.',
+  'us_visa_notice_verified': 'Liste vérifiée le @date.',
+  'us_visa_notice_official_cta': 'Voir la page officielle',
+  'us_visa_notice_whatsapp_cta': 'En parler sur WhatsApp',
+  'us_visa_whatsapp_prefill':
+      'Bonjour KPB Education, je regarde les études aux États-Unis et j\'aimerais savoir si la suspension des visas étudiants me concerne.',
+  // ── Universités : vue Partenaires / Tous (décision du 17/10/2026) ──────────
+  'uni_view_switch_label': 'Universités à afficher',
+  'uni_view_partners': 'Partenaires',
+  'uni_view_all': 'Tous',
+  'uni_view_count_semantics': '@label : @count formation(s)',
+  'uni_partner_notice_title': 'Universités partenaires de KPB',
+  // Décision du propriétaire du 17/10/2026 : pas de chiffre ni de garantie,
+  // le lien direct avec l'université. Toujours suivi de
+  // `uni_partner_notice_caveat`.
+  'uni_partner_notice_body':
+      'Cette vue montre les universités partenaires de KPB Éducation. KPB est en contact direct avec elles pour faciliter et accélérer ta procédure.',
+  'uni_partner_notice_caveat': 'Attention : cela dépend de ton dossier.',
+  'uni_partner_notice_switch_hint':
+      'Pour voir toutes les universités et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».',
+  'uni_partner_notice_cta': 'Voir toutes les universités',
+  'uni_partner_notice_close': 'Fermer ce message',
+  'uni_partner_reminder': 'Tu vois seulement les universités partenaires.',
+  'uni_partner_reminder_cta': 'Voir tout',
 };

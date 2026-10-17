@@ -418,6 +418,11 @@ class _SearchResultTile extends StatelessWidget {
   final AppController controller;
   final VoidCallback onTap;
 
+  /// La formation d'un résultat de type formation, ou null.
+  ProgramModel? get _program => result.type == SearchResultType.program
+      ? controller.programByIdOrNull(result.id)
+      : null;
+
   ProfileFit? get _fit {
     switch (result.type) {
       case SearchResultType.field:
@@ -495,6 +500,14 @@ class _SearchResultTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                  if (_program case final program?) ...[
+                    const SizedBox(height: 2),
+                    ProgramIntakeLine(
+                      program: program,
+                      institution: controller
+                          .institutionByIdOrNull(program.institutionId),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -1,5 +1,14 @@
 part of '../app_api_client.dart';
 
+/// Taille d'une page de `/catalog/programs` : deux allers-retours pour ~1 000
+/// formations, chacun d'environ 40 Kio compressés — un compromis entre la
+/// latence d'un réseau 3G (peu d'allers-retours) et une page qui aboutit avant
+/// le délai de réception.
+const catalogProgramPageSize = 500;
+
+/// Garde-fou de la boucle de pagination (30 000 formations).
+const catalogProgramMaxPages = 60;
+
 /// Catalogue, bourses, notifications, vols, contenus publics.
 mixin _CatalogApi on _ApiClientBase {
   // ── Parcours & Témoignages (Chantier C) ────────────────────────────────────
@@ -42,10 +51,9 @@ mixin _CatalogApi on _ApiClientBase {
   /// — the offline cache — must check [CatalogListPayload.isTrustworthy] before
   /// storing them, otherwise fake catalog entries get pinned on the device.
   Future<CatalogListPayload> listCatalogEnvelope(String resource) async {
+    if (resource == 'programs') return _listAllPrograms();
     final queryParameters =
-        (resource == 'programs' || resource == 'institutions')
-            ? <String, dynamic>{'limit': 1000}
-            : null;
+        resource == 'institutions' ? <String, dynamic>{'limit': 1000} : null;
     final response = await _dio.get<Map<String, dynamic>>(
       '/catalog/$resource',
       queryParameters: queryParameters,
@@ -54,6 +62,86 @@ mixin _CatalogApi on _ApiClientBase {
     return CatalogListPayload(
       items: data['items'] as List<dynamic>? ?? <dynamic>[],
       source: CatalogDataSource.parse(data['source']),
+    );
+  }
+
+  /// TOUTES les formations, page après page (décision du propriétaire du
+  /// 17/10/2026 : aucun plafond de formations).
+  ///
+  /// Les builds précédentes chargeaient un instantané `limit=1000`, et le
+  /// serveur ne servait rien au-delà : passé 1 000 formations publiques, la fin
+  /// de la liste disparaissait de l'app sans erreur. Ici :
+  ///
+  ///  * pages de [catalogProgramPageSize] en `view=compact` (sans les clés à
+  ///    plat que le serveur duplique pour les clients anciens : ~ −34 % à
+  ///    décoder et à garder dans le cache Hive), enchaînées sur `nextOffset`
+  ///    jusqu'à ce qu'il soit nul. Un serveur plus ancien, sans `nextOffset`,
+  ///    est lu jusqu'à `total` ou jusqu'à une page incomplète ;
+  ///  * dédoublonnage par `id` : si une écriture déplace une ligne d'une page à
+  ///    l'autre, elle n'apparaît pas deux fois ;
+  ///  * si `total` change en cours de lecture (import, date limite qui passe à
+  ///    minuit UTC), la lecture recommence UNE fois, puis garde l'union lue ;
+  ///  * une page en échec fait échouer TOUTE la lecture : l'appelant
+  ///    (`syncCatalogResource`) garde alors le cache précédent, jamais un
+  ///    catalogue tronqué présenté comme complet ;
+  ///  * une page dégradée (`source: "mock"`) est rendue telle quelle, pour que
+  ///    l'appelant la refuse comme avant.
+  ///
+  /// [catalogProgramMaxPages] borne la boucle face à un serveur qui
+  /// renverrait toujours le même curseur : 60 × 500 = 30 000 formations.
+  Future<CatalogListPayload> _listAllPrograms() async {
+    var collected = <dynamic>[];
+    for (var attempt = 0; attempt < 2; attempt++) {
+      final items = <dynamic>[];
+      final seen = <String>{};
+      int? total;
+      var offset = 0;
+      var totalChanged = false;
+      for (var page = 0; page < catalogProgramMaxPages; page++) {
+        final response = await _dio.get<Map<String, dynamic>>(
+          '/catalog/programs',
+          queryParameters: <String, dynamic>{
+            'limit': catalogProgramPageSize,
+            'offset': offset,
+            'view': 'compact',
+          },
+        );
+        final data = response.data ?? <String, dynamic>{};
+        final source = CatalogDataSource.parse(data['source']);
+        final pageItems = data['items'] as List<dynamic>? ?? <dynamic>[];
+        if (!source.isTrustworthy) {
+          return CatalogListPayload(items: pageItems, source: source);
+        }
+        final rawTotal = data['total'];
+        final pageTotal = rawTotal is num ? rawTotal.toInt() : null;
+        if (total != null && pageTotal != null && pageTotal != total) {
+          totalChanged = true;
+        }
+        total ??= pageTotal;
+        for (final item in pageItems) {
+          final id = item is Map ? item['id'] : null;
+          if (id is String && id.isNotEmpty && !seen.add(id)) continue;
+          items.add(item);
+        }
+        if (totalChanged) break;
+        final next = data['nextOffset'];
+        if (data.containsKey('nextOffset')) {
+          if (next is! num || next.toInt() <= offset) break;
+          offset = next.toInt();
+        } else {
+          // Serveur antérieur au 17/10/2026 : pas de curseur.
+          offset += pageItems.length;
+          final exhausted = pageItems.length < catalogProgramPageSize ||
+              (total != null && offset >= total);
+          if (exhausted) break;
+        }
+      }
+      collected = items;
+      if (!totalChanged) break;
+    }
+    return CatalogListPayload(
+      items: collected,
+      source: CatalogDataSource.database,
     );
   }
 

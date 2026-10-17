@@ -612,6 +612,10 @@ class _ProgramCard extends StatelessWidget {
                 ),
             ],
           ),
+          // Les rentrées publiées de la formation, s'il y en a. Pas de repli
+          // sur l'établissement : le résumé « Études en France » n'en porte
+          // pas, et une université n'a pas de « septembre » par défaut.
+          ProgramIntakeLine(program: program, localeCode: locale),
           const SizedBox(height: KpbSpacing.xs),
           Row(
             children: [

@@ -87,6 +87,19 @@ export const TARGETS: Target[] = [
   },
 ];
 
+/// Lignes du CSV qui NE SONT PAS des écoles : les blocs « ECE / ESCE / INSEEC —
+/// Rentrée décalée 2027 » sont des listes de formations (incomplètes, la
+/// source de vérité est la grille SPRING 27, voir `import:omnes-spring`). Elles
+/// ne doivent jamais devenir un établissement, même ajoutées par erreur à
+/// `TARGETS` : `assertTargetsAreSchools` arrête l'import.
+export const NON_SCHOOL_CSV_LABEL = /rentr[ée]e\s+d[ée]cal[ée]e/i;
+
+export function assertTargetsAreSchools(targets: readonly Target[]): string[] {
+  return targets
+    .filter((t) => NON_SCHOOL_CSV_LABEL.test(t.csvName) || NON_SCHOOL_CSV_LABEL.test(t.nameFr))
+    .map((t) => `${t.id} : « ${t.csvName} » n’est pas une école (bloc de rentrée décalée)`);
+}
+
 /// Degree levels the catalogue recognises once normalised by the admin service.
 export const KNOWN_LEVELS = new Set([
   'Bachelor',

@@ -9,6 +9,11 @@
 //
 // Ces tests verrouillent : (1) jamais de « % » dans la liste, avec ou sans
 // profil ; (2) sans profil, ni badge ni promesse de tri personnalisé.
+//
+// L'avis « vue Partenaires » (décision du propriétaire du 17/10/2026) porte un
+// « 70 % » voulu, couvert par partner_view_notice_test.dart : il est masqué ici
+// (élève qui a déjà ouvert « Tous ») pour que « aucun % » reste une assertion
+// sur la LISTE, sans exception.
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -18,6 +23,7 @@ import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/ui/components/profile_fit_badge.dart';
 import 'package:karatou/app/features/universities/universities_screen.dart';
+import 'package:karatou/app/features/universities/widgets/partner_view_notice_store.dart';
 
 import '../../support/screen_harness.dart';
 
@@ -76,7 +82,9 @@ void main() {
 
     await pumpKpbScreen(
       tester,
-      screen: const UniversitiesScreen(),
+      screen: UniversitiesScreen(
+        noticeStore: MemoryPartnerViewNoticeStore(allViewOpened: true),
+      ),
       viewport: iphone14,
       inDrawerShell: true,
     );
@@ -95,7 +103,9 @@ void main() {
 
     await pumpKpbScreen(
       tester,
-      screen: const UniversitiesScreen(),
+      screen: UniversitiesScreen(
+        noticeStore: MemoryPartnerViewNoticeStore(allViewOpened: true),
+      ),
       viewport: iphone14,
       inDrawerShell: true,
     );

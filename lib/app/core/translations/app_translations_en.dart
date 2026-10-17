@@ -1370,6 +1370,8 @@ const Map<String, String> appTranslationsEn = {
   // --- KPB-89 batch ---
   'country_study_in': 'Study in @country',
   'program_available_on_campuses': 'Available on @count campuses',
+  'program_available_on_one_campus': 'Available on 1 campus',
+  'program_recognition': 'Degree recognition',
   'quiz_title_with_country': 'Quiz · @country',
   'quiz_question_progress': 'Question @current/@total',
   'quiz_enrollment_with_program': 'Enrollment — @program',
@@ -1387,6 +1389,8 @@ const Map<String, String> appTranslationsEn = {
   'program_step_eligibility_choice': 'Eligibility quiz & program choice',
   'program_step_build_file': 'Building your file with KPB',
   'program_step_submission': 'Submission to the partner school',
+  'program_step_submission_direct':
+      'Sending your application to the institution (not a KPB partner)',
   'program_step_admission_letter': 'Receiving the admission letter',
   'program_step_visa_departure': 'Visa & departure preparation',
   'badge_kpb_partner': 'KPB Partner',
@@ -2193,6 +2197,30 @@ const Map<String, String> appTranslationsEn = {
   'parent_create_invite': 'Create an invite code',
   'salon_rsvp_error': 'Could not update your RSVP.',
   'intake_label': 'Intake',
+  'offering_intake_spring_month': 'Spring intake · @month @year',
+  'offering_intake_spring_year': 'Spring intake · @year',
+  'offering_intake_fall_month': '@month @year intake',
+  'offering_intake_fall_year': 'Fall @year intake',
+  'offering_rhythm_alternance': 'Work-study',
+  'offering_rhythm_initiale': 'Full-time study',
+  'program_intakes_one': 'Intake:',
+  'program_intakes_many': 'Intakes:',
+  'program_intakes_school_one': 'School intake:',
+  'program_intakes_school_many': 'School intakes:',
+  'program_intakes_more': '+ @count',
+  'program_intakes_none_upcoming': 'Next intake not yet published',
+  'program_offerings_all_past':
+      'The published intakes (@campuses) have passed. The next date is not published yet: ask your KPB advisor.',
+  'program_intake_spring_tag': 'spring',
+  'program_intake_spring_a11y': 'spring intake',
+  'program_intake_fall_year_short': 'Fall @year',
+  'offering_intake_estimated_note':
+      'Date carried over from @year, to be confirmed · @tuitionYear fee',
+  'offering_intake_estimated_a11y':
+      'Date carried over from the @year intake, to be confirmed by the school. Fee for @tuitionYear.',
+  'offering_intake_estimated_plain': 'Date and fee to be confirmed',
+  'program_intake_estimated_tag': 'to be confirmed',
+  'program_intake_estimated_a11y': 'date to be confirmed',
   'turnaround_label': 'Turnaround',
   'home_find_school_desc':
       'Find your private school in France based on your budget and goals. Chat instantly!',
@@ -3547,4 +3575,33 @@ const Map<String, String> appTranslationsEn = {
   'notifications_push_denied_subtitle':
       'Turn them back on in the app settings to get alerts.',
   'notifications_push_settings_action': 'Settings',
+  // ── US student visas suspended (owner decision, 17/10/2026) ──────────────
+  'us_visa_notice_title': 'Student visa for the United States',
+  'us_visa_notice_concerned': 'Your country is affected.',
+  'us_visa_notice_body':
+      'Student visa applications are currently suspended for nationals of: @countries.',
+  'us_visa_notice_check':
+      'Check your situation on travel.state.gov, or message us on WhatsApp to talk about it.',
+  'us_visa_notice_verified': 'List checked on @date.',
+  'us_visa_notice_official_cta': 'See the official page',
+  'us_visa_notice_whatsapp_cta': 'Talk about it on WhatsApp',
+  'us_visa_whatsapp_prefill':
+      'Hello KPB Education, I\'m looking at studying in the United States and I\'d like to know if the student visa suspension affects me.',
+  // ── Universities: Partners / All view (owner decision, 17/10/2026) ───────
+  'uni_view_switch_label': 'Universities to show',
+  'uni_view_partners': 'Partners',
+  'uni_view_all': 'All',
+  'uni_view_count_semantics': '@label: @count program(s)',
+  'uni_partner_notice_title': 'KPB partner universities',
+  // Owner's decision of 17/10/2026: no figure, no guarantee — the direct link
+  // with the university. Always followed by `uni_partner_notice_caveat`.
+  'uni_partner_notice_body':
+      'This view shows KPB Education\'s partner universities. KPB is in direct contact with them to make your application easier and faster.',
+  'uni_partner_notice_caveat': 'Important: this depends on your application.',
+  'uni_partner_notice_switch_hint':
+      'To see all universities and choose any destination, switch to the “All” tab.',
+  'uni_partner_notice_cta': 'See all universities',
+  'uni_partner_notice_close': 'Close this message',
+  'uni_partner_reminder': 'You\'re only seeing partner universities.',
+  'uni_partner_reminder_cta': 'See all',
 };

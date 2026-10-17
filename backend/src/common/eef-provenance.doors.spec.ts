@@ -294,13 +294,15 @@ interface Door {
 const DOORS: Readonly<Record<string, Door>> = {
   'modules/catalog/catalog.service.ts': {
     reason:
-      'Le catalogue GÉNÉRAL : ce que toutes les builds installées chargent en un '
-      + 'appel de 1 000 lignes. Il ne sert jamais une ligne de l’import.',
+      'Le catalogue GÉNÉRAL : ce que les builds récentes chargent page après '
+      + 'page, et les builds installées en un appel de 1 000 lignes. Il ne sert '
+      + 'jamais une ligne de l’import. `getPrograms` lit aussi les identifiants '
+      + 'des partenaires publiés (hors import), pour les servir en tête.',
     scoped: {
       getInstitutions: ['notEefInstitution'],
-      getPrograms: ['notEefProgram'],
+      getPrograms: ['notEefProgram', 'publicPartnerInstitutionWhere'],
     },
-    accesses: 4,
+    accesses: 5,
   },
   'modules/matches/matches.service.ts': {
     reason:

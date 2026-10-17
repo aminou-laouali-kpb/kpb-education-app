@@ -32,6 +32,11 @@ describe('AppConfigController', () => {
     KPB_RECOMMENDED_APP_VERSION: process.env.KPB_RECOMMENDED_APP_VERSION,
     KPB_SCHOLARSHIP_MATCH_ENABLED: process.env.KPB_SCHOLARSHIP_MATCH_ENABLED,
     KPB_ONBOARDING_V2_ENABLED: process.env.KPB_ONBOARDING_V2_ENABLED,
+    KPB_US_VISA_SUSPENDED_COUNTRIES: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
+    KPB_US_VISA_SUSPENSION_VERIFIED_AT:
+      process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
+    KPB_US_VISA_SUSPENSION_SOURCE_URL:
+      process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL,
   };
 
   beforeEach(() => {
@@ -404,6 +409,56 @@ describe('AppConfigController', () => {
   });
 
   // ── XC-09 — la version RECOMMANDÉE, par opposition à la version minimale ──
+  describe('usVisaSuspension — avis des fiches États-Unis', () => {
+    it('sert la liste vérifiée le 17/10/2026 quand rien n’est configuré', () => {
+      const served = new AppConfigController().getAppConfig().usVisaSuspension;
+      expect(served.countries.map((c) => c.code)).toEqual([
+        'BF', 'ML', 'NE', 'TD', 'CG', 'BJ', 'CI', 'SN', 'GA', 'MR', 'BI', 'TG', 'NG',
+      ]);
+      expect(served.countries[3]).toEqual({ code: 'TD', nameFr: 'Tchad', nameEn: 'Chad' });
+      expect(served.visaTypes).toEqual(['F', 'M', 'J']);
+      expect(served.lastVerifiedAt).toBe('2026-10-17');
+      expect(served.sourceUrl).toMatch(/^https:\/\/travel\.state\.gov\//);
+    });
+
+    it('suit la variable, sans nouvelle build', () => {
+      process.env.KPB_US_VISA_SUSPENDED_COUNTRIES = ' ng, sl ,NG ';
+      process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT = '2026-11-02';
+      const served = new AppConfigController().getAppConfig().usVisaSuspension;
+      expect(served.countries).toEqual([
+        { code: 'NG', nameFr: 'Nigeria', nameEn: 'Nigeria' },
+        { code: 'SL', nameFr: 'Sierra Leone', nameEn: 'Sierra Leone' },
+      ]);
+      expect(served.lastVerifiedAt).toBe('2026-11-02');
+    });
+
+    it('`none` retire l’avis ; une valeur illisible garde le défaut', () => {
+      process.env.KPB_US_VISA_SUSPENDED_COUNTRIES = 'none';
+      expect(new AppConfigController().getAppConfig().usVisaSuspension.countries).toEqual([]);
+      process.env.KPB_US_VISA_SUSPENDED_COUNTRIES = 'Burkina;Mali';
+      expect(
+        new AppConfigController().getAppConfig().usVisaSuspension.countries,
+      ).toHaveLength(13);
+    });
+
+    it('une liste personnalisée sans date ne prend pas la date du défaut', () => {
+      process.env.KPB_US_VISA_SUSPENDED_COUNTRIES = 'BF';
+      process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT = '2026-02-30';
+      expect(new AppConfigController().getAppConfig().usVisaSuspension.lastVerifiedAt).toBeNull();
+    });
+
+    it('n’ouvre qu’une source https', () => {
+      process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL = 'javascript:alert(1)';
+      expect(new AppConfigController().getAppConfig().usVisaSuspension.sourceUrl).toMatch(
+        /^https:\/\/travel\.state\.gov\//,
+      );
+      process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL = 'https://travel.state.gov/x.html';
+      expect(new AppConfigController().getAppConfig().usVisaSuspension.sourceUrl).toBe(
+        'https://travel.state.gov/x.html',
+      );
+    });
+  });
+
   describe('recommendedVersion', () => {
     it("est absente tant que l'exploitation n'en pose pas", () => {
       expect(

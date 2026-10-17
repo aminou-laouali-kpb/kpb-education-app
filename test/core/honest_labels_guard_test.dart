@@ -117,6 +117,35 @@ void main() {
       }
     });
 
+    test(
+        'avis « vue Partenaires » : ni chiffre ni garantie, mise en garde exigée',
+        () {
+      // Décision du propriétaire du 17/10/2026 : « 70 % » et « garanties
+      // d'admission » retirés au profit du contact direct avec l'université.
+      for (final lang in const ['fr', 'en']) {
+        final body = keys[lang]!['uni_partner_notice_body'];
+        expect(body, isNotNull, reason: '$lang : l\'avis a disparu');
+        expect(body, isNot(contains('%')));
+        expect(body!.toLowerCase(), isNot(contains('garanti')));
+        expect(body.toLowerCase(), isNot(contains('guarantee')));
+      }
+      // La mention obligatoire, au mot près en français.
+      expect(keys['fr']!['uni_partner_notice_caveat'],
+          'Attention : cela dépend de ton dossier.');
+      expect(keys['en']!['uni_partner_notice_caveat'],
+          contains('depends on your application'));
+      // Et l'écran ne peut pas afficher l'un sans l'autre : ils vivent dans le
+      // même paragraphe.
+      final source = _codeWithoutComments(
+          'lib/app/features/universities/widgets/partner_view_notice.dart');
+      final body = source.indexOf("'uni_partner_notice_body'.tr");
+      final caveat = source.indexOf("'uni_partner_notice_caveat'.tr");
+      expect(body, greaterThan(0));
+      expect(caveat, greaterThan(body));
+      expect(caveat - body, lessThan(400),
+          reason: 'La mise en garde doit suivre le texte, dans le même bloc.');
+    });
+
     test('la règle sait rougir (auto-test du motif)', () {
       expect(_chanceWord.hasMatch('En 1 minute, découvre tes chances'), isTrue);
       expect(_chanceWord.hasMatch('discover your chances'), isTrue);

@@ -449,18 +449,53 @@ class InstitutionModel {
 /// One campus on which a (multi-campus) formation is delivered, with its own
 /// price and intake. Used by OMNES formations, where the same programme runs on
 /// several campuses at different prices. Empty for single-campus programs.
+///
+/// A formation can have SEVERAL offerings on the same campus: the autumn intake
+/// and the « rentrée décalée » (January–March), each with its own price.
+/// [session] says which one (`fall` / `spring`); [rhythm] carries OMNES's
+/// « Rythme » column (`initiale` / `alternance`). Both are null on offerings
+/// written before they existed — the label then derives the session from the
+/// intake month (see `lib/app/core/utils/intake_label.dart`).
 class CampusOffering {
   const CampusOffering({
     required this.campus,
     this.tuitionUpfront,
     this.tuitionInstallments,
     this.intake,
+    this.session,
+    this.rhythm,
+    this.rolledFromIntake,
+    this.intakeEstimated = false,
   });
 
   final String campus;
   final num? tuitionUpfront;
   final num? tuitionInstallments;
   final String? intake;
+
+  /// `fall` | `spring`, or null when the source did not say.
+  final String? session;
+
+  /// `initiale` | `alternance`, or null when the source did not say.
+  final String? rhythm;
+
+  /// Rentrée d'origine d'une offre reconduite (« 01/10/2026 ») : la date
+  /// affichée en est la reconduction d'un an, non publiée par l'école
+  /// (backend/src/modules/catalog/omnes-fall-roll.ts).
+  final String? rolledFromIntake;
+
+  /// Date (et tarif) à confirmer par l'école.
+  final bool intakeEstimated;
+
+  /// L'offre annonce une rentrée que l'école n'a pas encore publiée.
+  bool get isIntakeEstimated => intakeEstimated || rolledFromIntake != null;
+
+  /// L'année de la rentrée d'origine (2026 pour « 14/09/2026 · 01/10/2026 »),
+  /// ou null.
+  int? get rolledFromYear {
+    final m = RegExp(r'(\d{4})').firstMatch(rolledFromIntake ?? '');
+    return m == null ? null : int.parse(m.group(1)!);
+  }
 
   /// Localized headline tuition for this campus, e.g. "12 690 €/an".
   String tuitionLabel(String localeCode) {
@@ -487,6 +522,10 @@ class CampusOffering {
         tuitionUpfront: json['tuitionUpfront'] as num?,
         tuitionInstallments: json['tuitionInstallments'] as num?,
         intake: json['intake'] as String?,
+        session: json['session'] as String?,
+        rhythm: json['rhythm'] as String?,
+        rolledFromIntake: json['rolledFromIntake'] as String?,
+        intakeEstimated: json['intakeEstimated'] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -494,6 +533,10 @@ class CampusOffering {
         'tuitionUpfront': tuitionUpfront,
         'tuitionInstallments': tuitionInstallments,
         'intake': intake,
+        if (session != null) 'session': session,
+        if (rhythm != null) 'rhythm': rhythm,
+        if (rolledFromIntake != null) 'rolledFromIntake': rolledFromIntake,
+        if (intakeEstimated) 'intakeEstimated': true,
       };
 }
 
@@ -510,6 +553,7 @@ class ProgramModel {
     required this.language,
     required this.requirements,
     this.campusOfferings = const [],
+    this.recognition,
     this.lastVerifiedAt,
     this.sourceUrl,
   });
@@ -528,6 +572,10 @@ class ProgramModel {
   /// Campuses on which this formation is available (multi-campus schools like
   /// OMNES). Empty for single-campus programs.
   final List<CampusOffering> campusOfferings;
+
+  /// Degree recognition as the school publishes it (« Titre RNCP », « Grade de
+  /// licence »…). Null when the catalog says nothing.
+  final LocalizedText? recognition;
   final DateTime? lastVerifiedAt;
   final String? sourceUrl;
 
@@ -576,6 +624,11 @@ class ProgramModel {
       return const [];
     }
 
+    LocalizedText? parseRecognition() {
+      final value = parseLoc('recognition');
+      return value.fr.isEmpty && value.en.isEmpty ? null : value;
+    }
+
     return ProgramModel(
       id: json['id'] as String? ?? '',
       institutionId: json['institutionId'] as String? ?? '',
@@ -588,6 +641,7 @@ class ProgramModel {
       language: parseLoc('language'),
       requirements: parseLocList('requirements'),
       campusOfferings: parseOfferings(),
+      recognition: parseRecognition(),
       lastVerifiedAt:
           DateTime.tryParse(json['lastVerifiedAt'] as String? ?? ''),
       sourceUrl: json['sourceUrl'] as String?,
@@ -607,6 +661,7 @@ class ProgramModel {
         'requirements': requirements.map((e) => e.toJson()).toList(),
         if (campusOfferings.isNotEmpty)
           'campusOfferings': campusOfferings.map((e) => e.toJson()).toList(),
+        if (recognition != null) 'recognition': recognition!.toJson(),
         'lastVerifiedAt': lastVerifiedAt?.toIso8601String(),
         'sourceUrl': sourceUrl,
       };

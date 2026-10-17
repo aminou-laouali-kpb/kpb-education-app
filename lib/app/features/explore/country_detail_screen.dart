@@ -17,6 +17,7 @@ import '../france/france_private_admission_screen.dart';
 import 'eligibility_quiz_screen.dart';
 import 'program_detail_screen.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/us_visa_notice.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §6/§10.2).
@@ -164,6 +165,13 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
 
     if (mvpNote.isNotEmpty) {
       children.add(_NoteBox(text: mvpNote));
+    }
+    if (isUnitedStatesCountryId(country.id)) {
+      children.add(UsVisaNotice(
+        countryOfResidence: _controller.profile?.countryOfResidence,
+        localeCode: locale,
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      ));
     }
     if (isFrance) {
       children.add(_FranceCard(

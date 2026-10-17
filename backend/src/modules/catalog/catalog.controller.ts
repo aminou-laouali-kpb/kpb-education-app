@@ -35,6 +35,7 @@ export class CatalogController {
     @Query('institutionId') institutionId?: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @Query('view') view?: string,
   ) {
     return this.catalogService.getPrograms({
       q: q?.trim() || undefined,
@@ -43,6 +44,8 @@ export class CatalogController {
       institutionId: institutionId?.trim() || undefined,
       limit: parseNonNegativeInt(limit),
       offset: parseNonNegativeInt(offset),
+      // Seule valeur reconnue ; toute autre garde la forme complète.
+      view: view?.trim() === 'compact' ? 'compact' : undefined,
     });
   }
 

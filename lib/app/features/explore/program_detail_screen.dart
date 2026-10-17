@@ -10,6 +10,7 @@ import '../../core/services/analytics_service.dart';
 import '../../core/services/share_card_service.dart';
 import '../../core/ui/components/log_once.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
+import '../../core/ui/components/program_intake_line.dart';
 import '../../core/ui/components/source_link.dart';
 import '../../core/ui/components/verified_badge.dart';
 import '../../core/utils/country_utils.dart';
@@ -21,7 +22,10 @@ import '../cases/case_tunnel_flow.dart';
 import '../search/match_explanation_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
+import '../../core/utils/intake_label.dart';
+import '../../core/utils/program_intakes.dart';
 import '../../core/ui/components/kpb_toast.dart';
+import '../../core/ui/components/us_visa_notice.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Palette (App-engagement handoff · Student App.dc.html · "Fiche université").
@@ -72,23 +76,52 @@ class ProgramDetailScreen extends StatelessWidget {
     final language = controller.resolve(program.language);
 
     // No dedicated "deadline" field exists on the catalog → surface the real
-    // intake instead (never fabricate a date).
-    final intake =
-        country != null ? controller.resolve(country.nextIntakeLabel) : '';
-    final intakeValue = intake.isNotEmpty
-        ? intake
-        : (institution != null && institution.intakePeriods.isNotEmpty
-            ? institution.intakePeriods.join(' · ')
-            : 'school_intake_on_request'.tr);
+    // intake instead (never fabricate a date). D'abord les rentrées À VENIR de
+    // la formation (ses offres, sinon celles de l'école, en toutes lettres) —
+    // même règle que les cartes (program_intakes.dart) : une date passée
+    // n'est jamais annoncée. Puis le libellé du pays, s'il n'est pas passé.
+    final intakeSummary = programIntakeSummary(
+      program,
+      institution: institution,
+    );
+    final countryIntake = country != null
+        ? upcomingIntakeText(controller.resolve(country.nextIntakeLabel))
+        : null;
+    final intakeValue = intakeSummary.count > 0
+        ? intakeSummary.longLabel(controller.localeCode)!
+        : intakeSummary.allPast
+            ? 'program_intakes_none_upcoming'.tr
+            : countryIntake ?? 'school_intake_on_request'.tr;
 
     final description =
         institution != null ? controller.resolve(institution.overview) : '';
+    // Une formation peut avoir deux offres sur le même campus (rentrée
+    // d'automne et rentrée décalée) : on compte les CAMPUS, et on range les
+    // offres par campus puis par date.
+    // Une offre dont la rentrée est passée n'est plus disponible : elle n'est
+    // pas listée (ni comptée dans « Disponible sur n campus »). Quand toutes
+    // le sont, la section le dit au lieu de les présenter comme ouvertes.
+    final allOfferings = sortedOfferings(program.campusOfferings);
+    final offerings =
+        allOfferings.where((o) => !offeringIsPast(o)).toList(growable: false);
+    final pastCampuses = offerings.isEmpty
+        ? allOfferings.map((o) => o.campus).toSet().join(', ')
+        : '';
+    final campusCount = distinctCampusCount(offerings);
+    final recognition = program.recognition != null
+        ? controller.resolve(program.recognition!)
+        : '';
     final fit = controller.programFit(program);
 
     final applicationSteps = [
       'program_step_eligibility_choice'.tr,
       'program_step_build_file'.tr,
-      'program_step_submission'.tr,
+      // Seule une école PARTENAIRE reçoit le dossier « de KPB » ; pour les
+      // autres (catalogue Amérique du Nord, catalogue général), l'élève
+      // candidate lui-même auprès de l'établissement.
+      (institution?.isPartner ?? false)
+          ? 'program_step_submission'.tr
+          : 'program_step_submission_direct'.tr,
       'program_step_admission_letter'.tr,
       'program_step_visa_departure'.tr,
     ];
@@ -148,6 +181,16 @@ class ProgramDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Visas étudiants américains suspendus pour certaines
+                  // nationalités (décision du 17/10/2026) : avis sobre, juste
+                  // sous les frais et la rentrée.
+                  if (isUnitedStatesCountryId(program.countryId))
+                    UsVisaNotice(
+                      countryOfResidence:
+                          controller.profile?.countryOfResidence,
+                      localeCode: controller.localeCode,
+                      margin: const EdgeInsets.only(top: 13),
+                    ),
                   if (description.isNotEmpty) ...[
                     const SizedBox(height: 13),
                     _Card(
@@ -177,25 +220,56 @@ class ProgramDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (program.campusOfferings.isNotEmpty) ...[
+                  if (recognition.isNotEmpty) ...[
                     const SizedBox(height: 13),
                     _Section(
-                      title: 'program_available_on_campuses'.trParams(
-                          {'count': '${program.campusOfferings.length}'}),
+                      title: 'program_recognition'.tr,
+                      icon: Icons.workspace_premium_outlined,
+                      child: Text(
+                        recognition,
+                        style: const TextStyle(
+                          fontSize: KpbFontSize.sm,
+                          height: 1.55,
+                          color: KpbColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (offerings.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: campusCount == 1
+                          ? 'program_available_on_one_campus'.tr
+                          : 'program_available_on_campuses'
+                              .trParams({'count': '$campusCount'}),
                       icon: Icons.location_city_outlined,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          for (var i = 0;
-                              i < program.campusOfferings.length;
-                              i++) ...[
+                          for (var i = 0; i < offerings.length; i++) ...[
                             if (i > 0) const Divider(height: 18),
                             _CampusOfferingRow(
-                              offering: program.campusOfferings[i],
+                              offering: offerings[i],
                               localeCode: controller.localeCode,
                             ),
                           ],
                         ],
+                      ),
+                    ),
+                  ],
+                  if (offerings.isEmpty && allOfferings.isNotEmpty) ...[
+                    const SizedBox(height: 13),
+                    _Section(
+                      title: 'program_intakes_none_upcoming'.tr,
+                      icon: Icons.event_busy_outlined,
+                      child: Text(
+                        'program_offerings_all_past'
+                            .trParams({'campuses': pastCampuses}),
+                        style: const TextStyle(
+                          fontSize: KpbFontSize.sm,
+                          height: 1.55,
+                          color: KpbColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -418,6 +492,15 @@ class _Header extends StatelessWidget {
                         fontSize: 11.5,
                         color: KpbColors.textFaint,
                       ),
+                    ),
+                    // Les rentrées disponibles de la formation, en résumé,
+                    // avant le détail par campus plus bas.
+                    const SizedBox(height: 6),
+                    ProgramIntakeLine(
+                      program: program,
+                      institution: institution,
+                      color: KpbColors.decorSky,
+                      localeCode: controller.localeCode,
                     ),
                   ],
                 ),
@@ -694,8 +777,15 @@ class _CampusOfferingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final intake = offering.intake;
-    return Row(
+    // « Rentrée décalée · mars 2027 · Alternance » : la rentrée en toutes
+    // lettres, puis le rythme quand la source le donne.
+    final details = [
+      offeringIntakeLabel(offering, localeCode),
+      offeringRhythmLabel(offering),
+    ].whereType<String>().join(' · ');
+    // Rentrée reconduite (automne 2026 → 2027) : date et tarif à confirmer.
+    final estimate = offeringEstimateNote(offering);
+    final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Icon(Icons.location_on_outlined,
@@ -713,25 +803,53 @@ class _CampusOfferingRow extends StatelessWidget {
                   color: KpbColors.brandNavy,
                 ),
               ),
-              if (intake != null && intake.isNotEmpty)
+              if (details.isNotEmpty)
                 Text(
-                  '${'intake_label'.tr} $intake',
+                  details,
                   style:
                       const TextStyle(fontSize: 11, color: KpbColors.textMuted),
+                ),
+              if (estimate != null)
+                Text(
+                  estimate,
+                  style: const TextStyle(
+                    fontSize: KpbFontSize.xs,
+                    fontStyle: FontStyle.italic,
+                    color: KpbColors.textMuted,
+                  ),
                 ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          offering.tuitionLabel(localeCode),
-          style: const TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            color: KpbColors.actionPrimary,
+        // Sans prix propre à l'offre (frais en USD / CAD, que `tuitionUpfront`
+        // — lu en euros — ne porte pas), rien : le prix de la formation est
+        // dans la tuile « Frais » en tête de fiche, pas « Sur demande ».
+        if (offering.tuitionUpfront != null) ...[
+          const SizedBox(width: 8),
+          Text(
+            offering.tuitionLabel(localeCode),
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w800,
+              color: KpbColors.actionPrimary,
+            ),
           ),
-        ),
+        ],
       ],
+    );
+    if (estimate == null) return row;
+    // TalkBack lit la mention en phrases, après le campus, la rentrée et le
+    // prix (« Date reconduite de la rentrée 2026, à confirmer par l'école.
+    // Tarif de l'année 2026-2027. »).
+    return Semantics(
+      container: true,
+      label: [
+        offering.campus,
+        if (details.isNotEmpty) details,
+        offering.tuitionLabel(localeCode),
+        offeringEstimateSemantics(offering),
+      ].whereType<String>().join(', '),
+      child: ExcludeSemantics(child: row),
     );
   }
 }
@@ -795,8 +913,12 @@ class _CounselorCta extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      // Hauteur MINIMALE et non fixe, libellé souple : à l'échelle de texte 1,5
+      // sur 360 pt, la hauteur fixe de 48 et le libellé rigide débordaient de
+      // 84 px (mesuré le 17/10/2026).
       child: Container(
-        height: 48,
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -808,12 +930,15 @@ class _CounselorCta extends StatelessWidget {
           children: [
             const Icon(Icons.chat_rounded, size: 17, color: KpbColors.whatsapp),
             const SizedBox(width: 8),
-            Text(
-              'ask_kpb_counselor'.tr,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: KpbColors.success,
+            Flexible(
+              child: Text(
+                'ask_kpb_counselor'.tr,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: KpbColors.success,
+                ),
               ),
             ),
           ],

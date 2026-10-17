@@ -4,6 +4,7 @@ import { loadEnvFile } from 'node:process';
 import { PrismaClient } from '@prisma/client';
 
 import {
+  countPartnerPrograms,
   evaluateCatalogConsistency,
   parseVerifyCatalogArgs,
   publicCatalogProgramWhere,
@@ -100,8 +101,9 @@ async function verifyCountryRefs() {
 /**
  * Catalogue consistency checks (logic and rationale in
  * src/modules/catalog/catalog-consistency-checks.ts): orphan Program.fieldId,
- * active partner institutions with no active program, and a public catalogue
- * larger than the 1000-program snapshot installed app builds load.
+ * active partner institutions with no active program, and partner programs
+ * that fall outside the 1000-program first page installed app builds load
+ * (recent builds page through the whole catalogue).
  *
  * They only WARN by default — deploy.yml and vps-ops.sh run without flags, and
  * a degraded catalogue must not block a release. `--strict` (Backend CI only)
@@ -125,6 +127,10 @@ async function verifyCatalogConsistency(strict: boolean) {
       prisma.program.count({ where: publicCatalogProgramWhere() }),
     ]);
 
+  const publicProgramsByInstitution = programsByInstitution.map((row) => ({
+    institutionId: row.institutionId,
+    count: row._count._all,
+  }));
   const findings = evaluateCatalogConsistency({
     fieldIds: fields.map((f) => f.id),
     programsByField: programsByField.map((row) => ({
@@ -133,13 +139,14 @@ async function verifyCatalogConsistency(strict: boolean) {
       count: row._count._all,
     })),
     partnerInstitutions,
-    publicProgramsByInstitution: programsByInstitution.map((row) => ({
-      institutionId: row.institutionId,
-      count: row._count._all,
-    })),
+    publicProgramsByInstitution,
     publicProgramCount,
   });
-  const report = renderCatalogConsistencyReport(findings, { strict, publicProgramCount });
+  const report = renderCatalogConsistencyReport(findings, {
+    strict,
+    publicProgramCount,
+    partnerProgramCount: countPartnerPrograms(partnerInstitutions, publicProgramsByInstitution),
+  });
   for (const line of report.lines) {
     // eslint-disable-next-line no-console
     (report.ok ? console.log : console.error)(line);

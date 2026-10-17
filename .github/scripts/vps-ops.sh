@@ -788,6 +788,145 @@ case "$ACTION" in
     fi
     ;;
 
+  import-omnes-spring)
+    # Ajoute la rentrée décalée OMNES (grille « SPRING 27 », janvier – mars
+    # 2027 : ECE, ESCE, INSEEC) depuis `backend/scripts/data/omnes_spring_27.csv`.
+    #
+    # ADDITIF : une formation déjà en base reçoit ses offres de printemps
+    # manquantes (campus + date, rythme, prix propre à l'offre) à la FIN de
+    # `campusOfferings` ; ses offres d'automne et le reste de sa fiche ne sont
+    # pas touchés. Une formation inconnue est créée aux conventions de
+    # `seed:omnes`. L'école reçoit ses nouvelles dates et formations (`push`).
+    #
+    # Chaque fiche n'est réécrite que si elle n'a pas bougé depuis la lecture
+    # (`WHERE updatedAt = …`) : une retouche faite dans l'admin pendant
+    # l'opération est gardée, et la relance la complète. Rejouer après
+    # application : « 0 écriture ».
+    #
+    # Garde de production : la première application passe (aucune offre de
+    # printemps en base) ; une relance qui aurait encore quelque chose à écrire
+    # est refusée sans KPB_ALLOW_PRODUCTION_SEED=1 — c'est voulu, on regarde
+    # d'abord pourquoi. Runbook : docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:omnes-spring
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:omnes-spring -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
+  roll-omnes-fall-2027)
+    # Reconduit d'un an les rentrées d'automne OMNES 2026 (décision du
+    # propriétaire du 16/10/2026) : « 01/10/2026 » → « 01/10/2027 »,
+    # « 14/09/2026 » → « 14/09/2027 », « 31/08/2026 » → « 31/08/2027 ». Campus
+    # et prix gardés (tarifs 2026-2027) ; chaque offre reconduite porte
+    # `rolledFromIntake` et `intakeEstimated: true`, que l'app affiche « Date
+    # reconduite de 2026, à confirmer ». Les offres de rentrée décalée
+    # (janvier – mars 2027) ne bougent pas. Les `intakePeriods` des écoles
+    # OMNES suivent (date 2026 remplacée à sa place par la date 2027).
+    #
+    # Seules les offres NON RETOUCHÉES (campus, dates, prix de la grille
+    # `backend/scripts/data/omnes_fall_26.xlsx`) sont reconduites ; une offre
+    # retouchée dans l'admin est signalée « ⚠ », jamais modifiée. Écriture sous
+    # `WHERE updatedAt = …`. Rejouable : « 0 écriture ». À passer APRÈS
+    # `dedupe-omnes` et `import-omnes-spring`. Garde de production : la
+    # première application passe ; une relance qui aurait encore quelque chose
+    # à écrire demande KPB_ALLOW_PRODUCTION_SEED=1. Runbook :
+    # docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run roll:omnes-fall-2027
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run roll:omnes-fall-2027 -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
+  dedupe-omnes)
+    # Fusionne les doublons OMNES déjà en base : la grille d'automne 2026
+    # écrivait parfois la même formation de deux façons (casse, accent, campus
+    # resté dans l'intitulé : « BCh- Rennes - B1 - Banque Assurance »), d'où
+    # deux fiches. Table EXPLICITE alias → fiche canonique :
+    # backend/src/modules/catalog/catalog-dedupe.ts (OMNES_PROGRAM_ID_ALIASES).
+    #
+    # La fiche canonique reçoit, à la FIN de `campusOfferings`, les offres de
+    # ses alias qu'elle n'a pas, et perd le campus resté collé dans son
+    # intitulé ; chaque alias passe hors ligne (`isActive = false`), rien n'est
+    # supprimé. Les ids d'automne ne bougent pas. Écriture sous
+    # `WHERE updatedAt = …` (retouche de l'admin gardée). Rejouable : « 0
+    # écriture ». À passer AVANT `import-omnes-spring`. Runbook :
+    # docs/runbook-rentrees-partenaires.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run dedupe:omnes
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run dedupe:omnes -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
+  import-igensia)
+    # Crée les écoles du groupe IGENSIA Education (IGENSIA School of Business,
+    # IGENSIA Tech, IGENSIA RH, American Business College) et leurs formations,
+    # depuis `backend/scripts/data/igensia_2027.csv` et `abc_2027.csv`.
+    #
+    # Même mécanique qu'`import-omnes-spring` : une école déjà en base n'est
+    # jamais réécrite (seules ses rentrées et formations manquantes sont
+    # ajoutées), une formation déjà en base ne reçoit que ses offres
+    # manquantes. Les faits relevés sur les sites officiels (fiche RNCP,
+    # langue, durée et admission d'ABC — backend/scripts/data/
+    # igensia_2027.sources.md) COMBLENT une colonne déjà en base seulement si
+    # elle est vide ou telle que la première version l'avait écrite. ESA Casablanca (`partner-esa-casa`) n'est pas touchée.
+    # Rejouable : « 0 écriture » une fois appliqué.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:igensia
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:igensia -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
+  import-north-america)
+    # Crée des universités NON partenaires (`isPartner: false`) du Canada et
+    # des États-Unis et leurs formations phares, depuis
+    # `backend/scripts/data/amerique-du-nord-2027.json` (provenance fait par
+    # fait : `amerique-du-nord-2027.sources.md` ; sélection et critères :
+    # docs/catalogue-amerique-du-nord.md).
+    #
+    # CRÉATION SEULE : une ligne déjà en base n'est jamais réécrite (seuls les
+    # ids des formations manquantes sont ajoutés à `programIds`), un homonyme
+    # déjà en base sous un autre id (Université d'Ottawa, `uottawa`) bloque la
+    # création. Rejouable : « 0 écriture » une fois appliqué. Seconde passe
+    # Canada (17/10/2026, 16 établissements) : si la première est déjà en base,
+    # la garde de production refuse l'application sans
+    # KPB_ALLOW_PRODUCTION_SEED=1 — procédure dans le runbook :
+    # docs/runbook-catalogue-amerique-du-nord.md.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:north-america
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:north-america -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   backfill-tuition-eur)
     # Renseigne `Program.tuitionMinEur` depuis le libellé `tuitionFr`.
     #

@@ -144,7 +144,19 @@ String studentLevelLabel(String? raw) {
 }
 
 /// A formation's awarded degree (axis 2).
-enum ProgramLevel { bac2, bachelor, bba, master, mba, doctorat, other }
+enum ProgramLevel {
+  bac2,
+  bachelor,
+  bba,
+  master,
+  mba,
+  doctorat,
+  // Collèges canadiens : diplôme / diplôme avancé de l'Ontario, DEC, CCNB…
+  college,
+  // Certificat postdiplôme de l'Ontario (après un premier diplôme).
+  gradCert,
+  other,
+}
 
 extension ProgramLevelX on ProgramLevel {
   String get labelFr {
@@ -161,6 +173,10 @@ extension ProgramLevelX on ProgramLevel {
         return 'MBA / DBA';
       case ProgramLevel.doctorat:
         return 'Doctorat';
+      case ProgramLevel.college:
+        return 'Diplôme collégial';
+      case ProgramLevel.gradCert:
+        return 'Graduate certificate';
       case ProgramLevel.other:
         return 'Autre';
     }
@@ -179,6 +195,9 @@ extension ProgramLevelX on ProgramLevel {
         return 'mba';
       case ProgramLevel.doctorat:
         return 'doctorate';
+      case ProgramLevel.college:
+      case ProgramLevel.gradCert:
+        return 'college';
       case ProgramLevel.other:
         return 'other';
     }
@@ -206,6 +225,18 @@ ProgramLevel normalizeProgramLevel(String? raw) {
     return ProgramLevel.doctorat;
   }
   if (s.contains('mba')) return ProgramLevel.mba;
+  // Avant « master » : un intitulé de collège ne contient aucun de ses jetons,
+  // mais « certificat postdiplôme » doit rester un certificat, pas un master.
+  if (s.contains('graduatecertificate') ||
+      s.contains('certificatpostdiplome')) {
+    return ProgramLevel.gradCert;
+  }
+  if (s.contains('diplomecollegial') ||
+      s.contains('advanceddiploma') ||
+      s.contains('ontariocollegediploma') ||
+      s.contains('collegediploma')) {
+    return ProgramLevel.college;
+  }
   if (s.contains('bac5') ||
       s.contains('bac+5') ||
       s.contains('master') ||

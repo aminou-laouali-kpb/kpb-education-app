@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/program_intakes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/program_filter_service.dart';
@@ -14,6 +15,8 @@ import '../../core/utils/tuition_utils.dart';
 import '../compare/institution_compare_screen.dart';
 import '../explore/country_detail_screen.dart';
 import '../explore/program_detail_screen.dart';
+import 'widgets/partner_view_notice.dart';
+import 'widgets/partner_view_notice_store.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §6/§10.2).
@@ -26,10 +29,18 @@ enum _QuickFilter { matches, france, canada, saved, budget }
 /// formations. Visual restyle to the App-engagement handoff; the GetX
 /// controller, catalog filtering and pagination are unchanged.
 class UniversitiesScreen extends StatefulWidget {
-  const UniversitiesScreen({super.key, this.initialFieldId});
+  const UniversitiesScreen({
+    super.key,
+    this.initialFieldId,
+    this.noticeStore = const SharedPreferencesPartnerViewNoticeStore(),
+  });
 
   /// Pre-filter from orientation or deep link.
   final String? initialFieldId;
+
+  /// La mémoire locale de l'avis « vue Partenaires » (voir
+  /// [PartnerNoticeStage]). Remplaçable par un test.
+  final PartnerViewNoticeStore noticeStore;
 
   @override
   State<UniversitiesScreen> createState() => _UniversitiesScreenState();
@@ -45,6 +56,8 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
   static const _pageSize = 25;
   int _visibleCount = _pageSize;
 
+  PartnerNoticeStage _noticeStage = PartnerNoticeStage.loading;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +66,25 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
       fieldId: widget.initialFieldId,
     );
     _scrollController.addListener(_onScroll);
+    _loadNoticeStage();
+  }
+
+  Future<void> _loadNoticeStage() async {
+    PartnerNoticeStage stage;
+    try {
+      stage = partnerNoticeStageFor(await widget.noticeStore.read());
+    } catch (_) {
+      // Stockage illisible : comme une première ouverture. L'avis ne bloque
+      // rien, le montrer une fois de trop ne coûte qu'un geste.
+      stage = PartnerNoticeStage.full;
+    }
+    if (!mounted || _noticeStage != PartnerNoticeStage.loading) return;
+    setState(() => _noticeStage = stage);
+  }
+
+  void _dismissNotice() {
+    setState(() => _noticeStage = PartnerNoticeStage.reminder);
+    widget.noticeStore.markDismissed().catchError((Object _) {});
   }
 
   @override
@@ -88,7 +120,16 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
   }
 
   void _setPartnerOnly(bool value) {
-    if (_filters.partnerOnly == value) return;
+    if (!value && _noticeStage != PartnerNoticeStage.hidden) {
+      // « Tous » ouvert une fois : l'élève sait que l'onglet existe, l'avis
+      // ne reviendra plus (voir [PartnerNoticeStage]).
+      _noticeStage = PartnerNoticeStage.hidden;
+      widget.noticeStore.markAllViewOpened().catchError((Object _) {});
+    }
+    if (_filters.partnerOnly == value) {
+      setState(() {});
+      return;
+    }
     setState(() {
       _filters = _filters.copyWith(partnerOnly: value);
       _quickFilter = _QuickFilter.matches;
@@ -161,13 +202,17 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
   Widget build(BuildContext context) {
     return GetBuilder<AppController>(
       builder: (controller) {
-        var programs = ProgramFilterService.apply(
+        // Un seul passage de filtre pour les DEUX vues : la vue « Tous » avec
+        // les filtres actifs, puis les partenaires qu'elle contient. Les deux
+        // compteurs du sélecteur en sortent sans second passage sur tout le
+        // catalogue (désormais sans plafond de taille).
+        var allPrograms = ProgramFilterService.apply(
           controller.programs,
-          _filters,
+          _filters.copyWith(partnerOnly: false),
           controller,
         );
         if (_quickFilter == _QuickFilter.saved) {
-          programs = programs
+          allPrograms = allPrograms
               .where(
                 (program) => controller.isSaved(
                   SavedItemType.program,
@@ -176,6 +221,16 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
               )
               .toList();
         }
+        final partnerPrograms = allPrograms
+            .where((program) =>
+                controller
+                    .institutionByIdOrNull(program.institutionId)
+                    ?.isPartner ??
+                false)
+            .toList();
+        final programs = _filters.partnerOnly
+            ? partnerPrograms
+            : List<ProgramModel>.of(allPrograms);
         programs.sort((left, right) {
           final matchOrder = controller
               .programMatch(right)
@@ -220,6 +275,10 @@ class _UniversitiesScreenState extends State<UniversitiesScreen> {
                               searchController: _searchController,
                               scrollController: _scrollController,
                               visibleCount: _visibleCount,
+                              partnerCount: partnerPrograms.length,
+                              allCount: allPrograms.length,
+                              noticeStage: _noticeStage,
+                              onDismissNotice: _dismissNotice,
                               onPartnerOnly: _setPartnerOnly,
                               onToggleExpanded: () => setState(
                                   () => _filtersExpanded = !_filtersExpanded),
@@ -353,6 +412,10 @@ class _Body extends StatelessWidget {
     required this.searchController,
     required this.scrollController,
     required this.visibleCount,
+    required this.partnerCount,
+    required this.allCount,
+    required this.noticeStage,
+    required this.onDismissNotice,
     required this.onPartnerOnly,
     required this.onToggleExpanded,
     required this.onQuickFilter,
@@ -363,6 +426,10 @@ class _Body extends StatelessWidget {
 
   final AppController controller;
   final List<ProgramModel> programs;
+  final int partnerCount;
+  final int allCount;
+  final PartnerNoticeStage noticeStage;
+  final VoidCallback onDismissNotice;
   final List<CountryModel> destinations;
   final ProgramFilterState filters;
   final _QuickFilter quickFilter;
@@ -382,9 +449,10 @@ class _Body extends StatelessWidget {
     final shown = programs.take(visibleCount).toList();
     final hasMore = programs.length > visibleCount;
 
-    // Header slots: [0] carousel, [1] filter block. Then rows (or an inline
-    // empty state) and an optional load-more footer.
-    const headerSlots = 2;
+    // Header slots: [0] carousel, [1] Partenaires | Tous + avis, [2] filter
+    // block. Then rows (or an inline empty state) and an optional load-more
+    // footer.
+    const headerSlots = 3;
     final bodyCount = shown.isEmpty ? 1 : shown.length + (hasMore ? 1 : 0);
 
     return ListView.builder(
@@ -398,6 +466,29 @@ class _Body extends StatelessWidget {
           return _DestinationCarousel(destinations: destinations);
         }
         if (index == 1) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                UniversityViewSwitcher(
+                  partnerOnly: filters.partnerOnly,
+                  partnerCount: partnerCount,
+                  allCount: allCount,
+                  onChanged: onPartnerOnly,
+                ),
+                PartnerViewNotice(
+                  stage: filters.partnerOnly
+                      ? noticeStage
+                      : PartnerNoticeStage.hidden,
+                  onShowAll: () => onPartnerOnly(false),
+                  onDismiss: onDismissNotice,
+                ),
+              ],
+            ),
+          );
+        }
+        if (index == 2) {
           return _FilterBlock(
             controller: controller,
             filters: filters,
@@ -405,7 +496,6 @@ class _Body extends StatelessWidget {
             expanded: filtersExpanded,
             searchController: searchController,
             resultCount: programs.length,
-            onPartnerOnly: onPartnerOnly,
             onToggleExpanded: onToggleExpanded,
             onQuickFilter: onQuickFilter,
             onQueryChanged: onQueryChanged,
@@ -458,6 +548,10 @@ class _Body extends StatelessWidget {
             subtitle: city.isNotEmpty ? '$level · $city' : level,
             feesLabel: tuition,
             feesEquivalent: tuitionEquivalent,
+            intake: ProgramIntakeLine(
+              program: program,
+              institution: institution,
+            ),
             fit: controller.programFit(program),
             saved: controller.isSaved(SavedItemType.program, program.id),
             onSave: () =>
@@ -514,7 +608,10 @@ class _DestinationCarousel extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(width: 10),
           itemBuilder: (context, index) {
             final country = destinations[index];
-            final intake = controller.resolve(country.nextIntakeLabel);
+            // Un libellé de rentrée PASSÉ n'est pas affiché.
+            final intake = upcomingIntakeText(
+                    controller.resolve(country.nextIntakeLabel)) ??
+                '';
             final tuition = controller.resolve(country.tuitionRange);
             final sub = intake.isNotEmpty ? intake : tuition;
             return _DestinationCard(
@@ -615,7 +712,7 @@ class _DestinationCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Filter block — search, Partners/All pills, an advanced-filter toggle and the
+// Filter block — search, an advanced-filter toggle and the
 // expandable advanced panel (country · budget · level · field · language).
 // ─────────────────────────────────────────────────────────────────────────────
 class _FilterBlock extends StatelessWidget {
@@ -626,7 +723,6 @@ class _FilterBlock extends StatelessWidget {
     required this.expanded,
     required this.searchController,
     required this.resultCount,
-    required this.onPartnerOnly,
     required this.onToggleExpanded,
     required this.onQuickFilter,
     required this.onQueryChanged,
@@ -640,7 +736,6 @@ class _FilterBlock extends StatelessWidget {
   final bool expanded;
   final TextEditingController searchController;
   final int resultCount;
-  final ValueChanged<bool> onPartnerOnly;
   final VoidCallback onToggleExpanded;
   final ValueChanged<_QuickFilter> onQuickFilter;
   final ValueChanged<String> onQueryChanged;
@@ -677,22 +772,8 @@ class _FilterBlock extends StatelessWidget {
               ),
               onChanged: onQueryChanged,
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _FilterPill(
-                  label: 'm6_tab_partners'.tr,
-                  selected: filters.partnerOnly,
-                  onTap: () => onPartnerOnly(true),
-                ),
-                const SizedBox(width: 8),
-                _FilterPill(
-                  label: 'm6_tab_all'.tr,
-                  selected: !filters.partnerOnly,
-                  onTap: () => onPartnerOnly(false),
-                ),
-              ],
-            ),
+            // « Partenaires | Tous » vit désormais au-dessus de la liste, toujours
+            // visible (UniversityViewSwitcher) : il n'est plus caché ici.
             const SizedBox(height: 12),
             _CountryFilter(
               countries: controller.countries,
@@ -902,6 +983,7 @@ class _SchoolRow extends StatelessWidget {
     required this.subtitle,
     required this.feesLabel,
     this.feesEquivalent,
+    this.intake,
     required this.fit,
     required this.saved,
     required this.onSave,
@@ -923,6 +1005,9 @@ class _SchoolRow extends StatelessWidget {
   /// ligne, ni même en deux, dans les ~200 pt de large de cette colonne. Coller
   /// les deux moitiés forçait un ellipsis qui mangeait justement le prix ajouté.
   final String? feesEquivalent;
+
+  /// La ligne des rentrées de la formation ([ProgramIntakeLine]), ou null.
+  final Widget? intake;
 
   /// Qualitative profile fit — null (no badge) without a student profile.
   final ProfileFit? fit;
@@ -978,6 +1063,10 @@ class _SchoolRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (intake != null) ...[
+                    const SizedBox(height: 3),
+                    intake!,
+                  ],
                   if (feesLabel.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
