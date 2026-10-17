@@ -39,8 +39,9 @@ export class PublicCampaignsController {
 type AuthedReq = Request & { studentUser?: { id: string } };
 
 /**
- * Position de l'élève connecté dans la campagne en cours. Préparé pour l'écran
- * classement in-app de la build 57 ; l'app installée ne l'appelle pas.
+ * Position de l'élève connecté dans la campagne en cours. Lue par l'écran
+ * « Compétition ambassadeurs » de la build 57 (2.3.1), derrière le drapeau
+ * `features.referralLeaderboard` ; l'app 2.3.0 ne l'appelle pas.
  */
 @Controller('referrals/campaigns')
 @UseGuards(StudentAuthGuard)

@@ -181,6 +181,33 @@ void main() {
     );
   });
 
+  // Parrainage côté app (build 57) : trois clés `features.*` indépendantes.
+  // Livrées éteintes : un défaut `true` dans compose lirait le referrer, ou
+  // ouvrirait l'étape d'onboarding et l'écran de la compétition, sur tout le
+  // parc 2.3.1 au premier redéploiement — avant la Data safety mise à jour.
+  test(
+      'les trois drapeaux du parrainage sont lus, relayés, documentés et '
+      'fermés', () {
+    final compose = File('docker-compose.yml').readAsStringSync();
+    final contracts = File('docs/api-contracts.md').readAsStringSync();
+    for (final (variable, key) in [
+      ('KPB_REFERRAL_INSTALL_REFERRER_ENABLED', 'referralInstallReferrer'),
+      ('KPB_REFERRAL_ONBOARDING_CODE_ENABLED', 'referralOnboardingCode'),
+      ('KPB_REFERRAL_LEADERBOARD_ENABLED', 'referralLeaderboard'),
+    ]) {
+      expect(read, contains(variable),
+          reason: '$controllerPath ne lit plus $variable.');
+      expect(relayed, contains(variable),
+          reason: '$variable n\'est pas relayée dans docker-compose.yml.');
+      expect(documented, contains(variable),
+          reason: '$variable n\'est pas documentée dans .env.example.');
+      expect(compose, contains('- $variable=\${$variable:-false}'),
+          reason: '$variable doit avoir `false` pour défaut dans compose.');
+      expect(contracts, contains('`features.$key`'),
+          reason: 'features.$key doit être documenté dans api-contracts.');
+    }
+  });
+
   // Bot « Vérif » (C3) : ni `/config/app` ni l'app ne le lisent — c'est un
   // réglage SERVEUR, lu par `community-verif-bot.config.ts`. Il passe quand
   // même par compose (sinon `auto` posé dans le `.env` du VPS n'entrerait

@@ -206,6 +206,13 @@ services:
       # /community/* (404 `{ disabled: true }` tant qu'il est coupé). FERMÉ par
       # défaut : à n'ouvrir qu'avec les déclarations stores mises à jour.
       - KPB_COMMUNITY_ENABLED=${KPB_COMMUNITY_ENABLED:-false}
+      # Parrainage côté app (build 57, compétition ambassadeurs) : trois clés
+      # `features.*` de /config/app, FERMÉES par défaut et indépendantes. Elles
+      # ne pilotent que l'app : Install Referrer (préremplissage du code),
+      # étape « code de ton parrain » de l'onboarding, écran « Compétition ».
+      - KPB_REFERRAL_INSTALL_REFERRER_ENABLED=${KPB_REFERRAL_INSTALL_REFERRER_ENABLED:-false}
+      - KPB_REFERRAL_ONBOARDING_CODE_ENABLED=${KPB_REFERRAL_ONBOARDING_CODE_ENABLED:-false}
+      - KPB_REFERRAL_LEADERBOARD_ENABLED=${KPB_REFERRAL_LEADERBOARD_ENABLED:-false}
       # Bot « Vérif » de la communauté (C3) : `review` (défaut) = le bot prépare,
       # un admin publie ; `auto` = publie seul les brouillons sûrs ; `off` = rien.
       # Voir docs/runbook-bot-verif.md. Reformulation LLM : fermée par défaut.

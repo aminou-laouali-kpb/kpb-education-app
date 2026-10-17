@@ -34,6 +34,12 @@ describe('AppConfigController', () => {
     KPB_ONBOARDING_V2_ENABLED: process.env.KPB_ONBOARDING_V2_ENABLED,
     KPB_COMMUNITY_ENABLED: process.env.KPB_COMMUNITY_ENABLED,
     KPB_ASSIST_BRIDGE_MODE: process.env.KPB_ASSIST_BRIDGE_MODE,
+    KPB_REFERRAL_INSTALL_REFERRER_ENABLED:
+      process.env.KPB_REFERRAL_INSTALL_REFERRER_ENABLED,
+    KPB_REFERRAL_ONBOARDING_CODE_ENABLED:
+      process.env.KPB_REFERRAL_ONBOARDING_CODE_ENABLED,
+    KPB_REFERRAL_LEADERBOARD_ENABLED:
+      process.env.KPB_REFERRAL_LEADERBOARD_ENABLED,
     KPB_US_VISA_SUSPENDED_COUNTRIES: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
     KPB_US_VISA_SUSPENSION_VERIFIED_AT:
       process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
@@ -100,6 +106,9 @@ describe('AppConfigController', () => {
       onboardingV2: false,
       community: false,
       assistBridge: false,
+      referralInstallReferrer: false,
+      referralOnboardingCode: false,
+      referralLeaderboard: false,
     });
     expect(config.eefCampaign).toEqual({
       opensAt: null,
@@ -810,6 +819,33 @@ describe('AppConfigController', () => {
       const opened = new AppConfigController().getAppConfig().features;
       expect(opened.assistBridge).toBe(true);
       expect({ ...opened, assistBridge: false }).toEqual(closed);
+    });
+  });
+
+  // Parrainage côté app (build 57) : trois interrupteurs FERMÉS par défaut et
+  // INDÉPENDANTS — ouvrir l'un n'en ouvre aucun autre.
+  describe.each([
+    ['referralInstallReferrer', 'KPB_REFERRAL_INSTALL_REFERRER_ENABLED'],
+    ['referralOnboardingCode', 'KPB_REFERRAL_ONBOARDING_CODE_ENABLED'],
+    ['referralLeaderboard', 'KPB_REFERRAL_LEADERBOARD_ENABLED'],
+  ] as const)('%s — fermé par défaut, indépendant', (key, envVar) => {
+    it('est fermé quand la variable est absente, vide ou mal tapée', () => {
+      for (const value of [undefined, '', 'false', '1', 'yes', 'on', 'ture']) {
+        if (value === undefined) delete process.env[envVar];
+        else process.env[envVar] = value;
+        const { features } = new AppConfigController().getAppConfig();
+        expect(Object.keys(features)).toContain(key);
+        expect(features[key]).toBe(false);
+      }
+    });
+
+    it('s’ouvre sur « true » (casse et espaces tolérés), sans rien ouvrir d’autre', () => {
+      delete process.env[envVar];
+      const closed = new AppConfigController().getAppConfig().features;
+      process.env[envVar] = ' TRUE ';
+      const opened = new AppConfigController().getAppConfig().features;
+      expect(opened[key]).toBe(true);
+      expect({ ...opened, [key]: false }).toEqual(closed);
     });
   });
 });

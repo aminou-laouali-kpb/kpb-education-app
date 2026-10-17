@@ -337,6 +337,62 @@ void main() {
     });
   });
 
+  // Parrainage côté app (build 57) : trois clés FERMÉES par défaut et
+  // INDÉPENDANTES — en ouvrir une n'en ouvre aucune autre.
+  group('parrainage — trois drapeaux fermés et indépendants', () {
+    final readers = <String, bool Function()>{
+      'referralInstallReferrer': () =>
+          RemoteFeatureFlags.instance.referralInstallReferrerEnabled,
+      'referralOnboardingCode': () =>
+          RemoteFeatureFlags.instance.referralOnboardingCodeEnabled,
+      'referralLeaderboard': () =>
+          RemoteFeatureFlags.instance.referralLeaderboardEnabled,
+    };
+
+    test('fermés avant toute lecture et serveur injoignable', () async {
+      for (final read in readers.values) {
+        expect(read(), isFalse);
+      }
+      when(api.getAppConfig).thenThrow(DioException(
+        requestOptions: RequestOptions(path: '/config/app'),
+        type: DioExceptionType.connectionError,
+      ));
+      await flags.refresh(api);
+      for (final read in readers.values) {
+        expect(read(), isFalse);
+      }
+    });
+
+    test('clé absente (ancien backend) ou non booléenne = fermé', () async {
+      when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+            'features': <String, dynamic>{
+              'community': true,
+              for (final key in readers.keys) key: 'true',
+            },
+          });
+      await flags.refresh(api);
+      for (final read in readers.values) {
+        expect(read(), isFalse);
+      }
+    });
+
+    for (final key in [
+      'referralInstallReferrer',
+      'referralOnboardingCode',
+      'referralLeaderboard',
+    ]) {
+      test('$key servi à vrai n\'ouvre que lui', () async {
+        when(api.getAppConfig).thenAnswer((_) async => <String, dynamic>{
+              'features': <String, dynamic>{key: true},
+            });
+        await flags.refresh(api);
+        for (final entry in readers.entries) {
+          expect(entry.value(), entry.key == key, reason: entry.key);
+        }
+      });
+    }
+  });
+
   group('la lecture de la charge', () {
     test('la valeur servie PRIME sur le repli de compilation', () async {
       AppConfig.eefTeaserEnabledOverride = true;
