@@ -101,6 +101,10 @@ enum CommunityEntityType {
 enum CommunityBadge {
   kpbTeam('kpb_team'),
   kpbAdvisor('kpb_advisor'),
+
+  /// « Assistant KPB » : réponse préparée par le bot Vérif depuis les données
+  /// vérifiées du catalogue (contrat, révision 2).
+  kpbAssistant('kpb_assistant'),
   verifiedAlumni('verified_alumni'),
   ambassador('ambassador');
 
@@ -116,8 +120,10 @@ enum CommunityBadge {
   }
 }
 
-/// Qui parle : un membre, l'équipe KPB, un conseiller KPB.
-enum CommunityAuthorKind { member, kpbTeam, kpbAdvisor }
+/// Qui parle : un membre, l'équipe KPB, un conseiller KPB, l'« Assistant KPB »
+/// (bot Vérif). Une valeur inconnue du serveur se lit `member` — sans
+/// `memberId`, elle n'ouvre ni profil, ni blocage, ni signalement de membre.
+enum CommunityAuthorKind { member, kpbTeam, kpbAdvisor, kpbAssistant }
 
 /// Les fils de l'accueil.
 enum CommunityFeedTab {
@@ -194,9 +200,14 @@ class CommunityAuthor {
   final String? countryName;
   final List<CommunityBadge> badges;
 
+  /// Contenu de KPB (équipe, conseiller, Assistant) : jamais bloqué.
   bool get isTeam =>
       kind == CommunityAuthorKind.kpbTeam ||
-      kind == CommunityAuthorKind.kpbAdvisor;
+      kind == CommunityAuthorKind.kpbAdvisor ||
+      kind == CommunityAuthorKind.kpbAssistant;
+
+  /// Réponse de l'« Assistant KPB » (bot Vérif).
+  bool get isAssistant => kind == CommunityAuthorKind.kpbAssistant;
 
   /// Les badges à afficher, dédoublonnés, dans l'ordre stable du contrat.
   List<CommunityBadge> get orderedBadges {
@@ -204,6 +215,9 @@ class CommunityAuthor {
     if (kind == CommunityAuthorKind.kpbTeam) set.add(CommunityBadge.kpbTeam);
     if (kind == CommunityAuthorKind.kpbAdvisor) {
       set.add(CommunityBadge.kpbAdvisor);
+    }
+    if (kind == CommunityAuthorKind.kpbAssistant) {
+      set.add(CommunityBadge.kpbAssistant);
     }
     return CommunityBadge.values.where(set.contains).toList(growable: false);
   }
@@ -227,6 +241,7 @@ class CommunityAuthor {
     final kind = switch (json['kind']) {
       'kpb_team' => CommunityAuthorKind.kpbTeam,
       'kpb_advisor' => CommunityAuthorKind.kpbAdvisor,
+      'kpb_assistant' => CommunityAuthorKind.kpbAssistant,
       _ => CommunityAuthorKind.member,
     };
     final badges = <CommunityBadge>[];
@@ -547,6 +562,22 @@ class CommunityPost {
   }
 }
 
+/// Réponse de l'« Assistant KPB » : la date de vérification des données
+/// citées (contrat, révision 2 — `Reply.assistant`).
+@immutable
+class CommunityAssistantInfo {
+  const CommunityAssistantInfo({this.sourceVerifiedAt});
+
+  final DateTime? sourceVerifiedAt;
+
+  static CommunityAssistantInfo? fromJson(Object? raw) {
+    final json = _map(raw);
+    if (json == null) return null;
+    return CommunityAssistantInfo(
+        sourceVerifiedAt: _date(json['sourceVerifiedAt']));
+  }
+}
+
 @immutable
 class CommunityReply {
   const CommunityReply({
@@ -563,6 +594,7 @@ class CommunityReply {
     this.verifiedAt,
     this.viewer = const CommunityViewer(),
     this.moderation,
+    this.assistant,
   });
 
   final String id;
@@ -579,6 +611,9 @@ class CommunityReply {
   final CommunityViewer viewer;
   final CommunityModeration? moderation;
 
+  /// Non nul pour une réponse de l'« Assistant KPB » (bot Vérif).
+  final CommunityAssistantInfo? assistant;
+
   CommunityReply copyWith({int? helpfulCount, CommunityViewer? viewer}) =>
       CommunityReply(
         id: id,
@@ -594,6 +629,7 @@ class CommunityReply {
         verifiedAt: verifiedAt,
         viewer: viewer ?? this.viewer,
         moderation: moderation,
+        assistant: assistant,
       );
 
   static CommunityReply? fromJson(Map<String, dynamic> json) {
@@ -621,6 +657,7 @@ class CommunityReply {
       verifiedAt: _date(json['verifiedAt']),
       viewer: CommunityViewer.fromJson(json['viewer']),
       moderation: CommunityModeration.fromJson(json['moderation']),
+      assistant: CommunityAssistantInfo.fromJson(json['assistant']),
     );
   }
 }

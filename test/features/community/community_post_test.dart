@@ -153,6 +153,104 @@ void main() {
     expect(find.byKey(const ValueKey('comm-menu-block')), findsNothing);
   });
 
+  // Bot « Vérif » (révision 2) : la réponse « Assistant KPB », son badge, la
+  // mention d'origine datée ; pas de profil ni de blocage ; un rôle inconnu
+  // d'une révision future ne casse rien.
+  testWidgets(
+      'réponse « Assistant KPB » : badge, mention datée, pas de blocage',
+      (tester) async {
+    useTallPhone(tester);
+    final api = FakeCommunityApi();
+    api.detail = <String, dynamic>{
+      'post': detailPostJson(),
+      'replies': {
+        'items': [
+          replyJson(id: 'cr_1'),
+          <String, dynamic>{
+            ...replyJson(
+              id: 'cr_bot',
+              text: 'Bonjour ! Voici ce que disent les données vérifiées.',
+              isVerified: true,
+              author: authorJson(
+                kind: 'kpb_assistant',
+                memberId: null,
+                displayName: 'Assistant KPB',
+                countryName: null,
+                badges: const ['kpb_assistant'],
+              ),
+            ),
+            'assistant': {'sourceVerifiedAt': '2026-10-01T00:00:00.000Z'},
+          },
+          <String, dynamic>{
+            ...replyJson(
+              id: 'cr_future',
+              text: 'Réponse d’un rôle futur.',
+              author: authorJson(
+                kind: 'kpb_robot',
+                memberId: null,
+                displayName: 'Robot KPB',
+                countryName: null,
+                badges: const ['kpb_robot'],
+              ),
+            ),
+            'assistant': 'illisible',
+          },
+        ],
+        'nextCursor': null,
+      },
+    };
+    await pumpCommunityApp(tester,
+        api: api, child: const CommunityPostScreen(postId: 'cp_1'));
+
+    final bot = find.byKey(const ValueKey('comm-reply-cr_bot'));
+    expect(bot, findsOneWidget);
+    // Vérifiée : épinglée en tête.
+    expect(
+        tester.getTopLeft(bot).dy,
+        lessThan(tester
+            .getTopLeft(find.byKey(const ValueKey('comm-reply-cr_1')))
+            .dy));
+    expect(find.descendant(of: bot, matching: find.text('Assistant KPB')),
+        findsNWidgets(2)); // nom + badge
+    expect(
+      find.descendant(
+          of: bot,
+          matching: find.text(
+              'Réponse préparée à partir des données vérifiées de KPB · vérifié le 01/10/2026')),
+      findsOneWidget,
+    );
+    expect(
+        find.descendant(
+            of: bot, matching: find.byIcon(Icons.fact_check_rounded)),
+        findsWidgets);
+
+    // Le menu : signaler la réponse, jamais « Bloquer » ; le nom n'ouvre rien.
+    await tester.tap(find.descendant(
+        of: bot, matching: find.byIcon(Icons.more_horiz_rounded)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('comm-menu-report')), findsOneWidget);
+    expect(find.byKey(const ValueKey('comm-menu-block')), findsNothing);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    // Rôle inconnu : lu comme un membre sans identifiant — rendu, sans badge
+    // inconnu, sans mention d'Assistant, sans blocage possible.
+    final future = find.byKey(const ValueKey('comm-reply-cr_future'));
+    await tester.ensureVisible(future);
+    expect(find.descendant(of: future, matching: find.text('Robot KPB')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: future,
+            matching: find.byKey(const ValueKey('comm-assistant-notice'))),
+        findsNothing);
+    await tester.tap(find.descendant(
+        of: future, matching: find.byIcon(Icons.more_horiz_rounded)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('comm-menu-block')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ma publication : modifier (dans les 15 min) et supprimer',
       (tester) async {
     final api = FakeCommunityApi();

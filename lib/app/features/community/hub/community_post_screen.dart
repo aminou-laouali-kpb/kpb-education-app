@@ -1188,6 +1188,11 @@ class _ReplyTile extends StatelessWidget {
               ),
             ],
           ),
+          if (reply.author.isAssistant || reply.assistant != null) ...[
+            const SizedBox(height: KpbSpacing.sm),
+            CommunityAssistantNotice(
+                sourceVerifiedAt: reply.assistant?.sourceVerifiedAt),
+          ],
           if (reply.moderation != null) ...[
             const SizedBox(height: KpbSpacing.sm),
             CommunityModerationNotice(moderation: reply.moderation!),
