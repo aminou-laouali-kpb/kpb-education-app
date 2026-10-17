@@ -181,6 +181,32 @@ void main() {
     );
   });
 
+  // Bot « Vérif » (C3) : ni `/config/app` ni l'app ne le lisent — c'est un
+  // réglage SERVEUR, lu par `community-verif-bot.config.ts`. Il passe quand
+  // même par compose (sinon `auto` posé dans le `.env` du VPS n'entrerait
+  // jamais dans le conteneur) avec le défaut décidé : `review` (validation
+  // humaine d'abord), et la reformulation LLM fermée.
+  test('le mode du bot Vérif est lu, relayé (défaut review) et documenté', () {
+    const configPath =
+        'backend/src/modules/community/community-verif-bot.config.ts';
+    final readByBot = _read(_envRead, configPath);
+    final compose = File('docker-compose.yml').readAsStringSync();
+    for (final (variable, fallback) in [
+      ('KPB_COMMUNITY_VERIF_BOT_MODE', 'review'),
+      ('KPB_COMMUNITY_VERIF_BOT_LLM', 'false'),
+    ]) {
+      expect(readByBot, contains(variable),
+          reason: '$configPath ne lit plus $variable.');
+      expect(compose, contains('- $variable=\${$variable:-$fallback}'),
+          reason: '$variable doit être relayée avec le défaut `$fallback`.');
+      expect(documented, contains(variable),
+          reason: '$variable n\'est pas documentée dans .env.example.');
+      expect(File('docs/api-contracts.md').readAsStringSync(),
+          contains('`$variable`'),
+          reason: '$variable doit être documentée dans api-contracts.');
+    }
+  });
+
   // Visas étudiants américains (décision du 17/10/2026) : la liste est
   // PILOTABLE sans build. Défauts VIDES dans compose — le serveur sert alors la
   // liste vérifiée et datée ; une liste écrite dans compose serait figée dans le

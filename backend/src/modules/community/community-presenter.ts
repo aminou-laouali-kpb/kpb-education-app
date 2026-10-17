@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client';
 
 import { publicNameFromFullName } from '../referrals/referral-code';
 import { COMMUNITY_EDIT_WINDOW_MS } from './community.constants';
+import { KPB_ASSISTANT_NAME } from './community-verif-bot.config';
 import type { ForYouReason } from './community-for-you';
 import {
   buildSegments,
@@ -29,11 +30,11 @@ export const REPLY_INCLUDE = {
 export type PostRow = Prisma.CommunityPostGetPayload<{ include: typeof POST_INCLUDE }>;
 export type ReplyRow = Prisma.CommunityReplyGetPayload<{ include: typeof REPLY_INCLUDE }>;
 
-export type Badge = 'kpb_team' | 'kpb_advisor' | 'verified_alumni' | 'ambassador';
-const BADGE_ORDER: readonly Badge[] = ['kpb_team', 'kpb_advisor', 'verified_alumni', 'ambassador'];
+export type Badge = 'kpb_team' | 'kpb_advisor' | 'kpb_assistant' | 'verified_alumni' | 'ambassador';
+const BADGE_ORDER: readonly Badge[] = ['kpb_team', 'kpb_advisor', 'kpb_assistant', 'verified_alumni', 'ambassador'];
 
 export interface AuthorJson {
-  kind: 'member' | 'kpb_team' | 'kpb_advisor';
+  kind: 'member' | 'kpb_team' | 'kpb_advisor' | 'kpb_assistant';
   memberId: string | null;
   displayName: string;
   countryName: string | null;
@@ -80,11 +81,21 @@ export function teamAuthor(kind: 'kpb_team' | 'kpb_advisor', adminName: string |
   };
 }
 
+/**
+ * « Assistant KPB » (bot Vérif, révision 2) : jamais de `memberId` — on ne le
+ * bloque pas, on ne le signale pas comme membre (ses réponses restent
+ * signalables comme contenu).
+ */
+export function assistantAuthor(): AuthorJson {
+  return { kind: 'kpb_assistant', memberId: null, displayName: KPB_ASSISTANT_NAME, countryName: null, badges: ['kpb_assistant'] };
+}
+
 /** Auteur d'un contenu, d'après sa ligne et la table des identités. */
 export function contentAuthor(
   row: { authorKind: string; authorMemberId: string | null; authorAdminName: string | null },
   identities: ReadonlyMap<string, MemberIdentity>,
 ): AuthorJson {
+  if (row.authorKind === 'kpb_assistant') return assistantAuthor();
   if (row.authorKind === 'kpb_team' || row.authorKind === 'kpb_advisor') {
     return teamAuthor(row.authorKind, row.authorAdminName);
   }
@@ -229,6 +240,13 @@ export function replyJson(row: ReplyRow, ctx: PresentContext) {
     helpfulCount: row.helpfulCount,
     isVerified: row.isVerified,
     verifiedAt: row.verifiedAt?.toISOString() ?? null,
+    // Révision 2 : réponse de l'« Assistant KPB » — date de vérification des
+    // données citées (mention « Réponse préparée à partir des données
+    // vérifiées de KPB »). `null` pour toute autre réponse.
+    assistant:
+      row.authorKind === 'kpb_assistant'
+        ? { sourceVerifiedAt: row.botSourceVerifiedAt?.toISOString() ?? null }
+        : null,
     viewer: {
       isAuthor: flags.isAuthor,
       hasMarkedHelpful: ctx.helpfulReplyIds.has(row.id),

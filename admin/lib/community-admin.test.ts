@@ -7,6 +7,12 @@ import { InternalRole } from './admin-capabilities';
 import {
   availableContentActions,
   BADGES,
+  BOT_LIST_STATUSES,
+  BOT_STATUSES,
+  botDraftActions,
+  isBotDraftStale,
+  safeSourceUrl,
+  validateBotText,
   buildSanctionPayload,
   COMMUNITY_TABS,
   communityAdminApi,
@@ -557,5 +563,108 @@ describe('appels du contrat', () => {
     mock = stub({});
     await communityAdminApi.member('cm/../x');
     expect(call(mock).path).toBe('/admin/community/members/cm%2F..%2Fx');
+  });
+});
+
+// ── Bot « Vérif » (révision 2) ──────────────────────────────────────────────
+
+describe('bot « Vérif »', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('onglet « Bot Vérif » : rôle R seulement, jamais le conseiller', () => {
+    expect(COMMUNITY_TABS).toContain('bot');
+    for (const role of [InternalRole.Moderator, InternalRole.ContentManager, InternalRole.Admin, InternalRole.SuperAdmin]) {
+      expect(visibleCommunityTabs(communityPermissions(role))).toContain('bot');
+    }
+    const counselor = visibleCommunityTabs(communityPermissions(InternalRole.Counselor));
+    expect(counselor).not.toContain('bot');
+    expect(resolveCommunityTab({ tab: 'bot', post: null, member: null }, counselor)).toBe('content');
+    expect(communityHref({ tab: 'bot' })).toBe('/community?tab=bot');
+  });
+
+  it('libellés : statuts, filtres, badge et codes d’erreur du bot dans les deux langues', () => {
+    for (const status of BOT_STATUSES) expectInBothLocales(`communityAdmin.bot.status.${status}`);
+    for (const status of BOT_LIST_STATUSES) if (status !== 'all') expectInBothLocales(`communityAdmin.bot.status.${status}`);
+    for (const mode of ['review', 'auto', 'off']) {
+      expectInBothLocales(`communityAdmin.bot.mode.${mode}`);
+      expectInBothLocales(`communityAdmin.bot.modeHint.${mode}`);
+    }
+    for (const reason of [
+      'not_question', 'no_intent', 'no_entity', 'ambiguous_entity', 'entity_not_public', 'team_post', 'error',
+      'post_not_visible', 'facts_changed',
+    ]) expectInBothLocales(`communityAdmin.bot.reason.${reason}`);
+    for (const intent of ['status', 'deadline', 'truth', 'scam', 'fees', 'partner', 'exists', 'documents', 'intake', 'visa']) {
+      expectInBothLocales(`communityAdmin.bot.intent.${intent}`);
+    }
+    for (const level of ['high', 'medium', 'low']) expectInBothLocales(`communityAdmin.bot.confidence.${level}`);
+    for (const type of ['scholarship', 'institution', 'program', 'country']) expectInBothLocales(`communityAdmin.bot.entity.${type}`);
+    expect(BADGES).toContain('kpb_assistant');
+    expect(enumMessageKey('badge', 'kpb_assistant')).toBe('communityAdmin.enum.badge.kpb_assistant');
+    expect(lookup(fr, 'communityAdmin.enum.badge.kpb_assistant')).toBe('Assistant KPB');
+    expect(KNOWN_ERROR_CODES).toContain('community_bot_draft_obsolete');
+    const info = readCommunityError({
+      status: 409,
+      body: JSON.stringify({ code: 'community_bot_draft_obsolete', details: { reason: 'facts_changed' } }),
+      message: 'x',
+    });
+    expect(communityErrorMessageKey(info)).toBe('communityAdmin.errors.community_bot_draft_obsolete');
+  });
+
+  it('obsolète : statut, ou contrôle en direct (publication masquée, faits changés)', () => {
+    expect(isBotDraftStale({ status: 'obsolete' })).toBe(true);
+    expect(isBotDraftStale({ status: 'proposed' }, { postVisible: true, factsChanged: false })).toBe(false);
+    expect(isBotDraftStale({ status: 'proposed' }, { postVisible: false, factsChanged: false })).toBe(true);
+    expect(isBotDraftStale({ status: 'proposed' }, { postVisible: true, factsChanged: true })).toBe(true);
+    expect(isBotDraftStale({ status: 'published' }, { postVisible: false, factsChanged: true })).toBe(false);
+  });
+
+  it('actions selon l’état : publier seulement un brouillon proposé et à jour', () => {
+    const fresh = { postVisible: true, factsChanged: false };
+    expect(botDraftActions({ status: 'proposed' }, fresh)).toEqual({ publish: true, reject: true, regenerate: true });
+    expect(botDraftActions({ status: 'proposed' }, { postVisible: true, factsChanged: true })).toEqual({ publish: false, reject: true, regenerate: true });
+    expect(botDraftActions({ status: 'obsolete' })).toEqual({ publish: false, reject: true, regenerate: true });
+    expect(botDraftActions({ status: 'published' })).toEqual({ publish: false, reject: false, regenerate: false });
+    expect(botDraftActions({ status: 'rejected' })).toEqual({ publish: false, reject: false, regenerate: true });
+    expect(botDraftActions({ status: 'statut_futur' })).toEqual({ publish: false, reject: false, regenerate: true });
+  });
+
+  it('texte : bornes d’une réponse ; sources : http(s) seulement', () => {
+    expect(validateBotText(' ')).toBe('bodyRequired');
+    expect(validateBotText('x'.repeat(3001))).toBe('bodyTooLong');
+    expect(validateBotText('Bonjour !')).toBeNull();
+    expect(safeSourceUrl('https://www.campusfrance.org/fr')).toBe('https://www.campusfrance.org/fr');
+    expect(safeSourceUrl('javascript:alert(1)')).toBeNull();
+    expect(safeSourceUrl('pas une url')).toBeNull();
+    expect(safeSourceUrl(null)).toBeNull();
+  });
+
+  it('appels : liste, détail, publier (texte modifié + vérifiée), rejeter, régénérer, statistiques', async () => {
+    const stubbed = (response: unknown = {}) => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, text: vi.fn().mockResolvedValue(JSON.stringify(response)) });
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    };
+    const call = (mock: ReturnType<typeof vi.fn>) => {
+      const [url, init] = mock.mock.calls[0] as [string, { method: string; body?: string }];
+      return { path: url.replace('http://127.0.0.1:4000/api', ''), method: init.method, body: init.body ? JSON.parse(init.body) : undefined };
+    };
+    let mock = stubbed({ items: [], nextCursor: null });
+    await communityAdminApi.botDrafts('proposed');
+    expect(call(mock)).toEqual({ path: '/admin/community/bot/drafts?status=proposed&limit=20', method: 'GET', body: undefined });
+    mock = stubbed({});
+    await communityAdminApi.botDraft('cbd/1');
+    expect(call(mock).path).toBe('/admin/community/bot/drafts/cbd%2F1');
+    mock = stubbed({});
+    await communityAdminApi.botPublish('cbd_1', { text: 'Texte relu', verified: true });
+    expect(call(mock)).toEqual({ path: '/admin/community/bot/drafts/cbd_1/publish', method: 'POST', body: { text: 'Texte relu', verified: true } });
+    mock = stubbed({});
+    await communityAdminApi.botReject('cbd_1', 'Hors sujet');
+    expect(call(mock)).toEqual({ path: '/admin/community/bot/drafts/cbd_1/reject', method: 'POST', body: { reason: 'Hors sujet' } });
+    mock = stubbed({});
+    await communityAdminApi.botRegenerate('cbd_1');
+    expect(call(mock)).toMatchObject({ path: '/admin/community/bot/drafts/cbd_1/regenerate', method: 'POST' });
+    mock = stubbed({});
+    await communityAdminApi.botStats(7);
+    expect(call(mock).path).toBe('/admin/community/bot/stats?days=7');
   });
 });

@@ -18,7 +18,7 @@ import { AdminCapability, hasAdminCapability } from './admin-capabilities';
 
 export type PostType = 'question' | 'experience' | 'advice';
 export type ContentStatus = 'visible' | 'pending_review' | 'hidden' | 'deleted';
-export type AuthorKind = 'member' | 'kpb_team' | 'kpb_advisor';
+export type AuthorKind = 'member' | 'kpb_team' | 'kpb_advisor' | 'kpb_assistant';
 export type MentionType = 'scholarship' | 'country' | 'institution' | 'program';
 export type ReportReason =
   | 'scam'
@@ -352,7 +352,7 @@ export const LOG_ACTIONS = [
   'member_reports_dismissed',
 ] as const;
 
-export const BADGES = ['kpb_team', 'kpb_advisor', 'verified_alumni', 'ambassador'] as const;
+export const BADGES = ['kpb_team', 'kpb_advisor', 'kpb_assistant', 'verified_alumni', 'ambassador'] as const;
 
 export const STATUS_VARIANT: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info'> = {
   visible: 'success',
@@ -710,6 +710,9 @@ export const KNOWN_ERROR_CODES = [
   'community_too_many_mentions',
   'community_too_many_hashtags',
   'community_invalid_cursor',
+  // Révision 2 (bot Vérif, §8.9).
+  'community_bot_draft_not_found',
+  'community_bot_draft_obsolete',
 ] as const;
 
 /**
@@ -767,6 +770,7 @@ export const COMMUNITY_TABS = [
   'members',
   'settings',
   'log',
+  'bot',
   'taxonomy',
 ] as const;
 export type CommunityTab = (typeof COMMUNITY_TABS)[number];
@@ -850,7 +854,149 @@ export const communityAdminApi = {
       method: 'POST',
       body: { text },
     }),
+  // Bot « Vérif » (révision 2, §8.9).
+  botDrafts: (status: BotDraftListStatus, cursor?: string | null, limit = 20) =>
+    apiFetch<BotDraftPage>(`${BASE}/bot/drafts${query({ status, cursor, limit })}`),
+  botDraft: (id: string) => apiFetch<BotDraftDetail>(`${BASE}/bot/drafts/${encodeURIComponent(id)}`),
+  botPublish: (id: string, body: { text?: string; verified?: boolean }) =>
+    apiFetch<{ draft: BotDraft; reply: AdminReply }>(`${BASE}/bot/drafts/${encodeURIComponent(id)}/publish`, {
+      method: 'POST',
+      body,
+    }),
+  botReject: (id: string, reason: string) =>
+    apiFetch<BotDraft>(`${BASE}/bot/drafts/${encodeURIComponent(id)}/reject`, { method: 'POST', body: { reason } }),
+  botRegenerate: (id: string) =>
+    apiFetch<BotDraft>(`${BASE}/bot/drafts/${encodeURIComponent(id)}/regenerate`, { method: 'POST' }),
+  botStats: (days = 30) => apiFetch<BotStats>(`${BASE}/bot/stats${query({ days })}`),
 };
+
+// ── Bot « Vérif » (révision 2, §8.9 et §14) ────────────────────────────────
+
+export type BotMode = 'review' | 'auto' | 'off';
+export type BotDraftStatus = 'queued' | 'skipped' | 'proposed' | 'published' | 'rejected' | 'obsolete';
+export type BotDraftListStatus = BotDraftStatus | 'all';
+
+export const BOT_LIST_STATUSES: readonly BotDraftListStatus[] = [
+  'proposed',
+  'obsolete',
+  'published',
+  'rejected',
+  'skipped',
+  'all',
+];
+
+/** Statuts connus (clé `communityAdmin.bot.status.*`) ; inconnu : affiché brut. */
+export const BOT_STATUSES: readonly BotDraftStatus[] = ['queued', 'skipped', 'proposed', 'published', 'rejected', 'obsolete'];
+
+export const BOT_STATUS_VARIANT: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info'> = {
+  queued: 'neutral',
+  skipped: 'neutral',
+  proposed: 'info',
+  published: 'success',
+  rejected: 'danger',
+  obsolete: 'warning',
+};
+
+export interface BotSource {
+  type: MentionType | string;
+  id: string;
+  label: string;
+  url: string | null;
+  verifiedAt: string | null;
+  stale: boolean;
+}
+
+export interface BotDraft {
+  id: string;
+  postId: string;
+  status: BotDraftStatus | string;
+  statusReason: string | null;
+  lang: 'fr' | 'en' | string;
+  intents: string[];
+  entities: Array<{ type: string; id: string; label: string; resolvedBy: 'mention' | 'name' | string }>;
+  facts: Record<string, unknown> | null;
+  sources: BotSource[];
+  factsHash: string | null;
+  proposedText: string | null;
+  writer: 'template' | 'llm' | string | null;
+  llmFallbackReason: string | null;
+  confidence: 'high' | 'medium' | 'low' | string | null;
+  complete: boolean;
+  scamCaution: boolean;
+  createdAt: string;
+  generatedAt: string | null;
+  processedAt: string | null;
+  processedBy: { adminId: string; name: string } | null;
+  rejectReason: string | null;
+  publishedReplyId: string | null;
+  publishedVerified: boolean;
+  autoPublished: boolean;
+  post?: { id: string; title: string; type: string; status: string; createdAt: string } | null;
+}
+
+export interface BotDraftPage {
+  mode?: BotMode | string;
+  items: BotDraft[];
+  nextCursor: string | null;
+}
+
+export interface BotDraftDetail {
+  mode?: BotMode | string;
+  draft: BotDraft;
+  post: AdminPost;
+  live: { postVisible: boolean; factsChanged: boolean };
+}
+
+export interface BotStats {
+  mode: BotMode | string;
+  llmEnabled: boolean;
+  window: { from: string; to: string; days: number };
+  current: Partial<Record<BotDraftStatus, number>>;
+  created: Partial<Record<BotDraftStatus, number>>;
+  autoPublished: number;
+  publishedVerified: number;
+  llmWritten: number;
+  medianHandlingHours: number | null;
+}
+
+/**
+ * Le brouillon est-il dépassé ? Statut `obsolete`, ou contrôle en direct du
+ * détail (publication plus visible, faits changés depuis la rédaction).
+ */
+export function isBotDraftStale(draft: Pick<BotDraft, 'status'>, live?: BotDraftDetail['live'] | null): boolean {
+  if (draft.status === 'obsolete') return true;
+  if (!live || draft.status !== 'proposed') return false;
+  return !live.postVisible || live.factsChanged;
+}
+
+/** Boutons possibles selon l'état (le serveur reste juge). */
+export function botDraftActions(
+  draft: Pick<BotDraft, 'status'>,
+  live?: BotDraftDetail['live'] | null,
+): { publish: boolean; reject: boolean; regenerate: boolean } {
+  const stale = isBotDraftStale(draft, live);
+  return {
+    publish: draft.status === 'proposed' && !stale,
+    reject: draft.status === 'proposed' || draft.status === 'obsolete',
+    regenerate: draft.status !== 'published' && draft.status !== 'queued',
+  };
+}
+
+/** Texte publié : mêmes bornes qu'une réponse (§4.2). */
+export function validateBotText(text: string): 'bodyRequired' | 'bodyTooLong' | null {
+  return validateTeamReply(text);
+}
+
+/** Lien officiel cliquable : http(s) seulement (sources du catalogue). */
+export function safeSourceUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
 
 // ── Saisie : réglages et contenus de l'équipe ──────────────────────────────
 

@@ -38,6 +38,11 @@ import { CommunityNotificationsService } from './modules/community/community-not
 import { CommunityPostsService } from './modules/community/community-posts.service';
 import { CommunityPurgeCronService } from './modules/community/community-purge-cron.service';
 import { CommunityStudentController } from './modules/community/community-student.controller';
+import { CommunityVerifBotCatalogService } from './modules/community/community-verif-bot-catalog.service';
+import { CommunityVerifBotController } from './modules/community/community-verif-bot.controller';
+import { CommunityVerifBotCronService } from './modules/community/community-verif-bot-cron.service';
+import { CommunityVerifBotQueueService } from './modules/community/community-verif-bot-queue.service';
+import { CommunityVerifBotService } from './modules/community/community-verif-bot.service';
 import { CommunityEnabledGuard } from './modules/community/community.feature';
 import { ContentController } from './modules/content/content.controller';
 import { ContentService } from './modules/content/content.service';
@@ -239,6 +244,8 @@ import { SalonService } from './modules/salon/salon.service';
     // historiques de taxonomie de CommunityController.
     CommunityStudentController,
     CommunityAdminController,
+    // Bot « Vérif » (C3) : file des brouillons /admin/community/bot/*.
+    CommunityVerifBotController,
     ContentController,
     ParcoursController,
     DeviceTokensController,
@@ -338,6 +345,10 @@ import { SalonService } from './modules/salon/salon.service';
     CommunityNotificationsService,
     CommunityPostsService,
     CommunityPurgeCronService,
+    CommunityVerifBotQueueService,
+    CommunityVerifBotCatalogService,
+    CommunityVerifBotService,
+    CommunityVerifBotCronService,
     CommunityEnabledGuard,
     ContentService,
     ParcoursService,

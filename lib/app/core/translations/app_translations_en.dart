@@ -3636,6 +3636,10 @@ const Map<String, String> appTranslationsEn = {
   'comm_badge_advisor': 'KPB Advisor',
   'comm_badge_alumni': 'Verified alumni',
   'comm_badge_ambassador': 'Ambassador',
+  'comm_badge_assistant': 'KPB Assistant',
+  'comm_assistant_notice': "Answer prepared from KPB's verified data",
+  'comm_assistant_notice_dated':
+      "Answer prepared from KPB's verified data · checked on @date",
   'comm_verified_answer': 'Verified answer',
   'comm_verified_answer_long': 'Answer verified by KPB',
   'comm_pinned': 'Pinned',

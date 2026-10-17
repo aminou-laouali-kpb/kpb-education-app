@@ -29,6 +29,51 @@ void main() {
     expect(team.orderedBadges, [CommunityBadge.kpbTeam]);
   });
 
+  test('Assistant KPB (révision 2) : rôle, badge, date de vérification', () {
+    final assistant = CommunityAuthor.fromJson(<String, dynamic>{
+      'kind': 'kpb_assistant',
+      'memberId': null,
+      'displayName': 'Assistant KPB',
+      'badges': ['kpb_assistant'],
+    });
+    expect(assistant.kind, CommunityAuthorKind.kpbAssistant);
+    expect(assistant.isAssistant, isTrue);
+    expect(assistant.isTeam, isTrue);
+    expect(assistant.orderedBadges, [CommunityBadge.kpbAssistant]);
+
+    final reply = CommunityReply.fromJson(<String, dynamic>{
+      'id': 'cr_1',
+      'postId': 'cp_1',
+      'body': 'Texte',
+      'author': {'kind': 'kpb_assistant', 'displayName': 'Assistant KPB'},
+      'assistant': {'sourceVerifiedAt': '2026-10-01T00:00:00.000Z'},
+    })!;
+    expect(reply.author.orderedBadges, [CommunityBadge.kpbAssistant]);
+    expect(reply.assistant?.sourceVerifiedAt, DateTime.utc(2026, 10, 1));
+    expect(reply.copyWith(helpfulCount: 2).assistant, isNotNull);
+
+    // Serveur plus ancien ou réponse ordinaire : pas de mention.
+    final plain = CommunityReply.fromJson(<String, dynamic>{
+      'id': 'cr_2',
+      'author': {'kind': 'member', 'memberId': 'cm_1', 'displayName': 'A. B.'},
+      'assistant': null,
+    })!;
+    expect(plain.assistant, isNull);
+
+    // Rôle inconnu d'une révision future : un membre sans identifiant, badge
+    // inconnu ignoré — ni profil, ni blocage possibles (memberId nul).
+    final future = CommunityAuthor.fromJson(<String, dynamic>{
+      'kind': 'kpb_robot',
+      'memberId': null,
+      'displayName': 'Robot KPB',
+      'badges': ['kpb_robot'],
+    });
+    expect(future.kind, CommunityAuthorKind.member);
+    expect(future.memberId, isNull);
+    expect(future.orderedBadges, isEmpty);
+    expect(future.isAssistant, isFalse);
+  });
+
   test('PostSummary : champs du contrat, `forYouReasons`, type inconnu', () {
     final post = CommunityPost.fromJson(<String, dynamic>{
       'id': 'cp_1',

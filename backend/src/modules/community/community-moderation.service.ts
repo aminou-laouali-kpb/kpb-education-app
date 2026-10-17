@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   Prisma,
   type CommunityContentStatus,
@@ -34,6 +34,7 @@ import { CommunityErrors } from './community-errors';
 import { CommunityFilterConfigService } from './community-filter-config.service';
 import { CommunityNotificationsService, type ModerationEvent } from './community-notifications.service';
 import { CommunityPostsService } from './community-posts.service';
+import { CommunityVerifBotQueueService } from './community-verif-bot-queue.service';
 import {
   KPB_TEAM_NAME,
   POST_INCLUDE,
@@ -113,6 +114,8 @@ export class CommunityModerationService {
     private readonly filterConfig: CommunityFilterConfigService,
     private readonly notifications: CommunityNotificationsService,
     private readonly posts: CommunityPostsService,
+    // Bot « Vérif » (C3) : une publication rétablie repasse par la file.
+    @Optional() private readonly verifBotQueue?: CommunityVerifBotQueueService,
   ) {}
 
   // ── Signaler (élève, §7.10) ───────────────────────────────────────────────
@@ -865,6 +868,9 @@ export class CommunityModerationService {
       }),
     );
 
+    if (targetType === 'post' && next?.status === 'visible') {
+      await this.verifBotQueue?.enqueue(id, { reset: true });
+    }
     if (event && input.notifyAuthor !== false && current.authorMemberId) {
       await this.notifications.moderation({
         memberId: current.authorMemberId,
@@ -879,7 +885,8 @@ export class CommunityModerationService {
     return this.adminContent(targetType, id, lang, now, actor.role);
   }
 
-  private async adminContent(targetType: 'post' | 'reply', id: string, lang: Lang, now: Date, role: string) {
+  /** Un contenu sous sa forme admin (§8.1) — aussi utilisé par le bot Vérif. */
+  async adminContent(targetType: 'post' | 'reply', id: string, lang: Lang, now: Date, role: string) {
     if (targetType === 'post') {
       const row = await runDb(this.prisma, (db) =>
         db.communityPost.findUniqueOrThrow({ where: { id }, include: POST_INCLUDE }),

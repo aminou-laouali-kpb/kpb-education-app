@@ -419,6 +419,18 @@ const DOORS: Readonly<Record<string, Door>> = {
     },
     accesses: 6,
   },
+  'modules/community/community-verif-bot-catalog.service.ts': {
+    reason:
+      'Le bot « Vérif » (C3) : retrouver une école citée en toutes lettres et '
+      + 'lire les faits publiés (partenaire, rentrées, frais) d’une école ou '
+      + 'd’une formation. Mêmes portes que les mentions : jamais une ligne de '
+      + 'l’import en attente, la réponse renvoie vers une fiche que l’élève voit.',
+    scoped: {
+      loadIndex: ['notPendingEefInstitution'],
+      loadFacts: ['notPendingEefInstitution', 'notPendingEefProgram'],
+    },
+    accesses: 3,
+  },
   'modules/competition-readiness/admin/admin-partnerships.service.ts': {
     reason:
       'Lecture par identifiant d’un établissement, par un administrateur qui gère '

@@ -37,6 +37,7 @@ Color communityPostTypeColor(CommunityPostType type) => switch (type) {
 String communityBadgeLabel(CommunityBadge badge) => switch (badge) {
       CommunityBadge.kpbTeam => 'comm_badge_team'.tr,
       CommunityBadge.kpbAdvisor => 'comm_badge_advisor'.tr,
+      CommunityBadge.kpbAssistant => 'comm_badge_assistant'.tr,
       CommunityBadge.verifiedAlumni => 'comm_badge_alumni'.tr,
       CommunityBadge.ambassador => 'comm_badge_ambassador'.tr,
     };
@@ -44,6 +45,7 @@ String communityBadgeLabel(CommunityBadge badge) => switch (badge) {
 IconData communityBadgeIcon(CommunityBadge badge) => switch (badge) {
       CommunityBadge.kpbTeam => Icons.shield_rounded,
       CommunityBadge.kpbAdvisor => Icons.verified_rounded,
+      CommunityBadge.kpbAssistant => Icons.fact_check_rounded,
       CommunityBadge.verifiedAlumni => Icons.school_rounded,
       CommunityBadge.ambassador => Icons.star_rounded,
     };
@@ -51,6 +53,7 @@ IconData communityBadgeIcon(CommunityBadge badge) => switch (badge) {
 Color communityBadgeColor(CommunityBadge badge) => switch (badge) {
       CommunityBadge.kpbTeam => KpbColors.brandNavy,
       CommunityBadge.kpbAdvisor => KpbColors.actionPrimary,
+      CommunityBadge.kpbAssistant => KpbColors.brandNavy,
       CommunityBadge.verifiedAlumni => KpbColors.success,
       CommunityBadge.ambassador => KpbColors.warning,
     };

@@ -98,6 +98,15 @@ export const CommunityErrors = {
       code: 'community_pin_limit',
       details: { max },
     }),
+  botDraftNotFound: () =>
+    new NotFoundException({ message: 'Draft not found.', code: 'community_bot_draft_not_found' }),
+  /** Révision 2 (bot Vérif) : publication plus visible, ou faits changés depuis le brouillon. */
+  botDraftObsolete: (reason: string) =>
+    new ConflictException({
+      message: 'This draft is out of date. Regenerate it.',
+      code: 'community_bot_draft_obsolete',
+      details: { reason },
+    }),
   invalidTransition: (status: string) =>
     new ConflictException({
       message: 'This action is not possible in the current state.',

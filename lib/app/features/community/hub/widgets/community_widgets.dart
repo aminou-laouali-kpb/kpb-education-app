@@ -37,8 +37,12 @@ class CommunityAvatar extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: team
-            ? Icon(Icons.shield_rounded,
-                size: size * 0.5, color: KpbColors.textOnDark)
+            ? Icon(
+                author.isAssistant
+                    ? Icons.fact_check_rounded
+                    : Icons.shield_rounded,
+                size: size * 0.5,
+                color: KpbColors.textOnDark)
             : Text(
                 author.initials,
                 maxLines: 1,
@@ -83,6 +87,54 @@ class CommunityRoleBadge extends StatelessWidget {
                 fontSize: KpbFontSize.xs,
                 fontWeight: FontWeight.w700,
                 color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// La mention sous une réponse de l'« Assistant KPB » (bot Vérif) : d'où
+/// vient la réponse et quand les données citées ont été vérifiées. La date est
+/// un JOUR du catalogue (minuit UTC) : lue en UTC, jamais décalée la veille.
+class CommunityAssistantNotice extends StatelessWidget {
+  const CommunityAssistantNotice({super.key, this.sourceVerifiedAt});
+
+  final DateTime? sourceVerifiedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final at = sourceVerifiedAt?.toUtc();
+    final text = at == null
+        ? 'comm_assistant_notice'.tr
+        : 'comm_assistant_notice_dated'.trParams({
+            'date': '${at.day.toString().padLeft(2, '0')}/'
+                '${at.month.toString().padLeft(2, '0')}/${at.year}',
+          });
+    return Container(
+      key: const ValueKey<String>('comm-assistant-notice'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: KpbColors.brandNavy.withValues(alpha: 0.06),
+        borderRadius: KpbRadius.smBr,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const ExcludeSemantics(
+            child: Icon(Icons.fact_check_rounded,
+                size: 14, color: KpbColors.brandNavy),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: KpbFontSize.xs,
+                height: 1.35,
+                color: KpbColors.textSecondary,
               ),
             ),
           ),
