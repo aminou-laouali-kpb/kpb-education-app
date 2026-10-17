@@ -520,6 +520,9 @@ model UserProfile {
   // Cascade : supprimer le compte efface tout ce que le membre a écrit (§12 du
   // contrat docs/community-api-contract.md).
   communityMember               CommunityMember?
+  // Bot « Passerelle » (C3 bis) : besoins repérés et suggestions envoyées.
+  // Cascade avec le compte ; purge à 12 mois (docs/runbook-bot-passerelle.md).
+  assistBridgeEvents            AssistBridgeEvent[]
 
   @@index([accountType])
   @@index([createdAt])
@@ -3856,4 +3859,75 @@ model CommunityBotDraft {
   post               CommunityPost           @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bot « Passerelle » (chantier C3 bis) — contrat : docs/community-api-contract.md
+// §15 (révision 3), runbook : docs/runbook-bot-passerelle.md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// D'où vient le texte où le besoin a été repéré. Toujours un texte écrit par
+// l'élève lui-même.
+enum AssistBridgeSource {
+  community_post
+  community_reply
+  // Message de l'élève au coach IA : source PRIVÉE, fermée par défaut
+  // (KPB_ASSIST_BRIDGE_COACH). Le texte n'est jamais recopié ici.
+  coach_message
+}
+
+enum AssistBridgeStatus {
+  // Besoin repéré, traitement (garde-fous, envoi) pas encore fait.
+  detected
+  // Notification écrite dans le fil (et poussée si le chemin commun l'a permis).
+  sent
+  // Rien n'est parti : `statusReason` dit pourquoi (dont `shadow`).
+  skipped
+  // Suivi après envoi (endpoint de clic de l'app).
+  opened_feature
+  opened_whatsapp
+  dismissed
+}
+
+// Un événement par texte source (`source` + `sourceId` uniques) : un même
+// message ne déclenche jamais deux fois. AUCUN texte n'est stocké : le besoin,
+// la règle qui l'a repéré, la version du catalogue, l'id de la source.
+model AssistBridgeEvent {
+  id               String             @id @default(cuid())
+  userId           String
+  source           AssistBridgeSource
+  sourceId         String
+  needId           String
+  ruleId           String
+  ruleVersion      String
+  status           AssistBridgeStatus @default(detected)
+  // skipped : not_student | opt_out | sanctioned | source_not_visible |
+  // coach_source_off | feature_unavailable | feature_used | need_cooldown |
+  // user_cap | expired | shadow | error.
+  statusReason     String?
+  // Mode au moment du traitement : shadow | on.
+  mode             String?
+  // Heures calmes : pas d'envoi avant cet instant.
+  notBefore        DateTime?
+  attempts         Int                @default(0)
+  lastError        String?
+  // `UserNotification.dedupeKey` de la notification écrite.
+  notificationKey  String?
+  // Issue du chemin commun : pushed | quiet_hours | capped | push_unconfigured | push_failed.
+  pushOutcome      String?
+  processedAt      DateTime?
+  sentAt           DateTime?
+  openedFeatureAt  DateTime?
+  openedWhatsappAt DateTime?
+  dismissedAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  user             UserProfile        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([source, sourceId])
+  @@index([status, createdAt])
+  @@index([userId, sentAt])
+  @@index([userId, needId, sentAt])
+  @@index([needId, createdAt])
+  @@index([createdAt])
 }

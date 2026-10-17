@@ -5,6 +5,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { InternalRole } from './admin-capabilities';
 import {
+  ASSIST_EVENT_STATUSES,
+  ASSIST_LIST_STATUSES,
+  ASSIST_NEED_IDS,
+  ASSIST_SKIP_REASONS,
+  ASSIST_SOURCES,
+  assistExcerpt,
+  assistSkippedEntries,
   availableContentActions,
   BADGES,
   BOT_LIST_STATUSES,
@@ -666,5 +673,74 @@ describe('bot « Vérif »', () => {
     mock = stubbed({});
     await communityAdminApi.botStats(7);
     expect(call(mock).path).toBe('/admin/community/bot/stats?days=7');
+  });
+});
+
+// ── Bot « Passerelle » (révision 3) ─────────────────────────────────────────
+
+describe('bot « Passerelle »', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('onglet « Bot Passerelle » : rôle R seulement, jamais le conseiller', () => {
+    expect(COMMUNITY_TABS).toContain('assistBridge');
+    for (const role of [InternalRole.Moderator, InternalRole.ContentManager, InternalRole.Admin, InternalRole.SuperAdmin]) {
+      expect(visibleCommunityTabs(communityPermissions(role))).toContain('assistBridge');
+    }
+    const counselor = visibleCommunityTabs(communityPermissions(InternalRole.Counselor));
+    expect(counselor).not.toContain('assistBridge');
+    expect(resolveCommunityTab({ tab: 'assistBridge', post: null, member: null }, counselor)).toBe('content');
+    expect(communityHref({ tab: 'assistBridge' })).toBe('/community?tab=assistBridge');
+  });
+
+  it('libellés : modes, statuts, besoins, sources, motifs dans les deux langues', () => {
+    for (const mode of ['shadow', 'on', 'off']) {
+      expectInBothLocales(`communityAdmin.assistBridge.mode.${mode}`);
+      expectInBothLocales(`communityAdmin.assistBridge.modeHint.${mode}`);
+    }
+    for (const status of ASSIST_EVENT_STATUSES) expectInBothLocales(`communityAdmin.assistBridge.status.${status}`);
+    expect(ASSIST_LIST_STATUSES[0]).toBe('all');
+    for (const need of ASSIST_NEED_IDS) expectInBothLocales(`communityAdmin.assistBridge.need.${need}`);
+    for (const source of ASSIST_SOURCES) expectInBothLocales(`communityAdmin.assistBridge.source.${source}`);
+    for (const reason of ASSIST_SKIP_REASONS) expectInBothLocales(`communityAdmin.assistBridge.reason.${reason}`);
+    for (const col of ['need', 'detected', 'sent', 'wouldSend', 'openedFeature', 'openedWhatsapp', 'dismissed', 'skipped']) {
+      expectInBothLocales(`communityAdmin.assistBridge.stats.${col}`);
+    }
+  });
+
+  it('extrait : jamais pour la source coach, même si le serveur en renvoyait un', () => {
+    expect(assistExcerpt({ source: 'coach_message', excerpt: 'texte privé' })).toBeNull();
+    expect(assistExcerpt({ source: 'source_future', excerpt: 'x' })).toBeNull();
+    expect(assistExcerpt({ source: 'community_post', excerpt: '  Quelle bourse pour moi ?  ' })).toBe('Quelle bourse pour moi ?');
+    expect(assistExcerpt({ source: 'community_reply', excerpt: null })).toBeNull();
+  });
+
+  it('motifs d’abandon : non nuls, du plus fréquent au moins fréquent', () => {
+    expect(assistSkippedEntries({ shadow: 4, opt_out: 0, user_cap: 2, need_cooldown: 2 })).toEqual([
+      ['shadow', 4],
+      ['need_cooldown', 2],
+      ['user_cap', 2],
+    ]);
+    expect(assistSkippedEntries(undefined)).toEqual([]);
+  });
+
+  it('appels : statistiques, événements filtrés (statut « tous » omis), catalogue', async () => {
+    const stubbed = (response: unknown = {}) => {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, text: vi.fn().mockResolvedValue(JSON.stringify(response)) });
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    };
+    const path = (mock: ReturnType<typeof vi.fn>) => (mock.mock.calls[0] as [string])[0].replace('http://127.0.0.1:4000/api', '');
+    let mock = stubbed({});
+    await communityAdminApi.assistStats(7);
+    expect(path(mock)).toBe('/admin/community/assist-bridge/stats?days=7');
+    mock = stubbed({ items: [], nextCursor: null });
+    await communityAdminApi.assistEvents({ status: 'all' });
+    expect(path(mock)).toBe('/admin/community/assist-bridge/events?limit=20');
+    mock = stubbed({ items: [], nextCursor: null });
+    await communityAdminApi.assistEvents({ status: 'sent', needId: 'visa', source: 'coach_message' }, 'abc', 10);
+    expect(path(mock)).toBe('/admin/community/assist-bridge/events?status=sent&needId=visa&source=coach_message&cursor=abc&limit=10');
+    mock = stubbed({});
+    await communityAdminApi.assistCatalog();
+    expect(path(mock)).toBe('/admin/community/assist-bridge/catalog');
   });
 });

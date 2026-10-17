@@ -1,10 +1,14 @@
-# Communauté KPB — contrat d'API (C1 + C2, bot Vérif C3)
+# Communauté KPB — contrat d'API (C1 + C2, bot Vérif C3, bot Passerelle C3 bis)
 
 Version du contrat : **community-api v1 — 17/10/2026** (révision 1 le même jour : identité réelle
 réservée à Admin/SuperAdmin, liste des sanctions, classement des signalements d'un membre,
 lecture des discussions pour le conseiller, valeurs du journal, deux indicateurs de tableau de bord ;
 **révision 2** le même jour, additive : bot « Vérif » C3 — auteur et badge `kpb_assistant`, champ
-`Reply.assistant`, routes `/admin/community/bot/*` (§8.9), deux codes d'erreur, §14). Statut : **stable** — l'app (Flutter) et
+`Reply.assistant`, routes `/admin/community/bot/*` (§8.9), deux codes d'erreur, §14 ;
+**révision 3** le même jour, additive : bot « Passerelle » C3 bis — notification privée
+`assist_bridge`, clé de désinscription `assist_bridge`, `POST /me/assist-bridge/events/:id`,
+routes `/admin/community/assist-bridge/*` (§8.10), `features.assistBridge`, code
+`assist_bridge_event_not_found`, §15). Statut : **stable** — l'app (Flutter) et
 l'admin (Next.js) se construisent sur ce document. Toute évolution est **additive** (champ
 nouveau, valeur d'énumération nouvelle tolérée par les clients) ; une rupture exige une v2.
 
@@ -14,7 +18,7 @@ Serveur : `backend/src/modules/community/` (NestJS 11, Prisma 6). Préfixe globa
 Sommaire : §1 principes · §2 drapeau et portes · §3 erreurs · §4 pagination et limites ·
 §5 modèles JSON · §6 visibilité · §7 routes élève · §8 routes admin · §9 modération et
 anti-arnaque · §10 fil « Pour toi » · §11 notifications · §12 RGPD · §13 ce qui ne change pas ·
-§14 bot « Vérif » (révision 2).
+§14 bot « Vérif » (révision 2) · §15 bot « Passerelle » (révision 3).
 
 ---
 
@@ -99,6 +103,7 @@ Les erreurs de validation de forme (ValidationPipe, `forbidNonWhitelisted`) sont
 | 409 | `community_invalid_transition` | (admin) action impossible dans l'état courant (ex. rétablir un contenu supprimé par son auteur) | `{ status }` |
 | 404 | `community_bot_draft_not_found` | (admin, révision 2) brouillon du bot inconnu | — |
 | 409 | `community_bot_draft_obsolete` | (admin, révision 2) publier un brouillon dont la publication n'est plus visible ou dont les faits ont changé depuis sa rédaction (le brouillon passe `obsolete`) | `{ reason: "post_not_visible" \| "facts_changed" \| … }` |
+| 404 | `assist_bridge_event_not_found` | (élève, révision 3) clic sur une suggestion qui n'existe pas, n'est pas la sienne ou n'a jamais été envoyée | — |
 
 ## 4. Pagination, limites, quotas
 
@@ -782,6 +787,23 @@ Rôle **R** (jamais le conseiller seul). Comportement du bot : §14.
 La réponse publiée : `authorKind = kpb_assistant`, jamais filtrée, notifie l'auteur et les abonnés
 comme une réponse d'équipe (`community_reply`, et `community_verified_answer` si vérifiée).
 
+### 8.10 Bot « Passerelle » — console (révision 3)
+
+Rôle **R** (jamais le conseiller seul), **lecture seule** : le bot n'écrit rien de public, il
+n'attend donc aucune validation. Comportement : §15.
+
+| Méthode et chemin | Réponse |
+|---|---|
+| `GET /admin/community/assist-bridge/stats?days=1..365` | 200 `{ "mode": "off" \| "shadow" \| "on", "coachSource": bool, "rulesVersion": "ab-1", "window", "totals": Counts, "bySource": { community_post, community_reply, coach_message }, "needs": [{ "needId", "label": { fr, en }, …Counts }] }` — `Counts` = `{ detected, pending, sent, wouldSend, skipped: { <motif>: n }, openedFeature, openedWhatsapp, dismissed }` sur les événements **créés** dans la fenêtre ; `wouldSend` = envois simulés en `shadow` |
+| `GET /admin/community/assist-bridge/events?status=all\|detected\|sent\|skipped\|opened_feature\|opened_whatsapp\|dismissed&needId&source&cursor&limit` | 200 `{ "mode", "items": AssistEvent[], "nextCursor" }` — récents d'abord |
+| `GET /admin/community/assist-bridge/catalog` | 200 `{ "mode", "coachSource", "version", "minWords", "needs": [{ "id", "label", "feature", "featureLabel", "route", "rules": [{ "id", "selfAsking" }], "title": { fr, en }, "body": { fr, en } }] }` |
+
+`AssistEvent` : `{ id, source, needId, ruleId, ruleVersion, status, statusReason, mode, pushOutcome,
+createdAt, processedAt, sentAt, openedFeatureAt, openedWhatsappAt, dismissedAt, excerpt, postId }`.
+**Aucune identité d'élève.** `excerpt` (≤ 120 caractères) et `postId` : seulement pour une
+publication ou une réponse de la communauté **visible au moment de la lecture** (relue à la volée,
+jamais stockée) ; **toujours `null` pour la source coach**.
+
 ## 9. Modération et anti-arnaque
 
 ### 9.1 Filtre avant publication
@@ -868,6 +890,7 @@ de réponses regroupées, `event` (modération) ∈ `hidden | restored | deleted
 | `community_followed_reply` | abonnés de la discussion (hors auteur de la publication et auteur de la réponse) | idem | idem |
 | `community_verified_answer` | auteur + abonnés | réponse marquée vérifiée | une seule fois par réponse |
 | `community_moderation` | auteur du contenu / membre sanctionné | masquage, rétablissement, suppression par l'équipe ; sanction (avertissement, lecture seule, bannissement) | aucun (événement rare) |
+| `assist_bridge` (révision 3, §15) | l'élève qui a écrit le besoin, **lui seul** | besoin repéré dans sa publication, sa réponse ou (source ouverte) son message au coach | aucun ; garde-fous du §15.3 |
 
 **Désinscription** : nouvelle clé `community` dans `disabledNotificationTypes`
 (`src/common/notification-types.ts`). Elle coupe le **push** de `community_reply`,
@@ -876,6 +899,10 @@ de réponses regroupées, `event` (modération) ∈ `hidden | restored | deleted
 coupée (elle concerne le compte). Aucune notification causée par un membre bloqué (dans un sens
 ou l'autre), ni pour un contenu non visible. **Aucune mention d'utilisateur** n'existe, donc
 aucune notification de mention.
+
+**Révision 3** : clé `assist_bridge` dans `disabledNotificationTypes` — elle coupe **tout** de la
+passerelle (ni ligne du fil, ni push : la suggestion n'est pas écrite) ; indépendante de
+`community`.
 
 ## 12. RGPD
 
@@ -898,7 +925,11 @@ aucune notification de mention.
   bloqué), ses signalements (motif, détail, statut), ses sanctions (motif, dates). Les
   signalements **visant** l'élève ne lui sont pas rendus (protection des signaleurs).
 - Inventaire : `docs/data-inventory.md` §7 (et §7 bis pour le bot Vérif : le brouillon ne recopie
-  aucune donnée de l'élève ; il part avec la publication, en cascade).
+  aucune donnée de l'élève ; il part avec la publication, en cascade ; §7 ter pour le bot
+  Passerelle).
+- **Bot « Passerelle »** (révision 3) : `AssistBridgeEvent` (besoin, règle, version, source = type
+  + id, statut, dates ; **aucun texte**) part avec le compte (cascade) et est purgé à **12 mois**
+  (À VALIDER) ; l'export porte la clé `assistBridgeEvents` (sans `userId`).
 
 ## 13. Ce qui ne change pas
 
@@ -961,3 +992,89 @@ renseigné, ou fiches toutes périmées ; `medium` sinon.
 `KPB_COMMUNITY_VERIF_BOT_MODE` : `review` (**défaut**) — tout attend un admin ; `auto` — publie seul
 un brouillon `high` + `complete` (jamais « vérifiée » : c'est un geste humain), le reste attend un
 admin ; `off` — aucune détection. Toute autre valeur vaut `review`.
+
+## 15. Bot « Passerelle » (révision 3)
+
+Demande du propriétaire : « quand un étudiant dit qu'il veut ci, qu'il cherche ça, le bot repère ça
+et lui envoie un message : "Déjà dans l'application, tu peux faire ça comme ça. Et si tu as besoin
+d'une aide supplémentaire, contacte-nous sur WhatsApp." » Code : `backend/src/modules/assist-bridge/`.
+Exploitation : `docs/runbook-bot-passerelle.md`.
+
+### 15.1 Sources (toujours un texte écrit par l'élève lui-même)
+
+- **Communauté** : une publication ou une réponse **visible** d'un membre, à sa création (et à son
+  rétablissement par l'équipe) — après le filtre de contenu ; jamais un contenu masqué, en revue ou
+  supprimé ; jamais un contenu de l'équipe ; le besoin est attribué à l'**auteur** du texte, jamais
+  à l'auteur de la publication sous laquelle il répond.
+- **Coach IA** (`CoachMessage`, rôle `user`) : donnée **privée**, derrière
+  `KPB_ASSIST_BRIDGE_COACH` (**fermé par défaut**, à ouvrir après mise à jour de la politique de
+  confidentialité — À VALIDER). Le texte sert à la détection en mémoire puis est oublié : seuls le
+  besoin, la règle et l'id du message sont écrits.
+
+Asynchrone : la détection (expressions régulières sur le texte déjà en mémoire) écrit au plus **une**
+ligne `AssistBridgeEvent` par texte (`source` + `sourceId` uniques — un même message ne déclenche
+jamais deux fois) ; une tâche à la minute applique les garde-fous et envoie. Jamais bloquant pour la
+publication ni pour le coach ; une erreur du bot n'empêche rien.
+
+### 15.2 Détection et catalogue (`assist-bridge.rules.ts`, version `ab-1`)
+
+Déterministe, sans LLM : texte normalisé sans accents (`normalizeSearchText`), mots entiers. Rien
+si moins de **4 mots**, si une **négation simple** est présente (« je ne cherche pas », « pas
+besoin », « don't need »…), ou si l'élève dit l'avoir **déjà fait** (« j'ai déjà… », « déjà
+relu », « already… »). Une règle « qui ne demande pas d'elle-même » exige en plus un signe de
+demande (« je cherche », « besoin », « comment », « aide », « perdu », « quel… », « help »,
+« how »…) ou un « ? ». Ordre = priorité (un besoin par texte).
+
+| Besoin (`needId`) | Repéré par (exemples) | Fonction cible (`feature`) | `route` (vérifiée dans `app_routes.dart`) |
+|---|---|---|---|
+| `document_review` | « relire / corriger / améliorer mon CV, ma lettre de motivation », « comment rédiger ma lettre » | Relecture de document IA (`POST /document-review`, `DocumentReviewScreen`, tiroir des outils) | `/document-review` : **pas de route nommée** — l'app l'ouvre par la clé ; une build ancienne retombe sur l'accueil |
+| `scholarship_match` | « quelle bourse pour moi ? », « je cherche une bourse », « which scholarships » | « Mes 10 bourses » (exige `KPB_SCHOLARSHIP_MATCH_ENABLED`) | `/scholarship-match` |
+| `etudes_en_france` | « Campus France », « Études en France », « study in France » + demande | Espace « Études en France » (exige `eefSpace` : `KPB_EEF_ENABLED` ou `KPB_EEF_SPACE_ENABLED`) | `/etudes-en-france` |
+| `accompaniment` | « être accompagné », « un conseiller », « monter mon dossier de candidature » | Ouvrir un dossier (cases) | `/new-case` |
+| `visa` | « visa » + demande | Services → offre `visa_kit` (exige une offre `visa_kit` active) | `/services` |
+| `school_choice` | « quelle école / formation / filière ? », « choisir une université » | Test d'orientation | `/orientation` |
+
+Hors catalogue, faute de fonction à ouvrir : la disponibilité des rendez-vous visa
+(`GET /visa-availability`, aucun écran) et l'avis visa USA (affiché seulement dans les fiches
+États-Unis, sans route propre).
+
+### 15.3 Garde-fous (dans cet ordre)
+
+`not_student` (compte non élève) · `opt_out` (clé `assist_bridge`) · `sanctioned` (lecture seule ou
+bannissement en cours dans la communauté) · `coach_source_off` (source coach refermée depuis la
+détection) · `source_not_visible` (texte supprimé, masqué, en revue, ou plus de cet élève) ·
+`feature_unavailable` (fonction coupée par son drapeau, offre visa absente) · `feature_used`
+(fonction déjà utilisée : quota de relecture consommé < 14 j, run « Mes 10 bourses » < 14 j,
+dossier en cours ou rendez-vous à venir, test d'orientation < 14 j, achat visa en cours) ·
+`need_cooldown` (même besoin envoyé < **30 jours**) · `user_cap` (une notification passerelle
+envoyée < **72 h**) · `shadow` (mode `shadow` : tout est appliqué, rien n'est envoyé) · `expired`
+(plus de 48 h sans pouvoir envoyer) · `error` (3 échecs techniques). **Heures calmes** (fenêtre des
+push, 21 h → 8 h locale) : l'événement attend (`notBefore`), il n'est jamais envoyé la nuit. Jamais
+de réponse publique dans la communauté.
+
+### 15.4 Notification et charge
+
+`UserNotification` `kind = assist_bridge`, `dedupeKey = assist_bridge:<eventId>`, poussée par
+`NotificationDispatchService` (plafond quotidien commun). Titre et texte FR/EN tutoyés, sans
+promesse, finissent par « Besoin d'aide en plus ? Écris-nous sur WhatsApp. ». `route` = route de
+la fonction (repli des builds anciennes, qui ne connaissent pas ce `kind` : elles suivent la route,
+ou retombent sur l'accueil). `data` (chaînes) = `{ needId, feature, eventId, whatsapp: "kpb",
+sender: "kpb_assistant", ruleVersion }`. **Aucun numéro** dans la charge : `whatsapp: "kpb"` dit à
+l'app d'ouvrir la ligne KPB de sa configuration (`AppConfig.whatsappNumber`, la même que la bulle
+« Études en France »). Expéditeur affiché : « Assistant KPB » (badge du bot Vérif), au nom de
+l'équipe — jamais le mot « bot ».
+
+L'app (build qui connaît ce `kind`) ouvre une feuille « Tu peux le faire directement dans l'app » :
+bouton vers la fonction, bouton WhatsApp, « Plus tard ». Chaque geste est mesuré :
+
+| Méthode et chemin | Corps | Réponse |
+|---|---|---|
+| `POST /me/assist-bridge/events/:id` (élève) | `{ "action": "opened_feature" \| "opened_whatsapp" \| "dismissed" }` | 200 `{ "id", "status" }` — idempotent (première date gardée, statut = dernière action) ; 404 `assist_bridge_event_not_found` si l'événement n'est pas le sien ou n'a pas été envoyé |
+
+### 15.5 Modes
+
+`KPB_ASSIST_BRIDGE_MODE` : `shadow` (**défaut**) — détecte, applique les garde-fous et journalise,
+**n'envoie rien** ; `on` — envoie ; `off` — aucune détection, aucun traitement (les événements restent
+lisibles). Toute autre valeur vaut `shadow`. `/config/app` → `features.assistBridge` = vrai en mode
+`on` seulement (l'app n'affiche l'interrupteur « Suggestions de l'équipe KPB » qu'alors).
+

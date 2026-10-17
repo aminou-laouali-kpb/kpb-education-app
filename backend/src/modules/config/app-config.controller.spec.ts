@@ -33,6 +33,7 @@ describe('AppConfigController', () => {
     KPB_SCHOLARSHIP_MATCH_ENABLED: process.env.KPB_SCHOLARSHIP_MATCH_ENABLED,
     KPB_ONBOARDING_V2_ENABLED: process.env.KPB_ONBOARDING_V2_ENABLED,
     KPB_COMMUNITY_ENABLED: process.env.KPB_COMMUNITY_ENABLED,
+    KPB_ASSIST_BRIDGE_MODE: process.env.KPB_ASSIST_BRIDGE_MODE,
     KPB_US_VISA_SUSPENDED_COUNTRIES: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
     KPB_US_VISA_SUSPENSION_VERIFIED_AT:
       process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
@@ -98,6 +99,7 @@ describe('AppConfigController', () => {
       scholarshipMatch: false,
       onboardingV2: false,
       community: false,
+      assistBridge: false,
     });
     expect(config.eefCampaign).toEqual({
       opensAt: null,
@@ -789,6 +791,25 @@ describe('AppConfigController', () => {
       expect(new AppConfigController().getAppConfig().features.community).toBe(false);
       if (previous === undefined) delete process.env.KPB_MVP_ONLY;
       else process.env.KPB_MVP_ONLY = previous;
+    });
+  });
+
+  describe('assistBridge — vrai seulement en mode « on »', () => {
+    it('est faux en shadow (défaut), off ou valeur mal tapée', () => {
+      for (const value of [undefined, '', 'shadow', 'off', 'ON?', 'true']) {
+        if (value === undefined) delete process.env.KPB_ASSIST_BRIDGE_MODE;
+        else process.env.KPB_ASSIST_BRIDGE_MODE = value;
+        expect(new AppConfigController().getAppConfig().features.assistBridge).toBe(false);
+      }
+    });
+
+    it('s’ouvre sur « on » (casse et espaces tolérés), sans rien ouvrir d’autre', () => {
+      delete process.env.KPB_ASSIST_BRIDGE_MODE;
+      const closed = new AppConfigController().getAppConfig().features;
+      process.env.KPB_ASSIST_BRIDGE_MODE = ' ON ';
+      const opened = new AppConfigController().getAppConfig().features;
+      expect(opened.assistBridge).toBe(true);
+      expect({ ...opened, assistBridge: false }).toEqual(closed);
     });
   });
 });

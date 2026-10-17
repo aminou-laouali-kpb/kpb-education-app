@@ -360,6 +360,16 @@ mixin _CatalogApi on _ApiClientBase {
     await _dio.post<void>('/me/notifications/read-all');
   }
 
+  /// Bot « Passerelle » (contrat communauté §15.4) : ce que l'élève a fait de
+  /// la suggestion — `opened_feature`, `opened_whatsapp` ou `dismissed`. Peut
+  /// lever (404 sur un backend plus ancien) : l'appelant avale l'erreur.
+  Future<void> reportAssistBridgeAction(String eventId, String action) async {
+    await _dio.post<void>(
+      '/me/assist-bridge/events/${Uri.encodeComponent(eventId)}',
+      data: <String, dynamic>{'action': action},
+    );
+  }
+
   // ── Suivre une bourse (chantier C — routes des builds récentes) ──────────
   //
   // Chacune de ces routes peut répondre 404 sur un backend pas encore

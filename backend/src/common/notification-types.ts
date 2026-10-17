@@ -37,6 +37,11 @@ export const NOTIFICATION_OPT_OUT_TYPES = [
   // (the inbox row is still written). Moderation notices (`community_moderation`)
   // are never silenced.
   'community',
+  // Bot « Passerelle » (C3 bis) — kind `assist_bridge`: a private suggestion
+  // pointing to an app feature after the student wrote about a need. Unlike the
+  // family keys above, opting out silences EVERYTHING (no feed row, no push):
+  // the suggestion is never written for a student who turned it off.
+  'assist_bridge',
 ] as const;
 
 export type NotificationOptOutType = (typeof NOTIFICATION_OPT_OUT_TYPES)[number];

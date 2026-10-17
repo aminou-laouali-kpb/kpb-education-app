@@ -35,6 +35,14 @@ abstract final class NotificationOptOutType {
   /// drapeau `community` ouvert.
   static const community = 'community';
 
+  /// Bot « Passerelle » (C3 bis) — suggestions privées de l'équipe KPB
+  /// (`assist_bridge`) : quand l'élève écrit qu'il cherche quelque chose, une
+  /// notification lui montre la fonction de l'app qui peut l'aider. La clé
+  /// coupe TOUT (ni push, ni ligne du fil). La ligne des préférences ne
+  /// s'affiche que drapeau `assistBridge` ouvert (serveur en mode `on`, qui
+  /// connaît donc la clé).
+  static const assistBridge = 'assist_bridge';
+
   /// Every key this build understands. An unknown key coming back from a newer
   /// server is preserved as-is (see [applyOptOut]) rather than dropped, so an
   /// older app never silently re-enables a family it cannot render a row for.
@@ -44,6 +52,7 @@ abstract final class NotificationOptOutType {
     parcoursWeekly,
     followedScholarshipUpdates,
     community,
+    assistBridge,
   ];
 }
 

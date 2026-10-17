@@ -175,6 +175,19 @@ notifications, RGPD — vit dans **[`docs/community-api-contract.md`](community-
   `KPB_COMMUNITY_VERIF_BOT_MODE` = `review` (**défaut** : un admin publie) | `auto` (publie seul les
   brouillons sûrs) | `off` ; `KPB_COMMUNITY_VERIF_BOT_LLM` = `false` (défaut) | `true`
   (reformulation contrainte aux faits). Runbook : `docs/runbook-bot-verif.md`.
+- **Bot « Passerelle » (C3 bis, révision 3 du contrat, §15)** : repère un besoin dans ce que
+  l'élève a écrit lui-même (publication ou réponse visible ; message au coach si la source est
+  ouverte) et lui envoie une notification **privée** `kind = assist_bridge` (fil in-app + push,
+  chemin commun) vers la fonction de l'app (relecture de document, « Mes 10 bourses », Études en
+  France, ouvrir un dossier, aide visa des Services, test d'orientation), puis vers WhatsApp (ligne
+  configurée dans l'app). Désinscription : clé `assist_bridge` de `disabledNotificationTypes`.
+  Élève : `POST /me/assist-bridge/events/:id` `{ action: opened_feature | opened_whatsapp |
+  dismissed }`. Console (rôle R, lecture seule) : `GET /admin/community/assist-bridge/stats`,
+  `…/events`, `…/catalog`. `/config/app` → `features.assistBridge` (vrai en mode `on` seulement :
+  affiche l'interrupteur des préférences). Réglages serveur relayés par compose :
+  `KPB_ASSIST_BRIDGE_MODE` = `shadow` (**défaut** : détecte et journalise, n'envoie rien) | `on` |
+  `off` ; `KPB_ASSIST_BRIDGE_COACH` = `false` (**défaut**, source privée fermée) | `true`.
+  Runbook : `docs/runbook-bot-passerelle.md`.
 
 Routes historiques, inchangées et dépréciées (taxonomie de l'ancien écran, jamais livré) :
 

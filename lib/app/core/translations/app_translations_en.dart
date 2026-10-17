@@ -3872,4 +3872,51 @@ const Map<String, String> appTranslationsEn = {
   'comm_month_10': 'October @year',
   'comm_month_11': 'November @year',
   'comm_month_12': 'December @year',
+  // Bot « Passerelle » (C3 bis) — notification privée `assist_bridge`.
+  'assist_bridge_badge': 'KPB Assistant',
+  'assist_bridge_from': 'A message from the KPB team',
+  'assist_bridge_sheet_title': 'You can do it right in the app',
+  'assist_bridge_body_document_review':
+      'Paste your CV or cover letter into the review tool: you get tips to improve it.',
+  'assist_bridge_body_scholarship_match':
+      'Take the “My 10 scholarships” test: it shows the scholarships that match your profile, based on their official conditions.',
+  'assist_bridge_body_etudes_en_france':
+      'The “Studying in France” space helps you prepare your procedure, with the catalogue of programmes.',
+  'assist_bridge_body_accompaniment':
+      'Open a file in the app: a KPB advisor helps you prepare your application.',
+  'assist_bridge_body_visa':
+      'The Services page shows KPB’s help to prepare your visa application.',
+  'assist_bridge_body_school_choice':
+      'Take the orientation test: it helps you spot the programmes and schools that fit your profile.',
+  'assist_bridge_body_generic':
+      'A feature of the app can help with what you are looking for.',
+  'assist_bridge_cta_document_review': 'Get my CV or letter reviewed',
+  'assist_bridge_cta_scholarship_match': 'Take the “My 10 scholarships” test',
+  'assist_bridge_cta_etudes_en_france': 'Open Studying in France',
+  'assist_bridge_cta_accompaniment': 'Open a file',
+  'assist_bridge_cta_visa': 'See the visa help',
+  'assist_bridge_cta_school_choice': 'Take the orientation test',
+  'assist_bridge_cta_generic': 'Open the feature',
+  'assist_bridge_whatsapp': 'Message KPB on WhatsApp',
+  'assist_bridge_later': 'Later',
+  'assist_bridge_settings_hint':
+      'You can turn these suggestions off in your notification settings.',
+  'assist_bridge_document_review_prefill':
+      'Hello KPB Education, I\'d like help reviewing my CV or cover letter.',
+  'assist_bridge_scholarship_match_prefill':
+      'Hello KPB Education, I\'d like help finding a scholarship.',
+  'assist_bridge_etudes_en_france_prefill':
+      'Hello KPB Education, I\'d like help with my Studying in France procedure.',
+  'assist_bridge_accompaniment_prefill':
+      'Hello KPB Education, I\'d like support with my application file.',
+  'assist_bridge_visa_prefill':
+      'Hello KPB Education, I\'d like help preparing my visa application.',
+  'assist_bridge_school_choice_prefill':
+      'Hello KPB Education, I\'d like help choosing a school or a programme.',
+  'assist_bridge_generic_prefill':
+      'Hello KPB Education, I\'d like help with my study plans.',
+  'assist_bridge_pref_title': 'Suggestions from the KPB team',
+  'assist_bridge_pref_subtitle':
+      'When you look for help, we show you the app feature that can help',
+  'notif_cta_assist_bridge': 'See how',
 };

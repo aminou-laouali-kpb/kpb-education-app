@@ -279,6 +279,20 @@ finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'exp
 jour CGU et politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) **avant**
 d'ouvrir. *À VALIDER (propriétaire) : délai de modération annoncé, adresse de contact affichée.*
 
+### 3 ter. Bot « Passerelle » (C3 bis) — rien à changer tant que la source coach reste fermée
+
+La passerelle (`docs/runbook-bot-passerelle.md`) ne collecte **aucune donnée nouvelle** : elle lit
+les publications et réponses que l'élève vient d'écrire (déjà déclarées au §3 bis) et lui envoie
+une notification privée par le chemin push existant ; aucun texte n'est recopié, aucun destinataire
+tiers ne s'ajoute, aucune interaction entre utilisateurs n'est créée. **Aucune réponse de console ne
+change** en `shadow` (défaut) ni en `on` avec la seule source communauté.
+
+**Le jour où `KPB_ASSIST_BRIDGE_COACH=true`** (et pas avant), dans la même mise à jour que la
+politique de confidentialité : Play *Sécurité des données* → « Messages — Autres messages in-app
+(coach IA) » : ajouter la finalité **Personnalisation** (suggestion d'une fonction de l'app à partir
+du message) ; Apple → « Other User Content » : ajouter **App Functionality / Product
+Personalization** selon la grille du moment. *À VALIDER (propriétaire).*
+
 ---
 
 ## 4. Suppression de compte & export (exigence store)

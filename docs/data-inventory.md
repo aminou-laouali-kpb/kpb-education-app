@@ -217,3 +217,27 @@ runbook `docs/runbook-bot-verif.md`. Réglage `KPB_COMMUNITY_VERIF_BOT_MODE` (d�
 - **Export RGPD** : rien de neuf pour l'élève (le brouillon n'est pas une donnée le concernant ;
   la réponse publiée est un contenu de l'équipe, comme une réponse « Équipe KPB »).
 
+
+### 7 ter. Bot « Passerelle » (C3 bis, relevé du 17/10/2026)
+
+Migration `20261025120000_assist_bridge`, `backend/src/modules/assist-bridge/`, contrat §15,
+runbook `docs/runbook-bot-passerelle.md`. Réglages `KPB_ASSIST_BRIDGE_MODE` (défaut `shadow` :
+rien n'est envoyé) et `KPB_ASSIST_BRIDGE_COACH` (défaut `false`).
+
+| Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
+|---|---|---|---|---|
+| Événement passerelle : besoin repéré (`needId`), règle et version du catalogue, **type et id** de la source (publication, réponse, message au coach), statut et motif, dates d'envoi et de clic (`opened_feature`, `opened_whatsapp`, `dismissed`) — **aucun texte** | Détection à l'écriture d'un texte de l'élève (publication / réponse visible ; message au coach si la source est ouverte) ; clics de la feuille de l'app (`POST /me/assist-bridge/events/:id`) | `AssistBridgeEvent` (un au plus par texte) | L'équipe (rôle R), **sans identité d'élève** ; un extrait de 120 caractères seulement pour un contenu **public** de la communauté, relu à la volée ; rien pour le coach | **12 mois** puis purge quotidienne (À VALIDER) ; supprimé avec le compte (cascade) |
+| Notification `assist_bridge` (titre, texte, route, besoin, id de l'événement) | Tâche de la minute, mode `on` | `UserNotification` + push (chemin commun) | L'élève seul | Avec le compte (cascade) ; désinscription : clé `assist_bridge` (coupe tout, pas même la ligne du fil) |
+
+- **Source coach — donnée privée, FERMÉE par défaut.** Ouverte, le texte du message ne sert qu'à
+  la détection en mémoire : **il n'est jamais recopié** (seuls le besoin, la règle et l'id du message
+  sont écrits). À activer **après mise à jour de la politique de confidentialité** (finalité nouvelle
+  pour un message privé : proposer une fonction de l'app) — À VALIDER (propriétaire).
+- **Aucun nouveau destinataire tiers** : détection locale par expressions régulières, aucun LLM ;
+  le push suit le chemin existant (FCM / OneSignal, déjà inventoriés). Le lien WhatsApp est ouvert
+  par l'app vers la ligne KPB de sa configuration ; le serveur n'envoie aucun numéro.
+- **Export RGPD** (`GET /profiles/me/export`) : clé `assistBridgeEvents` (sans `userId`).
+- **Mineurs** : rien de public ; la suggestion est privée et ne cite pas le texte de l'élève.
+- À VALIDER (propriétaire) : durée de conservation (12 mois), ouverture de la source coach et
+  mention dans `confidentialite.html` / la politique in-app, textes des six besoins, seuils
+  (72 h, 30 jours, 14 jours), ligne WhatsApp affichée.

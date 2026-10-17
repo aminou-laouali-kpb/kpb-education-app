@@ -12,6 +12,11 @@ import 'analytics_service.dart';
 /// ouvre « Mes suivis », où toutes ces bourses sont listées.
 const String scholarshipOpenedBundleKind = 'scholarship_opened_bundle';
 
+/// `kind` de la suggestion privée du bot « Passerelle » (contrat communauté
+/// §15.4) : un tap ouvre une FEUILLE (fonction de l'app, WhatsApp, plus tard)
+/// plutôt qu'une page — voir [NotificationRouter.assistBridgeOpener].
+const String assistBridgeNotificationKind = 'assist_bridge';
+
 /// Ce que le routeur attend du backend. [AppApiClient] l'implémente.
 abstract class NotificationRouterBackend {
   /// `POST /me/notifications/read-by-ref`. Peut lever (404 sur un backend
@@ -120,6 +125,12 @@ class NotificationRouter {
   @visibleForTesting
   bool Function()? navigatorReadyOverride;
 
+  /// Ouvre la feuille du bot « Passerelle » pour un tap `assist_bridge`.
+  /// Branché au démarrage (`main.dart`). Absent — ou en échec —, la route
+  /// servie est suivie, exactement comme sur une build qui ne connaît pas ce
+  /// `kind` : jamais un tap perdu.
+  Future<void> Function(Map<String, dynamic> data)? assistBridgeOpener;
+
   bool get isReady => _ready;
 
   @visibleForTesting
@@ -156,6 +167,7 @@ class NotificationRouter {
     _pending.clear();
     navigateOverride = null;
     navigatorReadyOverride = null;
+    assistBridgeOpener = null;
   }
 
   // ── Internal ────────────────────────────────────────────────────────────
@@ -205,6 +217,16 @@ class NotificationRouter {
       final controller = Get.find<AppController>();
       if (!controller.hasCompletedOnboarding && !controller.isGuestMode) {
         return;
+      }
+    }
+    final opener = assistBridgeOpener;
+    if (opener != null &&
+        notificationKindOf(data) == assistBridgeNotificationKind) {
+      try {
+        await opener(data);
+        return;
+      } catch (error) {
+        debugPrint('[NotificationRouter] assist bridge sheet failed: $error');
       }
     }
     final navigate = navigateOverride;

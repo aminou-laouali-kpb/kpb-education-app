@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { Prisma, type CommunityContentStatus, type CommunityPostType } from '@prisma/client';
 
+import { AssistBridgeQueueService } from '../assist-bridge/assist-bridge-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   COMMUNITY_EDIT_WINDOW_MS,
@@ -110,6 +111,9 @@ export class CommunityPostsService {
     // Bot « Vérif » (C3) : file asynchrone, jamais bloquante. Absente des
     // tests qui ne la fournissent pas.
     @Optional() private readonly verifBotQueue?: CommunityVerifBotQueueService,
+    // Bot « Passerelle » (C3 bis) : besoin repéré dans ce que l'élève écrit
+    // lui-même. Même contrat que la file du bot Vérif : jamais bloquant.
+    @Optional() private readonly assistBridgeQueue?: AssistBridgeQueueService,
   ) {}
 
   // ── Présentation ──────────────────────────────────────────────────────────
@@ -642,7 +646,10 @@ export class CommunityPostsService {
         return post.id;
       }),
     );
-    if (decision.status === 'visible') await this.verifBotQueue?.enqueue(postId);
+    if (decision.status === 'visible') {
+      await this.verifBotQueue?.enqueue(postId);
+      await this.assistBridgeQueue?.enqueueCommunity('post', postId);
+    }
     const row = await runDb(this.prisma, (db) =>
       db.communityPost.findUniqueOrThrow({ where: { id: postId }, include: POST_INCLUDE }),
     );
@@ -797,6 +804,7 @@ export class CommunityPostsService {
         reply: { id: replyId, authorMemberId: viewer.memberId },
         now,
       });
+      await this.assistBridgeQueue?.enqueueCommunity('reply', replyId);
     }
     const row = await runDb(this.prisma, (db) =>
       db.communityReply.findUniqueOrThrow({ where: { id: replyId }, include: REPLY_INCLUDE }),

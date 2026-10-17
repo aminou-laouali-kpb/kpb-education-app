@@ -34,6 +34,7 @@ import 'app/core/services/security_service.dart';
 import 'app/core/services/notification_router.dart';
 import 'app/core/services/push_service.dart';
 import 'app/core/services/deep_link_service.dart';
+import 'app/features/assist_bridge/assist_bridge_sheet.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'firebase_options.dart';
 
@@ -209,6 +210,8 @@ Future<void> main() async {
     // Le routeur des taps est branché AVANT le push : un tap de démarrage à
     // froid y entre en file, et n'est rejoué qu'après la première image.
     NotificationRouter.instance.attach(apiClient);
+    // Bot « Passerelle » : un tap `assist_bridge` ouvre sa feuille.
+    NotificationRouter.instance.assistBridgeOpener = showAssistBridgeSheet;
     if (firebaseInitialized) {
       await PushService.instance.initialize(backend: apiClient);
     }

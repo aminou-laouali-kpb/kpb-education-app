@@ -1591,6 +1591,28 @@ export class ProfilesService {
         },
       });
 
+      // Bot « Passerelle » (C3 bis) : les besoins repérés dans ce que l'élève a
+      // écrit et ce qu'il a fait des suggestions. Aucun texte n'y est stocké :
+      // le besoin, la règle, la source (type + id) et les dates.
+      const assistBridgeEvents = await prisma.assistBridgeEvent.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          source: true,
+          sourceId: true,
+          needId: true,
+          ruleId: true,
+          ruleVersion: true,
+          status: true,
+          statusReason: true,
+          createdAt: true,
+          sentAt: true,
+          openedFeatureAt: true,
+          openedWhatsappAt: true,
+          dismissedAt: true,
+        },
+      });
+
       const workspaceIds = scholarshipWorkspaces.map(
         (workspace) => workspace.id,
       );
@@ -1669,6 +1691,7 @@ export class ProfilesService {
               sanctions: communityMember.sanctions,
             }
           : null,
+        assistBridgeEvents,
       };
     });
 

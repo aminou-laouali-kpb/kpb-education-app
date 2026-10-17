@@ -9,6 +9,7 @@ import { Observable, Subscriber } from 'rxjs';
 
 import { AiConsentService } from '../ai/ai-consent.service';
 import { LlmService } from '../ai/llm.service';
+import { AssistBridgeQueueService } from '../assist-bridge/assist-bridge-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   buildCoachSystemPrompt,
@@ -79,6 +80,9 @@ export class CoachService {
     private readonly quotaService: CoachQuotaService,
     private readonly prisma: PrismaService,
     @Optional() aiConsent?: AiConsentService,
+    // Bot « Passerelle » (C3 bis) : source PRIVÉE, fermée par défaut
+    // (KPB_ASSIST_BRIDGE_COACH). Optionnel pour les tests existants.
+    @Optional() private readonly assistBridgeQueue?: AssistBridgeQueueService,
   ) {
     // Optional so the existing unit tests (`new CoachService(llm, quota, prisma)`)
     // keep constructing without a fourth argument. Production injects the
@@ -273,7 +277,13 @@ export class CoachService {
       return;
     }
 
-    await this.appendMessage(conversation, 'user', params.message);
+    const userMessageId = await this.appendMessage(conversation, 'user', params.message);
+    // Passerelle : détection en mémoire, jamais attendue par le coach, jamais
+    // d'erreur propagée (la file l'avale). Rien n'est écrit si la source coach
+    // est fermée (défaut) ; jamais le texte, seulement l'id du message.
+    if (userMessageId && this.assistBridgeQueue) {
+      void this.assistBridgeQueue.enqueueCoach(params.userId, userMessageId, params.message);
+    }
 
     const lang = resolveCoachLanguage(
       params.profile.preferredLanguage as string,
@@ -450,11 +460,12 @@ export class CoachService {
     return this.conversations.get(id) ?? null;
   }
 
+  /** Ajoute le message ; rend son id quand il est enregistré en base. */
   private async appendMessage(
     conversation: Conversation,
     role: CoachRole,
     content: string,
-  ): Promise<void> {
+  ): Promise<string | null> {
     const message: CoachMessage = {
       role,
       content,
@@ -482,5 +493,6 @@ export class CoachService {
       // DB disabled and this conversation isn't tracked yet — register it.
       this.conversations.set(conversation.id, conversation);
     }
+    return persisted?.id ?? null;
   }
 }

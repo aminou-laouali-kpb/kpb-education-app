@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 
+import { assistBridgeMode } from '../assist-bridge/assist-bridge.config';
 import { EEF_CATALOG_ATTRIBUTION } from '../etudes-en-france/catalog/eef-catalog-attribution';
 import { usVisaSuspensionConfig } from './us-visa-suspension';
 
@@ -380,6 +381,13 @@ export class AppConfigController {
         // les routes admin restent ouvertes. Indépendante de KPB_MVP_ONLY, qui
         // ne garde que l'ancien écran. Contrat : docs/community-api-contract.md.
         community: enabled(process.env.KPB_COMMUNITY_ENABLED),
+        // Bot « Passerelle » (C3 bis) : VRAI seulement en mode `on`
+        // (KPB_ASSIST_BRIDGE_MODE, défaut `shadow`). L'app n'en lit qu'une
+        // chose : afficher l'interrupteur « Suggestions de l'équipe KPB » des
+        // préférences — un backend plus ancien ignorerait la clé
+        // `assist_bridge` et l'interrupteur reviendrait seul. En `shadow`, rien
+        // n'est envoyé : rien à couper, rien à afficher.
+        assistBridge: assistBridgeMode() === 'on',
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse

@@ -38,6 +38,7 @@ import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/features/ai_advisor/ai_chat_screen.dart';
+import 'package:karatou/app/features/assist_bridge/assist_bridge_sheet.dart';
 import 'package:karatou/app/features/cases/case_detail_screen.dart';
 import 'package:karatou/app/features/etudes_en_france/eef_home_screen.dart';
 import 'package:karatou/app/features/shell/kpb_tools_drawer.dart';
@@ -81,7 +82,17 @@ const _expectedCallSites = <String, int>{
   // Même masque que la boîte à outils (`AppConfig.aiToolsEnabled`), couvert plus
   // bas dans les deux sens.
   'lib/app/features/etudes_en_france/eef_home_screen.dart': 3,
+  // La feuille du bot « Passerelle » (C3 bis) : son bouton « relecture » ouvre
+  // la relecture IA derrière le même masque, couvert plus bas dans les deux sens.
+  'lib/app/features/assist_bridge/assist_bridge_sheet.dart': 1,
 };
+
+/// Une suggestion « relecture » du bot Passerelle (C3 bis).
+const _assistBridgeReview = AssistBridgePayload(
+  needId: 'document_review',
+  feature: 'document_review',
+  route: '/document-review',
+);
 
 /// On mesure le dépôt SUIVI PAR GIT, pas les brouillons locaux d'une autre
 /// session — même patron que test/core/no_remote_animation_test.dart.
@@ -248,10 +259,10 @@ void main() {
       );
     });
 
-    test('les treize appels totalisent bien treize', () {
+    test('les quatorze appels totalisent bien quatorze', () {
       final total =
           _measuredCallSites().values.fold<int>(0, (sum, n) => sum + n);
-      expect(total, 13);
+      expect(total, 14);
     });
   });
 
@@ -316,10 +327,30 @@ void main() {
       expect(find.byIcon(Icons.edit_note_rounded), findsNothing);
       expect(find.byType(MotivationLettersScreen), findsNothing);
     });
+
+    testWidgets('la feuille Passerelle ne propose plus la relecture',
+        (tester) async {
+      await _pump(
+          tester, const AssistBridgeSheet(payload: _assistBridgeReview));
+
+      // La feuille est bien montée (contre-épreuve)…
+      expect(find.byKey(const ValueKey('assist-bridge-sheet')), findsOneWidget);
+      // …sans bouton vers la relecture IA.
+      expect(find.byKey(const ValueKey('assist-bridge-feature')), findsNothing);
+    });
   });
 
   group('(c) contre-épreuve — drapeau à VRAI, les dix entrées reviennent', () {
     setUp(() => AppConfig.aiToolsEnabledOverride = true);
+
+    testWidgets('la feuille Passerelle retrouve le bouton relecture',
+        (tester) async {
+      await _pump(
+          tester, const AssistBridgeSheet(payload: _assistBridgeReview));
+
+      expect(
+          find.byKey(const ValueKey('assist-bridge-feature')), findsOneWidget);
+    });
 
     test('le tiroir retrouve ses quatre outils IA', () {
       final labels =

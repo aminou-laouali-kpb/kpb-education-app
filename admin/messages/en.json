@@ -1666,6 +1666,7 @@
       "settings": "Settings",
       "log": "Log",
       "bot": "Fact-check bot",
+      "assistBridge": "Bridge bot",
       "taxonomy": "Categories and tags (legacy)"
     },
     "loading": "Loading…",
@@ -2181,6 +2182,87 @@
       "publishedAuto": "Auto-published on {date}.",
       "publishedBy": "Published on {date} by {name}.",
       "rejectedBy": "Rejected on {date} by {name}: {reason}"
+    },
+    "assistBridge": {
+      "modeLabel": "Bot mode:",
+      "coachOn": "Coach source on (private messages)",
+      "coachOff": "Coach source off",
+      "rulesVersion": "Catalogue {version}",
+      "mode": {
+        "shadow": "Observation (nothing is sent)",
+        "on": "Sending",
+        "off": "Off"
+      },
+      "modeHint": {
+        "shadow": "The bot spots needs and applies every safeguard, but sends nothing: “Simulated sends” shows what the active mode would have sent.",
+        "on": "The bot sends a private notification pointing to the app feature, then WhatsApp. Roll back: KPB_ASSIST_BRIDGE_MODE=shadow.",
+        "off": "No detection, nothing sent. Past events stay readable."
+      },
+      "stats": {
+        "title": "Bridge bot statistics",
+        "window": "Events created over the last {days} days, by need.",
+        "need": "Need",
+        "detected": "Detected",
+        "sent": "Sent",
+        "wouldSend": "Simulated sends",
+        "openedFeature": "Feature opened",
+        "openedWhatsapp": "WhatsApp opened",
+        "dismissed": "Dismissed",
+        "skipped": "Skipped (reason)"
+      },
+      "eventsTitle": "Latest events",
+      "eventsHint": "No student identity. An excerpt only shows for public community content; never for the coach.",
+      "filterStatus": "Status",
+      "filterNeed": "Need",
+      "filterSource": "Source",
+      "emptyTitle": "No events",
+      "emptyBody": "The bot has not spotted any need for these filters yet.",
+      "coachPrivate": "Private message to the coach: no text is kept or shown.",
+      "noExcerpt": "Content no longer visible: no excerpt.",
+      "detectedAt": "spotted on {date}",
+      "sentAt": "sent on {date}",
+      "openPost": "Open the discussion",
+      "catalogTitle": "Needs catalogue (read-only)",
+      "catalogHint": "Patterns, target features and sent texts live in the code (assist-bridge.rules.ts). Changing them requires a new version.",
+      "catalogShow": "Show the catalogue",
+      "catalogHide": "Hide the catalogue",
+      "catalogMeta": "Version {version} · at least {words} words per message",
+      "catalogTarget": "Feature: {feature} · route {route}",
+      "status": {
+        "detected": "Spotted",
+        "sent": "Sent",
+        "skipped": "Skipped",
+        "opened_feature": "Feature opened",
+        "opened_whatsapp": "WhatsApp opened",
+        "dismissed": "Dismissed"
+      },
+      "need": {
+        "document_review": "CV / letter review",
+        "scholarship_match": "Find a scholarship",
+        "etudes_en_france": "Studying in France",
+        "accompaniment": "Get support",
+        "visa": "Visa",
+        "school_choice": "Choose a school"
+      },
+      "source": {
+        "community_post": "Post",
+        "community_reply": "Reply",
+        "coach_message": "Coach (private)"
+      },
+      "reason": {
+        "not_student": "Not a student account",
+        "opt_out": "Opted out",
+        "sanctioned": "Sanctioned account",
+        "coach_source_off": "Coach source off",
+        "source_not_visible": "Content no longer visible",
+        "feature_unavailable": "Feature unavailable",
+        "feature_used": "Feature already used",
+        "need_cooldown": "Same need < 30 days",
+        "user_cap": "Already notified < 72 h",
+        "shadow": "Observation (not sent)",
+        "expired": "Expired",
+        "error": "Technical error"
+      }
     }
   }
 }

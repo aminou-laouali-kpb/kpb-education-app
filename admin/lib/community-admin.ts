@@ -771,6 +771,7 @@ export const COMMUNITY_TABS = [
   'settings',
   'log',
   'bot',
+  'assistBridge',
   'taxonomy',
 ] as const;
 export type CommunityTab = (typeof COMMUNITY_TABS)[number];
@@ -868,6 +869,19 @@ export const communityAdminApi = {
   botRegenerate: (id: string) =>
     apiFetch<BotDraft>(`${BASE}/bot/drafts/${encodeURIComponent(id)}/regenerate`, { method: 'POST' }),
   botStats: (days = 30) => apiFetch<BotStats>(`${BASE}/bot/stats${query({ days })}`),
+  // Bot « Passerelle » (révision 3, §8.10) — lecture seule.
+  assistStats: (days = 30) => apiFetch<AssistStats>(`${BASE}/assist-bridge/stats${query({ days })}`),
+  assistEvents: (filters: AssistEventFilters, cursor?: string | null, limit = 20) =>
+    apiFetch<AssistEventPage>(
+      `${BASE}/assist-bridge/events${query({
+        status: filters.status && filters.status !== 'all' ? filters.status : undefined,
+        needId: filters.needId,
+        source: filters.source,
+        cursor,
+        limit,
+      })}`,
+    ),
+  assistCatalog: () => apiFetch<AssistCatalog>(`${BASE}/assist-bridge/catalog`),
 };
 
 // ── Bot « Vérif » (révision 2, §8.9 et §14) ────────────────────────────────
@@ -1066,3 +1080,141 @@ export function resolveCommunityTab(
       : parseCommunityTab(params.tab);
   return visible.includes(wanted) ? wanted : (visible[0] ?? wanted);
 }
+
+// ── Bot « Passerelle » (révision 3, §8.10 et §15) ─────────────────────────
+
+export type AssistMode = 'off' | 'shadow' | 'on';
+
+/** Besoins du catalogue `ab-1` (clé `communityAdmin.assistBridge.need.*`) ; inconnu : brut. */
+export const ASSIST_NEED_IDS = [
+  'document_review',
+  'scholarship_match',
+  'etudes_en_france',
+  'accompaniment',
+  'visa',
+  'school_choice',
+] as const;
+
+export const ASSIST_EVENT_STATUSES = ['detected', 'sent', 'skipped', 'opened_feature', 'opened_whatsapp', 'dismissed'] as const;
+export type AssistEventStatus = (typeof ASSIST_EVENT_STATUSES)[number];
+export const ASSIST_LIST_STATUSES = ['all', ...ASSIST_EVENT_STATUSES] as const;
+export type AssistListStatus = (typeof ASSIST_LIST_STATUSES)[number];
+
+export const ASSIST_SOURCES = ['community_post', 'community_reply', 'coach_message'] as const;
+export type AssistSource = (typeof ASSIST_SOURCES)[number];
+
+/** Motifs de `skipped` (§15.3), dans l'ordre des garde-fous. */
+export const ASSIST_SKIP_REASONS = [
+  'not_student',
+  'opt_out',
+  'sanctioned',
+  'coach_source_off',
+  'source_not_visible',
+  'feature_unavailable',
+  'feature_used',
+  'need_cooldown',
+  'user_cap',
+  'shadow',
+  'expired',
+  'error',
+] as const;
+
+export const ASSIST_STATUS_VARIANT: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info'> = {
+  detected: 'neutral',
+  sent: 'info',
+  skipped: 'neutral',
+  opened_feature: 'success',
+  opened_whatsapp: 'success',
+  dismissed: 'warning',
+};
+
+export interface AssistCounts {
+  detected: number;
+  pending: number;
+  sent: number;
+  wouldSend: number;
+  skipped: Record<string, number>;
+  openedFeature: number;
+  openedWhatsapp: number;
+  dismissed: number;
+}
+
+export interface AssistStats {
+  mode: AssistMode | string;
+  coachSource: boolean;
+  rulesVersion: string;
+  window: { from: string; to: string; days: number };
+  totals: AssistCounts;
+  bySource: Partial<Record<AssistSource, number>>;
+  needs: Array<AssistCounts & { needId: string; label: { fr: string; en: string } }>;
+}
+
+export interface AssistEvent {
+  id: string;
+  source: AssistSource | string;
+  needId: string;
+  ruleId: string;
+  ruleVersion: string;
+  status: AssistEventStatus | string;
+  statusReason: string | null;
+  mode: string | null;
+  pushOutcome: string | null;
+  createdAt: string;
+  processedAt: string | null;
+  sentAt: string | null;
+  openedFeatureAt: string | null;
+  openedWhatsappAt: string | null;
+  dismissedAt: string | null;
+  excerpt: string | null;
+  postId: string | null;
+}
+
+export interface AssistEventPage {
+  mode?: AssistMode | string;
+  items: AssistEvent[];
+  nextCursor: string | null;
+}
+
+export interface AssistEventFilters {
+  status?: AssistListStatus;
+  needId?: string;
+  source?: AssistSource;
+}
+
+export interface AssistCatalogNeed {
+  id: string;
+  label: { fr: string; en: string };
+  feature: string;
+  featureLabel: { fr: string; en: string };
+  route: string;
+  rules: Array<{ id: string; selfAsking: boolean }>;
+  title: { fr: string; en: string };
+  body: { fr: string; en: string };
+}
+
+export interface AssistCatalog {
+  mode: AssistMode | string;
+  coachSource: boolean;
+  version: string;
+  minWords: number;
+  needs: AssistCatalogNeed[];
+}
+
+/**
+ * L'extrait affichable d'un événement : JAMAIS pour la source coach (donnée
+ * privée), même si un serveur en renvoyait un par erreur — défense en
+ * profondeur, le serveur n'en renvoie déjà aucun.
+ */
+export function assistExcerpt(event: Pick<AssistEvent, 'source' | 'excerpt'>): string | null {
+  if (event.source !== 'community_post' && event.source !== 'community_reply') return null;
+  const text = event.excerpt?.trim();
+  return text ? text : null;
+}
+
+/** Les motifs d'abandon non nuls, du plus fréquent au moins fréquent. */
+export function assistSkippedEntries(skipped: Record<string, number> | undefined): Array<[string, number]> {
+  return Object.entries(skipped ?? {})
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
