@@ -157,6 +157,14 @@ jobs:
           KPB_RUN_POSTGRES_INTEGRATION: 'true'
         run: npm run test:integration:opening-fanout
 
+      # Compétition ambassadeurs : campagne UTC+1, codes unifiés, rafales,
+      # appareil réutilisé, mineur non autorisé, gel, podium, versements, et
+      # l'idempotence du recalcul (rejouer n'écrit rien) — sur une base réelle.
+      - name: PostgreSQL referral campaign integration
+        env:
+          KPB_RUN_POSTGRES_INTEGRATION: 'true'
+        run: npm run test:integration:referral-campaign
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5

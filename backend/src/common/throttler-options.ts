@@ -54,3 +54,13 @@ export const ADMIN_LOGIN_THROTTLE = {
 export const SCHOLARSHIP_MATCH_RUN_THROTTLE = {
   [GLOBAL_THROTTLER]: { limit: 10, ttl: 60_000 },
 };
+
+/**
+ * Classement public d'une campagne de parrainage (`GET
+ * /public/campaigns/:slug/leaderboard`, sans authentification) : 30 lectures
+ * par minute et par IP. La page publique rafraîchit toutes les 60 s ; la
+ * réponse est de toute façon mise en cache 30 s côté serveur.
+ */
+export const PUBLIC_LEADERBOARD_THROTTLE = {
+  [GLOBAL_THROTTLER]: { limit: 30, ttl: 60_000 },
+};

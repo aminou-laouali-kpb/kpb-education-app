@@ -113,6 +113,13 @@ services:
       # dispatcher et par le worker d'annonce.
       - KPB_PUSH_QUIET_START=${KPB_PUSH_QUIET_START:-}
       - KPB_PUSH_QUIET_END=${KPB_PUSH_QUIET_END:-}
+      # Compétition ambassadeurs (docs/runbook-campagne-ambassadeurs.md). Vide =
+      # défaut : 30 rattachements par code et par heure, empreintes conservées
+      # 180 jours, clé des empreintes = KPB_JWT_SECRET, auto-activation fermée.
+      - REFERRAL_CODE_HOURLY_LIMIT=${REFERRAL_CODE_HOURLY_LIMIT:-}
+      - REFERRAL_SIGNAL_RETENTION_DAYS=${REFERRAL_SIGNAL_RETENTION_DAYS:-}
+      - KPB_REFERRAL_SIGNAL_SECRET=${KPB_REFERRAL_SIGNAL_SECRET:-}
+      - AMBASSADOR_SELF_ACTIVATION_ENABLED=${AMBASSADOR_SELF_ACTIVATION_ENABLED:-}
       # Quotas IA quotidiens par utilisateur (vide = défaut du code : 30 / 10 / 10).
       - KPB_AI_DAILY_QUOTA_TOOLS=${KPB_AI_DAILY_QUOTA_TOOLS:-}
       - KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW=${KPB_AI_DAILY_QUOTA_DOCUMENT_REVIEW:-}

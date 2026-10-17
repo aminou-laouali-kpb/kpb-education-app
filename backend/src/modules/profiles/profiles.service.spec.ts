@@ -68,6 +68,9 @@ describe('ProfilesService — account deletion & export', () => {
     'studentCredential',
     'scholarshipMatchRun',
     'scholarshipAlertSubscription',
+    'referralCampaignParticipant',
+    'referralCampaignReferral',
+    'referralAttributionSignal',
   ] as const;
 
   function makeFakePrisma(profile: unknown) {
