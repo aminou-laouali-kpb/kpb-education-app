@@ -3,12 +3,14 @@
 // sauf le dernier bloc, qui compare la clause des contrôles à celle que
 // `CatalogService` envoie réellement à Prisma.
 import { Test } from '@nestjs/testing';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 
 import { CatalogService } from './catalog.service';
+import { withoutSnapshotSegment } from './program-snapshot-order';
 import {
   INSTALLED_APP_PROGRAM_SNAPSHOT_LIMIT,
   MAX_DETAIL_LINES,
+  countPartnerPrograms,
   evaluateCatalogConsistency,
   findOrphanProgramFieldIds,
   findPartnersWithoutPrograms,
@@ -132,10 +134,34 @@ describe('findProgramSnapshotOverflow', () => {
   it('déborde à 1 001 et compte les formations que l’app ne verra pas', () => {
     expect(findProgramSnapshotOverflow(1001)).toEqual({
       publicPrograms: 1001,
+      partnerPrograms: 0,
       limit: 1000,
       hiddenFromInstalledApps: 1,
+      hiddenPartnerPrograms: 0,
     });
     expect(findProgramSnapshotOverflow(1634, 1000)?.hiddenFromInstalledApps).toBe(634);
+  });
+
+  it('ne compte comme perdues pour les partenaires que celles au-delà de la page', () => {
+    // Les partenaires sont servis en tête (program-snapshot-order.ts) : 900
+    // formations partenaires tiennent dans la page, même avec 1 634 au total.
+    expect(findProgramSnapshotOverflow(1634, 1000, 900)?.hiddenPartnerPrograms).toBe(0);
+    expect(findProgramSnapshotOverflow(1634, 1000, 1010)?.hiddenPartnerPrograms).toBe(10);
+  });
+});
+
+describe('countPartnerPrograms', () => {
+  it('additionne les formations publiques des seuls partenaires', () => {
+    expect(
+      countPartnerPrograms(
+        [{ id: 'icn', nameFr: 'ICN' }, { id: 'omnes', nameFr: 'OMNES' }],
+        [
+          { institutionId: 'icn', count: 3 },
+          { institutionId: 'omnes', count: 40 },
+          { institutionId: 'mcgill', count: 12 },
+        ],
+      ),
+    ).toBe(43);
   });
 });
 
@@ -151,7 +177,11 @@ describe('evaluateCatalogConsistency', () => {
           { fieldId: 'd01', isActive: true, count: 3 },
           { fieldId: 'd99', isActive: true, count: 2 },
         ],
-        publicProgramsByInstitution: [],
+        partnerInstitutions: [
+          { id: 'icn', nameFr: 'ICN Business School' },
+          { id: 'omnes', nameFr: 'OMNES Education' },
+        ],
+        publicProgramsByInstitution: [{ institutionId: 'omnes', count: 1100 }],
         publicProgramCount: 1200,
       }),
     );
@@ -163,7 +193,21 @@ describe('evaluateCatalogConsistency', () => {
     ]);
     expect(findings[0].details).toEqual(['fieldId="d99" (2 row(s), 2 active)']);
     expect(findings[1].details).toEqual(['"ICN Business School" (id=icn)']);
-    expect(findings[2].summary).toContain('200 are invisible');
+    expect(findings[2].summary).toContain('100 partner programs are invisible');
+  });
+
+  it('un catalogue au-delà de 1 000 n’est PAS un constat tant que les partenaires tiennent', () => {
+    // Aucun plafond de formations (décision du 17/10/2026) : les builds récentes
+    // paginent. Seules les builds installées perdent la fin de la liste, et ce
+    // sont des formations non partenaires.
+    expect(
+      evaluateCatalogConsistency(
+        healthyInput({
+          publicProgramsByInstitution: [{ institutionId: 'icn', count: 600 }],
+          publicProgramCount: 2500,
+        }),
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -181,6 +225,20 @@ describe('renderCatalogConsistencyReport', () => {
       expect(report.lines).toHaveLength(1);
       expect(report.lines[0]).toMatch(/^OK — .*\(634\/1000 programs\)/);
     }
+  });
+
+  it('imprime le compromis des builds installées au-delà de 1 000, sans échouer', () => {
+    const report = renderCatalogConsistencyReport([], {
+      strict: true,
+      publicProgramCount: 1300,
+      partnerProgramCount: 640,
+    });
+    expect(report).toMatchObject({ ok: true, exitCode: 0 });
+    expect(report.lines[1]).toBe(
+      'Note — 1300 public programs: recent app builds page through all of them; ' +
+        'installed builds (limit=1000, no paging) load the first 1000, partners first ' +
+        '(640 partner programs), and miss the last 300 program(s).',
+    );
   });
 
   it('AVERTIT et sort à 0 sans --strict — le déploiement continue', () => {
@@ -247,11 +305,16 @@ describe('les contrôles comptent le même ensemble que le catalogue public', ()
         }),
       },
       program: {
-        findMany: jest.fn(async (args: { where: unknown }) => {
-          captured.programs = args.where;
+        // Lecture par tranches (program-snapshot-order.ts) : on compare la
+        // clause publique, sans la condition de tranche.
+        findMany: jest.fn(async (args: { where: Prisma.ProgramWhereInput }) => {
+          captured.programs = withoutSnapshotSegment(args.where);
           return [];
         }),
-        count: jest.fn(async () => 0),
+        count: jest.fn(async (args: { where: Prisma.ProgramWhereInput }) => {
+          captured.programs = withoutSnapshotSegment(args.where);
+          return 0;
+        }),
       },
       $transaction: jest.fn(
         async (arg: unknown): Promise<unknown> =>

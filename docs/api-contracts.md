@@ -38,11 +38,60 @@ paramètre `institutionId` ne la fait pas réapparaître. Une formation dont
 l'ÉTABLISSEMENT est de l'import en est aussi, même saisie à la main (identifiant
 généré, active par défaut) : sans cette règle elle serait servie sur une carte
 sans école, l'école étant, elle, exclue. C'est la surface de
-TOUTES les builds installées, qui la chargent en un seul appel (`limit=1000`,
-trié par nom) ; y laisser des lignes EEF actives aurait évincé des formations
-partenaires de la liste de tout le monde. L'espace « Études en France » a ses
+TOUTES les builds, y compris celles déjà installées qui la chargent en un seul
+appel (`limit=1000`) ; y laisser des lignes EEF actives aurait évincé des
+formations partenaires de la liste de tout le monde. L'espace « Études en France » a ses
 propres routes (`/etudes-en-france/*`). La règle vit en un seul endroit :
 `backend/src/common/eef-provenance.ts`.
+
+### `GET /catalog/programs` : pagination, aucun plafond de catalogue (17/10/2026)
+
+Décision du propriétaire : le maximum de choix, sans plafond de formations.
+Le catalogue n'est plus borné ; seule **une page** l'est (`limit` ≤ 1 000).
+
+| Paramètre | Sens |
+|---|---|
+| `limit` | Taille de page, 1 à 1 000 (défaut et maximum 1 000 ; une valeur non entière est ignorée). |
+| `offset` | Rang de la première ligne (défaut 0). |
+| `q`, `fieldId`, `countryId`, `institutionId` | Filtres inchangés. |
+| `view` | `compact` : chaque formation **sans** les clés à plat dupliquées (`nameFr`, `nameEn`, `levelFr`… `recognitionEn`), les objets localisés (`name: {fr, en}`…) restant servis. Mesuré sur le catalogue amorcé (767 formations) : 1 185 → 780 Kio, gzip 83 → 60 Kio. Toute autre valeur, ou son absence : la forme complète d'avant. |
+
+Réponse : `{ items, total, limit, offset, nextOffset, source }`. `total` compte
+**tout** le catalogue filtré ; `nextOffset` est le rang de la page suivante, ou
+`null` quand tout est servi (clé nouvelle : un client plus ancien l'ignore).
+
+**Ordre (le même pour tous).** Trois tranches disjointes, chacune triée par
+`nameFr` puis `id` (ordre total, pages sans chevauchement) :
+
+1. les formations des établissements **partenaires** publiés (la clause de
+   `/catalog/institutions?partnerOnly=true`) ;
+2. les autres formations dont `applicationDeadline` est **à venir** (≥ minuit
+   UTC du jour) ;
+3. le reste (sans date limite, ou date passée).
+
+Code : `backend/src/modules/catalog/program-snapshot-order.ts`. L'app trie
+elle-même chaque liste affichée ; l'ordre serveur ne décide que de ce qui tombe
+dans la première page.
+
+**Builds récentes** (`lib/app/core/repositories/app_api_client/catalog.dart`) :
+pages de 500 en `view=compact` enchaînées sur `nextOffset` jusqu'à épuisement (garde-fou : 60
+pages), dédoublonnées par `id` ; si `total` change en cours de route (import,
+date limite qui passe à minuit UTC), la lecture recommence une fois. Une page en
+échec fait échouer toute la lecture : le cache Hive précédent reste servi, jamais
+un catalogue tronqué.
+
+**Builds déjà installées** (2.3.x et antérieures) : elles envoient `limit=1000`
+sans `offset` et ne lisent pas `nextOffset`. Au-delà de 1 000 formations
+publiques, elles ne reçoivent que la première page : tous les partenaires, puis
+les formations datées à venir, puis les autres par ordre alphabétique jusqu'à
+1 000. Ce qu'elles ne reçoivent pas n'existe pas pour elles : absent de la liste
+Universités, de la recherche, des filtres et de leurs compteurs (calculés sur la
+liste reçue) ; une fiche ouverte depuis un favori ou un lien affiche « Formation
+introuvable » ; l'aperçu de l'établissement saute la formation ; le comparateur
+compte encore `programIds` (servi complet par `/catalog/institutions`), donc un
+nombre de formations supérieur à ce qu'elles listent. `verify:catalog` imprime
+ce manque à chaque passage, et n'en fait un constat que si les formations
+**partenaires** dépassent à elles seules la première page.
 
 ## Matches (Phase 0 / P0-D — kit US-003/US-004)
 

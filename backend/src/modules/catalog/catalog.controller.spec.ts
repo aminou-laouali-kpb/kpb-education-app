@@ -2,7 +2,7 @@ import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
 
 describe('CatalogController — programs pagination params', () => {
-  function call(limit?: string, offset?: string) {
+  function call(limit?: string, offset?: string, view?: string) {
     let captured: Record<string, unknown> = {};
     const service = {
       getPrograms: (q: Record<string, unknown>) => {
@@ -10,7 +10,15 @@ describe('CatalogController — programs pagination params', () => {
         return { items: [] };
       },
     } as unknown as CatalogService;
-    new CatalogController(service).programs(undefined, undefined, undefined, undefined, limit, offset);
+    new CatalogController(service).programs(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      limit,
+      offset,
+      view,
+    );
     return captured;
   }
 
@@ -21,5 +29,11 @@ describe('CatalogController — programs pagination params', () => {
 
   it('forwards valid integers', () => {
     expect(call('20', '40')).toMatchObject({ limit: 20, offset: 40 });
+  });
+
+  it('ne transmet que la vue « compact », rien d’autre', () => {
+    expect(call(undefined, undefined, 'compact')).toMatchObject({ view: 'compact' });
+    expect(call(undefined, undefined, 'full')).toMatchObject({ view: undefined });
+    expect(call()).toMatchObject({ view: undefined });
   });
 });

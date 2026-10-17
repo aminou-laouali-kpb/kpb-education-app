@@ -189,6 +189,41 @@ export function mapProgram(row: Program) {
   };
 }
 
+/**
+ * Les clés « à plat » que `mapProgram` duplique pour les clients anciens
+ * (`nameFr`/`nameEn`… à côté de `name: {fr, en}`).
+ */
+const PROGRAM_FLAT_DUPLICATE_KEYS = [
+  'nameFr',
+  'nameEn',
+  'levelFr',
+  'levelEn',
+  'durationFr',
+  'durationEn',
+  'tuitionFr',
+  'tuitionEn',
+  'languageFr',
+  'languageEn',
+  'requirementsFr',
+  'requirementsEn',
+  'recognitionFr',
+  'recognitionEn',
+] as const;
+
+/**
+ * La projection `view=compact` de `/catalog/programs` : `mapProgram` SANS les
+ * doublons à plat. Les builds récentes lisent les objets localisés (et ne
+ * retombent sur les clés à plat qu'en leur absence) ; mesuré sur le catalogue
+ * amorcé (767 formations), la réponse passe de 1 185 à 780 Kio (gzip : 83 → 60
+ * Kio), autant de moins à décoder et à garder dans le cache Hive du téléphone.
+ * Les builds installées n'envoient pas `view` et gardent la forme complète.
+ */
+export function mapProgramCompact(row: Program) {
+  const full: Record<string, unknown> = mapProgram(row);
+  for (const key of PROGRAM_FLAT_DUPLICATE_KEYS) delete full[key];
+  return full;
+}
+
 /// Même règle de sélection que l'index public des bourses
 /// (scholarships-index.service.ts, `selectCurrentCycle`) : un cycle ouvert,
 /// sinon une prévision, sinon le plus récent. DUPLIQUÉE sciemment plutôt

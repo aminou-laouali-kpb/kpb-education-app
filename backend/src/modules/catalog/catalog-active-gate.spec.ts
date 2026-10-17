@@ -18,6 +18,7 @@ import { Test } from '@nestjs/testing';
 import type { PrismaClient } from '@prisma/client';
 
 import { CatalogService } from './catalog.service';
+import { withoutSnapshotSegment } from './program-snapshot-order';
 import { PrismaService } from '../prisma/prisma.service';
 
 type Captured = { institutions?: unknown; programs?: unknown; hidden?: unknown };
@@ -49,10 +50,18 @@ function fakePrisma(
           captured.hidden = args.where;
           return hiddenRows;
         }
-        captured.programs = args.where;
+        // `getPrograms` lit par tranches (partenaires d'abord — voir
+        // program-snapshot-order.ts) : on capture la clause PUBLIQUE, sans la
+        // condition de tranche.
+        captured.programs = withoutSnapshotSegment(args.where);
         return programRows;
       }),
-      count: jest.fn(async () => programRows.length),
+      // Toutes les lignes du faux catalogue tombent dans la première tranche :
+      // une seule lecture, pas de doublon.
+      count: jest.fn(async (args: { where: Record<string, unknown> }) => {
+        captured.programs = withoutSnapshotSegment(args.where);
+        return isPartnerSegment(args.where) ? programRows.length : 0;
+      }),
     },
     $transaction: jest.fn(
       async (arg: unknown): Promise<unknown> =>
@@ -62,6 +71,11 @@ function fakePrisma(
     ),
   };
   return client as unknown as PrismaClient;
+}
+
+function isPartnerSegment(where: Record<string, unknown>): boolean {
+  const and = where.AND as Record<string, { in?: unknown }>[];
+  return Array.isArray(and) && and[and.length - 1]?.institutionId?.in !== undefined;
 }
 
 function institutionRow(over: Record<string, unknown> = {}) {

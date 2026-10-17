@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { Prisma, PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient, Program } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { mockCatalog } from '../../common/data/mock-catalog';
@@ -15,13 +15,21 @@ import {
   isMockCatalogFallbackAllowed,
   type CatalogSource,
 } from './catalog-degraded-mode';
+import { publicPartnerInstitutionWhere } from './catalog-consistency-checks';
 import {
   mapCountry,
   mapField,
   mapInstitution,
   mapProgram,
+  mapProgramCompact,
   mapScholarship,
 } from './catalog.mapper';
+import {
+  PROGRAM_PAGE_MAX,
+  planProgramPage,
+  programSnapshotSegments,
+  startOfUtcDay,
+} from './program-snapshot-order';
 
 export type ProgramCatalogQuery = {
   q?: string;
@@ -30,6 +38,8 @@ export type ProgramCatalogQuery = {
   institutionId?: string;
   limit?: number;
   offset?: number;
+  /** `compact` : sans les doublons à plat (voir `mapProgramCompact`). */
+  view?: 'compact';
 };
 
 /** Every `/catalog/*` list response carries the provenance of its rows. */
@@ -135,6 +145,7 @@ export class CatalogService {
       total: number;
       limit: number;
       offset: number;
+      nextOffset: number | null;
     }
   > {
     // Voir `getInstitutions` : jamais optionnel. Une formation importée mais
@@ -148,6 +159,14 @@ export class CatalogService {
     // chasseraient des formations partenaires de l'app de tout le monde. Le
     // serveur ne sait pas quelle build l'appelle — aucun en-tête de version —,
     // la garde doit donc valoir pour tous.
+    //
+    // Pagination (17/10/2026, décision du propriétaire : aucun plafond de
+    // formations). Une page fait au plus `PROGRAM_PAGE_MAX` lignes, mais rien
+    // ne borne le catalogue : les builds récentes enchaînent les pages
+    // (`offset` / `nextOffset`) jusqu'à épuisement. Les builds installées
+    // n'envoient que `limit=1000`, sans `offset`, et ne voient que la première
+    // page : l'ordre de `programSnapshotSegments` y garde les formations
+    // partenaires, puis celles dont la date limite est à venir.
     const where: Prisma.ProgramWhereInput = {
       isActive: true,
       ...notEefProgram(),
@@ -163,19 +182,43 @@ export class CatalogService {
       ];
     }
 
-    const limit = Math.min(Math.max(query.limit ?? 1000, 1), 1000);
+    const limit = Math.min(
+      Math.max(query.limit ?? PROGRAM_PAGE_MAX, 1),
+      PROGRAM_PAGE_MAX,
+    );
     const offset = Math.max(query.offset ?? 0, 0);
 
     const result = await this.readOrDegrade('programs', (prisma) =>
-      prisma.$transaction([
-        prisma.program.findMany({
+      prisma.$transaction(async (tx) => {
+        // L'ordre de l'instantané (voir `programSnapshotSegments`) : les
+        // formations partenaires d'abord, puis celles dont la date limite est à
+        // venir, puis le reste — chaque tranche triée par nom puis par id.
+        const partners = await tx.institution.findMany({
+          where: publicPartnerInstitutionWhere(),
+          select: { id: true },
+        });
+        const segments = programSnapshotSegments(
           where,
-          orderBy: { nameFr: 'asc' },
-          take: limit,
-          skip: offset,
-        }),
-        prisma.program.count({ where }),
-      ]),
+          partners.map((row) => row.id),
+          startOfUtcDay(new Date()),
+        );
+        const counts: number[] = [];
+        for (const segment of segments) {
+          counts.push(await tx.program.count({ where: segment }));
+        }
+        const rows: Program[] = [];
+        for (const slice of planProgramPage(counts, offset, limit)) {
+          rows.push(
+            ...(await tx.program.findMany({
+              where: segments[slice.segment],
+              orderBy: [{ nameFr: 'asc' }, { id: 'asc' }],
+              skip: slice.skip,
+              take: slice.take,
+            })),
+          );
+        }
+        return { rows, total: counts.reduce((sum, n) => sum + n, 0) };
+      }),
     );
 
     if (result === null) {
@@ -185,15 +228,20 @@ export class CatalogService {
         total: fallback.items.length,
         limit,
         offset,
+        nextOffset: null,
       };
     }
 
-    const [items, total] = result;
+    const { rows, total } = result;
+    const end = offset + rows.length;
     return {
-      items: items.map(mapProgram),
+      items: rows.map(query.view === 'compact' ? mapProgramCompact : mapProgram),
       total,
       limit,
       offset,
+      // Le curseur de la page suivante, ou `null` quand tout est servi. Les
+      // builds récentes bouclent dessus ; les anciennes l'ignorent.
+      nextOffset: rows.length > 0 && end < total ? end : null,
       source: CATALOG_SOURCE_DATABASE,
     };
   }
