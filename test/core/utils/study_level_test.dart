@@ -116,6 +116,23 @@ void main() {
       expect(ProgramLevel.master.filterKey, 'master');
       expect(ProgramLevel.mba.filterKey, 'mba');
       expect(ProgramLevel.doctorat.filterKey, 'doctorate');
+      expect(ProgramLevel.college.filterKey, 'college');
+      expect(ProgramLevel.gradCert.filterKey, 'college');
+    });
+
+    test('collèges canadiens : diplôme collégial et certificat postdiplôme',
+        () {
+      expect(normalizeProgramLevel('Diplôme collégial'), ProgramLevel.college);
+      expect(normalizeProgramLevel('Advanced Diploma'), ProgramLevel.college);
+      expect(
+          normalizeProgramLevel('Graduate certificate'), ProgramLevel.gradCert);
+      expect(normalizeProgramLevel('Certificat postdiplôme'),
+          ProgramLevel.gradCert);
+      expect(programLevelLabel('Diplôme collégial'), 'Diplôme collégial');
+      expect(programLevelLabel('Graduate certificate'), 'Graduate certificate');
+      // Les niveaux existants ne bougent pas.
+      expect(normalizeProgramLevel('Bachelor · Bac+3'), ProgramLevel.bachelor);
+      expect(normalizeProgramLevel('MSc · Bac+5'), ProgramLevel.master);
     });
   });
 }
