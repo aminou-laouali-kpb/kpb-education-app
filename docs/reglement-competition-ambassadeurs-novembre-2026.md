@@ -1,0 +1,134 @@
+# Règlement — Compétition des ambassadeurs KPB Education (novembre 2026)
+
+> **BROUILLON — à faire valider par le propriétaire avant publication.** Les points
+> marqués « À VALIDER (propriétaire) » ne sont pas tranchés. Une fois validé, ce texte est
+> collé dans la campagne (champ « Règlement ») ou publié à une adresse https donnée dans
+> « Lien du règlement » : la page publique du classement affiche alors le bouton « Lire le
+> règlement ».
+
+## 1. Organisateur
+
+À VALIDER (propriétaire) : entité organisatrice — KPB Éducation / Karatou / KPB Global.
+
+Pour mémoire, le responsable du traitement des données de l'application est
+KPB Global L.L.C-FZ (voir la politique de confidentialité) ; l'organisateur du jeu peut
+être la même entité ou non.
+
+## 2. Dates
+
+La compétition se déroule **du 1er novembre 2026 à 00 h 00 au 10 novembre 2026 à
+23 h 59, heure d'Afrique de l'Ouest (UTC+1, heure de Niamey, Lagos, Cotonou, Douala)**.
+À Abidjan (UTC+0), cela correspond au 31 octobre à 23 h 00 jusqu'au 10 novembre à 22 h 59.
+
+## 3. Qui peut participer
+
+- Les **ambassadeurs activés par l'équipe KPB** et inscrits à la compétition. On ne
+  s'inscrit pas seul : l'équipe active l'ambassadeur à partir de son compte dans
+  l'application.
+- Villes concernées : Maradi, Niamey, Cotonou, Abidjan, Douala (liste que l'équipe peut
+  compléter avant le début de la compétition).
+- **Mineurs (16–17 ans)** : acceptés avec une **autorisation parentale signée**, vérifiée
+  par l'équipe KPB avant le classement. Sans cette autorisation vérifiée, l'ambassadeur
+  mineur n'apparaît pas au classement et ne peut pas recevoir de prix. Si l'âge n'est pas
+  connu, l'équipe le confirme avant de classer.
+- Les membres de l'équipe KPB ne participent pas. À VALIDER (propriétaire) : exclusion des
+  proches de l'équipe.
+
+## 4. Comment on gagne des points
+
+Chaque ambassadeur a un code (son code d'ambassadeur « KTOU-… » ou son code personnel
+affiché dans l'écran Parrainage de l'application : les deux comptent).
+
+Un filleul compte pour **1 point** quand, **pendant la compétition** :
+
+1. il **crée son compte** dans l'application ;
+2. il **vérifie son e-mail** (code reçu par e-mail, ou connexion Google) ;
+3. il **complète son profil** : nom, téléphone, date de naissance (accord d'un parent s'il
+   est mineur), au moins un domaine d'études et un pays visé, et l'acceptation des
+   conditions ;
+4. il **saisit le code de l'ambassadeur** dans l'écran Parrainage de l'application.
+
+Un compte créé avant le 1er novembre ne compte pas. Un code saisi après le 10 novembre à
+23 h 59 (UTC+1) ne compte pas. Un filleul ne peut être rattaché qu'à un seul ambassadeur, et
+une seule fois.
+
+**Le filleul ne reçoit rien** pendant la compétition.
+
+## 5. Classement
+
+- Le classement est calculé automatiquement toutes les 5 minutes et affiché sur
+  `kpbeducation.cloud/classement/` avec le prénom, l'initiale du nom et la ville de chaque
+  ambassadeur (par exemple « Aïcha K. — Niamey ») et son nombre de filleuls qualifiés.
+- En cas d'égalité, l'ambassadeur qui a atteint ce nombre **le premier** passe devant.
+- **Le classement reste provisoire** jusqu'à la vérification finale par l'équipe KPB.
+
+## 6. Loyauté et disqualification
+
+Pour que la compétition reste juste, l'équipe KPB peut **vérifier**, **ne pas compter** ou
+**retirer** des filleuls, et **disqualifier** un ambassadeur, notamment en cas de :
+
+- auto-parrainage (utiliser son propre code) ou parrainage croisé ;
+- plusieurs comptes créés depuis le **même téléphone** (un seul compte compte par
+  téléphone) ;
+- **rafales** d'inscriptions suspectes (beaucoup de comptes en très peu de temps, depuis
+  la même connexion) ;
+- adresses e-mail **jetables** ;
+- comptes fictifs, achetés, ou créés sans l'accord de la personne ;
+- pression, promesse d'argent ou de cadeau faite aux filleuls ;
+- tout autre comportement contraire à l'esprit du jeu.
+
+Les inscriptions signalées automatiquement sont d'abord **mises « à vérifier »**, pas
+supprimées : elles ne comptent pas tant que l'équipe ne les a pas validées (par exemple
+un atelier dans un lycée où tout le monde utilise le même Wi-Fi). Chaque décision de
+l'équipe est enregistrée avec son motif.
+
+Plafond technique : au-delà de 30 codes saisis en une heure pour le même ambassadeur, les
+saisies suivantes sont refusées temporairement (le filleul réessaie plus tard).
+
+## 7. Prix
+
+| Rang | Prix |
+|---|---|
+| 1er | 100 000 FCFA |
+| 2e | 50 000 FCFA |
+| 3e | 30 000 FCFA |
+
+- Les prix sont versés par **Wave** (ou autre moyen convenu) dans les **À VALIDER
+  (propriétaire) : délai** jours qui suivent la validation des résultats.
+- **Pour un ambassadeur mineur, le prix est versé à son parent** (ou représentant légal)
+  ayant signé l'autorisation.
+- Un lauréat qui ne peut pas être joint ou ne fournit pas les informations de versement
+  dans un délai de **À VALIDER (propriétaire)** jours perd son prix. À VALIDER
+  (propriétaire) : le prix est-il alors attribué au suivant ?
+- Les prix ne sont ni échangeables ni cessibles. À VALIDER (propriétaire) : fiscalité et
+  pièces d'identité demandées au versement.
+
+## 8. Résultats
+
+À la fin de la compétition, le classement est gelé, l'équipe vérifie les filleuls et les
+autorisations parentales, puis valide le podium. Les résultats définitifs remplacent alors
+le classement provisoire sur la même page. À VALIDER (propriétaire) : date d'annonce des
+résultats.
+
+## 9. Données personnelles
+
+- **Public** : prénom, initiale du nom, ville et nombre de filleuls des ambassadeurs
+  classés. Rien d'autre : ni e-mail, ni téléphone, ni nom des filleuls.
+- **Équipe KPB seulement** : identité et e-mail des ambassadeurs et de leurs filleuls,
+  statut de chaque filleul, autorisation parentale (statut, date, qui l'a vérifiée),
+  versements. Pour la lutte contre la fraude : des **empreintes chiffrées** de l'adresse IP
+  et du téléphone au moment de la saisie du code (jamais l'adresse ni l'identifiant en
+  clair), conservées **180 jours** (À VALIDER (propriétaire)).
+- Tu peux demander l'accès à tes données ou leur suppression depuis l'application
+  (Profil → exporter / supprimer mon compte) ou en écrivant à l'équipe. Supprimer son
+  compte retire sa participation et ses filleuls de la compétition ; la trace d'un prix
+  déjà versé est gardée pour la comptabilité.
+- À VALIDER (propriétaire) : mention de la compétition dans la politique de
+  confidentialité.
+
+## 10. Divers
+
+KPB peut modifier, suspendre ou arrêter la compétition en cas de problème technique ou de
+fraude massive ; les participants en sont informés sur la page du classement. La
+participation implique l'acceptation de ce règlement. À VALIDER (propriétaire) : droit
+applicable et contact pour les réclamations.

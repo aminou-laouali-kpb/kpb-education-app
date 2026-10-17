@@ -23,7 +23,7 @@ clearance is obtained.
 
 ```
 AppConfig.ambassadorCashEnabled == true   // global flag, build-time
-  OR  dashboard.activated == true          // this user is an ops-activated ambassador
+  OR  dashboard.activated == true          // Ambassador.cashProgramEnabled (see below)
 ```
 
 Otherwise it shows an **application screen** — no FCFA, no leaderboard, no
@@ -39,16 +39,30 @@ the free referral programme.
 
 ## Activating an individual ambassador (whitelist, flag left OFF)
 
-Active ambassadors keep full access regardless of the flag. Activation is
-**server-side and manual** (ops), not self-serve:
+> **Correction (17/10/2026).** This section used to say « mark their `Ambassador` record
+> `activated = true` ». **There is no `activated` column.** `dashboard.activated` is computed
+> by `AmbassadorService.getDashboard`. Until 17/10/2026 it was simply « an `Ambassador` row
+> exists » — and any user could create that row through `POST /referrals/ambassador/activate`
+> (no server guard). The real mechanics are now:
 
-1. Vet the person (18+, identity, payout account).
-2. Mark their `Ambassador` record `activated = true` in the backend
-   (admin/DB). From then on their app shows the full cash surface.
-3. Payouts remain manual via Wave (no automated transfer API).
+- **Activation is admin-only.** Console admin → « Compétition ambassadeurs » → « Activer un
+  ambassadeur » (`POST /admin/ambassadors`, Admin/SuperAdmin, audited). It creates or reuses
+  the `Ambassador` row and sets `approvedAt` / `approvedByAdminId`.
+- `POST /referrals/ambassador/activate` now returns **403**
+  (`ambassador_activation_admin_only`) when no row exists, unless the server flag
+  `AMBASSADOR_SELF_ACTIVATION_ENABLED=true`. The installed app never calls it while the cash
+  flag is off.
+- `dashboard.activated` is **`Ambassador.cashProgramEnabled`**. The migration
+  `20261022120000_referral_campaigns` set it to `true` on every row that existed before
+  (their app keeps the cash surface). Ambassadors activated for the November 2026 competition
+  get `false`: their app shows the application screen, never FCFA commissions.
+- To give one vetted ambassador the cash surface (only once the checklist below is cleared):
+  vet the person (18+, identity, payout account), then set `cashProgramEnabled = true` on their
+  row (DB, no admin button on purpose). Payouts remain manual via Wave.
 
-> There is no in-app "activate" button while gated — this is intentional so
-> activation can only happen through the vetted ops path.
+> The competition (`docs/runbook-campagne-ambassadeurs.md`) is **not** the cash programme:
+> referees receive nothing, only the top 3 ambassadors win a fixed prize, paid to the parent
+> for a minor.
 
 ## Opening the programme to everyone
 
