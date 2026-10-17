@@ -13,6 +13,7 @@ import { useAdminAuth } from '../admin-auth-provider';
 import { DashboardShell } from '../dashboard-shell';
 import { useLocale } from '../locale-provider';
 import { Alert, Button } from '../ui';
+import { AssistBridgePanel } from './assist-bridge-panel';
 import { BotPanel } from './bot-panel';
 import { ContentPanel } from './content-panel';
 import { DashboardPanel } from './dashboard-panel';
@@ -25,7 +26,8 @@ import { SettingsPanel } from './settings-panel';
 /**
  * Communauté — console de l'équipe : tableau de bord, file de modération,
  * contenus, membres, réglages du filtre, journal, bot « Vérif » (brouillons
- * préparés depuis le catalogue, publiés par l'équipe), et la taxonomie historique
+ * préparés depuis le catalogue, publiés par l'équipe), bot « Passerelle »
+ * (suggestions privées, lecture seule), et la taxonomie historique
  * du forum (gardée, dépréciée). L'onglet, la discussion et le membre ouverts
  * sont dans l'URL. Le conseiller (Counselor) ne voit que « Contenus » : lire
  * les discussions et y répondre.
@@ -79,6 +81,7 @@ export function CommunityHub() {
           {tab === 'settings' ? <SettingsPanel permissions={permissions} /> : null}
           {tab === 'log' ? <ModerationLog onOpenPost={(id) => openPost(id)} /> : null}
           {tab === 'bot' ? <BotPanel permissions={permissions} onOpenPost={(id) => openPost(id)} /> : null}
+          {tab === 'assistBridge' ? <AssistBridgePanel onOpenPost={(id) => openPost(id)} /> : null}
           {tab === 'taxonomy' ? <LegacyTaxonomy /> : null}
         </div>
       )}

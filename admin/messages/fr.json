@@ -1666,6 +1666,7 @@
       "settings": "Réglages",
       "log": "Journal",
       "bot": "Bot Vérif",
+      "assistBridge": "Bot Passerelle",
       "taxonomy": "Catégories et tags (ancien)"
     },
     "loading": "Chargement…",
@@ -2181,6 +2182,87 @@
       "publishedAuto": "Publié automatiquement le {date}.",
       "publishedBy": "Publié le {date} par {name}.",
       "rejectedBy": "Rejeté le {date} par {name} : {reason}"
+    },
+    "assistBridge": {
+      "modeLabel": "Mode du bot :",
+      "coachOn": "Source coach ouverte (messages privés)",
+      "coachOff": "Source coach fermée",
+      "rulesVersion": "Catalogue {version}",
+      "mode": {
+        "shadow": "Observation (rien n'est envoyé)",
+        "on": "Envoi actif",
+        "off": "Éteint"
+      },
+      "modeHint": {
+        "shadow": "Le bot repère les besoins et applique tous les garde-fous, mais n'envoie rien : « Envois simulés » dit ce que le mode actif aurait envoyé.",
+        "on": "Le bot envoie une notification privée vers la fonction de l'app, puis WhatsApp. Retour arrière : KPB_ASSIST_BRIDGE_MODE=shadow.",
+        "off": "Aucune détection, aucun envoi. Les événements passés restent lisibles."
+      },
+      "stats": {
+        "title": "Statistiques du bot Passerelle",
+        "window": "Événements créés sur les {days} derniers jours, par besoin.",
+        "need": "Besoin",
+        "detected": "Détectés",
+        "sent": "Envoyés",
+        "wouldSend": "Envois simulés",
+        "openedFeature": "Fonction ouverte",
+        "openedWhatsapp": "WhatsApp ouvert",
+        "dismissed": "Fermés",
+        "skipped": "Ignorés (motif)"
+      },
+      "eventsTitle": "Derniers événements",
+      "eventsHint": "Sans identité d'élève. Un extrait n'apparaît que pour un contenu public de la communauté ; jamais pour le coach.",
+      "filterStatus": "Statut",
+      "filterNeed": "Besoin",
+      "filterSource": "Source",
+      "emptyTitle": "Aucun événement",
+      "emptyBody": "Le bot n'a encore repéré aucun besoin pour ces filtres.",
+      "coachPrivate": "Message privé au coach : aucun texte n'est conservé ni affiché.",
+      "noExcerpt": "Contenu plus visible : pas d'extrait.",
+      "detectedAt": "repéré le {date}",
+      "sentAt": "envoyé le {date}",
+      "openPost": "Ouvrir la discussion",
+      "catalogTitle": "Catalogue des besoins (lecture seule)",
+      "catalogHint": "Les motifs, les fonctions cibles et les textes envoyés vivent dans le code (assist-bridge.rules.ts). Les changer demande une nouvelle version.",
+      "catalogShow": "Afficher le catalogue",
+      "catalogHide": "Masquer le catalogue",
+      "catalogMeta": "Version {version} · au moins {words} mots par message",
+      "catalogTarget": "Fonction : {feature} · route {route}",
+      "status": {
+        "detected": "Repéré",
+        "sent": "Envoyé",
+        "skipped": "Ignoré",
+        "opened_feature": "Fonction ouverte",
+        "opened_whatsapp": "WhatsApp ouvert",
+        "dismissed": "Fermé"
+      },
+      "need": {
+        "document_review": "Relecture CV / lettre",
+        "scholarship_match": "Trouver une bourse",
+        "etudes_en_france": "Études en France",
+        "accompaniment": "Être accompagné",
+        "visa": "Visa",
+        "school_choice": "Choisir une école"
+      },
+      "source": {
+        "community_post": "Publication",
+        "community_reply": "Réponse",
+        "coach_message": "Coach (privé)"
+      },
+      "reason": {
+        "not_student": "Compte non élève",
+        "opt_out": "Désinscrit",
+        "sanctioned": "Compte sanctionné",
+        "coach_source_off": "Source coach fermée",
+        "source_not_visible": "Contenu plus visible",
+        "feature_unavailable": "Fonction indisponible",
+        "feature_used": "Fonction déjà utilisée",
+        "need_cooldown": "Même besoin < 30 jours",
+        "user_cap": "Déjà notifié < 72 h",
+        "shadow": "Observation (non envoyé)",
+        "expired": "Expiré",
+        "error": "Erreur technique"
+      }
     }
   }
 }
