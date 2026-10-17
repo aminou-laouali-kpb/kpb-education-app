@@ -8,6 +8,7 @@ import '../../core/data/notification_opt_out.dart';
 import '../../core/models/app_models.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/services/notification_router.dart';
+import '../assist_bridge/assist_bridge_sheet.dart';
 import '../../core/services/push_permission.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/community_store.dart';
@@ -93,6 +94,7 @@ class _StoredNotification {
     required this.variant,
     required this.createdAt,
     required this.read,
+    this.data = const <String, dynamic>{},
   });
 
   final String id;
@@ -106,6 +108,10 @@ class _StoredNotification {
   final String? variant;
   final DateTime createdAt;
   final bool read;
+
+  /// La charge brute (`data`) : la feuille du bot « Passerelle » y lit le
+  /// besoin, la fonction et l'événement.
+  final Map<String, dynamic> data;
 
   factory _StoredNotification.fromJson(Map<String, dynamic> json) {
     final data = json['data'] is Map ? json['data'] as Map : const {};
@@ -122,6 +128,7 @@ class _StoredNotification {
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
       read: json['readAt'] != null,
+      data: Map<String, dynamic>.from(data),
     );
   }
 
@@ -142,6 +149,7 @@ class _StoredNotification {
         variant: variant,
         createdAt: createdAt,
         read: true,
+        data: data,
       );
 }
 
@@ -168,6 +176,15 @@ class _StoredNotification {
       background:
           datesOnly ? KpbColors.actionPrimarySoft : KpbColors.successLight,
       ctaKey: 'notif_cta_open_scholarship',
+    );
+  }
+  // Bot « Passerelle » (contrat §15) : une suggestion de l'équipe KPB.
+  if (k == assistBridgeKind) {
+    return (
+      icon: Icons.support_agent_rounded,
+      color: KpbColors.actionPrimary,
+      background: KpbColors.actionPrimarySoft,
+      ctaKey: 'notif_cta_assist_bridge',
     );
   }
   // Communauté (contrat §11) : avant les règles par sous-chaîne, pour qu'un
@@ -894,6 +911,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         // Navigation remains useful even if read-state persistence is offline.
       }
     }
+    // Bot « Passerelle » : la feuille « Tu peux le faire dans l'app », comme
+    // au tap du push.
+    if (item.kind == assistBridgeKind) {
+      await showAssistBridgeSheet(<String, dynamic>{
+        ...item.data,
+        'route': item.route,
+      });
+      return;
+    }
     // Même règle que le tap d'un push : la fiche de la bourse, « Mes suivis »
     // pour un groupé — jamais une liste générique quand l'identifiant est là.
     final route = item.destination;
@@ -982,6 +1008,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   type: NotificationOptOutType.community,
                   titleKey: 'comm_notif_pref_title',
                   subtitleKey: 'comm_notif_pref_subtitle',
+                ),
+              ],
+              // Bot « Passerelle » : visible seulement serveur en mode `on`
+              // (qui connaît la clé `assist_bridge`).
+              if (RemoteFeatureFlags.instance.assistBridgeEnabled) ...[
+                const SizedBox(height: 12),
+                _optOutRow(
+                  icon: Icons.support_agent_rounded,
+                  type: NotificationOptOutType.assistBridge,
+                  titleKey: 'assist_bridge_pref_title',
+                  subtitleKey: 'assist_bridge_pref_subtitle',
                 ),
               ],
               _matchAlertsRow(),

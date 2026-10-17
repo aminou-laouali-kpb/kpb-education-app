@@ -395,6 +395,16 @@ class RemoteFeatureFlags {
   /// fermé.
   bool get communityEnabled => _flag('community', false);
 
+  /// Le bot « Passerelle » envoie-t-il ses suggestions privées ?
+  ///
+  /// Clé `assistBridge`, FERMÉE par défaut : vraie seulement quand le serveur
+  /// est en mode `on` (en `shadow`, rien n'est envoyé). Elle ne sert qu'à
+  /// afficher l'interrupteur « Suggestions de l'équipe KPB » des préférences :
+  /// un backend plus ancien ne connaît pas la clé `assist_bridge` et la
+  /// retirerait à l'écriture. Une notification `assist_bridge` reçue s'ouvre
+  /// quel que soit ce drapeau.
+  bool get assistBridgeEnabled => _flag('assistBridge', false);
+
   // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
   //
   // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne

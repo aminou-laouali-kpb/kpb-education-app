@@ -221,4 +221,61 @@ void main() {
         reason:
             'une fiche poussée sur l\'écran de connexion mènerait à un 401');
   });
+
+  group('bot « Passerelle » (assist_bridge)', () {
+    Map<String, dynamic> payload() => <String, dynamic>{
+          'route': '/scholarship-match',
+          'type': 'assist_bridge',
+          'needId': 'scholarship_match',
+          'feature': 'scholarship_match',
+          'eventId': 'ev_1',
+          'whatsapp': 'kpb',
+          'notificationKey': 'assist_bridge:ev_1',
+        };
+
+    test('un tap ouvre la feuille, jamais une page par-dessus', () async {
+      final opened = <Map<String, dynamic>>[];
+      router.assistBridgeOpener = (data) async => opened.add(data);
+      router.markReady();
+      await router.open(payload());
+      expect(opened.single['needId'], 'scholarship_match');
+      expect(navigated, isEmpty);
+      expect(events.single.value, <String, Object>{'kind': 'assist_bridge'});
+    });
+
+    test('feuille en échec, ou non branchée : la route servie est suivie',
+        () async {
+      router.assistBridgeOpener =
+          (_) async => throw StateError('pas de contexte');
+      router.markReady();
+      await router.open(payload());
+      expect(navigated, <String?>['/scholarship-match']);
+
+      router.assistBridgeOpener = null;
+      await router.open(payload());
+      expect(navigated, <String?>['/scholarship-match', '/scholarship-match']);
+    });
+
+    test('une build ancienne (route inconnue) retombe sur l\'accueil', () {
+      expect(
+        resolveNotificationRoute(<String, dynamic>{
+          'route': '/document-review',
+          'kind': 'assist_bridge',
+        }),
+        isNull,
+      );
+    });
+
+    test('les autres kinds ne passent jamais par la feuille', () async {
+      final opened = <Map<String, dynamic>>[];
+      router.assistBridgeOpener = (data) async => opened.add(data);
+      router.markReady();
+      await router.open(<String, dynamic>{
+        'route': '/scholarships/chevening',
+        'kind': 'scholarship_opened',
+      });
+      expect(opened, isEmpty);
+      expect(navigated, <String?>['/scholarships/chevening']);
+    });
+  });
 }

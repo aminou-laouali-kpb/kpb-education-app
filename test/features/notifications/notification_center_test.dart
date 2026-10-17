@@ -127,6 +127,10 @@ void main() {
       expect(notificationKindStyle('case_milestone').ctaKey, 'notif_cta_case');
       expect(notificationKindStyle('counselor_message').ctaKey,
           'notif_cta_message');
+      expect(notificationKindStyle('assist_bridge').ctaKey,
+          'notif_cta_assist_bridge');
+      expect(notificationKindStyle('assist_bridge').icon,
+          Icons.support_agent_rounded);
       expect(notificationKindStyle('famille_future').icon,
           Icons.notifications_none_rounded,
           reason: 'un kind inconnu garde un rendu neutre');
@@ -240,6 +244,48 @@ void main() {
       (tester) async {
     await _pump(tester, unreadRouteExists: true);
     expect(find.text('followed_scholarship_pref_title'), findsOneWidget);
+  });
+
+  testWidgets(
+      'ligne « Suggestions de l\'équipe KPB » : absente tant que le serveur '
+      'n\'est pas en mode on', (tester) async {
+    await _pump(tester);
+    expect(find.text('assist_bridge_pref_title'), findsNothing);
+  });
+
+  testWidgets('… présente drapeau `assistBridge` ouvert', (tester) async {
+    RemoteFeatureFlags.instance
+        .debugSetFeaturesForTest(const <String, bool>{'assistBridge': true});
+    await _pump(tester);
+    expect(find.text('assist_bridge_pref_title'), findsOneWidget);
+    expect(find.text('assist_bridge_pref_subtitle'), findsOneWidget);
+  });
+
+  testWidgets(
+      'une suggestion `assist_bridge` du fil : son appel à l\'action, et au '
+      'tap la feuille (pas une page)', (tester) async {
+    final api = await _pump(tester, unread: 1, rows: [
+      <String, dynamic>{
+        ..._row('p', 'assist_bridge', DateTime.now(),
+            route: '/scholarship-match'),
+        'data': <String, dynamic>{
+          'needId': 'scholarship_match',
+          'feature': 'scholarship_match',
+          'eventId': 'ev_9',
+          'whatsapp': 'kpb',
+        },
+      },
+    ]);
+    when(() => api.markUserNotificationRead(any())).thenAnswer((_) async {});
+    when(() => api.reportAssistBridgeAction(any(), any()))
+        .thenAnswer((_) async {});
+    expect(find.text('notif_cta_assist_bridge'), findsOneWidget);
+    await tester.tap(find.text('Titre p'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('assist-bridge-sheet')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('assist-bridge-later')));
+    await tester.pumpAndSettle();
+    verify(() => api.reportAssistBridgeAction('ev_9', 'dismissed')).called(1);
   });
 
   testWidgets('autorisation refusée : « Notifications coupées » + réglages',
