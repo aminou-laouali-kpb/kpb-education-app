@@ -123,9 +123,9 @@ const NAV_LINKS: readonly NavLinkDefinition[] = [
     labelKey: 'nav.community',
     icon: 'community',
     // Rôle R du contrat de la communauté (Moderator, ContentManager, Admin,
-    // SuperAdmin) — les mêmes que les anciennes routes `/admin/forum-*`.
+    // SuperAdmin) + Counselor, qui y lit les discussions pour y répondre.
     visibleForRole: (role) =>
-      hasAdminCapability(role, AdminCapability.ModerateCommunity),
+      hasAdminCapability(role, AdminCapability.ReadCommunityDiscussions),
   },
   {
     href: '/notifications',

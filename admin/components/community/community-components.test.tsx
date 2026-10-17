@@ -15,7 +15,7 @@ import { LocaleProvider } from '../locale-provider';
 import { ContentActionDialog, SanctionDialog } from './action-dialogs';
 import { PostDetailView } from './content-panel';
 import { StatsView } from './dashboard-panel';
-import { MemberDetailView, MostReportedTable } from './members-panel';
+import { MemberDetailView, MostReportedTable, SanctionsTable } from './members-panel';
 import { QueueList, QueuePreview } from './moderation-queue';
 import { FiltersView, FixedSettings } from './settings-panel';
 import { LoadError, SoonState } from './shared';
@@ -34,6 +34,7 @@ const asyncNoop = async () => {};
 const moderator = communityPermissions(InternalRole.Moderator);
 const contentManager = communityPermissions(InternalRole.ContentManager);
 const admin = communityPermissions(InternalRole.Admin);
+const counselor = communityPermissions(InternalRole.Counselor);
 
 const author = {
   kind: 'member',
@@ -194,6 +195,30 @@ describe('file de modération (rendu)', () => {
     expect(html).not.toContain('Avertir');
   });
 
+  it('membre signalé : « Classer les signalements » (rôle S), absent pour le gestionnaire de contenu', () => {
+    const memberItem: QueueItem = {
+      ...queueItem,
+      key: 'member:cm_42',
+      targetType: 'member',
+      post: null,
+      member: { ...author, openReportCount: 3 },
+    };
+    const props = {
+      item: memberItem,
+      history: null,
+      historyLoading: false,
+      onContentAction: noop,
+      onSanction: noop,
+      onDismissMemberReports: noop,
+      onOpenPost: noop,
+      onOpenMember: noop,
+    };
+    const html = render(<QueuePreview {...props} permissions={moderator} />);
+    expect(html).toContain('Classer les signalements');
+    expect(html).toContain('Une sanction clôt ses signalements ouverts');
+    expect(render(<QueuePreview {...props} permissions={contentManager} />)).not.toContain('Classer les signalements');
+  });
+
   it('historique de l’auteur : restriction et sanctions passées', () => {
     const html = render(
       <QueuePreview
@@ -347,6 +372,18 @@ describe('discussion (rendu)', () => {
     expect(html).toContain('Réponses (2)');
     expect(html).toContain('Fatima');
   });
+
+  it('conseiller : lecture seule de la discussion (ni épinglage, ni vérification, ni action, ni lien membre)', () => {
+    const html = render(
+      <PostDetailView detail={detail} permissions={counselor} busy={null} onAction={noop} onPin={noop} onVerify={noop} />,
+    );
+    expect(html).toContain('Réponse vérifiée par KPB');
+    expect(html).not.toContain('Désépingler');
+    expect(html).not.toContain('Marquer « Réponse vérifiée par KPB »');
+    expect(html).not.toContain('>Masquer<');
+    expect(html).not.toMatch(/<button[^>]*>Aïcha K\.<\/button>/);
+    expect(html).not.toContain('aicha.kader@example.org');
+  });
 });
 
 describe('membres (rendu)', () => {
@@ -388,6 +425,34 @@ describe('membres (rendu)', () => {
     const cm = render(<MemberDetailView {...props} permissions={contentManager} />);
     expect(cm).not.toContain('>Lever<');
     expect(cm).not.toContain('Bannir');
+  });
+});
+
+describe('sanctions en cours (rendu)', () => {
+  const sanction = {
+    id: 's9',
+    kind: 'ban',
+    reason: 'Arnaque avérée',
+    endsAt: null,
+    createdAt: '2026-10-17T00:00:00.000Z',
+    createdBy: { adminId: 'adm_1', name: 'Fatima' },
+    revokedAt: null,
+    active: true,
+    member: { kind: 'member', memberId: 'cm_9', displayName: 'Koffi A.', countryName: 'Togo', badges: [] },
+  };
+
+  it('liste avec membre, motif, fin, levée pour le rôle S', () => {
+    const html = render(<SanctionsTable items={[sanction]} canRevoke onRevoke={noop} onOpenMember={noop} />);
+    expect(html).toContain('Koffi A.');
+    expect(html).toContain('Bannissement');
+    expect(html).toContain('Arnaque avérée');
+    expect(html).toContain('sans fin');
+    expect(html).toContain('>Lever<');
+  });
+
+  it('sans le droit de sanction : pas de levée ; liste vide : état vide', () => {
+    expect(render(<SanctionsTable items={[sanction]} canRevoke={false} onRevoke={noop} onOpenMember={noop} />)).not.toContain('>Lever<');
+    expect(render(<SanctionsTable items={[]} canRevoke onRevoke={noop} onOpenMember={noop} />)).toContain('Aucune sanction.');
   });
 });
 
@@ -446,5 +511,17 @@ describe('tableau de bord (rendu)', () => {
     expect(html).toContain('dont 38 de l&#x27;équipe');
     expect(html).toContain('4 publication(s) en attente de revue');
     expect(html).toContain('2026-10-17');
+  });
+
+  it('révision 1 : délai médian de modération et questions sans réponse > 48 h', () => {
+    const html = render(
+      <StatsView stats={{ ...stats, autoHiddenMedianHandlingHours: 3.5, unansweredOver48h: 4 }} onOpenQueue={noop} />,
+    );
+    expect(html).toContain('Délai médian de modération');
+    expect(html).toContain('3,5 h');
+    expect(html).toContain('Sans réponse depuis plus de 48 h');
+    expect(html).toContain('12 question(s) sans réponse au total');
+    // Serveur plus ancien : pas de tuile de délai de modération.
+    expect(render(<StatsView stats={stats} onOpenQueue={noop} />)).not.toContain('Délai médian de modération');
   });
 });

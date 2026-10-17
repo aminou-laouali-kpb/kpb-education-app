@@ -18,6 +18,7 @@ import {
   FILTER_FLAGS,
   isNewAccount,
   KNOWN_ERROR_CODES,
+  LOG_ACTIONS,
   mostReportedMembers,
   normalizeDomainInput,
   normalizeTermInput,
@@ -141,6 +142,7 @@ describe('messages de la console communauté', () => {
       ['postType', POST_TYPES],
       ['sanction', ['warning', 'read_only', 'ban']],
       ['target', ['post', 'reply', 'member']],
+      ['logAction', LOG_ACTIONS],
     ];
     for (const [group, values] of groups) {
       for (const value of values) {
@@ -182,10 +184,32 @@ describe('rôles (présentation seulement)', () => {
     expect(who((p) => p.viewIdentity)).toEqual([InternalRole.Admin, InternalRole.SuperAdmin].sort());
   });
 
+  it('lecture des discussions = R + Counselor (révision 1)', () => {
+    expect(who((p) => p.read)).toEqual(
+      [
+        InternalRole.Counselor,
+        InternalRole.Moderator,
+        InternalRole.ContentManager,
+        InternalRole.Admin,
+        InternalRole.SuperAdmin,
+      ].sort(),
+    );
+  });
+
+  it('conseiller : « Contenus » seul, ni modération, ni sanction, ni identité', () => {
+    const p = communityPermissions(InternalRole.Counselor);
+    expect(p).toEqual({ read: true, moderate: false, sanction: false, configureFilters: false, viewIdentity: false });
+    const tabs = visibleCommunityTabs(p);
+    expect(tabs).toEqual(['content']);
+    // Un lien vers la file ou un membre retombe sur « Contenus ».
+    expect(resolveCommunityTab({ tab: 'queue', post: null, member: null }, tabs)).toBe('content');
+    expect(resolveCommunityTab({ tab: null, post: null, member: 'cm_1' }, tabs)).toBe('content');
+  });
+
   it('rôle inconnu ou absent : aucun droit, aucun onglet', () => {
-    for (const role of [null, undefined, 'advisor', InternalRole.Counselor, InternalRole.Commercial]) {
+    for (const role of [null, undefined, 'advisor', InternalRole.Commercial]) {
       const p = communityPermissions(role);
-      expect(p).toEqual({ moderate: false, sanction: false, configureFilters: false, viewIdentity: false });
+      expect(p).toEqual({ read: false, moderate: false, sanction: false, configureFilters: false, viewIdentity: false });
       expect(visibleCommunityTabs(p)).toEqual([]);
     }
     expect(visibleCommunityTabs(communityPermissions(InternalRole.ContentManager))).toContain('taxonomy');
@@ -369,6 +393,9 @@ describe('file : urgence et ancienneté', () => {
     expect(isNewAccount({ accountCreatedAt: '2026-10-12T12:00:00.000Z' }, now)).toBe(true);
     expect(isNewAccount({ accountCreatedAt: '2026-10-01T12:00:00.000Z' }, now)).toBe(false);
     expect(isNewAccount({ accountCreatedAt: null }, now)).toBe(false);
+    // Révision 1 : le drapeau du serveur prime sur la date.
+    expect(isNewAccount({ accountCreatedAt: '2026-10-01T12:00:00.000Z', isNewAccount: true }, now)).toBe(true);
+    expect(isNewAccount({ accountCreatedAt: '2026-10-16T12:00:00.000Z', isNewAccount: false }, now)).toBe(false);
   });
 
   it('texte brut depuis les segments (mentions et hashtags lisibles)', () => {
@@ -501,6 +528,25 @@ describe('appels du contrat', () => {
       path: '/admin/community/posts/cp_1/replies',
       method: 'POST',
       body: { body: 'Bonjour', as: 'kpb_advisor', verified: true },
+    });
+  });
+
+  it('révision 1 : sanctions en cours, classement des signalements d’un membre', async () => {
+    let mock = stub({ items: [], nextCursor: null });
+    await communityAdminApi.sanctions();
+    expect(call(mock)).toEqual({ path: '/admin/community/sanctions?status=active&limit=30', method: 'GET', body: undefined });
+    mock = stub({ items: [], nextCursor: null });
+    await communityAdminApi.sanctions('all', 'abc');
+    expect(call(mock).path).toBe('/admin/community/sanctions?status=all&cursor=abc&limit=30');
+    mock = stub({ memberId: 'cm_1', dismissed: 2 });
+    await expect(communityAdminApi.dismissMemberReports('cm_1', 'Signalements infondés')).resolves.toEqual({
+      memberId: 'cm_1',
+      dismissed: 2,
+    });
+    expect(call(mock)).toEqual({
+      path: '/admin/community/members/cm_1/reports/dismiss',
+      method: 'POST',
+      body: { reason: 'Signalements infondés' },
     });
   });
 

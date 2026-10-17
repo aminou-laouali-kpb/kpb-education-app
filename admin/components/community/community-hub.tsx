@@ -25,7 +25,8 @@ import { SettingsPanel } from './settings-panel';
  * Communauté — console de l'équipe : tableau de bord, file de modération,
  * contenus, membres, réglages du filtre, journal, et la taxonomie historique
  * du forum (gardée, dépréciée). L'onglet, la discussion et le membre ouverts
- * sont dans l'URL.
+ * sont dans l'URL. Le conseiller (Counselor) ne voit que « Contenus » : lire
+ * les discussions et y répondre.
  */
 export function CommunityHub() {
   const { session } = useAdminAuth();
@@ -34,17 +35,19 @@ export function CommunityHub() {
   const params = useSearchParams();
   const postId = params.get('post');
   const memberId = params.get('member');
-  const tab = resolveCommunityTab({ tab: params.get('tab'), post: postId, member: memberId });
   const permissions = communityPermissions(session?.user.role);
   const tabs = visibleCommunityTabs(permissions);
+  const tab = resolveCommunityTab({ tab: params.get('tab'), post: postId, member: memberId }, tabs);
 
   const go = (target: Parameters<typeof communityHref>[0]) => router.push(communityHref(target));
   const openPost = (id: string | null) => go({ tab: 'content', post: id });
   const openMember = (id: string | null) => go({ tab: 'members', member: id });
+  // Fiches membres : rôle R seulement (le conseiller n'y a pas accès).
+  const openMemberIfAllowed = permissions.moderate ? (id: string) => openMember(id) : undefined;
 
   return (
     <DashboardShell title={t('communityAdmin.title')} subtitle={t('communityAdmin.subtitle')}>
-      {session && !permissions.moderate ? (
+      {session && !permissions.read ? (
         <Alert variant="warning">{t('communityAdmin.errors.forbidden')}</Alert>
       ) : (
         <div style={{ display: 'grid', gap: 14 }}>
@@ -66,7 +69,7 @@ export function CommunityHub() {
             <ModerationQueue permissions={permissions} onOpenPost={(id) => openPost(id)} onOpenMember={(id) => openMember(id)} />
           ) : null}
           {tab === 'content' ? (
-            <ContentPanel permissions={permissions} postId={postId} onOpenPost={openPost} onOpenMember={(id) => openMember(id)} />
+            <ContentPanel permissions={permissions} postId={postId} onOpenPost={openPost} onOpenMember={openMemberIfAllowed} />
           ) : null}
           {tab === 'members' ? (
             <MembersPanel permissions={permissions} memberId={memberId} onOpenMember={openMember} onOpenPost={(id) => openPost(id)} />

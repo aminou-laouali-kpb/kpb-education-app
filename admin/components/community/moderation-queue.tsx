@@ -28,7 +28,7 @@ import {
 } from '../../lib/community-admin';
 import { useLocale } from '../locale-provider';
 import { Alert, Badge, Button, EmptyState } from '../ui';
-import { ContentActionDialog, SanctionDialog } from './action-dialogs';
+import { ContentActionDialog, ReasonDialog, SanctionDialog } from './action-dialogs';
 import {
   AuthorLine,
   ContentStatusBadge,
@@ -71,6 +71,7 @@ export function ModerationQueue({
   const [actionError, setActionError] = useState<string | null>(null);
   const [contentAction, setContentAction] = useState<ContentAction | null>(null);
   const [sanctionKind, setSanctionKind] = useState<SanctionKind | null>(null);
+  const [dismissingMember, setDismissingMember] = useState(false);
 
   const queue = useLoader<QueueResponse>(() => communityAdminApi.queue(kind), [kind]);
 
@@ -128,6 +129,13 @@ export function ModerationQueue({
       const content = queueContent(selected);
       if (content && availableContentActions(content.content).includes(shortcut)) {
         setContentAction(shortcut);
+      } else if (
+        shortcut === 'dismiss_reports' &&
+        selected.targetType === 'member' &&
+        selected.member?.memberId &&
+        permissions.sanction
+      ) {
+        setDismissingMember(true);
       }
     },
     [move, permissions.sanction, selected],
@@ -135,7 +143,7 @@ export function ModerationQueue({
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (contentAction || sanctionKind) return;
+      if (contentAction || sanctionKind || dismissingMember) return;
       // Une boîte de dialogue (autre que les nôtres) est ouverte : on s'abstient.
       if (document.querySelector('[role="dialog"]')) return;
       const target = event.target as HTMLElement | null;
@@ -153,11 +161,12 @@ export function ModerationQueue({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [contentAction, sanctionKind, trigger]);
+  }, [contentAction, sanctionKind, dismissingMember, trigger]);
 
   async function afterAction(message: string) {
     setContentAction(null);
     setSanctionKind(null);
+    setDismissingMember(false);
     setNotice(message);
     setActionError(null);
     // La ligne traitée sort de la file : on garde la position (élément suivant).
@@ -208,6 +217,7 @@ export function ModerationQueue({
               historyLoading={history.loading}
               onContentAction={setContentAction}
               onSanction={setSanctionKind}
+              onDismissMemberReports={() => setDismissingMember(true)}
               onOpenPost={onOpenPost}
               onOpenMember={onOpenMember}
             />
@@ -225,6 +235,18 @@ export function ModerationQueue({
           if (content.kind === 'post') await communityAdminApi.postAction(content.content.id, input);
           else await communityAdminApi.replyAction(content.content.id, input);
           await afterAction(t(`communityAdmin.action.${input.action}.done`));
+        }}
+      />
+      <ReasonDialog
+        open={dismissingMember}
+        title={fill(t('communityAdmin.memberReports.title'), { member: memberName })}
+        description={t('communityAdmin.memberReports.body')}
+        confirmLabel={t('communityAdmin.memberReports.cta')}
+        onCancel={() => setDismissingMember(false)}
+        onConfirm={async (reason) => {
+          if (!memberId) return;
+          const result = await communityAdminApi.dismissMemberReports(memberId, reason);
+          await afterAction(fill(t('communityAdmin.memberReports.done'), { n: result?.dismissed ?? 0 }));
         }}
       />
       <SanctionDialog
@@ -367,6 +389,7 @@ export function QueuePreview({
   historyLoading,
   onContentAction,
   onSanction,
+  onDismissMemberReports,
   onOpenPost,
   onOpenMember,
 }: Readonly<{
@@ -376,6 +399,8 @@ export function QueuePreview({
   historyLoading: boolean;
   onContentAction: (action: ContentAction) => void;
   onSanction: (kind: SanctionKind) => void;
+  /** Membre signalé : classer ses signalements sans sanction (révision 1). */
+  onDismissMemberReports?: () => void;
   onOpenPost: (postId: string) => void;
   onOpenMember: (memberId: string) => void;
 }>) {
@@ -452,6 +477,12 @@ export function QueuePreview({
               </Button>
             ))
           : null}
+        {item.targetType === 'member' && permissions.sanction && memberId && onDismissMemberReports ? (
+          <Button size="sm" variant="secondary" aria-keyshortcuts="c" onClick={onDismissMemberReports}>
+            {t('communityAdmin.memberReports.cta')}
+            <kbd style={{ marginLeft: 6, opacity: 0.7 }}>c</kbd>
+          </Button>
+        ) : null}
         {postId ? (
           <Button size="sm" variant="ghost" onClick={() => onOpenPost(postId)}>
             {t('communityAdmin.openDiscussion')}

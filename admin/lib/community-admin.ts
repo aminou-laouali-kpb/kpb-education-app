@@ -71,6 +71,8 @@ export interface AdminAuthor {
   fullName?: string | null;
   email?: string | null;
   isMinor?: boolean | null;
+  /** Compte de moins de 7 jours (révision 1) ; à défaut, dérivé de `accountCreatedAt`. */
+  isNewAccount?: boolean | null;
   accountCreatedAt?: string | null;
   adminId?: string | null;
 }
@@ -143,6 +145,11 @@ export interface Sanction {
   revokedAt: string | null;
   revokedBy?: string | null;
   active: boolean;
+}
+
+/** Ligne de `GET /admin/community/sanctions` (révision 1, §8.5). */
+export interface SanctionWithMember extends Sanction {
+  member: AdminAuthor;
 }
 
 export interface Restriction {
@@ -225,7 +232,11 @@ export interface CommunityStats {
   helpfulReactions: number;
   reports: { opened: number; open: number; resolved: number; medianResolutionHours: number | null };
   autoHidden: number;
+  /** Révision 1 : médiane création → première décision humaine (masqués auto). */
+  autoHiddenMedianHandlingHours?: number | null;
   unansweredQuestions: number;
+  /** Révision 1 : questions visibles sans réponse créées il y a plus de 48 h. */
+  unansweredOver48h?: number;
   verifiedAnswers: number;
   activeMembers: number;
   newMembers: number;
@@ -322,6 +333,25 @@ export const STATUS_REASONS = [
   'moderation_deleted',
 ] as const;
 
+/**
+ * Valeurs de `ModerationLogEntry.action` (révision 1, §8.1) : décisions
+ * humaines seulement. Réponses d'équipe, épinglage et filtre vont dans
+ * `AdminAuditEvent`, pas dans ce journal.
+ */
+export const LOG_ACTIONS = [
+  'restore',
+  'hide',
+  'delete',
+  'dismiss_reports',
+  'verify_answer',
+  'unverify_answer',
+  'sanction_warning',
+  'sanction_read_only',
+  'sanction_ban',
+  'sanction_revoke',
+  'member_reports_dismissed',
+] as const;
+
 export const BADGES = ['kpb_team', 'kpb_advisor', 'verified_alumni', 'ambassador'] as const;
 
 export const STATUS_VARIANT: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -363,24 +393,7 @@ export function enumMessageKey(
     postType: POST_TYPES,
     sanction: ['warning', 'read_only', 'ban'],
     target: ['post', 'reply', 'member'],
-    logAction: [
-      'restore',
-      'hide',
-      'delete',
-      'dismiss_reports',
-      'warning',
-      'read_only',
-      'ban',
-      'revoke',
-      'verify',
-      'unverify',
-      'pin',
-      'unpin',
-      'team_reply',
-      'team_post',
-      'filter_add',
-      'filter_remove',
-    ],
+    logAction: LOG_ACTIONS,
   };
   return known[group].includes(value) ? `communityAdmin.enum.${group}.${value}` : null;
 }
@@ -393,6 +406,8 @@ export function rawLabel(value: string): string {
 // ── Rôles (présentation seulement) ─────────────────────────────────────────
 
 export interface CommunityPermissions {
+  /** R + Counselor : lire les discussions et y répondre (révision 1). */
+  read: boolean;
   /** R : lire, agir sur un contenu, répondre, vérifier, épingler. */
   moderate: boolean;
   /** S : avertir, lecture seule, bannir, lever. */
@@ -405,6 +420,7 @@ export interface CommunityPermissions {
 
 export function communityPermissions(role: string | null | undefined): CommunityPermissions {
   return {
+    read: hasAdminCapability(role, AdminCapability.ReadCommunityDiscussions),
     moderate: hasAdminCapability(role, AdminCapability.ModerateCommunity),
     sanction: hasAdminCapability(role, AdminCapability.SanctionCommunityMembers),
     configureFilters: hasAdminCapability(role, AdminCapability.ConfigureCommunityFilters),
@@ -622,7 +638,11 @@ export function shortcutFor(event: {
 // ── Identité et affichage ──────────────────────────────────────────────────
 
 /** Compte créé il y a moins de 7 jours (§4.3) — dérivé, pas la date exacte. */
-export function isNewAccount(author: Pick<AdminAuthor, 'accountCreatedAt'>, now = Date.now()): boolean {
+export function isNewAccount(
+  author: Pick<AdminAuthor, 'accountCreatedAt' | 'isNewAccount'>,
+  now = Date.now(),
+): boolean {
+  if (typeof author.isNewAccount === 'boolean') return author.isNewAccount;
   if (!author.accountCreatedAt) return false;
   const created = Date.parse(author.accountCreatedAt);
   if (Number.isNaN(created)) return false;
@@ -756,12 +776,13 @@ export function parseCommunityTab(value: string | null | undefined): CommunityTa
 }
 
 /**
- * Onglets visibles : tout le rôle R (les routes de lecture sont communes ;
- * les boutons d'écriture se règlent ensuite action par action).
+ * Onglets visibles : tout pour le rôle R (les boutons d'écriture se règlent
+ * ensuite action par action) ; « Contenus » seul pour le conseiller.
  */
 export function visibleCommunityTabs(permissions: CommunityPermissions): CommunityTab[] {
-  if (!permissions.moderate) return [];
-  return [...COMMUNITY_TABS];
+  if (permissions.moderate) return [...COMMUNITY_TABS];
+  if (permissions.read) return ['content'];
+  return [];
 }
 
 // ── Appels ─────────────────────────────────────────────────────────────────
@@ -793,6 +814,13 @@ export const communityAdminApi = {
     apiFetch<AdminReply>(`${BASE}/replies/${encodeURIComponent(id)}/actions`, { method: 'POST', body }),
   sanction: (memberId: string, body: SanctionPayload) =>
     apiFetch<Sanction>(`${BASE}/members/${encodeURIComponent(memberId)}/sanctions`, { method: 'POST', body }),
+  sanctions: (status: 'active' | 'all' = 'active', cursor?: string | null, limit = 30) =>
+    apiFetch<Page<SanctionWithMember>>(`${BASE}/sanctions${query({ status, cursor, limit })}`),
+  dismissMemberReports: (memberId: string, reason: string) =>
+    apiFetch<{ memberId: string; dismissed: number }>(
+      `${BASE}/members/${encodeURIComponent(memberId)}/reports/dismiss`,
+      { method: 'POST', body: { reason } },
+    ),
   revokeSanction: (id: string, reason: string) =>
     apiFetch<Sanction>(`${BASE}/sanctions/${encodeURIComponent(id)}/revoke`, {
       method: 'POST',
@@ -876,9 +904,19 @@ export function communityHref(target: { tab: CommunityTab; post?: string | null;
   return s ? `/community?${s}` : '/community';
 }
 
-/** Onglet effectif : une discussion ouvre « Contenus », un membre « Membres ». */
-export function resolveCommunityTab(params: { tab: string | null; post: string | null; member: string | null }): CommunityTab {
-  if (params.post) return 'content';
-  if (params.member) return 'members';
-  return parseCommunityTab(params.tab);
+/**
+ * Onglet effectif : une discussion ouvre « Contenus », un membre « Membres ».
+ * Un onglet hors des onglets visibles retombe sur le premier visible (le
+ * conseiller atterrit sur « Contenus »).
+ */
+export function resolveCommunityTab(
+  params: { tab: string | null; post: string | null; member: string | null },
+  visible: readonly CommunityTab[] = COMMUNITY_TABS,
+): CommunityTab {
+  const wanted: CommunityTab = params.post
+    ? 'content'
+    : params.member
+      ? 'members'
+      : parseCommunityTab(params.tab);
+  return visible.includes(wanted) ? wanted : (visible[0] ?? wanted);
 }

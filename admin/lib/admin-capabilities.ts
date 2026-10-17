@@ -118,12 +118,20 @@ export enum AdminCapability {
    */
   ConfigureCommunityFilters = 'configure_community_filters',
   /**
+   * Communauté : lire les discussions (`GET /admin/community/posts`, détail)
+   * et y répondre au nom de l'équipe. Rôle **R** + **Counselor** (contrat
+   * révision 1, §8) — le conseiller n'a ni la file, ni les membres, ni les
+   * sanctions, ni les statistiques, ni le filtre.
+   */
+  ReadCommunityDiscussions = 'read_community_discussions',
+  /**
    * Communauté : voir l'identité réelle d'un membre (nom complet, e-mail, date
    * de création du compte). Le contrat (§8.1, `AdminAuthor`) la sert à tout le
    * rôle R ; la console la réserve aux administrateurs, par minimisation : un
    * modérateur juge un contenu, il n'a pas besoin de l'e-mail d'un élève
-   * (parfois mineur). Présentation seulement — le serveur devrait idéalement
-   * ne pas l'envoyer (voir le rapport du chantier).
+   * (parfois mineur). Le serveur ne l'envoie d'ailleurs qu'à Admin et
+   * SuperAdmin (contrat révision 1, §8.1) ; ce filtre reste une seconde
+   * barrière d'affichage.
    */
   ViewCommunityIdentity = 'view_community_identity',
 }
@@ -139,6 +147,7 @@ const ALL_ROLES = Object.freeze([
 
 const ROLE_CAPABILITIES = {
   [InternalRole.Counselor]: Object.freeze([
+    AdminCapability.ReadCommunityDiscussions,
     AdminCapability.ViewInterestList,
     AdminCapability.ViewReviewRequestMetadata,
     AdminCapability.ViewAssignedReviewRequests,
@@ -162,12 +171,14 @@ const ROLE_CAPABILITIES = {
   ]),
   [InternalRole.ContentManager]: Object.freeze([
     AdminCapability.ModerateCommunity,
+    AdminCapability.ReadCommunityDiscussions,
     AdminCapability.ViewScholarshipContent,
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
   ]),
   [InternalRole.Moderator]: Object.freeze([
     AdminCapability.ModerateCommunity,
+    AdminCapability.ReadCommunityDiscussions,
     AdminCapability.SanctionCommunityMembers,
     AdminCapability.VerifyOutcomes,
     AdminCapability.ViewScholarshipContent,
@@ -204,6 +215,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewReferralCampaigns,
     AdminCapability.ManageReferralCampaigns,
     AdminCapability.ModerateCommunity,
+    AdminCapability.ReadCommunityDiscussions,
     AdminCapability.SanctionCommunityMembers,
     AdminCapability.ConfigureCommunityFilters,
     AdminCapability.ViewCommunityIdentity,

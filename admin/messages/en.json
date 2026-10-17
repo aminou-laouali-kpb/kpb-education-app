@@ -1718,7 +1718,7 @@
       "waiting": "waiting {h}",
       "urgency": "Urgency {n}",
       "urgencyHint": "Scam or contact details +5, serious report +4, each report +1 (max 5), minor author +2, over 24 h +3.",
-      "memberReportsHint": "Member report: it hides nothing. Check the profile, then sanction if needed."
+      "memberReportsHint": "Member report: it hides nothing. A sanction closes their open reports; otherwise, dismiss them."
     },
     "history": {
       "title": "Author history",
@@ -1789,6 +1789,12 @@
         "done": "Member banned."
       }
     },
+    "memberReports": {
+      "title": "Dismiss the reports against {member}?",
+      "body": "Open reports against this member are dismissed, with no sanction. Reports on their content are handled per content.",
+      "cta": "Dismiss reports",
+      "done": "{n} report(s) dismissed."
+    },
     "revoke": {
       "title": "Lift the sanction?",
       "cta": "Lift",
@@ -1855,8 +1861,13 @@
       "mostReportedHint": "Members with open reports, most reported first.",
       "noneReported": "No reported member.",
       "activeSanctions": "Active sanctions",
-      "activeSanctionsSoon": "Active sanctions list",
-      "activeSanctionsSoonBody": "The server does not list all active sanctions yet. Their count is on the dashboard; each member profile shows its sanctions and lets you lift them.",
+      "sanctionsHint": "Read-only and bans not lifted nor expired; “All” includes warnings, lifted and expired ones.",
+      "sanctionsFilter": "Filter sanctions",
+      "sanctionsStatus": {
+        "active": "Active",
+        "all": "All"
+      },
+      "noActiveSanctions": "No sanction.",
       "colMember": "Member",
       "colCountry": "Country",
       "colReports": "Reports",
@@ -1914,7 +1925,11 @@
       "days": "{n} days",
       "openReports": "Open reports",
       "openedResolved": "{opened} received, {resolved} resolved in the period",
-      "medianDelay": "Median handling time",
+      "medianDelay": "Median report handling time",
+      "moderationDelay": "Median moderation time",
+      "moderationDelayHint": "Auto-hidden content → first decision; target < {h} h",
+      "unansweredOver48h": "Unanswered for over 48 h",
+      "unansweredTotal": "{n} unanswered question(s) in total",
       "sla": "Target: under {h} h",
       "autoHidden": "Auto-hidden",
       "pendingNow": "{n} post(s) pending review",
@@ -2029,18 +2044,13 @@
         "hide": "Hidden",
         "delete": "Deleted",
         "dismiss_reports": "Reports dismissed",
-        "warning": "Warning",
-        "read_only": "Read-only",
-        "ban": "Ban",
-        "revoke": "Sanction lifted",
-        "verify": "Answer verified",
-        "unverify": "Verification removed",
-        "pin": "Pinned",
-        "unpin": "Unpinned",
-        "team_reply": "Team reply",
-        "team_post": "Team post",
-        "filter_add": "Filter: added",
-        "filter_remove": "Filter: removed"
+        "verify_answer": "Answer verified",
+        "unverify_answer": "Verification removed",
+        "sanction_warning": "Warning",
+        "sanction_read_only": "Read-only",
+        "sanction_ban": "Ban",
+        "sanction_revoke": "Sanction lifted",
+        "member_reports_dismissed": "Member reports dismissed"
       }
     }
   }

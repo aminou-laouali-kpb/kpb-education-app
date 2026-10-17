@@ -57,6 +57,12 @@ export function StatsView({ stats, onOpenQueue }: Readonly<{ stats: CommunitySta
   const { t, locale } = useLocale();
   const nf = new Intl.NumberFormat(locale === 'fr' ? 'fr-FR' : 'en-GB');
   const median = stats.reports.medianResolutionHours;
+  // Révision 1 : délai médian des contenus masqués automatiquement et
+  // questions sans réponse depuis plus de 48 h. Absents d'un serveur plus
+  // ancien : tuile omise, ou repli sur le total sans réponse.
+  const autoMedian = stats.autoHiddenMedianHandlingHours;
+  const hasOver48 = typeof stats.unansweredOver48h === 'number';
+  const over = (h: number | null | undefined) => h !== null && h !== undefined && h > MODERATION_SLA_HOURS;
   const maxDaily = Math.max(1, ...stats.daily.map((d) => d.posts + d.replies));
   const pending = stats.posts.byStatus.pending_review ?? 0;
   return (
@@ -68,23 +74,40 @@ export function StatsView({ stats, onOpenQueue }: Readonly<{ stats: CommunitySta
           sub={fill(t('communityAdmin.dashboard.openedResolved'), { opened: stats.reports.opened, resolved: stats.reports.resolved })}
           tone={stats.reports.open > 0 ? 'warning' : 'success'}
         />
+        {autoMedian !== undefined ? (
+          <Tile
+            label={t('communityAdmin.dashboard.moderationDelay')}
+            value={formatHours(autoMedian, locale)}
+            sub={fill(t('communityAdmin.dashboard.moderationDelayHint'), { h: MODERATION_SLA_HOURS })}
+            tone={over(autoMedian) ? 'danger' : 'neutral'}
+          />
+        ) : null}
         <Tile
           label={t('communityAdmin.dashboard.medianDelay')}
           value={formatHours(median, locale)}
           sub={fill(t('communityAdmin.dashboard.sla'), { h: MODERATION_SLA_HOURS })}
-          tone={median !== null && median !== undefined && median > MODERATION_SLA_HOURS ? 'danger' : 'neutral'}
+          tone={over(median) ? 'danger' : 'neutral'}
         />
         <Tile
           label={t('communityAdmin.dashboard.autoHidden')}
           value={nf.format(stats.autoHidden)}
           sub={fill(t('communityAdmin.dashboard.pendingNow'), { n: pending })}
         />
-        <Tile
-          label={t('communityAdmin.dashboard.unanswered')}
-          value={nf.format(stats.unansweredQuestions)}
-          sub={t('communityAdmin.dashboard.unansweredHint')}
-          tone={stats.unansweredQuestions > 0 ? 'warning' : 'success'}
-        />
+        {hasOver48 ? (
+          <Tile
+            label={t('communityAdmin.dashboard.unansweredOver48h')}
+            value={nf.format(stats.unansweredOver48h as number)}
+            sub={fill(t('communityAdmin.dashboard.unansweredTotal'), { n: stats.unansweredQuestions })}
+            tone={(stats.unansweredOver48h as number) > 0 ? 'warning' : 'success'}
+          />
+        ) : (
+          <Tile
+            label={t('communityAdmin.dashboard.unanswered')}
+            value={nf.format(stats.unansweredQuestions)}
+            sub={t('communityAdmin.dashboard.unansweredHint')}
+            tone={stats.unansweredQuestions > 0 ? 'warning' : 'success'}
+          />
+        )}
         <Tile
           label={t('communityAdmin.dashboard.posts')}
           value={nf.format(stats.posts.total)}

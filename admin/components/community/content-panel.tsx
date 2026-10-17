@@ -69,7 +69,8 @@ export function ContentPanel({
   permissions: CommunityPermissions;
   postId: string | null;
   onOpenPost: (postId: string | null) => void;
-  onOpenMember: (memberId: string) => void;
+  /** Absent pour le conseiller (pas d'accès aux fiches membres). */
+  onOpenMember?: (memberId: string) => void;
 }>) {
   const { t } = useLocale();
   if (postId) {
@@ -246,7 +247,7 @@ function PostDetailPanel({
   postId,
   permissions,
   onOpenMember,
-}: Readonly<{ postId: string; permissions: CommunityPermissions; onOpenMember: (memberId: string) => void }>) {
+}: Readonly<{ postId: string; permissions: CommunityPermissions; onOpenMember?: (memberId: string) => void }>) {
   const { t } = useLocale();
   const detail = useLoader<PostDetail>(() => communityAdminApi.post(postId), [postId]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -293,7 +294,7 @@ function PostDetailPanel({
           )
         }
       />
-      {permissions.moderate ? (
+      {permissions.read ? (
         <TeamReplyForm
           postId={postId}
           onPosted={async () => {
@@ -331,7 +332,7 @@ export function PostDetailView({
   detail: PostDetail;
   permissions: CommunityPermissions;
   busy: string | null;
-  onOpenMember: (memberId: string) => void;
+  onOpenMember?: (memberId: string) => void;
   onAction: (target: Target, action: ContentAction) => void;
   onPin: (pinned: boolean) => void;
   onVerify: (reply: AdminReply, verified: boolean) => void;
@@ -435,7 +436,7 @@ function ReplyItem({
   reply: AdminReply;
   permissions: CommunityPermissions;
   busy: string | null;
-  onOpenMember: (memberId: string) => void;
+  onOpenMember?: (memberId: string) => void;
   onAction: (action: ContentAction) => void;
   onVerify: (verified: boolean) => void;
 }>) {

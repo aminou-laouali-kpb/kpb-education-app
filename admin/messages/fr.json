@@ -1718,7 +1718,7 @@
       "waiting": "attend depuis {h}",
       "urgency": "Urgence {n}",
       "urgencyHint": "Arnaque ou coordonnées +5, signalement grave +4, chaque signalement +1 (max 5), auteur mineur +2, plus de 24 h +3.",
-      "memberReportsHint": "Signalement d'un membre : il ne masque rien. Consultez sa fiche, puis sanctionnez si nécessaire."
+      "memberReportsHint": "Signalement d'un membre : il ne masque rien. Une sanction clôt ses signalements ouverts ; sinon, classez-les sans suite."
     },
     "history": {
       "title": "Historique de l'auteur",
@@ -1789,6 +1789,12 @@
         "done": "Membre banni."
       }
     },
+    "memberReports": {
+      "title": "Classer les signalements visant {member} ?",
+      "body": "Les signalements ouverts visant ce membre sont classés sans suite, sans sanction. Ceux qui visent ses contenus se traitent contenu par contenu.",
+      "cta": "Classer les signalements",
+      "done": "{n} signalement(s) classé(s)."
+    },
     "revoke": {
       "title": "Lever la sanction ?",
       "cta": "Lever",
@@ -1855,8 +1861,13 @@
       "mostReportedHint": "Membres ayant des signalements ouverts, du plus signalé au moins signalé.",
       "noneReported": "Aucun membre signalé.",
       "activeSanctions": "Sanctions en cours",
-      "activeSanctionsSoon": "Liste des sanctions en cours",
-      "activeSanctionsSoonBody": "Le serveur ne liste pas encore toutes les sanctions en cours. Leur nombre figure au tableau de bord ; chaque fiche membre montre ses sanctions et permet de les lever.",
+      "sanctionsHint": "Lecture seule et bannissements non levés et non échus ; « Toutes » inclut avertissements, levées et échues.",
+      "sanctionsFilter": "Filtrer les sanctions",
+      "sanctionsStatus": {
+        "active": "En cours",
+        "all": "Toutes"
+      },
+      "noActiveSanctions": "Aucune sanction.",
       "colMember": "Membre",
       "colCountry": "Pays",
       "colReports": "Signalements",
@@ -1914,7 +1925,11 @@
       "days": "{n} jours",
       "openReports": "Signalements ouverts",
       "openedResolved": "{opened} reçus, {resolved} traités sur la période",
-      "medianDelay": "Délai médian de traitement",
+      "medianDelay": "Délai médian des signalements",
+      "moderationDelay": "Délai médian de modération",
+      "moderationDelayHint": "Contenus masqués automatiquement → première décision ; objectif < {h} h",
+      "unansweredOver48h": "Sans réponse depuis plus de 48 h",
+      "unansweredTotal": "{n} question(s) sans réponse au total",
       "sla": "Objectif : moins de {h} h",
       "autoHidden": "Masqués automatiquement",
       "pendingNow": "{n} publication(s) en attente de revue",
@@ -2029,18 +2044,13 @@
         "hide": "Masqué",
         "delete": "Supprimé",
         "dismiss_reports": "Signalements classés",
-        "warning": "Avertissement",
-        "read_only": "Lecture seule",
-        "ban": "Bannissement",
-        "revoke": "Sanction levée",
-        "verify": "Réponse vérifiée",
-        "unverify": "Vérification retirée",
-        "pin": "Épinglée",
-        "unpin": "Désépinglée",
-        "team_reply": "Réponse de l'équipe",
-        "team_post": "Publication de l'équipe",
-        "filter_add": "Filtre : ajout",
-        "filter_remove": "Filtre : retrait"
+        "verify_answer": "Réponse vérifiée",
+        "unverify_answer": "Vérification retirée",
+        "sanction_warning": "Avertissement",
+        "sanction_read_only": "Lecture seule",
+        "sanction_ban": "Bannissement",
+        "sanction_revoke": "Sanction levée",
+        "member_reports_dismissed": "Signalements du membre classés"
       }
     }
   }

@@ -9,9 +9,11 @@ import {
   type QueueResponse,
   mostReportedMembers,
   plainText,
+  type Page,
   type Sanction,
   SANCTION_VARIANT,
   type SanctionKind,
+  type SanctionWithMember,
 } from '../../lib/community-admin';
 import { useLocale } from '../locale-provider';
 import { AdminTable, AdminTableRow, Alert, Badge, Button, CellText, EmptyState, Field, Input } from '../ui';
@@ -21,12 +23,12 @@ import {
   AuthorLine,
   ContentStatusBadge,
   enumLabel,
+  errorText,
   fill,
   formatDate,
   hintStyle,
   LoadError,
   Section,
-  SoonState,
   useLoader,
 } from './shared';
 
@@ -55,10 +57,13 @@ export function MembersPanel({
       </div>
     );
   }
-  return <MembersOverview onOpenMember={(id) => onOpenMember(id)} />;
+  return <MembersOverview permissions={permissions} onOpenMember={(id) => onOpenMember(id)} />;
 }
 
-function MembersOverview({ onOpenMember }: Readonly<{ onOpenMember: (memberId: string) => void }>) {
+function MembersOverview({
+  permissions,
+  onOpenMember,
+}: Readonly<{ permissions: CommunityPermissions; onOpenMember: (memberId: string) => void }>) {
   const { t } = useLocale();
   const [lookup, setLookup] = useState('');
   const reported = useLoader<QueueResponse>(() => communityAdminApi.queue('members', null, 50), []);
@@ -94,10 +99,150 @@ function MembersOverview({ onOpenMember }: Readonly<{ onOpenMember: (memberId: s
         )}
       </Section>
 
-      <Section title={t('communityAdmin.members.activeSanctions')}>
-        <SoonState title={t('communityAdmin.members.activeSanctionsSoon')} description={t('communityAdmin.members.activeSanctionsSoonBody')} />
-      </Section>
+      <SanctionsSection permissions={permissions} onOpenMember={onOpenMember} />
     </div>
+  );
+}
+
+/** Sanctions en cours ou toutes (révision 1 : `GET /admin/community/sanctions`), avec levée. */
+function SanctionsSection({
+  permissions,
+  onOpenMember,
+}: Readonly<{ permissions: CommunityPermissions; onOpenMember: (memberId: string) => void }>) {
+  const { t } = useLocale();
+  const [status, setStatus] = useState<'active' | 'all'>('active');
+  const [extra, setExtra] = useState<SanctionWithMember[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<Sanction | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const list = useLoader<Page<SanctionWithMember>>(async () => {
+    const page = await communityAdminApi.sanctions(status);
+    setExtra([]);
+    setCursor(page.nextCursor);
+    return page;
+  }, [status]);
+
+  async function more() {
+    if (!cursor) return;
+    try {
+      const page = await communityAdminApi.sanctions(status, cursor);
+      setExtra((current) => [...current, ...page.items]);
+      setCursor(page.nextCursor);
+    } catch (e) {
+      setError(errorText(t, e));
+    }
+  }
+
+  return (
+    <Section
+      title={t('communityAdmin.members.activeSanctions')}
+      hint={t('communityAdmin.members.sanctionsHint')}
+      actions={
+        <div style={{ display: 'flex', gap: 6 }} role="group" aria-label={t('communityAdmin.members.sanctionsFilter')}>
+          {(['active', 'all'] as const).map((s) => (
+            <Button key={s} size="sm" variant={status === s ? 'primary' : 'secondary'} aria-pressed={status === s} onClick={() => setStatus(s)}>
+              {t(`communityAdmin.members.sanctionsStatus.${s}`)}
+            </Button>
+          ))}
+        </div>
+      }
+    >
+      {notice ? <Alert variant="success">{notice}</Alert> : null}
+      {error ? <Alert variant="danger">{error}</Alert> : null}
+      {list.error ? (
+        <LoadError error={list.error} />
+      ) : !list.data ? (
+        <EmptyState title={t('communityAdmin.loading')} />
+      ) : (
+        <SanctionsTable
+          items={[...list.data.items, ...extra]}
+          canRevoke={permissions.sanction}
+          onRevoke={setRevoking}
+          onOpenMember={onOpenMember}
+        />
+      )}
+      {cursor ? (
+        <div>
+          <Button size="sm" variant="secondary" onClick={() => void more()}>
+            {t('communityAdmin.loadMore')}
+          </Button>
+        </div>
+      ) : null}
+      <ReasonDialog
+        open={revoking !== null}
+        title={t('communityAdmin.revoke.title')}
+        description={revoking ? `${enumLabel(t, 'sanction', revoking.kind)} — ${revoking.reason}` : undefined}
+        confirmLabel={t('communityAdmin.revoke.cta')}
+        onCancel={() => setRevoking(null)}
+        onConfirm={async (reason) => {
+          if (!revoking) return;
+          await communityAdminApi.revokeSanction(revoking.id, reason);
+          setRevoking(null);
+          setNotice(t('communityAdmin.revoke.done'));
+          await list.reload();
+        }}
+      />
+    </Section>
+  );
+}
+
+export function SanctionsTable({
+  items,
+  canRevoke,
+  onRevoke,
+  onOpenMember,
+}: Readonly<{
+  items: readonly SanctionWithMember[];
+  canRevoke: boolean;
+  onRevoke: (sanction: Sanction) => void;
+  onOpenMember: (memberId: string) => void;
+}>) {
+  const { t, locale } = useLocale();
+  if (items.length === 0) return <EmptyState title={t('communityAdmin.members.noActiveSanctions')} />;
+  return (
+    <AdminTable
+      cols="1.3fr 0.8fr 1.8fr 1fr 0.9fr"
+      columns={[
+        t('communityAdmin.members.colMember'),
+        t('communityAdmin.members.colKind'),
+        t('communityAdmin.members.colReason'),
+        t('communityAdmin.members.colEnds'),
+        t('communityAdmin.members.colState'),
+      ]}
+    >
+      {items.map((s) => (
+        <AdminTableRow key={s.id}>
+          <div>
+            {s.member?.memberId ? (
+              <Button size="sm" variant="ghost" onClick={() => onOpenMember(s.member.memberId as string)}>
+                {s.member.displayName}
+              </Button>
+            ) : (
+              <CellText primary={s.member?.displayName ?? '—'} />
+            )}
+          </div>
+          <div>
+            <Badge variant={SANCTION_VARIANT[s.kind] ?? 'info'}>{enumLabel(t, 'sanction', s.kind)}</Badge>
+          </div>
+          <CellText primary={s.reason} sub={s.createdBy?.name ? `${s.createdBy.name} · ${formatDate(s.createdAt, locale)}` : formatDate(s.createdAt, locale)} />
+          <CellText primary={s.endsAt ? formatDate(s.endsAt, locale) : s.kind === 'ban' ? t('communityAdmin.noEnd') : '—'} muted />
+          <div>
+            {s.active && s.kind !== 'warning' && canRevoke ? (
+              <Button size="sm" variant="secondary" onClick={() => onRevoke(s)}>
+                {t('communityAdmin.revoke.cta')}
+              </Button>
+            ) : s.revokedAt ? (
+              <Badge variant="neutral">{t('communityAdmin.history.revoked')}</Badge>
+            ) : s.active ? (
+              <Badge variant="warning">{t('communityAdmin.history.active')}</Badge>
+            ) : (
+              <Badge variant="neutral">{t('communityAdmin.history.ended')}</Badge>
+            )}
+          </div>
+        </AdminTableRow>
+      ))}
+    </AdminTable>
   );
 }
 
@@ -152,6 +297,7 @@ function MemberDetailPanel({
   const detail = useLoader<AdminMemberDetail>(() => communityAdminApi.member(memberId), [memberId]);
   const [sanctionKind, setSanctionKind] = useState<SanctionKind | null>(null);
   const [revoking, setRevoking] = useState<Sanction | null>(null);
+  const [dismissing, setDismissing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   if (detail.error) return <LoadError error={detail.error} />;
@@ -166,7 +312,21 @@ function MemberDetailPanel({
         permissions={permissions}
         onSanction={setSanctionKind}
         onRevoke={setRevoking}
+        onDismissReports={() => setDismissing(true)}
         onOpenPost={onOpenPost}
+      />
+      <ReasonDialog
+        open={dismissing}
+        title={fill(t('communityAdmin.memberReports.title'), { member: member.displayName })}
+        description={t('communityAdmin.memberReports.body')}
+        confirmLabel={t('communityAdmin.memberReports.cta')}
+        onCancel={() => setDismissing(false)}
+        onConfirm={async (reason) => {
+          const result = await communityAdminApi.dismissMemberReports(memberId, reason);
+          setDismissing(false);
+          setNotice(fill(t('communityAdmin.memberReports.done'), { n: result?.dismissed ?? 0 }));
+          await detail.reload();
+        }}
       />
       <SanctionDialog
         kind={sanctionKind}
@@ -202,12 +362,15 @@ export function MemberDetailView({
   permissions,
   onSanction,
   onRevoke,
+  onDismissReports,
   onOpenPost,
 }: Readonly<{
   member: AdminMemberDetail;
   permissions: CommunityPermissions;
   onSanction: (kind: SanctionKind) => void;
   onRevoke: (sanction: Sanction) => void;
+  /** Classer sans suite les signalements visant le membre (révision 1). */
+  onDismissReports?: () => void;
   onOpenPost: (postId: string) => void;
 }>) {
   const { t, locale } = useLocale();
@@ -225,6 +388,11 @@ export function MemberDetailView({
         actions={
           permissions.sanction ? (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {(member.openReportCount ?? 0) > 0 && onDismissReports ? (
+                <Button size="sm" variant="secondary" onClick={onDismissReports}>
+                  {t('communityAdmin.memberReports.cta')}
+                </Button>
+              ) : null}
               {(['warning', 'read_only', 'ban'] as const).map((kind) => (
                 <Button key={kind} size="sm" variant={kind === 'warning' ? 'secondary' : 'dangerOutline'} onClick={() => onSanction(kind)}>
                   {t(`communityAdmin.sanction.${kind}.cta`)}
