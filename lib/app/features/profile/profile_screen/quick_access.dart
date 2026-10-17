@@ -54,6 +54,11 @@ class _QuickAccessCard extends StatelessWidget {
           KpbColors.error,
           'profile_quick_journeys_testimonials'.tr,
           () => Get.to(() => const ParcoursScreen()));
+      // Nouvelle communauté (drapeau distant `community`) : élèves seulement.
+      if (CommunityStore.instance.enabled) {
+        add(Icons.forum_rounded, KpbColors.actionPrimary, 'comm_title'.tr,
+            () => openCommunityHub(source: 'profile'));
+      }
       add(Icons.bookmarks_outlined, KpbColors.decorSky, 'followed_title'.tr,
           () => Get.to(() => const SavedScreen()));
       // Les préférences de notification à deux taps du Profil : jusqu'ici, on

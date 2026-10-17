@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/intake_calendar.dart';
 import '../../core/models/app_models.dart';
+import '../../core/models/community.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/ui/components/source_link.dart';
@@ -13,6 +14,7 @@ import '../../core/ui/components/verified_badge.dart';
 import '../../core/utils/country_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../cases/case_composer_sheet.dart';
+import '../community/hub/community_entity_section.dart';
 import '../france/france_private_admission_screen.dart';
 import 'eligibility_quiz_screen.dart';
 import 'program_detail_screen.dart';
@@ -337,6 +339,18 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
           foregroundColor: KpbColors.actionPrimary,
         ),
       ),
+    ));
+
+    // Communauté : « Discussions (N) » sur ce pays (drapeau distant
+    // `community` ; hauteur nulle sinon).
+    children.add(CommunityEntitySection(
+      entity: CommunityMention(
+        type: CommunityEntityType.country,
+        id: country.id,
+        label: name,
+        countryId: country.id,
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
     ));
 
     // Primary hand-off — WhatsApp "Get supported".

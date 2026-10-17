@@ -235,6 +235,44 @@ abstract final class AnalyticsEventName {
     scholarshipMatchAlertsToggled,
   ];
 
+  /// Communauté d'entraide (C1 + C2) : portée, fils, discussions ouvertes,
+  /// publications, réponses, réactions, signalements, blocages. Propriétés
+  /// FERMÉES (types, compteurs, drapeaux 0/1, identifiants d'écran) : JAMAIS
+  /// le texte d'une publication, d'une réponse ou d'une recherche, ni un nom,
+  /// un pays ou un identifiant de membre.
+  static const communityViewed = 'community_viewed';
+  static const communityFeedViewed = 'community_feed_viewed';
+  static const communitySearched = 'community_searched';
+  static const communityPostOpened = 'community_post_opened';
+  static const communityComposerOpened = 'community_composer_opened';
+  static const communityPostCreated = 'community_post_created';
+  static const communityPostFailed = 'community_post_failed';
+  static const communityReplyCreated = 'community_reply_created';
+  static const communityHelpfulToggled = 'community_helpful_toggled';
+  static const communityFollowToggled = 'community_follow_toggled';
+  static const communityReportSent = 'community_report_sent';
+  static const communityBlockToggled = 'community_block_toggled';
+  static const communityCharterAccepted = 'community_charter_accepted';
+  static const communityEntitySectionViewed = 'community_entity_section_viewed';
+
+  /// Les quatorze, pour les gardes (noms ≤ 40 caractères, contrat publié).
+  static const communityEvents = <String>[
+    communityViewed,
+    communityFeedViewed,
+    communitySearched,
+    communityPostOpened,
+    communityComposerOpened,
+    communityPostCreated,
+    communityPostFailed,
+    communityReplyCreated,
+    communityHelpfulToggled,
+    communityFollowToggled,
+    communityReportSent,
+    communityBlockToggled,
+    communityCharterAccepted,
+    communityEntitySectionViewed,
+  ];
+
   /// Sync / catalog observability (paired with [AnalyticsService] helpers).
   static const syncFullComplete = 'sync_full_complete';
   static const syncConflictResolved = 'sync_conflict_resolved';
@@ -360,6 +398,24 @@ abstract final class AnalyticsParamKey {
   static const reusedExisting = 'reused_existing';
   static const suggestion = 'suggestion';
   static const enabled = 'enabled';
+
+  /// Communauté : des types, des comptes et des drapeaux 0/1. `post_type`
+  /// (`question`/`experience`/`advice`), `tab` (`for_you`/`recent`/
+  /// `unanswered`), `target` (`post`/`reply`/`member`), `entity_type`
+  /// (`scholarship`/`country`/`institution`/`program`).
+  static const tab = 'tab';
+  static const postType = 'post_type';
+  static const hasHashtag = 'has_hashtag';
+  static const isHashtag = 'is_hashtag';
+  static const hasVerified = 'has_verified';
+  static const hasPrefill = 'has_prefill';
+  static const mentionCount = 'mention_count';
+  static const hashtagCount = 'hashtag_count';
+  static const pendingReview = 'pending_review';
+  static const target = 'target';
+  static const entityType = 'entity_type';
+  static const discussionCount = 'discussion_count';
+  static const isEdit = 'is_edit';
 
   /// `view_item` : la famille du contenu consulté (`scholarship`, `program`,
   /// `country`, `institution`). Clé GA4 standard, distincte d'`item_type`.

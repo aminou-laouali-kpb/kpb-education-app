@@ -384,6 +384,17 @@ class RemoteFeatureFlags {
   /// change pas le formulaire sous les doigts de l'élève.
   bool get onboardingV2Enabled => _flag('onboardingV2', false);
 
+  /// La nouvelle communauté d'entraide (C1 + C2) est-elle ouverte ?
+  ///
+  /// Clé `community`, FERMÉE par défaut : absente (backend plus ancien),
+  /// illisible ou serveur injoignable, elle vaut `false` et l'entrée actuelle
+  /// reste servie, inchangée. Aucun repli de compilation : pas même
+  /// `KPB_MVP_ONLY`, qui ne garde que l'ANCIEN écran (articles, groupe
+  /// WhatsApp). Le serveur coupe aussi ses routes `/community/*` avec la même
+  /// variable (404 `community_disabled`), que l'app lit comme ce drapeau
+  /// fermé.
+  bool get communityEnabled => _flag('community', false);
+
   // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
   //
   // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne

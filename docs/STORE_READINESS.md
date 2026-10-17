@@ -890,6 +890,32 @@ questionnaire caveat is that the 16 floor lives only in a client form; the
 report path still needs the internal-track/back-office operational evidence
 described above.
 
+### Community (C1 + C2) — ⚠️ TO APPLY ON THE DAY THE FLAG OPENS
+
+The table above stays true **while `KPB_COMMUNITY_ENABLED=false`** (default,
+`docker-compose.yml`): every student route `/community/*` answers 404
+`{ disabled: true }` before authentication (`community.feature.ts`), and the app
+hides the community. On the day the remote flag `features.community` is turned
+on — in the same submission as the build that shows it, never before — the
+answers change:
+
+| Questionnaire item | Answer at the flip | Reason (server, contract `docs/community-api-contract.md`) |
+|---|---|---|
+| Users interact with each other | **Yes** — public posts and replies between students; **no private messages**, no user mentions | `community-student.controller.ts`; §1 of the contract |
+| User-generated content | **Yes — public, moderated** | pre-publication filter (phone/WhatsApp/e-mail, money requests, mobile money, links outside an allowlist, FR/EN insults) → "pending review", visible to the author only (`community-content-filter.ts`); staff queue `GET /admin/community/queue` (target: 24 h) |
+| In-app content report / user block | **Yes / Yes** | report a post, a reply or a member (`POST /community/reports`); block a member, hidden both ways (`POST /community/members/:id/block`); provisional hide at 3 distinct reporters |
+| Community guidelines | **Yes** — 4 rules, accepted (timestamped, versioned) before the first post | `POST /community/charter/accept`, `CommunityCharterAcceptance` |
+| Sanctions / audit | read-only N days, ban; every staff action in `AdminAuditEvent` + `ForumModerationAction` | `community-moderation.service.ts` |
+| Minors (16–17) | minimal public profile (first name + initial, country, badges); never e-mail, phone, age or location | `community-presenter.ts` (`memberAuthor`) |
+
+Apple Guideline 1.2 (filter, report, block, contact, timely moderation) and Google
+Play's UGC policy are covered server-side; the app agent wires the report/block
+entry points. Data safety / privacy labels at the flip: add **Other user-generated
+content** (posts, replies, reports) — collected, **not shared**, linked to the
+account, App functionality; deleted with the account, included in the export (§6).
+Update ToS and privacy policy (web + in-app) **before** opening.
+*À VALIDER (owner): announced moderation delay, contact address shown in the app.*
+
 ---
 
 ## 6. Account deletion & data export (store requirement)

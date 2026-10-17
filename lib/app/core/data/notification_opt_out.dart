@@ -26,6 +26,15 @@ abstract final class NotificationOptOutType {
   /// préférences ne s'affiche donc que si le serveur sert les routes du suivi.
   static const followedScholarshipUpdates = 'followed_scholarship_updates';
 
+  /// Communauté (C1 + C2) — réponses à tes publications, aux discussions que
+  /// tu suis, réponses vérifiées (`community_reply`,
+  /// `community_followed_reply`, `community_verified_answer`). Coupe le push
+  /// seulement : la ligne reste dans le centre de notifications. Les
+  /// notifications de modération (`community_moderation`) concernent le
+  /// compte et ne se coupent pas. La ligne des préférences ne s'affiche que
+  /// drapeau `community` ouvert.
+  static const community = 'community';
+
   /// Every key this build understands. An unknown key coming back from a newer
   /// server is preserved as-is (see [applyOptOut]) rather than dropped, so an
   /// older app never silently re-enables a family it cannot render a row for.
@@ -34,6 +43,7 @@ abstract final class NotificationOptOutType {
     weeklyDigest,
     parcoursWeekly,
     followedScholarshipUpdates,
+    community,
   ];
 }
 

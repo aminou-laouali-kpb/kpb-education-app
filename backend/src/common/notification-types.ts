@@ -32,6 +32,11 @@ export const NOTIFICATION_OPT_OUT_TYPES = [
   'weekly_digest', // KPB-163 — Monday 08h local recap (push + email).
   'parcours_weekly', // KPB-169 — Sunday 18h local "récit de la semaine".
   'followed_scholarship_updates', // Chantier C — "a scholarship you follow is open" (kind `scholarship_opened`).
+  // Communauté C1 + C2 — FAMILY key like the one above: silences the PUSH of
+  // `community_reply`, `community_followed_reply` and `community_verified_answer`
+  // (the inbox row is still written). Moderation notices (`community_moderation`)
+  // are never silenced.
+  'community',
 ] as const;
 
 export type NotificationOptOutType = (typeof NOTIFICATION_OPT_OUT_TYPES)[number];

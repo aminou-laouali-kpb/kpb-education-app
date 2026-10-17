@@ -5,7 +5,8 @@ l’inscription. Chaque ligne cite le fichier qui **prouve** le flux. Les docs
 existants ne font pas autorité : si ce fichier et le code divergent, c’est le
 code qui gagne, et ce fichier doit être mis à jour.
 
-Dernière lecture du dépôt : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
+Dernière lecture du dépôt : 2026-10-17 (communauté C1 + C2, serveur, derrière un drapeau
+fermé ; §7). Lecture précédente : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
 web, sans nouvelle build ; §6). Lecture précédente : 2026-10-16 (chantier L, préparation de
 la build 57 : test « Mes 10 bourses », « Suivre » et notifications, caches hors ligne ; §5).
 Lecture précédente : 2026-08-24 (alignement des trois politiques : YouTube et le
@@ -162,4 +163,37 @@ push) ou de la saisie de l'équipe.
 - À VALIDER (propriétaire) : mention de la compétition (nom public, autorisation parentale,
   empreintes anti-fraude) dans `confidentialite.html` et la politique in-app ; base légale du
   traitement anti-fraude (intérêt légitime) ; durées marquées ci-dessus.
+
+## 7. Communauté d'entraide C1 + C2 (relevé du 17/10/2026)
+
+Lu dans `backend/prisma/schema.prisma` (migration `20261023120000_community`),
+`backend/src/modules/community/` et `backend/src/modules/profiles/profiles.service.ts`. Contrat :
+`docs/community-api-contract.md`. **Tout est derrière `KPB_COMMUNITY_ENABLED` (fermé)** : tant
+qu'il l'est, aucune de ces données ne naît.
+
+| Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
+|---|---|---|---|---|
+| Fiche membre (identifiant public, version et date d'acceptation de la charte) | Premier appel `/community/*` ; `POST /community/charter/accept` | `CommunityMember`, historique `CommunityCharterAcceptance` | Le membre ; l'équipe | Avec le compte (cascade) |
+| Publications et réponses (type, titre, texte libre, mentions d'entités du catalogue, hashtags, statut de modération, drapeaux du filtre) | Écran communauté | `CommunityPost`, `CommunityReply`, `CommunityMention`, `CommunityPostHashtag` | **Public pour les élèves connectés** quand visibles (nom affiché « Prénom I. », pays de résidence déclaré, badges) ; l'auteur seul quand masquées ; l'équipe toujours | Avec le compte (cascade) ; un contenu supprimé par l'auteur ou l'équipe est gardé **30 jours** pour la modération puis purgé (`CommunityPurgeCronService`) |
+| « Utile », suivis de discussion, blocages | Boutons | `CommunityReaction`, `CommunityFollow`, `CommunityBlock` | Compteurs publics (« utile ») ; le reste : le membre seul | Avec le compte (cascade, blocages dans les deux sens) |
+| Signalements (motif, détail libre ≤ 500 car.) | `POST /community/reports` | `CommunityReport` | L'équipe ; **jamais** le membre signalé | Ceux **visant** le compte supprimé partent ; ceux **rédigés** restent sans auteur (`SET NULL`) |
+| Sanctions (motif, durée, admin) | Équipe | `CommunitySanction` | Le membre (motif dans sa notification et `GET /community/me`) ; l'équipe | Avec le compte (cascade) |
+| Journal de modération | Chaque décision de l'équipe | `ForumModerationAction` (+ `AdminAuditEvent`, `purposeCode = community_moderation`) | L'équipe | Gardé ; le lien vers le membre (`memberId`) est mis à NULL à la suppression du compte |
+| Notifications `community_*` | Réponses, réponse vérifiée, modération | `UserNotification` + push (chemin commun) | Le destinataire | Avec le compte (cascade) ; désinscription : clé `community` de `disabledNotificationTypes` (push seulement) |
+| Identité réelle d'un membre (nom complet, e-mail) dans l'admin | Profil existant | — | **Admin et SuperAdmin seulement** ; Moderator/ContentManager/Counselor voient le nom public et les drapeaux « mineur » / « compte < 7 jours » | — |
+
+- **Suppression du compte** : **suppression définitive, pas d'anonymisation** (choix motivé au §12
+  du contrat : récits personnels d'un public jeune). Les réponses d'autres membres sous les
+  publications du compte supprimé partent avec elles ; les compteurs d'autrui sont recalculés.
+- **Export** (`GET /profiles/me/export`) : clé `community` (fiche, acceptations de charte,
+  publications et réponses en texte complet tous états, « utile », suivis, blocages, signalements
+  rédigés, sanctions). Les signalements **visant** l'élève ne lui sont pas rendus.
+- **Mineurs** : aucun message privé, aucune mention d'utilisateur, aucune géolocalisation ; profil
+  public minimal ; filtre anti-coordonnées avant publication.
+- **Aucun nouveau destinataire tiers** : rien ne part vers un service externe (le filtre est local ;
+  pas d'IA dans C1 + C2).
+- À VALIDER (propriétaire) : durée de conservation des contenus supprimés (30 jours) et des
+  signalements rédigés après suppression du compte ; mention de la communauté dans
+  `confidentialite.html`, `conditions.html` et la politique in-app avant ouverture ; base légale
+  (exécution du service) et âge minimal pour publier (16 ans, celui du compte).
 

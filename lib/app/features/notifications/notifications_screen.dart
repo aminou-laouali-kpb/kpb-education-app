@@ -10,6 +10,7 @@ import '../../core/repositories/app_api_client.dart';
 import '../../core/services/notification_router.dart';
 import '../../core/services/push_permission.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/community_store.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/services/scholarship_match_store.dart';
 import '../../core/ui/components/kpb_async_view.dart';
@@ -167,6 +168,32 @@ class _StoredNotification {
       background:
           datesOnly ? KpbColors.actionPrimarySoft : KpbColors.successLight,
       ctaKey: 'notif_cta_open_scholarship',
+    );
+  }
+  // Communauté (contrat §11) : avant les règles par sous-chaîne, pour qu'un
+  // `community_*` n'emprunte jamais le rendu d'une autre famille.
+  if (k == 'community_verified_answer') {
+    return (
+      icon: Icons.verified_rounded,
+      color: KpbColors.success,
+      background: KpbColors.successLight,
+      ctaKey: 'notif_cta_open_discussion',
+    );
+  }
+  if (k == 'community_moderation') {
+    return (
+      icon: Icons.shield_outlined,
+      color: KpbColors.brandNavy,
+      background: KpbColors.surfaceMuted,
+      ctaKey: 'notif_cta_open',
+    );
+  }
+  if (k.startsWith('community')) {
+    return (
+      icon: Icons.forum_outlined,
+      color: KpbColors.actionPrimary,
+      background: KpbColors.actionPrimarySoft,
+      ctaKey: 'notif_cta_open_discussion',
     );
   }
   if (k.contains('deadline') || k.contains('reminder')) {
@@ -945,6 +972,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   type: NotificationOptOutType.followedScholarshipUpdates,
                   titleKey: 'followed_scholarship_pref_title',
                   subtitleKey: 'followed_scholarship_pref_subtitle',
+                ),
+              ],
+              // Communauté : visible seulement drapeau `community` ouvert.
+              if (CommunityStore.instance.enabled) ...[
+                const SizedBox(height: 12),
+                _optOutRow(
+                  icon: Icons.forum_outlined,
+                  type: NotificationOptOutType.community,
+                  titleKey: 'comm_notif_pref_title',
+                  subtitleKey: 'comm_notif_pref_subtitle',
                 ),
               ],
               _matchAlertsRow(),

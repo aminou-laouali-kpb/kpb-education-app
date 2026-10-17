@@ -374,6 +374,12 @@ export class AppConfigController {
         // dans le champ. FERMÉ par défaut : l'ancien parcours reste le repli,
         // et seule `true` ouvre le nouveau.
         onboardingV2: enabled(process.env.KPB_ONBOARDING_V2_ENABLED),
+        // Communauté d'entraide (chantier Communauté C1 + C2). FERMÉE par
+        // défaut : seule `true` l'ouvre. La MÊME variable coupe les routes élève
+        // `/community/*` (404 `{ disabled: true }`, voir community.feature.ts) ;
+        // les routes admin restent ouvertes. Indépendante de KPB_MVP_ONLY, qui
+        // ne garde que l'ancien écran. Contrat : docs/community-api-contract.md.
+        community: enabled(process.env.KPB_COMMUNITY_ENABLED),
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse

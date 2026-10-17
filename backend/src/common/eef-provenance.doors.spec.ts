@@ -406,6 +406,19 @@ const DOORS: Readonly<Record<string, Door>> = {
     unscoped: ['planEefReconcile', 'applyEefReconcile'],
     accesses: 3,
   },
+  'modules/community/community-catalog.service.ts': {
+    reason:
+      'La communauté (C1 + C2) : valider une mention @école / @formation, '
+      + 'l’autocomplétion, et les hôtes des sites officiels (liste blanche des '
+      + 'liens). Seules les fiches actives et jamais une ligne de l’import en '
+      + 'attente : une mention ouvre une fiche, elle doit exister pour l’élève.',
+    scoped: {
+      resolveEntities: ['notPendingEefInstitution', 'notPendingEefProgram'],
+      suggest: ['notPendingEefInstitution', 'notPendingEefProgram'],
+      officialHosts: ['notPendingEefInstitution'],
+    },
+    accesses: 6,
+  },
   'modules/competition-readiness/admin/admin-partnerships.service.ts': {
     reason:
       'Lecture par identifiant d’un établissement, par un administrateur qui gère '

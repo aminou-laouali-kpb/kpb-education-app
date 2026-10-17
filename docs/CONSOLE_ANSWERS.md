@@ -255,6 +255,30 @@ CoreLocation. Réponse inchangée : **ne pas cocher Localisation**.
 > tranche. **Ne pas** reporter l'ancien couple « Apple 12+ / Google Teen » (dérivé
 > d'un module communautaire qui ne ship pas et sans les 6 surfaces d'IA).
 
+### 3 bis. Communauté (C1 + C2) — ⚠️ À APPLIQUER LE JOUR OÙ LE DRAPEAU S'OUVRE
+
+Tant que `KPB_COMMUNITY_ENABLED` vaut `false` (défaut, `docker-compose.yml`), le tableau
+ci-dessus reste juste : les routes élève `/community/*` répondent 404 et l'app n'affiche pas la
+communauté. **Le jour de la bascule** (et pas avant), dans la même soumission que la build qui
+l'affiche, remplacer ces lignes :
+
+| Item | Réponse à la bascule | Preuve (serveur, `docs/community-api-contract.md`) |
+|---|---|---|
+| Interaction entre utilisateurs | **Oui** — publications et réponses publiques entre élèves, **sans message privé** ni mention d'utilisateur | `community-student.controller.ts` ; aucun DM (§1 du contrat) |
+| Contenu généré par l'utilisateur | **Oui — public, modéré** : filtre avant publication (coordonnées, WhatsApp, demandes d'argent, mobile money, liens hors liste blanche, insultes FR/EN) → « en attente de revue » ; file de modération de l'équipe (délai cible 24 h) | `community-content-filter.ts`, `GET /admin/community/queue` |
+| Signalement de contenu / blocage | **Oui / Oui** — signaler une publication, une réponse ou un membre ; bloquer un membre (ses contenus disparaissent, dans les deux sens) ; masquage provisoire à 3 signalements | `POST /community/reports`, `POST /community/members/:id/block` |
+| Charte / règles | **Oui** — 4 règles, acceptées (horodatées, versionnées) avant la 1re publication | `POST /community/charter/accept`, `CommunityCharterAcceptance` |
+| Sanctions | lecture seule N jours, bannissement, journal d'audit | `POST /admin/community/members/:id/sanctions` |
+| Mineurs (16-17 ans) | profils publics minimaux (prénom + initiale, pays, badges) ; ni e-mail, ni téléphone, ni âge, ni localisation | `community-presenter.ts` (`memberAuthor`) |
+| Apple « User Generated Content » (Guideline 1.2) | filtre + signalement + blocage + contact + modération : **tous présents côté serveur** ; contact = équipe KPB (WhatsApp / e-mail existants) | — |
+| Play « Contenu généré par les utilisateurs » / IARC « les utilisateurs peuvent interagir » | **Oui**, modéré | idem |
+
+Sécurité des données (Play) / étiquettes (Apple) à la bascule : ajouter **Autre contenu généré par
+l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au compte,
+finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'export (§4). Mettre à
+jour CGU et politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) **avant**
+d'ouvrir. *À VALIDER (propriétaire) : délai de modération annoncé, adresse de contact affichée.*
+
 ---
 
 ## 4. Suppression de compte & export (exigence store)

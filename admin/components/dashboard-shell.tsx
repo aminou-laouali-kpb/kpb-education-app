@@ -118,7 +118,15 @@ const NAV_LINKS: readonly NavLinkDefinition[] = [
       hasAdminCapability(role, AdminCapability.ViewReferralCampaigns),
   },
   { href: '/service-sales', labelKey: 'nav.serviceSales', icon: 'serviceSales' },
-  { href: '/community', labelKey: 'nav.community', icon: 'community' },
+  {
+    href: '/community',
+    labelKey: 'nav.community',
+    icon: 'community',
+    // Rôle R du contrat de la communauté (Moderator, ContentManager, Admin,
+    // SuperAdmin) + Counselor, qui y lit les discussions pour y répondre.
+    visibleForRole: (role) =>
+      hasAdminCapability(role, AdminCapability.ReadCommunityDiscussions),
+  },
   {
     href: '/notifications',
     labelKey: 'nav.notifications',

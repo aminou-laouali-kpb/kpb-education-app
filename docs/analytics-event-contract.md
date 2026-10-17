@@ -401,6 +401,31 @@ tout produit payant existant.
 > qui cochent Premium dans un second temps. Compter sur les utilisateurs
 > distincts, ou lire le compteur du back-office, qui compte des lignes.
 
+## Communauté d'entraide (C1 + C2)
+
+Drapeau distant `features.community` (fermé par défaut). Propriétés FERMÉES :
+types, compteurs, drapeaux `1`/`0`, identifiants d'écran. **Jamais** le texte
+d'une publication, d'une réponse ou d'une recherche, ni un nom, un pays ou un
+identifiant de membre : `AnalyticsService.communityParams` retire toute autre
+clé avant l'envoi (test `community_logic_test.dart`).
+
+| Event | Parameters | Purpose |
+|-------|------------|---------|
+| `community_viewed` | `source` (`home_card`, `profile`, `deep_link`…) | L'accueil de la communauté s'ouvre — quelle porte amène du monde |
+| `community_feed_viewed` | `tab` (`for_you`/`recent`/`unanswered`), `post_type`, `has_hashtag` | Un fil est chargé (une fois par onglet et par jeu de filtres) |
+| `community_searched` | `result_count`, `is_hashtag` | Une recherche (première page) — sans le texte tapé |
+| `community_post_opened` | `source`, `post_type`, `has_verified` | Une discussion ouverte |
+| `community_composer_opened` | `source`, `has_prefill` | Le compositeur s'ouvre (après la charte) ; `has_prefill` = depuis une fiche |
+| `community_post_created` | `post_type`, `mention_count`, `hashtag_count`, `pending_review`, `is_edit` | Publication créée ou modifiée ; `pending_review` = mise en attente par le filtre anti-arnaque |
+| `community_post_failed` | `reason` (`CommunityFailure`), `target` (`post`/`reply`) | Échec d'une écriture — sans lui, une panne se lirait comme un abandon |
+| `community_reply_created` | `pending_review`, `mention_count` | Réponse publiée |
+| `community_helpful_toggled` | `target`, `enabled` | « Utile » posé ou retiré |
+| `community_follow_toggled` | `enabled` | Suivre / ne plus suivre une discussion |
+| `community_report_sent` | `target` (`post`/`reply`/`member`), `reason` | Signalement envoyé (motif du contrat) |
+| `community_block_toggled` | `enabled` | Bloquer / débloquer un membre |
+| `community_charter_accepted` | — | Charte acceptée (version courante) |
+| `community_entity_section_viewed` | `entity_type`, `discussion_count` | Section « Discussions (N) » vue sur une fiche |
+
 ## Sync & reliability (observability)
 
 | Event | Parameters | Purpose |

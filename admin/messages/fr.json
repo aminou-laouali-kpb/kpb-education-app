@@ -1653,5 +1653,405 @@
     "payoutReference": "Référence de la transaction",
     "payoutDate": "Date du versement",
     "settingsLocked": "Campagne lancée : seuls les noms et le règlement restent modifiables."
+  },
+  "communityAdmin": {
+    "title": "Communauté",
+    "subtitle": "Modération, contenus et réglages de la communauté d'entraide.",
+    "tabsLabel": "Sections de la communauté",
+    "tab": {
+      "dashboard": "Tableau de bord",
+      "queue": "File de modération",
+      "content": "Contenus",
+      "members": "Membres",
+      "settings": "Réglages",
+      "log": "Journal",
+      "taxonomy": "Catégories et tags (ancien)"
+    },
+    "loading": "Chargement…",
+    "loadMore": "Charger la suite",
+    "cancel": "Annuler",
+    "all": "Tous",
+    "member": "Membre",
+    "thePost": "la publication",
+    "theReply": "la réponse",
+    "replyOn": "Réponse sous",
+    "mentions": "Mentions :",
+    "flagsLabel": "Motifs du filtre",
+    "minor": "Mineur",
+    "newAccount": "Compte de moins de 7 jours",
+    "accountSince": "compte créé le",
+    "noReports": "Aucun signalement ouvert.",
+    "reporterDeleted": "Compte supprimé",
+    "until": "jusqu'au",
+    "noEnd": "sans fin",
+    "verified": "Réponse vérifiée",
+    "verifiedAnswer": "Réponse vérifiée par KPB",
+    "notifyAuthor": "Prévenir l'auteur (notification)",
+    "openDiscussion": "Ouvrir la discussion",
+    "openMember": "Fiche du membre",
+    "reasonLabel": "Motif (obligatoire, gardé au journal)",
+    "reasonPlaceholder": "Ex. : numéro WhatsApp et demande de frais d'agent.",
+    "soon": {
+      "badge": "Bientôt",
+      "title": "Cette partie arrive bientôt",
+      "body": "Le serveur ne propose pas encore cette fonction. Rien à corriger de votre côté."
+    },
+    "queue": {
+      "kinds": "Filtrer la file",
+      "kind": {
+        "all": "Tout",
+        "auto_hidden": "Masqués automatiquement",
+        "reported": "Signalés",
+        "members": "Membres signalés"
+      },
+      "sortLabel": "Trier la file",
+      "sort": {
+        "oldest": "Plus ancien d'abord",
+        "urgency": "Plus urgent d'abord"
+      },
+      "listLabel": "Éléments à traiter",
+      "previewLabel": "Aperçu de l'élément",
+      "emptyTitle": "File vide",
+      "emptyBody": "Aucun contenu masqué ni signalé à traiter.",
+      "reports": "{n} signalement(s)",
+      "openReports": "Signalements ouverts : {n}",
+      "waiting": "attend depuis {h}",
+      "urgency": "Urgence {n}",
+      "urgencyHint": "Arnaque ou coordonnées +5, signalement grave +4, chaque signalement +1 (max 5), auteur mineur +2, plus de 24 h +3.",
+      "memberReportsHint": "Signalement d'un membre : il ne masque rien. Une sanction clôt ses signalements ouverts ; sinon, classez-les sans suite."
+    },
+    "history": {
+      "title": "Historique de l'auteur",
+      "summary": "{posts} publication(s), {replies} réponse(s) visibles · {reports} signalement(s) ouvert(s) · {sanctions} sanction(s)",
+      "active": "en cours",
+      "revoked": "levée",
+      "ended": "terminée"
+    },
+    "shortcuts": {
+      "title": "Raccourcis clavier",
+      "body": "Chaque action ouvre une confirmation avec motif : aucun raccourci n'agit seul. Inactifs pendant la saisie.",
+      "next": "élément suivant",
+      "previous": "élément précédent",
+      "restore": "rétablir",
+      "hide": "masquer",
+      "delete": "supprimer",
+      "dismiss_reports": "classer les signalements",
+      "warning": "avertir",
+      "read_only": "lecture seule",
+      "ban": "bannir"
+    },
+    "action": {
+      "restore": {
+        "title": "Rétablir {target} ?",
+        "body": "Le contenu redevient visible de tous. Les signalements ouverts sont classés sans suite.",
+        "cta": "Rétablir",
+        "done": "Contenu rétabli."
+      },
+      "hide": {
+        "title": "Masquer {target} ?",
+        "body": "Seul son auteur le verra encore, avec la mention « masqué par la modération ». Les signalements ouverts sont traités.",
+        "cta": "Masquer",
+        "done": "Contenu masqué."
+      },
+      "delete": {
+        "title": "Supprimer {target} ?",
+        "body": "Le contenu disparaît pour tous (gardé 30 jours pour l'équipe, puis purgé). Les signalements ouverts sont traités.",
+        "cta": "Supprimer",
+        "done": "Contenu supprimé."
+      },
+      "dismiss_reports": {
+        "title": "Classer les signalements de {target} ?",
+        "body": "Le statut ne change pas, sauf un masquage dû au seul seuil de signalements, qui est levé.",
+        "cta": "Classer sans suite",
+        "done": "Signalements classés."
+      }
+    },
+    "sanction": {
+      "kindLabel": "Sanction",
+      "durationLabel": "Durée (jours, 1 à 365)",
+      "hideContent": "Masquer aussi tous ses contenus visibles",
+      "warning": {
+        "title": "Avertir {member} ?",
+        "body": "Aucune restriction : le membre reçoit une notification avec votre motif.",
+        "cta": "Avertir",
+        "done": "Avertissement envoyé."
+      },
+      "read_only": {
+        "title": "Mettre {member} en lecture seule ?",
+        "body": "Le membre lit normalement mais ne peut plus publier, répondre ni réagir pendant la durée choisie.",
+        "cta": "Lecture seule",
+        "done": "Lecture seule appliquée."
+      },
+      "ban": {
+        "title": "Bannir {member} ?",
+        "body": "Sans fin, jusqu'à levée par l'équipe. Le membre lit mais n'écrit plus.",
+        "cta": "Bannir",
+        "done": "Membre banni."
+      }
+    },
+    "memberReports": {
+      "title": "Classer les signalements visant {member} ?",
+      "body": "Les signalements ouverts visant ce membre sont classés sans suite, sans sanction. Ceux qui visent ses contenus se traitent contenu par contenu.",
+      "cta": "Classer les signalements",
+      "done": "{n} signalement(s) classé(s)."
+    },
+    "revoke": {
+      "title": "Lever la sanction ?",
+      "cta": "Lever",
+      "done": "Sanction levée."
+    },
+    "pin": {
+      "pin": "Épingler",
+      "unpin": "Désépingler",
+      "pinned": "Épinglée",
+      "done": "Publication épinglée.",
+      "undone": "Publication désépinglée."
+    },
+    "verify": {
+      "mark": "Marquer « Réponse vérifiée par KPB »",
+      "remove": "Retirer la vérification",
+      "done": "Réponse marquée vérifiée (l'éventuelle précédente perd la marque).",
+      "undone": "Vérification retirée."
+    },
+    "content": {
+      "search": "Rechercher",
+      "searchPlaceholder": "Mots du titre ou du corps, #hashtag…",
+      "searchCta": "Rechercher",
+      "status": "Statut",
+      "type": "Type",
+      "empty": "Aucune publication.",
+      "back": "Retour aux contenus",
+      "colPost": "Publication",
+      "colAuthor": "Auteur",
+      "colStatus": "Statut",
+      "colReplies": "Réponses",
+      "colDate": "Date (UTC)",
+      "replies": "Réponses ({n})",
+      "noReplies": "Aucune réponse.",
+      "reports": "Signalements",
+      "log": "Journal de modération"
+    },
+    "teamReply": {
+      "title": "Répondre au nom de l'équipe",
+      "hint": "Jamais filtrée. Prévient l'auteur et les abonnés. Tutoyez l'élève, sans promesse d'admission.",
+      "as": "Signer en tant que",
+      "asAdvisor": "Conseiller KPB (votre prénom et initiale)",
+      "body": "Réponse",
+      "placeholder": "Mentionnez une fiche avec @[Libellé](scholarship:id) si utile.",
+      "verified": "Marquer d'emblée « Réponse vérifiée par KPB »",
+      "submit": "Publier la réponse",
+      "done": "Réponse publiée."
+    },
+    "teamPost": {
+      "open": "Nouvelle publication de l'équipe",
+      "title": "Publication de l'équipe",
+      "titleLabel": "Titre (8 à 120 caractères)",
+      "bodyLabel": "Texte (20 à 5 000 caractères)",
+      "mentionHint": "Mentions : @[Libellé](type:id), type = scholarship, country, institution ou program. Hashtags : #CampusFrance.",
+      "pinned": "Épingler en tête du fil (3 au plus)",
+      "submit": "Publier"
+    },
+    "members": {
+      "back": "Retour aux membres",
+      "lookupTitle": "Ouvrir une fiche",
+      "lookupHint": "Identifiant public du membre (cm_…), visible dans la file et les discussions.",
+      "memberId": "Identifiant du membre",
+      "open": "Ouvrir",
+      "mostReported": "Membres les plus signalés",
+      "mostReportedHint": "Membres ayant des signalements ouverts, du plus signalé au moins signalé.",
+      "noneReported": "Aucun membre signalé.",
+      "activeSanctions": "Sanctions en cours",
+      "sanctionsHint": "Lecture seule et bannissements non levés et non échus ; « Toutes » inclut avertissements, levées et échues.",
+      "sanctionsFilter": "Filtrer les sanctions",
+      "sanctionsStatus": {
+        "active": "En cours",
+        "all": "Toutes"
+      },
+      "noActiveSanctions": "Aucune sanction.",
+      "colMember": "Membre",
+      "colCountry": "Pays",
+      "colReports": "Signalements",
+      "colRestriction": "Restriction",
+      "summary": "{posts} publication(s) · {replies} réponse(s) · {helpful} réponse(s) utiles · {reports} signalement(s) ouvert(s)",
+      "charterAccepted": "Charte {version} acceptée le {date}.",
+      "charterNotAccepted": "Charte pas encore acceptée.",
+      "sanctions": "Sanctions",
+      "noSanctions": "Aucune sanction.",
+      "colKind": "Type",
+      "colReason": "Motif",
+      "colDate": "Date (UTC)",
+      "colEnds": "Fin",
+      "colState": "État",
+      "recentPosts": "Publications récentes",
+      "recentReplies": "Réponses récentes"
+    },
+    "settings": {
+      "domainsTitle": "Liste blanche des liens",
+      "domainsHint": "Un lien hors liste masque le message avant revue. S'ajoutent les {n} sites officiels du catalogue (écoles, bourses).",
+      "builtin": "Liste intégrée ({n} domaines, non modifiable)",
+      "termsTitle": "Mots filtrés",
+      "termsHint": "En plus des {n} termes intégrés (insultes, arnaques). Comparés sans accents ni casse, en mot entier.",
+      "noCustom": "Aucun ajout de l'équipe.",
+      "readOnly": "Modification réservée aux administrateurs.",
+      "add_allowed_domain": "Ajouter un domaine",
+      "add_blocked_term": "Ajouter un terme",
+      "termPlaceholder": "2 à 60 caractères",
+      "addCta": "Ajouter",
+      "added": "Ajouté.",
+      "removed": "Retiré.",
+      "removeTitle": "Retirer cette entrée ?",
+      "removeCta": "Retirer",
+      "testTitle": "Essayer le filtre",
+      "testHint": "Collez un message pour voir les motifs qui le masqueraient. Rien n'est enregistré.",
+      "testLabel": "Texte à tester",
+      "testCta": "Tester",
+      "wouldHide": "Serait masqué avant revue :",
+      "wouldPass": "Passerait le filtre.",
+      "fixedTitle": "Seuils et charte",
+      "fixedHint": "Fixés côté serveur pour l'instant (lecture seule) ; leur réglage depuis la console arrive bientôt.",
+      "days": "{n} jours",
+      "fixed": {
+        "reportsBeforeHide": "Signalements de membres distincts avant masquage provisoire",
+        "newAccount": "Un compte est « nouveau » pendant",
+        "postsPerDay": "Publications par jour (nouveau / établi)",
+        "repliesPerHour": "Réponses par heure (nouveau / établi)",
+        "reportsPerDay": "Signalements par jour et par membre",
+        "editWindow": "Fenêtre de modification par l'auteur",
+        "charterVersion": "Version de la charte"
+      }
+    },
+    "dashboard": {
+      "window": "Période",
+      "days": "{n} jours",
+      "openReports": "Signalements ouverts",
+      "openedResolved": "{opened} reçus, {resolved} traités sur la période",
+      "medianDelay": "Délai médian des signalements",
+      "moderationDelay": "Délai médian de modération",
+      "moderationDelayHint": "Contenus masqués automatiquement → première décision ; objectif < {h} h",
+      "unansweredOver48h": "Sans réponse depuis plus de 48 h",
+      "unansweredTotal": "{n} question(s) sans réponse au total",
+      "sla": "Objectif : moins de {h} h",
+      "autoHidden": "Masqués automatiquement",
+      "pendingNow": "{n} publication(s) en attente de revue",
+      "unanswered": "Questions sans réponse",
+      "unansweredHint": "Aucune réponse d'un autre membre ni de l'équipe (instantané).",
+      "posts": "Publications",
+      "replies": "Réponses",
+      "byTeam": "dont {n} de l'équipe",
+      "verified": "Réponses vérifiées",
+      "members": "Membres actifs",
+      "newMembers": "{n} nouveaux",
+      "sanctions": "Sanctions en cours",
+      "helpful": "{n} « utile » sur la période",
+      "toQueue": "Aller à la file de modération",
+      "dailyTitle": "Activité quotidienne",
+      "dailyHint": "Jours UTC.",
+      "dailyCaption": "Publications et réponses par jour",
+      "colDate": "Jour",
+      "noActivity": "Aucune activité sur la période."
+    },
+    "log": {
+      "empty": "Aucune action enregistrée.",
+      "colDate": "Date (UTC)",
+      "colAction": "Action",
+      "colTarget": "Cible",
+      "colReason": "Motif",
+      "colModerator": "Par"
+    },
+    "errors": {
+      "reasonRequired": "Le motif est obligatoire.",
+      "reasonTooShort": "Motif trop court (3 caractères au moins).",
+      "reasonTooLong": "Motif trop long (500 caractères au plus).",
+      "durationInvalid": "Durée entre 1 et 365 jours.",
+      "bodyRequired": "La réponse est vide.",
+      "bodyTooLong": "Réponse trop longue (3 000 caractères au plus).",
+      "titleLength": "Titre entre 8 et 120 caractères.",
+      "postBodyLength": "Texte entre 20 et 5 000 caractères.",
+      "domainInvalid": "Domaine invalide : hôte nu (univ-lyon1.fr) ou suffixe (*.univ-lyon1.fr).",
+      "termInvalid": "Terme entre 2 et 60 caractères.",
+      "unavailable": "Cette fonction n'est pas encore disponible sur le serveur.",
+      "forbidden": "Votre rôle ne permet pas cette action.",
+      "rateLimited": "Trop de requêtes : réessayez dans un instant.",
+      "server": "Le serveur n'a pas répondu. Réessayez.",
+      "community_pin_limit": "Déjà 3 publications épinglées : désépinglez-en une d'abord.",
+      "community_invalid_transition": "Action impossible dans l'état actuel du contenu (ex. supprimé par son auteur, ou réponse non visible).",
+      "community_post_not_found": "Publication introuvable.",
+      "community_reply_not_found": "Réponse introuvable.",
+      "community_member_not_found": "Membre introuvable.",
+      "community_invalid_mention": "Mention invalide : entité inconnue ou non publique.",
+      "community_too_many_mentions": "10 mentions au plus.",
+      "community_too_many_hashtags": "10 hashtags au plus.",
+      "community_invalid_cursor": "Liste périmée : rechargez la page."
+    },
+    "enum": {
+      "flag": {
+        "phone": "Téléphone",
+        "email": "E-mail",
+        "whatsapp": "WhatsApp / Telegram",
+        "money_request": "Demande d'argent",
+        "mobile_money": "Mobile money",
+        "external_link": "Lien hors liste",
+        "profanity": "Insulte",
+        "blocked_term": "Mot filtré",
+        "disposable_email": "E-mail jetable"
+      },
+      "reportReason": {
+        "scam": "Arnaque",
+        "harassment": "Harcèlement",
+        "inappropriate": "Inapproprié",
+        "spam": "Spam",
+        "personal_info": "Données personnelles",
+        "misinformation": "Fausse information",
+        "other": "Autre"
+      },
+      "status": {
+        "visible": "Visible",
+        "pending_review": "En attente de revue",
+        "hidden": "Masqué",
+        "deleted": "Supprimé"
+      },
+      "statusReason": {
+        "auto_filter": "Filtre anti-arnaque",
+        "reports_threshold": "Seuil de signalements",
+        "new_account_review": "Compte à e-mail jetable",
+        "moderation": "Masqué par l'équipe",
+        "author_deleted": "Supprimé par l'auteur",
+        "moderation_deleted": "Supprimé par l'équipe"
+      },
+      "badge": {
+        "kpb_team": "Équipe KPB",
+        "kpb_advisor": "Conseiller KPB",
+        "verified_alumni": "Alumni vérifié",
+        "ambassador": "Ambassadeur"
+      },
+      "postType": {
+        "question": "Question",
+        "experience": "Retour d'expérience",
+        "advice": "Conseil"
+      },
+      "sanction": {
+        "warning": "Avertissement",
+        "read_only": "Lecture seule",
+        "ban": "Bannissement"
+      },
+      "target": {
+        "post": "Publication",
+        "reply": "Réponse",
+        "member": "Membre"
+      },
+      "logAction": {
+        "restore": "Rétabli",
+        "hide": "Masqué",
+        "delete": "Supprimé",
+        "dismiss_reports": "Signalements classés",
+        "verify_answer": "Réponse vérifiée",
+        "unverify_answer": "Vérification retirée",
+        "sanction_warning": "Avertissement",
+        "sanction_read_only": "Lecture seule",
+        "sanction_ban": "Bannissement",
+        "sanction_revoke": "Sanction levée",
+        "member_reports_dismissed": "Signalements du membre classés"
+      }
+    }
   }
 }

@@ -32,6 +32,7 @@ describe('AppConfigController', () => {
     KPB_RECOMMENDED_APP_VERSION: process.env.KPB_RECOMMENDED_APP_VERSION,
     KPB_SCHOLARSHIP_MATCH_ENABLED: process.env.KPB_SCHOLARSHIP_MATCH_ENABLED,
     KPB_ONBOARDING_V2_ENABLED: process.env.KPB_ONBOARDING_V2_ENABLED,
+    KPB_COMMUNITY_ENABLED: process.env.KPB_COMMUNITY_ENABLED,
     KPB_US_VISA_SUSPENDED_COUNTRIES: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
     KPB_US_VISA_SUSPENSION_VERIFIED_AT:
       process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
@@ -96,6 +97,7 @@ describe('AppConfigController', () => {
       homeCounselor: true,
       scholarshipMatch: false,
       onboardingV2: false,
+      community: false,
     });
     expect(config.eefCampaign).toEqual({
       opensAt: null,
@@ -759,6 +761,34 @@ describe('AppConfigController', () => {
       const opened = new AppConfigController().getAppConfig().features;
       expect(opened.onboardingV2).toBe(true);
       expect({ ...opened, onboardingV2: false }).toEqual(closed);
+    });
+  });
+
+  describe('community — fermé par défaut', () => {
+    it('est fermé quand la variable est absente, vide ou mal tapée', () => {
+      for (const value of [undefined, '', 'false', '1', 'yes', 'on', 'ture']) {
+        if (value === undefined) delete process.env.KPB_COMMUNITY_ENABLED;
+        else process.env.KPB_COMMUNITY_ENABLED = value;
+        expect(new AppConfigController().getAppConfig().features.community).toBe(false);
+      }
+    });
+
+    it('s’ouvre sur « true » (casse et espaces tolérés), sans rien ouvrir d’autre', () => {
+      delete process.env.KPB_COMMUNITY_ENABLED;
+      const closed = new AppConfigController().getAppConfig().features;
+      process.env.KPB_COMMUNITY_ENABLED = ' TRUE ';
+      const opened = new AppConfigController().getAppConfig().features;
+      expect(opened.community).toBe(true);
+      expect({ ...opened, community: false }).toEqual(closed);
+    });
+
+    it('ne dépend pas de KPB_MVP_ONLY (qui ne garde que l’ancien écran)', () => {
+      const previous = process.env.KPB_MVP_ONLY;
+      process.env.KPB_MVP_ONLY = 'false';
+      delete process.env.KPB_COMMUNITY_ENABLED;
+      expect(new AppConfigController().getAppConfig().features.community).toBe(false);
+      if (previous === undefined) delete process.env.KPB_MVP_ONLY;
+      else process.env.KPB_MVP_ONLY = previous;
     });
   });
 });

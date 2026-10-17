@@ -401,6 +401,9 @@ mixin _SessionMixin on _AppControllerBase {
     _lastSyncAttemptAt = null;
     _syncBackoffUntil = null;
     _resetScholarshipFollowState();
+    // Communauté : fiche membre, blocages de la session et cache disque
+    // appartiennent au compte.
+    CommunityStore.instance.reset();
   }
 
   /// GDPR / store-required account deletion (KPB-67). When remote sync is on we
