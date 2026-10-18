@@ -4,7 +4,8 @@ Un numéro listé sous **Consommés** ne peut plus figurer dans `pubspec.yaml`.
 Le numéro sous **Courant** est le seul autorisé. Le test
 `test/release/build_number_test.dart` lit ce fichier.
 
-Version marketing EN VENTE : `2.2.0` (depuis le 13/09/2026). Le test lit cette ligne :
+Version marketing EN VENTE : `2.3.0` (depuis le 07/10/2026 sur l'App Store, et sur Google Play :
+constat du 16/10/2026 en lecture seule). Le test lit cette ligne :
 la version de `pubspec.yaml` doit lui être strictement supérieure (ITMS-90062). La mettre
 à jour le jour où une nouvelle version passe en vente, pas avant.
 
@@ -92,11 +93,16 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   son contenu complet est dans `### Ce que 55 embarque`, et la 56 le reprend en entier.
   La 55 n'ayant jamais été soumise, la version marketing `2.3.0` reste libre pour la 56.
 
-## Courant
+- `56` — **`2.3.0 (56)` : la 2.3.0 est EN VENTE sur l'App Store (mise en ligne le
+  07/10/2026) et sur Google Play (constat du 16/10/2026, en lecture seule) ; numéro
+  consommé, remplacé comme courant par la 57 le 18/10/2026.** À VALIDER (propriétaire) :
+  que la build en vente est bien la 56 (les boutiques n'affichent que « 2.3.0 »), sa date
+  de téléversement et le SHA archivé — trois faits absents du dépôt, à reporter ici sans
+  les deviner. Les papiers de la 56 portent un bandeau « REMPLACÉE par la 57 ».
 
-- `56` — **`2.3.0 (56)`, EN COURS (archive à faire) : non téléversée, non soumise.
-  La SEULE build 2.3.0 à envoyer : elle remplace la 55 (décision du propriétaire,
-  05/10/2026).** Elle porte tout ce que portait la 55 (`### Ce que 55 embarque`) plus
+  Ce que disait la ligne courante au 05/10/2026, conservé pour l'histoire (sauf l'état
+  « avant l'archive » et le marqueur du commit, qui ne valent plus) : la SEULE build 2.3.0
+  à envoyer, elle remplace la 55 (décision du propriétaire, 05/10/2026). Elle porte tout ce que portait la 55 (`### Ce que 55 embarque`) plus
   ce que la 56 y ajoute (`### Ce que la 56 ajoute à la 55`) : la bulle verte WhatsApp, la
   visite guidée, la feuille « écoles privées », deux interrupteurs serveur fermés, le
   retrait de l'avertissement de suspension. Le numéro 55 est CONSOMMÉ (téléversé) ; la 56
@@ -119,14 +125,8 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   la 55. L'ouverture est une opération serveur séparée
   (`docs/runbook-ouverture-espace-reel.md`), sans nouvelle soumission.
 
-  **Commit à archiver : `<RELEASE>` — À RENSEIGNER.** C'est le SHA complet de `main`
-  après la fusion de #326 (la vitrine sans avertissement) ET de la PR qui prépare la 56
-  (version, préflights, ce registre, la checklist) ; **rien d'autre ne fusionne
-  ensuite**. Tant que l'archive n'existe pas, ce marqueur reste tel quel : un SHA écrit
-  à l'avance serait inventé (le test refuse un SHA de 40 caractères posé comme
-  `RELEASE`). Il se relève avec `git rev-parse origin/main`
-  (`docs/mise-a-jour-56-checklist.md`, étape 0) et se reporte ici le jour de
-  l'archive.
+  *(Le paragraphe « Commit à archiver » de la ligne courante est retiré : le SHA archivé
+  n'a jamais été reporté ici — À VALIDER ci-dessus.)*
 
   **Statut au 05/10/2026** : non archivée, non soumise, absente de TestFlight (la 55 y
   est, seule) et de Play. **Production : relevé du 03/10, NON remesuré le 05/10.**
@@ -142,6 +142,31 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   production est TOUJOURS `0641601` ; la 56 le tolère (clé absente = fermé) ; le déployer
   au SHA de la 56 n'est nécessaire QUE pour allumer la bulle ou les écoles privées, et
   **ne se fait pas avant le préflight de la 56**.
+
+## Courant
+
+- `57` — **`2.3.1 (57)`, EN COURS (archive à faire) : non téléversée, non soumise.**
+  Release unique : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifications par
+  Firebase Cloud Messaging (#351), correctifs #349 et #350, parrainage côté app (#368),
+  et, derrière des drapeaux fermés, la communauté C1 + C2 et les bots « Vérif » et
+  « Passerelle » (#365 à #367). Version marketing `2.3.1` (décision du propriétaire du
+  16/10/2026) : la 2.3.0 est en vente, App Store Connect refuse une version qui ne lui
+  est pas strictement supérieure (ITMS-90062), et `isVersionBelow` ignore le numéro de
+  build. Couplage backend **`requires-new`** : la 57 n'embarque plus le SDK OneSignal ;
+  serveur, puis admin, puis app.
+
+  **Commit à archiver : `<RELEASE>` — À RENSEIGNER.** C'est le SHA complet de `main`
+  après la fusion de la PR de préparation de la 57 (version, préflights, ce registre) ;
+  **rien d'autre ne fusionne ensuite**. Tant que l'archive n'existe pas, ce marqueur reste
+  tel quel : un SHA écrit à l'avance serait inventé. Il se relève avec
+  `git rev-parse origin/main` (`docs/mise-a-jour-57-checklist.md`, étape 0.3) et se
+  reporte ici le jour de l'envoi, avec « téléversée le … » (checklist, étape 8).
+
+  **Papiers** : `docs/mise-a-jour-57-checklist.md` (l'ordre des opérations),
+  `docs/release-57-store-pack.md` (notes de version, notes de revue recomptées,
+  déclarations de confidentialité, drapeaux, paliers), `docs/device-qa-build57.md`
+  (recette appareil, jamais jouée). Entrées ci-dessous : `### Chantier L (16/10/2026)`,
+  `### Parrainage côté app (17/10/2026)` et `### Finalisation de la build 57 (18/10/2026)`.
 
 ### Ce que 55 embarque
 
@@ -436,6 +461,9 @@ bandeau « REMPLACÉE par la 56 ».
 
 ### Chantier L (16/10/2026) — préparation de la build 57 : conformité et pack de release, numéro NON posé
 
+*(Mise à jour du 18/10/2026 : le numéro est posé — `2.3.1+57` — voir
+`### Finalisation de la build 57 (18/10/2026)`. Le texte ci-dessous est conservé tel qu'écrit.)*
+
 **État : papiers prêts, numéro non posé.** `pubspec.yaml` porte toujours `2.3.0+56` et la ligne
 courante reste celle de la 56 (le test `test/release/build_number_test.dart` les lie). La 57 est
 une **release unique** : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifications par FCM
@@ -505,6 +533,43 @@ web) qui nomme l'identifiant d'installation, la lecture du lien d'invitation et 
 d'écran de la compétition (organisateur, Apple et Google non partenaires) ; le `rulesUrl` de la
 campagne ; l'ordre et les dates d'ouverture des trois drapeaux ; `flutter build apk --debug` sur
 une machine équipée d'un SDK Android (non joué dans ce chantier).
+
+### Finalisation de la build 57 (18/10/2026) — version posée, décisions du propriétaire reportées
+
+**Numéro posé** (checklist de la 57, §0.2) : `pubspec.yaml` = `version: 2.3.1+57` ;
+`scripts/preflight-ios-archive.sh` (`EXPECTED_BUILD="57"`, `EXPECTED_VERSION="2.3.1"`) et
+`scripts/preflight-android-aab.sh` (`EXPECTED_VERSION_NAME="2.3.1"`, `EXPECTED_VERSION_CODE="57"`) ;
+« Version marketing EN VENTE : `2.3.0` » ; la `56` passe sous **Consommés** (date de téléversement,
+SHA archivé et identité de la build en vente : À VALIDER (propriétaire)) ; la `57` est **courante**,
+état « avant l'archive ». `test/release/mise_a_jour_56_checklist_test.dart` ne lit plus la version
+du dépôt (il garde le document de la 56) ; les papiers de la 56 portent le bandeau « REMPLACÉE par
+la 57 ». Aucune build de store lancée, rien de déployé ni de soumis.
+
+**Compilation Android avec `play_install_referrer` : vérifiée.** La CI de la PR #368 a construit
+l'APK debug (« Build Android APK (debug validation) » vert, 18/10/2026). L'AAB signé reste à
+produire au moment de la release (checklist, étape 3).
+
+**Décisions du propriétaire du 18/10/2026, reportées** : règlement de la compétition (versement
+Wave sous 7 jours, prix perdu après 15 jours et passé au suivant, résultats le 17 novembre 2026,
+droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com, proches de
+l'équipe exclus, pièce d'identité au versement, fiscalité à la charge du lauréat, empreintes 180
+jours) ; conservations validées (empreintes 180 jours, événements « Passerelle » 12 mois, contenus
+supprimés de la communauté 30 jours) ; nationalité sur **consentement explicite**, facultative,
+effaçable (case ajoutée au récapitulatif du test, derrière `features.scholarshipMatch`, fermé) ;
+prix FCFA affichés à titre indicatif et payés hors store ; textes et seuils du bot « Passerelle »
+validés (shadow au moins 2 semaines, < 10 % de faux positifs) ; bot « Vérif » en `auto` après 50
+réponses validées sans correction. **Non reportée** : l'absence de finalité « Marketing » (XC-06),
+parce que le code permet un envoi promotionnel sans opt-in (campagnes admin, voir
+`docs/CONSOLE_ANSWERS.md` §0quater) — point laissé ouvert.
+
+**Code** : `GET /profiles/me/export` inclut les notifications in-app (`notifications`, sans les
+détails d'exploitation du worker). **Textes juridiques rédigés, à relire par le propriétaire avant
+l'archive** (texte in-app compilé) : politique (in-app FR/EN et web) — communauté, réponses et
+suggestions automatiques, parrainage et compétition, nationalité ; CGU (in-app et web) —
+communauté, compétition ; page de suppression de compte.
+
+**Reste au propriétaire** : relire ces textes avant l'archive ; les trois faits de la 56 ;
+XC-06 ; les points À VALIDER restants listés dans `docs/release-57-store-pack.md` §7 et §8.
 
 ### Ce que 52 embarque
 

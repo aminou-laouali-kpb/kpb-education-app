@@ -7,9 +7,9 @@
 // le backend de #351, elle ne reçoit aucune notification. D'où un couplage
 // `requires-new` et l'ordre serveur → admin → app.
 //
-// Ce dépôt ne pose PAS la version (`pubspec.yaml` reste à `+56` tant que la PR
-// de préparation n'est pas faite) : le test accepte les deux états, et, une fois
-// `+57` posé, exige que la checklist nomme la version réellement posée.
+// La version est posée depuis le 18/10/2026 (`pubspec.yaml` : `2.3.1+57`, PR de
+// préparation, checklist §0.2) : le test exige la 57 et que la checklist nomme
+// la version réellement posée.
 //
 // Ce test lit les documents ; il ne lance aucune commande (elles touchent les
 // boutiques et la production).
@@ -54,17 +54,16 @@ void main() {
     test('porte la version 2.3.1 (57) et plus aucun contrôle sur 56', () {
       final shipping = _pubspec();
       expect(
-        ['56', '57'],
-        contains(shipping.build),
-        reason: 'pubspec.yaml porte +${shipping.build} : ni la 56 en cours, '
-            'ni la 57 préparée par cette checklist',
+        shipping.build,
+        '57',
+        reason: 'pubspec.yaml porte +${shipping.build}, pas la 57 préparée '
+            'par cette checklist',
       );
-      if (shipping.build == '57') {
-        // La PR de préparation est faite : la checklist doit nommer la version
-        // réellement posée (2.3.1, choisie par le propriétaire).
-        expect(doc, contains('${shipping.name} (57)'));
-        expect(doc, contains('version: ${shipping.name}+57'));
-      }
+      // La PR de préparation est faite : la checklist doit nommer la version
+      // réellement posée (2.3.1, choisie par le propriétaire).
+      expect(shipping.name, '2.3.1');
+      expect(doc, contains('${shipping.name} (57)'));
+      expect(doc, contains('version: ${shipping.name}+57'));
       expect(doc, contains('FLUTTER_BUILD_NUMBER=57'));
       expect(doc, contains('Préflight iOS OK — 2.3.1 (57)'));
       expect(doc, contains('Préflight Android OK — 2.3.1 (57)'));
@@ -329,17 +328,26 @@ void main() {
     });
   });
 
-  test('le registre consigne le chantier L sans poser la 57 en courant', () {
+  test('le registre consigne le chantier L et la 57 posée en courant', () {
     final ledger = _read('docs/release-ledger.md');
     expect(ledger, contains('### Chantier L (16/10/2026)'));
     final courant = ledger.split('## Courant').last;
-    // Le premier numéro sous « Courant » suit pubspec : la 57 n'y est posée
-    // que par la PR de préparation, jamais par ce chantier.
+    // Le premier numéro sous « Courant » suit pubspec : la 57 y est posée par
+    // la préparation du 18/10/2026, la 56 est passée sous « Consommés ».
     final first = RegExp(
       r'^-\s+`(\d+)`\s+—',
       multiLine: true,
     ).firstMatch(courant)!.group(1);
     expect(first, _pubspec().build);
+    // La 56 est consommée, la 2.3.0 en vente ; ce que le dépôt ne sait pas
+    // (build réellement en vente, date, SHA) reste À VALIDER, jamais inventé.
+    expect(ledger, contains('Version marketing EN VENTE : `2.3.0`'));
+    final consumed = ledger.split('## Courant').first;
+    final line56 = consumed.substring(
+      consumed.indexOf(RegExp(r'^-\s+`56`\s+—', multiLine: true)),
+    );
+    expect(line56, contains('À VALIDER (propriétaire)'));
+    expect(courant, contains('`<RELEASE>`'));
     final entry = ledger.substring(ledger.indexOf('### Chantier L'));
     expect(entry, contains('`requires-new`'));
     expect(entry, contains('2.3.1'));
