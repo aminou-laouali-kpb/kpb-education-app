@@ -525,6 +525,12 @@ sur-déclaration.
   (`:67`). C'est un service humain réel, donc défendable hors achat intégré,
   mais c'est le point que la revue Apple regardera. Valider la formulation du
   §7.1 avec le conseil, ou retirer l'affichage du prix de l'app.
+  **Tranché le 18/10/2026 (décision du propriétaire)** : les prix FCFA restent
+  affichés **à titre indicatif** (l'app les préfixe de « ~ »,
+  `CurrencyUtils.formatXof(approximate: true)`) et sont **payés hors store**
+  (bouton WhatsApp vers un conseiller, aucun achat intégré). Cohérent avec les
+  notes de revue du pack 57 §3 (« their FCFA price is shown for information… »)
+  et `docs/CONSOLE_ANSWERS.md` §0quinquies.
 - **D6 — Copie interne fausse (§8).** Publier la fiche sans corriger l'écran de
   connexion et l'écran de consentement IA, c'est laisser dans l'app les
   promesses que la fiche refuse d'écrire. Corriger avant, ou l'assumer par écrit.

@@ -93,6 +93,7 @@ préproduction.
 | Lecteur-8 | **« Suivre »** | Le bouton est annoncé « Suivre », puis « Suivie » après le double tap ; la feuille d'explication est lue avant la demande système ; la demande système est atteignable | ☐ | ☐ |
 | Lecteur-9 | **Ouvrir un dossier** depuis la bourse | Le tunnel de dossier se parcourt jusqu'à l'envoi ; le toast de confirmation (`KpbToast`) est lu ; « Voir » est atteignable pendant ses 4 s | ☐ | ☐ |
 | Lecteur-10 | **« Mes suivis »** et l'écran des notifications | La bourse suivie y figure, lue avec son statut ; chaque notification lue avec sa date ; la cloche annonce les non-lus | ☐ | ☐ |
+| Lecteur-11 | **Consentement à l'usage de la nationalité** (ajout du 18/10/2026) : récapitulatif sans cocher la case, puis case cochée | Case décochée : « C'est bon, voir mes bourses » est désactivé et « Coche la case de consentement pour voir tes bourses. » est lu ; la case est annoncée avec son libellé et son état ; cochée, l'envoi part. La question « Ta nationalité » dit qu'elle est facultative. Brouillon repris après avoir tué l'app : la case est **redemandée**. Texte 1,5 sur 360 dp : rien de tronqué | ☐ | ☐ |
 
 ## Notifications (FCM, repli OneSignal) — ferme le point A9 de la fiche 54
 
@@ -174,6 +175,7 @@ Fenêtre de recette en production ou en préproduction : poser le drapeau dans l
 | Parrain-4 | **Étape du code : erreurs** — code inconnu, son propre code, mode avion | Inconnu / propre code : message DANS le champ, on peut corriger ou passer ; mode avion : « Pas de connexion. Ton code est gardé… », l'onboarding continue ; le code réapparaît dans Parrainage | ☐ | ☐ |
 | Parrain-5 | **Écran « Compétition ambassadeurs »** (`KPB_REFERRAL_LEADERBOARD_ENABLED=true`, compte ambassadeur participant), TalkBack / VoiceOver, texte 1,5 | Phase et compte à rebours, rang (lu « Ton rang : … »), qualifiés / à vérifier / en attente, « provisoire », code, partage, classement public, règlement ; aucun montant ; rien de tronqué à 1,5 sur 360 dp | ☐ | ☐ |
 | Parrain-6 | **Non-participant** (drapeau ouvert) | Espace ambassadeur : l'écran de candidature, inchangé ; écran Parrainage : aucune carte « Compétition » | ☐ | ☐ |
+| Parrain-7 | **Pied de l'écran « Compétition »** (ajout du 18/10/2026), dans chaque phase | « Organisateur : KPB Global L.L.C-FZ. Apple et Google ne sont ni organisateurs ni partenaires de cette compétition. » lu en bas de l'écran ; le bouton « règlement » ouvre le `rulesUrl` de la campagne | ☐ | ☐ |
 
 ## Gardes de boutiques
 
@@ -182,8 +184,9 @@ Fenêtre de recette en production ou en préproduction : poser le drapeau dans l
 | Boutique-1 | **L'installation est la build soumise** | TestFlight : **2.3.1 (57)** ; Play Console / `adb shell dumpsys package com.karatou.android \| grep versionCode` → 57 | ☐ | ☐ |
 | Boutique-2 | **Aucun pourcentage, aucune « chance »** | Liste, fiche, accueil, résultats du test : ni « % » de compatibilité, ni « chances » | ☐ | ☐ |
 | Boutique-3 | **Aucune permission neuve** | Aucune invite système en dehors de l'autorisation des notifications au premier « Suivre » (la permission d'installation Install Referrer d'Android n'affiche rien) | ☐ | ☐ |
-| Boutique-4 | **Politique de confidentialité in-app** | Elle nomme le test (nationalité, date de naissance), dit l'absence de transmission aux écoles, la conservation et les mineurs de 16 et 17 ans, comme `web/public/confidentialite.html` | ☐ | ☐ |
+| Boutique-4 | **Politique de confidentialité in-app** | Elle nomme le test (nationalité, date de naissance), dit l'absence de transmission aux écoles, la conservation et les mineurs de 16 et 17 ans, comme `web/public/confidentialite.html` ; depuis le 18/10/2026, les sections « Communauté d'entraide », « Réponses et suggestions automatiques », « Parrainage et compétition des ambassadeurs » et « Votre nationalité » s'affichent et se lisent jusqu'au bout (CGU : « Communauté d'entraide », « Compétition des ambassadeurs ») | ☐ | ☐ |
 | Boutique-5 | **Les notes de revue disent la vérité** | Relire le pack 57 §3 point par point contre ce qu'on a vu (espace ouvert ou non, test et onboarding V2 éteints, autorisation au premier « Suivre ») | ☐ | ☐ |
+| Boutique-6 | **Export de mes données** (Profil → Mes données) | Le JSON partagé contient la clé `notifications` (les notifications reçues dans l'app) en plus des clés existantes | ☐ | ☐ |
 
 ## Signature
 

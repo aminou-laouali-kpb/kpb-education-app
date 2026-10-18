@@ -3404,7 +3404,7 @@ model ReferralCampaignReferral {
 
 // Signaux anti-fraude relevés au rattachement (POST /referrals/redeem). Aucune
 // adresse IP ni aucun jeton en clair : des HMAC (clé serveur). Purgés après
-// `REFERRAL_SIGNAL_RETENTION_DAYS` (180 j par défaut — durée À VALIDER).
+// `REFERRAL_SIGNAL_RETENTION_DAYS` (180 j par défaut — durée validée par le propriétaire le 18/10/2026).
 model ReferralAttributionSignal {
   id                String   @id @default(cuid())
   refereeProfileId  String   @unique

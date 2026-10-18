@@ -916,7 +916,10 @@ Play's UGC policy are covered server-side; the app agent wires the report/block
 entry points. Data safety / privacy labels at the flip: add **Other user-generated
 content** (posts, replies, reports) — collected, **not shared**, linked to the
 account, App functionality; deleted with the account, included in the export (§6).
-Update ToS and privacy policy (web + in-app) **before** opening.
+ToS and privacy policy (web + in-app): "Community" sections **drafted on 18/10/2026**
+(charter in four rules, prohibited content, moderation, sanctions, reporting, no private
+messages; 30-day retention of deleted content, hard deletion with the account) — to be reviewed
+by the owner **before** opening.
 *À VALIDER (owner): announced moderation delay, contact address shown in the app.*
 
 ---
@@ -945,8 +948,24 @@ Owner decision of 17/10/2026: the app side of the referral programme ships in bu
   partners (Apple 5.3.2). No user-to-user interaction, no UGC: age rating unchanged.
 
 Full lines to paste: `docs/release-57-store-pack.md` §4, `docs/CONSOLE_ANSWERS.md` §0septies.
-*À VALIDER (owner): privacy policy (web + in-app) naming the installation identifier, the invite
-link reading and the contest, before submission.*
+Privacy policy (web + in-app): the installation identifier (fraud prevention), the invite-link
+reading (prefill only, nothing sent without confirmation), the HMAC fingerprints (180 days, owner
+decision of 18/10/2026) and the contest are now named — text **drafted on 18/10/2026, to be
+reviewed by the owner before the archive** (the in-app text is compiled).
+
+### Owner decisions of 18/10/2026 — what they change for the stores
+
+- **Nationality** ("My 10 scholarships", flag still closed): legal basis **explicit consent**,
+  optional, kept while the account exists, erasable; the app now shows a consent checkbox on the
+  test summary and sends nothing without it. Play/Apple rows unchanged (`docs/release-57-store-pack.md`
+  §4); "Sensitive Info: No" still to confirm with counsel — *À VALIDER (owner)*.
+- **XC-06 (Marketing purpose)**: the owner chose "no Marketing purpose" **provided** no
+  promotional message goes out without opt-in. The code does not guarantee it — admin campaigns
+  (`campaign-executor.service.ts`) send free-form push and e-mail to broad audiences with no
+  consent filter — so the forms must **not** claim "no Marketing" yet. *À VALIDER (owner).*
+- **D5 (FCFA prices)**: settled — indicative prices ("~" prefix), paid outside the stores via a
+  counsellor on WhatsApp; consistent with the Notes for Review.
+- **GDPR export**: now includes in-app notifications (`notifications` key).
 
 ## 6. Account deletion & data export (store requirement)
 

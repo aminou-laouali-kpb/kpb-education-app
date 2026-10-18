@@ -253,6 +253,12 @@ void main() {
       expect(open, contains('Nationalité'));
       expect(open, contains('À VALIDER (propriétaire)'));
       expect(open, contains('features.scholarshipMatch'));
+      // Décisions du propriétaire du 18/10/2026 : la nationalité est tranchée
+      // (consentement explicite) ; XC-06 reste ouvert tant que le code permet
+      // un envoi promotionnel sans opt-in.
+      expect(open, contains('consentement explicite'));
+      expect(open, contains('XC-06'));
+      expect(open, contains('reste ouvert'));
     });
   });
 
@@ -640,14 +646,14 @@ void main() {
       const sizes = {
         'Appareil': 8,
         'Texte': 7,
-        'Lecteur': 10,
+        'Lecteur': 11,
         'Push': 12,
         'HorsLigne': 7,
         'Accueil': 6,
         'Suivi': 4,
         'Drapeau': 5,
-        'Parrain': 6,
-        'Boutique': 5,
+        'Parrain': 7,
+        'Boutique': 6,
       };
       sizes.forEach((prefix, expected) {
         final count = rows.keys.where((id) => id.startsWith('$prefix-'));
@@ -682,6 +688,11 @@ void main() {
         'Parrain-1': ['Install Referrer', 'Valider le code'],
         'Parrain-3': ['Passer'],
         'Parrain-5': ['Compétition', '1,5'],
+        // Ajouts du 18/10/2026 : consentement nationalité, pied « Organisateur »,
+        // export des notifications.
+        'Lecteur-11': ['Consentement', 'nationalité', 'redemandée'],
+        'Parrain-7': ['Organisateur', 'KPB Global L.L.C-FZ', 'Apple et Google'],
+        'Boutique-6': ['Export', '`notifications`'],
         'Drapeau-1': ['referralOnboardingCode=false'],
       };
       required.forEach((id, needles) {

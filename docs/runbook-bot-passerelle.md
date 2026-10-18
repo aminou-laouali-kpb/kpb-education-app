@@ -30,7 +30,7 @@ curl -s https://api.kpbeducation.cloud/api/config/app | jq .features.assistBridg
 
 ## 2. Le parcours conseillé : `shadow` → lecture des stats → `on`
 
-1. **Shadow (défaut)**, au moins **2 semaines** de communauté ouverte (À VALIDER).
+1. **Shadow (défaut)**, au moins **2 semaines** de communauté ouverte (validé par le propriétaire le 18/10/2026).
 2. Lire l'onglet Bot Passerelle (ou `GET /admin/community/assist-bridge/stats?days=14`) :
    - **Détectés par besoin** : un besoin à zéro → motifs trop étroits ; un besoin qui écrase tout
      → motifs trop larges.
@@ -41,8 +41,9 @@ curl -s https://api.kpbeducation.cloud/api/config/app | jq .features.assistBridg
      (« Mes 10 bourses », espace Études en France, aucune offre `visa_kit`) — l'ouvrir ou accepter
      que ce besoin reste muet ; beaucoup de `user_cap` / `need_cooldown` ⇒ les seuils jouent.
    - **`wouldSend`** : ce que `on` aurait envoyé — l'ordre de grandeur des notifications à venir.
-3. Critères pour passer à `on` (À VALIDER) : < 10 % de faux positifs sur l'échantillon relu, textes
-   relus par le propriétaire (onglet → Catalogue), numéro WhatsApp de l'app vérifié (§5).
+3. Critères pour passer à `on` (validés par le propriétaire le 18/10/2026) : < 10 % de faux positifs
+   sur l'échantillon relu ; textes FR/EN des besoins validés le 18/10/2026 (un texte modifié depuis
+   se relit à nouveau, onglet → Catalogue) ; numéro WhatsApp de l'app vérifié (§5).
 4. **On** : suivre les clics (« ouvertures fonction », « ouvertures WhatsApp », « fermées ») ; un
    taux de « fermées » très supérieur aux ouvertures sur un besoin ⇒ revoir son texte ou ses motifs.
 
@@ -64,14 +65,15 @@ l'élève a déjà utilisé la fonction (relecture, « Mes 10 bourses » ou orie
 dossier en cours ou rendez-vous à venir, achat visa en cours) ; rien pour un compte sanctionné
 (lecture seule, bannissement) ; rien pour un texte masqué, supprimé ou d'un autre ; rien la nuit
 (21 h → 8 h locale : l'envoi attend le matin, abandonné après 48 h) ; désinscription : préférences
-de l'app → « Suggestions de l'équipe KPB » (clé `assist_bridge`, coupe tout). Seuils : À VALIDER.
+de l'app → « Suggestions de l'équipe KPB » (clé `assist_bridge`, coupe tout). Seuils (72 h, 30 jours,
+14 jours, 48 h, 4 mots) : validés par le propriétaire le 18/10/2026.
 
 ## 5. Le lien WhatsApp
 
 Le serveur n'envoie **aucun numéro** : la charge dit `whatsapp: "kpb"`, et l'app ouvre la ligne KPB
 de sa propre configuration (`KPB_WHATSAPP_NUMBER` au build, `AppConfig.whatsappNumber`) — la même
 que la bulle « Études en France » et les autres boutons WhatsApp. Changer de numéro = nouvelle build
-(À VALIDER : le propriétaire confirme que cette ligne est bien celle de l'assistance).
+(ligne `+33768674292` confirmée comme ligne d'assistance par le propriétaire le 18/10/2026).
 
 ## 6. Surveillance
 

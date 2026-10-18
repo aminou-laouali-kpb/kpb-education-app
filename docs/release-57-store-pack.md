@@ -36,6 +36,13 @@
 >
 > **Rien de ce qui suit ne s'envoie sans le feu vert explicite du propriétaire.** Ce fichier
 > prépare des textes et des valeurs ; il ne soumet rien, ne déploie rien, n'allume aucun drapeau.
+>
+> **Mise à jour du 18/10/2026 (finalisation)** : version **`2.3.1+57` posée** (`pubspec.yaml`,
+> préflights, registre) ; décisions du propriétaire du 18/10/2026 reportées (§4, §5, §7) ;
+> politique de confidentialité et CGU **rédigées** pour la communauté, les bots, le parrainage, la
+> compétition et la nationalité — **à relire par le propriétaire avant l'archive** ; export RGPD
+> complété des notifications in-app ; compilation Android avec `play_install_referrer` vérifiée par
+> la CI (§8).
 
 ---
 
@@ -88,8 +95,8 @@ notification** tant que le backend de #351 n'est pas déployé **et** que
 La 2.3.0 est en vente (mesure ci-dessus). App Store Connect refuse toute build dont la version
 marketing n'est pas **strictement supérieure** à la dernière approuvée (**ITMS-90062**) : la 57 ne
 peut pas rester en 2.3.0. Le propriétaire a retenu **2.3.1** le 16/10/2026 (strictement supérieure à 2.3.0, donc
-acceptée ; le test « Mes 10 bourses » part fermé). Ce pack ne touche
-pas à `pubspec.yaml` : la version `2.3.1+57` se pose dans la PR de préparation (checklist §0.2).
+acceptée ; le test « Mes 10 bourses » part fermé). La version `2.3.1+57` est posée depuis le
+18/10/2026 (PR de préparation, checklist §0.2).
 
 Le choix compte aussi pour le bandeau de mise à jour : `isVersionBelow` **ignore le numéro de
 build** — `_parseVersion` coupe tout ce qui suit `+` (`lib/app/core/utils/version_utils.dart`), et
@@ -214,8 +221,10 @@ caractères de marge.
 Mêmes réponses que `docs/CONSOLE_ANSWERS.md` (§1, §2), **sauf les lignes ci-dessous**, tirées de
 `docs/data-inventory.md` (§2 et §5). Le sens de l'erreur est choisi comme pour XC-06 :
 sur-déclarer coûte une ligne, sous-déclarer coûte une soumission (« declaration inconsistent with
-privacy policy »). La politique in-app et `web/public/confidentialite.html` décrivent déjà le test,
-les suivis et les notifications (mise à jour du 16/10/2026).
+privacy policy »). La politique in-app et `web/public/confidentialite.html` décrivent le test,
+les suivis et les notifications (mise à jour du 16/10/2026) et, depuis le 18/10/2026 (texte à
+relire par le propriétaire), la nationalité sur consentement explicite, la communauté, les bots,
+le parrainage (identifiant d'installation, lien d'invitation) et la compétition.
 
 **Quand reporter ?** Les lignes du test « Mes 10 bourses » portent sur une fonction **dans le
 binaire mais fermée**. Recommandation : les déclarer **dès la soumission de la 57** (le code et la
@@ -226,7 +235,7 @@ formulaires se modifient sans nouvelle build. À VALIDER (propriétaire).
 
 | Type Play | Collecté | Partagé | Requis / Choix | Finalité | Preuve |
 |---|---|---|---|---|---|
-| Infos perso — **Autres** : **Nationalité(s)**, date de naissance, accord du tuteur, plus haut diplôme, niveau visé, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience | Oui | **Non** (aucune école, aucun organisme, pas l'e-mail commercial) | **Optionnel** (test facultatif ; la date de naissance reste requise par le contrôle d'âge) | Fonctionnalité (vérifier les conditions des bourses) | `UserProfile.nationalityCode`… (`schema.prisma`) ; `match-answers.ts` ; data-inventory §5 |
+| Infos perso — **Autres** : **Nationalité(s)**, date de naissance, accord du tuteur, plus haut diplôme, niveau visé, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience | Oui | **Non** (aucune école, aucun organisme, pas l'e-mail commercial) | **Optionnel** (test facultatif ; la nationalité n'est envoyée qu'après la case de consentement explicite du récapitulatif, décision du propriétaire du 18/10/2026 ; la date de naissance reste requise par le contrôle d'âge) | Fonctionnalité (vérifier les conditions des bourses) | `UserProfile.nationalityCode`… (`schema.prisma`) ; `match-answers.ts` ; data-inventory §5 |
 | Infos perso — **Origine ethnique** | **Non** | — | — | — | La nationalité n'est pas une origine ethnique ; À VALIDER (propriétaire) avec le juridique |
 | Activité — **Autres actions** : bourses suivies, réglages d'alerte, ouverture d'une notification | Oui | Non | Requis pour la fonction « Suivre » | Fonctionnalité, Analyses (taux d'ouverture des campagnes) | `ScholarshipAlertSubscription`, `NotificationDelivery.openedAt` |
 | Infos et performances — **Autres données de performance** : version et build de l'app | Oui (depuis la 54, lue côté serveur depuis B) | Non | Requis (en-têtes de chaque requête) | Fonctionnalité (savoir quelles versions restent en service) | `UserProfile.lastAppVersion`, `lastAppBuild` |
@@ -263,21 +272,31 @@ aucun SDK nouveau.
 
 ### 4.3 Points qui restent ouverts
 
-- **XC-06** (finalité Marketing des coordonnées) et **D5** (prix FCFA affichés) : inchangés depuis
-  la 56 (`docs/CONSOLE_ANSWERS.md` §0quater, `docs/store-listing-copy.md` §9). À VALIDER
-  (propriétaire).
-- **Nationalité** : À VALIDER (propriétaire) — validation juridique de la collecte attendue ;
-  `features.scholarshipMatch` reste fermé tant qu'elle n'est pas donnée (`docs/data-inventory.md`
-  §5, avec la base légale, la durée de conservation propre et le texte sur les mineurs).
-- **Export** : les notifications in-app (`UserNotification`) ne figurent pas dans
-  `GET /profiles/me/export` ; la politique ne les promet pas. Écart à corriger côté serveur.
-- **Parrainage (2.3.1)** : À VALIDER (propriétaire) — mention de l'identifiant d'installation, de
-  la lecture du lien d'invitation (Install Referrer) et de la compétition (nom public, autorisation
-  parentale, empreintes anti-fraude) dans la politique in-app et `confidentialite.html` **avant la
-  soumission** (l'identifiant part avec tout rattachement par code, drapeaux ou non) ; finalité
-  « prévention de la fraude » ajoutée à la ligne Play « Identifiants d'appareil » ; texte en pied
-  de l'écran « Compétition » (« Organisateur : KPB Global L.L.C-FZ. Apple et Google ne sont ni
-  organisateurs ni partenaires… ») ; `rulesUrl` posé sur la campagne avant d'ouvrir
+- **XC-06** (finalité Marketing des coordonnées) : **reste ouvert**. Décision du propriétaire du
+  18/10/2026 : pas de finalité « Marketing », **sous réserve** qu'aucun envoi promotionnel ne parte
+  sans opt-in. Or les campagnes de l'admin (`campaign-executor.service.ts`) envoient un modèle libre
+  en push et par e-mail à des audiences larges, sans filtre de consentement : la réserve n'est pas
+  tenue par le code, la décision n'est donc **pas** reportée dans les formulaires
+  (`docs/CONSOLE_ANSWERS.md` §0quater, « Suivi du 18/10/2026 »). À VALIDER (propriétaire).
+- **D5** (prix FCFA) : **tranché le 18/10/2026** — affichés à titre indicatif, payés hors store
+  (`docs/store-listing-copy.md` §9 ; notes de revue §3 cohérentes).
+- **Nationalité** : base légale **consentement explicite**, saisie facultative, conservée tant que
+  le compte existe, effaçable (décision du propriétaire, 18/10/2026) ; case de consentement ajoutée
+  au récapitulatif du test ; politique rédigée (« Votre nationalité »). `features.scholarshipMatch`
+  reste **fermé** (défaut inchangé : son ouverture est une action d'exploitation, §5 étape 4).
+  Restent À VALIDER (propriétaire) : la réponse « Sensitive Info / origine ethnique : Non » avec le
+  juridique (§4.1, §4.2) et le texte sur les mineurs de 16 et 17 ans (`docs/data-inventory.md` §5) ;
+  constat : aucune action « effacer ma nationalité » dans l'app (le retrait passe par
+  privacy@kpbeducation.com).
+- **Export** : corrigé le 18/10/2026 — les notifications in-app (`UserNotification`) figurent dans
+  `GET /profiles/me/export` (clé `notifications`) ; la politique le dit (section 8).
+  `NotificationDelivery` (livraisons des campagnes admin) n'y est toujours pas.
+- **Parrainage (2.3.1)** : mention de l'identifiant d'installation, de la lecture du lien
+  d'invitation (Install Referrer) et de la compétition (nom public, autorisation parentale,
+  empreintes anti-fraude 180 jours, organisateur) **rédigée le 18/10/2026** dans la politique in-app
+  et `confidentialite.html` — à relire par le propriétaire **avant l'archive** ; finalité
+  « prévention de la fraude » à ajouter à la ligne Play « Identifiants d'appareil » (§4.1) ; pied
+  de l'écran « Compétition » présent et testé ; `rulesUrl` à poser sur la campagne avant d'ouvrir
   `features.referralLeaderboard` (data-inventory §6 et §6 bis).
 
 ---
@@ -318,9 +337,9 @@ ouvert pour les seconds (`RemoteFeatureFlags`). « Prod. 16/10 » = mesure du 16
 | `homeParcours` | `KPB_HOME_PARCOURS_ENABLED` | ouvert | absente | ouvert (`true`) | Interrupteur d'urgence |
 | `homeCounselor` | `KPB_HOME_COUNSELOR_ENABLED` | ouvert | absente | ouvert (`true`) | Interrupteur d'urgence |
 | `onboardingV2` | `KPB_ONBOARDING_V2_ENABLED` | fermé | absente | `false` | **Étape 2** de l'ordre ci-dessous : quand la 57 est à 100 % sur les deux boutiques et stable |
-| `scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | fermé | absente | `false` | **Étape 4**, la dernière : après la validation juridique de la nationalité, la porte des 90 % de couverture et la recette en préproduction |
+| `scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | fermé | absente | `false` | **Étape 4**, la dernière : nationalité tranchée (consentement explicite, 18/10/2026 ; case dans l'app), puis la porte des 90 % de couverture, la recette en préproduction et la relecture des textes |
 | `community` | `KPB_COMMUNITY_ENABLED` | fermé | absente | `false` | Hors de la 57 : la communauté (C1 + C2) s'ouvre avec la build qui l'affiche et les déclarations stores mises à jour (`docs/STORE_READINESS.md`, `docs/CONSOLE_ANSWERS.md` §3 bis) ; ne pas toucher |
-| `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Hors de la 57 : bot « Passerelle » (C3 bis) ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après lecture des statistiques en `shadow` (`docs/runbook-bot-passerelle.md`) ; ne pas toucher |
+| `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Hors de la 57 : bot « Passerelle » (C3 bis) ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après au moins 2 semaines de `shadow` et moins de 10 % de faux positifs (critères validés le 18/10/2026, `docs/runbook-bot-passerelle.md`) ; source coach fermée ; ne pas toucher |
 | `referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | fermé | absente | `false` | Parrainage : après la Data safety Play reportée (§4.1) et la politique à jour ; dernière des trois (`docs/runbook-campagne-ambassadeurs.md` §8) |
 | `referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | fermé | absente | `false` | Parrainage : avec ou juste après `referralLeaderboard`, avant le 1er novembre 2026 si la 57 est à 100 % |
 | `referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | fermé | absente | `false` | Parrainage : avant le 1er novembre 2026 (début de la compétition), `rulesUrl` posé sur la campagne ; À VALIDER (propriétaire) |
@@ -335,7 +354,8 @@ jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
    progressive iOS terminée, et les critères du §6.2 tenus. Seule la 57 lit la clé.
 3. **Mode d'ouverture** `outbox_alerts` puis `outbox_followers` (§6.3).
 4. **`KPB_SCHOLARSHIP_MATCH_ENABLED=true`**, seulement quand : la collecte de la nationalité est
-   validée (À VALIDER (propriétaire)) ; `GET /admin/scholarships/eligibility-coverage` en
+   tranchée (consentement explicite, décision du propriétaire du 18/10/2026 ; case de consentement
+   dans l'app) et les textes de la politique relus ; `GET /admin/scholarships/eligibility-coverage` en
    production montre au moins 90 % de bourses publiques structurées et fraîches ; la recette
    « Mes 10 bourses » de `docs/device-qa-build57.md` est jouée en préproduction ; les déclarations
    du §4 sont reportées. Procédure : registre, entrée du 15/10/2026 « chantier D ».
@@ -445,13 +465,15 @@ possible (30 jours au total au plus) depuis App Store Connect.
 |---|---|---|---|
 | **a** | Version marketing de la 57 | **2.3.1** (2.3.0 est en vente : ITMS-90062) | §1.2 ; checklist §0.2 |
 | **b** | État réel de la 56 à consigner au registre | Date de téléversement, SHA archivé, « en vente depuis le 07/10/2026 » (App Store) — À VALIDER (propriétaire) | `docs/release-ledger.md` |
-| **c** | Collecte de la nationalité | À VALIDER (propriétaire) — validation juridique ; `scholarshipMatch` fermé d'ici là | §4.3 ; `docs/data-inventory.md` §5 |
+| **c** | Collecte de la nationalité | **Tranché le 18/10/2026** : consentement explicite, facultative, conservée tant que le compte existe, effaçable ; case ajoutée au test ; `scholarshipMatch` reste fermé (défaut inchangé) | §4.3 ; `docs/data-inventory.md` §5 |
 | **d** | Moment de déclarer le test dans les consoles | Dès la soumission de la 57 | §4 |
 | **e** | Espace « Études en France » ouvert pendant la revue | Le garder tel que mesuré (ouvert), le dire dans les notes | §3, point 1 |
 | **f** | Seuils et durées des paliers Play | Ceux du §6.2 | §6.2 |
 | **g** | `outbox_followers` pour les favoris des anciennes builds | Quand la 57 est majoritaire | §6.3 |
-| **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | Inchangées depuis la 56 | §4.3 |
-| **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique de confidentialité et Data safety à jour **avant** la soumission (identifiant d'installation) ; textes de l'écran « Compétition » et ordre d'ouverture — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
+| **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | **D5 tranché le 18/10/2026** (indicatif, payé hors store). **XC-06 ouvert** : « pas de Marketing » décidé sous réserve d'opt-in, réserve non tenue par les campagnes admin — À VALIDER (propriétaire) | §4.3 ; `docs/CONSOLE_ANSWERS.md` §0quater |
+| **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique **rédigée le 18/10/2026** (à relire avant l'archive) et Data safety à reporter (identifiant d'installation) ; pied de l'écran « Compétition » retenu et testé ; ordre d'ouverture des trois drapeaux — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
+| **j** | Règlement de la compétition (18/10/2026) | **Tranché** : Wave sous 7 jours ; prix perdu après 15 jours et passé au suivant ; résultats le 17 novembre 2026 ; droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com ; proches de l'équipe exclus ; pièce d'identité au versement ; fiscalité à la charge du lauréat ; empreintes 180 jours. **Limite du code** : réattribuer un prix après un premier versement noté est refusé par le serveur (`docs/runbook-campagne-ambassadeurs.md` §7) | `docs/reglement-competition-ambassadeurs-novembre-2026.md` |
+| **k** | Conservations et bots (18/10/2026) | **Tranché** : empreintes 180 jours, événements « Passerelle » 12 mois, contenus supprimés de la communauté 30 jours ; textes et seuils « Passerelle » validés, `shadow` ≥ 2 semaines, < 10 % de faux positifs ; « Vérif » en `auto` après 50 réponses validées sans correction | `docs/data-inventory.md` §6, §7, §7 bis, §7 ter ; runbooks des bots |
 
 ---
 
@@ -464,5 +486,6 @@ possible (30 jours au total au plus) depuis App Store Connect.
 | Les cas de `docs/device-qa-build57.md` | **Jamais joués sur appareil** : écrits d'après le code | Recette sur TestFlight / Play Internal |
 | Le moyen d'envoyer une notification à un seul compte de test | Propriétaire | `docs/device-qa-build57.md`, §Push |
 | L'anglais n'est pas atteignable sur la build soumise (`kShippedLocale = 'fr'`, `lib/app/core/i18n/app_locale.dart`) | Constat | Les textes EN de la politique sont gardés par la parité, pas par un appareil |
-| Le greffon natif `play_install_referrer` compile-t-il avec l'AGP 8.9.2 / Kotlin 2.2.0 du projet ? (le greffon déclare AGP 8.13.0 et Kotlin 2.2.10 dans son `buildscript`) | **Non vérifié ici** : aucun SDK Android dans l'environnement du chantier, `flutter build apk --debug` impossible | `flutter build apk --debug` puis l'AAB de la checklist, sur une machine équipée, avant la soumission |
+| Le greffon natif `play_install_referrer` compile-t-il avec l'AGP 8.9.2 / Kotlin 2.2.0 du projet ? (le greffon déclare AGP 8.13.0 et Kotlin 2.2.10 dans son `buildscript`) | **Vérifié** : la CI de la PR #368 a construit l'APK debug (« Build Android APK (debug validation) » vert, 18/10/2026) | L'**AAB signé** reste à produire au moment de la release (checklist, étape 3) |
+| Les textes juridiques rédigés le 18/10/2026 (politique in-app et web, CGU, page de suppression) | **À relire par le propriétaire** avant l'archive (le texte in-app est compilé) | Sections listées au registre, entrée « Finalisation de la build 57 » |
 | La lecture réelle du referrer (installation depuis le lien `invite.html`) | Recette appareil (Play, test interne avec un lien `referrer=`) | `docs/device-qa-build57.md`, section « Parrainage » |

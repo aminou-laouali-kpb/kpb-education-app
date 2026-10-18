@@ -37,11 +37,20 @@ La console affiche le mode en tête de l'onglet Bot Vérif (`GET /admin/communit
 `mode`). Retour arrière : remettre `review` et recréer le conteneur ; les réponses déjà publiées
 restent (les masquer ou supprimer depuis Contenus si besoin, avec motif).
 
-### Avant de passer en `auto` (À VALIDER par le propriétaire)
+### Avant de passer en `auto` (décision finale du propriétaire, 18/10/2026)
 
-1. Au moins **4 semaines** en `review` avec la file traitée sous 24 h.
-2. Sur les 30 derniers jours (`GET /admin/community/bot/stats?days=30`) : taux de rejet des
-   brouillons `high` + `complete` **< 5 %**, et aucun rejet pour « fait faux ».
+**Règle** : le passage en `auto` est possible après **50 réponses validées sans correction** —
+50 brouillons publiés par un admin (`community.bot_publish`) dont le texte n'a pas été modifié
+(`changes.edited = false` dans l'`AdminAuditEvent`, `purposeCode = community_moderation`,
+`entityType = community_bot_draft`). La console ne compte pas encore ce chiffre : le relever par
+une requête en lecture sur `AdminAuditEvent` (filtre ci-dessus). Un brouillon corrigé avant
+publication ne compte pas ; un rejet non plus.
+
+Contrôles conseillés en plus (non bloquants depuis la décision du 18/10/2026) :
+
+1. File traitée sous 24 h pendant la période en `review`.
+2. Sur les 30 derniers jours (`GET /admin/community/bot/stats?days=30`) : peu de rejets parmi les
+   brouillons `high` + `complete`, et aucun rejet pour « fait faux ».
 3. Catalogue frais : la plupart des bourses citées vérifiées depuis moins de 30 jours (sinon le
    bot reste prudent et n'auto-publie presque rien — c'est voulu).
 4. Relire 20 brouillons `high` au hasard : ton (tutoiement, B1), sources cliquables, aucune promesse.

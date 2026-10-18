@@ -1991,6 +1991,14 @@ des clés explicites).
 suppression du compte les emporte par cascade (prouvé contre PostgreSQL :
 `scholarship-match-api.postgres.spec.ts`).
 
+Depuis le 18/10/2026, l'export porte aussi la clé `notifications` (clé présente même vide) : les
+lignes `UserNotification` de l'élève, triées par date de création — `id`, `kind`,
+`scholarshipId`, `cycleId`, `titleFr`, `titleEn`, `bodyFr`, `bodyEn`, `route`, `data`,
+`createdAt`, `readAt`, `pushedAt`, `pushStatus`. Restent dehors les détails d'exploitation de la
+boîte d'envoi (`dedupeKey`, `pushNotBefore`, `pushAttempts`, `pushLockedUntil`, `pushLockedBy`,
+`pushLastError`, `pushProvider`, `pushBatchId`). Prouvé contre PostgreSQL :
+`profiles.postgres.spec.ts` (export, puis cascade à la suppression).
+
 ## Liste des bourses : recherche, statut et tri (chantier I)
 
 `GET /scholarships` (élève connecté, `StudentAuthGuard`) garde ses paramètres d'avant
