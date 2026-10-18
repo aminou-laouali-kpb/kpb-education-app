@@ -8,16 +8,30 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/models/referral_campaign.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/services/referral_attribution.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/utils/external_link.dart';
+import 'ambassador_competition_screen.dart';
+import 'referral_outcome_messages.dart';
 
 /// WhatsApp-native referral loop (KPB-69 + KPB-77): the student shares a tracked
 /// code, can redeem a friend's code, and spends earned credits (one per referred
 /// friend who creates a case) on a no-cash WhatsApp advisor review voucher.
+///
+/// Build 57 : le champ « code d'un ami » est prérempli par le code en attente
+/// (lien d'invitation via le Play Install Referrer, ou code saisi à
+/// l'onboarding sans réseau) — l'élève CONFIRME toujours ; et un participant à
+/// la compétition ambassadeurs y trouve l'entrée de son classement
+/// (`features.referralLeaderboard`).
 class ReferralScreen extends StatefulWidget {
-  const ReferralScreen({super.key});
+  const ReferralScreen({super.key, this.attribution});
+
+  /// Le service de parrainage (défaut : l'instance partagée).
+  final ReferralAttribution? attribution;
 
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
@@ -30,11 +44,48 @@ class _ReferralScreenState extends State<ReferralScreen> {
   bool _loading = true;
   bool _redeeming = false;
   bool _redeemingVoucher = false;
+  PendingReferralCode? _pending;
+  ReferralCampaignStanding? _competition;
+
+  ReferralAttribution get _attribution =>
+      widget.attribution ?? ReferralAttribution.instance;
 
   @override
   void initState() {
     super.initState();
     _load();
+    unawaited(_loadPending());
+    if (RemoteFeatureFlags.instance.referralLeaderboardEnabled) {
+      unawaited(_loadCompetition());
+    }
+  }
+
+  /// Le code en attente de confirmation, prérempli — jamais validé sans l'élève.
+  Future<void> _loadPending() async {
+    final pending = await _attribution.pendingCode();
+    if (!mounted || pending == null) return;
+    setState(() {
+      _pending = pending;
+      if (_codeCtrl.text.isEmpty) _codeCtrl.text = pending.code;
+    });
+    unawaited(AnalyticsService.instance.logReferralCodePromptViewed(
+      surface: 'referral_screen',
+      prefill: referralPrefillWire(pending),
+    ));
+  }
+
+  /// L'entrée « Compétition ambassadeurs » : seulement pour un participant, et
+  /// sans bruit en cas d'échec (l'écran Parrainage ne dépend pas de la
+  /// compétition).
+  Future<void> _loadCompetition() async {
+    try {
+      final standing = ReferralCampaignStanding.fromJson(
+        await _ctrl.apiClient.getCurrentReferralCampaign(),
+      );
+      if (mounted && standing.participating) {
+        setState(() => _competition = standing);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -146,33 +197,41 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   Future<void> _redeem() async {
     final code = _codeCtrl.text.trim().toUpperCase();
-    if (code.isEmpty) return;
+    if (code.isEmpty || _redeeming) return;
     setState(() => _redeeming = true);
-    try {
-      final res = await _ctrl.apiClient.redeemReferral(code);
-      final attributed = res['attributed'] == true;
-      final already = res['alreadyReferred'] == true;
-      if (attributed && !already) {
-        unawaited(AnalyticsService.instance.logReferralRedeemed());
-      }
-      if (!mounted) return;
-      KpbToast.show(
-        kind: already
-            ? KpbToastKind.info
-            : (attributed ? KpbToastKind.success : KpbToastKind.error),
-        message: already
-            ? 'referral_redeemed_already'.tr
-            : (attributed
-                ? 'referral_redeemed_ok'.tr
-                : 'referral_redeem_error'.tr),
-      );
-      if (attributed && !already) _codeCtrl.clear();
-    } catch (_) {
-      if (!mounted) return;
-      KpbToast.error('referral_redeem_error'.tr);
-    } finally {
-      if (mounted) setState(() => _redeeming = false);
+    final prefill = referralPrefillWire(_pending);
+    // L'en-tête `X-KPB-Device-Id` (identifiant d'installation) part avec CETTE
+    // requête seulement — voir ReferralAttribution.redeem.
+    final outcome = await _attribution.redeem(_ctrl.apiClient, code);
+    unawaited(AnalyticsService.instance.logReferralCodeSubmitted(
+      surface: 'referral_screen',
+      prefill: prefill,
+      result: outcome.wireName,
+    ));
+    if (outcome == ReferralRedeemOutcome.attributed) {
+      unawaited(AnalyticsService.instance.logReferralRedeemed());
     }
+    if (!mounted) return;
+    setState(() {
+      _redeeming = false;
+      if (outcome.isSuccess) {
+        _pending = null;
+        _codeCtrl.clear();
+      } else if (!outcome.isRetryable && _pending?.code == code) {
+        _pending = null;
+      }
+    });
+    KpbToast.show(
+      kind: switch (outcome) {
+        ReferralRedeemOutcome.attributed => KpbToastKind.success,
+        ReferralRedeemOutcome.unknownCode ||
+        ReferralRedeemOutcome.selfReferral ||
+        ReferralRedeemOutcome.notAllowed =>
+          KpbToastKind.error,
+        _ => KpbToastKind.info,
+      },
+      message: referralOutcomeMessageKey(outcome, onReferralScreen: true).tr,
+    );
   }
 
   @override
@@ -187,6 +246,12 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 Text('referral_intro'.tr,
                     style: TextStyle(color: context.kpb.textSecondary)),
                 const SizedBox(height: KpbSpacing.lg),
+
+                // ── Compétition ambassadeurs (build 57) ─────────────
+                if (_competition != null) ...[
+                  _CompetitionEntry(standing: _competition!),
+                  const SizedBox(height: KpbSpacing.lg),
+                ],
 
                 // ── My code ─────────────────────────────────────────
                 KpbCard(
@@ -319,12 +384,31 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           style: KpbTextStyles.titleMd),
                       const SizedBox(height: 8),
                       TextField(
+                        key: const ValueKey('referral-code-field'),
                         controller: _codeCtrl,
                         textCapitalization: TextCapitalization.characters,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        // La mention « code repris de ton lien » suit le champ.
+                        onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           labelText: 'referral_code_hint'.tr,
                         ),
                       ),
+                      if (_pending != null &&
+                          _codeCtrl.text.trim().toUpperCase() ==
+                              _pending!.code) ...[
+                        const SizedBox(height: KpbSpacing.xs),
+                        Text(
+                          _pending!.origin ==
+                                  PendingReferralOrigin.installReferrer
+                              ? 'referral_pending_note'.tr
+                              : 'referral_pending_typed_note'.tr,
+                          key: const ValueKey('referral-pending-note'),
+                          style: KpbTextStyles.caption
+                              .copyWith(color: context.kpb.textSecondary),
+                        ),
+                      ],
                       const SizedBox(height: KpbSpacing.sm),
                       SizedBox(
                         width: double.infinity,
@@ -345,6 +429,48 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ],
             ),
+    );
+  }
+}
+
+/// L'entrée vers l'écran « Compétition ambassadeurs », pour un participant.
+class _CompetitionEntry extends StatelessWidget {
+  const _CompetitionEntry({required this.standing});
+
+  final ReferralCampaignStanding standing;
+
+  @override
+  Widget build(BuildContext context) {
+    final rank = standing.rank;
+    return KpbCard(
+      key: const ValueKey('referral-competition-entry'),
+      onTap: () => Get.to(() => const AmbassadorCompetitionScreen()),
+      child: Row(
+        children: [
+          const ExcludeSemantics(
+            child: Icon(Icons.emoji_events_outlined,
+                color: KpbColors.actionPrimary),
+          ),
+          const SizedBox(width: KpbSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('comp_title'.tr, style: KpbTextStyles.titleMd),
+                Text(
+                  rank == null
+                      ? 'comp_entry_sub'.tr
+                      : 'comp_rank_a11y'.trParams({
+                          'rank': 'comp_rank_value'.trParams({'rank': '$rank'}),
+                        }),
+                  style: KpbTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          const ExcludeSemantics(child: Icon(Icons.chevron_right_rounded)),
+        ],
+      ),
     );
   }
 }

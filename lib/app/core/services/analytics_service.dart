@@ -1382,6 +1382,73 @@ class AnalyticsService {
     }
   }
 
+  // ── Parrainage côté app (build 57) ───────────────────────────────────────
+
+  /// Les surfaces du champ « code de ton parrain ».
+  static const referralCodeSurfaces = <String>{'onboarding', 'referral_screen'};
+
+  /// Les propriétés des trois événements du champ : `surface`, `prefill` et,
+  /// pour une validation, `result` — des identifiants fermés, jamais le code.
+  @visibleForTesting
+  static Map<String, Object> referralCodeParams({
+    required String surface,
+    required String prefill,
+    String? result,
+  }) =>
+      <String, Object>{
+        AnalyticsParamKey.surface: surface,
+        AnalyticsParamKey.prefill: prefill,
+        if (result != null) AnalyticsParamKey.result: result,
+      };
+
+  Future<void> logReferralCodePromptViewed({
+    required String surface,
+    required String prefill,
+  }) =>
+      _logReferral(
+        AnalyticsEventName.referralCodePromptViewed,
+        referralCodeParams(surface: surface, prefill: prefill),
+      );
+
+  Future<void> logReferralCodeSubmitted({
+    required String surface,
+    required String prefill,
+    required String result,
+  }) =>
+      _logReferral(
+        AnalyticsEventName.referralCodeSubmitted,
+        referralCodeParams(surface: surface, prefill: prefill, result: result),
+      );
+
+  Future<void> logReferralCodeSkipped({
+    required String surface,
+    required String prefill,
+  }) =>
+      _logReferral(
+        AnalyticsEventName.referralCodeSkipped,
+        referralCodeParams(surface: surface, prefill: prefill),
+      );
+
+  /// `campaign_phase` seulement : ni rang, ni compteur, ni nom public.
+  @visibleForTesting
+  static Map<String, Object> referralCompetitionParams(String phase) =>
+      <String, Object>{AnalyticsParamKey.campaignPhase: phase};
+
+  Future<void> logReferralCompetitionViewed({required String phase}) =>
+      _logReferral(
+        AnalyticsEventName.referralCompetitionViewed,
+        referralCompetitionParams(phase),
+      );
+
+  Future<void> _logReferral(String name, Map<String, Object> params) async {
+    try {
+      await _logEvent(name, params);
+      _mirror(name, params);
+    } catch (e, s) {
+      _logError(name, e, s);
+    }
+  }
+
   // ── Content events ────────────────────────────────────────────────────────
 
   Future<void> logSaveItem({

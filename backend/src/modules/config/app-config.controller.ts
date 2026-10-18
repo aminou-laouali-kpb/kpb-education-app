@@ -388,6 +388,25 @@ export class AppConfigController {
         // `assist_bridge` et l'interrupteur reviendrait seul. En `shadow`, rien
         // n'est envoyé : rien à couper, rien à afficher.
         assistBridge: assistBridgeMode() === 'on',
+        // Parrainage côté app (build 57, compétition ambassadeurs) : trois
+        // interrupteurs FERMÉS par défaut et INDÉPENDANTS — seule `true` ouvre
+        // chacun, et aucun ne dérive d'un autre. Les routes serveur
+        // (`POST /referrals/redeem`, `GET /referrals/campaigns/current`) restent
+        // servies quel que soit leur état : ces clés ne pilotent que l'app.
+        //   • `referralInstallReferrer` : lecture (Android, une fois par
+        //     installation) du Play Install Referrer pour PRÉREMPLIR le code ;
+        //   • `referralOnboardingCode` : l'étape facultative « code de ton
+        //     parrain » en fin d'onboarding ;
+        //   • `referralLeaderboard` : l'écran « Compétition ambassadeurs ».
+        referralInstallReferrer: enabled(
+          process.env.KPB_REFERRAL_INSTALL_REFERRER_ENABLED,
+        ),
+        referralOnboardingCode: enabled(
+          process.env.KPB_REFERRAL_ONBOARDING_CODE_ENABLED,
+        ),
+        referralLeaderboard: enabled(
+          process.env.KPB_REFERRAL_LEADERBOARD_ENABLED,
+        ),
       },
       // La fenêtre de campagne est SERVIE, jamais compilée. Une build vit ~90
       // jours ; une date d'ouverture écrite dans le binaire devient fausse

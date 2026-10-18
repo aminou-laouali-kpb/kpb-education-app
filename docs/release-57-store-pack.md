@@ -30,6 +30,9 @@
 > phrase ») : *toute fonctionnalité vantée doit être atteignable le jour de l'approbation.* Le
 > test « Mes 10 bourses » (`features.scholarshipMatch`) et l'onboarding V2
 > (`features.onboardingV2`) partent **fermés** : ni les notes de version ni la fiche ne les citent.
+> Même règle pour les parties app du **parrainage** (révision du 17/10/2026,
+> `docs/runbook-campagne-ambassadeurs.md` §8) : `features.referralInstallReferrer`,
+> `features.referralOnboardingCode` et `features.referralLeaderboard` partent fermés.
 >
 > **Rien de ce qui suit ne s'envoie sans le feu vert explicite du propriétaire.** Ce fichier
 > prépare des textes et des valeurs ; il ne soumet rien, ne déploie rien, n'allume aucun drapeau.
@@ -49,18 +52,26 @@
 | H (#359) | Test « Mes 10 bourses » dans l'app ; **libellés honnêtes** (plus aucun palier de compatibilité calculé côté client pour une bourse, plus de « chances ») ; héros invité « Trouve tes bourses » | Libellés : oui. Test : **non** (drapeau fermé) |
 | I (#360) | Liste des bourses lisible (statut, filtres, tri), **cache hors ligne** des bourses, fiche ; onboarding V2 ; code OTP collé et validé au 6e chiffre | Liste, hors ligne, OTP : oui. Onboarding V2 : **non** |
 | K (#361) | Accueil « **Ta prochaine étape** » : une action, sept blocs, chacun avec un interrupteur serveur ouvert par défaut, chacun replié quand son appel échoue | Oui |
+| Parrainage côté app (17/10/2026) | **Play Install Referrer** (Android, une fois par installation, code prérempli jamais validé sans l'élève) ; **identifiant d'installation** (UUID v4 aléatoire) en `X-KPB-Device-Id` sur `POST /referrals/redeem` seulement ; étape facultative « code de ton parrain » en fin d'onboarding ; écran « **Compétition ambassadeurs** » (phase, compte à rebours, rang, compteurs, code, classement public, règlement) ; messages clairs sur chaque erreur de code (écran Parrainage compris) | Messages d'erreur et identifiant : oui. Referrer, étape, compétition : **non** (trois drapeaux fermés, §5) |
 
 **Ce que la 57 change dans le binaire** (à re-prouver sur le SHA final, checklist étape 0) :
-`pubspec.yaml` gagne `firebase_messaging` et perd `onesignal_flutter` (#351) ; `pubspec.lock` suit ;
+`pubspec.yaml` gagne `firebase_messaging` et perd `onesignal_flutter` (#351), puis gagne
+**`play_install_referrer` 0.5.0** (parrainage, Android seulement : bibliothèque Google
+`com.android.installreferrer:installreferrer:2.2`) ; `pubspec.lock` suit ;
 `android/app/src/main/AndroidManifest.xml` gagne deux `meta-data` FCM (icône, canal `kpb_default`),
-**aucune permission** ; `ios/Runner/Info.plist` ne change que par le commentaire et le texte de
+**aucune permission** dans le fichier source — le manifeste **fusionné** gagne la permission
+d'installation `com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE`, déclarée
+par l'AAR `installreferrer` 2.2 (lue le 17/10/2026), jamais affichée à l'utilisateur ;
+`ios/Runner/Info.plist` ne change que par le commentaire et le texte de
 `NSLocationWhenInUseUsageDescription` (gardée par précaution, jamais demandée). **`ios/Podfile.lock`
 n'a pas été régénéré par #351** : il cite encore `onesignal_flutter` et ne cite pas
 `firebase_messaging` ; le `pod install` de l'archive le réécrira (checklist étape 4).
 
 **Ce que la 57 ne contient PAS** : les écoles partenaires (chantiers E et J, non faits) ; le
 forum ; un envoi hebdomadaire « nouvelles bourses compatibles » (l'opt-in est enregistré, aucun
-envoi n'est codé) ; une permission nouvelle ; un hôte nouveau.
+envoi n'est codé) ; une permission **demandée à l'utilisateur** ; un hôte nouveau (l'écran de la
+compétition ouvre `kpbeducation.cloud/classement/`, domaine déjà servi, et le `rulesUrl` servi par
+le backend).
 
 ### 1.1 Couplage backend : `requires-new` pour les notifications
 
@@ -123,7 +134,8 @@ What's new:
 • Synchronisation plus robuste quand le réseau coupe.
 ```
 
-Les captures d'écran de la fiche ne montrent ni le test « Mes 10 bourses » ni l'onboarding V2.
+Les captures d'écran de la fiche ne montrent ni le test « Mes 10 bourses » ni l'onboarding V2, ni
+l'étape « code de ton parrain » ni l'écran « Compétition ambassadeurs » (drapeaux fermés).
 
 ---
 
@@ -133,7 +145,7 @@ Le champ est limité à **4 000 caractères** (à vérifier à la saisie dans Ap
 texte ci-dessous **remplace** celui du pack 56 §3 : à coller **seul**, en anglais. Paragraphes
 continus (chaque retour à la ligne compte pour un caractère).
 
-<!-- notes-for-review: chars=3252 bytes=3255 reserve=160 -->
+<!-- notes-for-review: chars=3553 bytes=3556 reserve=160 -->
 
 ```
 SIGN-IN
@@ -158,14 +170,14 @@ NEW IN THIS VERSION
 "Follow" on a scholarship saves it and sends a notification when it opens and before its deadline. Notification permission is never asked at launch: only after a short explanation, at the first "Follow". A "My follows" screen and an in-app notification list are added; viewed scholarships stay readable offline; Home shows one "next step" card. Push notifications now use Firebase Cloud Messaging; the OneSignal SDK is removed.
 
 REMOTELY ACTIVATED FEATURES (guideline 2.3.1)
-Switched from our server (api.kpbeducation.cloud/api/config/app). The "Études en France" space is open (flag eefSpace). OFF at review time: features.scholarshipMatch, a scholarship eligibility test (nationality, date of birth, diploma, grades, languages) that shows up to 10 scholarships, never a percentage; features.onboardingV2, a shorter sign-up flow; features.eefHelpBubble and features.eefPrivateSchools, WhatsApp help inside the space. None adds a permission, SDK or host. Test answers are not sent to schools, analytics or notifications. Also remote: a dismissible "update available" banner (recommendedVersion).
+Switched from our server (api.kpbeducation.cloud/api/config/app). The "Études en France" space is open (flag eefSpace). OFF at review time: features.scholarshipMatch, a scholarship eligibility test (nationality, date of birth, diploma, grades, languages) that shows up to 10 scholarships, never a percentage; features.onboardingV2, a shorter sign-up flow; features.eefHelpBubble and features.eefPrivateSchools, WhatsApp help inside the space; features.referralOnboardingCode and features.referralLeaderboard, an optional referral-code step after sign-up and a referral contest screen for ambassadors registered by our team (organiser KPB Global L.L.C-FZ, official rules linked, Apple is not a sponsor, no prize amount shown in the app). None adds a permission, SDK or host on iOS. Test answers are not sent to schools, analytics or notifications. Also remote: a dismissible "update available" banner (recommendedVersion).
 
 NOT AFFILIATED WITH ANY GOVERNMENT. KPB Education is a private guidance service, not affiliated with Campus France or any French administration, and does not process applications. The demo account is a test account: its declarations are excluded from our advisors' call lists.
 ```
 
-**Décompte (script, 16/10/2026).** Marqueurs `<ADDRESS>` et `<METHOD>` remplacés par la place
-qu'on leur réserve — **40** et **120** caractères — : **3 252 caractères** (3 255 octets en
-UTF-8), soit **748 caractères sous la limite**. Sans les marqueurs : 3 109 caractères. Le test
+**Décompte (script, 17/10/2026, parrainage ajouté).** Marqueurs `<ADDRESS>` et `<METHOD>` remplacés par la place
+qu'on leur réserve — **40** et **120** caractères — : **3 553 caractères** (3 556 octets en
+UTF-8), soit **447 caractères sous la limite**. Sans les marqueurs : 3 410 caractères. Le test
 `test/release/store_pack_57_test.dart` refait ce calcul à chaque exécution et exige au moins 50
 caractères de marge.
 
@@ -176,8 +188,14 @@ caractères de marge.
    remplacer la phrase par « The "Études en France" space is OFF at review time (flag eefSpace) »
    et recompter. À VALIDER (propriétaire) : que l'espace reste ouvert pendant la revue.
 2. **« OFF at review time » pour `scholarshipMatch`, `onboardingV2`, `eefHelpBubble`,
-   `eefPrivateSchools`** : les quatre valent `false` (ou sont absentes) au moment de soumettre
-   (checklist étape 8). Le relecteur ne voit ni le test ni le nouvel onboarding.
+   `eefPrivateSchools`, `referralOnboardingCode`, `referralLeaderboard`** : les six valent `false`
+   (ou sont absentes) au moment de soumettre (checklist étape 8), ainsi que
+   `referralInstallReferrer` (Android seulement, non cité aux notes Apple). Le relecteur ne voit ni
+   le test, ni le nouvel onboarding, ni l'étape du code, ni l'écran de la compétition. Si la
+   compétition doit être **ouverte** pendant la revue, la phrase change (« ON at review time » est
+   interdit par le test : reformuler et recompter) et le `rulesUrl` de la campagne doit être posé —
+   Apple 5.3.2 exige le règlement dans l'app et « Apple n'est pas sponsor ». À VALIDER
+   (propriétaire).
 3. **« Notification permission is never asked at launch »** : la demande est faite au premier
    « Suivre », derrière une feuille d'explication (`features.followPushPrimer`, ouvert), ou depuis
    l'écran des notifications ; l'onboarding ne la fait plus (`onboarding_screen.dart`, `_submit`).
@@ -215,6 +233,8 @@ formulaires se modifient sans nouvelle build. À VALIDER (propriétaire).
 | **Identifiants d'appareil** | Oui (jeton FCM) | **Oui (OneSignal) tant que le repli tourne** pour les builds 53 et 56 | Requis | Push | `docs/CONSOLE_ANSWERS.md` §0sexies : garder « Partagé (OneSignal) » tant que `ONESIGNAL_*` est posé |
 | Infos perso — **ID utilisateur** | Oui | **Oui (OneSignal)** pour les builds 53 et 56 seulement ; la 57 ne l'envoie qu'à notre backend et à PostHog | Requis | Fonctionnalité, Analyses | idem |
 | Activité — **Autres actions** (4 étiquettes OneSignal) | Oui (builds 53 et 56) | Oui (OneSignal) | Requis | Fonctionnalité | La 57 n'en envoie plus ; la ligne tombe au retrait du repli |
+| **Identifiants d'appareil ou autres** : **identifiant d'installation** (UUID v4 aléatoire, ni IMEI ni identifiant publicitaire) | Oui (2.3.1) — envoyé sur `POST /referrals/redeem` seulement, gardé côté serveur en **empreinte HMAC** (un hachage reste une collecte pour Play) | Non | Requis **quand** l'élève valide un code de parrain (pas de rattachement sans lui) | **Prévention de la fraude, sécurité et conformité** (ajout à la ligne « Identifiants d'appareil » existante) | `referral_attribution.dart` (`installId`), `referrals.controller.ts` ; data-inventory §6 bis ; conservation 180 jours (§6) |
+| **Play Install Referrer** (SDK `play_install_referrer` 0.5.0 → bibliothèque Google `installreferrer` 2.2) | **Non collecté** : la chaîne de référence et ses horodatages sont lus et traités **sur l'appareil** ; seul `ref` est gardé en local pour préremplir un champ | Non | — | — | Le code ne part que quand l'élève appuie sur « Valider le code », comme une saisie manuelle (rattachement par code : déjà déclaré depuis KPB-69, « Autres actions ») ; drapeau `referralInstallReferrer` fermé : aucune lecture. À VALIDER (propriétaire) : réponse finale avec la grille Play du jour |
 
 Inchangé : chiffrement en transit (Oui), suppression (Oui, en app + URL), identifiant publicitaire
 (Non), Localisation (Non), Achats (Non), traitement éphémère (Non).
@@ -228,9 +248,18 @@ Inchangé : chiffrement en transit (Oui), suppression (Oui, en app + URL), ident
 | **Usage Data — Product Interaction** : suivis, ouverture des notifications | Oui | Oui | Non | **App Functionality** (ajout) + Analytics | « Suivre » et « Mes suivis » sont une fonction, pas seulement de la mesure |
 | **Identifiers — User ID, Device ID** | Oui | Oui | Non | App Functionality, Analytics | Jeton FCM (la 57) ; abonnement OneSignal des builds 53 et 56 tant que le repli tourne |
 | **Diagnostics** | Oui | Non | Non | App Functionality | Inchangé (Crashlytics) ; la version de l'app vue par le serveur se rattache à « Other Diagnostic Data » |
+| **Identifiers — Device ID** (précision 2.3.1) | Oui | Oui | Non | **App Functionality** (prévention de la fraude) | Identifiant d'installation aléatoire envoyé avec un code de parrain (`X-KPB-Device-Id`) ; `PrivacyInfo.xcprivacy` déclare déjà `NSPrivacyCollectedDataTypeDeviceID`. Pas de Play Install Referrer sur iOS |
 
 **Tracking : Non** partout, inchangé (`NSPrivacyTracking=false`, aucune ATT). La liste des SDK perd
 OneSignal et gagne Firebase Messaging (même éditeur que Firebase Analytics, déjà déclaré).
+
+**Déclaration des SDK (2.3.1)** : côté **Android**, la liste gagne le **Play Install Referrer**
+(`play_install_referrer` 0.5.0, éditeur vérifié chunkytofustudios.com, autour de la bibliothèque
+Google `com.android.installreferrer:installreferrer:2.2`) : il lit auprès du Play Store de
+l'appareil l'URL de référence du lien Play, les horodatages du clic et du début d'installation, la
+version installée et le paramètre Instant ; **rien n'est transmis** par l'app à partir de ces
+données, sauf le code de parrain au moment du rattachement **confirmé** par l'élève. Côté **iOS** :
+aucun SDK nouveau.
 
 ### 4.3 Points qui restent ouverts
 
@@ -242,6 +271,14 @@ OneSignal et gagne Firebase Messaging (même éditeur que Firebase Analytics, d�
   §5, avec la base légale, la durée de conservation propre et le texte sur les mineurs).
 - **Export** : les notifications in-app (`UserNotification`) ne figurent pas dans
   `GET /profiles/me/export` ; la politique ne les promet pas. Écart à corriger côté serveur.
+- **Parrainage (2.3.1)** : À VALIDER (propriétaire) — mention de l'identifiant d'installation, de
+  la lecture du lien d'invitation (Install Referrer) et de la compétition (nom public, autorisation
+  parentale, empreintes anti-fraude) dans la politique in-app et `confidentialite.html` **avant la
+  soumission** (l'identifiant part avec tout rattachement par code, drapeaux ou non) ; finalité
+  « prévention de la fraude » ajoutée à la ligne Play « Identifiants d'appareil » ; texte en pied
+  de l'écran « Compétition » (« Organisateur : KPB Global L.L.C-FZ. Apple et Google ne sont ni
+  organisateurs ni partenaires… ») ; `rulesUrl` posé sur la campagne avant d'ouvrir
+  `features.referralLeaderboard` (data-inventory §6 et §6 bis).
 
 ---
 
@@ -284,6 +321,9 @@ ouvert pour les seconds (`RemoteFeatureFlags`). « Prod. 16/10 » = mesure du 16
 | `scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | fermé | absente | `false` | **Étape 4**, la dernière : après la validation juridique de la nationalité, la porte des 90 % de couverture et la recette en préproduction |
 | `community` | `KPB_COMMUNITY_ENABLED` | fermé | absente | `false` | Hors de la 57 : la communauté (C1 + C2) s'ouvre avec la build qui l'affiche et les déclarations stores mises à jour (`docs/STORE_READINESS.md`, `docs/CONSOLE_ANSWERS.md` §3 bis) ; ne pas toucher |
 | `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Hors de la 57 : bot « Passerelle » (C3 bis) ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après lecture des statistiques en `shadow` (`docs/runbook-bot-passerelle.md`) ; ne pas toucher |
+| `referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | fermé | absente | `false` | Parrainage : après la Data safety Play reportée (§4.1) et la politique à jour ; dernière des trois (`docs/runbook-campagne-ambassadeurs.md` §8) |
+| `referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | fermé | absente | `false` | Parrainage : avec ou juste après `referralLeaderboard`, avant le 1er novembre 2026 si la 57 est à 100 % |
+| `referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | fermé | absente | `false` | Parrainage : avant le 1er novembre 2026 (début de la compétition), `rulesUrl` posé sur la campagne ; À VALIDER (propriétaire) |
 
 **Ordre d'ouverture après la 57** (chaque étape séparée de la précédente par au moins quelques
 jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
@@ -301,7 +341,8 @@ jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
    du §4 sont reportées. Procédure : registre, entrée du 15/10/2026 « chantier D ».
 
 Les interrupteurs `eefHelpBubble` et `eefPrivateSchools` suivent leur propre calendrier (pack 56
-§7). Aucune action `vps-ops` n'écrit les clés des chantiers G, K, D et I : elles se posent dans le
+§7), comme les trois drapeaux du parrainage (compétition du 1er au 10 novembre 2026, ordre
+conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le propriétaire). Aucune action `vps-ops` n'écrit les clés des chantiers G, K, D et I ni celles du parrainage : elles se posent dans le
 `.env` de production, puis le conteneur `api` est recréé. À VALIDER (propriétaire) : qui écrit ce
 `.env`, et la trace qu'on en garde.
 
@@ -410,6 +451,7 @@ possible (30 jours au total au plus) depuis App Store Connect.
 | **f** | Seuils et durées des paliers Play | Ceux du §6.2 | §6.2 |
 | **g** | `outbox_followers` pour les favoris des anciennes builds | Quand la 57 est majoritaire | §6.3 |
 | **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | Inchangées depuis la 56 | §4.3 |
+| **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique de confidentialité et Data safety à jour **avant** la soumission (identifiant d'installation) ; textes de l'écran « Compétition » et ordre d'ouverture — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
 
 ---
 
@@ -422,3 +464,5 @@ possible (30 jours au total au plus) depuis App Store Connect.
 | Les cas de `docs/device-qa-build57.md` | **Jamais joués sur appareil** : écrits d'après le code | Recette sur TestFlight / Play Internal |
 | Le moyen d'envoyer une notification à un seul compte de test | Propriétaire | `docs/device-qa-build57.md`, §Push |
 | L'anglais n'est pas atteignable sur la build soumise (`kShippedLocale = 'fr'`, `lib/app/core/i18n/app_locale.dart`) | Constat | Les textes EN de la politique sont gardés par la parité, pas par un appareil |
+| Le greffon natif `play_install_referrer` compile-t-il avec l'AGP 8.9.2 / Kotlin 2.2.0 du projet ? (le greffon déclare AGP 8.13.0 et Kotlin 2.2.10 dans son `buildscript`) | **Non vérifié ici** : aucun SDK Android dans l'environnement du chantier, `flutter build apk --debug` impossible | `flutter build apk --debug` puis l'AAB de la checklist, sur une machine équipée, avant la soumission |
+| La lecture réelle du referrer (installation depuis le lien `invite.html`) | Recette appareil (Play, test interne avec un lien `referrer=`) | `docs/device-qa-build57.md`, section « Parrainage » |

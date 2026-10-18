@@ -4210,4 +4210,76 @@ const Map<String, String> appTranslationsFr = {
   'assist_bridge_pref_subtitle':
       'Quand tu cherches de l\'aide, on te montre la fonction de l\'app qui peut t\'aider',
   'notif_cta_assist_bridge': 'Voir comment faire',
+  // ── Parrainage côté app (build 57 / 2.3.1) ───────────────────────────────
+  'onb_ref_title': 'Tu as un code de parrain ?',
+  'onb_ref_subtitle':
+      'Si un ami t’a invité, saisis son code pour qu’il soit crédité. C’est facultatif.',
+  'onb_ref_prefilled_note':
+      'Code repris de ton lien d’invitation. Vérifie-le avant de le valider.',
+  'onb_ref_later_note':
+      'Tu pourras aussi le saisir plus tard dans Profil → Parrainer un ami.',
+  'referral_pending_note':
+      'Code repris de ton lien d’invitation : vérifie-le, puis valide-le.',
+  'referral_pending_typed_note':
+      'Code saisi pendant ton inscription, pas encore validé.',
+  'referral_err_unknown': 'Ce code n’existe pas. Vérifie chaque caractère.',
+  'referral_err_self':
+      'C’est ton propre code : il sert à inviter tes amis, pas à toi.',
+  'referral_err_not_allowed':
+      'Ce code ne peut pas être utilisé avec ton compte.',
+  'referral_err_rate_limited':
+      'Ce code a beaucoup servi dans l’heure. Il est gardé : réessaie plus tard depuis Profil → Parrainer un ami.',
+  'referral_err_offline':
+      'Pas de connexion. Ton code est gardé : valide-le plus tard depuis Profil → Parrainer un ami.',
+  'referral_err_generic':
+      'Le code n’a pas pu être vérifié. Il est gardé : réessaie plus tard depuis Profil → Parrainer un ami.',
+  'comp_title': 'Compétition ambassadeurs',
+  'comp_phase_upcoming': 'À venir',
+  'comp_phase_running': 'En cours',
+  'comp_phase_ended': 'Terminée',
+  'comp_starts_in': 'Début dans @time',
+  'comp_ends_in': 'Fin dans @time',
+  'comp_ended_body': 'La compétition est terminée.',
+  'comp_time_dhm': '@d j @h h @m min',
+  'comp_time_hm': '@h h @m min',
+  'comp_time_m': '@m min',
+  'comp_provisional':
+      'Classement provisoire : il peut encore changer après la vérification des filleuls.',
+  'comp_rank_label': 'Ton rang',
+  'comp_rank_value': 'N° @rank',
+  'comp_rank_none': 'Pas encore classé',
+  'comp_rank_a11y': 'Ton rang : @rank',
+  'comp_unrankable':
+      'Tu n’apparais pas encore dans le classement public : l’équipe KPB doit finaliser ta participation (par exemple l’autorisation parentale si tu es mineur).',
+  'comp_qualified': 'Qualifiés',
+  'comp_qualified_hint': 'Comptent pour ton rang',
+  'comp_to_review': 'À vérifier',
+  'comp_to_review_hint': 'Vérifiés par l’équipe avant de compter',
+  'comp_pending': 'En attente',
+  'comp_pending_hint': 'Inscrits, profil pas encore complété',
+  'comp_rule_explainer':
+      'Un filleul compte quand son profil est complété. Seuls les ambassadeurs sont classés : tes filleuls, eux, ne gagnent rien.',
+  'comp_your_code': 'Ton code ambassadeur',
+  'comp_share_cta': 'Partager mon lien',
+  'comp_share_message':
+      'Rejoins-moi sur KPB Education ! Inscris-toi avec mon code @code : @link',
+  'comp_public_cta': 'Voir le classement public',
+  'comp_rules_cta': 'Lire le règlement',
+  'comp_organizer_note':
+      'Organisateur : KPB Global L.L.C-FZ. Apple et Google ne sont ni organisateurs ni partenaires de cette compétition.',
+  'comp_not_participating_title': 'Tu ne participes pas à la compétition',
+  'comp_not_participating_body':
+      'Les ambassadeurs participants sont inscrits par l’équipe KPB. Tu peux toujours inviter tes amis avec ton code de parrainage.',
+  'comp_offline_title': 'Hors ligne',
+  'comp_offline_body': 'Connecte-toi à Internet pour voir ton classement.',
+  'comp_error_title': 'Classement indisponible',
+  'comp_error_body': 'Réessaie dans un instant.',
+  'comp_entry_sub': 'Voir ton classement',
+  'comp_name_city': '@name — @city',
+  'referral_err_rate_limited_here':
+      'Ce code a beaucoup servi dans l’heure. Réessaie plus tard.',
+  'referral_err_offline_here':
+      'Pas de connexion. Réessaie quand tu seras en ligne.',
+  'referral_err_generic_here':
+      'Le code n’a pas pu être vérifié. Réessaie plus tard.',
 };

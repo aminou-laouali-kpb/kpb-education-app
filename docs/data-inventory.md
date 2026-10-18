@@ -5,8 +5,10 @@ l’inscription. Chaque ligne cite le fichier qui **prouve** le flux. Les docs
 existants ne font pas autorité : si ce fichier et le code divergent, c’est le
 code qui gagne, et ce fichier doit être mis à jour.
 
-Dernière lecture du dépôt : 2026-10-17 (communauté C1 + C2, serveur, derrière un drapeau
-fermé ; §7). Lecture précédente : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
+Dernière lecture du dépôt : 2026-10-17 (parrainage côté app de la build 57 / 2.3.1 :
+Play Install Referrer, identifiant d'installation, étape « code de ton parrain », écran
+« Compétition ambassadeurs », derrière trois drapeaux fermés ; §6 bis). Lecture précédente :
+2026-10-17 (communauté C1 + C2, serveur, derrière un drapeau fermé ; §7). Lecture précédente : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
 web, sans nouvelle build ; §6). Lecture précédente : 2026-10-16 (chantier L, préparation de
 la build 57 : test « Mes 10 bourses », « Suivre » et notifications, caches hors ligne ; §5).
 Lecture précédente : 2026-08-24 (alignement des trois politiques : YouTube et le
@@ -56,15 +58,28 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Dictée vocale | Demande d’accompagnement | Reconnaissance **locale demandée** (correctif 1 du 18/08) ; à défaut, l'app refuse la session et ne l'envoie au service du téléphone qu'après accord explicite | **Garantie inégale** : contrat dur sur iOS (le greffon refuse si le local manque) ; sur Android `onDevice` n'est qu'une préférence et le repli réseau est invisible depuis Dart. Ne pas écrire « jamais transmis ». `NSMicrophoneUsageDescription` + `RECORD_AUDIO` |
 | Profil académique, budget | Onboarding | Postgres + local | Budget → Groq en **tranche** seulement |
 | Jeton push | Runtime | Backend KPB (`DeviceToken`), FCM | |
+| **Identifiant d'installation** (build 57 / 2.3.1) | UUID v4 **aléatoire** créé par l'app au premier rattachement demandé (`lib/app/core/services/referral_attribution.dart`, `installId`) — jamais l'IMEI, jamais l'identifiant publicitaire | Appareil : `SharedPreferences` `kpb_relaunch_v1.install_id_v1` ; serveur : **HMAC seulement** (`ReferralAttributionSignal.clientDeviceHash`, §6) | Envoyé dans l'en-tête `X-KPB-Device-Id` de `POST /referrals/redeem` **et d'aucune autre requête** (`test/core/repositories/referral_api_test.dart`). Indépendant des drapeaux. Nouveau à chaque réinstallation (`android:allowBackup="false"`). Détail : §6 bis |
+| Code du parrain en attente (build 57) | Play Install Referrer (Android, drapeau `features.referralInstallReferrer`) ou code saisi à l'onboarding sans réseau | Appareil seulement : `SharedPreferences` `kpb_relaunch_v1.referral_pending_code_v1` (code + origine) | Ne part au serveur que quand l'élève appuie sur « Valider le code » ; effacé au rattachement réussi. Détail : §6 bis |
 | Dernière version / build de l'app, date de dernière requête | En-têtes `X-KPB-App-Version` / `X-KPB-App-Build` (build 54+) des requêtes authentifiées — `backend/src/modules/app-builds/app-build.interceptor.ts` | Postgres (`UserProfile.lastAppVersion`, `lastAppBuild`, `lastAppSeenAt`) | Au plus une écriture par 6 h ; lue seulement en agrégat (`GET /admin/app-builds`) ; incluse dans l'export, supprimée avec le compte |
 | Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés |
 
 ## 3. Permissions (ce que l’OS affiche)
 
-Aucune permission nouvelle avec la build 57 : `POST_NOTIFICATIONS` (Android 13+)
-et l'autorisation iOS des notifications existaient déjà. Le SDK OneSignal est
-retiré, Firebase Cloud Messaging le remplace (#351) ; deux `meta-data` FCM
-(icône, canal `kpb_default`) s'ajoutent au manifeste Android, aucune permission.
+Aucune permission **demandée à l'utilisateur** n'est nouvelle avec la build 57 :
+`POST_NOTIFICATIONS` (Android 13+) et l'autorisation iOS des notifications
+existaient déjà. Le SDK OneSignal est retiré, Firebase Cloud Messaging le remplace
+(#351) ; deux `meta-data` FCM (icône, canal `kpb_default`) s'ajoutent au manifeste
+Android, aucune permission.
+
+**Parrainage (build 57 / 2.3.1)** : la bibliothèque Google
+`com.android.installreferrer:installreferrer:2.2` (tirée par le paquet
+`play_install_referrer` 0.5.0) ajoute au manifeste **fusionné** Android la
+permission d'installation `com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE`
+(lue dans le manifeste de l'AAR le 17/10/2026). Elle n'est pas dans
+`android/app/src/main/AndroidManifest.xml`, n'est **jamais affichée** à
+l'utilisateur (permission normale, pas d'invite) et ne sert qu'à se lier au
+service Install Referrer du Play Store. Rien côté iOS (le paquet n'a pas de
+partie iOS).
 
 ### Android (`android/app/src/main/AndroidManifest.xml`)
 
@@ -163,6 +178,35 @@ push) ou de la saisie de l'équipe.
 - À VALIDER (propriétaire) : mention de la compétition (nom public, autorisation parentale,
   empreintes anti-fraude) dans `confidentialite.html` et la politique in-app ; base légale du
   traitement anti-fraude (intérêt légitime) ; durées marquées ci-dessus.
+
+## 6 bis. Parrainage côté app — build 57 / 2.3.1 (relevé du 17/10/2026)
+
+Lu dans `lib/app/core/services/referral_attribution.dart`,
+`lib/app/features/onboarding/onboarding_referral_step.dart`,
+`lib/app/features/referral/` et `lib/app/core/repositories/app_api_client/engagement.dart`.
+Trois drapeaux distants **fermés** et indépendants (`features.referralInstallReferrer`,
+`referralOnboardingCode`, `referralLeaderboard`, `docs/api-contracts.md`) ; l'identifiant
+d'installation, lui, accompagne tout `POST /referrals/redeem`, drapeaux ou non.
+
+| Donnée | Où elle naît | Où elle vit | Ce qui part, et quand | Conservation |
+|---|---|---|---|---|
+| **Chaîne du Play Install Referrer** (URL de référence du lien Play, horodatages du clic et du début d'installation, version installée, paramètre Instant) | Lue par le SDK `play_install_referrer` 0.5.0 (bibliothèque Google `installreferrer` 2.2) auprès du Play Store de l'appareil — Android seulement, **une fois par installation**, drapeau `referralInstallReferrer` ouvert | **Mémoire vive seulement** : l'app n'en garde que `ref`, et seulement s'il a la forme exacte d'un code réel (`ReferralCodeFormat`) | **Rien.** Ni la chaîne, ni les horodatages ne quittent l'appareil ; aucun appel réseau dans la capture | Non conservée ; un drapeau local `…referral_install_referrer_checked_v1` (booléen) empêche toute seconde lecture |
+| Code du parrain en attente (`ref` du lien, ou code saisi à l'onboarding non validé faute de réseau / limite horaire) | Ci-dessus, ou saisie de l'élève | `SharedPreferences` `kpb_relaunch_v1.referral_pending_code_v1` (code + origine `install_referrer` / `typed`) | **Seulement quand l'élève appuie sur « Valider le code »** (étape d'onboarding ou écran Parrainage) : le code part dans `POST /referrals/redeem`, comme une saisie manuelle — jamais de rattachement silencieux | Effacé au rattachement réussi (ou déjà fait) et au refus définitif de CE code ; sinon jusqu'à la désinstallation |
+| Identifiant d'installation | UUID v4 aléatoire (`uuid`), créé au premier rattachement demandé | `SharedPreferences` `kpb_relaunch_v1.install_id_v1` | En-tête `X-KPB-Device-Id` de `POST /referrals/redeem` **seulement** ; le serveur n'en garde qu'une empreinte HMAC (§6, « empreintes anti-fraude ») | Sur l'appareil : jusqu'à la désinstallation (pas de sauvegarde Android, `allowBackup="false"`) ; serveur : 180 jours (§6) |
+| Position dans la compétition (rang, qualifiés / à vérifier / en attente, nom public, ville, code ambassadeur) | `GET /referrals/campaigns/current` (élève connecté, drapeau `referralLeaderboard`) | **Affichée, jamais stockée** sur l'appareil | Rien de plus : lecture | — |
+| Règlement de la campagne | `GET /public/campaigns/:slug/leaderboard` (sans authentification) : l'app n'en lit que `rulesUrl` (https) | Mémoire vive | — | — |
+| Mesure d'audience | `referral_code_prompt_viewed`, `referral_code_submitted`, `referral_code_skipped`, `referral_competition_viewed` (`docs/analytics-event-contract.md`) | Firebase Analytics, PostHog (opt-out existant) | Identifiants **fermés** seulement (`surface`, `prefill`, `result`, `campaign_phase`) : **jamais le code**, ni rang, ni compteur, ni nom | Comme le reste de l'analytique |
+
+- **Suppression du compte / déconnexion** : le code en attente et l'identifiant d'installation ne
+  sont pas liés au compte et restent sur l'appareil (le code prérempli reste à confirmer par
+  l'utilisateur suivant ; l'identifiant n'a de sens que par son empreinte serveur, purgée avec le
+  compte, §6).
+- **Data safety / App Privacy** : `docs/release-57-store-pack.md` §4 (lignes « identifiant
+  d'installation » et « SDK Install Referrer »).
+- À VALIDER (propriétaire) : mention de l'identifiant d'installation et de la lecture du lien
+  d'invitation (Install Referrer) dans `confidentialite.html` et la politique in-app, avec la
+  mention de la compétition déjà en attente (§6) — **avant la soumission**, l'identifiant partant
+  avec tout rattachement par code dès la 2.3.1.
 
 ## 7. Communauté d'entraide C1 + C2 (relevé du 17/10/2026)
 

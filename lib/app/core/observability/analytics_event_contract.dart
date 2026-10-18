@@ -77,6 +77,22 @@ abstract final class AnalyticsEventName {
   static const referralInviteShared = 'referral_invite_shared';
   static const referralRedeemed = 'referral_redeemed';
 
+  /// Parrainage côté app (build 57 / 2.3.1). Le champ « code de ton parrain »
+  /// a été montré (`referral_code_prompt_viewed`), validé
+  /// (`referral_code_submitted`, avec l'issue fermée `result`) ou passé
+  /// (`referral_code_skipped`) ; `surface` dit où (`onboarding`,
+  /// `referral_screen`) et `prefill` d'où venait le code prérempli
+  /// (`install_referrer`, `typed`, `none`). JAMAIS le code lui-même : il
+  /// désigne une personne (le parrain).
+  ///
+  /// `referral_competition_viewed` : l'écran « Compétition ambassadeurs » a
+  /// été ouvert, avec `campaign_phase` (`upcoming`, `running`, `ended`, ou
+  /// `none` pour un non-participant). Ni rang, ni compteur, ni nom.
+  static const referralCodePromptViewed = 'referral_code_prompt_viewed';
+  static const referralCodeSubmitted = 'referral_code_submitted';
+  static const referralCodeSkipped = 'referral_code_skipped';
+  static const referralCompetitionViewed = 'referral_competition_viewed';
+
   /// Espace « Études en France » — vitrine de Phase 0. `eef_teaser_viewed`
   /// donne la portée ; `eef_interest_declared` est LA question posée par la
   /// vitrine (y a-t-il une demande, et pour le payant ?).
@@ -361,6 +377,12 @@ abstract final class AnalyticsParamKey {
   static const tourCardsSeen = 'tour_cards_seen';
   static const surface = 'surface';
   static const variant = 'variant';
+
+  /// Parrainage (build 57) : d'où venait le code prérempli
+  /// (`install_referrer`, `typed`, `none`) et la phase de la compétition
+  /// (`upcoming`, `running`, `ended`, `none`). Identifiants fermés.
+  static const prefill = 'prefill';
+  static const campaignPhase = 'campaign_phase';
 
   /// Onboarding funnel + auth attribution (KPB-158).
   static const step = 'step';

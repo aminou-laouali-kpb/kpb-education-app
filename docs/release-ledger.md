@@ -476,6 +476,36 @@ confidentialité mise à jour (in-app FR + EN, et `web/public/confidentialite.ht
 (texte compilé), la PR de préparation (version, préflights, registre), les seuils
 des paliers, XC-06 et D5.
 
+### Parrainage côté app (17/10/2026) — ajouté à la build 57 (2.3.1), trois drapeaux FERMÉS
+
+**Décision du propriétaire du 17/10/2026** : les parties app de la compétition ambassadeurs
+(1er au 10 novembre 2026) entrent dans la 57, et non plus dans « une build ultérieure »
+(`docs/runbook-campagne-ambassadeurs.md` §8, révisé). Numéro toujours **non posé** : `pubspec.yaml`
+reste `2.3.0+56` ; la 57 sera `2.3.1+57` à la PR de préparation.
+
+**Ce qui s'ajoute au binaire** : le paquet **`play_install_referrer` 0.5.0** (Android seulement ;
+bibliothèque Google `installreferrer` 2.2, qui ajoute au manifeste fusionné la permission
+d'installation `BIND_GET_INSTALL_REFERRER_SERVICE`, sans invite) ; un **identifiant d'installation**
+(UUID v4 aléatoire) envoyé en `X-KPB-Device-Id` sur `POST /referrals/redeem` seulement ; l'étape
+« code de ton parrain » en fin d'onboarding ; l'écran « Compétition ambassadeurs » ; des messages
+clairs sur chaque erreur de code. Côté serveur, trois clés `features.*` fermées et indépendantes
+(`KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED`,
+`KPB_REFERRAL_LEADERBOARD_ENABLED`), relayées par `docker-compose.yml` ; aucune migration, aucune
+route nouvelle. Couplage inchangé (`requires-new`, pour les notifications) : un backend sans les
+trois clés laisse les trois fonctions fermées.
+
+**Papiers mis à jour** : `docs/release-57-store-pack.md` (§1, notes de revue recomptées, §4 Data
+safety / App Privacy et déclaration des SDK, §5 drapeaux, §7 décision i), `docs/data-inventory.md`
+§6 bis, `docs/STORE_READINESS.md`, `docs/CONSOLE_ANSWERS.md` §0septies, `docs/api-contracts.md`,
+`docs/device-qa-build57.md` (section « Parrainage »).
+
+**Reste au propriétaire** : À VALIDER (propriétaire) — la politique de confidentialité (in-app et
+web) qui nomme l'identifiant d'installation, la lecture du lien d'invitation et la compétition,
+**avant** l'archive ; la finalité anti-fraude ajoutée à la Data safety Play ; le texte de pied
+d'écran de la compétition (organisateur, Apple et Google non partenaires) ; le `rulesUrl` de la
+campagne ; l'ordre et les dates d'ouverture des trois drapeaux ; `flutter build apk --debug` sur
+une machine équipée d'un SDK Android (non joué dans ce chantier).
+
 ### Ce que 52 embarque
 
 - **Liste d'attente Karatou Premium (PR #258).** Point 8 de la revue du build

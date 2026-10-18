@@ -1094,6 +1094,25 @@ le consentement du tuteur restent exigés dans les deux parcours. Indépendant d
 drapeau. Gardé par `backend/src/modules/config/app-config.controller.spec.ts` et
 `test/release/config_env_relay_test.dart` (relais compose, défaut `false`).
 
+### Interrupteurs « Parrainage côté app » dans `features` (build 57, 2.3.1)
+
+Trois booléens **stricts**, toujours présents, **`false` par défaut** (seule la valeur `true`,
+casse et espaces tolérés, ouvre chacun), **indépendants** les uns des autres et de tout autre
+drapeau. Un backend plus ancien ne les sert pas : l'app lit une clé absente comme `false`.
+
+| Clé | Variable d'environnement | Sens |
+|---|---|---|
+| `features.referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | Android seulement : lecture **une fois par installation** du Play Install Referrer (paquet `play_install_referrer`), extraction stricte de `ref` (code personnel ou ambassadeur), gardé en local pour **préremplir** le champ « code de ton parrain ». Aucun rattachement sans confirmation de l'élève ; rien n'est transmis tant qu'il n'a pas validé. Fermé : aucune lecture. |
+| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrain ? » à la fin de l'onboarding élève, APRÈS la synchro du profil (`POST /referrals/redeem`), bouton « Passer », ne bloque jamais l'entrée dans l'app. |
+| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition ambassadeurs » (`GET /referrals/campaigns/current`, et `GET /public/campaigns/:slug/leaderboard` pour le seul `rulesUrl`) : phase, compte à rebours, rang, compteurs, code et partage. Point d'entrée : écran Parrainage (participant) et espace ambassadeur sans programme rémunéré. |
+
+Purement côté app : les routes `/referrals/*` restent servies quel que soit leur état. L'en-tête
+`X-KPB-Device-Id` (identifiant d'installation, UUID v4 aléatoire stocké sur l'appareil) part sur
+`POST /referrals/redeem` **seulement**, indépendamment de ces drapeaux. Gardé par
+`backend/src/modules/config/app-config.controller.spec.ts`,
+`test/core/services/remote_feature_flags_test.dart` et `test/release/config_env_relay_test.dart`
+(relais compose, défaut `false`).
+
 ### Ce que `GET /config/app` sert d'autre que des drapeaux (build 54)
 
 Route publique, sans authentification. Quatre ajouts, tous **absents sur un
@@ -2032,8 +2051,8 @@ Corps inchangé `{ code }` (4 à 16 caractères), réponse inchangée `{attribut
   `REFERRAL_CODE_HOURLY_LIMIT` (30) rattachements au même parrain dans l'heure ; rien n'est créé.
 - **Nouveau** : empreintes anti-fraude relevées au mieux (jamais bloquantes) dans
   `ReferralAttributionSignal` : HMAC de l'IP, de sa plage (/24, /48), des jetons push déjà
-  enregistrés du filleul, et de l'en-tête facultatif `X-KPB-Device-Id` (build 57+ ; absent de
-  l'app installée).
+  enregistrés du filleul, et de l'en-tête facultatif `X-KPB-Device-Id` (build 57 / 2.3.1 :
+  UUID v4 d'installation, envoyé sur cette route seulement ; absent de l'app 2.3.0).
 
 ### `POST /referrals/ambassador/activate` (existante, gardée)
 
@@ -2049,7 +2068,7 @@ lignes antérieures à la migration). Un ambassadeur activé pour la compétitio
 non activé : l'app affiche l'écran de candidature, jamais des commissions promises.
 `POST /referrals/withdraw` refuse (400) sans `cashProgramEnabled`.
 
-### `GET /referrals/campaigns/current` (élève, préparée pour la build 57)
+### `GET /referrals/campaigns/current` (élève, lue par la build 57 derrière `features.referralLeaderboard`)
 
 `{participating: false}` ou `{participating: true, campaign: {slug, nameFr, nameEn, status,
 phase, startsAt, endsAt, provisional}, me: {publicName, city, code, rank, qualified, toReview,

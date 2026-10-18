@@ -8,6 +8,8 @@
 // 176 cas, tous à zéro après correction du bouton de l'écran « aha ».)
 // (17/10/2026, communauté C1 + C2 : CommunityHubScreen, CommunityComposerScreen
 // et CommunityPostScreen ajoutés → 25 surfaces, 200 cas, tous à zéro.)
+// (17/10/2026, parrainage build 57 : AmbassadorCompetitionScreen et
+// OnboardingReferralStep ajoutés → 27 surfaces, 216 cas, tous à zéro.)
 // (Revérifié le 15/08/2026 après les masquages M1/M2 : mêmes 20 surfaces, mêmes
 // 14 cas budgétés.)
 //
@@ -30,8 +32,8 @@
 //     second test : une oscillation de 3 à 2 due aux métriques de police ne doit
 //     pas rougir la CI.
 //
-// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 25
-// surfaces × 2 téléphones × 4 échelles = 200 cas sont à zéro.
+// CE QUE CE BUDGET DIT, EN FRANÇAIS. Aucune surface ne déborde : les 27
+// surfaces × 2 téléphones × 4 échelles = 216 cas sont à zéro.
 //
 // AuthWelcomeScreen (trouvailles du harnais, 44 px / 38 px à l'échelle 1,3)
 // a été corrigé au lot 9 : colonne défilable, plus de Spacer dans une hauteur
@@ -67,4 +69,4 @@ const screenOverflowKnownCauses = <String, String>{};
 
 /// Le total, pour que le message de synthèse ne puisse pas être approximatif.
 const screenOverflowCaseCount = 0;
-const screenMatrixCaseCount = 200;
+const screenMatrixCaseCount = 216;

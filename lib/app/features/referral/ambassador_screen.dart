@@ -15,6 +15,8 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/whatsapp_utils.dart';
+import '../../core/services/remote_feature_flags.dart';
+import 'ambassador_competition_screen.dart';
 import 'referral_screen.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
@@ -189,7 +191,16 @@ class _AmbassadorScreenState extends State<AmbassadorScreen> {
                         _BottomNav(current: _tab, onTap: _goTab),
                       ],
                     )
-                  : const _AmbassadorApplication(),
+                  // Build 57 (`features.referralLeaderboard`) : un
+                  // ambassadeur SANS espace rémunéré qui participe à la
+                  // compétition voit son classement à la place de l'écran de
+                  // candidature (runbook §8, point 4). Non-participant, drapeau
+                  // fermé ou backend plus ancien : la candidature, inchangée.
+                  : RemoteFeatureFlags.instance.referralLeaderboardEnabled
+                      ? const AmbassadorCompetitionView(
+                          nonParticipant: _AmbassadorApplication(),
+                        )
+                      : const _AmbassadorApplication(),
     );
   }
 }

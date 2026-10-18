@@ -146,6 +146,7 @@ dependencies:
   printing: ^5.14.3
   package_info_plus: ^9.0.1
   posthog_flutter: ^5.32.0
+  play_install_referrer: ^0.5.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

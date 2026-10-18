@@ -30,6 +30,7 @@ import 'app/core/navigation/app_boot_screen.dart';
 import 'app/core/services/auth_service.dart';
 import 'app/core/navigation/shell_tabs.dart';
 import 'app/core/services/remote_feature_flags.dart';
+import 'app/core/services/referral_attribution.dart';
 import 'app/core/services/security_service.dart';
 import 'app/core/services/notification_router.dart';
 import 'app/core/services/push_service.dart';
@@ -232,7 +233,16 @@ Future<void> main() async {
     // le service échoue fermé sur les constantes de compilation. C'est ce qui
     // permet d'ouvrir l'espace « Études en France » le jour de la campagne en
     // basculant une variable d'environnement, sans soumission App Store.
-    unawaited(RemoteFeatureFlags.instance.refresh(apiClient));
+    //
+    // Le Play Install Referrer (parrainage, build 57) est lu APRÈS les
+    // drapeaux : sa lecture dépend de `features.referralInstallReferrer`, et
+    // elle n'a lieu qu'une fois par installation (Android seulement). Rien ne
+    // part vers le serveur : le code trouvé ne fait que préremplir un champ.
+    unawaited(RemoteFeatureFlags.instance.refresh(apiClient).then(
+          (_) => ReferralAttribution.instance.captureInstallReferrerOnce(
+            enabled: RemoteFeatureFlags.instance.referralInstallReferrerEnabled,
+          ),
+        ));
 
     ConnectivityService.instance.startMonitoring();
     ConnectivityService.instance.bindReconnectSync(() async {

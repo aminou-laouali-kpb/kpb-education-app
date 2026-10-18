@@ -19,6 +19,9 @@ void main() {
         contains('s=eligibility'));
     expect(buildInviteLink(source: ShareSource.match), contains('s=match'));
     expect(buildInviteLink(source: ShareSource.budget), contains('s=budget'));
+    // Build 57 : le partage depuis l'écran « Compétition ambassadeurs ».
+    expect(buildInviteLink(source: ShareSource.competition),
+        contains('s=competition'));
   });
 
   test('includes the referral code when there is one', () {

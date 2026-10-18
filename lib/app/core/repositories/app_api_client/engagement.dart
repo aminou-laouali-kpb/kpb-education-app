@@ -69,10 +69,42 @@ mixin _EngagementApi on _ApiClientBase {
 
   /// Attribute the caller to the owner of [code]. Returns
   /// `{attributed, alreadyReferred}`.
-  Future<Map<String, dynamic>> redeemReferral(String code) async {
+  ///
+  /// [deviceId] — l'identifiant d'installation (UUID v4 aléatoire, voir
+  /// `ReferralAttribution.installId`) — part dans l'en-tête
+  /// [referralDeviceIdHeader] de CETTE route seulement : le serveur en garde
+  /// une empreinte HMAC (signal anti-fraude, jamais bloquant). Aucune autre
+  /// requête de l'app ne le porte.
+  Future<Map<String, dynamic>> redeemReferral(
+    String code, {
+    String? deviceId,
+  }) async {
+    final id = deviceId?.trim() ?? '';
     final response = await _dio.post<Map<String, dynamic>>(
       '/referrals/redeem',
       data: {'code': code},
+      options:
+          id.isEmpty ? null : Options(headers: {referralDeviceIdHeader: id}),
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  /// La position de l'élève dans la compétition ambassadeurs en cours
+  /// (`GET /referrals/campaigns/current`) : `{participating: false}` ou
+  /// `{participating: true, campaign, me, serverTime}`. Lu par l'écran
+  /// « Compétition ambassadeurs » (drapeau `features.referralLeaderboard`).
+  Future<Map<String, dynamic>> getCurrentReferralCampaign() async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/referrals/campaigns/current',
+    );
+    return response.data ?? <String, dynamic>{};
+  }
+
+  /// Le classement PUBLIC d'une campagne (`GET /public/campaigns/:slug/
+  /// leaderboard`, sans authentification). L'app n'en lit que `rulesUrl`.
+  Future<Map<String, dynamic>> getPublicCampaignLeaderboard(String slug) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      '/public/campaigns/${Uri.encodeComponent(slug)}/leaderboard',
     );
     return response.data ?? <String, dynamic>{};
   }

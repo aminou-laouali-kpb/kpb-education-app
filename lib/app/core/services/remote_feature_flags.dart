@@ -405,6 +405,25 @@ class RemoteFeatureFlags {
   /// quel que soit ce drapeau.
   bool get assistBridgeEnabled => _flag('assistBridge', false);
 
+  // ── Parrainage côté app (build 57, compétition ambassadeurs) ─────────────
+  //
+  // Trois clés FERMÉES par défaut et INDÉPENDANTES : absentes (backend plus
+  // ancien), illisibles ou serveur injoignable, elles valent `false`. Aucun
+  // repli de compilation, et aucune ne dérive d'une autre : ouvrir l'écran de
+  // la compétition ne lit pas le referrer, et inversement.
+
+  /// Lecture du Play Install Referrer (Android, une fois par installation)
+  /// pour PRÉREMPLIR le code du parrain. Fermée : aucune lecture.
+  bool get referralInstallReferrerEnabled =>
+      _flag('referralInstallReferrer', false);
+
+  /// L'étape facultative « code de ton parrain » en fin d'onboarding élève.
+  bool get referralOnboardingCodeEnabled =>
+      _flag('referralOnboardingCode', false);
+
+  /// L'écran « Compétition ambassadeurs » (rang, compteurs, compte à rebours).
+  bool get referralLeaderboardEnabled => _flag('referralLeaderboard', false);
+
   // ── « Suivre » une bourse et notifications (chantier G) ───────────────────
   //
   // Des INTERRUPTEURS D'URGENCE : chaque clé vaut `true` tant que le serveur ne

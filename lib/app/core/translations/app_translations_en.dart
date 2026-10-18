@@ -3919,4 +3919,73 @@ const Map<String, String> appTranslationsEn = {
   'assist_bridge_pref_subtitle':
       'When you look for help, we show you the app feature that can help',
   'notif_cta_assist_bridge': 'See how',
+  // ── Referrals in the app (build 57 / 2.3.1) ──────────────────────────────
+  'onb_ref_title': 'Got a referral code?',
+  'onb_ref_subtitle':
+      'If a friend invited you, enter their code so they get the credit. It’s optional.',
+  'onb_ref_prefilled_note':
+      'Code taken from your invite link. Check it before confirming.',
+  'onb_ref_later_note':
+      'You can also enter it later in Profile → Refer a friend.',
+  'referral_pending_note':
+      'Code taken from your invite link: check it, then confirm it.',
+  'referral_pending_typed_note':
+      'Code entered during sign-up, not confirmed yet.',
+  'referral_err_unknown': 'This code doesn’t exist. Check every character.',
+  'referral_err_self':
+      'That’s your own code: it’s for inviting your friends, not for you.',
+  'referral_err_not_allowed': 'This code can’t be used with your account.',
+  'referral_err_rate_limited':
+      'This code has been used a lot in the last hour. It’s saved: try again later from Profile → Refer a friend.',
+  'referral_err_offline':
+      'No connection. Your code is saved: confirm it later from Profile → Refer a friend.',
+  'referral_err_generic':
+      'The code couldn’t be checked. It’s saved: try again later from Profile → Refer a friend.',
+  'comp_title': 'Ambassador competition',
+  'comp_phase_upcoming': 'Upcoming',
+  'comp_phase_running': 'Live',
+  'comp_phase_ended': 'Ended',
+  'comp_starts_in': 'Starts in @time',
+  'comp_ends_in': 'Ends in @time',
+  'comp_ended_body': 'The competition has ended.',
+  'comp_time_dhm': '@d d @h h @m min',
+  'comp_time_hm': '@h h @m min',
+  'comp_time_m': '@m min',
+  'comp_provisional':
+      'Provisional ranking: it may still change once referrals are checked.',
+  'comp_rank_label': 'Your rank',
+  'comp_rank_value': 'No. @rank',
+  'comp_rank_none': 'Not ranked yet',
+  'comp_rank_a11y': 'Your rank: @rank',
+  'comp_unrankable':
+      'You don’t appear in the public ranking yet: the KPB team still has to finalise your entry (for example parental consent if you’re a minor).',
+  'comp_qualified': 'Qualified',
+  'comp_qualified_hint': 'Count towards your rank',
+  'comp_to_review': 'To review',
+  'comp_to_review_hint': 'Checked by the team before they count',
+  'comp_pending': 'Pending',
+  'comp_pending_hint': 'Signed up, profile not complete yet',
+  'comp_rule_explainer':
+      'A referral counts once their profile is complete. Only ambassadors are ranked: your referrals don’t win anything.',
+  'comp_your_code': 'Your ambassador code',
+  'comp_share_cta': 'Share my link',
+  'comp_share_message':
+      'Join me on KPB Education! Sign up with my code @code: @link',
+  'comp_public_cta': 'See the public ranking',
+  'comp_rules_cta': 'Read the rules',
+  'comp_organizer_note':
+      'Organiser: KPB Global L.L.C-FZ. Apple and Google are neither organisers nor partners of this competition.',
+  'comp_not_participating_title': 'You’re not taking part in the competition',
+  'comp_not_participating_body':
+      'Participating ambassadors are registered by the KPB team. You can still invite your friends with your referral code.',
+  'comp_offline_title': 'Offline',
+  'comp_offline_body': 'Connect to the internet to see your ranking.',
+  'comp_error_title': 'Ranking unavailable',
+  'comp_error_body': 'Try again in a moment.',
+  'comp_entry_sub': 'See your ranking',
+  'comp_name_city': '@name — @city',
+  'referral_err_rate_limited_here':
+      'This code has been used a lot in the last hour. Try again later.',
+  'referral_err_offline_here': 'No connection. Try again once you’re online.',
+  'referral_err_generic_here': 'The code couldn’t be checked. Try again later.',
 };

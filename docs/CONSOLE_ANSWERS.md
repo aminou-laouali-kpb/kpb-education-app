@@ -125,6 +125,26 @@ Localisation iOS : `NSLocationWhenInUseUsageDescription` reste déclarée par pr
 (`Info.plist`) jusqu'à preuve, sur l'archive, qu'aucune bibliothèque ne référence plus
 CoreLocation. Réponse inchangée : **ne pas cocher Localisation**.
 
+## 0septies. Build 57 (2.3.1) — parrainage côté app : ce qui change dans les formulaires
+
+Décision du propriétaire du 17/10/2026 : les parties app du parrainage entrent dans la 57
+(`docs/runbook-campagne-ambassadeurs.md` §8), derrière trois drapeaux **fermés**
+(`features.referralInstallReferrer`, `referralOnboardingCode`, `referralLeaderboard`). Détail et
+preuves : `docs/release-57-store-pack.md` §4 et `docs/data-inventory.md` §6 bis.
+
+| Ligne | Réponse avec la 57 | Preuve |
+|---|---|---|
+| Play — **Identifiants d'appareil ou autres** | Garder « Collecté, non partagé » et **ajouter la finalité « Prévention de la fraude, sécurité et conformité »** : un **identifiant d'installation** (UUID v4 aléatoire, ni IMEI ni identifiant publicitaire) part en `X-KPB-Device-Id` avec chaque `POST /referrals/redeem`, **drapeaux ou non** ; le serveur n'en garde qu'une empreinte HMAC (180 jours) | `lib/app/core/services/referral_attribution.dart` (`installId`) ; `test/core/repositories/referral_api_test.dart` (en-tête sur cette route seulement) |
+| Play — **Play Install Referrer** (SDK Android `play_install_referrer` 0.5.0 → Google `installreferrer` 2.2) | **Non collecté** : URL de référence, horodatages et version d'installation sont lus et traités **sur l'appareil** ; seul `ref` est gardé localement pour préremplir un champ ; le code ne part qu'au rattachement **confirmé** par l'élève (le rattachement par code est déjà couvert par « Autres actions », KPB-69) | `referral_attribution.dart` (`captureInstallReferrerOnce`, aucun appel réseau) |
+| Apple — **Identifiers / Device ID** | Inchangé (déjà déclaré, lié, non utilisé pour le suivi) ; finalité **App Functionality** couvre la prévention de la fraude. Aucun SDK nouveau sur iOS | `ios/Runner/PrivacyInfo.xcprivacy` (`NSPrivacyCollectedDataTypeDeviceID`) |
+| Apple — **Tracking** | **Non**, inchangé : l'Install Referrer est Android seulement, sert à préremplir un code de parrain, ne joint rien à des données tierces | — |
+| Classification d'âge | Inchangée : l'écran « Compétition ambassadeurs » n'ajoute ni interaction entre utilisateurs ni contenu généré ; un concours avec prix (Apple 5.3) se signale aux notes de revue (pack 57 §3) | — |
+
+⚠️ À TRANCHER (propriétaire) **avant la soumission** : la politique in-app et
+`web/public/confidentialite.html` doivent nommer l'identifiant d'installation (finalité
+anti-fraude), la lecture du lien d'invitation et la compétition — sinon « declaration inconsistent
+with privacy policy ». Textes non écrits ici : ce sont des textes juridiques.
+
 ---
 
 ## 1. Google Play — Data Safety

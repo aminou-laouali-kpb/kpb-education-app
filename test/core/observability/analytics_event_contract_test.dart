@@ -360,4 +360,83 @@ void main() {
       }
     });
   });
+
+  // Parrainage côté app (build 57) : des identifiants FERMÉS, jamais le code
+  // (il désigne le parrain), ni rang, ni compteur, ni nom public.
+  group('parrainage (build 57)', () {
+    test('les noms d\'événements sont ceux du contrat publié', () {
+      expect(AnalyticsEventName.referralCodePromptViewed,
+          'referral_code_prompt_viewed');
+      expect(
+          AnalyticsEventName.referralCodeSubmitted, 'referral_code_submitted');
+      expect(AnalyticsEventName.referralCodeSkipped, 'referral_code_skipped');
+      expect(AnalyticsEventName.referralCompetitionViewed,
+          'referral_competition_viewed');
+      for (final name in [
+        AnalyticsEventName.referralCodePromptViewed,
+        AnalyticsEventName.referralCodeSubmitted,
+        AnalyticsEventName.referralCodeSkipped,
+        AnalyticsEventName.referralCompetitionViewed,
+      ]) {
+        expect(name.length, lessThanOrEqualTo(40), reason: name);
+      }
+    });
+
+    test('les propriétés sont EXACTEMENT celles du contrat', () {
+      expect(
+        AnalyticsService.referralCodeParams(
+                surface: 'onboarding', prefill: 'none')
+            .keys
+            .toSet(),
+        {AnalyticsParamKey.surface, AnalyticsParamKey.prefill},
+      );
+      expect(
+        AnalyticsService.referralCodeParams(
+                surface: 'referral_screen',
+                prefill: 'install_referrer',
+                result: 'attributed')
+            .keys
+            .toSet(),
+        {
+          AnalyticsParamKey.surface,
+          AnalyticsParamKey.prefill,
+          AnalyticsParamKey.result,
+        },
+      );
+      expect(
+        AnalyticsService.referralCompetitionParams('running'),
+        {AnalyticsParamKey.campaignPhase: 'running'},
+      );
+    });
+
+    test('aucune clé ne désigne une donnée personnelle', () {
+      final personal = RegExp(
+        r'name|nom|mail|phone|code|rank|city|ville|user|uid|id$|profile',
+        caseSensitive: false,
+      );
+      for (final key in [
+        ...AnalyticsService.referralCodeParams(
+                surface: 'onboarding', prefill: 'none', result: 'error')
+            .keys,
+        ...AnalyticsService.referralCompetitionParams('none').keys,
+      ]) {
+        expect(personal.hasMatch(key), isFalse, reason: key);
+      }
+    });
+
+    test('docs/analytics-event-contract.md documente les quatre événements',
+        () {
+      final doc = File('docs/analytics-event-contract.md').readAsStringSync();
+      for (final needle in [
+        '`referral_code_prompt_viewed`',
+        '`referral_code_submitted`',
+        '`referral_code_skipped`',
+        '`referral_competition_viewed`',
+        '`prefill`',
+        '`campaign_phase`',
+      ]) {
+        expect(doc, contains(needle), reason: needle);
+      }
+    });
+  });
 }
