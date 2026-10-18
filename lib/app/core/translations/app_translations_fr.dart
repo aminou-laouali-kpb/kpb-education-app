@@ -3602,6 +3602,18 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_match_progress_a11y': 'Question @index sur @total',
   'scholarship_match_q_nationality': 'Ta nationalité',
   'scholarship_match_q_nationality_help': 'Celle de ton passeport.',
+  // Consentement explicite à l'usage de la nationalité (décision du
+  // propriétaire, 18/10/2026 : base légale = consentement, saisie facultative,
+  // effaçable). Rédigé le 18/10/2026 — à relire par le propriétaire avant
+  // soumission.
+  'scholarship_match_nationality_optional':
+      'C\'est facultatif : elle ne sert qu\'à ce test, et seulement avec ton accord.',
+  'scholarship_match_nationality_consent':
+      'J\'accepte que KPB Education utilise ma nationalité pour vérifier les conditions des bourses.',
+  'scholarship_match_nationality_consent_help':
+      'Elle reste sur ton profil tant que ton compte existe et n\'est transmise à aucune école. Tu peux retirer ton accord à tout moment en écrivant à privacy@kpbeducation.com ; elle est aussi effacée avec ton compte.',
+  'scholarship_match_nationality_consent_required':
+      'Coche la case de consentement pour voir tes bourses.',
   'scholarship_match_nationality_suggestion':
       'Tu vis au pays « @country » : c\'est aussi ta nationalité ?',
   'scholarship_match_second_nationality': 'J\'ai une deuxième nationalité',

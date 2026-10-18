@@ -147,10 +147,37 @@ void main() {
       api: api,
     );
 
+    // Consentement explicite à l'usage de la nationalité : sans la case,
+    // le bouton reste désactivé et dit pourquoi.
+    expect(
+      t.widget<FilledButton>(find.byKey(_k('match-submit'))).onPressed,
+      isNull,
+    );
+    expect(
+      find.text('Coche la case de consentement pour voir tes bourses.'),
+      findsOneWidget,
+    );
+    // La case est la dernière ligne du récapitulatif : on va au bout de la
+    // liste (la barre du bas la recouvrirait sinon).
+    await t.scrollUntilVisible(
+      find.byKey(_k('match-nationality-consent')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await t.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(_k('match-nationality-consent')));
+    await t.pumpAndSettle();
+
     await t.tap(find.byKey(_k('match-submit')));
     await t.pumpAndSettle();
 
     expect(api.runCalls, hasLength(1));
+    // La case n'est jamais envoyée au serveur.
+    expect(
+      (api.runCalls.single['answers'] as Map).containsKey('nationalityConsent'),
+      isFalse,
+    );
     expect(api.runCalls.single['confirm'], isTrue);
     expect(find.byKey(_k('match-submit-error')), findsOneWidget);
     expect(find.byKey(_k('match-submit-retry')), findsOneWidget);

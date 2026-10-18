@@ -10,6 +10,8 @@ import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/translations/app_translations_en.dart';
+import 'package:karatou/app/core/translations/app_translations_fr.dart';
 import 'package:karatou/app/core/services/analytics_service.dart';
 import 'package:karatou/app/core/services/referral_attribution.dart';
 import 'package:karatou/app/core/services/remote_feature_flags.dart';
@@ -232,6 +234,39 @@ void main() {
       expect(find.byKey(const ValueKey('comp-phase-ended')), findsOneWidget);
       await unmount(tester);
     });
+  });
+
+  // Apple 5.3.2 / règlement Play des concours : l'organisateur est nommé et
+  // Apple et Google sont dits étrangers à la compétition, en pied d'écran,
+  // dans chaque phase (décision du propriétaire, 18/10/2026).
+  group('pied d\'écran « Organisateur »', () {
+    test('le texte FR/EN est celui du règlement, mot pour mot', () {
+      expect(
+        appTranslationsFr['comp_organizer_note'],
+        'Organisateur : KPB Global L.L.C-FZ. Apple et Google ne sont ni '
+        'organisateurs ni partenaires de cette compétition.',
+      );
+      expect(
+        appTranslationsEn['comp_organizer_note'],
+        'Organiser: KPB Global L.L.C-FZ. Apple and Google are neither '
+        'organisers nor partners of this competition.',
+      );
+    });
+
+    for (final (phase, status) in [
+      ('upcoming', 'live'),
+      ('running', 'live'),
+      ('ended', 'frozen'),
+      ('ended', 'closed'),
+    ]) {
+      testWidgets('affiché en phase $phase ($status)', (tester) async {
+        when(() => api.getCurrentReferralCampaign())
+            .thenAnswer((_) async => standing(phase: phase, status: status));
+        await pumpScreen(tester);
+        expect(find.text('comp_organizer_note'), findsOneWidget);
+        await unmount(tester);
+      });
+    }
   });
 
   group('non-participant et pannes', () {
