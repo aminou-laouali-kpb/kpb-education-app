@@ -189,6 +189,29 @@ describePostgres("ProfilesService — PostgreSQL privacy integration", () => {
         academicYear: `privacy-${suffix}`,
       },
     });
+    // Une notification in-app (annonce d'ouverture) : elle doit figurer dans
+    // l'export, sans les détails d'exploitation du worker d'envoi.
+    await prisma.userNotification.create({
+      data: {
+        userId,
+        scholarshipId,
+        cycleId,
+        kind: "scholarship_opened",
+        dedupeKey: `privacy-notification-${suffix}`,
+        titleFr: "La bourse test est ouverte",
+        titleEn: "The test scholarship is open",
+        bodyFr: "Tu peux candidater.",
+        bodyEn: "You can apply.",
+        route: `/scholarships/${scholarshipId}`,
+        data: { notificationKey: "scholarship_opened" },
+        pushedAt: now,
+        pushStatus: "accepted",
+        pushProvider: "fcm",
+        pushLockedBy: `privacy-worker-${suffix}`,
+        pushLastError: "privacy-internal-error",
+        pushBatchId: `privacy-batch-${suffix}`,
+      },
+    });
     await prisma.consentNotice.create({
       data: {
         id: noticeId,
@@ -598,6 +621,31 @@ describePostgres("ProfilesService — PostgreSQL privacy integration", () => {
     expect(exportRecord.profile).toMatchObject({ hasAvatar: true });
     expect(JSON.stringify(exported)).not.toContain(avatarStorageKey);
     expect(JSON.stringify(exported)).not.toContain("avatarStorageKey");
+    // Notifications in-app : rendues, sans clé de déduplication, verrou,
+    // identifiant du worker, lot ni erreur du fournisseur.
+    expect(exportRecord.notifications).toEqual([
+      expect.objectContaining({
+        kind: "scholarship_opened",
+        scholarshipId,
+        cycleId,
+        titleFr: "La bourse test est ouverte",
+        bodyEn: "You can apply.",
+        route: `/scholarships/${scholarshipId}`,
+        readAt: null,
+        pushStatus: "accepted",
+      }),
+    ]);
+    const notificationJson = JSON.stringify(exportRecord.notifications);
+    for (const internal of [
+      `privacy-notification-${suffix}`,
+      `privacy-worker-${suffix}`,
+      "privacy-internal-error",
+      `privacy-batch-${suffix}`,
+      "pushLockedBy",
+      "dedupeKey",
+    ]) {
+      expect(notificationJson).not.toContain(internal);
+    }
 
     await expect(service.deleteMe(userId)).resolves.toEqual({
       deleted: true,
@@ -616,6 +664,7 @@ describePostgres("ProfilesService — PostgreSQL privacy integration", () => {
       }),
     ).toBe(0);
     expect(await prisma.consentReceipt.count({ where: { userId } })).toBe(0);
+    expect(await prisma.userNotification.count({ where: { userId } })).toBe(0);
     expect(await prisma.analyticsEvent.count({ where: { workspaceId } })).toBe(
       0,
     );

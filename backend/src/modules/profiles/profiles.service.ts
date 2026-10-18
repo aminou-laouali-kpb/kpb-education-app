@@ -1613,6 +1613,33 @@ export class ProfilesService {
         },
       });
 
+      // Les notifications in-app de l'élève (annonces d'ouverture, rappels de
+      // date limite, communauté, passerelle…). Elles manquaient à l'export
+      // alors que la suppression les couvre (cascade). Seuls les champs qui
+      // décrivent la notification et son sort sont rendus : la clé de
+      // déduplication, les verrous et l'identifiant du worker, le lot et la
+      // dernière erreur du fournisseur sont des détails d'exploitation.
+      const notifications = await prisma.userNotification.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: 'asc' },
+        select: {
+          id: true,
+          kind: true,
+          scholarshipId: true,
+          cycleId: true,
+          titleFr: true,
+          titleEn: true,
+          bodyFr: true,
+          bodyEn: true,
+          route: true,
+          data: true,
+          createdAt: true,
+          readAt: true,
+          pushedAt: true,
+          pushStatus: true,
+        },
+      });
+
       const workspaceIds = scholarshipWorkspaces.map(
         (workspace) => workspace.id,
       );
@@ -1692,6 +1719,7 @@ export class ProfilesService {
             }
           : null,
         assistBridgeEvents,
+        notifications,
       };
     });
 
