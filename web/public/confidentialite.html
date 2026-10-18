@@ -27,9 +27,11 @@
       <li>Date de naissance (étudiants) ; nom et contact du tuteur si vous avez moins de 18 ans</li>
       <li>Photo de profil, si vous en ajoutez une (caméra ou photothèque)</li>
       <li>Profil académique : niveau d'études, niveau cible, compétences linguistiques, notes, filières d'intérêt, pays de destination</li>
-      <!-- Test « Mes 10 bourses » (drapeau features.scholarshipMatch, fermé) : la collecte de la nationalité attend une validation juridique — À VALIDER (propriétaire), voir docs/data-inventory.md. -->
+      <!-- Test « Mes 10 bourses » (drapeau features.scholarshipMatch, fermé) : nationalité sur consentement explicite, facultative, effaçable (décision du propriétaire, 18/10/2026) — voir la section « Votre nationalité » et docs/data-inventory.md. -->
       <li>Test « Mes 10 bourses », si vous le passez (fonction ouverte progressivement) : nationalité(s), pays de résidence, date de naissance, plus haut diplôme, niveau de bourse visé, domaines, tranche de moyenne sur 20, niveaux d'anglais et de français, scores de tests de langue, tranche d'expérience professionnelle et, si vous avez 16 ou 17 ans, l'accord de votre représentant légal. Rien ne vous oblige à répondre : sans ces réponses, le test ne calcule pas de résultat, et le reste de l'app reste utilisable</li>
       <li>Bourses suivies et notifications : les bourses que vous suivez, vos réglages d'alerte, les notifications reçues dans l'app et le moment où vous en ouvrez une</li>
+      <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+      <li>Communauté, suggestions automatiques, parrainage et compétition : voir les sections dédiées plus bas</li>
       <li>Messages de dossier et textes soumis au coach (KPB Intelligence)</li>
       <li>Dictée vocale : le micro capte votre voix, l'app demande à votre téléphone de la convertir en texte sur l'appareil et n'en garde que le texte ; l'enregistrement audio ne nous est jamais transmis. Sur iPhone, si la reconnaissance locale est indisponible, la dictée ne démarre pas. Sur Android, la reconnaissance locale n'est qu'une préférence : sans modèle local installé, le service de reconnaissance de votre téléphone (Google) peut traiter votre voix hors de l'appareil</li>
       <li>Documents (passeport, relevés, pièces de dossier) : l'envoi depuis l'application est masqué. Ces pièces passent par WhatsApp vers votre conseiller, pas par un téléversement in-app</li>
@@ -57,6 +59,8 @@
       <li>Consentement : vous acceptez cette politique lors de la création de votre compte</li>
       <li>Exécution du contrat : le traitement est nécessaire pour fournir nos services</li>
       <li>Intérêt légitime : amélioration de nos services et sécurité de la plateforme</li>
+      <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+      <li>Consentement explicite : votre nationalité, pour le test « Mes 10 bourses » (voir « Votre nationalité »)</li>
       <li>Mineurs de 16 et 17 ans : l'accord déclaré d'un représentant légal (nom et contact) est demandé avant de compléter le profil, d'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L'application n'est pas destinée aux moins de 16 ans</li>
     </ul>
 
@@ -85,6 +89,51 @@
     <h2>Transferts hors de votre pays</h2>
     <p>Certains destinataires sont établis aux États-Unis (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — YouTube et les services de reconnaissance vocale compris — et Wikimedia). Le transfert repose sur votre consentement à cette politique et, le cas échéant, sur les clauses contractuelles types du sous-traitant. Vous pouvez refuser l'analytique depuis Profil → « Analyse d'usage » et refuser KPB Intelligence : le reste de l'app reste utilisable.</p>
 
+    <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+    <!-- Décision du propriétaire du 18/10/2026 : contenus supprimés gardés 30 jours. Suppression du compte : suppression définitive, pas d'anonymisation (docs/data-inventory.md §7). -->
+    <h2>Communauté d'entraide (fonction ouverte progressivement)</h2>
+    <p>Si vous utilisez la communauté :</p>
+    <ul>
+      <li>Ce que vous publiez : vos publications et vos réponses (titre, texte, bourses, pays, établissements ou formations cités, mots-clés) sont visibles des autres élèves connectés, avec un nom affiché sous la forme « Prénom I. », le pays de résidence de votre profil et vos badges. Votre nom complet, votre e-mail et votre téléphone ne sont pas affichés</li>
+      <li>Pas de messages privés : la communauté n'a ni messagerie entre membres, ni mention d'un autre membre</li>
+      <li>Vérification avant publication : un texte qui contient un numéro, une adresse e-mail, un lien WhatsApp, un lien externe, une demande d'argent ou un terme interdit n'est pas publié tout de suite ; il attend la revue de l'équipe KPB et reste visible de vous seul. Cette vérification se fait sur nos serveurs, sans service externe</li>
+      <li>Signalements et blocages : vous pouvez signaler une publication, une réponse ou un membre (motif, et précision facultative de 500 caractères au plus). Seule l'équipe KPB voit les signalements, jamais la personne signalée. Un contenu signalé par plusieurs membres peut être masqué en attendant la revue. Vous pouvez aussi bloquer un membre : vous ne voyez plus ses contenus, et il ne voit plus les vôtres</li>
+      <li>Modération : l'équipe KPB peut masquer ou supprimer un contenu, marquer une réponse comme vérifiée et prendre une sanction (avertissement, lecture seule, exclusion), dont le motif vous est notifié. Chaque décision est enregistrée dans un journal de modération</li>
+      <li>Notifications : réponses à vos publications et décisions de modération ; vous pouvez couper les notifications push de la communauté dans les réglages des notifications</li>
+      <li>Conservation : vos contenus restent tant que votre compte existe. Un contenu supprimé, par vous ou par l'équipe, reste lisible par l'équipe KPB pendant 30 jours pour la modération, puis est effacé définitivement</li>
+      <li>Suppression de votre compte : vos publications, réponses, « utile », suivis et blocages sont supprimés définitivement (ils ne sont pas anonymisés), ainsi que les réponses publiées sous vos publications. Les signalements que vous avez rédigés sont conservés sans lien avec votre compte, et le journal de modération perd tout lien avec votre compte</li>
+    </ul>
+    <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+    <!-- Bots Vérif (C3) et Passerelle (C3 bis). Passerelle : 12 mois (décision du 18/10/2026). La source « coach » reste fermée et n'est pas mentionnée. -->
+    <h2>Réponses et suggestions automatiques (fonctions ouvertes progressivement)</h2>
+    <ul>
+      <li>Assistant KPB : une question publiée dans la communauté peut recevoir une réponse signée « Assistant KPB », préparée automatiquement à partir des données vérifiées de notre catalogue (bourses, établissements, formations, pays). Elle est relue et publiée par l'équipe KPB ; quand l'équipe l'a activé, une réponse dont toutes les données sont vérifiées et récentes peut être publiée automatiquement. Cette préparation ne recopie ni votre question, ni votre nom, ni votre profil, et votre question n'est envoyée à aucun service externe</li>
+      <li>Suggestions de l'équipe KPB : vos publications et réponses dans la communauté sont analysées automatiquement, sur nos serveurs, pour repérer un besoin (trouver une bourse, préparer un visa, choisir une école…) et vous suggérer en privé, par une notification, la fonction de l'app ou la ligne WhatsApp de KPB qui peut vous aider. Aucun texte n'est stocké par cette analyse : seuls le besoin repéré, la règle utilisée, la référence de la publication concernée et les dates d'envoi et de réaction sont enregistrés, pendant 12 mois. Une suggestion n'est jamais publique et ne cite pas votre texte</li>
+      <li>Vous pouvez couper ces suggestions à tout moment dans les réglages des notifications (« Suggestions de l'équipe KPB ») : aucune suggestion ne vous est alors envoyée</li>
+    </ul>
+    <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+    <!-- Parrainage côté app (build 57) et compétition : empreintes 180 jours (décision du 18/10/2026), docs/data-inventory.md §6 et §6 bis. -->
+    <h2>Parrainage et compétition des ambassadeurs</h2>
+    <ul>
+      <li>Code de parrain : le code que vous saisissez n'est envoyé à nos serveurs que lorsque vous appuyez sur « Valider le code », pour vous rattacher à ce parrain (une seule fois)</li>
+      <li>Lien d'invitation (Android, fonction ouverte progressivement) : si vous avez installé l'app depuis un lien d'invitation Google Play, l'app lit une fois, sur votre téléphone, l'information de provenance que Google Play lui fournit (lien d'origine, dates du clic et de l'installation) et n'en garde que le code du parrain, pour préremplir le champ. Rien n'est transmis tant que vous ne confirmez pas ce code</li>
+      <li>Identifiant d'installation : au premier rattachement demandé, l'app crée un identifiant aléatoire propre à cette installation (ni l'IMEI, ni l'identifiant publicitaire). Il est envoyé uniquement avec un code de parrain, pour la prévention de la fraude ; nos serveurs n'en gardent qu'une empreinte chiffrée. Il change à chaque réinstallation</li>
+      <li>Empreintes anti-fraude : lors d'un rattachement, nos serveurs calculent des empreintes chiffrées (HMAC) de votre adresse IP, de sa plage, de vos jetons de notifications et de l'identifiant d'installation — jamais conservés en clair — pour repérer les comptes multiples et les inscriptions en rafale. Elles sont conservées 180 jours, puis effacées</li>
+      <li>Compétition des ambassadeurs : organisée par KPB Global L.L.C-FZ, réservée aux ambassadeurs inscrits par l'équipe KPB, selon un règlement publié. Le classement public affiche, pour les ambassadeurs classés, un nom sous la forme « Prénom I. — Ville » et le nombre de filleuls qualifiés, jamais l'e-mail, le téléphone ni le nom des filleuls. Un ambassadeur de 16 ou 17 ans n'est classé, et ne reçoit de prix, qu'avec une autorisation parentale signée et vérifiée par l'équipe ; son prix est versé à son représentant légal. L'équipe voit l'identité et l'e-mail des ambassadeurs et de leurs filleuls, le statut de chaque filleul et les versements</li>
+      <li>Suppression de votre compte : votre participation, vos rattachements et vos empreintes sont supprimés ; seule la trace d'un prix déjà versé (rang, nom public, montant, versement) est gardée pour la comptabilité, sans lien avec votre compte</li>
+      <li>Apple et Google ne sont ni organisateurs ni partenaires de cette compétition</li>
+    </ul>
+    <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+    <!-- Décision du propriétaire du 18/10/2026 : consentement explicite, facultative, conservée tant que le compte existe, effaçable. -->
+    <h2>Votre nationalité (test « Mes 10 bourses »)</h2>
+    <ul>
+      <li>Base légale : votre consentement explicite. Vous donnez votre nationalité seulement si vous passez le test, et elle n'est envoyée qu'après que vous avez coché « J'accepte que KPB Education utilise ma nationalité pour vérifier les conditions des bourses »</li>
+      <li>Facultative : sans elle, le test ne calcule pas de résultat, et le reste de l'app reste utilisable</li>
+      <li>Usage : uniquement vérifier les conditions de nationalité des bourses. Elle n'est transmise à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne part ni dans l'analytique ni dans les notifications</li>
+      <li>Conservation : sur votre profil tant que votre compte existe ; elle est supprimée avec votre compte</li>
+      <li>Retrait : vous pouvez retirer votre consentement à tout moment en écrivant à <a href="mailto:privacy@kpbeducation.com">privacy@kpbeducation.com</a> ; nous effaçons alors votre nationalité de votre profil</li>
+    </ul>
+
     <h2>6. Durée de conservation</h2>
     <ul>
       <li>Données de profil : conservées tant que votre compte est actif</li>
@@ -92,6 +141,10 @@
       <li>Réponses au test « Mes 10 bourses » : gardées sur votre profil tant que votre compte est actif, et modifiables en refaisant le test ; seuls vos 5 derniers résultats sont conservés, les plus anciens s'effacent automatiquement</li>
       <li>Bourses suivies et notifications reçues dans l'app : conservées tant que votre compte est actif</li>
       <li>Sur votre téléphone : le brouillon du test s'efface à la fin du test et à la déconnexion ; les bourses gardées pour une consultation hors ligne s'effacent à la déconnexion</li>
+      <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+      <li>Communauté : un contenu supprimé reste 30 jours lisible par l'équipe pour la modération, puis il est effacé</li>
+      <li>Suggestions automatiques : les enregistrements sont gardés 12 mois</li>
+      <li>Empreintes anti-fraude du parrainage : 180 jours</li>
       <li>Données analytiques : agrégées et anonymisées, conservées indéfiniment</li>
       <li>En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours</li>
     </ul>
@@ -115,7 +168,8 @@
       <li>De vous opposer au traitement</li>
       <li>De portabilité de vos données</li>
     </ul>
-    <p>L'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats et vos alertes de bourses.</p>
+    <!-- Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission. -->
+    <p>L'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats, vos alertes de bourses, les notifications reçues dans l'app, vos contenus de la communauté, les suggestions automatiques qui vous concernent et vos données de parrainage et de compétition.</p>
     <p>Pour exercer ces droits, contactez-nous à : <a href="mailto:privacy@kpbeducation.com">privacy@kpbeducation.com</a></p>
 
     <h2>9. Analytique produit &amp; enregistrement de session</h2>

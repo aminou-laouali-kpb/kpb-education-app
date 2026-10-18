@@ -487,6 +487,109 @@ void main() {
       }
     });
 
+    // Sections rédigées le 18/10/2026 (décisions du propriétaire) : elles
+    // doivent dire, dans les deux langues in-app ET sur la page web, ce que le
+    // code fait — identifiant d'installation, empreintes 180 jours, contenus
+    // supprimés 30 jours, passerelle 12 mois, nationalité sur consentement —
+    // et ne jamais nommer la source « coach », fermée.
+    test('politique : communauté, bots, parrainage, nationalité (18/10/2026)',
+        () {
+      for (final key in [
+        'privacy_community_body',
+        'privacy_bots_body',
+        'privacy_referral_body',
+        'privacy_nationality_body',
+      ]) {
+        expect(fr, contains("  '$key':"), reason: 'clé $key absente (FR)');
+        expect(en, contains("  '$key':"), reason: 'clé $key absente (EN)');
+      }
+      final frAll = [
+        entry(fr, 'privacy_community_body'),
+        entry(fr, 'privacy_bots_body'),
+        entry(fr, 'privacy_referral_body'),
+        entry(fr, 'privacy_nationality_body'),
+      ].join();
+      for (final needle in [
+        '30 jours',
+        '12 mois',
+        '180 jours',
+        'identifiant aléatoire',
+        'HMAC',
+        'Prénom I. — Ville',
+        'autorisation parentale',
+        'KPB Global L.L.C-FZ',
+        'consentement explicite',
+        'Suggestions de l',
+        'ne sont pas anonymisés',
+      ]) {
+        expect(frAll, contains(needle), reason: 'politique FR : « $needle »');
+        expect(web, contains(needle), reason: 'page web : « $needle »');
+      }
+      final enAll = [
+        entry(en, 'privacy_community_body'),
+        entry(en, 'privacy_bots_body'),
+        entry(en, 'privacy_referral_body'),
+        entry(en, 'privacy_nationality_body'),
+      ].join();
+      for (final needle in [
+        '30 days',
+        '12 months',
+        '180 days',
+        'random identifier',
+        'HMAC',
+        'explicit consent',
+        'not anonymised',
+      ]) {
+        expect(enAll, contains(needle), reason: 'politique EN : « $needle »');
+      }
+      // La source « coach » de la passerelle reste fermée : la politique n'en
+      // parle pas (décision du propriétaire, 18/10/2026).
+      for (final text in [entry(fr, 'privacy_bots_body'), web]) {
+        expect(text.toLowerCase().contains('coach ia'), isFalse);
+      }
+      expect(entry(en, 'privacy_bots_body').toLowerCase(),
+          isNot(contains('coach')));
+      expect(entry(fr, 'privacy_bots_body').toLowerCase(),
+          isNot(contains('coach')));
+      // Chaque section ajoutée porte la note de relecture (non affichée).
+      expect(web, contains('à relire par le propriétaire avant soumission'));
+      expect(
+          web.contains('<!-- Test « Mes 10 bourses » (drapeau '
+              'features.scholarshipMatch, fermé) : la collecte de la nationalité '
+              'attend une validation juridique'),
+          isFalse);
+    });
+
+    test('CGU : communauté (charte en quatre règles) et compétition', () {
+      final conditions = _read('web/public/conditions.html');
+      // Le source Dart échappe l'apostrophe : on compare le texte rendu.
+      String terms(String key) => entry(fr, key).replaceAll("\\'", "'");
+      final constants = _read(
+        'backend/src/modules/community/community.constants.ts',
+      );
+      // Les quatre titres de la charte du serveur figurent dans les CGU.
+      for (final title in [
+        'Bienveillance',
+        "Jamais d'argent",
+        'Pas de coordonnées',
+      ]) {
+        expect(constants, contains(title));
+        expect(conditions, contains(title));
+        expect(terms('terms_community_body'), contains(title));
+      }
+      for (final text in [conditions, terms('terms_community_body')]) {
+        expect(text, contains('pas de messages privés'));
+      }
+      for (final text in [conditions, terms('terms_competition_body')]) {
+        expect(text, contains('KPB Global L.L.C-FZ'));
+        expect(text, contains('règlement'));
+        expect(
+          text,
+          contains('Apple et Google ne sont ni organisateurs ni partenaires'),
+        );
+      }
+    });
+
     test('l\'inventaire dit la transmission, la conservation et l\'écart', () {
       final s5 = inventory.substring(inventory.indexOf('## 5. Build 57'));
       expect(s5, contains('nationalityCode'));
