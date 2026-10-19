@@ -481,8 +481,42 @@ déploiement du serveur de la 57** (avant l'ouverture des paliers) : une campagn
 finalité **`informational`** (message de service, donc envoyée à tous, sans le filtre
 promotionnel), audience `all_users`, push, titre « Notre politique évolue », dont le texte invite à
 relire la politique (Profil → Informations légales) : nouveaux choix « Nouvelles et offres de KPB »
-(e-mail, notification), base légale, durées de conservation. Texte de la notification : À VALIDER
-(propriétaire).
+(e-mail, notification), base légale, durées de conservation.
+
+**Texte validé par le propriétaire (19/10/2026)** — calendrier : **envoi le 24 octobre 2026**,
+application de la politique le **31 octobre 2026** (7 jours de préavis, avant la compétition du
+1er novembre). Lien du bouton : `https://kpbeducation.cloud/confidentialite.html`.
+
+| | FR | EN |
+|---|---|---|
+| Titre du push | Notre politique de confidentialité évolue | Our privacy policy is changing |
+| Texte du push | Communauté, parrainage, nouvelles options de confidentialité : découvre ce qui change et tes choix. | Community, referrals, new privacy options: see what's changing and your choices. |
+| Bouton | Lire la politique | Read the policy |
+
+Message dans l'app (FR) :
+
+> Avec la nouvelle version de KPB Education, on ajoute :
+> - la communauté d'entraide : tes publications sont visibles des autres élèves sous la forme « Prénom I. », jamais avec ton e-mail ni ton téléphone ;
+> - les suggestions de l'équipe KPB : si tu cherches de l'aide dans la communauté, on peut te proposer en privé la bonne fonction de l'app (tu peux les couper dans tes réglages) ;
+> - le parrainage et la compétition des ambassadeurs, avec des protections contre la fraude ;
+> - ta nationalité, utilisée seulement avec ton accord pour le test « Mes 10 bourses », et effaçable à tout moment ;
+> - les nouvelles et offres de KPB, envoyées par e-mail ou par notification seulement si tu les acceptes.
+>
+> Ces changements s'appliquent à partir du 31 octobre 2026.
+
+Message dans l'app (EN) :
+
+> With the new version of KPB Education, we're adding:
+> - the help community: your posts are visible to other students as "First name I.", never with your email or phone number;
+> - suggestions from the KPB team: if you ask for help in the community, we may privately point you to the right app feature (you can turn them off in your settings);
+> - referrals and the ambassador competition, with fraud protection;
+> - your nationality, used only with your consent for the "My 10 scholarships" test, and erasable at any time;
+> - KPB news and offers, sent by email or notification only if you accept them.
+>
+> These changes apply from October 31, 2026.
+
+Si la 57 n'est pas déployée côté serveur le 24 octobre, décaler les deux dates en gardant 7 jours
+de préavis.
 
 ---
 
