@@ -254,11 +254,11 @@ void main() {
       expect(open, contains('À VALIDER (propriétaire)'));
       expect(open, contains('features.scholarshipMatch'));
       // Décisions du propriétaire du 18/10/2026 : la nationalité est tranchée
-      // (consentement explicite) ; XC-06 reste ouvert tant que le code permet
-      // un envoi promotionnel sans opt-in.
+      // (consentement explicite) ; XC-06 est tranché le 19/10/2026 : le push
+      // promotionnel reste en opt-out, la finalité « Marketing » est déclarée.
       expect(open, contains('consentement explicite'));
       expect(open, contains('XC-06'));
-      expect(open, contains('reste ouvert'));
+      expect(open, contains('finalité « Marketing » DÉCLARÉE'));
     });
   });
 

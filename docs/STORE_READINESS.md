@@ -959,7 +959,7 @@ reviewed by the owner before the archive** (the in-app text is compiled).
   optional, kept while the account exists, erasable; the app now shows a consent checkbox on the
   test summary and sends nothing without it. Play/Apple rows unchanged (`docs/release-57-store-pack.md`
   §4); "Sensitive Info: No" still to confirm with counsel — *À VALIDER (owner)*.
-- **XC-06 (Marketing purpose)**: the owner chose "no Marketing purpose" **provided** no
+- **XC-06 (Marketing purpose) — SETTLED 19/10/2026**: promotional push stays opt-out, so the owner **declares the Marketing purpose** (Play Data Safety; Apple App Privacy « Developer's Advertising or Marketing »). History: the owner first chose "no Marketing purpose" **provided** no
   promotional message goes out without opt-in. *Fixes 57 (19/10/2026)*: admin campaigns now carry
   a purpose (`promotional` by default); a promotional **e-mail** only goes to accounts that ticked
   "KPB news and offers" (off by default; declared minors also need guardian consent) and carries a
