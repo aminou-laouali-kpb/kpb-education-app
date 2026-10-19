@@ -824,7 +824,8 @@ const Map<String, String> appTranslationsFr = {
       // VALIDER (propriétaire), docs/data-inventory.md.
       '• Signalements rédigés dans la communauté par un compte depuis supprimé : 12 mois après la suppression du compte, puis effacés\n'
       '• Statistiques agrégées et anonymisées : sans limite de durée\n'
-      '• Événements Firebase Analytics et PostHog liés à un identifiant pseudonyme, et enregistrements de session PostHog : conservés pendant la durée de rétention de l\'outil, puis supprimés\n'
+      '• Enregistrements de session PostHog : 30 jours, puis supprimés\n'
+      '• Événements Firebase Analytics et PostHog liés à un identifiant pseudonyme : conservés pendant la durée de rétention de l\'outil, puis supprimés\n'
       '• En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours',
   'privacy_s7_body': '• Communication chiffrée via HTTPS/TLS\n'
       '• Mots de passe hachés (bcrypt)\n'

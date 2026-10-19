@@ -139,8 +139,9 @@ void main() {
     expect(purge, contains('COMMUNITY_ORPHAN_REPORT_RETENTION_DAYS'));
   });
 
-  test('5. analytique : plus de « conservées indéfiniment », pas de chiffre',
-      () {
+  test(
+      '5. analytique : plus de « conservées indéfiniment », '
+      'enregistrements 30 jours, événements sans chiffre inventé', () {
     for (final text in [entry(fr, 'privacy_s6_body'), web]) {
       expect(text, isNot(contains('conservées indéfiniment')));
     }
@@ -149,9 +150,17 @@ void main() {
         ['privacy_s6_body']);
     saysEn('kept for the tool\'s retention period, then deleted',
         ['privacy_s6_body']);
-    // La durée n'est documentée nulle part : l'inventaire le dit.
-    expect(_read('docs/data-inventory.md'),
-        contains('À VALIDER (propriétaire) : durée de rétention PostHog'));
+    // Enregistrements de session : 30 jours, lu dans le projet PostHog le
+    // 19/10/2026 (`session_recording_retention_period = 30d`).
+    saysFr(
+        'Enregistrements de session PostHog : 30 jours', ['privacy_s6_body']);
+    saysEn('PostHog session recordings: 30 days', ['privacy_s6_body']);
+    expect(web, contains('Enregistrements de session PostHog : 30 jours'));
+    // La durée des événements reste à confirmer : l'inventaire le dit.
+    expect(
+        _read('docs/data-inventory.md'),
+        contains(
+            'À VALIDER (propriétaire) : durée de rétention des événements PostHog'));
   });
 
   test('6. modifications : notification avant, aucune « acceptation tacite »',
