@@ -716,16 +716,23 @@ const Map<String, String> appTranslationsFr = {
       '• Vous envoyer par email les nouvelles bourses d\'études disponibles, uniquement si vous y avez consenti (case à cocher — désinscription possible à tout moment depuis votre profil ou le lien de désinscription des emails)\n'
       // Correctifs 57 (XC-06), 19/10/2026 — à relire par le propriétaire
       // avant soumission. Uniquement ce que le code fait (campaign-purpose.ts).
-      '• Vous envoyer des nouvelles et des offres de KPB Education : par e-mail uniquement si vous l\'avez accepté (Profil → « Nouvelles et offres de KPB », non coché par défaut ; pour un mineur de 16 ou 17 ans, il faut en plus l\'accord déclaré de son représentant légal), et par notification push tant que vous ne les avez pas coupées (réglages des notifications → « Nouvelles et offres de KPB »). Chaque e-mail contient un lien de désinscription en un clic, et vous pouvez vous désinscrire à tout moment depuis l\'app\n'
+      // Chantier juridique 57 : push promotionnel en opt-in (App Store
+      // 4.5.4), à relire par le propriétaire avant soumission.
+      '• Vous envoyer des nouvelles et des offres de KPB Education, uniquement si vous l\'avez accepté, canal par canal : par e-mail (Profil → « Nouvelles et offres de KPB par e-mail ») et par notification (réglages des notifications → « Nouvelles et offres de KPB par notification »). Les deux choix sont distincts et désactivés par défaut ; pour un mineur de 16 ou 17 ans, il faut en plus l\'accord déclaré de son représentant légal. Chaque e-mail contient un lien de désinscription en un clic, et vous pouvez retirer chacun de ces accords à tout moment depuis l\'app\n'
       '• Améliorer nos services via des statistiques agrégées et anonymisées\n'
       '• Communiquer avec vous dans le cadre de vos démarches\n'
       '• Vous rappeler au sujet d\'un espace ou d\'un accompagnement pour lequel vous avez déclaré votre intérêt, si vous l\'avez accepté au moment de le déclarer. Cette déclaration est lisible par nos conseillers et notre équipe commerciale, et vous pouvez la retirer à tout moment depuis l\'écran où vous l\'avez faite',
-  'privacy_s4_body': '• Consentement : vous acceptez cette politique lors de la création de votre compte\n'
-      '• Exécution du contrat : le traitement est nécessaire pour fournir nos services\n'
-      '• Intérêt légitime : amélioration de nos services et sécurité de la plateforme\n'
-      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
-      '• Consentement explicite : votre nationalité, pour le test « Mes 10 bourses » (voir « Votre nationalité »)\n'
-      '• Mineurs de 16 et 17 ans : l\'accord déclaré d\'un représentant légal (nom et contact) est demandé avant de compléter le profil, d\'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L\'application n\'est pas destinée aux moins de 16 ans',
+  'privacy_s4_body':
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Uniquement ce que le code fait.
+      '• Exécution du service : le traitement est nécessaire pour vous fournir l\'application et ses services (compte, profil, recommandations, dossiers, notifications liées à votre compte et à vos dossiers)\n'
+          '• Consentement, pour les traitements que vous acceptez explicitement dans l\'application et que vous pouvez refuser : la newsletter bourses ; les nouvelles et offres de KPB, par e-mail et par notification (deux choix distincts, désactivés par défaut) ; KPB Intelligence (fenêtre « Activer KPB Intelligence », que vous pouvez refuser) ; le rappel au sujet d\'un espace ou d\'un accompagnement pour lequel vous avez déclaré votre intérêt\n'
+          // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+          '• Consentement explicite : votre nationalité, pour le test « Mes 10 bourses » (voir « Votre nationalité »)\n'
+          '• Intérêt légitime, avec votre droit de vous y opposer : l\'analytique produit et les enregistrements de session, actifs par défaut et désactivables à tout moment depuis Profil → « Analyse d\'usage » (voir section 9) ; la sécurité de la plateforme\n'
+          '• Intérêt légitime : prévention de la fraude au parrainage et à la compétition (empreintes anti-fraude, identifiant d\'installation)\n'
+          '• Obligation légale : conservation comptable de la trace des prix versés\n'
+          '• Mineurs de 16 et 17 ans : l\'accord déclaré d\'un représentant légal (nom et contact) est demandé avant de compléter le profil, d\'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L\'application n\'est pas destinée aux moins de 16 ans',
   'privacy_s5_body': 'Vos données ne sont PAS vendues à des tiers.\n\n'
       'Elles peuvent être partagées avec :\n'
       '• Notre backend KPB (VPS Hostinger, api.kpbeducation.cloud) pour faire fonctionner l\'application\n'
@@ -758,8 +765,11 @@ const Map<String, String> appTranslationsFr = {
       '• Votre nationalité, votre date de naissance et vos autres réponses au test « Mes 10 bourses » ne sont transmises à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne partent ni dans l\'analytique ni dans les notifications. Quand vous ouvrez un dossier depuis une bourse, votre conseiller voit la bourse concernée, pas vos réponses. Le test peut mettre à jour des champs de votre profil déjà utilisés ailleurs (pays de résidence, niveau d\'anglais, moyenne) : ils suivent alors les règles de cette section\n'
       '• Nos partenaires institutionnels (universités) uniquement avec votre accord explicite lors de la soumission d\'un dossier\n'
       '• Les autorités compétentes si la loi l\'exige',
+  // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire avant
+  // soumission : le transfert ne repose plus sur « l'acceptation » de la
+  // politique.
   'privacy_transfers_body':
-      'Certains destinataires sont établis aux États-Unis (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — YouTube et les services de reconnaissance vocale compris — et Wikimedia). Le transfert repose sur votre consentement à cette politique et, le cas échéant, sur les clauses contractuelles types du sous-traitant. Vous pouvez refuser l\'analytique depuis Profil → « Analyse d\'usage » et refuser KPB Intelligence : le reste de l\'app reste utilisable.',
+      'Certains destinataires sont établis aux États-Unis (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — YouTube et les services de reconnaissance vocale compris — et Wikimedia). Ces transferts sont nécessaires pour vous fournir le service. Ils sont encadrés par les clauses contractuelles types du sous-traitant lorsqu\'elles existent et, pour l\'IA et l\'analytique, par les choix que vous faites dans l\'application : vous pouvez refuser l\'analytique depuis Profil → « Analyse d\'usage » et refuser KPB Intelligence, le reste de l\'app reste utilisable.',
   // Sections ajoutées le 18/10/2026 (communauté, bots, parrainage et
   // compétition, nationalité) — décisions du propriétaire du 18/10/2026.
   // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
@@ -775,7 +785,9 @@ const Map<String, String> appTranslationsFr = {
       '• Modération : l\'équipe KPB peut masquer ou supprimer un contenu, marquer une réponse comme vérifiée et prendre une sanction (avertissement, lecture seule, exclusion), dont le motif vous est notifié. Chaque décision est enregistrée dans un journal de modération\n'
       '• Notifications : réponses à vos publications et décisions de modération ; vous pouvez couper les notifications push de la communauté dans les réglages des notifications\n'
       '• Conservation : vos contenus restent tant que votre compte existe. Un contenu supprimé, par vous ou par l\'équipe, reste lisible par l\'équipe KPB pendant 30 jours pour la modération, puis est effacé définitivement\n'
-      '• Suppression de votre compte : vos publications, réponses, « utile », suivis et blocages sont supprimés définitivement (ils ne sont pas anonymisés), ainsi que les réponses publiées sous vos publications. Les signalements que vous avez rédigés sont conservés sans lien avec votre compte, et le journal de modération perd tout lien avec votre compte',
+      '• Suppression de votre compte : vos publications, réponses, « utile », suivis et blocages sont supprimés définitivement (ils ne sont pas anonymisés), ainsi que les réponses publiées sous vos publications. Les signalements que vous avez rédigés sont conservés sans lien avec votre compte pendant 12 mois après sa suppression, puis effacés, et le journal de modération perd tout lien avec votre compte',
+  // Chantier juridique 57 : 12 mois (COMMUNITY_ORPHAN_REPORT_RETENTION_DAYS,
+  // purge quotidienne) — à relire par le propriétaire avant soumission.
   'privacy_bots_title':
       'Réponses et suggestions automatiques (fonctions ouvertes progressivement)',
   'privacy_bots_body':
@@ -787,7 +799,7 @@ const Map<String, String> appTranslationsFr = {
       '• Lien d\'invitation (Android, fonction ouverte progressivement) : si vous avez installé l\'app depuis un lien d\'invitation Google Play, l\'app lit une fois, sur votre téléphone, l\'information de provenance que Google Play lui fournit (lien d\'origine, dates du clic et de l\'installation) et n\'en garde que le code du parrain, pour préremplir le champ. Rien n\'est transmis tant que vous ne confirmez pas ce code\n'
       '• Identifiant d\'installation : au premier rattachement demandé, l\'app crée un identifiant aléatoire propre à cette installation (ni l\'IMEI, ni l\'identifiant publicitaire). Il est envoyé uniquement avec un code de parrain, pour la prévention de la fraude ; nos serveurs n\'en gardent qu\'une empreinte chiffrée. Il change à chaque réinstallation\n'
       '• Empreintes anti-fraude : lors d\'un rattachement, nos serveurs calculent des empreintes chiffrées (HMAC) de votre adresse IP, de sa plage, de vos jetons de notifications et de l\'identifiant d\'installation — jamais conservés en clair — pour repérer les comptes multiples et les inscriptions en rafale. Elles sont conservées 180 jours, puis effacées\n'
-      '• Compétition des ambassadeurs : organisée par KPB Global L.L.C-FZ, réservée aux ambassadeurs inscrits par l\'équipe KPB, selon un règlement publié. Le classement public affiche, pour les ambassadeurs classés, un nom sous la forme « Prénom I. — Ville » et le nombre de filleuls qualifiés, jamais l\'e-mail, le téléphone ni le nom des filleuls. Un ambassadeur de 16 ou 17 ans n\'est classé, et ne reçoit de prix, qu\'avec une autorisation parentale signée et vérifiée par l\'équipe ; son prix est versé à son représentant légal. L\'équipe voit l\'identité et l\'e-mail des ambassadeurs et de leurs filleuls, le statut de chaque filleul et les versements\n'
+      '• Compétition des ambassadeurs : organisée par KPB Global L.L.C-FZ, réservée aux ambassadeurs inscrits par l\'équipe KPB, selon un règlement publié. Le classement public affiche, pour les ambassadeurs classés, un nom sous la forme « Prénom I. — Ville » et le nombre de filleuls qualifiés, jamais l\'e-mail, le téléphone ni le nom des filleuls. Un ambassadeur de 16 ou 17 ans n\'est classé, et ne reçoit de prix, qu\'avec une autorisation parentale signée et vérifiée par l\'équipe : sans cette autorisation vérifiée, son nom public n\'apparaît pas au classement public ; son prix est versé à son représentant légal. L\'équipe voit l\'identité et l\'e-mail des ambassadeurs et de leurs filleuls, le statut de chaque filleul et les versements\n'
       '• Suppression de votre compte : votre participation, vos rattachements et vos empreintes sont supprimés ; seule la trace d\'un prix déjà versé (rang, nom public, montant, versement) est gardée pour la comptabilité, sans lien avec votre compte\n'
       '• Apple et Google ne sont ni organisateurs ni partenaires de cette compétition',
   'privacy_nationality_title': 'Votre nationalité (test « Mes 10 bourses »)',
@@ -807,7 +819,12 @@ const Map<String, String> appTranslationsFr = {
       '• Communauté : un contenu supprimé reste 30 jours lisible par l\'équipe pour la modération, puis il est effacé\n'
       '• Suggestions automatiques : les enregistrements sont gardés 12 mois\n'
       '• Empreintes anti-fraude du parrainage : 180 jours\n'
-      '• Données analytiques : agrégées et anonymisées, conservées indéfiniment\n'
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Durée de rétention des outils d'analytique : À
+      // VALIDER (propriétaire), docs/data-inventory.md.
+      '• Signalements rédigés dans la communauté par un compte depuis supprimé : 12 mois après la suppression du compte, puis effacés\n'
+      '• Statistiques agrégées et anonymisées : sans limite de durée\n'
+      '• Événements Firebase Analytics et PostHog liés à un identifiant pseudonyme, et enregistrements de session PostHog : conservés pendant la durée de rétention de l\'outil, puis supprimés\n'
       '• En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours',
   'privacy_s7_body': '• Communication chiffrée via HTTPS/TLS\n'
       '• Mots de passe hachés (bcrypt)\n'
@@ -832,8 +849,10 @@ const Map<String, String> appTranslationsFr = {
       '• Cette mesure est ACTIVE PAR DÉFAUT : elle fait partie du fonctionnement normal du service et sert uniquement à l\'améliorer (voir les CGU, « Mesure d\'audience »)\n'
       '• Vous pouvez la désactiver à tout moment, ainsi que les enregistrements, depuis Profil → « Analyse d\'usage » : la collecte s\'arrête immédiatement, et votre refus est conservé — il n\'est jamais réactivé par une mise à jour',
   'privacy_s10_body':
-      'Cette politique peut être mise à jour. Nous vous informerons de tout changement significatif via une notification dans l\'application.\n\n'
-          'En continuant à utiliser l\'application après une mise à jour, vous acceptez la nouvelle politique.',
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission.
+      'Cette politique peut être mise à jour. Avant qu\'une modification importante (par exemple un nouveau traitement de vos données) s\'applique, nous vous en informons dans l\'application, par une notification.\n\n'
+          'Un traitement qui repose sur votre consentement n\'est jamais activé par une simple mise à jour de cette politique : il vous est demandé dans l\'application.',
   'terms_s10_body':
       'Les présentes CGU sont régies par le droit des Émirats arabes unis et par la réglementation de la Meydan Free Zone (Émirat de Dubaï), lieu d\'établissement de KPB Global L.L.C-FZ, éditeur de KPB Education.\n\n'
           'En cas de litige, les parties s\'engagent à chercher une résolution amiable ; à défaut d\'accord, les tribunaux compétents de Dubaï le trancheront.\n\n'
@@ -4294,9 +4313,11 @@ const Map<String, String> appTranslationsFr = {
       'Quand tu cherches de l\'aide, on te montre la fonction de l\'app qui peut t\'aider',
   'notif_cta_assist_bridge': 'Voir comment faire',
   // Correctifs 57 (XC-06) — nouvelles et offres de KPB.
-  'kpb_promotions_pref_title': 'Nouvelles et offres de KPB',
+  // Chantier juridique 57 (App Store 4.5.4) : le push promotionnel est un
+  // OPT-IN, désactivé par défaut.
+  'kpb_promotions_pref_title': 'Nouvelles et offres de KPB par notification',
   'kpb_promotions_pref_subtitle':
-      'Annonces et offres de l\'équipe KPB (les messages sur ton compte et tes dossiers continuent)',
+      'Désactivé par défaut. Active-le pour recevoir par notification les annonces et offres de l\'équipe KPB ; tu peux le couper à tout moment (les messages sur ton compte et tes dossiers continuent)',
   'profile_promotions_email': 'Nouvelles et offres de KPB par e-mail',
   'profile_promotions_email_desc':
       'Recevoir par e-mail les nouvelles et offres de KPB Education (désinscription à tout moment)',

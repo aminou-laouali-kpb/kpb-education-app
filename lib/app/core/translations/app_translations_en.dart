@@ -657,16 +657,23 @@ const Map<String, String> appTranslationsEn = {
       '• Email newly listed scholarships only if you opted in (checkbox — unsubscribe any time from your profile or the email footer)\n'
       // Correctifs 57 (XC-06), 19/10/2026 — à relire par le propriétaire
       // avant soumission. Uniquement ce que le code fait (campaign-purpose.ts).
-      '• Send you news and offers from KPB Education: by email only if you accepted it (Profile → "KPB news and offers", unticked by default; for a minor aged 16 or 17, the declared agreement of their legal guardian is also required), and by push notification as long as you have not turned them off (notification settings → "KPB news and offers"). Every email contains a one-click unsubscribe link, and you can unsubscribe at any time from the app\n'
+      // Chantier juridique 57 : push promotionnel en opt-in (App Store
+      // 4.5.4), à relire par le propriétaire avant soumission.
+      '• Send you news and offers from KPB Education, only if you accepted it, channel by channel: by email (Profile → "KPB news and offers by email") and by notification (notification settings → "KPB news and offers by notification"). The two choices are separate and off by default; for a minor aged 16 or 17, the declared agreement of their legal guardian is also required. Every email contains a one-click unsubscribe link, and you can withdraw each of these agreements at any time from the app\n'
       '• Improve our services through aggregated, anonymised statistics\n'
       '• Communicate with you about your applications\n'
       '• Contact you about a space or a guidance offer you declared an interest in, where you agreed to it when declaring. That declaration is readable by our counsellors and our sales team, and you can withdraw it at any time from the screen where you made it',
-  'privacy_s4_body': '• Consent: you accept this policy when you create an account\n'
-      '• Contract: processing is required to provide the service\n'
-      '• Legitimate interest: improving the service and securing the platform\n'
-      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
-      '• Explicit consent: your nationality, for the "My 10 scholarships" test (see "Your nationality")\n'
-      '• Minors aged 16 and 17: the declared agreement of a legal guardian (name and contact) is required before completing the profile, using KPB Intelligence or taking the "My 10 scholarships" test. The app is not intended for anyone under 16',
+  'privacy_s4_body':
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Uniquement ce que le code fait.
+      '• Performance of the service: processing is required to provide the app and its services (account, profile, recommendations, applications, notifications about your account and your applications)\n'
+          '• Consent, for the processing you explicitly accept in the app and can decline: the scholarship newsletter; KPB news and offers, by email and by notification (two separate choices, off by default); KPB Intelligence ("Enable KPB Intelligence" dialog, which you can decline); being contacted about a space or a guidance offer you declared an interest in\n'
+          // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+          '• Explicit consent: your nationality, for the "My 10 scholarships" test (see "Your nationality")\n'
+          '• Legitimate interest, with your right to object: product analytics and session recordings, on by default and can be turned off at any time from Profile → "Usage analytics" (see section 9); securing the platform\n'
+          '• Legitimate interest: preventing referral and competition fraud (anti-fraud fingerprints, installation identifier)\n'
+          '• Legal obligation: keeping the accounting record of prizes paid\n'
+          '• Minors aged 16 and 17: the declared agreement of a legal guardian (name and contact) is required before completing the profile, using KPB Intelligence or taking the "My 10 scholarships" test. The app is not intended for anyone under 16',
   'privacy_s5_body': 'Your data is NOT sold to third parties.\n\n'
       'It may be shared with:\n'
       '• Our KPB backend (Hostinger VPS, api.kpbeducation.cloud) to run the app\n'
@@ -688,8 +695,11 @@ const Map<String, String> appTranslationsEn = {
       '• Your nationality, date of birth and other answers to the "My 10 scholarships" test are not sent to any school, scholarship body or our sales team, and never go into analytics or notifications. When you open a case from a scholarship, your advisor sees that scholarship, not your answers. The test may update profile fields already used elsewhere (country of residence, English level, grades): they then follow the rules of this section\n'
       '• Institutional partners (universities) only with your explicit agreement when you submit a case\n'
       '• Competent authorities if the law requires it',
+  // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire avant
+  // soumission : le transfert ne repose plus sur « l'acceptation » de la
+  // politique.
   'privacy_transfers_body':
-      'Some recipients are established in the United States (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — including YouTube and the speech recognition services — and Wikimedia). The transfer rests on your consent to this policy and, where applicable, the processor\'s standard contractual clauses. You can turn analytics off in Profile → "Usage analytics" and decline KPB Intelligence: the rest of the app stays usable.',
+      'Some recipients are established in the United States (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — including YouTube and the speech recognition services — and Wikimedia). These transfers are necessary to provide the service. They are covered by the processor\'s standard contractual clauses where they exist and, for AI and analytics, by the choices you make in the app: you can turn analytics off in Profile → "Usage analytics" and decline KPB Intelligence, the rest of the app stays usable.',
   // Sections ajoutées le 18/10/2026 (communauté, bots, parrainage et
   // compétition, nationalité) — décisions du propriétaire du 18/10/2026.
   // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
@@ -704,7 +714,9 @@ const Map<String, String> appTranslationsEn = {
       '• Moderation: the KPB team can hide or delete content, mark a reply as verified and take a sanction (warning, read-only, exclusion), whose reason is notified to you. Each decision is recorded in a moderation log\n'
       '• Notifications: replies to your posts and moderation decisions; you can turn off community push notifications in the notification settings\n'
       '• Retention: your content stays while your account exists. Content deleted by you or by the team stays readable by the KPB team for 30 days for moderation, then is permanently erased\n'
-      '• Deleting your account: your posts, replies, "helpful" marks, follows and blocks are permanently deleted (they are not anonymised), together with the replies posted under your posts. Reports you wrote are kept without any link to your account, and the moderation log loses any link to your account',
+      '• Deleting your account: your posts, replies, "helpful" marks, follows and blocks are permanently deleted (they are not anonymised), together with the replies posted under your posts. Reports you wrote are kept without any link to your account for 12 months after its deletion, then erased, and the moderation log loses any link to your account',
+  // Chantier juridique 57 : 12 mois (COMMUNITY_ORPHAN_REPORT_RETENTION_DAYS,
+  // purge quotidienne) — à relire par le propriétaire avant soumission.
   'privacy_bots_title':
       'Automatic answers and suggestions (features opened gradually)',
   'privacy_bots_body':
@@ -716,7 +728,7 @@ const Map<String, String> appTranslationsEn = {
       '• Invitation link (Android, feature opened gradually): if you installed the app from a Google Play invitation link, the app reads once, on your phone, the install source information that Google Play provides (original link, dates of the click and of the install) and keeps only the referral code from it, to prefill the field. Nothing is sent until you confirm that code\n'
       '• Installation identifier: on the first referral request, the app creates a random identifier specific to this installation (neither the IMEI nor the advertising identifier). It is sent only with a referral code, for fraud prevention; our servers keep only an encrypted fingerprint of it. It changes with every reinstall\n'
       '• Anti-fraud fingerprints: when a referral is recorded, our servers compute encrypted fingerprints (HMAC) of your IP address, its range, your notification tokens and the installation identifier — never stored in clear — to detect multiple accounts and bursts of sign-ups. They are kept for 180 days, then erased\n'
-      '• Ambassador competition: organised by KPB Global L.L.C-FZ, open to ambassadors enrolled by the KPB team, under published official rules. The public leaderboard shows, for ranked ambassadors, a name as "First name I. — City" and the number of qualified referrals, never the email, phone number or names of referrals. An ambassador aged 16 or 17 is ranked, and receives a prize, only with a signed parental authorisation verified by the team; their prize is paid to their legal guardian. The team sees the identity and email of ambassadors and of their referrals, each referral\'s status and the payments\n'
+      '• Ambassador competition: organised by KPB Global L.L.C-FZ, open to ambassadors enrolled by the KPB team, under published official rules. The public leaderboard shows, for ranked ambassadors, a name as "First name I. — City" and the number of qualified referrals, never the email, phone number or names of referrals. An ambassador aged 16 or 17 is ranked, and receives a prize, only with a signed parental authorisation verified by the team: without that verified authorisation, their public name does not appear on the public leaderboard; their prize is paid to their legal guardian. The team sees the identity and email of ambassadors and of their referrals, each referral\'s status and the payments\n'
       '• Deleting your account: your participation, your referral links and your fingerprints are deleted; only the record of a prize already paid (rank, public name, amount, payment) is kept for accounting, with no link to your account\n'
       '• Apple and Google are neither organisers nor partners of this competition',
   'privacy_nationality_title': 'Your nationality ("My 10 scholarships" test)',
@@ -736,7 +748,12 @@ const Map<String, String> appTranslationsEn = {
       '• Community: deleted content stays readable by the team for 30 days for moderation, then it is erased\n'
       '• Automatic suggestions: records are kept for 12 months\n'
       '• Referral anti-fraud fingerprints: 180 days\n'
-      '• Analytics data: aggregated and anonymised, kept indefinitely\n'
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Durée de rétention des outils d'analytique : À
+      // VALIDER (propriétaire), docs/data-inventory.md.
+      '• Community reports written by an account since deleted: 12 months after the account is deleted, then erased\n'
+      '• Aggregated, anonymised statistics: no time limit\n'
+      '• Firebase Analytics and PostHog events linked to a pseudonymous identifier, and PostHog session recordings: kept for the tool\'s retention period, then deleted\n'
       '• If you delete your account: personal data is erased within 30 days',
   'privacy_s7_body': '• Encrypted transport via HTTPS/TLS\n'
       '• Passwords hashed (bcrypt)\n'
@@ -761,8 +778,10 @@ const Map<String, String> appTranslationsEn = {
       '• This measurement is ON BY DEFAULT: it is part of the normal operation of the service and is used solely to improve it (see the Terms, "Audience measurement")\n'
       '• You can turn it off at any time, along with the recordings, from Profile → "Usage analytics": collection stops immediately, and your refusal is kept — no update ever turns it back on',
   'privacy_s10_body':
-      'This policy may be updated. We will notify you of any material change via an in-app notification.\n\n'
-          'By continuing to use the app after an update, you accept the new policy.',
+      // Chantier juridique 57, 19/10/2026 — à relire par le propriétaire
+      // avant soumission.
+      'This policy may be updated. Before a material change (for example a new processing of your data) applies, we inform you in the app, through a notification.\n\n'
+          'Processing that relies on your consent is never turned on by a mere update of this policy: you are asked for it in the app.',
   'terms_s10_body':
       'These Terms are governed by the laws of the United Arab Emirates and by the regulations of the Meydan Free Zone (Emirate of Dubai), where KPB Global L.L.C-FZ, the publisher of KPB Education, is established.\n\n'
           'In case of dispute, the parties will first seek an amicable resolution; failing agreement, the competent courts of Dubai shall settle it.\n\n'
@@ -4002,9 +4021,11 @@ const Map<String, String> appTranslationsEn = {
       'When you look for help, we show you the app feature that can help',
   'notif_cta_assist_bridge': 'See how',
   // Correctifs 57 (XC-06) — KPB news and offers.
-  'kpb_promotions_pref_title': 'KPB news and offers',
+  // Legal fixes 57 (App Store 4.5.4): promotional push is OPT-IN, off by
+  // default.
+  'kpb_promotions_pref_title': 'KPB news and offers by notification',
   'kpb_promotions_pref_subtitle':
-      'Announcements and offers from the KPB team (messages about your account and applications continue)',
+      'Off by default. Turn it on to receive announcements and offers from the KPB team by notification; you can turn it off at any time (messages about your account and applications continue)',
   'profile_promotions_email': 'KPB news and offers by email',
   'profile_promotions_email_desc':
       'Receive news and offers from KPB Education by email (unsubscribe anytime)',

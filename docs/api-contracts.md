@@ -24,6 +24,15 @@ Purpose:
   `forbidNonWhitelisted`).
 - **`disabledNotificationTypes`** accepte la clé **`kpb_promotions`** : coupe le push des
   campagnes de l'admin marquées `promotional` (voir « Admin notifications »).
+- **`promotionsPushOptIn`** (booléen, lu et écrit par `GET`/`PATCH /profiles/me` — chantier
+  juridique 57, App Store 4.5.4) : « Recevoir par notification les nouvelles et offres de KPB »,
+  **opt-in** distinct de `promotionsEmailOptIn`, **`false` par défaut pour tous, comptes existants
+  compris** (migration `20261027120000_promotions_push_opt_in`). Le serveur horodate
+  `promotionsPushConsentedAt` au seul passage `false → true` (jamais exposé). Un push
+  promotionnel exige `promotionsPushOptIn = true` **et** l'absence de `kpb_promotions`. Sa
+  **présence** dans la réponse dit à l'app que le serveur exige l'opt-in : l'app n'affiche
+  l'interrupteur et n'envoie le champ qu'alors (`forbidNonWhitelisted`). Une build qui ne le
+  connaît pas ne peut pas consentir, donc ne reçoit plus de push promotionnel.
 - **`DELETE /profiles/me/nationality`** (élève authentifié, **pas** derrière le drapeau
   `scholarshipMatch`) : « Effacer ma nationalité ». Dans une transaction : `nationalityCode` et
   `secondNationalityCode` à NULL, **suppression des runs « Mes 10 bourses »** de l'élève
@@ -1517,13 +1526,13 @@ créées avant la migration (colonne `NotificationCampaign.purpose`, défaut `'p
 | Finalité | Push | E-mail |
 |---|---|---|
 | `informational` | inchangé | inchangé |
-| `promotional` | jamais vers un compte qui a `kpb_promotions` dans `disabledNotificationTypes` | seulement si `promotionsEmailOptIn = true` ; mineur **déclaré** (date de naissance connue, < 18 ans) : il faut **en plus** `guardianConsentedAt` ; pied de désinscription + `List-Unsubscribe` ; sans secret de signature, l'e-mail ne part pas (livraison `failed`) |
+| `promotional` | seulement si `promotionsPushOptIn = true` (opt-in, chantier juridique 57) **et** jamais vers un compte qui a `kpb_promotions` dans `disabledNotificationTypes` ; mineur **déclaré** : il faut **en plus** `guardianConsentedAt` | seulement si `promotionsEmailOptIn = true` ; mineur **déclaré** (date de naissance connue, < 18 ans) : il faut **en plus** `guardianConsentedAt` ; pied de désinscription + `List-Unsubscribe` ; sans secret de signature, l'e-mail ne part pas (livraison `failed`) |
 
 Un canal fermé à un compte ne crée **aucune** livraison (rien n'est tenté). L'aperçu accepte
 aussi `channels` (défaut `["push"]`) et renvoie, en plus de `recipients` (taille de
 l'audience) : `purpose`, **`reachable`** (comptes qui recevront au moins un canal) et
-**`byChannel`** : `[{channel, eligible, blocked: {push_opted_out?, email_no_consent?,
-email_minor_without_guardian?}}]` — le nombre réel après filtres. La classification reste un
+**`byChannel`** : `[{channel, eligible, blocked: {push_no_consent?, push_opted_out?,
+push_minor_without_guardian?, email_no_consent?, email_minor_without_guardian?}}]` — le nombre réel après filtres. La classification reste un
 choix humain fait dans l'admin : le code garantit le filtre d'une campagne marquée
 promotionnelle et le défaut prudent, pas l'honnêteté du choix.
 

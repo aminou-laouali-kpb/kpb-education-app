@@ -911,7 +911,9 @@ passerelle (ni ligne du fil, ni push : la suggestion n'est pas écrite) ; indép
   — y compris les réponses des autres sous ces publications —, réponses, « utile », mentions,
   suivis, blocages (dans les deux sens), acceptations de charte, sanctions. Les signalements
   **visant** ses contenus ou son profil sont supprimés ; ceux qu'il a **rédigés** perdent leur
-  auteur (`reporterMemberId → NULL`) et restent dans la file. Les compteurs des publications
+  auteur (`reporterMemberId → NULL`) et restent dans la file **12 mois** après la suppression
+  (`reporterDeletedAt`, posé par la suppression ; purge quotidienne — chantier juridique 57 ; un
+  orphelin d'avant la colonne part 12 mois après sa création). Les compteurs des publications
   d'autrui touchées sont recalculés. Le journal de modération garde l'action (sans contenu) mais
   perd le lien vers le membre. *Choix motivé : un contenu de forum est souvent un récit personnel
   (dossier, pays, notes) d'un public jeune ; l'effacement total est la direction d'erreur sûre.

@@ -65,7 +65,7 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | **Identifiant d'installation** (build 57 / 2.3.1) | UUID v4 **aléatoire** créé par l'app au premier rattachement demandé (`lib/app/core/services/referral_attribution.dart`, `installId`) — jamais l'IMEI, jamais l'identifiant publicitaire | Appareil : `SharedPreferences` `kpb_relaunch_v1.install_id_v1` ; serveur : **HMAC seulement** (`ReferralAttributionSignal.clientDeviceHash`, §6) | Envoyé dans l'en-tête `X-KPB-Device-Id` de `POST /referrals/redeem` **et d'aucune autre requête** (`test/core/repositories/referral_api_test.dart`). Indépendant des drapeaux. Nouveau à chaque réinstallation (`android:allowBackup="false"`). Détail : §6 bis |
 | Code du parrain en attente (build 57) | Play Install Referrer (Android, drapeau `features.referralInstallReferrer`) ou code saisi à l'onboarding sans réseau | Appareil seulement : `SharedPreferences` `kpb_relaunch_v1.referral_pending_code_v1` (code + origine) | Ne part au serveur que quand l'élève appuie sur « Valider le code » ; effacé au rattachement réussi. Détail : §6 bis |
 | Dernière version / build de l'app, date de dernière requête | En-têtes `X-KPB-App-Version` / `X-KPB-App-Build` (build 54+) des requêtes authentifiées — `backend/src/modules/app-builds/app-build.interceptor.ts` | Postgres (`UserProfile.lastAppVersion`, `lastAppBuild`, `lastAppSeenAt`) | Au plus une écriture par 6 h ; lue seulement en agrégat (`GET /admin/app-builds`) ; incluse dans l'export, supprimée avec le compte |
-| Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés |
+| Analytique / replay / crash | Runtime | Firebase + PostHog + Crashlytics | Opt-out : Profil → « Analyse d’usage » — coupe bien **les trois** depuis le correctif 3 du 18/08 (avant, Crashlytics continuait quoi qu'on choisisse), état appliqué au démarrage, et un refus purge la file des rapports non envoyés. **Conservation** (chantier juridique 57) : les statistiques agrégées et anonymisées sans limite ; les événements Firebase Analytics et PostHog (PostHog identifié par l'id du compte, un UUID : `analytics_service.dart`, `identifyUser`) et les enregistrements de session PostHog pendant la durée de rétention de l'outil. **À VALIDER (propriétaire) : durée de rétention PostHog** (événements et enregistrements de session) **et Firebase Analytics** — elle n'est documentée ni configurée nulle part dans le dépôt ; la politique dit « pendant la durée de rétention de l'outil, puis supprimés », sans chiffre |
 
 ## 3. Permissions (ce que l’OS affiche)
 
@@ -171,13 +171,16 @@ Lu dans `backend/prisma/schema.prisma`, `backend/src/modules/scholarship-match/`
 | Finalité d'une campagne : `informational` / `promotional`, **défaut `promotional`** (y compris les campagnes antérieures) | `NotificationCampaign.purpose` (migration `20261026120000_campaign_purpose_promotions_consent`) ; choisie dans l'admin | `campaign-purpose.ts`, `admin/app/notifications/page.tsx` |
 | Consentement « Nouvelles et offres de KPB » par e-mail : **non par défaut**, distinct de la newsletter bourses | `UserProfile.promotionsEmailOptIn` + preuve horodatée `promotionsEmailConsentedAt` (posée au seul passage à oui) ; interrupteur Profil → Préférences (app 2.3.1, visible si le serveur annonce le champ) | `profiles.service.ts`, `profiles-fix57.spec.ts`, `campaign-consent.postgres.spec.ts` |
 | E-mail promotionnel | Part seulement si consentement ; mineur déclaré (< 18 ans, date connue) : accord du représentant légal (`guardianConsentedAt`) en plus ; pied + `List-Unsubscribe` avec lien signé `GET/POST /public/promotions/unsubscribe` (aucune donnée du compte affichée) ; sans secret, rien ne part | `campaign-executor.service.ts`, `promotions-unsubscribe*.ts` |
-| Push promotionnel | **Opt-out** : jamais vers un compte qui a `kpb_promotions` dans `disabledNotificationTypes` (Notifications → « Nouvelles et offres de KPB ») | `campaign-executor.service.spec.ts` |
+| Consentement « Nouvelles et offres de KPB » par notification (chantier juridique 57, App Store 4.5.4) : **non par défaut pour tous, comptes existants compris**, distinct de l'e-mail | `UserProfile.promotionsPushOptIn` + preuve horodatée `promotionsPushConsentedAt` (posée au seul passage à oui ; migration `20261027120000_promotions_push_opt_in`) ; interrupteur Notifications → « Nouvelles et offres de KPB par notification » (visible si le serveur annonce le champ ; l'activer retire aussi la coupure `kpb_promotions`) | `profiles-promotions.spec.ts`, `campaign-consent.postgres.spec.ts`, `notification_center_test.dart` |
+| Push promotionnel | **Opt-in** : seulement si `promotionsPushOptIn = true` **et** `kpb_promotions` absent de `disabledNotificationTypes` ; mineur déclaré : accord du représentant légal (`guardianConsentedAt`) en plus. Une build sans le champ ne peut pas consentir : plus de push promotionnel | `campaign-purpose.spec.ts`, `campaign-executor.service.spec.ts`, `campaign-consent.postgres.spec.ts` |
 | Campagne `informational` | Aucun filtre de plus qu'avant | idem |
 | Ce qui part chez Resend | Adresse e-mail + contenu de la campagne + lien de désinscription (identifiant de compte et jeton HMAC dans l'URL) | §1, ligne Resend |
 | Aperçu de l'admin | Nombre réel par canal après filtres (`byChannel`, `reachable`) | `notifications.service.ts` |
 
-Non garanti par le code : la **classification** (choix humain) ; le push promotionnel n'est pas
-un opt-in explicite. Le consentement et sa date figurent dans `GET /profiles/me/export` (la
+Non garanti par le code : la **classification** (choix humain). Le push promotionnel est un opt-in
+explicite depuis le chantier juridique 57 (deux interrupteurs distincts, e-mail et notification,
+plutôt qu'un consentement unique : réutiliser le consentement e-mail pour le push aurait fait
+passer pour consentants des comptes qui n'avaient accepté que l'e-mail). Le consentement et sa date figurent dans `GET /profiles/me/export` (la
 ligne `UserProfile` y est exportée entière, hors clé de stockage de la photo).
 
 ## 6. Compétition ambassadeurs (relevé du 17/10/2026)
@@ -255,7 +258,7 @@ qu'il l'est, aucune de ces données ne naît.
 | Fiche membre (identifiant public, version et date d'acceptation de la charte) | Premier appel `/community/*` ; `POST /community/charter/accept` | `CommunityMember`, historique `CommunityCharterAcceptance` | Le membre ; l'équipe | Avec le compte (cascade) |
 | Publications et réponses (type, titre, texte libre, mentions d'entités du catalogue, hashtags, statut de modération, drapeaux du filtre) | Écran communauté | `CommunityPost`, `CommunityReply`, `CommunityMention`, `CommunityPostHashtag` | **Public pour les élèves connectés** quand visibles (nom affiché « Prénom I. », pays de résidence déclaré, badges) ; l'auteur seul quand masquées ; l'équipe toujours | Avec le compte (cascade) ; un contenu supprimé par l'auteur ou l'équipe est gardé **30 jours** pour la modération puis purgé (`CommunityPurgeCronService`) |
 | « Utile », suivis de discussion, blocages | Boutons | `CommunityReaction`, `CommunityFollow`, `CommunityBlock` | Compteurs publics (« utile ») ; le reste : le membre seul | Avec le compte (cascade, blocages dans les deux sens) |
-| Signalements (motif, détail libre ≤ 500 car.) | `POST /community/reports` | `CommunityReport` | L'équipe ; **jamais** le membre signalé | Ceux **visant** le compte supprimé partent ; ceux **rédigés** restent sans auteur (`SET NULL`) |
+| Signalements (motif, détail libre ≤ 500 car.) | `POST /community/reports` | `CommunityReport` | L'équipe ; **jamais** le membre signalé | Ceux **visant** le compte supprimé partent ; ceux **rédigés** restent sans auteur (`SET NULL`), datés (`reporterDeletedAt`, migration `20261027130000_community_report_orphan_retention`) et **purgés 12 mois après la suppression du compte** (`CommunityPurgeCronService`, quotidienne ; un orphelin d'avant la colonne part 12 mois après sa création) |
 | Sanctions (motif, durée, admin) | Équipe | `CommunitySanction` | Le membre (motif dans sa notification et `GET /community/me`) ; l'équipe | Avec le compte (cascade) |
 | Journal de modération | Chaque décision de l'équipe | `ForumModerationAction` (+ `AdminAuditEvent`, `purposeCode = community_moderation`) | L'équipe | Gardé ; le lien vers le membre (`memberId`) est mis à NULL à la suppression du compte |
 | Notifications `community_*` | Réponses, réponse vérifiée, modération | `UserNotification` + push (chemin commun) | Le destinataire | Avec le compte (cascade) ; désinscription : clé `community` de `disabledNotificationTypes` (push seulement) |
@@ -276,9 +279,12 @@ qu'il l'est, aucune de ces données ne naît.
   `conditions.html` et les textes in-app (politique et CGU), à relire par le propriétaire avant
   l'ouverture ; la charte en quatre règles du serveur y est reprise sans changement (aucune
   contradiction relevée avec la politique).
-- À VALIDER (propriétaire) : durée de conservation des signalements rédigés après la
-  suppression du compte (aujourd'hui sans limite, auteur effacé) ; base légale (exécution du
-  service) et âge minimal pour publier (16 ans, celui du compte).
+- Durée de conservation des signalements rédigés après la suppression du compte : **12 mois,
+  décidée le 19/10/2026** (chantier juridique 57) — purge quotidienne, testée
+  (`community-purge-cron.service.spec.ts`, `community.postgres.spec.ts`) ; politique et page de
+  suppression mises à jour (à relire par le propriétaire).
+- À VALIDER (propriétaire) : base légale (exécution du service) et âge minimal pour publier
+  (16 ans, celui du compte).
 
 ### 7 bis. Bot « Vérif » (C3, relevé du 17/10/2026)
 
