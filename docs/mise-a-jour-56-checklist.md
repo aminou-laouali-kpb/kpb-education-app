@@ -1,5 +1,13 @@
 # Mise à jour 2.3.0 (56) — la checklist du 05/10/2026
 
+> **⚠️ REMPLACÉE par la 57 le 18/10/2026 : suivre `docs/mise-a-jour-57-checklist.md`.**
+> La 2.3.0 est en vente (App Store depuis le 07/10/2026, et Google Play : constat du 16/10/2026) ;
+> la build suivante est la `2.3.1 (57)` (`pubspec.yaml`, préflights et registre posés le 18/10/2026).
+> À VALIDER (propriétaire) : que la build en vente est bien la 56, sa date de téléversement et le
+> SHA archivé (`docs/release-ledger.md`, ligne `56`). Le contenu ci-dessous est conservé tel
+> qu'écrit ; pour tout numéro de version ou de build à venir, lire 57. Les papiers de la 57 :
+> `docs/release-57-store-pack.md`, `docs/device-qa-build57.md`.
+
 > **Ce que ce fichier est.** L'ordre exact des opérations pour archiver, vérifier et
 > soumettre la 56, avec les commandes. Il **remplace** `docs/mise-a-jour-55-checklist.md` :
 > décision du propriétaire du 05/10/2026 (« 56 »), on n'envoie **que la 56**. La 55

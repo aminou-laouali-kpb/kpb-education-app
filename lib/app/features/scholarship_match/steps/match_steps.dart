@@ -181,7 +181,10 @@ class _NationalityStep extends StatelessWidget {
         children: [
           MatchQuestionHeader(
             title: 'scholarship_match_q_nationality'.tr,
-            help: 'scholarship_match_q_nationality_help'.tr,
+            // Facultative, et utilisée seulement avec l'accord donné au
+            // récapitulatif (case « J'accepte… »).
+            help: '${'scholarship_match_q_nationality_help'.tr} '
+                '${'scholarship_match_nationality_optional'.tr}',
           ),
           if (suggested != null && prefill != null)
             MatchChoice(

@@ -5,7 +5,11 @@ l’inscription. Chaque ligne cite le fichier qui **prouve** le flux. Les docs
 existants ne font pas autorité : si ce fichier et le code divergent, c’est le
 code qui gagne, et ce fichier doit être mis à jour.
 
-Dernière lecture du dépôt : 2026-10-17 (parrainage côté app de la build 57 / 2.3.1 :
+Dernière lecture du dépôt : 2026-10-18 (finalisation de la build 57 : décisions du
+propriétaire du 18/10/2026 reportées — conservations validées, nationalité sur consentement
+explicite avec une case au récapitulatif du test, notifications in-app ajoutées à l'export,
+politique et CGU rédigées pour la communauté, les bots, le parrainage et la compétition, à
+relire par le propriétaire ; §5 à §7 ter). Lecture précédente : 2026-10-17 (parrainage côté app de la build 57 / 2.3.1 :
 Play Install Referrer, identifiant d'installation, étape « code de ton parrain », écran
 « Compétition ambassadeurs », derrière trois drapeaux fermés ; §6 bis). Lecture précédente :
 2026-10-17 (communauté C1 + C2, serveur, derrière un drapeau fermé ; §7). Lecture précédente : 2026-10-17 (compétition ambassadeurs, serveur + admin + page
@@ -44,11 +48,11 @@ Paiements (hors liste historique des 8, mais présents dans le code) :
 | Nom, e-mail, téléphone, WhatsApp | Onboarding | Postgres ; e-mail aussi Supabase Auth | Le nom n’est **pas** envoyé à Groq — coach et outils depuis le lot 11, **orientation seulement depuis le 18/08** (elle envoyait tout le profil). Les outils IA restent masqués jusqu’au déploiement couplé 49 |
 | Date de naissance | Onboarding (étudiants) | Postgres + snapshot local | Plancher 16 ans (lot 9) ; tuteur si &lt; 18 |
 | Nom / contact / consentement du tuteur | Onboarding (mineurs déclarés) | Postgres | Contact tuteur non persisté sur l’appareil |
-| Réponses du test « Mes 10 bourses » (nationalité(s), résidence, date de naissance, accord du tuteur pour un mineur, diplôme, niveau visé, domaines, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience) | Assistant du test (drapeau `features.scholarshipMatch`, fermé tant que la collecte de la nationalité n'est pas validée) | Postgres, colonnes de `UserProfile` (`nationalityCode`, `secondNationalityCode`, `highestDiploma`, `scholarshipTargetLevel`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests`, `workExperienceBand`, `scholarshipProfileConfirmedAt`, plus `birthDate` et les champs tuteur existants), écrites par `POST /scholarships/match/runs` seulement, jamais par le PATCH du profil (`backend/src/modules/scholarship-match/match-answers.ts`) ; sur l'appareil : brouillon Hive `kpb.scholarship_match.v1` (sans le nom ni le contact du tuteur), par compte, effacé à la fin du test (`scholarship_match_flow_screen.dart`, `clearDraft`) et à la déconnexion, et le dernier run (sans les réponses) | Jamais dans l'analytique ni dans le push (liste fermée des propriétés `scholarship_match_*`). **Écritures de compatibilité** : l'anglais et la moyenne recopient `languageLevel` / `gradeRange`, la résidence `countryOfResidence` (`legacyCompatibilityWrites`) — ces champs anciens suivent ensuite leurs propres flux (la résidence figure dans l'e-mail commercial d'un dossier). Transmission, conservation, export : §5 |
+| Réponses du test « Mes 10 bourses » (nationalité(s), résidence, date de naissance, accord du tuteur pour un mineur, diplôme, niveau visé, domaines, tranche de moyenne, niveaux de langue, scores de test, tranche d'expérience) | Assistant du test (drapeau `features.scholarshipMatch`, fermé ; son ouverture reste une action d'exploitation). La nationalité n'est envoyée qu'après la case de consentement explicite du récapitulatif (`match-nationality-consent`, ajoutée le 18/10/2026 ; jamais envoyée au serveur ni gardée dans le brouillon) | Postgres, colonnes de `UserProfile` (`nationalityCode`, `secondNationalityCode`, `highestDiploma`, `scholarshipTargetLevel`, `gradeBandOn20`, `englishLevel`, `frenchLevel`, `languageTests`, `workExperienceBand`, `scholarshipProfileConfirmedAt`, plus `birthDate` et les champs tuteur existants), écrites par `POST /scholarships/match/runs` seulement, jamais par le PATCH du profil (`backend/src/modules/scholarship-match/match-answers.ts`) ; sur l'appareil : brouillon Hive `kpb.scholarship_match.v1` (sans le nom ni le contact du tuteur), par compte, effacé à la fin du test (`scholarship_match_flow_screen.dart`, `clearDraft`) et à la déconnexion, et le dernier run (sans les réponses) | Jamais dans l'analytique ni dans le push (liste fermée des propriétés `scholarship_match_*`). **Écritures de compatibilité** : l'anglais et la moyenne recopient `languageLevel` / `gradeRange`, la résidence `countryOfResidence` (`legacyCompatibilityWrites`) — ces champs anciens suivent ensuite leurs propres flux (la résidence figure dans l'e-mail commercial d'un dossier). Transmission, conservation, export : §5 |
 | Passages du moteur (`ScholarshipMatchRun`) | Chaque `POST /scholarships/match/runs` | Postgres ; **5 derniers par élève** (`prune`), cascade à la suppression du compte | `inputsSummary` **minimisé** : niveau visé, nombre de domaines, booléens, jamais la nationalité, la date de naissance ni la moyenne (`match-presenter.ts`, `RunInputsSummary`) ; `items` = bourses retenues et raisons rendues ; empreinte SHA-256 du profil normalisé (`profileHash`) |
 | Opt-in « nouvelles bourses compatibles » | Résultats du test | Postgres (`UserProfile.scholarshipMatchAlertsOptInAt`) | Horodatage seul. **Aucun envoi n'est implémenté à ce jour** (aucune tâche planifiée ne lit la colonne, relevé du 16/10/2026) |
 | Bourses suivies (« Suivre ») et alertes d'ouverture | Bouton « Suivre », cloche, « Mes suivis » (chantiers C et G) | Postgres : favori `SavedItem` + `ScholarshipAlertSubscription` (`pushEnabled`, `inAppEnabled`, `mutedAt`, `impliedFollow`), cascade à la suppression du compte ; sur l'appareil : cache Hive `kpb.followed.cache` par compte, vidé à la déconnexion (`followed_scholarships_store.dart`) | Interrupteurs serveur ouverts par défaut (`features.follow*`, `followedScholarships`…). Désinscription globale par la clé `followed_scholarship_updates` de `disabledNotificationTypes` |
-| Notifications in-app et file d'envoi | Annonce d'ouverture, rappels de date limite (`backend/src/modules/scholarships-index/opening/`) | Postgres `UserNotification` (titre, corps FR/EN, route, état d'envoi `push*`), cascade à la suppression du compte ; aucune purge par âge | **Absente de l'export** `GET /profiles/me/export` (relevé du 16/10/2026, §5) |
+| Notifications in-app et file d'envoi | Annonce d'ouverture, rappels de date limite (`backend/src/modules/scholarships-index/opening/`) | Postgres `UserNotification` (titre, corps FR/EN, route, état d'envoi `push*`), cascade à la suppression du compte ; aucune purge par âge | **Incluse dans l'export** `GET /profiles/me/export` depuis le 18/10/2026 (clé `notifications`, sans les détails d'exploitation de la boîte d'envoi ; §5) |
 | Ouverture d'une notification | Tap sur un push (`POST /me/push-opens`, `backend/src/modules/notifications/push-opens.controller.ts`) | Postgres `NotificationDelivery.openedAt` ; un rappel tapé passe en lu (`UserNotification.readAt`) | Mesure de l'utilité des campagnes (`opened` / `openRate` dans l'admin) |
 | Bourses gardées pour le hors-ligne | Liste et fiches consultées (chantier I) | Appareil seulement : Hive `kpb.scholarships.cache` (première page par jeu de filtres, 60 fiches au plus) | Données publiques du catalogue ; vidé à la déconnexion et à la perte de session, jamais relu après un 401 / 403 |
 | Photo de profil | Profil | Stockage backend, scan antivirus, pas d’URL publique | Caméra / photothèque |
@@ -124,30 +128,33 @@ Lu dans `backend/prisma/schema.prisma`, `backend/src/modules/scholarship-match/`
 | Partent-elles dans l'**e-mail commercial** d'un dossier ? | **Non** pour la nationalité, la date de naissance, les notes et les langues. L'e-mail porte nom, e-mail, téléphone, WhatsApp, pays de résidence, langue, niveaux actuel et visé (`targetLevel`, distinct de `scholarshipTargetLevel`), contact du tuteur | `case-lead-mail.service.ts` (`CaseLeadUser`, `leadBody`) |
 | L'**admin** les voit-il ? | Pas par une route : aucune route admin ne sert `nationalityCode` ni les autres réponses. « Tester un profil » (`POST /admin/scholarships/match-preview`) prend un profil **saisi par l'équipe**, rien n'est lu ni écrit sur un élève | `admin-catalog/scholarship-eligibility-admin.service.ts` |
 | Analytique, push, IA ? | Non : propriétés `scholarship_match_*` en liste fermée ; aucune réponse dans une charge de push ; aucune dans une invite IA | `docs/analytics-event-contract.md` ; `scholarship-match.service.ts` |
-| **Export** (`GET /profiles/me/export`) | Les colonnes du profil (réponses comprises, sans la clé de stockage de la photo), les `ScholarshipMatchRun`, les `ScholarshipAlertSubscription`, les favoris `SavedItem`. **Écart : `UserNotification` et `NotificationDelivery` n'y figurent pas** — à ajouter dans un chantier serveur ; la politique ne promet que les réponses, les résultats et les alertes | `profiles.service.ts` (`exportMe`) |
+| **Export** (`GET /profiles/me/export`) | Les colonnes du profil (réponses comprises, sans la clé de stockage de la photo), les `ScholarshipMatchRun`, les `ScholarshipAlertSubscription`, les favoris `SavedItem` et, depuis le 18/10/2026, les notifications in-app `UserNotification` (clé `notifications` : type, bourse, cycle, titres et textes FR/EN, route, données, dates de création, de lecture et d'envoi, état d'envoi ; sans `dedupeKey`, verrous, identifiant du worker, lot ni dernière erreur). **Écart restant : `NotificationDelivery`** (livraisons des campagnes admin, `recipientId`, ouverture) n'y figure pas. La politique décrit l'export (section 8) | `profiles.service.ts` (`exportMe`) ; `profiles.postgres.spec.ts` |
 | **Suppression du compte** | Cascade sur `ScholarshipMatchRun`, `ScholarshipAlertSubscription`, `UserNotification` ; les colonnes du profil partent avec la ligne | `schema.prisma` (`onDelete: Cascade`) |
-| **Durée de conservation** | Réponses : tant que le compte est actif (modifiables en refaisant le test ; aucune action « effacer mes réponses » dédiée) ; runs : 5 derniers ; notifications et suivis : tant que le compte est actif, aucune purge par âge ; brouillon local : fin du test ou déconnexion ; caches hors ligne : déconnexion | ci-dessus |
+| **Durée de conservation** | Réponses : tant que le compte est actif (modifiables en refaisant le test). Nationalité : conservée tant que le compte existe, effaçable à tout moment (décision du propriétaire, 18/10/2026) — **aucune action « effacer » dans l'app** : le retrait passe par une demande à privacy@kpbeducation.com (texte de la politique et de la case), et la suppression du compte l'efface ; runs : 5 derniers ; notifications et suivis : tant que le compte est actif, aucune purge par âge ; brouillon local : fin du test ou déconnexion ; caches hors ligne : déconnexion | ci-dessus |
 | **Mineurs de 16 et 17 ans** | Le test exige l'accord du représentant légal (`readiness` : `guardianConsent` requis sous 18 ans) ; plancher de 16 ans (`MINIMUM_ACCOUNT_AGE`, `parseBirthDate` refuse en dessous) ; le niveau « lycée » n'est proposé qu'en dessous d'un âge plafond (`SECONDARY_MAX_AGE`) | `match-inputs.ts`, `match-answers.ts`, `profiles/profile-age.policy.ts` |
 
-**Ce que ce relevé ne tranche pas** (le drapeau `features.scholarshipMatch` reste
-**fermé** tant que ces points ne sont pas validés) :
+**Décisions du propriétaire du 18/10/2026** (le drapeau `features.scholarshipMatch` reste
+**fermé** : son ouverture est une action d'exploitation, défaut inchangé) :
 
-- À VALIDER (propriétaire) : la **collecte de la nationalité** elle-même — validation
-  juridique attendue avant toute ouverture du drapeau (registre, entrée du 15/10/2026
-  « chantier D », point 5). La nationalité n'est pas une catégorie « sensible » au sens
-  des consoles (Apple : *Sensitive Info* = origine raciale ou ethnique, opinions,
-  religion, santé…), mais son traitement pour exclure des bourses mérite l'avis du
-  juridique.
-- À VALIDER (propriétaire) : la **base légale** de ce traitement (consentement explicite
-  au test, ou exécution du service demandé) ; la politique ne la précise pas pour le
-  test et dit « Rien ne vous oblige à répondre ».
-- À VALIDER (propriétaire) : une **durée de conservation propre** à la nationalité et aux
-  notes (aujourd'hui : celle du profil) et une action « effacer mes réponses au test ».
+- **Nationalité — base légale : consentement explicite**, saisie facultative ; conservée tant
+  que le compte existe, effaçable à tout moment, supprimée avec le compte. L'app recueille le
+  consentement par une case au récapitulatif du test (`scholarship_match_nationality_consent`,
+  test `scholarship_match_flow_controller_test.dart` et `…_flow_screen_test.dart`) ; sans elle,
+  rien ne part. La politique (in-app et web, section « Votre nationalité », rédigée le
+  18/10/2026, à relire) le dit.
+- Écart corrigé côté serveur : les notifications in-app sont dans l'export (ligne « Export »).
+
+**Ce que ce relevé ne tranche toujours pas** :
+
+- À VALIDER (propriétaire) : le classement de la nationalité hors des catégories « sensibles »
+  des consoles (Apple : *Sensitive Info* = origine raciale ou ethnique, opinions, religion,
+  santé…), avec le juridique (`docs/release-57-store-pack.md` §4).
 - À VALIDER (propriétaire) : le texte de la politique sur les mineurs de 16 et 17 ans
   (« accord déclaré d'un représentant légal ») face au droit des pays visés (Sénégal,
   Côte d'Ivoire, Niger…).
-- Écart à corriger côté serveur (pas un point juridique) : notifications absentes de
-  l'export (ligne « Export » ci-dessus).
+- Non codé (constat) : une action « effacer ma nationalité / mes réponses au test » dans l'app
+  — le retrait du consentement passe aujourd'hui par une demande écrite, traitée à la main ;
+  et `NotificationDelivery` absente de l'export.
 
 ## 6. Compétition ambassadeurs (relevé du 17/10/2026)
 
@@ -163,7 +170,7 @@ push) ou de la saisie de l'équipe.
 | Activation ambassadeur (`approvedAt`, admin) et espace « cash » (`cashProgramEnabled`) | Action de l'équipe | `Ambassador` | Équipe | Avec la ligne `Ambassador` |
 | Statut de chaque filleul dans une campagne (rattachement, création du compte, complétion du profil, qualification, signaux, décision et motif de l'équipe) | Calcul du serveur (`ReferralCampaignService.recompute`) ; décision de l'équipe | `ReferralCampaignReferral` (référence plate au filleul) | Équipe (nom et e-mail du filleul affichés dans l'admin et l'export CSV) ; **jamais public** ; l'ambassadeur voit dans l'app le seul nombre d'amis inscrits (écran Parrainage, existant) | Tant que la campagne existe ; purgé nommément à la suppression du compte du filleul ; cascade avec le participant |
 | Instant de complétion du profil (`UserProfile.profileCompletedAt`) | Serveur, au `PATCH /profiles/me` qui complète le profil | `UserProfile` | Serveur (date de qualification) | Avec le profil ; incluse dans l'export (colonne du profil) |
-| **Empreintes anti-fraude** : HMAC de l'adresse IP, de sa plage (/24, /48), des jetons push du filleul, de l'identifiant d'installation (build 57+, en-tête `X-KPB-Device-Id`), horodatage, type de code | `POST /referrals/redeem` | `ReferralAttributionSignal` — **aucune IP ni aucun jeton en clair** (clé `KPB_REFERRAL_SIGNAL_SECRET`, à défaut `KPB_JWT_SECRET`) | Serveur seulement (le calcul des signaux) ; l'équipe ne voit que le signal (« même téléphone », « rafale… ») | **180 jours** (`REFERRAL_SIGNAL_RETENTION_DAYS`, purge quotidienne) — durée **À VALIDER (propriétaire)** ; purgées à la suppression du compte (filleul ou parrain) |
+| **Empreintes anti-fraude** : HMAC de l'adresse IP, de sa plage (/24, /48), des jetons push du filleul, de l'identifiant d'installation (build 57+, en-tête `X-KPB-Device-Id`), horodatage, type de code | `POST /referrals/redeem` | `ReferralAttributionSignal` — **aucune IP ni aucun jeton en clair** (clé `KPB_REFERRAL_SIGNAL_SECRET`, à défaut `KPB_JWT_SECRET`) | Serveur seulement (le calcul des signaux) ; l'équipe ne voit que le signal (« même téléphone », « rafale… ») | **180 jours** (`REFERRAL_SIGNAL_RETENTION_DAYS`, purge quotidienne) — durée **validée par le propriétaire le 18/10/2026** ; purgées à la suppression du compte (filleul ou parrain) |
 | Ligne de l'espace ambassadeur (`AmbassadorReferral.refereeName` = « Prénom I. » du filleul) | `POST /referrals/redeem` quand le parrain est ambassadeur | `AmbassadorReferral` | L'ambassadeur ayant l'espace « cash » (aucun pour la compétition) | Purgée à la suppression du compte du filleul (existant) |
 | Prix et versements (rang, nom public figé, montant, bénéficiaire ambassadeur/parent, moyen, référence Wave, date, admin) | Validation du podium et saisie de l'équipe | `ReferralCampaignPrizeAward` | Équipe | **Gardé après suppression du compte** (trace comptable, `participantId` → NULL, nom public figé) — À VALIDER (propriétaire) : durée légale de conservation comptable |
 | Journal des actions de l'équipe | Chaque écriture admin | `AdminAuditEvent` (`purposeCode = referral_campaign`, motif dans `reasonCode`) | Équipe | Comme le reste de l'audit (aucune purge) |
@@ -175,9 +182,12 @@ push) ou de la saisie de l'équipe.
   nommée) ; seul le prix versé reste, sans lien vers le compte.
 - **Page publique** : statique, sans traceur ; elle appelle l'API sans cookie (CSP
   `connect-src 'self' https://api.kpbeducation.cloud`).
-- À VALIDER (propriétaire) : mention de la compétition (nom public, autorisation parentale,
-  empreintes anti-fraude) dans `confidentialite.html` et la politique in-app ; base légale du
-  traitement anti-fraude (intérêt légitime) ; durées marquées ci-dessus.
+- Mention de la compétition (nom public, autorisation parentale, empreintes anti-fraude,
+  organisateur) **rédigée le 18/10/2026** dans `confidentialite.html` et la politique in-app
+  (section « Parrainage et compétition des ambassadeurs »), à relire par le propriétaire.
+- À VALIDER (propriétaire) : base légale du traitement anti-fraude (intérêt légitime — la
+  politique dit la finalité, pas la base) ; lieu et durée de conservation du formulaire
+  d'autorisation parentale signé ; durée légale de conservation comptable des prix versés.
 
 ## 6 bis. Parrainage côté app — build 57 / 2.3.1 (relevé du 17/10/2026)
 
@@ -203,9 +213,10 @@ d'installation, lui, accompagne tout `POST /referrals/redeem`, drapeaux ou non.
   compte, §6).
 - **Data safety / App Privacy** : `docs/release-57-store-pack.md` §4 (lignes « identifiant
   d'installation » et « SDK Install Referrer »).
-- À VALIDER (propriétaire) : mention de l'identifiant d'installation et de la lecture du lien
-  d'invitation (Install Referrer) dans `confidentialite.html` et la politique in-app, avec la
-  mention de la compétition déjà en attente (§6) — **avant la soumission**, l'identifiant partant
+- Mention de l'identifiant d'installation (UUID aléatoire, prévention de la fraude) et de la
+  lecture du lien d'invitation (Install Referrer : préremplissage, rien de transmis sans
+  confirmation) **rédigée le 18/10/2026** dans `confidentialite.html` et la politique in-app —
+  à relire par le propriétaire **avant l'archive** (texte in-app compilé), l'identifiant partant
   avec tout rattachement par code dès la 2.3.1.
 
 ## 7. Communauté d'entraide C1 + C2 (relevé du 17/10/2026)
@@ -236,15 +247,22 @@ qu'il l'est, aucune de ces données ne naît.
   public minimal ; filtre anti-coordonnées avant publication.
 - **Aucun nouveau destinataire tiers** : rien ne part vers un service externe (le filtre est local ;
   pas d'IA dans C1 + C2).
-- À VALIDER (propriétaire) : durée de conservation des contenus supprimés (30 jours) et des
-  signalements rédigés après suppression du compte ; mention de la communauté dans
-  `confidentialite.html`, `conditions.html` et la politique in-app avant ouverture ; base légale
-  (exécution du service) et âge minimal pour publier (16 ans, celui du compte).
+- Durée de conservation des contenus supprimés : **30 jours, validée par le propriétaire le
+  18/10/2026**. Mention de la communauté **rédigée le 18/10/2026** dans `confidentialite.html`,
+  `conditions.html` et les textes in-app (politique et CGU), à relire par le propriétaire avant
+  l'ouverture ; la charte en quatre règles du serveur y est reprise sans changement (aucune
+  contradiction relevée avec la politique).
+- À VALIDER (propriétaire) : durée de conservation des signalements rédigés après la
+  suppression du compte (aujourd'hui sans limite, auteur effacé) ; base légale (exécution du
+  service) et âge minimal pour publier (16 ans, celui du compte).
 
 ### 7 bis. Bot « Vérif » (C3, relevé du 17/10/2026)
 
 Migration `20261024120000_community_verif_bot`, `backend/src/modules/community/community-verif-bot*.ts`,
-runbook `docs/runbook-bot-verif.md`. Réglage `KPB_COMMUNITY_VERIF_BOT_MODE` (défaut `review`).
+runbook `docs/runbook-bot-verif.md`. Réglage `KPB_COMMUNITY_VERIF_BOT_MODE` (défaut `review` ;
+passage en `auto` possible après 50 réponses validées sans correction, décision du propriétaire du
+18/10/2026). Mention dans la politique (« Réponses et suggestions automatiques ») rédigée le
+18/10/2026, à relire.
 
 | Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
 |---|---|---|---|---|
@@ -270,7 +288,7 @@ rien n'est envoyé) et `KPB_ASSIST_BRIDGE_COACH` (défaut `false`).
 
 | Donnée | Où elle naît | Où elle vit | Qui la voit | Conservation |
 |---|---|---|---|---|
-| Événement passerelle : besoin repéré (`needId`), règle et version du catalogue, **type et id** de la source (publication, réponse, message au coach), statut et motif, dates d'envoi et de clic (`opened_feature`, `opened_whatsapp`, `dismissed`) — **aucun texte** | Détection à l'écriture d'un texte de l'élève (publication / réponse visible ; message au coach si la source est ouverte) ; clics de la feuille de l'app (`POST /me/assist-bridge/events/:id`) | `AssistBridgeEvent` (un au plus par texte) | L'équipe (rôle R), **sans identité d'élève** ; un extrait de 120 caractères seulement pour un contenu **public** de la communauté, relu à la volée ; rien pour le coach | **12 mois** puis purge quotidienne (À VALIDER) ; supprimé avec le compte (cascade) |
+| Événement passerelle : besoin repéré (`needId`), règle et version du catalogue, **type et id** de la source (publication, réponse, message au coach), statut et motif, dates d'envoi et de clic (`opened_feature`, `opened_whatsapp`, `dismissed`) — **aucun texte** | Détection à l'écriture d'un texte de l'élève (publication / réponse visible ; message au coach si la source est ouverte) ; clics de la feuille de l'app (`POST /me/assist-bridge/events/:id`) | `AssistBridgeEvent` (un au plus par texte) | L'équipe (rôle R), **sans identité d'élève** ; un extrait de 120 caractères seulement pour un contenu **public** de la communauté, relu à la volée ; rien pour le coach | **12 mois** puis purge quotidienne (validés par le propriétaire le 18/10/2026) ; supprimé avec le compte (cascade) |
 | Notification `assist_bridge` (titre, texte, route, besoin, id de l'événement) | Tâche de la minute, mode `on` | `UserNotification` + push (chemin commun) | L'élève seul | Avec le compte (cascade) ; désinscription : clé `assist_bridge` (coupe tout, pas même la ligne du fil) |
 
 - **Source coach — donnée privée, FERMÉE par défaut.** Ouverte, le texte du message ne sert qu'à
@@ -282,6 +300,11 @@ rien n'est envoyé) et `KPB_ASSIST_BRIDGE_COACH` (défaut `false`).
   par l'app vers la ligne KPB de sa configuration ; le serveur n'envoie aucun numéro.
 - **Export RGPD** (`GET /profiles/me/export`) : clé `assistBridgeEvents` (sans `userId`).
 - **Mineurs** : rien de public ; la suggestion est privée et ne cite pas le texte de l'élève.
-- À VALIDER (propriétaire) : durée de conservation (12 mois), ouverture de la source coach et
-  mention dans `confidentialite.html` / la politique in-app, textes des six besoins, seuils
-  (72 h, 30 jours, 14 jours), ligne WhatsApp affichée.
+- **Validés par le propriétaire le 18/10/2026** : conservation 12 mois ; textes FR/EN des
+  besoins ; seuils (72 h, 30 jours, 14 jours, 48 h, 4 mots) ; ligne WhatsApp `+33768674292`
+  comme ligne d'assistance ; `shadow` au moins 2 semaines, passage à `on` sous 10 % de faux
+  positifs. Mention dans `confidentialite.html` et la politique in-app **rédigée le
+  18/10/2026** (analyse automatique des publications, aucun texte stocké, 12 mois, réglage
+  « Suggestions de l'équipe KPB »), à relire par le propriétaire.
+- Source coach : **reste FERMÉE** ; la politique ne la mentionne pas (décision du 18/10/2026).
+  Son ouverture demanderait d'abord une mise à jour de la politique — À VALIDER (propriétaire).

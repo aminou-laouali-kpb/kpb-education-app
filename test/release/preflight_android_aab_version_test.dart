@@ -13,7 +13,7 @@
 // Java remplacés par des bouchons : `jarsigner` répond « 0 », `keytool` rend un
 // certificat auto-signé généré ici et l'empreinte attendue, `java -jar bundletool`
 // imprime le manifeste de la fabrique. Le numéro de version du manifeste est
-// volontairement DIFFÉRENT de celui du script (la 55, la 54, la 57) : il doit être
+// volontairement DIFFÉRENT de celui du script (les builds voisines) : il doit être
 // refusé, avec le message qui nomme le numéro attendu. Une contre-épreuve avec le
 // bon numéro va jusqu'au bout : sans elle, un refus pour une autre raison (un
 // bouchon défaillant) passerait pour la preuve.
@@ -42,14 +42,16 @@ class _Run {
 /// Le manifeste que `bundletool dump manifest` imprimerait.
 String _manifest({
   required String versionCode,
-  String versionName = '2.3.0',
+  // Par défaut, le nom de version que le script attend (lu dans le script) :
+  // seul le numéro de build varie d'un cas à l'autre.
+  String? versionName,
   String package = 'com.karatou.android',
   String targetSdk = '36',
 }) =>
     '''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionCode="$versionCode"
-    android:versionName="$versionName"
+    android:versionName="${versionName ?? _expected('EXPECTED_VERSION_NAME')}"
     package="$package">
   <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="$targetSdk" />
   <application>

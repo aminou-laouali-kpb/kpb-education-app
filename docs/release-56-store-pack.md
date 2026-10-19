@@ -1,5 +1,13 @@
 # Build 56 — pack de soumission : ce que la 56 ajoute, notes de revue recomptées, réponses de console, décisions ouvertes
 
+> **⚠️ REMPLACÉE par la 57 le 18/10/2026 : suivre `docs/mise-a-jour-57-checklist.md`.**
+> La 2.3.0 est en vente (App Store depuis le 07/10/2026, et Google Play : constat du 16/10/2026) ;
+> la build suivante est la `2.3.1 (57)` (`pubspec.yaml`, préflights et registre posés le 18/10/2026).
+> À VALIDER (propriétaire) : que la build en vente est bien la 56, sa date de téléversement et le
+> SHA archivé (`docs/release-ledger.md`, ligne `56`). Le contenu ci-dessous est conservé tel
+> qu'écrit ; pour tout numéro de version ou de build à venir, lire 57. Les papiers de la 57 :
+> `docs/release-57-store-pack.md`, `docs/device-qa-build57.md`.
+
 > **À quoi sert ce fichier.** La 56 est la build qui porte, en plus de ce que portait la 55
 > (abandonnée, voir ci-dessous), trois éléments **dormants** de l'espace « Études en France » : la **bulle verte WhatsApp**, la
 > **visite guidée** du hub et la **feuille « écoles privées »**. Ce fichier rassemble ce

@@ -184,6 +184,49 @@ void main() {
     expect(flow.canContinue, isFalse);
   });
 
+  // Décision du propriétaire (18/10/2026) : la nationalité n'est collectée
+  // qu'avec un consentement explicite. La case se coche au récapitulatif, ne
+  // part jamais au serveur et ne se garde pas dans le brouillon.
+  test('récapitulatif complet : rien ne part sans la case de consentement', () {
+    final flow = ScholarshipMatchFlowController(
+      state: _state(matchStateJson(
+        required: const [],
+        answers: {
+          'nationalityCode': 'ner',
+          'residence': 'ner',
+          'birthDate': '2000-01-01',
+          'guardianConsented': false,
+          'highestDiploma': 'licence',
+          'scholarshipTargetLevel': 'master',
+          'fieldIds': ['d01'],
+          'targetCountryIds': <String>[],
+          'gradeBandOn20': '12_14',
+          'englishLevel': 'b1',
+          'languageTests': <dynamic>[],
+          'workExperienceBand': 'none',
+          'confirmedAt': null,
+        },
+      )),
+      mode: MatchFlowMode.recap,
+      now: () => now,
+    );
+    expect(flow.onRecap, isTrue);
+    expect(flow.recapMissing, isEmpty);
+    expect(flow.nationalityConsented, isFalse);
+    expect(flow.canContinue, isFalse);
+
+    flow.set(MatchDraftKey.nationalityConsent, true);
+    expect(flow.canContinue, isTrue);
+    expect(flow.buildAnswers().containsKey('nationalityConsent'), isFalse);
+    expect(
+      flow.toDraft().values.containsKey(MatchDraftKey.nationalityConsent),
+      isFalse,
+    );
+
+    flow.set(MatchDraftKey.nationalityConsent, null);
+    expect(flow.canContinue, isFalse);
+  });
+
   test('« Pas encore décidé » est une réponse (liste vide envoyée)', () {
     final flow = ScholarshipMatchFlowController(
       state: _state(matchStateJson()),

@@ -176,6 +176,27 @@ class MatchRecapStep extends StatelessWidget {
             if (test != null) c.putLanguageTest(test);
           },
         ),
+        const SizedBox(height: KpbSpacing.md),
+        // Consentement explicite à l'usage de la nationalité (décision du
+        // propriétaire, 18/10/2026) : sans la case, rien ne s'envoie.
+        CheckboxListTile(
+          key: const ValueKey<String>('match-nationality-consent'),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: c.nationalityConsented,
+          title: Text(
+            'scholarship_match_nationality_consent'.tr,
+            style: KpbTextStyles.bodySm,
+          ),
+          subtitle: Text(
+            'scholarship_match_nationality_consent_help'.tr,
+            style: KpbTextStyles.caption.copyWith(
+              color: KpbColors.textSecondary,
+            ),
+          ),
+          onChanged: (v) =>
+              c.set(MatchDraftKey.nationalityConsent, v == true ? true : null),
+        ),
       ],
     );
   }

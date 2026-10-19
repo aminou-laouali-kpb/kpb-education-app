@@ -55,6 +55,12 @@
 
 ### 0.2 La PR de préparation de la 57 (avant de relever `RELEASE`)
 
+> **Fait le 18/10/2026** (branche de finalisation de la 57, à fusionner avant de relever
+> `RELEASE`) : les points 1 à 5 ci-dessous sont posés — `version: 2.3.1+57`, préflights épinglés à
+> 2.3.1 (57), registre (2.3.0 en vente, 56 consommée, 57 courante « avant l'archive »), test de la 56
+> restreint à son document, bandeaux « REMPLACÉE par la 57 ». Restent À VALIDER (propriétaire) les
+> trois faits de la 56 (build en vente, date de téléversement, SHA archivé).
+
 Ce dépôt **ne pose pas** la version : elle se pose le jour où l'on prépare l'archive, dans **une**
 PR, fusionnée avant de relever `RELEASE` :
 

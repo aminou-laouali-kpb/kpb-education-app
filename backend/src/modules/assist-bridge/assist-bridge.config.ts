@@ -47,10 +47,10 @@ export const ASSIST_BRIDGE_OPT_OUT = 'assist_bridge';
  */
 export const ASSIST_BRIDGE_SENDER = 'kpb_assistant';
 
-/** Au plus UNE notification passerelle par élève sur cette fenêtre (heures). À VALIDER. */
+/** Au plus UNE notification passerelle par élève sur cette fenêtre (heures). Validé le 18/10/2026. */
 export const ASSIST_BRIDGE_USER_CAP_HOURS = 72;
 
-/** Un même besoin n'est pas re-proposé à l'élève avant ce délai (jours). À VALIDER. */
+/** Un même besoin n'est pas re-proposé à l'élève avant ce délai (jours). Validé le 18/10/2026. */
 export const ASSIST_BRIDGE_NEED_COOLDOWN_DAYS = 30;
 
 /** « Fonction déjà utilisée récemment » : fenêtre de la vérification (jours). */
@@ -62,7 +62,7 @@ export const ASSIST_BRIDGE_FEATURE_RECENT_DAYS = 14;
  */
 export const ASSIST_BRIDGE_EXPIRY_HOURS = 48;
 
-/** Conservation des événements (jours) — 12 mois proposés, À VALIDER. */
+/** Conservation des événements (jours) — 12 mois, validés par le propriétaire le 18/10/2026. */
 export const ASSIST_BRIDGE_RETENTION_DAYS = 365;
 
 /** Événements traités par passage de la tâche (chaque minute). */

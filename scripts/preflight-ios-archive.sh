@@ -24,8 +24,8 @@ ARCHIVE_PLIST=""
 APP_PATH=""
 POSTHOG_ONLY=0
 
-EXPECTED_BUILD="56"
-EXPECTED_VERSION="2.3.0"
+EXPECTED_BUILD="57"
+EXPECTED_VERSION="2.3.1"
 EXPECTED_BUNDLE_ID="Karatou.karatou"
 EXPECTED_TEAM_ID="DNPB788LKX"
 
@@ -130,7 +130,7 @@ check_posthog_key() {
   if ! printf '%s' "$key" | LC_ALL=C grep -Eq '^phc_[A-Za-z0-9]{30,60}$'; then
     occurrences=$(printf '%s' "$key" | grep -o 'phc_' | wc -l | tr -d '[:space:]')
     if [[ "$occurrences" -gt 1 ]]; then
-      fail "POSTHOG_API_KEY invalide : $len caractères et $occurrences occurrences de phc_ — la clé a été collée deux fois. Une clé de projet n'en porte qu'une. Refaire la saisie SEULE, puis la construction (docs/mise-a-jour-56-checklist.md, étape 3)."
+      fail "POSTHOG_API_KEY invalide : $len caractères et $occurrences occurrences de phc_ — la clé a été collée deux fois. Une clé de projet n'en porte qu'une. Refaire la saisie SEULE, puis la construction (docs/mise-a-jour-57-checklist.md, étape 4)."
     fi
     fail "POSTHOG_API_KEY invalide : $len caractères ; attendu phc_ suivi de 30 à 60 lettres ou chiffres, sans espace, tiret, guillemet ni autre caractère."
   fi
@@ -162,7 +162,7 @@ check_no_open_eef_defines() {
     fi
   done
   [[ -z "$offenders" ]] || \
-    fail "repli compilé EEF allumé :$offenders=true. Ces interrupteurs sont SERVEUR : la 56 part avec l'espace, la bulle et les écoles privées FERMÉS (aucun --dart-define KPB_EEF_*). Reconstruire sans eux (docs/mise-a-jour-56-checklist.md, étape 3)."
+    fail "repli compilé EEF allumé :$offenders=true. Ces interrupteurs sont SERVEUR : la 57 se construit sans aucun --dart-define KPB_EEF_* (l'espace, la bulle et les écoles privées s'ouvrent par /config/app). Reconstruire sans eux (docs/mise-a-jour-57-checklist.md, étape 4)."
   echo "Replis compilés EEF : aucun define KPB_EEF_*_ENABLED à true — OK"
 }
 

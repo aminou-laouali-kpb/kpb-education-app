@@ -667,7 +667,6 @@ const Map<String, String> appTranslationsFr = {
   'privacy_s9_title': '9. Analytique produit & enregistrement de session',
   'privacy_s10_title': '10. Modifications',
   'privacy_transfers_title': 'Transferts hors de votre pays',
-  'last_updated_september_2026': 'Dernière mise à jour : septembre 2026',
   'last_updated_october_2026': 'Dernière mise à jour : octobre 2026',
   // L'éditeur. « KPB Education » est un SERVICE, pas une personne
   // morale : le responsable du traitement est KPB Global L.L.C-FZ, et
@@ -690,6 +689,8 @@ const Map<String, String> appTranslationsFr = {
       // nationalité n'est pas validée (docs/data-inventory.md).
       '• Test « Mes 10 bourses », si vous le passez (fonction ouverte progressivement) : nationalité(s), pays de résidence, date de naissance, plus haut diplôme, niveau de bourse visé, domaines, tranche de moyenne sur 20, niveaux d\'anglais et de français, scores de tests de langue, tranche d\'expérience professionnelle et, si vous avez 16 ou 17 ans, l\'accord de votre représentant légal. Rien ne vous oblige à répondre : sans ces réponses, le test ne calcule pas de résultat, et le reste de l\'app reste utilisable\n'
       '• Bourses suivies et notifications : les bourses que vous suivez, vos réglages d\'alerte, les notifications reçues dans l\'app et le moment où vous en ouvrez une\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Communauté, suggestions automatiques, parrainage et compétition : voir les sections dédiées plus bas\n'
       '• Messages de dossier et textes soumis au coach (KPB Intelligence)\n'
       // Le repli réseau est NOMMÉ parce qu'il subsiste dans le code.
       // `SpeechInputService.startListening` demande bien la
@@ -716,11 +717,12 @@ const Map<String, String> appTranslationsFr = {
       '• Améliorer nos services via des statistiques agrégées et anonymisées\n'
       '• Communiquer avec vous dans le cadre de vos démarches\n'
       '• Vous rappeler au sujet d\'un espace ou d\'un accompagnement pour lequel vous avez déclaré votre intérêt, si vous l\'avez accepté au moment de le déclarer. Cette déclaration est lisible par nos conseillers et notre équipe commerciale, et vous pouvez la retirer à tout moment depuis l\'écran où vous l\'avez faite',
-  'privacy_s4_body':
-      '• Consentement : vous acceptez cette politique lors de la création de votre compte\n'
-          '• Exécution du contrat : le traitement est nécessaire pour fournir nos services\n'
-          '• Intérêt légitime : amélioration de nos services et sécurité de la plateforme\n'
-          '• Mineurs de 16 et 17 ans : l\'accord déclaré d\'un représentant légal (nom et contact) est demandé avant de compléter le profil, d\'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L\'application n\'est pas destinée aux moins de 16 ans',
+  'privacy_s4_body': '• Consentement : vous acceptez cette politique lors de la création de votre compte\n'
+      '• Exécution du contrat : le traitement est nécessaire pour fournir nos services\n'
+      '• Intérêt légitime : amélioration de nos services et sécurité de la plateforme\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Consentement explicite : votre nationalité, pour le test « Mes 10 bourses » (voir « Votre nationalité »)\n'
+      '• Mineurs de 16 et 17 ans : l\'accord déclaré d\'un représentant légal (nom et contact) est demandé avant de compléter le profil, d\'utiliser KPB Intelligence ou de passer le test « Mes 10 bourses ». L\'application n\'est pas destinée aux moins de 16 ans',
   'privacy_s5_body': 'Vos données ne sont PAS vendues à des tiers.\n\n'
       'Elles peuvent être partagées avec :\n'
       '• Notre backend KPB (VPS Hostinger, api.kpbeducation.cloud) pour faire fonctionner l\'application\n'
@@ -755,11 +757,52 @@ const Map<String, String> appTranslationsFr = {
       '• Les autorités compétentes si la loi l\'exige',
   'privacy_transfers_body':
       'Certains destinataires sont établis aux États-Unis (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — YouTube et les services de reconnaissance vocale compris — et Wikimedia). Le transfert repose sur votre consentement à cette politique et, le cas échéant, sur les clauses contractuelles types du sous-traitant. Vous pouvez refuser l\'analytique depuis Profil → « Analyse d\'usage » et refuser KPB Intelligence : le reste de l\'app reste utilisable.',
+  // Sections ajoutées le 18/10/2026 (communauté, bots, parrainage et
+  // compétition, nationalité) — décisions du propriétaire du 18/10/2026.
+  // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+  // Uniquement ce que le code fait (docs/data-inventory.md §5 à §7 ter).
+  'privacy_community_title':
+      'Communauté d\'entraide (fonction ouverte progressivement)',
+  'privacy_community_body': 'Si vous utilisez la communauté :\n'
+      '\n'
+      '• Ce que vous publiez : vos publications et vos réponses (titre, texte, bourses, pays, établissements ou formations cités, mots-clés) sont visibles des autres élèves connectés, avec un nom affiché sous la forme « Prénom I. », le pays de résidence de votre profil et vos badges. Votre nom complet, votre e-mail et votre téléphone ne sont pas affichés\n'
+      '• Pas de messages privés : la communauté n\'a ni messagerie entre membres, ni mention d\'un autre membre\n'
+      '• Vérification avant publication : un texte qui contient un numéro, une adresse e-mail, un lien WhatsApp, un lien externe, une demande d\'argent ou un terme interdit n\'est pas publié tout de suite ; il attend la revue de l\'équipe KPB et reste visible de vous seul. Cette vérification se fait sur nos serveurs, sans service externe\n'
+      '• Signalements et blocages : vous pouvez signaler une publication, une réponse ou un membre (motif, et précision facultative de 500 caractères au plus). Seule l\'équipe KPB voit les signalements, jamais la personne signalée. Un contenu signalé par plusieurs membres peut être masqué en attendant la revue. Vous pouvez aussi bloquer un membre : vous ne voyez plus ses contenus, et il ne voit plus les vôtres\n'
+      '• Modération : l\'équipe KPB peut masquer ou supprimer un contenu, marquer une réponse comme vérifiée et prendre une sanction (avertissement, lecture seule, exclusion), dont le motif vous est notifié. Chaque décision est enregistrée dans un journal de modération\n'
+      '• Notifications : réponses à vos publications et décisions de modération ; vous pouvez couper les notifications push de la communauté dans les réglages des notifications\n'
+      '• Conservation : vos contenus restent tant que votre compte existe. Un contenu supprimé, par vous ou par l\'équipe, reste lisible par l\'équipe KPB pendant 30 jours pour la modération, puis est effacé définitivement\n'
+      '• Suppression de votre compte : vos publications, réponses, « utile », suivis et blocages sont supprimés définitivement (ils ne sont pas anonymisés), ainsi que les réponses publiées sous vos publications. Les signalements que vous avez rédigés sont conservés sans lien avec votre compte, et le journal de modération perd tout lien avec votre compte',
+  'privacy_bots_title':
+      'Réponses et suggestions automatiques (fonctions ouvertes progressivement)',
+  'privacy_bots_body':
+      '• Assistant KPB : une question publiée dans la communauté peut recevoir une réponse signée « Assistant KPB », préparée automatiquement à partir des données vérifiées de notre catalogue (bourses, établissements, formations, pays). Elle est relue et publiée par l\'équipe KPB ; quand l\'équipe l\'a activé, une réponse dont toutes les données sont vérifiées et récentes peut être publiée automatiquement. Cette préparation ne recopie ni votre question, ni votre nom, ni votre profil, et votre question n\'est envoyée à aucun service externe\n'
+          '• Suggestions de l\'équipe KPB : vos publications et réponses dans la communauté sont analysées automatiquement, sur nos serveurs, pour repérer un besoin (trouver une bourse, préparer un visa, choisir une école…) et vous suggérer en privé, par une notification, la fonction de l\'app ou la ligne WhatsApp de KPB qui peut vous aider. Aucun texte n\'est stocké par cette analyse : seuls le besoin repéré, la règle utilisée, la référence de la publication concernée et les dates d\'envoi et de réaction sont enregistrés, pendant 12 mois. Une suggestion n\'est jamais publique et ne cite pas votre texte\n'
+          '• Vous pouvez couper ces suggestions à tout moment dans les réglages des notifications (« Suggestions de l\'équipe KPB ») : aucune suggestion ne vous est alors envoyée',
+  'privacy_referral_title': 'Parrainage et compétition des ambassadeurs',
+  'privacy_referral_body': '• Code de parrain : le code que vous saisissez n\'est envoyé à nos serveurs que lorsque vous appuyez sur « Valider le code », pour vous rattacher à ce parrain (une seule fois)\n'
+      '• Lien d\'invitation (Android, fonction ouverte progressivement) : si vous avez installé l\'app depuis un lien d\'invitation Google Play, l\'app lit une fois, sur votre téléphone, l\'information de provenance que Google Play lui fournit (lien d\'origine, dates du clic et de l\'installation) et n\'en garde que le code du parrain, pour préremplir le champ. Rien n\'est transmis tant que vous ne confirmez pas ce code\n'
+      '• Identifiant d\'installation : au premier rattachement demandé, l\'app crée un identifiant aléatoire propre à cette installation (ni l\'IMEI, ni l\'identifiant publicitaire). Il est envoyé uniquement avec un code de parrain, pour la prévention de la fraude ; nos serveurs n\'en gardent qu\'une empreinte chiffrée. Il change à chaque réinstallation\n'
+      '• Empreintes anti-fraude : lors d\'un rattachement, nos serveurs calculent des empreintes chiffrées (HMAC) de votre adresse IP, de sa plage, de vos jetons de notifications et de l\'identifiant d\'installation — jamais conservés en clair — pour repérer les comptes multiples et les inscriptions en rafale. Elles sont conservées 180 jours, puis effacées\n'
+      '• Compétition des ambassadeurs : organisée par KPB Global L.L.C-FZ, réservée aux ambassadeurs inscrits par l\'équipe KPB, selon un règlement publié. Le classement public affiche, pour les ambassadeurs classés, un nom sous la forme « Prénom I. — Ville » et le nombre de filleuls qualifiés, jamais l\'e-mail, le téléphone ni le nom des filleuls. Un ambassadeur de 16 ou 17 ans n\'est classé, et ne reçoit de prix, qu\'avec une autorisation parentale signée et vérifiée par l\'équipe ; son prix est versé à son représentant légal. L\'équipe voit l\'identité et l\'e-mail des ambassadeurs et de leurs filleuls, le statut de chaque filleul et les versements\n'
+      '• Suppression de votre compte : votre participation, vos rattachements et vos empreintes sont supprimés ; seule la trace d\'un prix déjà versé (rang, nom public, montant, versement) est gardée pour la comptabilité, sans lien avec votre compte\n'
+      '• Apple et Google ne sont ni organisateurs ni partenaires de cette compétition',
+  'privacy_nationality_title': 'Votre nationalité (test « Mes 10 bourses »)',
+  'privacy_nationality_body':
+      '• Base légale : votre consentement explicite. Vous donnez votre nationalité seulement si vous passez le test, et elle n\'est envoyée qu\'après que vous avez coché « J\'accepte que KPB Education utilise ma nationalité pour vérifier les conditions des bourses »\n'
+          '• Facultative : sans elle, le test ne calcule pas de résultat, et le reste de l\'app reste utilisable\n'
+          '• Usage : uniquement vérifier les conditions de nationalité des bourses. Elle n\'est transmise à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne part ni dans l\'analytique ni dans les notifications\n'
+          '• Conservation : sur votre profil tant que votre compte existe ; elle est supprimée avec votre compte\n'
+          '• Retrait : vous pouvez retirer votre consentement à tout moment en écrivant à privacy@kpbeducation.com ; nous effaçons alors votre nationalité de votre profil',
   'privacy_s6_body': '• Données de profil : conservées tant que votre compte est actif\n'
       '• Données de dossier : conservées tant que le dossier est ouvert, puis supprimées avec le compte\n'
       '• Réponses au test « Mes 10 bourses » : gardées sur votre profil tant que votre compte est actif, et modifiables en refaisant le test ; seuls vos 5 derniers résultats sont conservés, les plus anciens s\'effacent automatiquement\n'
       '• Bourses suivies et notifications reçues dans l\'app : conservées tant que votre compte est actif\n'
       '• Sur votre téléphone : le brouillon du test s\'efface à la fin du test et à la déconnexion ; les bourses gardées pour une consultation hors ligne s\'effacent à la déconnexion\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Communauté : un contenu supprimé reste 30 jours lisible par l\'équipe pour la modération, puis il est effacé\n'
+      '• Suggestions automatiques : les enregistrements sont gardés 12 mois\n'
+      '• Empreintes anti-fraude du parrainage : 180 jours\n'
       '• Données analytiques : agrégées et anonymisées, conservées indéfiniment\n'
       '• En cas de suppression de compte : vos données personnelles sont supprimées sous 30 jours',
   'privacy_s7_body': '• Communication chiffrée via HTTPS/TLS\n'
@@ -775,7 +818,8 @@ const Map<String, String> appTranslationsFr = {
           '• De limiter le traitement\n'
           '• De vous opposer au traitement\n'
           '• De portabilité de vos données\n\n'
-          'L\'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats et vos alertes de bourses.\n\n'
+          // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+          'L\'export de vos données comprend vos réponses au test « Mes 10 bourses », vos derniers résultats, vos alertes de bourses, les notifications reçues dans l\'app, vos contenus de la communauté, les suggestions automatiques qui vous concernent et vos données de parrainage et de compétition.\n\n'
           'Pour exercer ces droits, contactez-nous à : privacy@kpbeducation.com',
   'privacy_s9_body': 'Nous utilisons Firebase Analytics (Google) et PostHog pour comprendre l\'usage de l\'application et l\'améliorer :\n\n'
       '• Écrans consultés, actions effectuées (orientation, recherche, sauvegarde)\n'
@@ -816,6 +860,29 @@ const Map<String, String> appTranslationsFr = {
   'terms_s9_title': '10. Résiliation',
   'terms_s10_title': '11. Droit applicable',
   'terms_s11_title': '12. Contact',
+  // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+  // La charte reprend les quatre règles de
+  // backend/src/modules/community/community.constants.ts.
+  'terms_community_title': 'Communauté d\'entraide',
+  'terms_community_body': 'La communauté (fonction ouverte progressivement) permet aux élèves de poser des questions et de partager leur expérience. Avant votre première publication, vous acceptez sa charte, en quatre règles :\n'
+      '\n'
+      '• Bienveillance : pas d\'insulte, pas de moquerie, pas de harcèlement\n'
+      '• Jamais d\'argent : personne ne vend de bourse ni de visa ; ne payez jamais un « agent » rencontré dans la communauté, et signalez toute demande d\'argent\n'
+      '• Pas de coordonnées : ni numéro, ni WhatsApp, ni e-mail, ni adresse, les vôtres comme celles des autres\n'
+      '• Des informations vérifiables : partagez votre expérience et citez les sources officielles\n'
+      '\n'
+      'Sont interdits notamment : les contenus qui enfreignent ces règles ou la loi, les offres payantes, les demandes d\'argent et les liens externes non autorisés. Un texte qui contient des coordonnées, un lien externe, une demande d\'argent ou un terme interdit attend la revue de l\'équipe KPB avant d\'être publié.\n'
+      '\n'
+      'Modération : l\'équipe KPB modère la communauté. Elle peut masquer ou supprimer un contenu et, selon la gravité, adresser un avertissement, limiter un compte à la lecture ou l\'exclure de la communauté, pour une durée limitée ou non. Le motif vous est notifié.\n'
+      '\n'
+      'Signalement : chaque contenu et chaque membre peut être signalé depuis l\'application ; la personne signalée ne sait pas qui l\'a signalée. Vous pouvez aussi bloquer un membre.\n'
+      '\n'
+      'La communauté n\'a pas de messages privés. Les réponses des membres sont des avis personnels : elles ne remplacent ni les sources officielles ni un conseiller KPB.',
+  'terms_competition_title': 'Compétition des ambassadeurs',
+  'terms_competition_body':
+      'La compétition des ambassadeurs est organisée par KPB Global L.L.C-FZ et réservée aux ambassadeurs inscrits par l\'équipe KPB. Elle est régie par son règlement, accessible depuis l\'écran « Compétition » de l\'application et la page publique du classement ; y participer implique de l\'accepter. En cas de différence, le règlement prévaut pour la compétition.\n'
+          '\n'
+          'Apple et Google ne sont ni organisateurs ni partenaires de cette compétition.',
   'terms_analytics_body':
       'Pour maintenir et améliorer le service, KPB Education mesure l\'usage de l\'application. Cette mesure est ACTIVE PAR DÉFAUT dès la première ouverture.\n\n'
           'Ce qui est mesuré : les écrans consultés et les actions effectuées (orientation, recherche, sauvegarde, candidature), les diagnostics de plantage, et des enregistrements de session dont les textes et les images sont masqués automatiquement — aucun document, note ou coordonnée n\'y est lisible.\n\n'
@@ -3602,6 +3669,18 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_match_progress_a11y': 'Question @index sur @total',
   'scholarship_match_q_nationality': 'Ta nationalité',
   'scholarship_match_q_nationality_help': 'Celle de ton passeport.',
+  // Consentement explicite à l'usage de la nationalité (décision du
+  // propriétaire, 18/10/2026 : base légale = consentement, saisie facultative,
+  // effaçable). Rédigé le 18/10/2026 — à relire par le propriétaire avant
+  // soumission.
+  'scholarship_match_nationality_optional':
+      'C\'est facultatif : elle ne sert qu\'à ce test, et seulement avec ton accord.',
+  'scholarship_match_nationality_consent':
+      'J\'accepte que KPB Education utilise ma nationalité pour vérifier les conditions des bourses.',
+  'scholarship_match_nationality_consent_help':
+      'Elle reste sur ton profil tant que ton compte existe et n\'est transmise à aucune école. Tu peux retirer ton accord à tout moment en écrivant à privacy@kpbeducation.com ; elle est aussi effacée avec ton compte.',
+  'scholarship_match_nationality_consent_required':
+      'Coche la case de consentement pour voir tes bourses.',
   'scholarship_match_nationality_suggestion':
       'Tu vis au pays « @country » : c\'est aussi ta nationalité ?',
   'scholarship_match_second_nationality': 'J\'ai une deuxième nationalité',

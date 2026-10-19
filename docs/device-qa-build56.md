@@ -1,5 +1,13 @@
 # Fiche de QA appareil — build 56 : bulle WhatsApp, visite guidée, écoles privées
 
+> **⚠️ REMPLACÉE par la 57 le 18/10/2026 : suivre `docs/mise-a-jour-57-checklist.md`.**
+> La 2.3.0 est en vente (App Store depuis le 07/10/2026, et Google Play : constat du 16/10/2026) ;
+> la build suivante est la `2.3.1 (57)` (`pubspec.yaml`, préflights et registre posés le 18/10/2026).
+> À VALIDER (propriétaire) : que la build en vente est bien la 56, sa date de téléversement et le
+> SHA archivé (`docs/release-ledger.md`, ligne `56`). Le contenu ci-dessous est conservé tel
+> qu'écrit ; pour tout numéro de version ou de build à venir, lire 57. Les papiers de la 57 :
+> `docs/release-57-store-pack.md`, `docs/device-qa-build57.md`.
+
 > **Pour qui.** Le propriétaire, sur **un iPhone et un Android physiques**, avec la
 > **build soumise** (TestFlight / Play Internal) — pas un build de debug : le contrat de
 > soumission exige que la preuve vienne de l'artefact. Cette fiche est la **suite de

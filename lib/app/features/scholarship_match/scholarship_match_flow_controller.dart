@@ -53,7 +53,7 @@ String matchStepAnalyticsName(String key) => switch (key) {
     };
 
 /// Les clés de valeur du brouillon (celles de `answers` côté serveur, plus
-/// deux marqueurs locaux).
+/// trois marqueurs locaux).
 abstract final class MatchDraftKey {
   static const nationalityCode = 'nationalityCode';
   static const secondNationalityCode = 'secondNationalityCode';
@@ -75,6 +75,12 @@ abstract final class MatchDraftKey {
   static const frenchLevel = 'frenchLevel';
   static const languageTests = 'languageTests';
   static const workExperienceBand = 'workExperienceBand';
+
+  /// Local : la case de consentement explicite à l'usage de la nationalité
+  /// (décision du propriétaire, 18/10/2026 : base légale = consentement).
+  /// Jamais envoyée au serveur, jamais gardée dans le brouillon : décochée à
+  /// chaque ouverture de l'assistant.
+  static const nationalityConsent = 'nationalityConsent';
 }
 
 /// Âge révolu à [now] d'une date `AAAA-MM-JJ`, ou `null`.
@@ -349,6 +355,12 @@ class ScholarshipMatchFlowController extends ChangeNotifier {
 
   String? get target => value<String>(MatchDraftKey.scholarshipTargetLevel);
 
+  /// La case « J'accepte que KPB Education utilise ma nationalité… » est
+  /// cochée. Sans elle, le récapitulatif ne s'envoie pas : la nationalité
+  /// n'est collectée qu'avec un consentement explicite.
+  bool get nationalityConsented =>
+      value<bool>(MatchDraftKey.nationalityConsent) == true;
+
   bool get needsExperience =>
       target != null && MatchTokens.experienceTargets.contains(target);
 
@@ -520,7 +532,7 @@ class ScholarshipMatchFlowController extends ChangeNotifier {
       case MatchReadinessKey.workExperienceBand:
         return value<String>(MatchDraftKey.workExperienceBand) != null;
       case MatchFlowScreen.recap:
-        return recapMissing.isEmpty;
+        return recapMissing.isEmpty && nationalityConsented;
       default:
         return true;
     }
@@ -618,6 +630,9 @@ class ScholarshipMatchFlowController extends ChangeNotifier {
   static const Set<String> _notPersisted = <String>{
     MatchDraftKey.guardianName,
     MatchDraftKey.guardianContact,
+    // Le consentement se donne au moment de l'envoi : un brouillon repris
+    // redemande la case.
+    MatchDraftKey.nationalityConsent,
   };
 
   /// Le brouillon à persister.

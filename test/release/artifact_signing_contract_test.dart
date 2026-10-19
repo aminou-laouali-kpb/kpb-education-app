@@ -220,10 +220,15 @@ void main() {
   // « 2.1.0 », aucune valeur de `KPB_MIN_APP_VERSION` ne pouvait en distinguer
   // une seule — la porte de mise à jour ne servait à rien.
   //
+  // Passé à 2.3.1 pour la build 57, délibérément (décision du propriétaire du
+  // 16/10/2026, posée le 18/10/2026) : la 2.3.0 est en vente sur l'App Store
+  // depuis le 07/10/2026 et sur Google Play ; une 57 en 2.3.0 serait refusée
+  // (ITMS-90062) et indiscernable de la 56 pour `isVersionBelow`.
+  //
   // Le NUMÉRO de build, lui, n'est pas épinglé ici : `build_number_test.dart`
   // le confronte au registre de release, qui en est la source.
-  test('the shipping marketing version stays 2.3.0', () {
-    expect(_shippingVersion().name, '2.3.0');
+  test('the shipping marketing version stays 2.3.1', () {
+    expect(_shippingVersion().name, '2.3.1');
   });
 
   // Revue du build 49 : la mesure d'audience est passée d'OPT-IN à ACTIVE PAR

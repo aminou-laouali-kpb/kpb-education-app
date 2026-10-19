@@ -917,7 +917,8 @@ passerelle (ni ligne du fil, ni push : la suggestion n'est pas écrite) ; indép
   (dossier, pays, notes) d'un public jeune ; l'effacement total est la direction d'erreur sûre.
   Conséquence acceptée : un fil perd les réponses publiées sous la question d'un compte supprimé.*
 - **Suppression d'un contenu par son auteur** : statut `deleted` immédiat (invisible), contenu
-  gardé **30 jours** pour la modération (preuve en cas d'arnaque), puis **purge définitive**
+  gardé **30 jours** (durée validée par le propriétaire le 18/10/2026) pour la modération
+  (preuve en cas d'arnaque), puis **purge définitive**
   (tâche quotidienne).
 - **Export** (`GET /profiles/me/export`) : clé `community` = `{ member, charterAcceptances,
   posts, replies, helpfulReactions, follows, blocks, reportsFiled, sanctions }` — ses contenus
@@ -929,7 +930,9 @@ passerelle (ni ligne du fil, ni push : la suggestion n'est pas écrite) ; indép
   Passerelle).
 - **Bot « Passerelle »** (révision 3) : `AssistBridgeEvent` (besoin, règle, version, source = type
   + id, statut, dates ; **aucun texte**) part avec le compte (cascade) et est purgé à **12 mois**
-  (À VALIDER) ; l'export porte la clé `assistBridgeEvents` (sans `userId`).
+  (validé par le propriétaire le 18/10/2026) ; l'export porte la clé `assistBridgeEvents` (sans
+  `userId`). Les notifications `community_*` et `assist_bridge` (`UserNotification`) figurent
+  dans l'export depuis le 18/10/2026 (clé `notifications`).
 
 ## 13. Ce qui ne change pas
 

@@ -624,7 +624,6 @@ const Map<String, String> appTranslationsEn = {
   'privacy_s9_title': '9. Product analytics & session recording',
   'privacy_s10_title': '10. Changes',
   'privacy_transfers_title': 'Transfers outside your country',
-  'last_updated_september_2026': 'Last updated: September 2026',
   'last_updated_october_2026': 'Last updated: October 2026',
   'privacy_s1_body':
       'KPB Education (hereafter "we", "our", "KPB") is a service of KPB Global L.L.C-FZ, a free-zone limited liability company registered with the Meydan Free Zone (Meydan City Corporation, Emirate of Dubai) under licence no. 2537631.01. KPB Global L.L.C-FZ is the controller of personal data collected through the KPB Education mobile app.\n\n'
@@ -639,6 +638,8 @@ const Map<String, String> appTranslationsEn = {
       '• Academic profile: current level, target level, language skills, grades, fields of interest, destination countries\n'
       '• "My 10 scholarships" test, if you take it (feature being opened gradually): nationality or nationalities, country of residence, date of birth, highest diploma, scholarship level sought, fields, grade band out of 20, English and French levels, language test scores, work experience band and, if you are 16 or 17, your legal guardian\'s agreement. You are never required to answer: without these answers the test computes no result, and the rest of the app stays usable\n'
       '• Followed scholarships and notifications: the scholarships you follow, your alert settings, the notifications received in the app and when you open one\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Community, automatic suggestions, referrals and the competition: see the dedicated sections below\n'
       '• Case messages and texts submitted to the coach (KPB Intelligence)\n'
       // Voir le commentaire du bloc `fr` : le repli réseau d'Android est
       // nommé parce qu'il subsiste dans le greffon.
@@ -660,6 +661,8 @@ const Map<String, String> appTranslationsEn = {
   'privacy_s4_body': '• Consent: you accept this policy when you create an account\n'
       '• Contract: processing is required to provide the service\n'
       '• Legitimate interest: improving the service and securing the platform\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Explicit consent: your nationality, for the "My 10 scholarships" test (see "Your nationality")\n'
       '• Minors aged 16 and 17: the declared agreement of a legal guardian (name and contact) is required before completing the profile, using KPB Intelligence or taking the "My 10 scholarships" test. The app is not intended for anyone under 16',
   'privacy_s5_body': 'Your data is NOT sold to third parties.\n\n'
       'It may be shared with:\n'
@@ -684,11 +687,51 @@ const Map<String, String> appTranslationsEn = {
       '• Competent authorities if the law requires it',
   'privacy_transfers_body':
       'Some recipients are established in the United States (OpenRouter, Groq, PostHog, OneSignal, Resend, Firebase / Google — including YouTube and the speech recognition services — and Wikimedia). The transfer rests on your consent to this policy and, where applicable, the processor\'s standard contractual clauses. You can turn analytics off in Profile → "Usage analytics" and decline KPB Intelligence: the rest of the app stays usable.',
+  // Sections ajoutées le 18/10/2026 (communauté, bots, parrainage et
+  // compétition, nationalité) — décisions du propriétaire du 18/10/2026.
+  // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+  // Uniquement ce que le code fait (docs/data-inventory.md §5 à §7 ter).
+  'privacy_community_title': 'Help community (feature opened gradually)',
+  'privacy_community_body': 'If you use the community:\n'
+      '\n'
+      '• What you post: your posts and replies (title, text, scholarships, countries, schools or programmes mentioned, hashtags) are visible to other signed-in students, with a name shown as "First name I.", the country of residence of your profile and your badges. Your full name, email and phone number are not shown\n'
+      '• No private messages: the community has no messaging between members and no mention of another member\n'
+      '• Check before publishing: a text containing a phone number, an email address, a WhatsApp link, an external link, a request for money or a banned term is not published right away; it waits for review by the KPB team and stays visible to you only. This check runs on our servers, with no external service\n'
+      '• Reports and blocks: you can report a post, a reply or a member (reason, and an optional detail of at most 500 characters). Only the KPB team sees reports, never the reported person. Content reported by several members may be hidden pending review. You can also block a member: you no longer see their content, and they no longer see yours\n'
+      '• Moderation: the KPB team can hide or delete content, mark a reply as verified and take a sanction (warning, read-only, exclusion), whose reason is notified to you. Each decision is recorded in a moderation log\n'
+      '• Notifications: replies to your posts and moderation decisions; you can turn off community push notifications in the notification settings\n'
+      '• Retention: your content stays while your account exists. Content deleted by you or by the team stays readable by the KPB team for 30 days for moderation, then is permanently erased\n'
+      '• Deleting your account: your posts, replies, "helpful" marks, follows and blocks are permanently deleted (they are not anonymised), together with the replies posted under your posts. Reports you wrote are kept without any link to your account, and the moderation log loses any link to your account',
+  'privacy_bots_title':
+      'Automatic answers and suggestions (features opened gradually)',
+  'privacy_bots_body':
+      '• KPB Assistant: a question posted in the community may receive an answer signed "KPB Assistant", prepared automatically from the verified data of our catalogue (scholarships, schools, programmes, countries). It is reviewed and published by the KPB team; when the team has enabled it, an answer whose data is all verified and recent may be published automatically. This preparation copies neither your question, nor your name, nor your profile, and your question is not sent to any external service\n'
+          '• Suggestions from the KPB team: your posts and replies in the community are analysed automatically, on our servers, to spot a need (finding a scholarship, preparing a visa, choosing a school…) and to suggest privately, through a notification, the app feature or the KPB WhatsApp line that can help you. No text is stored by this analysis: only the need spotted, the rule used, the reference of the post concerned and the dates of sending and of your reaction are recorded, for 12 months. A suggestion is never public and never quotes your text\n'
+          '• You can turn these suggestions off at any time in the notification settings ("Suggestions from the KPB team"): no suggestion is then sent to you',
+  'privacy_referral_title': 'Referrals and the ambassador competition',
+  'privacy_referral_body': '• Referral code: the code you type is sent to our servers only when you tap "Apply code", to link you to that referrer (once only)\n'
+      '• Invitation link (Android, feature opened gradually): if you installed the app from a Google Play invitation link, the app reads once, on your phone, the install source information that Google Play provides (original link, dates of the click and of the install) and keeps only the referral code from it, to prefill the field. Nothing is sent until you confirm that code\n'
+      '• Installation identifier: on the first referral request, the app creates a random identifier specific to this installation (neither the IMEI nor the advertising identifier). It is sent only with a referral code, for fraud prevention; our servers keep only an encrypted fingerprint of it. It changes with every reinstall\n'
+      '• Anti-fraud fingerprints: when a referral is recorded, our servers compute encrypted fingerprints (HMAC) of your IP address, its range, your notification tokens and the installation identifier — never stored in clear — to detect multiple accounts and bursts of sign-ups. They are kept for 180 days, then erased\n'
+      '• Ambassador competition: organised by KPB Global L.L.C-FZ, open to ambassadors enrolled by the KPB team, under published official rules. The public leaderboard shows, for ranked ambassadors, a name as "First name I. — City" and the number of qualified referrals, never the email, phone number or names of referrals. An ambassador aged 16 or 17 is ranked, and receives a prize, only with a signed parental authorisation verified by the team; their prize is paid to their legal guardian. The team sees the identity and email of ambassadors and of their referrals, each referral\'s status and the payments\n'
+      '• Deleting your account: your participation, your referral links and your fingerprints are deleted; only the record of a prize already paid (rank, public name, amount, payment) is kept for accounting, with no link to your account\n'
+      '• Apple and Google are neither organisers nor partners of this competition',
+  'privacy_nationality_title': 'Your nationality ("My 10 scholarships" test)',
+  'privacy_nationality_body':
+      '• Legal basis: your explicit consent. You give your nationality only if you take the test, and it is sent only after you tick "I agree that KPB Education uses my nationality to check scholarship conditions"\n'
+          '• Optional: without it, the test does not compute a result, and the rest of the app remains usable\n'
+          '• Use: only to check the nationality conditions of scholarships. It is not sent to any school, any scholarship body or our sales team, and goes neither into analytics nor into notifications\n'
+          '• Retention: on your profile while your account exists; it is deleted with your account\n'
+          '• Withdrawal: you can withdraw your consent at any time by writing to privacy@kpbeducation.com; we then erase your nationality from your profile',
   'privacy_s6_body': '• Profile data: kept while your account is active\n'
       '• Case data: kept while the case is open, then deleted with the account\n'
       '• "My 10 scholarships" test answers: kept on your profile while your account is active, and editable by taking the test again; only your last 5 results are kept, older ones are erased automatically\n'
       '• Followed scholarships and in-app notifications: kept while your account is active\n'
       '• On your phone: the test draft is erased when you finish the test and when you sign out; scholarships kept for offline viewing are erased when you sign out\n'
+      // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+      '• Community: deleted content stays readable by the team for 30 days for moderation, then it is erased\n'
+      '• Automatic suggestions: records are kept for 12 months\n'
+      '• Referral anti-fraud fingerprints: 180 days\n'
       '• Analytics data: aggregated and anonymised, kept indefinitely\n'
       '• If you delete your account: personal data is erased within 30 days',
   'privacy_s7_body': '• Encrypted transport via HTTPS/TLS\n'
@@ -704,7 +747,8 @@ const Map<String, String> appTranslationsEn = {
           '• Restrict processing\n'
           '• Object to processing\n'
           '• Data portability\n\n'
-          'The export of your data includes your "My 10 scholarships" test answers, your latest results and your scholarship alerts.\n\n'
+          // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+          'The export of your data includes your "My 10 scholarships" test answers, your latest results, your scholarship alerts, the notifications received in the app, your community content, the automatic suggestions about you and your referral and competition data.\n\n'
           'To exercise these rights, contact us at: privacy@kpbeducation.com',
   'privacy_s9_body': 'We use Firebase Analytics (Google) and PostHog to understand and improve the app:\n\n'
       '• Screens viewed, actions taken (orientation, search, save)\n'
@@ -740,6 +784,29 @@ const Map<String, String> appTranslationsEn = {
   'terms_s9_title': '10. Termination',
   'terms_s10_title': '11. Governing law',
   'terms_s11_title': '12. Contact',
+  // Rédigé le 18/10/2026 — à relire par le propriétaire avant soumission.
+  // La charte reprend les quatre règles de
+  // backend/src/modules/community/community.constants.ts.
+  'terms_community_title': 'Help community',
+  'terms_community_body': 'The community (feature opened gradually) lets students ask questions and share their experience. Before your first post, you accept its guidelines, in four rules:\n'
+      '\n'
+      '• Be kind: no insults, no mockery, no harassment\n'
+      '• Never money: nobody sells scholarships or visas; never pay an "agent" you met in the community, and report any request for money\n'
+      '• No contact details: no phone number, WhatsApp, email or address, yours or anyone else\'s\n'
+      '• Verifiable information: share your experience and cite official sources\n'
+      '\n'
+      'In particular, the following are prohibited: content that breaks these rules or the law, paid offers, requests for money and unauthorised external links. A text containing contact details, an external link, a request for money or a banned term waits for review by the KPB team before it is published.\n'
+      '\n'
+      'Moderation: the KPB team moderates the community. It can hide or delete content and, depending on the seriousness, send a warning, restrict an account to read-only or exclude it from the community, for a limited time or not. The reason is notified to you.\n'
+      '\n'
+      'Reporting: any content and any member can be reported from the app; the reported person does not know who reported them. You can also block a member.\n'
+      '\n'
+      'The community has no private messages. Members\' answers are personal opinions: they replace neither official sources nor a KPB counsellor.',
+  'terms_competition_title': 'Ambassador competition',
+  'terms_competition_body':
+      'The ambassador competition is organised by KPB Global L.L.C-FZ and open to ambassadors enrolled by the KPB team. It is governed by its official rules, available from the "Competition" screen of the app and from the public leaderboard page; taking part implies accepting them. In case of difference, the rules prevail for the competition.\n'
+          '\n'
+          'Apple and Google are neither organisers nor partners of this competition.',
   'terms_analytics_body':
       'To maintain and improve the service, KPB Education measures how the app is used. This measurement is ON BY DEFAULT from first launch.\n\n'
           'What is measured: screens viewed and actions taken (orientation, search, save, application), crash diagnostics, and session recordings in which text and images are masked automatically — no document, note or contact detail is readable in them.\n\n'
@@ -3330,6 +3397,17 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_progress_a11y': 'Question @index of @total',
   'scholarship_match_q_nationality': 'Your nationality',
   'scholarship_match_q_nationality_help': 'The one on your passport.',
+  // Explicit consent to the use of nationality (owner's decision,
+  // 18/10/2026). Rédigé le 18/10/2026 — à relire par le propriétaire avant
+  // soumission.
+  'scholarship_match_nationality_optional':
+      'Optional: it is only used for this test, and only with your consent.',
+  'scholarship_match_nationality_consent':
+      'I agree that KPB Education uses my nationality to check scholarship conditions.',
+  'scholarship_match_nationality_consent_help':
+      'It stays on your profile while your account exists and is not sent to any school. You can withdraw your consent at any time by writing to privacy@kpbeducation.com; it is also erased with your account.',
+  'scholarship_match_nationality_consent_required':
+      'Tick the consent box to see your scholarships.',
   'scholarship_match_nationality_suggestion':
       'You live in « @country »: is it also your nationality?',
   'scholarship_match_second_nationality': 'I have a second nationality',

@@ -75,6 +75,26 @@ class PrivacyPolicyScreen extends StatelessWidget {
               title: 'privacy_transfers_title'.tr,
               body: 'privacy_transfers_body'.tr,
             ),
+            // Sections du 18/10/2026 (décisions du propriétaire) : communauté,
+            // bots Vérif et Passerelle, parrainage et compétition, nationalité.
+            // Rédigé le 18/10/2026 — à relire par le propriétaire avant
+            // soumission.
+            _LegalSection(
+              title: 'privacy_community_title'.tr,
+              body: 'privacy_community_body'.tr,
+            ),
+            _LegalSection(
+              title: 'privacy_bots_title'.tr,
+              body: 'privacy_bots_body'.tr,
+            ),
+            _LegalSection(
+              title: 'privacy_referral_title'.tr,
+              body: 'privacy_referral_body'.tr,
+            ),
+            _LegalSection(
+              title: 'privacy_nationality_title'.tr,
+              body: 'privacy_nationality_body'.tr,
+            ),
             _LegalSection(
               title: 'privacy_s6_title'.tr,
               body: 'privacy_s6_body'.tr,
@@ -133,7 +153,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'last_updated_september_2026'.tr,
+              'last_updated_october_2026'.tr,
               style: TextStyle(fontSize: 13, color: context.kpb.textMuted),
             ),
             const SizedBox(height: KpbSpacing.lg),
@@ -193,6 +213,17 @@ class TermsOfServiceScreen extends StatelessWidget {
                   '• Ne pas tenter d\'accéder de manière non autorisée aux systèmes de KPB Education\n'
                   '• Respecter les autres utilisateurs dans les espaces communautaires\n'
                   '• Ne pas utiliser l\'application à des fins commerciales non autorisées',
+            ),
+            // Communauté (charte en quatre règles) et compétition des
+            // ambassadeurs (renvoi au règlement). Rédigé le 18/10/2026 — à
+            // relire par le propriétaire avant soumission.
+            _LegalSection(
+              title: 'terms_community_title'.tr,
+              body: 'terms_community_body'.tr,
+            ),
+            _LegalSection(
+              title: 'terms_competition_title'.tr,
+              body: 'terms_competition_body'.tr,
             ),
             _LegalSection(
               title: 'terms_s7_title'.tr,

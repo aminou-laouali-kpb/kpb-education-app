@@ -2,8 +2,11 @@
 
 Compétition de **novembre 2026** : du 1er au 10/11 inclus, heure d'Afrique de l'Ouest
 (Africa/Lagos, UTC+1), prix 100 000 / 50 000 / 30 000 FCFA, villes Maradi, Niamey, Cotonou,
-Abidjan, Douala (pilotables). Décisions du propriétaire du 17/10/2026. Règlement (brouillon) :
-`docs/reglement-competition-ambassadeurs-novembre-2026.md`.
+Abidjan, Douala (pilotables). Décisions du propriétaire du 17/10/2026, complétées le
+18/10/2026 (versement sous 7 jours, prix perdu après 15 jours et passé au suivant, résultats le
+17 novembre 2026, droit des Émirats arabes unis (Dubaï), proches de l'équipe exclus, pièce
+d'identité au versement, empreintes 180 jours). Règlement (texte arrêté le 18/10/2026, à relire
+par le propriétaire avant publication) : `docs/reglement-competition-ambassadeurs-novembre-2026.md`.
 
 **Tout fonctionne avec l'app installée (2.3.0, build 56), sans nouvelle build** : le comptage
 est serveur, la gestion est dans la console admin, le classement est une page web.
@@ -125,8 +128,19 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
 3. **Valider le podium** : fige les lauréats (nom public, montant, bénéficiaire = **parent pour
    un mineur**). Tant qu'aucun versement n'est noté, on peut revalider ; « Rouvrir » n'est plus
    possible.
-4. Verser par Wave, puis **Noter le versement** : référence Wave, date, bénéficiaire. Le serveur
-   refuse « l'ambassadeur » comme bénéficiaire d'un lauréat mineur.
+4. Demander la **pièce d'identité** du lauréat (du parent pour un mineur), verser par Wave **dans
+   les 7 jours** qui suivent la validation des résultats, puis **Noter le versement** : référence
+   Wave, date, bénéficiaire. Le serveur refuse « l'ambassadeur » comme bénéficiaire d'un lauréat
+   mineur. Lauréat injoignable ou sans informations de versement **15 jours** après la validation :
+   il perd son prix, qui **passe au suivant** du classement (décisions du propriétaire,
+   18/10/2026). Mécanique : retirer le lauréat (« Retirer », motif obligatoire), puis **Valider le
+   podium** de nouveau — le recalcul fait monter le 4e en 3e, etc. **Limite du code** : le serveur
+   refuse de revalider le podium dès qu'**un** versement est noté (« Un versement est déjà noté :
+   podium figé ») ; la réattribution d'un prix perdu **après** un premier versement noté n'est pas
+   codée. D'ici un correctif, attendre la fin du délai de 15 jours (ou la confirmation de tous les
+   lauréats) avant de noter le premier versement, ou traiter la réattribution hors outil avec une
+   trace écrite. À trancher avant le 17 novembre 2026.
+   Les résultats définitifs sont annoncés le **17 novembre 2026**.
 5. **Clore** : résultats définitifs, plus aucun recalcul ; la page publique retire la mention
    « provisoire ».
 6. **Export CSV** (classement ou filleuls) pour archive — fichiers à données personnelles, à
@@ -163,8 +177,8 @@ espace « cash »**, le classement **remplace** l'écran de candidature quand il
 non-participant garde la candidature, sans rien de promis (l'API ne lui donne pas le slug, l'app
 ne le code pas en dur : pas de lien vers un classement public). Aucun montant n'est affiché dans
 l'app (ni prix, ni commission) ; la mention « Organisateur : KPB Global L.L.C-FZ. Apple et Google
-ne sont ni organisateurs ni partenaires de cette compétition. » figure en pied d'écran — texte
-À VALIDER (propriétaire).
+ne sont ni organisateurs ni partenaires de cette compétition. » figure en pied d'écran (texte
+retenu le 18/10/2026, gardé par `test/features/referral/ambassador_competition_screen_test.dart`).
 
 **Ordre d'ouverture conseillé** — À VALIDER (propriétaire) — (après la 57 à 100 % sur les deux boutiques, et la politique de
 confidentialité / la Data safety à jour — `docs/release-57-store-pack.md` §4 et §5) :
@@ -185,7 +199,7 @@ conteneur `api` ; l'app se replie au prochain démarrage. La recette appareil es
 ## 9. Exploitation et données
 
 - Conservation des empreintes anti-fraude : 180 jours (purge quotidienne à 03 h 17), durée
-  **À VALIDER (propriétaire)**. Autres données de campagne : tant que le compte existe ;
+  **validée par le propriétaire le 18/10/2026**. Autres données de campagne : tant que le compte existe ;
   suppression du compte → participation, filleul et empreintes purgés (un prix versé garde sa
   trace, nom public figé). Voir `docs/data-inventory.md` §6.
 - Toutes les actions de l'équipe écrivent un `AdminAuditEvent` (`purposeCode =

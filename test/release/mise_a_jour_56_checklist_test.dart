@@ -24,11 +24,11 @@ List<String> _blocks(String doc) => RegExp(r'```[a-z]*\n(.*?)```', dotAll: true)
     .map((m) => m.group(1)!)
     .toList();
 
-({String name, String build}) _shipping() {
-  final m = RegExp(r'^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$', multiLine: true)
-      .firstMatch(_read('pubspec.yaml'))!;
-  return (name: m.group(1)!, build: m.group(2)!);
-}
+/// La version que la checklist de la 56 décrit. Depuis la préparation de la 57
+/// (18/10/2026), `pubspec.yaml` porte `2.3.1+57` : ce test ne lit plus la
+/// version du dépôt, il garde le document de la 56 tel qu'il doit rester
+/// (`mise_a_jour_57_checklist_test.dart` garde désormais la version posée).
+const ({String name, String build}) _documented = (name: '2.3.0', build: '56');
 
 /// Les blocs de code AVEC leur position dans le document : l'ordre des commandes
 /// se compare entre COMMANDES, jamais entre une commande et une mention en prose
@@ -74,9 +74,9 @@ void main() {
 
   group('La checklist de la 56', () {
     final doc = _read(path);
-    final shipping = _shipping();
+    const shipping = _documented;
 
-    test('porte la version de pubspec.yaml et plus aucun contrôle sur 55', () {
+    test('porte la version de la 56 et plus aucun contrôle sur 55', () {
       expect(shipping.build, '56');
       expect(doc, contains('${shipping.name} (${shipping.build})'));
       expect(doc, contains('FLUTTER_BUILD_NUMBER=${shipping.build}'));

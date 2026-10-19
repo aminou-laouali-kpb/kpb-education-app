@@ -69,6 +69,8 @@ describe('ProfilesService — account deletion & export', () => {
     'scholarshipMatchRun',
     'scholarshipAlertSubscription',
     'assistBridgeEvent',
+    // Notifications in-app : lues par l'export (la suppression passe par la cascade).
+    'userNotification',
     'referralCampaignParticipant',
     'referralCampaignReferral',
     'referralAttributionSignal',
@@ -449,6 +451,70 @@ describe('ProfilesService — account deletion & export', () => {
     // Bot « Passerelle » (C3 bis) : les besoins repérés et les suggestions.
     // Clé présente même vide.
     expect((out as { assistBridgeEvents?: unknown }).assistBridgeEvents).toEqual([]);
+    // Notifications in-app (`UserNotification`) : clé présente même vide.
+    expect((out as { notifications?: unknown }).notifications).toEqual([]);
+  });
+
+  it('exports in-app notifications without operational push internals', async () => {
+    const { client } = makeFakePrisma({ id: 'user-1', email: 'a@b.com' });
+    const queries: Array<{ where?: unknown; select?: Record<string, unknown> }> = [];
+    const row = {
+      id: 'notif-1',
+      kind: 'scholarship_opened',
+      scholarshipId: 'sch-1',
+      cycleId: 'cyc-1',
+      titleFr: 'La bourse est ouverte',
+      titleEn: 'The scholarship is open',
+      bodyFr: 'Tu peux candidater.',
+      bodyEn: 'You can apply.',
+      route: '/scholarships/sch-1',
+      data: { notificationKey: 'scholarship_opened' },
+      createdAt: new Date('2026-10-18T08:00:00Z'),
+      readAt: null,
+      pushedAt: new Date('2026-10-18T08:00:05Z'),
+      pushStatus: 'accepted',
+    };
+    client.userNotification = {
+      findMany: async (args: { where?: unknown; select?: Record<string, unknown> }) => {
+        queries.push(args);
+        return [row];
+      },
+    };
+    const prisma = {
+      execute: async (fn: (c: unknown) => unknown) => fn(client),
+    } as unknown as PrismaService;
+
+    const out = (await new ProfilesService(prisma, fakeStorage).exportMe('user-1')) as {
+      notifications?: Array<Record<string, unknown>>;
+    };
+
+    expect(queries).toHaveLength(1);
+    expect(queries[0].where).toEqual({ userId: 'user-1' });
+    const selected = Object.keys(queries[0].select ?? {});
+    for (const field of ['kind', 'titleFr', 'bodyEn', 'route', 'readAt', 'pushedAt', 'createdAt']) {
+      expect(selected).toContain(field);
+    }
+    // Détails d'exploitation du worker d'envoi : jamais dans l'export.
+    for (const internal of [
+      'userId',
+      'dedupeKey',
+      'pushLockedBy',
+      'pushLockedUntil',
+      'pushLastError',
+      'pushBatchId',
+      'pushAttempts',
+      'pushNotBefore',
+      'pushProvider',
+    ]) {
+      expect(selected).not.toContain(internal);
+    }
+    expect(out.notifications).toHaveLength(1);
+    expect(out.notifications?.[0]).toMatchObject({
+      id: 'notif-1',
+      kind: 'scholarship_opened',
+      titleFr: 'La bourse est ouverte',
+      pushStatus: 'accepted',
+    });
   });
 
   it('never puts the avatar storage key in the GDPR export', async () => {

@@ -413,7 +413,7 @@ export class AssistBridgeService {
     return 'sent';
   }
 
-  /** Purge des événements au-delà de la durée de conservation (12 mois, À VALIDER). */
+  /** Purge des événements au-delà de la durée de conservation (12 mois, validés le 18/10/2026). */
   async purge(now: Date = new Date()): Promise<number> {
     const before = new Date(now.getTime() - ASSIST_BRIDGE_RETENTION_DAYS * DAY_MS);
     const result = await this.prisma.execute((db) =>

@@ -1,9 +1,11 @@
 # Règlement — Compétition des ambassadeurs KPB Education (novembre 2026)
 
-> **BROUILLON — à faire valider par le propriétaire avant publication.** Les points
-> marqués « À VALIDER (propriétaire) » ne sont pas tranchés. Une fois validé, ce texte est
-> collé dans la campagne (champ « Règlement ») ou publié à une adresse https donnée dans
-> « Lien du règlement » : la page publique du classement affiche alors le bouton « Lire le
+> **Texte arrêté par les décisions du propriétaire du 18/10/2026** (versement, délais, date
+> des résultats, droit applicable, réclamations, exclusions, pièce d'identité, fiscalité,
+> conservation des empreintes) — rédigé le 18/10/2026, **à relire par le propriétaire avant
+> publication**. Une fois relu, ce texte est collé dans la campagne (champ « Règlement ») ou
+> publié à une adresse https donnée dans « Lien du règlement » : la page publique du
+> classement et l'écran « Compétition » de l'application affichent alors le bouton « Lire le
 > règlement ».
 
 ## 1. Organisateur
@@ -34,8 +36,8 @@ La compétition se déroule **du 1er novembre 2026 à 00 h 00 au 10 novembre 202
   par l'équipe KPB avant le classement. Sans cette autorisation vérifiée, l'ambassadeur
   mineur n'apparaît pas au classement et ne peut pas recevoir de prix. Si l'âge n'est pas
   connu, l'équipe le confirme avant de classer.
-- Les membres de l'équipe KPB ne participent pas. À VALIDER (propriétaire) : exclusion des
-  proches de l'équipe.
+- Les membres de l'équipe KPB ne participent pas, ni leurs proches (famille proche,
+  conjoints) (décision du propriétaire, 18/10/2026).
 
 ## 4. Comment on gagne des points
 
@@ -96,22 +98,24 @@ saisies suivantes sont refusées temporairement (le filleul réessaie plus tard)
 | 2e | 50 000 FCFA |
 | 3e | 30 000 FCFA |
 
-- Les prix sont versés par **Wave** (ou autre moyen convenu) dans les **À VALIDER
-  (propriétaire) : délai** jours qui suivent la validation des résultats.
+- Les prix sont versés par **Wave** (ou autre moyen convenu) dans les **7 jours** qui
+  suivent la validation des résultats (décision du propriétaire, 18/10/2026).
 - **Pour un ambassadeur mineur, le prix est versé à son parent** (ou représentant légal)
   ayant signé l'autorisation.
 - Un lauréat qui ne peut pas être joint ou ne fournit pas les informations de versement
-  dans un délai de **À VALIDER (propriétaire)** jours perd son prix. À VALIDER
-  (propriétaire) : le prix est-il alors attribué au suivant ?
-- Les prix ne sont ni échangeables ni cessibles. À VALIDER (propriétaire) : fiscalité et
-  pièces d'identité demandées au versement.
+  dans un délai de **15 jours** perd son prix ; le prix **passe alors au suivant** du
+  classement (le 4e devient 3e, et ainsi de suite) (décision du propriétaire, 18/10/2026).
+- Au versement, l'équipe KPB demande une **pièce d'identité** du lauréat, ou du parent
+  (représentant légal) pour un lauréat mineur.
+- Les prix ne sont ni échangeables ni cessibles. La fiscalité éventuelle du prix est à la
+  charge du lauréat (décision du propriétaire, 18/10/2026).
 
 ## 8. Résultats
 
 À la fin de la compétition, le classement est gelé, l'équipe vérifie les filleuls et les
 autorisations parentales, puis valide le podium. Les résultats définitifs remplacent alors
-le classement provisoire sur la même page. À VALIDER (propriétaire) : date d'annonce des
-résultats.
+le classement provisoire sur la même page. Les résultats définitifs sont annoncés le
+**17 novembre 2026** (décision du propriétaire, 18/10/2026).
 
 ## 9. Données personnelles
 
@@ -121,17 +125,23 @@ résultats.
   statut de chaque filleul, autorisation parentale (statut, date, qui l'a vérifiée),
   versements. Pour la lutte contre la fraude : des **empreintes chiffrées** de l'adresse IP
   et du téléphone au moment de la saisie du code (jamais l'adresse ni l'identifiant en
-  clair), conservées **180 jours** (À VALIDER (propriétaire)).
+  clair), conservées **180 jours** (durée validée par le propriétaire le 18/10/2026).
 - Tu peux demander l'accès à tes données ou leur suppression depuis l'application
   (Profil → exporter / supprimer mon compte) ou en écrivant à l'équipe. Supprimer son
   compte retire sa participation et ses filleuls de la compétition ; la trace d'un prix
   déjà versé est gardée pour la comptabilité.
-- À VALIDER (propriétaire) : mention de la compétition dans la politique de
-  confidentialité.
+- La compétition est décrite dans la politique de confidentialité (section « Parrainage et
+  compétition des ambassadeurs », rédigée le 18/10/2026, à relire par le propriétaire) :
+  `https://kpbeducation.cloud/confidentialite.html`.
 
 ## 10. Divers
 
 KPB peut modifier, suspendre ou arrêter la compétition en cas de problème technique ou de
 fraude massive ; les participants en sont informés sur la page du classement. La
-participation implique l'acceptation de ce règlement. À VALIDER (propriétaire) : droit
-applicable et contact pour les réclamations.
+participation implique l'acceptation de ce règlement.
+
+Ce règlement est régi par le **droit des Émirats arabes unis (Émirat de Dubaï)**. Toute
+réclamation s'adresse à l'équipe KPB à **contact@kpbeducation.com** (décision du
+propriétaire, 18/10/2026).
+
+Apple et Google ne sont ni organisateurs ni partenaires de cette compétition.

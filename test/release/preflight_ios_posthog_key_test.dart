@@ -413,7 +413,7 @@ void main() {
       expect(_expected('EXPECTED_BUILD'), shipping.group(2));
     });
 
-    test('un xcconfig de la build PRÉCÉDENTE (55) est refusé : attendu 56', () {
+    test('un xcconfig d\'une build PRÉCÉDENTE (N-1, N-2) est refusé', () {
       final key = _key(43);
       for (final stale in [expectedBuild() - 1, expectedBuild() - 2]) {
         final result =

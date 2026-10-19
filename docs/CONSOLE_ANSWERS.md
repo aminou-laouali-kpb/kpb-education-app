@@ -82,6 +82,7 @@ rouvre tout seul à la revue suivante.
 |---|---|---|---|
 | **LIV-09** | **Wikimedia Commons** est un destinataire | La politique publiée le nomme (IP + user-agent dès qu'un logo s'affiche). Ajouté au tableau §5. Reporter la **même réponse que pour YouTube** dans Data Safety (Play) et App Privacy (Apple). | Dev (fait ici) · Ops (consoles) |
 | **XC-06** | **Finalités commerciales** des coordonnées | La politique publiée dit que (a) les déclarations d'intérêt sont lues par l'équipe commerciale pour rappeler l'étudiant et (b) dès qu'un dossier est déposé, nom, e-mail, téléphone, WhatsApp et contact du tuteur partent par e-mail aux commerciaux. Or les tableaux §1.2 et §2 ne déclarent que « Fonctionnalité / Compte ». **⚠️ À TRANCHER avec le juridique** — recommandation : ajouter la finalité **Marketing** (Play : « Advertising or marketing » ; Apple : « Developer's Advertising or Marketing ») sur Nom, E-mail, Téléphone et listes d'intérêt, pour que les consoles ne contredisent pas la politique. Le sens de l'erreur est choisi : sur-déclarer coûte une ligne, sous-déclarer coûte une soumission (« declaration inconsistent with privacy policy »). | **Juridique** |
+| **XC-06** | **Suivi du 18/10/2026 — décision NON reportée** | Le propriétaire a décidé le 18/10/2026 de **ne pas déclarer de finalité « Marketing »** pour les coordonnées, **sous réserve** qu'aucun envoi promotionnel ne parte sans opt-in explicite. Vérification du code : la newsletter (Mautic) n'est alimentée qu'après consentement (`newsletter-sync.service.ts`, `resolveNewsletterAction`) ; le récapitulatif hebdomadaire est fermé par défaut et respecte la désinscription `weekly_digest` ; **mais les campagnes de l'admin** (`campaign-executor.service.ts`) envoient un modèle **libre** en push et par e-mail (Resend) à des audiences larges (`all_users`, `all_students`, pays, niveau…) **sans aucun filtre de consentement ni de désinscription** — le code permet donc un envoi promotionnel sans opt-in. En outre, la politique dit que l'équipe commerciale reçoit les coordonnées à chaque dossier déposé et rappelle les déclarants d'intérêt (ces derniers sur consentement). **Ne pas déclarer « pas de Marketing » en l'état** : soit ajouter la finalité (recommandation d'origine), soit réserver par écrit (ou par le code) les campagnes admin aux messages de service et/ou à un opt-in, puis trancher. **À VALIDER (propriétaire).** | **Propriétaire** |
 | **XC-06** | « Langue du consentement » | Corrigé §1.2 : `EefInterest` n'a pas de colonne de langue. Soit retirer l'affirmation (fait), soit ajouter `consentLocale` avec une `eef-consent-v2` — **non fait**, voir `docs/eef-consent-v1.md`. | Juridique + Dev |
 | **XC-04** | **Applications gouvernementales** (Play → App content → « Government apps ») | L'app communique des informations d'État (date d'ouverture de la campagne ; la 56 n'affiche **plus** de suspension d'un pays — retirée par #324 et #326). Répondre : **l'app n'est pas une application gouvernementale et ne représente aucune entité gouvernementale**. La description de la fiche doit porter la **mention de non-affiliation** et la **source officielle** : texte prêt, **pour la 56**, dans `docs/release-56-store-pack.md` §4 (FR et EN, sans « suspensions » : la 56 n'en affiche plus ; `docs/release-54-store-pack.md` §4 et `docs/release-55-store-pack.md` §4 les citent encore et ne se collent plus). Côté Apple, vérifier la guideline 5.2.1 (usage du nom « Campus France » — cité en corps de texte seulement, jamais en enseigne : `eef_naming_test`). | Contenu KPB + Ops |
 | **MISS-04** | **Classification d'âge** | L'App Store affiche **4+** alors que les CGU fixent **16 ans** et que l'app a **6 surfaces d'IA générative à texte libre**. Remplir le questionnaire App Store Connect **et** IARC avec les réponses du §3, **garder la preuve des réponses** (exigée par le §5 du contrat de soumission), consigner la décision D2 (`store-listing-copy.md` §9). | Ops + propriétaire |
@@ -98,6 +99,11 @@ les six faits suivants restent vrais sur le SHA final — l'un tombe, « inchang
 écoles, aucun formulaire ; (5) état de la visite local à l'appareil ; (6) aucune dépendance ni
 manifeste modifié. Preuves et commandes : pack §5 et §6. Restent à trancher **avant la
 soumission**, inchangés par la 56 : **XC-06** (finalité Marketing) et **D5** (prix FCFA affichés).
+*Suivi du 18/10/2026* : **D5 tranché** — les prix FCFA restent affichés **à titre indicatif**
+(préfixe « ~ », `CurrencyUtils.formatXof(approximate: true)`) et sont **payés hors store**
+(bouton WhatsApp vers un conseiller), ce que disent déjà les notes de revue (« their FCFA price is
+shown for information… payment is arranged outside the app ») ; **XC-06 reste ouvert** (§0quater,
+ligne « Suivi du 18/10/2026 »).
 
 ## 0sexies. Migration push OneSignal → FCM — ce qui change à la build qui la porte
 
@@ -140,10 +146,12 @@ preuves : `docs/release-57-store-pack.md` §4 et `docs/data-inventory.md` §6 bi
 | Apple — **Tracking** | **Non**, inchangé : l'Install Referrer est Android seulement, sert à préremplir un code de parrain, ne joint rien à des données tierces | — |
 | Classification d'âge | Inchangée : l'écran « Compétition ambassadeurs » n'ajoute ni interaction entre utilisateurs ni contenu généré ; un concours avec prix (Apple 5.3) se signale aux notes de revue (pack 57 §3) | — |
 
-⚠️ À TRANCHER (propriétaire) **avant la soumission** : la politique in-app et
-`web/public/confidentialite.html` doivent nommer l'identifiant d'installation (finalité
-anti-fraude), la lecture du lien d'invitation et la compétition — sinon « declaration inconsistent
-with privacy policy ». Textes non écrits ici : ce sont des textes juridiques.
+**Politique (18/10/2026)** : la politique in-app (FR/EN) et `web/public/confidentialite.html`
+nomment désormais l'identifiant d'installation (finalité prévention de la fraude), la lecture du
+lien d'invitation (préremplissage, rien de transmis sans confirmation), les empreintes HMAC
+(180 jours) et la compétition (section « Parrainage et compétition des ambassadeurs »). Texte
+rédigé le 18/10/2026, **à relire par le propriétaire avant l'archive** (le texte in-app est
+compilé) — sans quoi « declaration inconsistent with privacy policy ».
 
 ---
 
@@ -295,8 +303,9 @@ l'affiche, remplacer ces lignes :
 
 Sécurité des données (Play) / étiquettes (Apple) à la bascule : ajouter **Autre contenu généré par
 l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au compte,
-finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'export (§4). Mettre à
-jour CGU et politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) **avant**
+finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'export (§4). CGU et
+politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) : sections
+« Communauté d'entraide » **rédigées le 18/10/2026**, à relire par le propriétaire **avant**
 d'ouvrir. *À VALIDER (propriétaire) : délai de modération annoncé, adresse de contact affichée.*
 
 ### 3 ter. Bot « Passerelle » (C3 bis) — rien à changer tant que la source coach reste fermée
@@ -321,7 +330,7 @@ Personalization** selon la grille du moment. *À VALIDER (propriétaire).*
 |---|---|---|
 | Play → *Suppression des données possible ?* | **Oui — en app + URL web** | `DELETE /profiles/me` (`profiles.controller.ts:117`) |
 | Play / Apple → **URL de suppression de compte** | `https://kpbeducation.cloud/suppression-compte.html` | page + routeur Traefik + sonde uptime |
-| Export proposé | **Oui — en app, JSON partagé depuis l'app** (pas une archive téléchargeable) | `GET /profiles/me/export` (`profiles.controller.ts:110`) |
+| Export proposé | **Oui — en app, JSON partagé depuis l'app** (pas une archive téléchargeable) ; il comprend les notifications in-app depuis le 18/10/2026 (clé `notifications`) | `GET /profiles/me/export` (`profiles.controller.ts:110`) |
 | Suppression immédiate | **Oui dans le code** (hard-delete Supabase puis purge locale) | `profiles.controller.ts:115` |
 
 > ✅ **Point 3 — RÉSOLU.** Il était encore ouvert le 25/08 : `CounsellorReview`

@@ -481,7 +481,9 @@ class _BottomBar extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: KpbSpacing.xs),
               child: Text(
-                'scholarship_match_recap_complete_first'.tr,
+                flow.recapMissing.isEmpty
+                    ? 'scholarship_match_nationality_consent_required'.tr
+                    : 'scholarship_match_recap_complete_first'.tr,
                 style: KpbTextStyles.caption.copyWith(color: KpbColors.error),
               ),
             ),
