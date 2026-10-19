@@ -960,9 +960,17 @@ reviewed by the owner before the archive** (the in-app text is compiled).
   test summary and sends nothing without it. Play/Apple rows unchanged (`docs/release-57-store-pack.md`
   §4); "Sensitive Info: No" still to confirm with counsel — *À VALIDER (owner)*.
 - **XC-06 (Marketing purpose)**: the owner chose "no Marketing purpose" **provided** no
-  promotional message goes out without opt-in. The code does not guarantee it — admin campaigns
-  (`campaign-executor.service.ts`) send free-form push and e-mail to broad audiences with no
-  consent filter — so the forms must **not** claim "no Marketing" yet. *À VALIDER (owner).*
+  promotional message goes out without opt-in. *Fixes 57 (19/10/2026)*: admin campaigns now carry
+  a purpose (`promotional` by default); a promotional **e-mail** only goes to accounts that ticked
+  "KPB news and offers" (off by default; declared minors also need guardian consent) and carries a
+  one-click unsubscribe link + `List-Unsubscribe`; a promotional **push** honours the
+  `kpb_promotions` opt-out. Still not guaranteed by code: push is **opt-out**, not opt-in; the
+  purpose is a human choice in the admin; the sales team still receives contact details for
+  every filed case. The forms must **not** claim "no Marketing" until the owner decides on
+  these. *À VALIDER (owner).*
+- **Nationality withdrawal** (fixes 57): an "Erase my nationality" button in "My 10
+  scholarships" (`DELETE /profiles/me/nationality`) erases it and the test results computed
+  with it; e-mail to privacy@kpbeducation.com still works.
 - **D5 (FCFA prices)**: settled — indicative prices ("~" prefix), paid outside the stores via a
   counsellor on WhatsApp; consistent with the Notes for Review.
 - **GDPR export**: now includes in-app notifications (`notifications` key).

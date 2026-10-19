@@ -11,6 +11,33 @@ Purpose:
 - load the current user profile
 - progressively enrich profile data after onboarding
 
+### Correctifs 57 (19/10/2026)
+
+- **`promotionsEmailOptIn`** (booléen, lu et écrit par `GET`/`PATCH /profiles/me`) :
+  « Recevoir par e-mail les nouvelles et offres de KPB », **distinct** de
+  `scholarshipNewsletterOptIn`, **`false` par défaut** (migration
+  `20261026120000_campaign_purpose_promotions_consent`). Le serveur horodate
+  `promotionsEmailConsentedAt` au seul passage `false → true` (jamais exposé). Sa
+  **présence** dans la réponse dit à l'app 2.3.1 que le serveur connaît aussi la clé
+  `kpb_promotions` de `disabledNotificationTypes` : l'app n'affiche les deux lignes de
+  préférence et n'envoie le champ qu'alors (un serveur antérieur le refuserait :
+  `forbidNonWhitelisted`).
+- **`disabledNotificationTypes`** accepte la clé **`kpb_promotions`** : coupe le push des
+  campagnes de l'admin marquées `promotional` (voir « Admin notifications »).
+- **`DELETE /profiles/me/nationality`** (élève authentifié, **pas** derrière le drapeau
+  `scholarshipMatch`) : « Effacer ma nationalité ». Dans une transaction : `nationalityCode` et
+  `secondNationalityCode` à NULL, **suppression des runs « Mes 10 bourses »** de l'élève
+  (calculés avec la nationalité). Réponse `{nationalityCode: null, secondNationalityCode: null,
+  matchRunsDeleted}` ; idempotent ; 404 profil inconnu ; 503 sans base. Le prochain test
+  redemande la nationalité et la case de consentement.
+- **`GET` / `POST /public/promotions/unsubscribe?u=<id>&t=<jeton>`** — sans authentification,
+  30 requêtes / min / IP, `text/html`, `no-store`. Lien signé (HMAC-SHA256 de l'id du compte,
+  secret `KPB_PROMOTIONS_UNSUBSCRIBE_SECRET`, sinon `KPB_JWT_SECRET`) porté par chaque e-mail
+  promotionnel avec `List-Unsubscribe` / `List-Unsubscribe-Post: List-Unsubscribe=One-Click`
+  (RFC 8058). `GET` affiche une page avec un bouton (un antivirus qui suit le lien ne désinscrit
+  pas) ; `POST` passe `promotionsEmailOptIn` à `false` (idempotent). Jeton faux : page « Lien
+  invalide », rien n'est écrit. La page n'affiche aucune donnée du compte.
+
 ## Orientation
 
 - `POST /orientation/sessions`
@@ -1477,6 +1504,29 @@ Purpose:
 - manage grouped or specific campaigns across push, in-app, and email channels
 - attach critical campaign events to case timelines when needed
 
+### Finalité d'une campagne : `purpose` (correctifs 57, XC-06)
+
+`POST /admin/notifications/campaigns` et `POST /admin/notifications/campaigns/preview`
+acceptent **`purpose`** : `informational` (message de service : compte, dossier,
+maintenance, conditions) ou `promotional` (offre, mise en avant, annonce marketing).
+**Absent ⇒ `promotional`** — défaut prudent d'un texte libre, y compris pour les campagnes
+créées avant la migration (colonne `NotificationCampaign.purpose`, défaut `'promotional'`).
+`GET /admin/notifications/campaigns` renvoie `purpose`. Règle unique
+(`campaign-purpose.ts`), appliquée à l'aperçu ET à l'envoi :
+
+| Finalité | Push | E-mail |
+|---|---|---|
+| `informational` | inchangé | inchangé |
+| `promotional` | jamais vers un compte qui a `kpb_promotions` dans `disabledNotificationTypes` | seulement si `promotionsEmailOptIn = true` ; mineur **déclaré** (date de naissance connue, < 18 ans) : il faut **en plus** `guardianConsentedAt` ; pied de désinscription + `List-Unsubscribe` ; sans secret de signature, l'e-mail ne part pas (livraison `failed`) |
+
+Un canal fermé à un compte ne crée **aucune** livraison (rien n'est tenté). L'aperçu accepte
+aussi `channels` (défaut `["push"]`) et renvoie, en plus de `recipients` (taille de
+l'audience) : `purpose`, **`reachable`** (comptes qui recevront au moins un canal) et
+**`byChannel`** : `[{channel, eligible, blocked: {push_opted_out?, email_no_consent?,
+email_minor_without_guardian?}}]` — le nombre réel après filtres. La classification reste un
+choix humain fait dans l'admin : le code garantit le filtre d'une campagne marquée
+promotionnelle et le défaut prudent, pas l'honnêteté du choix.
+
 ## Audiences de campagne « Études en France » (LIV-24)
 
 Deux audiences de campagne s'ajoutent à `all_students`, `country`, etc. :
@@ -2101,7 +2151,8 @@ pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
   },
   "serverTime": "…",
   "cities": ["Maradi", "Niamey"],
-  "entries": [{"rank": 1, "name": "Aïcha K.", "city": "Niamey", "qualified": 12}]
+  "entries": [{"rank": 1, "name": "Aïcha K.", "city": "Niamey", "qualified": 12}],
+  "winners": [{"prizeRank": 1, "amountFcfa": 100000, "name": "Aïcha K.", "city": "Niamey"}]
 }
 ```
 
@@ -2109,6 +2160,10 @@ pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
   filleul. Seuls les participants **classables** apparaissent (actif, ambassadeur activé, âge
   connu, mineur avec autorisation parentale `verified`). `rank` est null à 0 qualifié.
   `provisional` vaut false seulement quand la campagne est `closed`.
+- **`winners`** (correctifs 57) : vide tant que la campagne n'est pas `closed` ; ensuite, les
+  lauréats **effectifs** (prix déclarés forfait réattribués compris) : rang du **prix**,
+  montant, nom public, ville — rien d'autre. `entries` garde l'ordre réel du classement. La page
+  `classement/` dessine le podium depuis `winners` quand il est servi.
 
 ### Qualification (calcul, `campaigns/campaign-qualification.ts`)
 
@@ -2137,14 +2192,15 @@ SuperAdmin. `Cache-Control: private, no-store`. Chaque écriture crée un `Admin
 | `GET /admin/referral-campaigns` | Liste + compteurs |
 | `POST /admin/referral-campaigns` | Création (`draft`) : `{slug, nameFr, nameEn, startDate, endDate, timeZone?, prizes?, rulesText?, rulesUrl?, eligibleCities?, eligibleCountries?, qualificationRule?}` — jours inclusifs lus dans `timeZone` (défaut `Africa/Lagos`). 409 slug pris |
 | `GET/PATCH /admin/referral-campaigns/:id` | Lecture / édition ; `live` et `frozen` : noms et règlement seulement (400 `campaign_field_locked`) |
-| `POST /admin/referral-campaigns/:id/transition` | `{action: launch\|freeze\|unfreeze\|validate_podium\|close}` ; 409 si impossible. `close` exige le podium validé ; `validate_podium` refusé après un versement |
+| `POST /admin/referral-campaigns/:id/transition` | `{action: launch\|freeze\|unfreeze\|validate_podium\|close}` ; 409 si impossible. `close` exige le podium validé ; `validate_podium` refusé après un versement (après un premier versement, un prix perdu se réattribue par `…/prizes/:rank/forfeit`) ; une revalidation saute les participants déclarés forfait |
 | `POST /admin/referral-campaigns/:id/recompute` | Recalcul : `{created, updated, deleted, unchanged, participantsUpdated, profilesStamped, skipped?}` |
 | `GET /admin/referral-campaigns/:id/leaderboard?city=&country=` | Classement complet (non classables compris, `unrankableReason`) |
 | `POST /admin/referral-campaigns/:id/participants` | `{ambassadorId \| email, publicName?, city?, country?, minorStatus?}` ; ambassadeur activé exigé, ville/pays éligibles, nom public sans e-mail ni numéro |
 | `PATCH /admin/referral-campaigns/:id/participants/:pid` | Nom public, ville, pays, statut (+ motif), âge, autorisation parentale (`verified` pose date et admin), note |
 | `GET /admin/referral-campaigns/:id/participants/:pid/referrals` | Filleuls : nom, e-mail, dates, statut, signaux, décision |
 | `POST /admin/referral-campaigns/:id/referrals/:rid/decision` | `{decision: validated\|excluded\|clear, reason?}` — motif requis pour exclure |
-| `GET /admin/referral-campaigns/:id/prizes` | Lauréats figés au podium |
+| `GET /admin/referral-campaigns/:id/prizes` | `{items, forfeits}` : lauréats (prix par rang, `participantId`) et prix déclarés forfait (`rank, participantId, publicNameSnapshot, amountFcfa, reason, forfeitedAt, forfeitedByAdminId, replacedByParticipantId`) |
+| `POST /admin/referral-campaigns/:id/prizes/:rank/forfeit` | **Correctifs 57** — « Déclarer le prix forfait et réattribuer » : `{participantId, reason}` (motif 3–500 caractères). Podium validé exigé (409) ; 404 sans prix ou sans lauréat à ce rang ; **409 si ce prix est déjà versé** ; 409 `prize_holder_changed` si le lauréat du rang n'est plus `participantId`. Le lauréat est marqué forfait (table `ReferralCampaignPrizeForfeit`) et ne pourra plus recevoir de prix dans la campagne, même à une revalidation ; les prix **non versés** à partir de ce rang passent, dans l'ordre, aux suivants **classés** sans prix ni forfait (le 3e monte au 2e prix, le 4e entre au 3e) ; un prix versé ne bouge jamais ; plus de candidat ⇒ prix non attribué (ligne retirée). Le classement (rangs) ne change pas. **Idempotent** : redéclarer le même lauréat rend `{items, forfeits}` sans rien écrire. Audit `referral_campaign.prize_forfeited` (purpose `referral_campaign`, motif dans `reasonCode`) dans la même transaction. Réponse : `{items, forfeits}` |
 | `POST /admin/referral-campaigns/:id/prizes/:rank/payout` | `{payoutReference, paidAt?, paidAmountFcfa?, recipient?, payoutMethod?, note?}` ; lauréat mineur → `recipient: parent` exigé |
 | `GET /admin/referral-campaigns/:id/export.csv?scope=leaderboard\|referrals` | CSV (BOM, cellules neutralisées) |
 | `GET /admin/ambassadors?search=&approved=yes\|no` | Ambassadeurs |

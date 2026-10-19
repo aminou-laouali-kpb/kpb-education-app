@@ -152,9 +152,33 @@ Lu dans `backend/prisma/schema.prisma`, `backend/src/modules/scholarship-match/`
 - À VALIDER (propriétaire) : le texte de la politique sur les mineurs de 16 et 17 ans
   (« accord déclaré d'un représentant légal ») face au droit des pays visés (Sénégal,
   Côte d'Ivoire, Niger…).
-- Non codé (constat) : une action « effacer ma nationalité / mes réponses au test » dans l'app
-  — le retrait du consentement passe aujourd'hui par une demande écrite, traitée à la main ;
-  et `NotificationDelivery` absente de l'export.
+- **Codé (correctifs 57, 19/10/2026)** : bouton « Effacer ma nationalité » dans l'espace
+  « Mes 10 bourses » (`scholarship_match_results_screen.dart`, avec confirmation) →
+  `DELETE /profiles/me/nationality` : `nationalityCode` et `secondNationalityCode` à NULL **et**
+  suppression des `ScholarshipMatchRun` de l'élève (calculés avec elle), dans une transaction ;
+  côté appareil, le dernier run, l'état et le brouillon du test sont effacés
+  (`ScholarshipMatchStore.eraseNationality`). Le retrait par écrit à privacy@kpbeducation.com
+  reste possible. Les autres réponses du test (diplôme, notes, langues…) restent sur le profil et
+  se modifient en refaisant le test. Constat inchangé : `NotificationDelivery` absente de
+  l'export.
+
+## 5 bis. Nouvelles et offres de KPB — campagnes de l'admin (correctifs 57, 19/10/2026)
+
+À relire par le propriétaire (XC-06, `docs/CONSOLE_ANSWERS.md` §0quater).
+
+| Donnée / règle | Où | Preuve |
+|---|---|---|
+| Finalité d'une campagne : `informational` / `promotional`, **défaut `promotional`** (y compris les campagnes antérieures) | `NotificationCampaign.purpose` (migration `20261026120000_campaign_purpose_promotions_consent`) ; choisie dans l'admin | `campaign-purpose.ts`, `admin/app/notifications/page.tsx` |
+| Consentement « Nouvelles et offres de KPB » par e-mail : **non par défaut**, distinct de la newsletter bourses | `UserProfile.promotionsEmailOptIn` + preuve horodatée `promotionsEmailConsentedAt` (posée au seul passage à oui) ; interrupteur Profil → Préférences (app 2.3.1, visible si le serveur annonce le champ) | `profiles.service.ts`, `profiles-fix57.spec.ts`, `campaign-consent.postgres.spec.ts` |
+| E-mail promotionnel | Part seulement si consentement ; mineur déclaré (< 18 ans, date connue) : accord du représentant légal (`guardianConsentedAt`) en plus ; pied + `List-Unsubscribe` avec lien signé `GET/POST /public/promotions/unsubscribe` (aucune donnée du compte affichée) ; sans secret, rien ne part | `campaign-executor.service.ts`, `promotions-unsubscribe*.ts` |
+| Push promotionnel | **Opt-out** : jamais vers un compte qui a `kpb_promotions` dans `disabledNotificationTypes` (Notifications → « Nouvelles et offres de KPB ») | `campaign-executor.service.spec.ts` |
+| Campagne `informational` | Aucun filtre de plus qu'avant | idem |
+| Ce qui part chez Resend | Adresse e-mail + contenu de la campagne + lien de désinscription (identifiant de compte et jeton HMAC dans l'URL) | §1, ligne Resend |
+| Aperçu de l'admin | Nombre réel par canal après filtres (`byChannel`, `reachable`) | `notifications.service.ts` |
+
+Non garanti par le code : la **classification** (choix humain) ; le push promotionnel n'est pas
+un opt-in explicite. Le consentement et sa date figurent dans `GET /profiles/me/export` (la
+ligne `UserProfile` y est exportée entière, hors clé de stockage de la photo).
 
 ## 6. Compétition ambassadeurs (relevé du 17/10/2026)
 
