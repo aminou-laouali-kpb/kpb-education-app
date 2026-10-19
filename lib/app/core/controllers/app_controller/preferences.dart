@@ -106,6 +106,15 @@ mixin _PreferencesMixin on _AppControllerBase {
         updateProfile(current.copyWith(wantsScholarshipNewsletter: optIn)));
   }
 
+  /// « Recevoir par e-mail les nouvelles et offres de KPB » (correctifs 57).
+  /// Le serveur horodate le consentement au passage à `true`. Sans effet tant
+  /// que le serveur n'a pas annoncé le champ ([UserProfile.serverKnowsPromotions]).
+  void setPromotionsEmailOptIn(bool optIn) {
+    final current = profile;
+    if (current == null || !current.serverKnowsPromotions) return;
+    unawaited(updateProfile(current.copyWith(promotionsEmailOptIn: optIn)));
+  }
+
   /// KPB-169: opt out of (or back into) ONE recurring notification family.
   /// Persisted via the profile PATCH; the other families are untouched, and a
   /// key this build doesn't know about is preserved rather than cleared.
@@ -189,6 +198,10 @@ mixin _PreferencesMixin on _AppControllerBase {
       'preferredCurrency': profile.preferredCurrency,
       'wantsScholarshipSupport': profile.wantsScholarshipSupport,
       'scholarshipNewsletterOptIn': profile.wantsScholarshipNewsletter,
+      // Seulement si le serveur l'a annoncé : un serveur antérieur refuserait
+      // le PATCH entier (`forbidNonWhitelisted`).
+      if (profile.promotionsEmailOptIn != null)
+        'promotionsEmailOptIn': profile.promotionsEmailOptIn,
       'disabledNotificationTypes': profile.disabledNotificationTypes,
       'availableDocuments': profile.availableDocuments,
       if (profile.monthlyBudgetEur != null)

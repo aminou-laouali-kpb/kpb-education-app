@@ -213,6 +213,19 @@ export class ProfilesService {
       stampNewsletterConsent = current ? !current.newsletterOptIn : false;
     }
 
+    // Même règle pour les nouvelles et offres de KPB (XC-06) : la preuve
+    // horodatée n'est posée qu'au vrai passage à `true`.
+    let stampPromotionsConsent = false;
+    if (input.promotionsEmailOptIn === true) {
+      const current = await this.prismaService.execute((prisma) =>
+        prisma.userProfile.findUnique({
+          where: { id },
+          select: { promotionsEmailOptIn: true },
+        }),
+      );
+      stampPromotionsConsent = current ? !current.promotionsEmailOptIn : false;
+    }
+
     // KPB-169: per-type notification opt-outs live in one array column. A
     // client may send the array directly, or the legacy per-type booleans —
     // which are folded into the array so the already-built app keeps working.
@@ -268,6 +281,12 @@ export class ProfilesService {
           ...(optOutTypes ? { disabledNotificationTypes: optOutTypes } : {}),
           ...(stampNewsletterConsent
             ? { newsletterConsentedAt: new Date() }
+            : {}),
+          ...(input.promotionsEmailOptIn !== undefined
+            ? { promotionsEmailOptIn: input.promotionsEmailOptIn }
+            : {}),
+          ...(stampPromotionsConsent
+            ? { promotionsEmailConsentedAt: new Date() }
             : {}),
           ...(input.fieldIds ? { fieldIds: input.fieldIds } : {}),
           ...(input.targetCountryIds
@@ -1768,6 +1787,9 @@ export class ProfilesService {
       preferredCurrency: p.preferredCurrency,
       wantsScholarshipSupport: p.wantsScholarship,
       scholarshipNewsletterOptIn: p.newsletterOptIn,
+      // Correctifs 57 : sa PRÉSENCE dit à l'app que ce serveur connaît aussi la
+      // clé `kpb_promotions` (les lignes de préférence ne s'affichent qu'alors).
+      promotionsEmailOptIn: p.promotionsEmailOptIn,
       disabledNotificationTypes: sanitizeOptOutTypes(
         p.disabledNotificationTypes,
       ),

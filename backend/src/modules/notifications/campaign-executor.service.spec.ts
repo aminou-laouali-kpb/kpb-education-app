@@ -16,10 +16,20 @@ describe('CampaignExecutorService', () => {
     channels: string[];
     template: Record<string, string> | null;
     pushOk?: boolean;
-    recipients?: Array<{ id: string; preferredLanguage: string }>;
+    recipients?: Array<{
+      id: string;
+      preferredLanguage: string;
+      email?: string | null;
+      disabledNotificationTypes?: string[];
+      promotionsEmailOptIn?: boolean;
+      birthDate?: Date | null;
+      guardianConsentedAt?: Date | null;
+    }>;
     audienceType?: string;
     filters?: Record<string, unknown>;
     route?: string | null;
+    purpose?: string;
+    mailEnabled?: boolean;
   }) {
     const recipients = options.recipients ?? [
       { id: 'u1', preferredLanguage: 'fr' },
@@ -35,6 +45,7 @@ describe('CampaignExecutorService', () => {
       channels: options.channels,
       linkedCaseId: null,
       route: options.route ?? null,
+      purpose: options.purpose,
       status: 'sending',
     };
     let campaignStatus = campaign.status;
@@ -90,16 +101,35 @@ describe('CampaignExecutorService', () => {
     const push = {
       isConfigured: true,
       sendToUser: async (
-        _userId: string,
+        userId: string,
         _title: string,
         _body: string,
         data?: Record<string, unknown>,
       ) => {
         pushData.push(data);
+        pushedTo.push(userId);
         return options.pushOk ?? true;
       },
     } as unknown as PushSenderService;
-    const mail = { isEnabled: false } as unknown as CampaignMailService;
+    const mails: Array<{
+      to: string;
+      subject: string;
+      text: string;
+      options?: { headers?: Record<string, string> };
+    }> = [];
+    const mail = {
+      isEnabled: options.mailEnabled ?? false,
+      send: async (
+        to: string,
+        subject: string,
+        text: string,
+        opts?: { headers?: Record<string, string> },
+      ) => {
+        mails.push({ to, subject, text, options: opts });
+        return true;
+      },
+    } as unknown as CampaignMailService;
+    const pushedTo: string[] = [];
 
     return {
       service: new CampaignExecutorService(prisma, push, mail),
@@ -107,6 +137,8 @@ describe('CampaignExecutorService', () => {
       status: () => campaignStatus,
       profileQueries: () => profileQueries,
       pushData: () => pushData,
+      pushedTo: () => pushedTo,
+      mails: () => mails,
     };
   }
 
@@ -368,6 +400,119 @@ describe('CampaignExecutorService', () => {
       const where = h.profileQueries().at(-1) as Record<string, any>;
       expect(where.eefInterest).toEqual({ isNot: null });
       expect(where.NOT.OR).toHaveLength(1);
+    });
+  });
+
+  // ── Correctifs 57 (XC-06) : finalité et consentement ──────────────────────
+  describe('finalité promotionnelle (défaut)', () => {
+    const previous = process.env.KPB_JWT_SECRET;
+    const previousDedicated = process.env.KPB_PROMOTIONS_UNSUBSCRIBE_SECRET;
+    beforeEach(() => {
+      process.env.KPB_JWT_SECRET = 'jwt-secret';
+      delete process.env.KPB_PROMOTIONS_UNSUBSCRIBE_SECRET;
+    });
+    afterAll(() => {
+      if (previous === undefined) delete process.env.KPB_JWT_SECRET;
+      else process.env.KPB_JWT_SECRET = previous;
+      if (previousDedicated !== undefined) {
+        process.env.KPB_PROMOTIONS_UNSUBSCRIBE_SECRET = previousDedicated;
+      }
+    });
+
+    const people = [
+      // Majeur, consentant.
+      {
+        id: 'yes',
+        preferredLanguage: 'fr',
+        email: 'yes@example.test',
+        promotionsEmailOptIn: true,
+        birthDate: new Date('2000-01-01T00:00:00Z'),
+      },
+      // N'a jamais consenti, a coupé le push promotionnel.
+      {
+        id: 'no',
+        preferredLanguage: 'fr',
+        email: 'no@example.test',
+        promotionsEmailOptIn: false,
+        disabledNotificationTypes: ['kpb_promotions'],
+      },
+      // Mineur consentant SANS accord du représentant légal.
+      {
+        id: 'minor',
+        preferredLanguage: 'en',
+        email: 'minor@example.test',
+        promotionsEmailOptIn: true,
+        birthDate: new Date('2012-01-01T00:00:00Z'),
+      },
+    ];
+
+    it('sans finalité déclarée : aucun e-mail sans consentement, aucun push vers qui l’a coupé', async () => {
+      const { service, deliveries, pushedTo, mails } = makeService({
+        channels: ['push', 'email'],
+        template: TEMPLATE,
+        recipients: people,
+        mailEnabled: true,
+      });
+      await service.execute('c1');
+      expect(pushedTo().sort()).toEqual(['minor', 'yes']);
+      expect(mails().map((m) => m.to)).toEqual(['yes@example.test']);
+      // Rien n'est même mis en file pour un canal fermé.
+      expect(
+        deliveries()
+          .map((d) => `${d.recipientId}:${d.channel}`)
+          .sort(),
+      ).toEqual(['minor:push', 'yes:email', 'yes:push']);
+    });
+
+    it('chaque e-mail promotionnel porte un lien de désinscription et List-Unsubscribe', async () => {
+      const { service, mails } = makeService({
+        channels: ['email'],
+        template: TEMPLATE,
+        recipients: people,
+        mailEnabled: true,
+        purpose: 'promotional',
+      });
+      await service.execute('c1');
+      expect(mails()).toHaveLength(1);
+      const [mail] = mails();
+      expect(mail.text.startsWith('Corps\n\n')).toBe(true);
+      expect(mail.text).toMatch(
+        /Te désinscrire en un clic : https:\/\/api\.kpbeducation\.cloud\/api\/public\/promotions\/unsubscribe\?u=yes&t=/,
+      );
+      expect(mail.options?.headers?.['List-Unsubscribe']).toMatch(/^<https:\/\/.+u=yes&t=.+>$/);
+      expect(mail.options?.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+    });
+
+    it('sans secret pour signer le lien : l’e-mail promotionnel ne part pas', async () => {
+      delete process.env.KPB_JWT_SECRET;
+      const { service, deliveries, mails, status } = makeService({
+        channels: ['email'],
+        template: TEMPLATE,
+        recipients: people,
+        mailEnabled: true,
+      });
+      await service.execute('c1');
+      expect(mails()).toHaveLength(0);
+      expect(deliveries()).toEqual([{ ...deliveries()[0], recipientId: 'yes', status: 'failed' }]);
+      expect(status()).toBe('failed');
+    });
+
+    it('une campagne d’information n’est pas filtrée et n’ajoute pas de pied promotionnel', async () => {
+      const { service, pushedTo, mails } = makeService({
+        channels: ['push', 'email'],
+        template: TEMPLATE,
+        recipients: people,
+        mailEnabled: true,
+        purpose: 'informational',
+      });
+      await service.execute('c1');
+      expect(pushedTo().sort()).toEqual(['minor', 'no', 'yes']);
+      expect(mails().map((m) => m.to).sort()).toEqual([
+        'minor@example.test',
+        'no@example.test',
+        'yes@example.test',
+      ]);
+      expect(mails().every((m) => !m.text.includes('désinscrire') && !m.options)).toBe(true);
     });
   });
 });

@@ -75,6 +75,7 @@ import { OneSignalSenderService } from './modules/notifications/onesignal-sender
 import { FcmSenderService } from './modules/notifications/fcm-sender.service';
 import { PushSenderService } from './modules/notifications/push-sender.service';
 import { PushOpensController } from './modules/notifications/push-opens.controller';
+import { PromotionsUnsubscribeController } from './modules/notifications/promotions-unsubscribe.controller';
 import { CampaignExecutorService } from './modules/notifications/campaign-executor.service';
 import { CampaignMailService } from './modules/notifications/campaign-mail.service';
 import { CampaignCronService } from './modules/notifications/campaign-cron.service';
@@ -258,6 +259,7 @@ import { SalonService } from './modules/salon/salon.service';
     ParcoursController,
     DeviceTokensController,
     PushOpensController,
+    PromotionsUnsubscribeController,
     AdminPushController,
     DocumentReviewController,
     AppConfigController,

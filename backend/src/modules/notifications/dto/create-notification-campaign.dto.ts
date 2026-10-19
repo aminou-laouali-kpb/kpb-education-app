@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 
 import { AUDIENCE_TYPES } from '../campaign-audience';
+import { CAMPAIGN_PURPOSES } from '../campaign-purpose';
 
 export class CreateNotificationCampaignDto {
   @IsOptional()
@@ -36,6 +37,15 @@ export class CreateNotificationCampaignDto {
   @IsOptional()
   @IsObject()
   filters?: Record<string, unknown>;
+
+  /**
+   * `informational` (message de service) ou `promotional` (offre, mise en
+   * avant, annonce marketing). Absent ⇒ `promotional` : le défaut prudent
+   * d'un texte libre (XC-06, `campaign-purpose.ts`).
+   */
+  @IsOptional()
+  @IsIn(CAMPAIGN_PURPOSES)
+  purpose?: 'informational' | 'promotional';
 
   @IsOptional()
   @IsArray()

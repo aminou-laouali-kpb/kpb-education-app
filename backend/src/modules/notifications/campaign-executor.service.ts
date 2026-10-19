@@ -10,7 +10,33 @@ import {
   resolveExcludedCountries,
 } from './campaign-audience';
 import { CampaignMailService } from './campaign-mail.service';
+import {
+  campaignChannelBlock,
+  type CampaignChannelBlock,
+  type CampaignPurpose,
+  parseCampaignPurpose,
+} from './campaign-purpose';
+import {
+  promotionsEmailFooter,
+  promotionsUnsubscribeUrl,
+} from './promotions-unsubscribe';
 import { PushSenderService } from './push-sender.service';
+
+/**
+ * Ce que l'exécuteur lit de chaque destinataire : de quoi lui écrire, et de
+ * quoi décider si une campagne promotionnelle a le droit de le faire
+ * (`campaign-purpose.ts`).
+ */
+const RECIPIENT_SELECT = {
+  id: true,
+  fullName: true,
+  email: true,
+  preferredLanguage: true,
+  disabledNotificationTypes: true,
+  promotionsEmailOptIn: true,
+  birthDate: true,
+  guardianConsentedAt: true,
+} as const;
 
 interface ResolvedTemplate {
   titleFr: string;
@@ -102,10 +128,39 @@ export class CampaignExecutorService {
         }
       : null;
 
-    const recipients = await this.resolveRecipients(
+    const audience = await this.resolveRecipients(
       campaign.audienceType,
       (campaign.filters as Record<string, unknown>) ?? {},
     );
+
+    // ── Finalité : qui a le droit de recevoir quoi (XC-06) ────────────────
+    //
+    // Une campagne promotionnelle ne crée AUCUNE livraison vers un compte qui
+    // n'y a pas droit sur ce canal (e-mail sans consentement, push coupé) :
+    // rien n'est tenté, donc rien ne peut partir par erreur plus bas. Les
+    // comptes qui n'ont plus aucun canal ouvert sortent de la liste.
+    const purpose = parseCampaignPurpose(campaign.purpose);
+    const now = new Date();
+    const blockedCounts: Partial<Record<CampaignChannelBlock, number>> = {};
+    const allowedChannels = new Map<string, string[]>();
+    for (const user of audience) {
+      const open = campaign.channels.filter((channel) => {
+        const block = campaignChannelBlock(purpose, channel, user, now);
+        if (block) blockedCounts[block] = (blockedCounts[block] ?? 0) + 1;
+        return block === null;
+      });
+      if (open.length > 0) allowedChannels.set(user.id, open);
+    }
+    const recipients = audience.filter((user) => allowedChannels.has(user.id));
+    const allowed = (userId: string, channel: string) =>
+      allowedChannels.get(userId)?.includes(channel) ?? false;
+    if (Object.keys(blockedCounts).length > 0) {
+      this.logger.log(
+        `Campaign ${campaignId} (${purpose}): consent filters removed ` +
+          `${JSON.stringify(blockedCounts)} channel delivery(ies).`,
+      );
+    }
+
     if (recipients.length === 0) {
       await this.prismaService.execute((prisma) =>
         prisma.notificationCampaign.update({
@@ -119,7 +174,7 @@ export class CampaignExecutorService {
     await this.prismaService.execute((prisma) =>
       prisma.notificationDelivery.createMany({
         data: recipients.flatMap((user) =>
-          campaign.channels.map((channel) => ({
+          allowedChannels.get(user.id)!.map((channel) => ({
             campaignId,
             caseId: campaign.linkedCaseId,
             recipientId: user.id,
@@ -158,6 +213,7 @@ export class CampaignExecutorService {
     let delivered = 0;
     if (campaign.channels.includes('push') && template) {
       for (const user of recipients) {
+        if (!allowed(user.id, 'push')) continue;
         const title =
           user.preferredLanguage === 'en' ? template.titleEn : template.titleFr;
         const body =
@@ -215,15 +271,20 @@ export class CampaignExecutorService {
     if (campaign.channels.includes('email') && template) {
       if (this.mailService.isEnabled) {
         for (const user of recipients) {
-          const subject =
-            user.preferredLanguage === 'en'
-              ? template.titleEn
-              : template.titleFr;
-          const text =
-            user.preferredLanguage === 'en' ? template.bodyEn : template.bodyFr;
-          const ok = user.email
-            ? await this.mailService.send(user.email, subject, text)
-            : false;
+          if (!allowed(user.id, 'email')) continue;
+          const lang = user.preferredLanguage === 'en' ? 'en' : 'fr';
+          const subject = lang === 'en' ? template.titleEn : template.titleFr;
+          const body = lang === 'en' ? template.bodyEn : template.bodyFr;
+          const mail = this.promotionalMail(purpose, user.id, body, lang);
+          const ok =
+            user.email && mail
+              ? await this.mailService.send(
+                  user.email,
+                  subject,
+                  mail.text,
+                  mail.headers ? { headers: mail.headers } : undefined,
+                )
+              : false;
           if (ok) emailsSent += 1;
 
           // Same honesty rule as push: record the real per-recipient outcome
@@ -295,7 +356,7 @@ export class CampaignExecutorService {
     );
 
     const line =
-      `Campaign ${campaignId} executed: ${recipients.length} recipients, ` +
+      `Campaign ${campaignId} (${purpose}) executed: ${recipients.length} recipients, ` +
       `${delivered} push sent, ${emailsSent} emails sent → ${finalStatus}.`;
     if (finalStatus === NotificationCampaignStatus.Failed) {
       this.logger.error(line);
@@ -303,6 +364,36 @@ export class CampaignExecutorService {
       this.logger.log(line);
     }
     return { enqueued: recipients.length };
+  }
+
+  /**
+   * Le texte (et les en-têtes) d'un e-mail de campagne. Promotionnel : pied
+   * de désinscription + `List-Unsubscribe` (RFC 8058) ; sans secret pour
+   * signer le lien, `null` — l'e-mail ne part pas plutôt que de partir sans
+   * issue. De service : le texte tel quel.
+   */
+  private promotionalMail(
+    purpose: CampaignPurpose,
+    userId: string,
+    body: string,
+    lang: 'fr' | 'en',
+  ): { text: string; headers?: Record<string, string> } | null {
+    if (purpose !== 'promotional') return { text: body };
+    const url = promotionsUnsubscribeUrl(userId);
+    if (!url) {
+      this.logger.error(
+        'Promotional campaign email NOT sent: no unsubscribe secret ' +
+          '(KPB_PROMOTIONS_UNSUBSCRIBE_SECRET or KPB_JWT_SECRET) to sign the link.',
+      );
+      return null;
+    }
+    return {
+      text: `${body}\n\n${promotionsEmailFooter(url, lang)}`,
+      headers: {
+        'List-Unsubscribe': `<${url}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    };
   }
 
   /** Public pour l'aperçu d'audience : une seule résolution, jamais deux. */
@@ -346,23 +437,13 @@ export class CampaignExecutorService {
           case 'all_users': {
             // Every account, including parents — no accountType filter.
             return prisma.userProfile.findMany({
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           case 'all_students': {
             return prisma.userProfile.findMany({
               where: { accountType: 'student' },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           // ── Les déclarants « Études en France » ───────────────────────
@@ -387,12 +468,7 @@ export class CampaignExecutorService {
                   ? { NOT: countryExclusion(excluded) }
                   : {}),
               },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           // Tous les étudiants, sauf des pays donnés. Le filtre est exigé en
@@ -408,12 +484,7 @@ export class CampaignExecutorService {
                 accountType: 'student',
                 NOT: countryExclusion(excluded),
               },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           case 'country': {
@@ -422,12 +493,7 @@ export class CampaignExecutorService {
             if (!countryId) return Promise.resolve([]);
             return prisma.userProfile.findMany({
               where: { countryOfResidence: countryId },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           case 'case_status': {
@@ -435,12 +501,7 @@ export class CampaignExecutorService {
             return prisma.userProfile
               .findMany({
                 where: { cases: { some: { status: status as any } } },
-                select: {
-                  id: true,
-                  fullName: true,
-                  email: true,
-                  preferredLanguage: true,
-                },
+                select: RECIPIENT_SELECT,
               })
               .catch(() => []);
           }
@@ -449,12 +510,7 @@ export class CampaignExecutorService {
             if (!userId) return Promise.resolve([]);
             return prisma.userProfile.findMany({
               where: { id: userId },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           // ── Persona (account type) ─────────────────────────────────────
@@ -464,12 +520,7 @@ export class CampaignExecutorService {
               where: {
                 accountType: accountType as 'student' | 'parent' | 'partner',
               },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           // ── Study level ────────────────────────────────────────────────
@@ -485,12 +536,7 @@ export class CampaignExecutorService {
                 accountType: 'student',
                 currentLevel: { in: levelArray as string[] },
               },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           // ── Country of residence ───────────────────────────────────────
@@ -498,12 +544,7 @@ export class CampaignExecutorService {
             const countryCode = filters['countryCode'] as string | undefined;
             return prisma.userProfile.findMany({
               where: { countryOfResidence: countryCode },
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                preferredLanguage: true,
-              },
+              select: RECIPIENT_SELECT,
             });
           }
           default:

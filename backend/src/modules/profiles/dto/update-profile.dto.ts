@@ -101,6 +101,13 @@ export class UpdateProfileDto {
   @IsBoolean()
   scholarshipNewsletterOptIn?: boolean;
 
+  // « Recevoir par e-mail les nouvelles et offres de KPB » (correctifs 57,
+  // XC-06) — distinct de la newsletter bourses. Le serveur horodate
+  // promotionsEmailConsentedAt au passage false→true.
+  @IsOptional()
+  @IsBoolean()
+  promotionsEmailOptIn?: boolean;
+
   // KPB-169: canonical per-type notification opt-outs. Unknown keys are
   // dropped server-side rather than rejected, so a newer client that knows one
   // extra type can still save the types this server does understand.

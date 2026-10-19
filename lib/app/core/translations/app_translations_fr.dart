@@ -714,6 +714,9 @@ const Map<String, String> appTranslationsFr = {
       '• Vous envoyer des notifications pertinentes (mises à jour de dossier, deadlines, ouverture et dates limites des bourses que vous suivez ; nouvelles bourses compatibles avec votre test seulement si vous l\'activez)\n'
       '• Pour le test « Mes 10 bourses » : comparer vos réponses aux conditions officielles des bourses (nationalité, âge, niveau, notes, langues, expérience) et vous montrer jusqu\'à 10 bourses compatibles ou à vérifier. Le résultat est indicatif : aucune décision n\'est prise à votre place, et seul l\'organisme de la bourse décide de votre candidature\n'
       '• Vous envoyer par email les nouvelles bourses d\'études disponibles, uniquement si vous y avez consenti (case à cocher — désinscription possible à tout moment depuis votre profil ou le lien de désinscription des emails)\n'
+      // Correctifs 57 (XC-06), 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Uniquement ce que le code fait (campaign-purpose.ts).
+      '• Vous envoyer des nouvelles et des offres de KPB Education : par e-mail uniquement si vous l\'avez accepté (Profil → « Nouvelles et offres de KPB », non coché par défaut ; pour un mineur de 16 ou 17 ans, il faut en plus l\'accord déclaré de son représentant légal), et par notification push tant que vous ne les avez pas coupées (réglages des notifications → « Nouvelles et offres de KPB »). Chaque e-mail contient un lien de désinscription en un clic, et vous pouvez vous désinscrire à tout moment depuis l\'app\n'
       '• Améliorer nos services via des statistiques agrégées et anonymisées\n'
       '• Communiquer avec vous dans le cadre de vos démarches\n'
       '• Vous rappeler au sujet d\'un espace ou d\'un accompagnement pour lequel vous avez déclaré votre intérêt, si vous l\'avez accepté au moment de le déclarer. Cette déclaration est lisible par nos conseillers et notre équipe commerciale, et vous pouvez la retirer à tout moment depuis l\'écran où vous l\'avez faite',
@@ -4289,6 +4292,24 @@ const Map<String, String> appTranslationsFr = {
   'assist_bridge_pref_subtitle':
       'Quand tu cherches de l\'aide, on te montre la fonction de l\'app qui peut t\'aider',
   'notif_cta_assist_bridge': 'Voir comment faire',
+  // Correctifs 57 (XC-06) — nouvelles et offres de KPB.
+  'kpb_promotions_pref_title': 'Nouvelles et offres de KPB',
+  'kpb_promotions_pref_subtitle':
+      'Annonces et offres de l\'équipe KPB (les messages sur ton compte et tes dossiers continuent)',
+  'profile_promotions_email': 'Nouvelles et offres de KPB par e-mail',
+  'profile_promotions_email_desc':
+      'Recevoir par e-mail les nouvelles et offres de KPB Education (désinscription à tout moment)',
+  // Correctifs 57 — « Effacer ma nationalité ».
+  'scholarship_match_erase_nationality': 'Effacer ma nationalité',
+  'scholarship_match_erase_nationality_title': 'Effacer ta nationalité ?',
+  'scholarship_match_erase_nationality_body':
+      'Ta nationalité sera effacée de ton profil, avec les résultats du test calculés avec elle. Pour revoir tes bourses, il faudra refaire le test.',
+  'scholarship_match_erase_nationality_cancel': 'Annuler',
+  'scholarship_match_erase_nationality_confirm': 'Effacer',
+  'scholarship_match_erase_nationality_done':
+      'Ta nationalité et tes résultats ont été effacés.',
+  'scholarship_match_erase_nationality_error':
+      'L\'effacement n\'a pas abouti. Vérifie ta connexion et réessaie.',
   // ── Parrainage côté app (build 57 / 2.3.1) ───────────────────────────────
   'onb_ref_title': 'Tu as un code de parrain ?',
   'onb_ref_subtitle':

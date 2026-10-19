@@ -1320,7 +1320,21 @@
     "colDeliveredAt": "Remis le",
     "colOpenedAt": "Ouverte le",
     "deliveriesEmpty": "Aucun envoi enregistré pour cette campagne pour le moment.",
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "purposeLabel": "Finalité",
+    "purpose_promotional": "Promotionnelle — offre, mise en avant, annonce marketing",
+    "purpose_informational": "Information de service — compte, dossier, maintenance",
+    "purposeHint_promotional": "Par défaut. E-mail : seulement aux comptes qui ont accepté « Nouvelles et offres de KPB » (et, pour un mineur, avec l'accord de son représentant légal), avec un lien de désinscription. Push : jamais vers ceux qui ont coupé « Nouvelles et offres de KPB ».",
+    "purposeHint_informational": "Réservé aux messages de service (compte, dossier, maintenance, conditions). Une offre ou une mise en avant est promotionnelle, même envoyée à peu de monde.",
+    "previewCta": "Aperçu des destinataires",
+    "previewAudience": "Audience : {n} compte(s)",
+    "previewReachable": "recevront au moins un canal : {n}",
+    "previewFiltered": "filtrés",
+    "previewFilterMissing": "Filtre exigé manquant : la campagne ne viserait personne.",
+    "previewError": "Aperçu impossible.",
+    "blocked_push_opted_out": "ont coupé les nouvelles et offres",
+    "blocked_email_no_consent": "sans consentement e-mail",
+    "blocked_email_minor_without_guardian": "mineurs sans accord du représentant légal"
   },
   "serviceSales": {
     "title": "Ventes de services",

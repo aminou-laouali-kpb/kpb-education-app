@@ -393,6 +393,12 @@ model UserProfile {
   newsletterOptIn               Boolean                        @default(false)
   newsletterConsentedAt         DateTime?
   newsletterSyncedOptIn         Boolean?
+  // « Recevoir par e-mail les nouvelles et offres de KPB » (correctifs 57,
+  // XC-06) : consentement DISTINCT de la newsletter bourses ci-dessus, défaut
+  // NON. Seul passe-droit des e-mails des campagnes « promotional » de l'admin.
+  // `promotionsEmailConsentedAt` : preuve horodatée du dernier opt-in.
+  promotionsEmailOptIn          Boolean                        @default(false)
+  promotionsEmailConsentedAt    DateTime?
   // KPB-169: the per-type notification opt-outs, as stable keys (see
   // src/common/notification-types.ts). A third type appeared, so — as the
   // previous note planned — the per-type booleans collapsed into one column.
@@ -957,6 +963,11 @@ model NotificationCampaign {
   linkedCaseId String?
   // Écran ouvert au tap (ex. `/scholarships/<id>`). Null = accueil.
   route        String?
+  // `informational` (message de service) | `promotional` (offre, mise en
+  // avant, annonce marketing). Défaut PRUDENT : `promotional` — e-mail aux
+  // seuls comptes qui ont consenti (`promotionsEmailOptIn`), push jamais aux
+  // comptes qui ont coupé `kpb_promotions` (correctifs 57, XC-06).
+  purpose      String                     @default("promotional")
   createdAt    DateTime                   @default(now())
   updatedAt    DateTime                   @updatedAt
   deliveries   NotificationDelivery[]

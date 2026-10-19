@@ -19,7 +19,7 @@ export class CampaignMailService {
     to: string,
     subject: string,
     text: string,
-    options?: { replyTo?: string },
+    options?: { replyTo?: string; headers?: Record<string, string> },
   ): Promise<boolean> {
     const resendKey = process.env.RESEND_API_KEY?.trim();
     if (!resendKey) return false;
@@ -37,6 +37,10 @@ export class CampaignMailService {
       text,
     };
     if (replyTo) payload.reply_to = replyTo;
+    // En-têtes ajoutés (ex. `List-Unsubscribe` des e-mails promotionnels).
+    if (options?.headers && Object.keys(options.headers).length > 0) {
+      payload.headers = options.headers;
+    }
 
     try {
       const response = await fetch('https://api.resend.com/emails', {

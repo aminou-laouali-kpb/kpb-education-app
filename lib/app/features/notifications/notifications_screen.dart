@@ -1021,6 +1021,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   subtitleKey: 'assist_bridge_pref_subtitle',
                 ),
               ],
+              // Nouvelles et offres de KPB (correctifs 57) : visible seulement
+              // si le serveur connaît la clé `kpb_promotions` — sinon il la
+              // retirerait à l'écriture et l'interrupteur reviendrait seul.
+              if (ctrl.profile?.serverKnowsPromotions ?? false) ...[
+                const SizedBox(height: 12),
+                _optOutRow(
+                  icon: Icons.campaign_outlined,
+                  type: NotificationOptOutType.kpbPromotions,
+                  titleKey: 'kpb_promotions_pref_title',
+                  subtitleKey: 'kpb_promotions_pref_subtitle',
+                ),
+              ],
               _matchAlertsRow(),
               const SizedBox(height: 12),
               Container(
