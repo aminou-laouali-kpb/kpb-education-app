@@ -167,6 +167,7 @@ class LocalAppRepository implements AppRepository {
       'wantsScholarshipSupport': profile.wantsScholarshipSupport,
       'wantsScholarshipNewsletter': profile.wantsScholarshipNewsletter,
       'promotionsEmailOptIn': profile.promotionsEmailOptIn,
+      'promotionsPushOptIn': profile.promotionsPushOptIn,
       'disabledNotificationTypes': profile.disabledNotificationTypes,
       'availableDocuments': profile.availableDocuments,
       // Consent timestamps + age gate must survive a cold start so we don't
@@ -210,6 +211,7 @@ class LocalAppRepository implements AppRepository {
       wantsScholarshipNewsletter:
           json['wantsScholarshipNewsletter'] as bool? ?? false,
       promotionsEmailOptIn: json['promotionsEmailOptIn'] as bool?,
+      promotionsPushOptIn: json['promotionsPushOptIn'] as bool?,
       // A snapshot written before KPB-169 carries the two booleans instead of
       // the list; read either shape so a cold start never loses a preference.
       disabledNotificationTypes: _optOutTypesFromSnapshot(json),

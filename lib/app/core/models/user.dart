@@ -60,6 +60,7 @@ class UserProfile {
     this.wantsScholarshipSupport = false,
     this.wantsScholarshipNewsletter = false,
     this.promotionsEmailOptIn,
+    this.promotionsPushOptIn,
     this.disabledNotificationTypes = const [],
     this.availableDocuments = const [],
     this.consentedAt,
@@ -111,6 +112,25 @@ class UserProfile {
 
   /// Le serveur connaît les préférences « nouvelles et offres de KPB ».
   bool get serverKnowsPromotions => promotionsEmailOptIn != null;
+
+  /// « Recevoir par notification les nouvelles et offres de KPB » (chantier
+  /// juridique 57, App Store 4.5.4) : OPT-IN explicite, NON par défaut,
+  /// distinct de l'e-mail. Un push promotionnel ne part qu'avec ce oui, et
+  /// tant que la clé `kpb_promotions` n'est pas coupée.
+  ///
+  /// `null` : le serveur ne connaît pas (encore) cet opt-in. L'app n'affiche
+  /// alors pas l'interrupteur et n'envoie pas le champ (un serveur antérieur
+  /// refuserait le PATCH entier en 400).
+  final bool? promotionsPushOptIn;
+
+  /// Le serveur exige (et connaît) l'opt-in du push promotionnel.
+  bool get serverKnowsPromotionsPush => promotionsPushOptIn != null;
+
+  /// L'élève reçoit les push promotionnels : opt-in donné ET clé
+  /// `kpb_promotions` non coupée. C'est l'état affiché par l'interrupteur.
+  bool get receivesPromotionsPush =>
+      promotionsPushOptIn == true &&
+      !disabledNotificationTypes.contains(NotificationOptOutType.kpbPromotions);
 
   /// KPB-169: the recurring notification families this student has opted OUT
   /// of, as stable keys ([NotificationOptOutType]). One list rather than one
@@ -197,6 +217,7 @@ class UserProfile {
     bool? wantsScholarshipSupport,
     bool? wantsScholarshipNewsletter,
     bool? promotionsEmailOptIn,
+    bool? promotionsPushOptIn,
     List<String>? disabledNotificationTypes,
     List<String>? availableDocuments,
     DateTime? consentedAt,
@@ -232,6 +253,7 @@ class UserProfile {
       wantsScholarshipNewsletter:
           wantsScholarshipNewsletter ?? this.wantsScholarshipNewsletter,
       promotionsEmailOptIn: promotionsEmailOptIn ?? this.promotionsEmailOptIn,
+      promotionsPushOptIn: promotionsPushOptIn ?? this.promotionsPushOptIn,
       disabledNotificationTypes:
           disabledNotificationTypes ?? this.disabledNotificationTypes,
       availableDocuments: availableDocuments ?? this.availableDocuments,

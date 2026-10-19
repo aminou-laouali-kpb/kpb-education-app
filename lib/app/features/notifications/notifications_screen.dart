@@ -1021,16 +1021,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   subtitleKey: 'assist_bridge_pref_subtitle',
                 ),
               ],
-              // Nouvelles et offres de KPB (correctifs 57) : visible seulement
-              // si le serveur connaît la clé `kpb_promotions` — sinon il la
-              // retirerait à l'écriture et l'interrupteur reviendrait seul.
-              if (ctrl.profile?.serverKnowsPromotions ?? false) ...[
+              // Nouvelles et offres de KPB par notification (chantier
+              // juridique 57, App Store 4.5.4) : OPT-IN explicite, désactivé
+              // par défaut, jamais coché à la place de l'élève, retrait à tout
+              // moment. Visible seulement si le serveur connaît l'opt-in —
+              // sinon il le refuserait et l'interrupteur reviendrait seul.
+              if (ctrl.profile?.serverKnowsPromotionsPush ?? false) ...[
                 const SizedBox(height: 12),
-                _optOutRow(
-                  icon: Icons.campaign_outlined,
-                  type: NotificationOptOutType.kpbPromotions,
-                  titleKey: 'kpb_promotions_pref_title',
-                  subtitleKey: 'kpb_promotions_pref_subtitle',
+                GetBuilder<AppController>(
+                  builder: (c) => _prefToggleRow(
+                    icon: Icons.campaign_outlined,
+                    titleKey: 'kpb_promotions_pref_title',
+                    subtitleKey: 'kpb_promotions_pref_subtitle',
+                    receive: c.profile?.receivesPromotionsPush ?? false,
+                    onReceiveChanged: c.setPromotionsPushOptIn,
+                    switchKey: const ValueKey<String>('notif-promotions-push'),
+                  ),
                 ),
               ],
               _matchAlertsRow(),
@@ -1198,6 +1204,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     required String subtitleKey,
     required bool receive,
     required ValueChanged<bool> onReceiveChanged,
+    Key? switchKey,
   }) {
     return Row(
       children: [
@@ -1236,7 +1243,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        Switch(value: receive, onChanged: onReceiveChanged),
+        Switch(key: switchKey, value: receive, onChanged: onReceiveChanged),
       ],
     );
   }

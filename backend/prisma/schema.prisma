@@ -399,6 +399,13 @@ model UserProfile {
   // `promotionsEmailConsentedAt` : preuve horodatée du dernier opt-in.
   promotionsEmailOptIn          Boolean                        @default(false)
   promotionsEmailConsentedAt    DateTime?
+  // « Nouvelles et offres de KPB » par NOTIFICATION (chantier juridique 57,
+  // App Store 4.5.4) : opt-in EXPLICITE, distinct de l'e-mail, défaut NON pour
+  // tout le monde, comptes existants compris. Un push promotionnel ne part
+  // qu'avec ce oui ET sans la clé `kpb_promotions` coupée.
+  // `promotionsPushConsentedAt` : preuve horodatée du dernier opt-in.
+  promotionsPushOptIn           Boolean                        @default(false)
+  promotionsPushConsentedAt     DateTime?
   // KPB-169: the per-type notification opt-outs, as stable keys (see
   // src/common/notification-types.ts). A third type appeared, so — as the
   // previous note planned — the per-type booleans collapsed into one column.
@@ -3811,6 +3818,10 @@ model CommunityReport {
   resolvedByName    String?
   resolutionNote    String?
   createdAt         DateTime              @default(now())
+  // Date de suppression du compte du signaleur (posée par la suppression du
+  // compte, juste avant le SET NULL) : le signalement orphelin est purgé
+  // 12 mois plus tard (`CommunityPurgeCronService`, chantier juridique 57).
+  reporterDeletedAt DateTime?
   reporter          CommunityMember?      @relation("communityReporter", fields: [reporterMemberId], references: [id], onDelete: SetNull)
   post              CommunityPost?        @relation(fields: [postId], references: [id], onDelete: Cascade)
   reply             CommunityReply?       @relation(fields: [replyId], references: [id], onDelete: Cascade)

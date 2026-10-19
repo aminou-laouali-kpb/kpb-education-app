@@ -4,15 +4,18 @@
  *
  * `promotional` est le DÉFAUT du formulaire, comme côté serveur : un texte
  * libre est réputé promotionnel tant que l'équipe ne dit pas le contraire.
- * Promotionnel ⇒ e-mail seulement aux comptes qui ont consenti, push jamais
- * vers ceux qui ont coupé « Nouvelles et offres de KPB ».
+ * Promotionnel ⇒ e-mail et push seulement aux comptes qui ont consenti (opt-in
+ * distinct par canal ; mineur : accord du représentant légal en plus), push
+ * jamais vers ceux qui ont coupé « Nouvelles et offres de KPB ».
  */
 export const CAMPAIGN_PURPOSES = ['promotional', 'informational'] as const;
 export type CampaignPurpose = (typeof CAMPAIGN_PURPOSES)[number];
 export const DEFAULT_CAMPAIGN_PURPOSE: CampaignPurpose = 'promotional';
 
 export type CampaignChannelBlock =
+  | 'push_no_consent'
   | 'push_opted_out'
+  | 'push_minor_without_guardian'
   | 'email_no_consent'
   | 'email_minor_without_guardian';
 
@@ -53,7 +56,9 @@ export function previewBody(input: {
 }
 
 const BLOCK_ORDER: CampaignChannelBlock[] = [
+  'push_no_consent',
   'push_opted_out',
+  'push_minor_without_guardian',
   'email_no_consent',
   'email_minor_without_guardian',
 ];

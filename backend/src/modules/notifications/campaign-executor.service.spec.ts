@@ -22,6 +22,7 @@ describe('CampaignExecutorService', () => {
       email?: string | null;
       disabledNotificationTypes?: string[];
       promotionsEmailOptIn?: boolean;
+      promotionsPushOptIn?: boolean;
       birthDate?: Date | null;
       guardianConsentedAt?: Date | null;
     }>;
@@ -31,9 +32,11 @@ describe('CampaignExecutorService', () => {
     purpose?: string;
     mailEnabled?: boolean;
   }) {
+    // Par défaut, deux comptes qui ont accepté le push promotionnel (la
+    // finalité par défaut est `promotional`, qui exige cet opt-in).
     const recipients = options.recipients ?? [
-      { id: 'u1', preferredLanguage: 'fr' },
-      { id: 'u2', preferredLanguage: 'fr' },
+      { id: 'u1', preferredLanguage: 'fr', promotionsPushOptIn: true },
+      { id: 'u2', preferredLanguage: 'fr', promotionsPushOptIn: true },
     ];
     let deliveries: Delivery[] = [];
     const profileQueries: unknown[] = [];
@@ -420,20 +423,22 @@ describe('CampaignExecutorService', () => {
     });
 
     const people = [
-      // Majeur, consentant.
+      // Majeur, consentant (e-mail ET push).
       {
         id: 'yes',
         preferredLanguage: 'fr',
         email: 'yes@example.test',
         promotionsEmailOptIn: true,
+        promotionsPushOptIn: true,
         birthDate: new Date('2000-01-01T00:00:00Z'),
       },
-      // N'a jamais consenti, a coupé le push promotionnel.
+      // A activé le push puis coupé `kpb_promotions` ; jamais d'e-mail.
       {
         id: 'no',
         preferredLanguage: 'fr',
         email: 'no@example.test',
         promotionsEmailOptIn: false,
+        promotionsPushOptIn: true,
         disabledNotificationTypes: ['kpb_promotions'],
       },
       // Mineur consentant SANS accord du représentant légal.
@@ -442,11 +447,20 @@ describe('CampaignExecutorService', () => {
         preferredLanguage: 'en',
         email: 'minor@example.test',
         promotionsEmailOptIn: true,
+        promotionsPushOptIn: true,
         birthDate: new Date('2012-01-01T00:00:00Z'),
+      },
+      // Compte d'une build sans l'interrupteur push (champ jamais posé) :
+      // opt-in absent = non (chantier juridique 57, App Store 4.5.4).
+      {
+        id: 'old',
+        preferredLanguage: 'fr',
+        email: 'old@example.test',
+        promotionsEmailOptIn: false,
       },
     ];
 
-    it('sans finalité déclarée : aucun e-mail sans consentement, aucun push vers qui l’a coupé', async () => {
+    it('sans finalité déclarée : ni e-mail ni push sans consentement, aucun push vers qui l’a coupé', async () => {
       const { service, deliveries, pushedTo, mails } = makeService({
         channels: ['push', 'email'],
         template: TEMPLATE,
@@ -454,14 +468,16 @@ describe('CampaignExecutorService', () => {
         mailEnabled: true,
       });
       await service.execute('c1');
-      expect(pushedTo().sort()).toEqual(['minor', 'yes']);
+      // Push : opt-in exigé ; le mineur sans accord du représentant légal et
+      // l'ancienne build (opt-in absent) ne reçoivent rien.
+      expect(pushedTo().sort()).toEqual(['yes']);
       expect(mails().map((m) => m.to)).toEqual(['yes@example.test']);
       // Rien n'est même mis en file pour un canal fermé.
       expect(
         deliveries()
           .map((d) => `${d.recipientId}:${d.channel}`)
           .sort(),
-      ).toEqual(['minor:push', 'yes:email', 'yes:push']);
+      ).toEqual(['yes:email', 'yes:push']);
     });
 
     it('chaque e-mail promotionnel porte un lien de désinscription et List-Unsubscribe', async () => {
@@ -506,10 +522,11 @@ describe('CampaignExecutorService', () => {
         purpose: 'informational',
       });
       await service.execute('c1');
-      expect(pushedTo().sort()).toEqual(['minor', 'no', 'yes']);
+      expect(pushedTo().sort()).toEqual(['minor', 'no', 'old', 'yes']);
       expect(mails().map((m) => m.to).sort()).toEqual([
         'minor@example.test',
         'no@example.test',
+        'old@example.test',
         'yes@example.test',
       ]);
       expect(mails().every((m) => !m.text.includes('désinscrire') && !m.options)).toBe(true);

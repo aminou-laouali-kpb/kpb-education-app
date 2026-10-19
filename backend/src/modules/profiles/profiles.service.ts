@@ -227,6 +227,19 @@ export class ProfilesService {
       stampPromotionsConsent = current ? !current.promotionsEmailOptIn : false;
     }
 
+    // Push promotionnel (chantier juridique 57, App Store 4.5.4) : même règle,
+    // preuve horodatée posée au seul vrai passage à `true`.
+    let stampPromotionsPushConsent = false;
+    if (input.promotionsPushOptIn === true) {
+      const current = await this.prismaService.execute((prisma) =>
+        prisma.userProfile.findUnique({
+          where: { id },
+          select: { promotionsPushOptIn: true },
+        }),
+      );
+      stampPromotionsPushConsent = current ? !current.promotionsPushOptIn : false;
+    }
+
     // KPB-169: per-type notification opt-outs live in one array column. A
     // client may send the array directly, or the legacy per-type booleans —
     // which are folded into the array so the already-built app keeps working.
@@ -288,6 +301,12 @@ export class ProfilesService {
             : {}),
           ...(stampPromotionsConsent
             ? { promotionsEmailConsentedAt: new Date() }
+            : {}),
+          ...(input.promotionsPushOptIn !== undefined
+            ? { promotionsPushOptIn: input.promotionsPushOptIn }
+            : {}),
+          ...(stampPromotionsPushConsent
+            ? { promotionsPushConsentedAt: new Date() }
             : {}),
           ...(input.fieldIds ? { fieldIds: input.fieldIds } : {}),
           ...(input.targetCountryIds
@@ -715,7 +734,8 @@ export class ProfilesService {
       // avec le profil, et avec elle publications (réponses des autres
       // comprises), réponses, « utile », mentions, suivis, blocages, charte,
       // sanctions, et les signalements VISANT ses contenus ou son profil ; ceux
-      // qu'il a RÉDIGÉS restent, sans auteur (SET NULL). On relève AVANT la
+      // qu'il a RÉDIGÉS restent, sans auteur (SET NULL), 12 mois au plus
+      // (`reporterDeletedAt`, purge quotidienne). On relève AVANT la
       // suppression les contenus d'autrui dont les compteurs vont bouger
       // (ses réponses et ses « utile »), recalculés APRÈS.
       const communityMember = await prisma.communityMember.findUnique({
@@ -985,6 +1005,13 @@ export class ProfilesService {
               prisma.forumModerationAction.updateMany({
                 where: { memberId: communityMemberId },
                 data: { memberId: null },
+              }),
+              // Signalements RÉDIGÉS : ils restent sans auteur (SET NULL à la
+              // suppression du profil, plus bas), datés ici pour la purge à
+              // 12 mois (`CommunityPurgeCronService`, chantier juridique 57).
+              prisma.communityReport.updateMany({
+                where: { reporterMemberId: communityMemberId },
+                data: { reporterDeletedAt: new Date() },
               }),
             ]
           : []),
@@ -1836,6 +1863,9 @@ export class ProfilesService {
       // Correctifs 57 : sa PRÉSENCE dit à l'app que ce serveur connaît aussi la
       // clé `kpb_promotions` (les lignes de préférence ne s'affichent qu'alors).
       promotionsEmailOptIn: p.promotionsEmailOptIn,
+      // Chantier juridique 57 : sa PRÉSENCE dit à l'app que ce serveur exige
+      // l'opt-in du push promotionnel (l'interrupteur ne s'affiche qu'alors).
+      promotionsPushOptIn: p.promotionsPushOptIn,
       disabledNotificationTypes: sanitizeOptOutTypes(
         p.disabledNotificationTypes,
       ),

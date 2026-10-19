@@ -8,7 +8,9 @@ import {
 } from './campaign-purpose';
 
 const labels = {
+  push_no_consent: 'sans consentement push',
   push_opted_out: 'push coupé',
+  push_minor_without_guardian: 'mineurs sans accord (push)',
   email_no_consent: 'sans consentement',
   email_minor_without_guardian: 'mineurs sans accord',
 };
@@ -41,5 +43,17 @@ describe('campaign-purpose (XC-06)', () => {
       ),
     ).toBe('email : 120 (filtrés : 40 sans consentement, 3 mineurs sans accord)');
     expect(channelCountLine({ channel: 'push', eligible: 9, blocked: {} }, labels, 'filtrés')).toBe('push : 9');
+    // Chantier juridique 57 : le push promotionnel est en opt-in.
+    expect(
+      channelCountLine(
+        {
+          channel: 'push',
+          eligible: 5,
+          blocked: { push_opted_out: 1, push_no_consent: 90, push_minor_without_guardian: 2 },
+        },
+        labels,
+        'filtrés',
+      ),
+    ).toBe('push : 5 (filtrés : 90 sans consentement push, 1 push coupé, 2 mineurs sans accord (push))');
   });
 });

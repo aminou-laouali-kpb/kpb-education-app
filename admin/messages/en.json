@@ -1324,7 +1324,7 @@
     "purposeLabel": "Purpose",
     "purpose_promotional": "Promotional — offer, highlight, marketing announcement",
     "purpose_informational": "Service information — account, application, maintenance",
-    "purposeHint_promotional": "Default. Email: only to accounts that accepted “KPB news and offers” (and, for a minor, with their legal guardian's agreement), with an unsubscribe link. Push: never to those who turned off “KPB news and offers”.",
+    "purposeHint_promotional": "Default. Email and push: only to accounts that accepted “KPB news and offers” on that channel (two separate agreements, none by default; for a minor, their legal guardian's agreement is also required). Each email carries an unsubscribe link; push never goes to those who turned it off.",
     "purposeHint_informational": "For service messages only (account, application, maintenance, terms). An offer or a highlight is promotional, even when sent to few people.",
     "previewCta": "Preview recipients",
     "previewAudience": "Audience: {n} account(s)",
@@ -1332,6 +1332,8 @@
     "previewFiltered": "filtered",
     "previewFilterMissing": "Required filter missing: the campaign would target nobody.",
     "previewError": "Preview failed.",
+    "blocked_push_no_consent": "without push consent",
+    "blocked_push_minor_without_guardian": "minors without guardian agreement",
     "blocked_push_opted_out": "turned off news and offers",
     "blocked_email_no_consent": "without email consent",
     "blocked_email_minor_without_guardian": "minors without guardian agreement"
