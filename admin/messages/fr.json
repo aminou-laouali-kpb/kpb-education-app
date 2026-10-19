@@ -1666,7 +1666,15 @@
     "payoutHint": "Versement Wave fait à la main : note la référence de la transaction et la date. Pour un mineur, le bénéficiaire est le parent.",
     "payoutReference": "Référence de la transaction",
     "payoutDate": "Date du versement",
-    "settingsLocked": "Campagne lancée : seuls les noms et le règlement restent modifiables."
+    "settingsLocked": "Campagne lancée : seuls les noms et le règlement restent modifiables.",
+    "forfeit": "Déclarer le prix forfait et réattribuer",
+    "forfeitConfirm": "Déclarer forfait",
+    "forfeitHint": "{name} perd le prix n° {rank} (règlement : injoignable ou sans informations de versement 15 jours après la validation). Le prix passe au suivant classé qui n'a pas encore de prix ; les prix déjà versés ne bougent pas ; le classement public garde l'ordre réel. Action tracée, sans retour arrière dans l'outil.",
+    "forfeitReason": "Motif (obligatoire)",
+    "forfeitReasonPlaceholder": "Ex. injoignable depuis le 18/11 (3 appels, 2 messages WhatsApp)",
+    "forfeitsTitle": "Prix déclarés forfait",
+    "forfeitReassigned": "réattribué",
+    "forfeitVacant": "non réattribué (plus de candidat)"
   },
   "communityAdmin": {
     "title": "Communauté",

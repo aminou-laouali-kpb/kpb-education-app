@@ -30,6 +30,7 @@ import {
   CampaignTransitionDto,
   CreateReferralCampaignDto,
   EnrollParticipantDto,
+  ForfeitPrizeDto,
   RecordPayoutDto,
   ReferralDecisionDto,
   RevokeAmbassadorDto,
@@ -191,6 +192,25 @@ export class AdminReferralCampaignsController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.campaigns.recordPayout(id, rank, dto, actor(req), requestIdOf(req, res));
+  }
+
+  /**
+   * « Déclarer le prix forfait et réattribuer » : le lauréat du rang `rank`
+   * perd son prix (motif tracé), qui passe au suivant classable non primé.
+   * Refusé si ce prix est déjà versé ; rejouer la même déclaration ne change
+   * rien (idempotent).
+   */
+  @Post(':id/prizes/:rank/forfeit')
+  @Roles(...WRITE_ROLES)
+  @HttpCode(HttpStatus.OK)
+  forfeit(
+    @Param('id') id: string,
+    @Param('rank', ParseIntPipe) rank: number,
+    @Body() dto: ForfeitPrizeDto,
+    @Req() req: AdminRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.campaigns.forfeitPrize(id, rank, dto, actor(req), requestIdOf(req, res));
   }
 
   /** `scope=leaderboard` (défaut) ou `scope=referrals`. */

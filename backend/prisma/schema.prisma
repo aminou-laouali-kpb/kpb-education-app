@@ -3339,6 +3339,7 @@ model ReferralCampaign {
   participants             ReferralCampaignParticipant[]
   referrals                ReferralCampaignReferral[]
   prizeAwards              ReferralCampaignPrizeAward[]
+  prizeForfeits            ReferralCampaignPrizeForfeit[]
 
   @@index([status])
 }
@@ -3378,6 +3379,7 @@ model ReferralCampaignParticipant {
   ambassador                    Ambassador                   @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
   referrals                     ReferralCampaignReferral[]
   prizeAwards                   ReferralCampaignPrizeAward[]
+  prizeForfeits                 ReferralCampaignPrizeForfeit[]
 
   @@unique([campaignId, ambassadorId])
   @@index([campaignId, rank])
@@ -3461,6 +3463,31 @@ model ReferralCampaignPrizeAward {
   participant        ReferralCampaignParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
 
   @@unique([campaignId, rank])
+}
+
+// Prix déclaré forfait (correctifs 57) : lauréat injoignable ou sans
+// informations de versement 15 jours après la validation (règlement). Une ligne
+// par lauréat forfait ; le prix du rang passe au suivant classable non primé
+// (voir `prize-forfeit.ts`). Les prix déjà versés ne bougent jamais.
+model ReferralCampaignPrizeForfeit {
+  id                      String                       @id @default(cuid())
+  campaignId              String
+  // Rang du PRIX perdu (pas le rang au classement, qui ne change pas).
+  rank                    Int
+  // SET NULL : la trace reste si le compte disparaît.
+  participantId           String?
+  publicNameSnapshot      String
+  amountFcfa              Int
+  reason                  String
+  forfeitedAt             DateTime                     @default(now())
+  forfeitedByAdminId      String
+  // Qui tient ce rang après la réattribution (null : prix non réattribué).
+  replacedByParticipantId String?
+  campaign                ReferralCampaign             @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  participant             ReferralCampaignParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, participantId])
+  @@index([campaignId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

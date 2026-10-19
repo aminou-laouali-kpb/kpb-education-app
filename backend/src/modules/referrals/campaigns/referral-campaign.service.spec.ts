@@ -56,13 +56,14 @@ describe('ReferralCampaignService — classement public', () => {
     ...over,
   });
 
-  function service(status = 'live', rows: unknown[] = []) {
+  function service(status = 'live', rows: unknown[] = [], awards: unknown[] = []) {
     const client = {
       referralCampaign: {
         findUnique: async ({ where }: { where: { slug: string } }) =>
           where.slug === campaign.slug ? { ...campaign, status } : null,
       },
       referralCampaignParticipant: { findMany: async () => rows },
+      referralCampaignPrizeAward: { findMany: async () => awards },
     };
     const prisma = {
       execute: async (fn: (c: typeof client) => unknown) => fn(client),
@@ -192,5 +193,51 @@ describe('ReferralCampaignService — classement public', () => {
   it('close : plus provisoire', async () => {
     const out = await service('closed', rows).publicLeaderboard(campaign.slug, undefined);
     expect(out.campaign.provisional).toBe(false);
+  });
+
+  // Correctifs 57 : un prix déclaré forfait passe au suivant ; les résultats
+  // définitifs montrent les lauréats EFFECTIFS, le classement l'ordre réel.
+  const awards = [
+    {
+      id: 'award_internal',
+      rank: 1,
+      amountFcfa: 100000,
+      participantId: 'p1',
+      publicNameSnapshot: 'Aïcha K. — Niamey',
+      payoutReference: 'WAVE-SECRET',
+      participant: { publicName: 'Aïcha K.', city: 'Niamey' },
+    },
+    {
+      id: 'award_internal_2',
+      rank: 2,
+      amountFcfa: 50000,
+      participantId: 'p4',
+      publicNameSnapshot: 'Awa S. — Cotonou',
+      payoutReference: null,
+      participant: { publicName: 'Awa S.', city: 'Cotonou' },
+    },
+  ];
+
+  it('close : les lauréats effectifs (rang du prix, nom public, ville, montant — rien d’autre)', async () => {
+    const out = await service('closed', rows, awards).publicLeaderboard(campaign.slug, undefined);
+    expect(out.winners).toEqual([
+      { prizeRank: 1, amountFcfa: 100000, name: 'Aïcha K.', city: 'Niamey' },
+      { prizeRank: 2, amountFcfa: 50000, name: 'Awa S.', city: 'Cotonou' },
+    ]);
+    // L'ordre réel du classement ne bouge pas (Moussa D. reste 2e).
+    expect(out.entries.slice(0, 3).map((e) => [e.rank, e.name])).toEqual([
+      [1, 'Aïcha K.'],
+      [2, 'Moussa D.'],
+      [3, 'Awa S.'],
+    ]);
+    const text = JSON.stringify(out.winners);
+    for (const leak of ['award_internal', 'WAVE-SECRET', 'p1', 'p4']) {
+      expect(text).not.toContain(leak);
+    }
+  });
+
+  it('avant la clôture : aucun lauréat public (podium provisoire)', async () => {
+    const out = await service('frozen', rows, awards).publicLeaderboard(campaign.slug, undefined);
+    expect(out.winners).toEqual([]);
   });
 });

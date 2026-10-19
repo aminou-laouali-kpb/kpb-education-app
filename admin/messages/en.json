@@ -1666,7 +1666,15 @@
     "payoutHint": "Manual Wave payout: record the transaction reference and the date. For a minor, the recipient is the parent.",
     "payoutReference": "Transaction reference",
     "payoutDate": "Payout date",
-    "settingsLocked": "Campaign launched: only names and rules can still change."
+    "settingsLocked": "Campaign launched: only names and rules can still change.",
+    "forfeit": "Declare the prize forfeited and reassign",
+    "forfeitConfirm": "Declare forfeited",
+    "forfeitHint": "{name} loses prize #{rank} (rules: unreachable or without payout details 15 days after validation). The prize goes to the next ranked participant who has no prize yet; prizes already paid do not move; the public ranking keeps the real order. Logged, no undo in the tool.",
+    "forfeitReason": "Reason (required)",
+    "forfeitReasonPlaceholder": "E.g. unreachable since 18/11 (3 calls, 2 WhatsApp messages)",
+    "forfeitsTitle": "Forfeited prizes",
+    "forfeitReassigned": "reassigned",
+    "forfeitVacant": "not reassigned (no candidate left)"
   },
   "communityAdmin": {
     "title": "Community",

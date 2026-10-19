@@ -17,9 +17,11 @@ const read = (p: string) => readFileSync(resolve(WEB, p), 'utf8');
 interface PageApi {
   toViewModel: (payload: unknown) => {
     entries: Array<Record<string, unknown>>;
+    winners: Array<Record<string, unknown>>;
     rulesUrl: string;
     provisional: boolean;
   };
+  podiumOf: (vm: unknown) => Array<Record<string, unknown>>;
   filterEntries: (entries: unknown[], q: string, city: string) => Array<{ name: string }>;
   formatCountdown: (ms: number) => string;
   countdownTarget: (vm: unknown, now: number) => { label: string; target: number | null };
@@ -111,6 +113,44 @@ describe('page publique du classement', () => {
     expect(vm.entries).toEqual([{ rank: 1, name: 'Aïcha K.', city: 'Niamey', qualified: 4 }]);
     expect(JSON.stringify(vm)).not.toMatch(/internal|note privée|flagged/);
     expect(vm.provisional).toBe(true);
+  });
+
+  // Correctifs 57 : un prix déclaré forfait passe au suivant. Campagne close,
+  // le podium montre les lauréats EFFECTIFS ; la liste garde l'ordre réel.
+  it('campagne close : podium des lauréats effectifs, liste dans l’ordre réel', () => {
+    const vm = page.toViewModel({
+      campaign: { status: 'closed', provisional: false, prizes: [{ rank: 1, amountFcfa: 100000 }, { rank: 2, amountFcfa: 50000 }] },
+      entries: [
+        { rank: 1, name: 'Awa S.', city: 'Cotonou', qualified: 3 },
+        { rank: 2, name: 'Aïcha K.', city: 'Niamey', qualified: 2 },
+        { rank: 3, name: 'Moussa D.', city: 'Maradi', qualified: 2 },
+      ],
+      winners: [
+        { prizeRank: 1, amountFcfa: 100000, name: 'Awa S.', city: 'Cotonou', payoutReference: 'WAVE-SECRET' },
+        { prizeRank: 2, amountFcfa: 50000, name: 'Moussa D.', city: 'Maradi', participantId: 'part_internal' },
+      ],
+    });
+    expect(Object.keys(vm.winners[0]).sort()).toEqual(['amountFcfa', 'city', 'name', 'prizeRank']);
+    expect(JSON.stringify(vm)).not.toMatch(/WAVE-SECRET|part_internal/);
+    expect(page.podiumOf(vm)).toEqual([
+      { rank: 1, name: 'Awa S.', city: 'Cotonou', qualified: 3, amountFcfa: 100000 },
+      { rank: 2, name: 'Moussa D.', city: 'Maradi', qualified: 2, amountFcfa: 50000 },
+    ]);
+    expect(vm.entries.map((e) => e.name)).toEqual(['Awa S.', 'Aïcha K.', 'Moussa D.']);
+  });
+
+  it('avant la clôture : podium provisoire = trois premiers, prix de leur rang', () => {
+    const vm = page.toViewModel({
+      campaign: { status: 'frozen', prizes: [{ rank: 1, amountFcfa: 100000 }] },
+      entries: [
+        { rank: 1, name: 'Awa S.', city: 'Cotonou', qualified: 3 },
+        { rank: 2, name: 'Aïcha K.', city: 'Niamey', qualified: 2 },
+      ],
+    });
+    expect(page.podiumOf(vm)).toEqual([
+      { rank: 1, name: 'Awa S.', city: 'Cotonou', qualified: 3, amountFcfa: 100000 },
+      { rank: 2, name: 'Aïcha K.', city: 'Niamey', qualified: 2, amountFcfa: null },
+    ]);
   });
 
   it('cherche un nom sans accents ni casse, filtre par ville', () => {

@@ -270,6 +270,23 @@ export class RecordPayoutDto {
   note?: string;
 }
 
+/**
+ * « Déclarer le prix forfait et réattribuer » (correctifs 57). `participantId`
+ * est le lauréat que l'équipe voit à l'écran : si le prix a changé de main
+ * entre-temps, le serveur refuse au lieu de déclarer forfait quelqu'un d'autre.
+ */
+export class ForfeitPrizeDto {
+  @IsString()
+  @Length(1, 64)
+  participantId!: string;
+
+  /** Motif (ex. « injoignable 15 jours après la validation »), tracé. */
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
+}
+
 export class ActivateAmbassadorAdminDto {
   @IsEmail()
   @MaxLength(254)

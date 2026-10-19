@@ -92,6 +92,8 @@ export interface CampaignReferralRow {
 export interface PrizeAward {
   id: string;
   rank: number;
+  /** Lauréat actuel (null : compte disparu). */
+  participantId: string | null;
   publicNameSnapshot: string;
   amountFcfa: number;
   recipient: 'ambassador' | 'parent';
@@ -101,6 +103,29 @@ export interface PrizeAward {
   paidAmountFcfa: number | null;
   paidAt: string | null;
   paidByAdminId: string | null;
+}
+
+/** Un prix déclaré forfait (correctifs 57) : trace du lauréat qui l'a perdu. */
+export interface PrizeForfeit {
+  id: string;
+  rank: number;
+  participantId: string | null;
+  publicNameSnapshot: string;
+  amountFcfa: number;
+  reason: string;
+  forfeitedAt: string;
+  forfeitedByAdminId: string;
+  /** Qui tient ce prix après la réattribution (null : non réattribué). */
+  replacedByParticipantId: string | null;
+}
+
+/**
+ * « Déclarer le prix forfait et réattribuer » n'a de sens que pour un prix
+ * attribué et NON versé : le serveur refuse le reste (409), l'écran ne le
+ * propose pas.
+ */
+export function canForfeit(award: Pick<PrizeAward, 'payoutStatus' | 'participantId'>): boolean {
+  return award.payoutStatus !== 'paid' && award.participantId !== null;
 }
 
 export interface AmbassadorRow {
@@ -332,7 +357,13 @@ export const campaignsApi = {
       method: 'POST',
       body: { decision, ...(reason ? { reason } : {}) },
     }),
-  prizes: (id: string) => apiFetch<{ items: PrizeAward[] }>(`${BASE}/${id}/prizes`),
+  prizes: (id: string) =>
+    apiFetch<{ items: PrizeAward[]; forfeits?: PrizeForfeit[] }>(`${BASE}/${id}/prizes`),
+  forfeit: (id: string, rank: number, body: { participantId: string; reason: string }) =>
+    apiFetch<{ items: PrizeAward[]; forfeits: PrizeForfeit[] }>(`${BASE}/${id}/prizes/${rank}/forfeit`, {
+      method: 'POST',
+      body,
+    }),
   payout: (id: string, rank: number, body: Record<string, unknown>) =>
     apiFetch<PrizeAward>(`${BASE}/${id}/prizes/${rank}/payout`, { method: 'POST', body }),
   exportCsv: (id: string, scope: 'leaderboard' | 'referrals') =>
