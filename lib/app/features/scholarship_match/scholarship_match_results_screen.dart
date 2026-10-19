@@ -65,6 +65,7 @@ class _ScholarshipMatchResultsScreenState
   bool? _alertsOverride;
   bool _alertsSaving = false;
   bool _autoRerunDone = false;
+  bool _erasing = false;
 
   String get _userId => scholarshipMatchUserId(_app);
   String get _lang => scholarshipMatchLang(_app);
@@ -117,6 +118,51 @@ class _ScholarshipMatchResultsScreenState
       ));
       await _rerun(trigger: 'stale_refresh');
     }
+  }
+
+  /// Confirmation, puis effacement serveur ET local. Les résultats
+  /// calculés avec la nationalité disparaissent : l'écran retombe sur « faire
+  /// le test ».
+  Future<void> _eraseNationality() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('scholarship_match_erase_nationality_title'.tr),
+        content: Text('scholarship_match_erase_nationality_body'.tr),
+        actions: [
+          TextButton(
+            key: const ValueKey<String>('match-erase-nationality-cancel'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text('scholarship_match_erase_nationality_cancel'.tr),
+          ),
+          TextButton(
+            key: const ValueKey<String>('match-erase-nationality-confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text('scholarship_match_erase_nationality_confirm'.tr),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _erasing = true);
+    final ok = await _store.eraseNationality(
+      client: _app.apiClient,
+      userId: _userId,
+    );
+    if (!mounted) return;
+    setState(() => _erasing = false);
+    if (!ok) {
+      KpbToast.error(
+        'scholarship_match_erase_nationality_error'.tr,
+        context: context,
+      );
+      return;
+    }
+    KpbToast.success(
+      'scholarship_match_erase_nationality_done'.tr,
+      context: context,
+    );
+    await _load(force: true);
   }
 
   Future<void> _refreshSuccessLab() async {
@@ -613,6 +659,19 @@ class _ScholarshipMatchResultsScreenState
                 'scholarship_match_needs_connection'.tr,
                 style: KpbTextStyles.caption,
               ),
+      ),
+      // « Effacer ma nationalité » (correctifs 57) : retirer le consentement
+      // donné au test, sans écrire à privacy@ (qui reste possible).
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          key: const ValueKey<String>('match-erase-nationality'),
+          style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
+          onPressed:
+              online && !_erasing ? () => unawaited(_eraseNationality()) : null,
+          icon: const Icon(Icons.no_accounts_outlined),
+          label: Text('scholarship_match_erase_nationality'.tr),
+        ),
       ),
       const SizedBox(height: KpbSpacing.sm),
       Text(

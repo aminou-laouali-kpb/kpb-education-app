@@ -159,4 +159,47 @@ void main() {
     expect(await store.setAlerts(client: api, enabled: false), isNull);
     expect(store.alertsOptIn, isTrue);
   });
+
+  // Correctifs 57 — « Effacer ma nationalité ».
+  group('effacer la nationalité', () {
+    test('serveur, puis run, état et brouillon locaux (le brouillon la porte)',
+        () async {
+      final api =
+          FakeMatchApi(state: matchStateJson(latestRun: matchRunJson()));
+      await load(api);
+      await store.saveDraft('u1', {
+        'v': 1,
+        'values': {'nationalityCode': 'ner'},
+      });
+      // Un autre compte du même appareil n'est pas touché.
+      await store.saveDraft('u2', {'v': 1});
+      expect(store.latestRun, isNotNull);
+
+      expect(await store.eraseNationality(client: api, userId: 'u1'), isTrue);
+      expect(api.eraseCalls, 1);
+      expect(store.latestRun, isNull);
+      expect(store.state, isNull);
+      expect(await store.readDraft('u1'), isNull);
+      expect(await store.readDraft('u2'), isNotNull);
+      expect(
+          cache.entries.keys.where((k) => k.startsWith('user:u1:')), isEmpty);
+
+      // L'état relu ne ramène plus de run.
+      await load(api, force: true);
+      expect(store.latestRun, isNull);
+    });
+
+    test("échec serveur : rien n'est effacé localement (pas de faux succès)",
+        () async {
+      final api =
+          FakeMatchApi(state: matchStateJson(latestRun: matchRunJson()));
+      await load(api);
+      await store.saveDraft('u1', {'v': 1});
+      api.eraseError =
+          const ScholarshipMatchException(ScholarshipMatchFailure.offline);
+      expect(await store.eraseNationality(client: api, userId: 'u1'), isFalse);
+      expect(store.latestRun, isNotNull);
+      expect(await store.readDraft('u1'), isNotNull);
+    });
+  });
 }

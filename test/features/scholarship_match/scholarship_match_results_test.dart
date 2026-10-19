@@ -309,4 +309,38 @@ void main() {
     expect(find.byKey(_k('match-results-list')), findsNothing);
     expect(api.stateCalls, 0);
   });
+
+  // Correctifs 57 — « Effacer ma nationalité » : confirmation, effacement
+  // serveur et local, l'écran retombe sur « faire le test ».
+  testWidgets('« Effacer ma nationalité » : annuler ne fait rien', (t) async {
+    resetMatchWorld();
+    final api = FakeMatchApi(state: matchStateJson(latestRun: matchRunJson()));
+    await _open(t, api);
+    await _scrollTo(t, _k('match-erase-nationality'));
+    await t.tap(find.byKey(_k('match-erase-nationality')));
+    await t.pumpAndSettle();
+    expect(find.text('Effacer ta nationalité ?'), findsOneWidget);
+    await t.tap(find.byKey(_k('match-erase-nationality-cancel')));
+    await t.pumpAndSettle();
+    expect(api.eraseCalls, 0);
+    expect(ScholarshipMatchStore.instance.latestRun, isNotNull);
+  });
+
+  testWidgets('« Effacer ma nationalité » : confirmer efface tout', (t) async {
+    resetMatchWorld();
+    final api = FakeMatchApi(state: matchStateJson(latestRun: matchRunJson()));
+    await _open(t, api);
+    await _scrollTo(t, _k('match-erase-nationality'));
+    await t.tap(find.byKey(_k('match-erase-nationality')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(_k('match-erase-nationality-confirm')));
+    await t.pumpAndSettle();
+    expect(api.eraseCalls, 1);
+    expect(ScholarshipMatchStore.instance.latestRun, isNull);
+    expect(find.text('Ta nationalité et tes résultats ont été effacés.'),
+        findsOneWidget);
+    // Les résultats calculés avec la nationalité ne s'affichent plus.
+    expect(find.byKey(_k('match-erase-nationality')), findsNothing);
+    await t.pump(const Duration(seconds: 6));
+  });
 }

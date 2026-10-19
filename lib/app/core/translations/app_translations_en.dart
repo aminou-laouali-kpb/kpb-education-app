@@ -725,7 +725,8 @@ const Map<String, String> appTranslationsEn = {
           '• Optional: without it, the test does not compute a result, and the rest of the app remains usable\n'
           '• Use: only to check the nationality conditions of scholarships. It is not sent to any school, any scholarship body or our sales team, and goes neither into analytics nor into notifications\n'
           '• Retention: on your profile while your account exists; it is deleted with your account\n'
-          '• Withdrawal: you can withdraw your consent at any time by writing to privacy@kpbeducation.com; we then erase your nationality from your profile',
+          // Correctifs 57, 19/10/2026 — à relire par le propriétaire.
+          '• Withdrawal: you can withdraw your consent at any time with the "Erase my nationality" button in the "My 10 scholarships" space: your nationality is erased from your profile, together with the test results computed with it. You can also write to privacy@kpbeducation.com',
   'privacy_s6_body': '• Profile data: kept while your account is active\n'
       '• Case data: kept while the case is open, then deleted with the account\n'
       '• "My 10 scholarships" test answers: kept on your profile while your account is active, and editable by taking the test again; only your last 5 results are kept, older ones are erased automatically\n'
@@ -3408,7 +3409,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_nationality_consent':
       'I agree that KPB Education uses my nationality to check scholarship conditions.',
   'scholarship_match_nationality_consent_help':
-      'It stays on your profile while your account exists and is not sent to any school. You can withdraw your consent at any time by writing to privacy@kpbeducation.com; it is also erased with your account.',
+      'It stays on your profile while your account exists and is not sent to any school. You can withdraw your consent at any time with "Erase my nationality" in "My 10 scholarships", or by writing to privacy@kpbeducation.com; it is also erased with your account.',
   'scholarship_match_nationality_consent_required':
       'Tick the consent box to see your scholarships.',
   'scholarship_match_nationality_suggestion':

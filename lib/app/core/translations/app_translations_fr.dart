@@ -796,7 +796,8 @@ const Map<String, String> appTranslationsFr = {
           '• Facultative : sans elle, le test ne calcule pas de résultat, et le reste de l\'app reste utilisable\n'
           '• Usage : uniquement vérifier les conditions de nationalité des bourses. Elle n\'est transmise à aucune école, à aucun organisme de bourse ni à notre équipe commerciale, et ne part ni dans l\'analytique ni dans les notifications\n'
           '• Conservation : sur votre profil tant que votre compte existe ; elle est supprimée avec votre compte\n'
-          '• Retrait : vous pouvez retirer votre consentement à tout moment en écrivant à privacy@kpbeducation.com ; nous effaçons alors votre nationalité de votre profil',
+          // Correctifs 57, 19/10/2026 — à relire par le propriétaire.
+          '• Retrait : vous pouvez retirer votre consentement à tout moment avec le bouton « Effacer ma nationalité » de l\'espace « Mes 10 bourses » : votre nationalité est effacée de votre profil, ainsi que les résultats du test calculés avec elle. Vous pouvez aussi écrire à privacy@kpbeducation.com',
   'privacy_s6_body': '• Données de profil : conservées tant que votre compte est actif\n'
       '• Données de dossier : conservées tant que le dossier est ouvert, puis supprimées avec le compte\n'
       '• Réponses au test « Mes 10 bourses » : gardées sur votre profil tant que votre compte est actif, et modifiables en refaisant le test ; seuls vos 5 derniers résultats sont conservés, les plus anciens s\'effacent automatiquement\n'
@@ -3681,7 +3682,7 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_match_nationality_consent':
       'J\'accepte que KPB Education utilise ma nationalité pour vérifier les conditions des bourses.',
   'scholarship_match_nationality_consent_help':
-      'Elle reste sur ton profil tant que ton compte existe et n\'est transmise à aucune école. Tu peux retirer ton accord à tout moment en écrivant à privacy@kpbeducation.com ; elle est aussi effacée avec ton compte.',
+      'Elle reste sur ton profil tant que ton compte existe et n\'est transmise à aucune école. Tu peux retirer ton accord à tout moment avec « Effacer ma nationalité » dans « Mes 10 bourses », ou en écrivant à privacy@kpbeducation.com ; elle est aussi effacée avec ton compte.',
   'scholarship_match_nationality_consent_required':
       'Coche la case de consentement pour voir tes bourses.',
   'scholarship_match_nationality_suggestion':

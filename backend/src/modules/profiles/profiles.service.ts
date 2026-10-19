@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -475,6 +476,51 @@ export class ProfilesService {
       await this.storageService.delete(result.previousKey);
     }
     return this.mapDbProfile(result.profile);
+  }
+
+  /**
+   * « Effacer ma nationalité » (correctifs 57) : retire le consentement
+   * explicite donné au test « Mes 10 bourses ».
+   *
+   * Efface la nationalité ET la seconde nationalité du profil, et supprime les
+   * runs du test — ils ont été calculés avec elle et ses raisons (« réservée
+   * aux ressortissants de… ») la laissent deviner. Une seule transaction : on
+   * ne garde jamais des résultats qui dépendent d'une donnée retirée. Le
+   * prochain test redemandera la nationalité et la case de consentement.
+   *
+   * Pas derrière le drapeau `scholarshipMatch` : un test refermé ne doit pas
+   * empêcher d'effacer ce qu'il a collecté. Idempotent.
+   */
+  async eraseNationality(userId?: string) {
+    const id = userId ?? 'demo-user';
+    if (!this.prismaService.isEnabled) {
+      throw new ServiceUnavailableException(
+        'Database is not configured. Set DATABASE_URL.',
+      );
+    }
+    const result = await this.prismaService.execute((prisma) =>
+      prisma.$transaction(async (tx) => {
+        const exists = await tx.userProfile.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+        if (!exists) return null;
+        const runs = await tx.scholarshipMatchRun.deleteMany({
+          where: { userId: id },
+        });
+        await tx.userProfile.update({
+          where: { id },
+          data: { nationalityCode: null, secondNationalityCode: null },
+        });
+        return { matchRunsDeleted: runs.count };
+      }),
+    );
+    if (!result) throw new NotFoundException('Profile not found.');
+    return {
+      nationalityCode: null,
+      secondNationalityCode: null,
+      matchRunsDeleted: result.matchRunsDeleted,
+    };
   }
 
   /**
