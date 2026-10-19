@@ -753,7 +753,8 @@ const Map<String, String> appTranslationsEn = {
       // VALIDER (propriétaire), docs/data-inventory.md.
       '• Community reports written by an account since deleted: 12 months after the account is deleted, then erased\n'
       '• Aggregated, anonymised statistics: no time limit\n'
-      '• Firebase Analytics and PostHog events linked to a pseudonymous identifier, and PostHog session recordings: kept for the tool\'s retention period, then deleted\n'
+      '• PostHog session recordings: 30 days, then deleted\n'
+      '• Firebase Analytics and PostHog events linked to a pseudonymous identifier: kept for the tool\'s retention period, then deleted\n'
       '• If you delete your account: personal data is erased within 30 days',
   'privacy_s7_body': '• Encrypted transport via HTTPS/TLS\n'
       '• Passwords hashed (bcrypt)\n'
