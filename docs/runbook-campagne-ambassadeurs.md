@@ -30,6 +30,9 @@ est serveur, la gestion est dans la console admin, le classement est une page we
    - La migration ne touche aucune colonne existante. Rattrapages : code ambassadeur normalisé,
      `cashProgramEnabled = true` pour les ambassadeurs existants (leur app ne change pas),
      `profileCompletedAt` des profils déjà complets.
+   - Correctifs 57 (19/10/2026) : le déploiement complet suivant applique aussi la migration
+     additive `20261026130000_referral_prize_forfeit` (table neuve, vide) qui porte « Déclarer le
+     prix forfait et réattribuer » (§7). À déployer **avant** la validation du podium.
 2. Variables (toutes facultatives, défauts sûrs) : `REFERRAL_CODE_HOURLY_LIMIT` (30),
    `REFERRAL_SIGNAL_RETENTION_DAYS` (180), `KPB_REFERRAL_SIGNAL_SECRET` (sinon `KPB_JWT_SECRET`),
    `AMBASSADOR_SELF_ACTIVATION_ENABLED` (faux : laisser faux).
@@ -133,13 +136,22 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
    Wave, date, bénéficiaire. Le serveur refuse « l'ambassadeur » comme bénéficiaire d'un lauréat
    mineur. Lauréat injoignable ou sans informations de versement **15 jours** après la validation :
    il perd son prix, qui **passe au suivant** du classement (décisions du propriétaire,
-   18/10/2026). Mécanique : retirer le lauréat (« Retirer », motif obligatoire), puis **Valider le
-   podium** de nouveau — le recalcul fait monter le 4e en 3e, etc. **Limite du code** : le serveur
-   refuse de revalider le podium dès qu'**un** versement est noté (« Un versement est déjà noté :
-   podium figé ») ; la réattribution d'un prix perdu **après** un premier versement noté n'est pas
-   codée. D'ici un correctif, attendre la fin du délai de 15 jours (ou la confirmation de tous les
-   lauréats) avant de noter le premier versement, ou traiter la réattribution hors outil avec une
-   trace écrite. À trancher avant le 17 novembre 2026.
+   18/10/2026). Mécanique (correctifs 57, 19/10/2026) : onglet **Prix** → sur la ligne du prix
+   **non versé**, **« Déclarer le prix forfait et réattribuer »**, motif obligatoire (ex.
+   « injoignable depuis le 18/11 : 3 appels, 2 messages WhatsApp »). Le serveur :
+   - marque le lauréat forfait (motif, date, admin ; audit `referral_campaign.prize_forfeited`) —
+     il ne pourra plus recevoir de prix dans cette campagne, même à une revalidation ;
+   - fait passer les prix **non versés** à partir de ce rang aux suivants **classés** qui n'ont
+     pas de prix (le 3e monte au 2e prix, le 4e entre au 3e prix) ;
+   - ne touche **jamais** à un prix déjà versé, et refuse de déclarer forfait un prix versé ;
+   - laisse le prix non attribué s'il n'y a plus de candidat classé (la liste « Prix déclarés
+     forfait » l'indique) ;
+   - ne change pas le classement public (ordre réel) ; une fois la campagne **close**, le podium
+     de la page publique montre les lauréats **effectifs**.
+   L'action est idempotente (un double clic ne déclare rien deux fois) et marche **avant comme
+   après** un premier versement : plus besoin d'attendre ni de traiter hors outil. Elle n'a pas
+   de retour arrière dans l'outil : vérifier le délai de 15 jours avant de la lancer. Le nouveau
+   lauréat est contacté et versé comme les autres (pièce d'identité, 7 jours).
    Les résultats définitifs sont annoncés le **17 novembre 2026**.
 5. **Clore** : résultats définitifs, plus aucun recalcul ; la page publique retire la mention
    « provisoire ».

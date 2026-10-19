@@ -4,7 +4,12 @@
 // inline. Aucune insertion de HTML venant de l'API : tout passe par
 // textContent. La page ne lit QUE quatre champs par ligne (rang, nom public,
 // ville, nombre) — `toViewModel` les recopie un à un, si bien qu'un champ de
-// trop dans la réponse ne pourrait jamais s'afficher.
+// trop dans la réponse ne pourrait jamais s'afficher. Idem pour les lauréats
+// (rang du prix, montant, nom public, ville).
+//
+// Correctifs 57 : campagne close, le podium montre les lauréats EFFECTIFS
+// servis par l'API (`winners`) — un prix déclaré forfait apparaît chez celui
+// qui l'a reçu — tandis que la liste garde l'ordre réel du classement.
 //
 // Écrit en ES5 (var, function) : la page doit marcher sur les navigateurs
 // d'entrée de gamme du public visé.
@@ -56,7 +61,57 @@
           qualified: toInt(e.qualified),
         };
       }),
+      winners: ((payload && payload.winners) || []).map(function (w) {
+        return {
+          prizeRank: toInt(w.prizeRank),
+          amountFcfa: toInt(w.amountFcfa),
+          name: String(w.name || ''),
+          city: String(w.city || ''),
+        };
+      }),
     };
+  }
+
+  /**
+   * Les cartes du podium : les lauréats effectifs quand l'API les sert
+   * (campagne close), sinon les trois premiers du classement provisoire avec
+   * le prix de leur rang.
+   */
+  function podiumOf(vm) {
+    if (vm.winners && vm.winners.length) {
+      return vm.winners
+        .filter(function (w) {
+          return w.prizeRank >= 1 && w.prizeRank <= 3;
+        })
+        .map(function (w) {
+          var entry = vm.entries.filter(function (e) {
+            return e.name === w.name && e.city === w.city;
+          })[0];
+          return {
+            rank: w.prizeRank,
+            name: w.name,
+            city: w.city,
+            qualified: entry ? entry.qualified : null,
+            amountFcfa: w.amountFcfa,
+          };
+        });
+    }
+    return vm.entries
+      .filter(function (e) {
+        return e.rank !== null && e.rank <= 3;
+      })
+      .map(function (e) {
+        var prize = vm.prizes.filter(function (p) {
+          return p.rank === e.rank;
+        })[0];
+        return {
+          rank: e.rank,
+          name: e.name,
+          city: e.city,
+          qualified: e.qualified,
+          amountFcfa: prize ? prize.amountFcfa : null,
+        };
+      });
   }
 
   /** Filtre par nom (sans accents ni casse) et par ville. */
@@ -115,6 +170,7 @@
 
   var api = {
     toViewModel: toViewModel,
+    podiumOf: podiumOf,
     filterEntries: filterEntries,
     citiesOf: citiesOf,
     formatCountdown: formatCountdown,
@@ -157,23 +213,20 @@
   function renderPodium(vm) {
     var podium = $('podium');
     while (podium.firstChild) podium.removeChild(podium.firstChild);
-    var top = vm.entries.filter(function (e) {
-      return e.rank !== null && e.rank <= 3;
-    });
+    var top = podiumOf(vm);
     if (!top.length) {
       podium.hidden = true;
       return;
     }
     top.forEach(function (e) {
-      var prize = vm.prizes.filter(function (p) {
-        return p.rank === e.rank;
-      })[0];
       var card = el('div', 'lb-step lb-step-' + e.rank);
       card.appendChild(el('span', 'lb-medal', String(e.rank)));
       card.appendChild(el('strong', 'lb-step-name', e.name));
       card.appendChild(el('span', 'lb-step-city', e.city));
-      card.appendChild(el('span', 'lb-step-count', e.qualified + (e.qualified > 1 ? ' filleuls' : ' filleul')));
-      if (prize) card.appendChild(el('span', 'lb-step-prize', formatFcfa(prize.amountFcfa)));
+      if (e.qualified !== null) {
+        card.appendChild(el('span', 'lb-step-count', e.qualified + (e.qualified > 1 ? ' filleuls' : ' filleul')));
+      }
+      if (e.amountFcfa !== null) card.appendChild(el('span', 'lb-step-prize', formatFcfa(e.amountFcfa)));
       podium.appendChild(card);
     });
     podium.hidden = false;

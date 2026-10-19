@@ -54,6 +54,8 @@ abstract final class ProfileApiCodec {
           false,
       wantsScholarshipNewsletter:
           json['scholarshipNewsletterOptIn'] as bool? ?? false,
+      // Absent d'un serveur antérieur aux correctifs 57 : reste `null`.
+      promotionsEmailOptIn: json['promotionsEmailOptIn'] as bool?,
       disabledNotificationTypes: _optOutTypes(json),
       availableDocuments: stringListFromJson(json['availableDocuments']),
       consentedAt: DateTime.tryParse(json['consentedAt'] as String? ?? ''),

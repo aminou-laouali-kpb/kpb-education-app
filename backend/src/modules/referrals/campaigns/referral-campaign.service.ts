@@ -47,10 +47,12 @@ import {
 import type {
   CreateReferralCampaignDto,
   EnrollParticipantDto,
+  ForfeitPrizeDto,
   RecordPayoutDto,
   UpdateParticipantDto,
   UpdateReferralCampaignDto,
 } from './dto/referral-campaign.dto';
+import { podiumAssignments, reassignAfterForfeit } from './prize-forfeit';
 import { isMinorAt, PROFILE_COMPLETION_SELECT } from './profile-completion';
 
 export type CampaignActor = Pick<AdminSessionUser, 'id' | 'role'>;
@@ -95,6 +97,20 @@ export interface PublicLeaderboard {
   serverTime: string;
   cities: string[];
   entries: PublicLeaderboardEntry[];
+  /**
+   * Les lauréats EFFECTIFS, campagne close seulement (résultats définitifs) :
+   * un prix déclaré forfait apparaît chez celui qui l'a reçu. Nom public,
+   * ville, rang du prix et montant — rien d'autre. Vide avant la clôture.
+   */
+  winners: PublicWinner[];
+}
+
+/** Un lauréat effectif : rang du PRIX (pas du classement), nom public, ville, montant. */
+export interface PublicWinner {
+  prizeRank: number;
+  amountFcfa: number;
+  name: string;
+  city: string;
 }
 
 const AUDIT_PURPOSE = 'referral_campaign';
@@ -548,14 +564,37 @@ export class ReferralCampaignService {
           where: { campaignId: current.id, payoutStatus: 'paid' },
         });
         if (paid > 0) throw new ConflictException('Un versement est déjà noté : podium figé.');
+        // Un participant déjà déclaré forfait ne reprend pas un prix à la
+        // revalidation : le suivant classé le reçoit (`podiumAssignments`).
+        const forfeited = new Set(
+          (
+            await tx.referralCampaignPrizeForfeit.findMany({
+              where: { campaignId: current.id },
+              select: { participantId: true },
+            })
+          )
+            .map((f) => f.participantId)
+            .filter((id): id is string => id !== null),
+        );
         const ranked = await tx.referralCampaignParticipant.findMany({
           where: { campaignId: current.id, rank: { not: null } },
           orderBy: { rank: 'asc' },
-          take: prizes.length,
+          take: prizes.length + forfeited.size,
         });
         await tx.referralCampaignPrizeAward.deleteMany({ where: { campaignId: current.id } });
+        const byId = new Map(ranked.map((r) => [r.id, r]));
+        const assignment = new Map(
+          podiumAssignments(
+            prizes.map((p) => p.rank),
+            forfeited,
+            ranked.map((r) => ({ id: r.id, rank: r.rank! })),
+          ).map((a) => [a.rank, a.participantId]),
+        );
         const awards = prizes
-          .map((prize) => ({ prize, winner: ranked.find((r) => r.rank === prize.rank) }))
+          .map((prize) => {
+            const id = assignment.get(prize.rank);
+            return { prize, winner: id ? byId.get(id) : undefined };
+          })
           .filter((a) => a.winner);
         if (awards.length) {
           await tx.referralCampaignPrizeAward.createMany({
@@ -910,7 +949,179 @@ export class ReferralCampaignService {
     const rows = await this.db((db) =>
       db.referralCampaignPrizeAward.findMany({ where: { campaignId }, orderBy: { rank: 'asc' } }),
     );
-    return { items: rows };
+    const forfeits = await this.db((db) =>
+      db.referralCampaignPrizeForfeit.findMany({
+        where: { campaignId },
+        orderBy: [{ forfeitedAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+    return { items: rows, forfeits };
+  }
+
+  /**
+   * « Déclarer le prix forfait et réattribuer » (correctifs 57) — règlement :
+   * lauréat injoignable ou sans informations de versement 15 jours après la
+   * validation ⇒ il perd son prix, qui passe au suivant.
+   *
+   * - podium validé exigé ; refusé si le prix de ce rang est DÉJÀ VERSÉ ;
+   * - le lauréat est marqué forfait (motif, date, admin) et ne pourra plus
+   *   recevoir de prix dans cette campagne, même à une revalidation ;
+   * - les prix non versés à partir de ce rang sont redistribués aux suivants
+   *   classés non primés (`reassignAfterForfeit`) ; un prix versé ne bouge
+   *   jamais ; plus de candidat ⇒ le prix reste non attribué ;
+   * - le classement (ordre réel, rangs) ne change pas ;
+   * - idempotent : redéclarer le même lauréat rend l'état actuel sans rien
+   *   écrire ; un lauréat qui a changé entre-temps ⇒ 409 ;
+   * - audit `referral_campaign.prize_forfeited` dans la même transaction.
+   */
+  async forfeitPrize(
+    campaignId: string,
+    rank: number,
+    dto: ForfeitPrizeDto,
+    actor: CampaignActor,
+    requestId: string,
+  ) {
+    const campaign = await this.campaignOrThrow(campaignId);
+    if (!campaign.podiumValidatedAt) throw new ConflictException('Podium non validé.');
+    const prizes = parsePrizes(campaign.prizes) ?? [];
+    const prize = prizes.find((p) => p.rank === rank);
+    if (!prize) throw new NotFoundException('Aucun prix à ce rang.');
+    const participantId = dto.participantId.trim();
+    const reason = dto.reason.trim();
+    if (reason.length < 3) throw new BadRequestException('Un motif est requis pour déclarer un prix forfait.');
+
+    try {
+      const outcome = await this.db((db) =>
+        db.$transaction(async (tx) => {
+          const already = await tx.referralCampaignPrizeForfeit.findFirst({
+            where: { campaignId, participantId },
+          });
+          if (already) return { replayed: true as const };
+
+          const award = await tx.referralCampaignPrizeAward.findUnique({
+            where: { campaignId_rank: { campaignId, rank } },
+          });
+          if (!award || !award.participantId) {
+            throw new NotFoundException('Aucun lauréat à ce rang.');
+          }
+          if (award.payoutStatus === 'paid') {
+            throw new ConflictException('Ce prix est déjà versé : il ne peut plus être déclaré forfait.');
+          }
+          if (award.participantId !== participantId) {
+            throw new ConflictException({
+              code: 'prize_holder_changed',
+              message: 'Le lauréat de ce rang a changé entre-temps : recharge la page.',
+            });
+          }
+
+          const [awards, forfeits, ranked] = await Promise.all([
+            tx.referralCampaignPrizeAward.findMany({ where: { campaignId } }),
+            tx.referralCampaignPrizeForfeit.findMany({
+              where: { campaignId },
+              select: { participantId: true },
+            }),
+            tx.referralCampaignParticipant.findMany({
+              where: { campaignId, rank: { not: null } },
+              orderBy: { rank: 'asc' },
+            }),
+          ]);
+          const forfeited = new Set(
+            forfeits.map((f) => f.participantId).filter((id): id is string => id !== null),
+          );
+          forfeited.add(participantId);
+          const awardByRank = new Map(awards.map((a) => [a.rank, a]));
+          const slots = prizes.map((p) => {
+            const a = awardByRank.get(p.rank);
+            return {
+              rank: p.rank,
+              participantId: a?.participantId ?? null,
+              paid: a?.payoutStatus === 'paid',
+            };
+          });
+          const plan = reassignAfterForfeit(
+            slots,
+            rank,
+            forfeited,
+            ranked.map((r) => ({ id: r.id, rank: r.rank! })),
+          );
+          const byId = new Map(ranked.map((r) => [r.id, r]));
+          const amountOf = new Map(prizes.map((p) => [p.rank, p.amountFcfa]));
+
+          const forfeit = await tx.referralCampaignPrizeForfeit.create({
+            data: {
+              campaignId,
+              rank,
+              participantId,
+              publicNameSnapshot: award.publicNameSnapshot,
+              amountFcfa: award.amountFcfa,
+              reason,
+              forfeitedByAdminId: actor.id,
+              replacedByParticipantId: plan.find((a) => a.rank === rank)?.participantId ?? null,
+            },
+          });
+
+          const changes: { rank: number; from: string | null; to: string | null }[] = [];
+          for (const target of plan) {
+            const existing = awardByRank.get(target.rank) ?? null;
+            const from = existing?.participantId ?? null;
+            if (from === target.participantId) continue;
+            changes.push({ rank: target.rank, from, to: target.participantId });
+            const winner = target.participantId ? byId.get(target.participantId) : undefined;
+            if (!winner) {
+              // Plus de candidat : le prix reste non attribué.
+              if (existing) await tx.referralCampaignPrizeAward.delete({ where: { id: existing.id } });
+              continue;
+            }
+            const data = {
+              participantId: winner.id,
+              publicNameSnapshot: displayName(winner.publicName, winner.city),
+              amountFcfa: amountOf.get(target.rank) ?? existing?.amountFcfa ?? 0,
+              recipient: winner.minorStatus === 'minor' ? 'parent' : 'ambassador',
+              payoutStatus: 'pending',
+              payoutReference: null,
+              paidAmountFcfa: null,
+              paidAt: null,
+              paidByAdminId: null,
+              note: null,
+            };
+            if (existing) {
+              await tx.referralCampaignPrizeAward.update({ where: { id: existing.id }, data });
+            } else {
+              await tx.referralCampaignPrizeAward.create({
+                data: { campaignId, rank: target.rank, ...data },
+              });
+            }
+          }
+
+          await this.audit(tx, {
+            action: 'referral_campaign.prize_forfeited',
+            entityType: 'ReferralCampaignPrizeForfeit',
+            entityId: forfeit.id,
+            actor,
+            requestId,
+            reasonCode: reason,
+            changes: {
+              campaignId,
+              rank,
+              forfeitedParticipantId: participantId,
+              amountFcfa: award.amountFcfa,
+              reassigned: changes,
+            },
+          });
+          return { replayed: false as const };
+        }),
+      );
+      if (!outcome.replayed) this.invalidatePublic(campaign.slug);
+    } catch (error) {
+      // Deux déclarations simultanées du même lauréat : la seconde bute sur
+      // l'unicité (campagne, participant) — c'est un rejeu, pas une erreur.
+      const replay =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002' &&
+        JSON.stringify(error.meta ?? {}).includes('participantId');
+      if (!replay) throw error;
+    }
+    return this.prizes(campaignId);
   }
 
   async recordPayout(
@@ -1115,6 +1326,27 @@ export class ReferralCampaignService {
         city: r.city,
         qualified: r.qualifiedCount,
       }));
+    // Résultats définitifs : les lauréats effectifs, prix forfait réattribués
+    // compris. Avant la clôture, rien (la page montre le podium provisoire).
+    const winners: PublicWinner[] =
+      campaign.status === 'closed'
+        ? (
+            await this.db((db) =>
+              db.referralCampaignPrizeAward.findMany({
+                where: { campaignId: campaign.id, participantId: { not: null } },
+                orderBy: { rank: 'asc' },
+                include: { participant: { select: { publicName: true, city: true } } },
+              }),
+            )
+          )
+            .filter((a) => a.participant)
+            .map((a) => ({
+              prizeRank: a.rank,
+              amountFcfa: a.amountFcfa,
+              name: a.participant!.publicName,
+              city: a.participant!.city,
+            }))
+        : [];
     const days = campaignDaysFromWindow(campaign, campaign.timeZone);
     const payload: PublicLeaderboard = {
       campaign: {
@@ -1141,6 +1373,7 @@ export class ReferralCampaignService {
         a.localeCompare(b, 'fr'),
       ),
       entries,
+      winners,
     };
     this.publicCache.set(cacheKey, { at: now.getTime(), payload });
     return payload;

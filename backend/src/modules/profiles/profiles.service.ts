@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -213,6 +214,19 @@ export class ProfilesService {
       stampNewsletterConsent = current ? !current.newsletterOptIn : false;
     }
 
+    // Même règle pour les nouvelles et offres de KPB (XC-06) : la preuve
+    // horodatée n'est posée qu'au vrai passage à `true`.
+    let stampPromotionsConsent = false;
+    if (input.promotionsEmailOptIn === true) {
+      const current = await this.prismaService.execute((prisma) =>
+        prisma.userProfile.findUnique({
+          where: { id },
+          select: { promotionsEmailOptIn: true },
+        }),
+      );
+      stampPromotionsConsent = current ? !current.promotionsEmailOptIn : false;
+    }
+
     // KPB-169: per-type notification opt-outs live in one array column. A
     // client may send the array directly, or the legacy per-type booleans —
     // which are folded into the array so the already-built app keeps working.
@@ -268,6 +282,12 @@ export class ProfilesService {
           ...(optOutTypes ? { disabledNotificationTypes: optOutTypes } : {}),
           ...(stampNewsletterConsent
             ? { newsletterConsentedAt: new Date() }
+            : {}),
+          ...(input.promotionsEmailOptIn !== undefined
+            ? { promotionsEmailOptIn: input.promotionsEmailOptIn }
+            : {}),
+          ...(stampPromotionsConsent
+            ? { promotionsEmailConsentedAt: new Date() }
             : {}),
           ...(input.fieldIds ? { fieldIds: input.fieldIds } : {}),
           ...(input.targetCountryIds
@@ -456,6 +476,51 @@ export class ProfilesService {
       await this.storageService.delete(result.previousKey);
     }
     return this.mapDbProfile(result.profile);
+  }
+
+  /**
+   * « Effacer ma nationalité » (correctifs 57) : retire le consentement
+   * explicite donné au test « Mes 10 bourses ».
+   *
+   * Efface la nationalité ET la seconde nationalité du profil, et supprime les
+   * runs du test — ils ont été calculés avec elle et ses raisons (« réservée
+   * aux ressortissants de… ») la laissent deviner. Une seule transaction : on
+   * ne garde jamais des résultats qui dépendent d'une donnée retirée. Le
+   * prochain test redemandera la nationalité et la case de consentement.
+   *
+   * Pas derrière le drapeau `scholarshipMatch` : un test refermé ne doit pas
+   * empêcher d'effacer ce qu'il a collecté. Idempotent.
+   */
+  async eraseNationality(userId?: string) {
+    const id = userId ?? 'demo-user';
+    if (!this.prismaService.isEnabled) {
+      throw new ServiceUnavailableException(
+        'Database is not configured. Set DATABASE_URL.',
+      );
+    }
+    const result = await this.prismaService.execute((prisma) =>
+      prisma.$transaction(async (tx) => {
+        const exists = await tx.userProfile.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+        if (!exists) return null;
+        const runs = await tx.scholarshipMatchRun.deleteMany({
+          where: { userId: id },
+        });
+        await tx.userProfile.update({
+          where: { id },
+          data: { nationalityCode: null, secondNationalityCode: null },
+        });
+        return { matchRunsDeleted: runs.count };
+      }),
+    );
+    if (!result) throw new NotFoundException('Profile not found.');
+    return {
+      nationalityCode: null,
+      secondNationalityCode: null,
+      matchRunsDeleted: result.matchRunsDeleted,
+    };
   }
 
   /**
@@ -1768,6 +1833,9 @@ export class ProfilesService {
       preferredCurrency: p.preferredCurrency,
       wantsScholarshipSupport: p.wantsScholarship,
       scholarshipNewsletterOptIn: p.newsletterOptIn,
+      // Correctifs 57 : sa PRÉSENCE dit à l'app que ce serveur connaît aussi la
+      // clé `kpb_promotions` (les lignes de préférence ne s'affichent qu'alors).
+      promotionsEmailOptIn: p.promotionsEmailOptIn,
       disabledNotificationTypes: sanitizeOptOutTypes(
         p.disabledNotificationTypes,
       ),

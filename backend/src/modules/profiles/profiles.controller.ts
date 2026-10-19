@@ -105,6 +105,13 @@ export class ProfilesController {
     return this.profilesService.deleteAvatar(req.studentUser?.id);
   }
 
+  // « Effacer ma nationalité » (test « Mes 10 bourses ») : efface la ou les
+  // nationalités du profil et les résultats calculés avec elles.
+  @Delete('me/nationality')
+  eraseNationality(@Req() req: any) {
+    return this.profilesService.eraseNationality(req.studentUser?.id);
+  }
+
   // GDPR data export (portability) — returns one JSON document of all the
   // caller's records.
   @Get('me/export')

@@ -404,6 +404,36 @@ class ScholarshipMatchStore extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// « Effacer ma nationalité » (correctifs 57) : `DELETE
+  /// /profiles/me/nationality`, puis tout ce que l'app garde qui en dépend —
+  /// le dernier run (mémoire et cache), l'état servi et le brouillon de
+  /// l'assistant (qui contient la nationalité saisie). Le prochain test la
+  /// redemandera, avec la case de consentement. Rend `false` si le serveur
+  /// n'a pas confirmé : RIEN n'est alors effacé localement, pour ne pas faire
+  /// croire à un effacement qui n'a pas eu lieu.
+  Future<bool> eraseNationality({
+    required AppApiClient client,
+    required String userId,
+  }) async {
+    try {
+      await client.eraseNationality();
+    } catch (_) {
+      return false;
+    }
+    if (_userId == null || _userId == userId) {
+      _state = null;
+      _stateFresh = false;
+      _run = null;
+      _runSyncedAt = null;
+      _runFromCache = false;
+      _failure = null;
+    }
+    await _deleteRun(userId);
+    await clearDraft(userId);
+    notifyListeners();
+    return true;
+  }
+
   // ── Brouillon de l'assistant ─────────────────────────────────────────────
 
   /// Le brouillon de [userId], ou `null`. Illisible = absent.

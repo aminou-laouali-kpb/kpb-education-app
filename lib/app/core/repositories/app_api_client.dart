@@ -305,6 +305,13 @@ class AppApiClient extends _ApiClientBase
   Future<void> deleteAvatar() async {
     await _dio.delete<void>('/profiles/me/avatar');
   }
+
+  /// `DELETE /profiles/me/nationality` — « Effacer ma nationalité »
+  /// (correctifs 57) : le serveur efface la ou les nationalités du profil et
+  /// les résultats « Mes 10 bourses » calculés avec elles. Idempotent.
+  Future<void> eraseNationality() async {
+    await _dio.delete<void>('/profiles/me/nationality');
+  }
 }
 
 /// Whether a failed Supabase token refresh means the session is really dead.

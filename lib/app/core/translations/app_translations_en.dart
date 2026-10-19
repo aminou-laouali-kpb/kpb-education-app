@@ -655,6 +655,9 @@ const Map<String, String> appTranslationsEn = {
       '• Send relevant notifications (case updates, deadlines, openings and deadlines of the scholarships you follow; new scholarships matching your test only if you turn it on)\n'
       '• For the "My 10 scholarships" test: compare your answers with the official conditions of scholarships (nationality, age, level, grades, languages, experience) and show you up to 10 matching or to-check scholarships. The result is indicative: no decision is made for you, and only the scholarship body decides on your application\n'
       '• Email newly listed scholarships only if you opted in (checkbox — unsubscribe any time from your profile or the email footer)\n'
+      // Correctifs 57 (XC-06), 19/10/2026 — à relire par le propriétaire
+      // avant soumission. Uniquement ce que le code fait (campaign-purpose.ts).
+      '• Send you news and offers from KPB Education: by email only if you accepted it (Profile → "KPB news and offers", unticked by default; for a minor aged 16 or 17, the declared agreement of their legal guardian is also required), and by push notification as long as you have not turned them off (notification settings → "KPB news and offers"). Every email contains a one-click unsubscribe link, and you can unsubscribe at any time from the app\n'
       '• Improve our services through aggregated, anonymised statistics\n'
       '• Communicate with you about your applications\n'
       '• Contact you about a space or a guidance offer you declared an interest in, where you agreed to it when declaring. That declaration is readable by our counsellors and our sales team, and you can withdraw it at any time from the screen where you made it',
@@ -722,7 +725,8 @@ const Map<String, String> appTranslationsEn = {
           '• Optional: without it, the test does not compute a result, and the rest of the app remains usable\n'
           '• Use: only to check the nationality conditions of scholarships. It is not sent to any school, any scholarship body or our sales team, and goes neither into analytics nor into notifications\n'
           '• Retention: on your profile while your account exists; it is deleted with your account\n'
-          '• Withdrawal: you can withdraw your consent at any time by writing to privacy@kpbeducation.com; we then erase your nationality from your profile',
+          // Correctifs 57, 19/10/2026 — à relire par le propriétaire.
+          '• Withdrawal: you can withdraw your consent at any time with the "Erase my nationality" button in the "My 10 scholarships" space: your nationality is erased from your profile, together with the test results computed with it. You can also write to privacy@kpbeducation.com',
   'privacy_s6_body': '• Profile data: kept while your account is active\n'
       '• Case data: kept while the case is open, then deleted with the account\n'
       '• "My 10 scholarships" test answers: kept on your profile while your account is active, and editable by taking the test again; only your last 5 results are kept, older ones are erased automatically\n'
@@ -3405,7 +3409,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_nationality_consent':
       'I agree that KPB Education uses my nationality to check scholarship conditions.',
   'scholarship_match_nationality_consent_help':
-      'It stays on your profile while your account exists and is not sent to any school. You can withdraw your consent at any time by writing to privacy@kpbeducation.com; it is also erased with your account.',
+      'It stays on your profile while your account exists and is not sent to any school. You can withdraw your consent at any time with "Erase my nationality" in "My 10 scholarships", or by writing to privacy@kpbeducation.com; it is also erased with your account.',
   'scholarship_match_nationality_consent_required':
       'Tick the consent box to see your scholarships.',
   'scholarship_match_nationality_suggestion':
@@ -3997,6 +4001,24 @@ const Map<String, String> appTranslationsEn = {
   'assist_bridge_pref_subtitle':
       'When you look for help, we show you the app feature that can help',
   'notif_cta_assist_bridge': 'See how',
+  // Correctifs 57 (XC-06) — KPB news and offers.
+  'kpb_promotions_pref_title': 'KPB news and offers',
+  'kpb_promotions_pref_subtitle':
+      'Announcements and offers from the KPB team (messages about your account and applications continue)',
+  'profile_promotions_email': 'KPB news and offers by email',
+  'profile_promotions_email_desc':
+      'Receive news and offers from KPB Education by email (unsubscribe anytime)',
+  // Correctifs 57 — "Erase my nationality".
+  'scholarship_match_erase_nationality': 'Erase my nationality',
+  'scholarship_match_erase_nationality_title': 'Erase your nationality?',
+  'scholarship_match_erase_nationality_body':
+      'Your nationality will be erased from your profile, together with the test results computed with it. To see your scholarships again, you will need to retake the test.',
+  'scholarship_match_erase_nationality_cancel': 'Cancel',
+  'scholarship_match_erase_nationality_confirm': 'Erase',
+  'scholarship_match_erase_nationality_done':
+      'Your nationality and your results have been erased.',
+  'scholarship_match_erase_nationality_error':
+      'Erasing did not go through. Check your connection and try again.',
   // ── Referrals in the app (build 57 / 2.3.1) ──────────────────────────────
   'onb_ref_title': 'Got a referral code?',
   'onb_ref_subtitle':

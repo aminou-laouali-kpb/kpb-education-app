@@ -17,6 +17,11 @@ import {
   audienceFilterMissing,
 } from './campaign-audience';
 import { CampaignExecutorService } from './campaign-executor.service';
+import {
+  campaignChannelBlock,
+  countCampaignChannels,
+  parseCampaignPurpose,
+} from './campaign-purpose';
 import { CreateNotificationCampaignDto } from './dto/create-notification-campaign.dto';
 import { PreviewCampaignAudienceDto } from './dto/preview-campaign-audience.dto';
 import { UpsertNotificationTemplateDto } from './dto/upsert-notification-template.dto';
@@ -169,6 +174,7 @@ export class NotificationsService {
         status: item.status,
         linkedCaseId: item.linkedCaseId,
         route: item.route,
+        purpose: parseCampaignPurpose(item.purpose),
         createdAt: item.createdAt.toISOString(),
       })),
     };
@@ -188,6 +194,8 @@ export class NotificationsService {
     const linkedCaseId =
       (input['linkedCaseId'] as string | null | undefined) ?? null;
     const route = (input['route'] as string | null | undefined) ?? null;
+    // Défaut prudent : une campagne sans finalité déclarée est promotionnelle.
+    const purpose = parseCampaignPurpose(input.purpose);
     // Un canal de contenu SANS modèle ne peut rien envoyer : l'exécuteur garde
     // ses deux boucles derrière `&& template`. La campagne partait quand même,
     // n'envoyait rien, et s'affichait « terminée ». Or « aucun modèle » est le
@@ -244,6 +252,7 @@ export class NotificationsService {
           status: initialStatus,
           linkedCaseId,
           route,
+          purpose,
         },
       }),
     );
@@ -293,6 +302,7 @@ export class NotificationsService {
       status: final.status,
       linkedCaseId: final.linkedCaseId,
       route: final.route,
+      purpose: parseCampaignPurpose(final.purpose),
     };
   }
 
@@ -314,6 +324,19 @@ export class NotificationsService {
         ? []
         : await this.campaignExecutor.resolveRecipients(audienceType, filters);
     const fr = recipients.filter((r) => r.preferredLanguage !== 'en').length;
+
+    // Le nombre RÉEL par canal, après les filtres de consentement d'une
+    // campagne promotionnelle — la même règle que l'exécuteur
+    // (`campaign-purpose.ts`). `recipients` reste la taille de l'audience.
+    const purpose = parseCampaignPurpose(input.purpose);
+    const channels = input.channels?.length ? input.channels : ['push'];
+    const now = new Date();
+    const byChannel = countCampaignChannels(purpose, channels, recipients, now);
+    const reachable = recipients.filter((r) =>
+      channels.some(
+        (channel) => campaignChannelBlock(purpose, channel, r, now) === null,
+      ),
+    ).length;
 
     // Ce que l'exclusion RETIRE, dit en clair : un aperçu qui n'affichait qu'un
     // nombre laissait croire à une exclusion efficace alors qu'elle pouvait ne
@@ -346,6 +369,10 @@ export class NotificationsService {
       filterInvalid,
       recipients: recipients.length,
       byLanguage: { fr, en: recipients.length - fr },
+      purpose,
+      // Comptes qui recevront au moins un canal, après les filtres.
+      reachable,
+      byChannel,
       ...(exclusion
         ? {
             excludedCountries: exclusion.countries,

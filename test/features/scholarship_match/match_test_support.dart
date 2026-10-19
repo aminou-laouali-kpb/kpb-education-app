@@ -237,6 +237,10 @@ class FakeMatchApi extends MockApiClient {
   final List<bool> alertCalls = <bool>[];
   Object? alertsError;
 
+  /// « Effacer ma nationalité » (correctifs 57).
+  int eraseCalls = 0;
+  Object? eraseError;
+
   final List<List<String>> bulkCalls = <List<String>>[];
   final List<String> caseLookups = <String>[];
   List<dynamic> casesForScholarship = <dynamic>[];
@@ -287,6 +291,19 @@ class FakeMatchApi extends MockApiClient {
     final error = alertsError;
     if (error != null) throw error;
     return enabled;
+  }
+
+  @override
+  Future<void> eraseNationality() async {
+    eraseCalls++;
+    final error = eraseError;
+    if (error != null) throw error;
+    // Comme le serveur : les runs calculés avec la nationalité disparaissent.
+    stateJson = <String, dynamic>{
+      ...stateJson,
+      'latestRun': null,
+      'isStale': false,
+    };
   }
 
   @override

@@ -42,6 +42,11 @@ export const NOTIFICATION_OPT_OUT_TYPES = [
   // family keys above, opting out silences EVERYTHING (no feed row, no push):
   // the suggestion is never written for a student who turned it off.
   'assist_bridge',
+  // Correctifs 57 (XC-06) — push des campagnes de l'admin marquées
+  // `promotional` (offre, mise en avant, annonce marketing). Les campagnes de
+  // service (`informational`) ne la lisent pas. L'e-mail promotionnel, lui, est
+  // un OPT-IN distinct (`UserProfile.promotionsEmailOptIn`), pas une clé ici.
+  'kpb_promotions',
 ] as const;
 
 export type NotificationOptOutType = (typeof NOTIFICATION_OPT_OUT_TYPES)[number];

@@ -7,6 +7,7 @@ import { AdminCapability, hasAdminCapability, InternalRole } from './admin-capab
 import {
   availableActions,
   buildCampaignPayload,
+  canForfeit,
   editableFields,
   inviteUrl,
   NOVEMBER_2026_DEFAULTS,
@@ -169,5 +170,13 @@ describe('messages de la compétition', () => {
       expect(lookup(fr, key), key).toBeTypeOf('string');
       expect(lookup(en, key), key).toBeTypeOf('string');
     }
+  });
+});
+
+describe('canForfeit (correctifs 57)', () => {
+  it('seulement un prix attribué et non versé', () => {
+    expect(canForfeit({ payoutStatus: 'pending', participantId: 'p1' })).toBe(true);
+    expect(canForfeit({ payoutStatus: 'paid', participantId: 'p1' })).toBe(false);
+    expect(canForfeit({ payoutStatus: 'pending', participantId: null })).toBe(false);
   });
 });

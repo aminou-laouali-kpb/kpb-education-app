@@ -354,10 +354,78 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
       'versement',
     );
 
+    // ── Correctifs 57 : prix forfait réattribué APRÈS un premier versement ──
+    const board = await campaigns.adminLeaderboard(campaignId);
+    const pid = (name: string) => board.items.find((i) => i.publicName === name)!.id;
+    // Un prix versé ne se déclare pas forfait.
+    await expect(
+      campaigns.forfeitPrize(campaignId, 1, { participantId: pid('Awa S.'), reason: 'Injoignable' }, actor, 'rq16a'),
+    ).rejects.toThrow('versé');
+    // Le lauréat affiché a changé entre-temps : refus, rien n'est écrit.
+    await expect(
+      campaigns.forfeitPrize(campaignId, 2, { participantId: pid('Moussa D.'), reason: 'Injoignable' }, actor, 'rq16b'),
+    ).rejects.toThrow('changé');
+    const after = await campaigns.forfeitPrize(
+      campaignId,
+      2,
+      { participantId: pid('Aïcha K.'), reason: 'Injoignable 15 jours après la validation' },
+      actor,
+      'rq16c',
+    );
+    // Le 2e prix passe au suivant classé non primé (le 3e) ; le 3e prix n'a
+    // plus de candidat (trois participants classés) ; le 1er, versé, ne bouge pas.
+    expect(after.items.map((p) => [p.rank, p.publicNameSnapshot, p.amountFcfa, p.payoutStatus])).toEqual([
+      [1, 'Awa S. — Cotonou', 100000, 'paid'],
+      [2, 'Moussa D. — Maradi', 50000, 'pending'],
+    ]);
+    expect(after.forfeits).toHaveLength(1);
+    expect(after.forfeits[0]).toMatchObject({
+      rank: 2,
+      participantId: pid('Aïcha K.'),
+      publicNameSnapshot: 'Aïcha K. — Niamey',
+      amountFcfa: 50000,
+      reason: 'Injoignable 15 jours après la validation',
+      forfeitedByAdminId: actor.id,
+      replacedByParticipantId: pid('Moussa D.'),
+    });
+    // Idempotent : la même déclaration ne réécrit rien.
+    const replay = await campaigns.forfeitPrize(
+      campaignId,
+      2,
+      { participantId: pid('Aïcha K.'), reason: 'Injoignable' },
+      actor,
+      'rq16d',
+    );
+    expect(replay.forfeits).toHaveLength(1);
+    expect(replay.items.map((p) => p.publicNameSnapshot)).toEqual(['Awa S. — Cotonou', 'Moussa D. — Maradi']);
+    const forfeitAudit = await prisma.adminAuditEvent.findMany({
+      where: { actorAdminId: actor.id, action: 'referral_campaign.prize_forfeited' },
+    });
+    expect(forfeitAudit).toHaveLength(1);
+    expect(forfeitAudit[0]).toMatchObject({
+      purposeCode: 'referral_campaign',
+      reasonCode: 'Injoignable 15 jours après la validation',
+    });
+    // Le classement garde l'ordre réel.
+    const ranks = (await campaigns.adminLeaderboard(campaignId)).items.slice(0, 3).map((i) => [i.rank, i.publicName]);
+    expect(ranks).toEqual([
+      [1, 'Awa S.'],
+      [2, 'Aïcha K.'],
+      [3, 'Moussa D.'],
+    ]);
+    // Avant la clôture, aucun lauréat public (podium provisoire).
+    expect((await campaigns.publicLeaderboard(slug, undefined, T('2026-11-16T00:00:00Z'))).winners).toEqual([]);
+
     await campaigns.transition(campaignId, 'close', actor, 'rq17');
     expect((await campaigns.recompute(campaignId)).skipped).toBe('closed');
-    const pub = await campaigns.publicLeaderboard(slug, undefined, T('2026-11-16T00:00:00Z'));
+    const pub = await campaigns.publicLeaderboard(slug, undefined, T('2026-11-16T00:05:00Z'));
     expect(pub.campaign.provisional).toBe(false);
+    // Résultats définitifs : les lauréats EFFECTIFS ; le classement, l'ordre réel.
+    expect(pub.winners).toEqual([
+      { prizeRank: 1, amountFcfa: 100000, name: 'Awa S.', city: 'Cotonou' },
+      { prizeRank: 2, amountFcfa: 50000, name: 'Moussa D.', city: 'Maradi' },
+    ]);
+    expect(pub.entries.slice(0, 3).map((e) => e.name)).toEqual(['Awa S.', 'Aïcha K.', 'Moussa D.']);
 
     const csv = await campaigns.exportCsv(campaignId, 'leaderboard');
     expect(csv.split('\r\n')[0]).toContain('"rank","public_name"');

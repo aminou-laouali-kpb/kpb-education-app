@@ -272,12 +272,17 @@ aucun SDK nouveau.
 
 ### 4.3 Points qui restent ouverts
 
-- **XC-06** (finalité Marketing des coordonnées) : **reste ouvert**. Décision du propriétaire du
-  18/10/2026 : pas de finalité « Marketing », **sous réserve** qu'aucun envoi promotionnel ne parte
-  sans opt-in. Or les campagnes de l'admin (`campaign-executor.service.ts`) envoient un modèle libre
-  en push et par e-mail à des audiences larges, sans filtre de consentement : la réserve n'est pas
-  tenue par le code, la décision n'est donc **pas** reportée dans les formulaires
-  (`docs/CONSOLE_ANSWERS.md` §0quater, « Suivi du 18/10/2026 »). À VALIDER (propriétaire).
+- **XC-06** (finalité Marketing des coordonnées) : **tranché le 19/10/2026 — finalité « Marketing » DÉCLARÉE** (Play Data Safety et Apple App Privacy, coordonnées et identifiants de notification) : le propriétaire garde le push promotionnel en opt-out et déclare donc honnêtement la finalité. Historique : réduit par les correctifs 57
+  (19/10/2026). Décision du propriétaire du 18/10/2026 : pas de finalité « Marketing », **sous
+  réserve** qu'aucun envoi promotionnel ne parte sans opt-in. Depuis les correctifs 57, une campagne
+  de l'admin porte une finalité (`promotional` par défaut) : l'**e-mail** promotionnel ne part
+  qu'aux comptes qui ont coché « Nouvelles et offres de KPB » (non par défaut ; mineur : accord du
+  représentant légal en plus), avec un lien de désinscription en un clic ; le **push**
+  promotionnel respecte l'interrupteur « Nouvelles et offres de KPB » (`kpb_promotions`) — c'est un
+  **opt-out**, pas un opt-in. Restent donc non garantis par le code : le push en opt-out, la
+  classification humaine des campagnes, et les coordonnées envoyées à l'équipe commerciale. La
+  décision n'est **pas** reportée dans les formulaires (`docs/CONSOLE_ANSWERS.md` §0quater,
+  « Suivi du 18/10/2026 » et « Suivi du 19/10/2026 »). À VALIDER (propriétaire).
 - **D5** (prix FCFA) : **tranché le 18/10/2026** — affichés à titre indicatif, payés hors store
   (`docs/store-listing-copy.md` §9 ; notes de revue §3 cohérentes).
 - **Nationalité** : base légale **consentement explicite**, saisie facultative, conservée tant que
@@ -285,9 +290,10 @@ aucun SDK nouveau.
   au récapitulatif du test ; politique rédigée (« Votre nationalité »). `features.scholarshipMatch`
   reste **fermé** (défaut inchangé : son ouverture est une action d'exploitation, §5 étape 4).
   Restent À VALIDER (propriétaire) : la réponse « Sensitive Info / origine ethnique : Non » avec le
-  juridique (§4.1, §4.2) et le texte sur les mineurs de 16 et 17 ans (`docs/data-inventory.md` §5) ;
-  constat : aucune action « effacer ma nationalité » dans l'app (le retrait passe par
-  privacy@kpbeducation.com).
+  juridique (§4.1, §4.2) et le texte sur les mineurs de 16 et 17 ans (`docs/data-inventory.md` §5).
+  **Correctifs 57** : bouton « Effacer ma nationalité » dans l'espace « Mes 10 bourses »
+  (`DELETE /profiles/me/nationality` : nationalité(s) et résultats du test effacés, cache local
+  vidé) ; privacy@kpbeducation.com reste possible ; politique mise à jour (à relire).
 - **Export** : corrigé le 18/10/2026 — les notifications in-app (`UserNotification`) figurent dans
   `GET /profiles/me/export` (clé `notifications`) ; la politique le dit (section 8).
   `NotificationDelivery` (livraisons des campagnes admin) n'y est toujours pas.
@@ -470,9 +476,9 @@ possible (30 jours au total au plus) depuis App Store Connect.
 | **e** | Espace « Études en France » ouvert pendant la revue | Le garder tel que mesuré (ouvert), le dire dans les notes | §3, point 1 |
 | **f** | Seuils et durées des paliers Play | Ceux du §6.2 | §6.2 |
 | **g** | `outbox_followers` pour les favoris des anciennes builds | Quand la 57 est majoritaire | §6.3 |
-| **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | **D5 tranché le 18/10/2026** (indicatif, payé hors store). **XC-06 ouvert** : « pas de Marketing » décidé sous réserve d'opt-in, réserve non tenue par les campagnes admin — À VALIDER (propriétaire) | §4.3 ; `docs/CONSOLE_ANSWERS.md` §0quater |
+| **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | **D5 tranché le 18/10/2026** (indicatif, payé hors store). **XC-06 tranché le 19/10/2026** : finalité « Marketing » déclarée (push promotionnel en opt-out, choix du propriétaire) ; l'e-mail promotionnel reste réservé par le code aux consentants (lien de désinscription) | §4.3 ; `docs/CONSOLE_ANSWERS.md` §0quater |
 | **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique **rédigée le 18/10/2026** (à relire avant l'archive) et Data safety à reporter (identifiant d'installation) ; pied de l'écran « Compétition » retenu et testé ; ordre d'ouverture des trois drapeaux — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
-| **j** | Règlement de la compétition (18/10/2026) | **Tranché** : Wave sous 7 jours ; prix perdu après 15 jours et passé au suivant ; résultats le 17 novembre 2026 ; droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com ; proches de l'équipe exclus ; pièce d'identité au versement ; fiscalité à la charge du lauréat ; empreintes 180 jours. **Limite du code** : réattribuer un prix après un premier versement noté est refusé par le serveur (`docs/runbook-campagne-ambassadeurs.md` §7) | `docs/reglement-competition-ambassadeurs-novembre-2026.md` |
+| **j** | Règlement de la compétition (18/10/2026) | **Tranché** : Wave sous 7 jours ; prix perdu après 15 jours et passé au suivant ; résultats le 17 novembre 2026 ; droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com ; proches de l'équipe exclus ; pièce d'identité au versement ; fiscalité à la charge du lauréat ; empreintes 180 jours. **Correctifs 57** : « Déclarer le prix forfait et réattribuer » (onglet Prix de l'admin) réattribue un prix non versé au suivant classé, même après un premier versement ; un prix versé ne bouge jamais (`docs/runbook-campagne-ambassadeurs.md` §7) | `docs/reglement-competition-ambassadeurs-novembre-2026.md` |
 | **k** | Conservations et bots (18/10/2026) | **Tranché** : empreintes 180 jours, événements « Passerelle » 12 mois, contenus supprimés de la communauté 30 jours ; textes et seuils « Passerelle » validés, `shadow` ≥ 2 semaines, < 10 % de faux positifs ; « Vérif » en `auto` après 50 réponses validées sans correction | `docs/data-inventory.md` §6, §7, §7 bis, §7 ter ; runbooks des bots |
 
 ---

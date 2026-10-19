@@ -1320,7 +1320,21 @@
     "colDeliveredAt": "Delivered at",
     "colOpenedAt": "Opened at",
     "deliveriesEmpty": "No delivery recorded for this campaign yet.",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "purposeLabel": "Purpose",
+    "purpose_promotional": "Promotional — offer, highlight, marketing announcement",
+    "purpose_informational": "Service information — account, application, maintenance",
+    "purposeHint_promotional": "Default. Email: only to accounts that accepted “KPB news and offers” (and, for a minor, with their legal guardian's agreement), with an unsubscribe link. Push: never to those who turned off “KPB news and offers”.",
+    "purposeHint_informational": "For service messages only (account, application, maintenance, terms). An offer or a highlight is promotional, even when sent to few people.",
+    "previewCta": "Preview recipients",
+    "previewAudience": "Audience: {n} account(s)",
+    "previewReachable": "will receive at least one channel: {n}",
+    "previewFiltered": "filtered",
+    "previewFilterMissing": "Required filter missing: the campaign would target nobody.",
+    "previewError": "Preview failed.",
+    "blocked_push_opted_out": "turned off news and offers",
+    "blocked_email_no_consent": "without email consent",
+    "blocked_email_minor_without_guardian": "minors without guardian agreement"
   },
   "serviceSales": {
     "title": "Service sales",
@@ -1652,7 +1666,15 @@
     "payoutHint": "Manual Wave payout: record the transaction reference and the date. For a minor, the recipient is the parent.",
     "payoutReference": "Transaction reference",
     "payoutDate": "Payout date",
-    "settingsLocked": "Campaign launched: only names and rules can still change."
+    "settingsLocked": "Campaign launched: only names and rules can still change.",
+    "forfeit": "Declare the prize forfeited and reassign",
+    "forfeitConfirm": "Declare forfeited",
+    "forfeitHint": "{name} loses prize #{rank} (rules: unreachable or without payout details 15 days after validation). The prize goes to the next ranked participant who has no prize yet; prizes already paid do not move; the public ranking keeps the real order. Logged, no undo in the tool.",
+    "forfeitReason": "Reason (required)",
+    "forfeitReasonPlaceholder": "E.g. unreachable since 18/11 (3 calls, 2 WhatsApp messages)",
+    "forfeitsTitle": "Forfeited prizes",
+    "forfeitReassigned": "reassigned",
+    "forfeitVacant": "not reassigned (no candidate left)"
   },
   "communityAdmin": {
     "title": "Community",

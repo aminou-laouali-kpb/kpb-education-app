@@ -12,12 +12,14 @@ import {
   type CampaignReferralRow,
   campaignsApi,
   buildCampaignPayload,
+  canForfeit,
   editableFields,
   formatFcfa,
   inviteUrl,
   type Leaderboard,
   type LeaderboardItem,
   type PrizeAward,
+  type PrizeForfeit,
   prizeAmountsText,
   publicLeaderboardUrl,
   REFERRAL_VARIANT,
@@ -36,6 +38,7 @@ import {
   Input,
   Modal,
   Select,
+  Textarea,
 } from '../ui';
 import { CampaignFields } from './campaigns-hub';
 
@@ -730,12 +733,16 @@ function PrizesTab({
   const [payout, setPayout] = useState<{ rank: number; reference: string; date: string; recipient: string } | null>(
     null,
   );
+  const [forfeits, setForfeits] = useState<PrizeForfeit[]>([]);
+  const [forfeit, setForfeit] = useState<{ award: PrizeAward; reason: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
-      setAwards((await campaignsApi.prizes(campaign.id)).items ?? []);
+      const res = await campaignsApi.prizes(campaign.id);
+      setAwards(res.items ?? []);
+      setForfeits(res.forfeits ?? []);
     } catch (e) {
       setError(errorText(e, t('parrainage.loadError')));
     }
@@ -758,6 +765,26 @@ function PrizesTab({
       });
       setPayout(null);
       await load();
+    } catch (e) {
+      setError(errorText(e, t('parrainage.saveError')));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** « Déclarer le prix forfait et réattribuer » (correctifs 57). */
+  async function saveForfeit() {
+    if (!forfeit?.award.participantId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await campaignsApi.forfeit(campaign.id, forfeit.award.rank, {
+        participantId: forfeit.award.participantId,
+        reason: forfeit.reason.trim(),
+      });
+      setAwards(res.items ?? []);
+      setForfeits(res.forfeits ?? []);
+      setForfeit(null);
     } catch (e) {
       setError(errorText(e, t('parrainage.saveError')));
     } finally {
@@ -810,7 +837,7 @@ function PrizesTab({
                 primary={a.payoutStatus === 'paid' ? t('parrainage.paid') : t('parrainage.unpaid')}
                 sub={a.payoutReference ? `${a.payoutMethod} · ${a.payoutReference} · ${a.paidAt?.slice(0, 10)}` : undefined}
               />
-              <div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {canManage && a.payoutStatus !== 'paid' ? (
                   <Button
                     size="sm"
@@ -821,11 +848,71 @@ function PrizesTab({
                     {t('parrainage.recordPayout')}
                   </Button>
                 ) : null}
+                {canManage && canForfeit(a) ? (
+                  <Button size="sm" variant="dangerOutline" onClick={() => setForfeit({ award: a, reason: '' })}>
+                    {t('parrainage.forfeit')}
+                  </Button>
+                ) : null}
               </div>
             </AdminTableRow>
           ))}
         </AdminTable>
       )}
+      {forfeits.length > 0 ? (
+        <div style={{ display: 'grid', gap: 4 }}>
+          <strong>{t('parrainage.forfeitsTitle')}</strong>
+          <ul style={{ margin: 0 }}>
+            {forfeits.map((f) => (
+              <li key={f.id}>
+                {f.rank}. {f.publicNameSnapshot} — {formatFcfa(f.amountFcfa, locale)} · {f.forfeitedAt.slice(0, 10)} ·{' '}
+                {f.reason} ·{' '}
+                {f.replacedByParticipantId ? t('parrainage.forfeitReassigned') : t('parrainage.forfeitVacant')}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <Modal
+        open={forfeit !== null}
+        title={t('parrainage.forfeit')}
+        onClose={() => setForfeit(null)}
+        busy={busy}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setForfeit(null)} disabled={busy}>
+              {t('parrainage.cancel')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={saveForfeit}
+              loading={busy}
+              disabled={!forfeit || forfeit.reason.trim().length < 3}
+            >
+              {t('parrainage.forfeitConfirm')}
+            </Button>
+          </>
+        }
+      >
+        {forfeit ? (
+          <div style={{ display: 'grid', gap: 10 }}>
+            <Alert variant="warning">
+              {t('parrainage.forfeitHint')
+                .replace('{rank}', String(forfeit.award.rank))
+                .replace('{name}', forfeit.award.publicNameSnapshot)}
+            </Alert>
+            <Field label={t('parrainage.forfeitReason')}>
+              {({ id }) => (
+                <Textarea
+                  id={id}
+                  value={forfeit.reason}
+                  placeholder={t('parrainage.forfeitReasonPlaceholder')}
+                  onChange={(e) => setForfeit({ ...forfeit, reason: e.target.value })}
+                />
+              )}
+            </Field>
+          </div>
+        ) : null}
+      </Modal>
       <Modal
         open={payout !== null}
         title={t('parrainage.recordPayout')}

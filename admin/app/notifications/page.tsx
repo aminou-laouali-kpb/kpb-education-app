@@ -6,6 +6,14 @@ import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { useLocale } from '../../components/locale-provider';
 import { apiFetch } from '../../lib/api-client';
+import {
+  CAMPAIGN_PURPOSES,
+  type CampaignAudiencePreview,
+  type CampaignPurpose,
+  channelCountLine,
+  DEFAULT_CAMPAIGN_PURPOSE,
+  previewBody,
+} from '../../lib/campaign-purpose';
 import { splitList } from '../../lib/ui';
 import {
   AdminTable,
@@ -91,6 +99,8 @@ interface NotificationCampaignItem {
   scheduledFor: string | null;
   status: string;
   linkedCaseId: string | null;
+  /** Absent d'un serveur antérieur aux correctifs 57. */
+  purpose?: CampaignPurpose;
 }
 
 interface NotificationDeliveryItem {
@@ -160,7 +170,10 @@ export default function NotificationsPage() {
     channels: 'push',
     scheduledFor: '',
     linkedCaseId: '',
+    purpose: DEFAULT_CAMPAIGN_PURPOSE as CampaignPurpose,
   });
+  const [preview, setPreview] = useState<CampaignAudiencePreview | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   function formatDateTime(value: string | null) {
     if (!value) return '—';
@@ -277,6 +290,45 @@ export default function NotificationsPage() {
     }
   }
 
+  /**
+   * Le nombre RÉEL de destinataires, canal par canal, après les filtres de
+   * consentement d'une campagne promotionnelle (même règle que l'envoi).
+   */
+  async function previewCampaign() {
+    setErrorMessage(null);
+    let parsedFilters: unknown;
+    try {
+      parsedFilters = JSON.parse(campaignForm.filtersJson);
+    } catch {
+      setErrorMessage(t('notifications.filtersJsonError'));
+      return;
+    }
+    setPreviewing(true);
+    try {
+      setPreview(
+        await apiFetch<CampaignAudiencePreview>(
+          '/admin/notifications/campaigns/preview',
+          {
+            method: 'POST',
+            body: previewBody({
+              audienceType: campaignForm.audienceType,
+              filters: parsedFilters,
+              channels: splitList(campaignForm.channels),
+              purpose: campaignForm.purpose,
+            }),
+          },
+        ),
+      );
+    } catch (error) {
+      setPreview(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : t('notifications.previewError'),
+      );
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
   async function submitCampaign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatusMessage(null);
@@ -302,6 +354,7 @@ export default function NotificationsPage() {
             ? new Date(campaignForm.scheduledFor).toISOString()
             : null,
           linkedCaseId: campaignForm.linkedCaseId || null,
+          purpose: campaignForm.purpose,
         },
       });
       setCampaignForm({
@@ -312,7 +365,9 @@ export default function NotificationsPage() {
         channels: 'push',
         scheduledFor: '',
         linkedCaseId: '',
+        purpose: DEFAULT_CAMPAIGN_PURPOSE,
       });
+      setPreview(null);
       setStatusMessage(t('notifications.campaignCreated'));
       await loadNotifications();
     } catch (error) {
@@ -542,6 +597,30 @@ export default function NotificationsPage() {
                   )}
                 </Field>
               </div>
+              <Field label={t('notifications.purposeLabel')}>
+                {({ id }) => (
+                  <Select
+                    id={id}
+                    value={campaignForm.purpose}
+                    onChange={(e) => {
+                      setPreview(null);
+                      setCampaignForm((current) => ({
+                        ...current,
+                        purpose: e.target.value as CampaignPurpose,
+                      }));
+                    }}
+                  >
+                    {CAMPAIGN_PURPOSES.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`notifications.purpose_${value}`)}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <p style={hintStyle}>
+                {t(`notifications.purposeHint_${campaignForm.purpose}`)}
+              </p>
               <Field label={t('notifications.audienceLabel')}>
                 {({ id }) => (
                   <Select
@@ -612,7 +691,49 @@ export default function NotificationsPage() {
                   )}
                 </Field>
               </div>
-              <div>
+              {preview ? (
+                <Alert variant="info">
+                  <div>
+                    {t('notifications.previewAudience').replace(
+                      '{n}',
+                      String(preview.recipients),
+                    )}
+                    {preview.reachable !== undefined
+                      ? ` · ${t('notifications.previewReachable').replace(
+                          '{n}',
+                          String(preview.reachable),
+                        )}`
+                      : ''}
+                  </div>
+                  {(preview.byChannel ?? []).map((count) => (
+                    <div key={count.channel}>
+                      {channelCountLine(
+                        count,
+                        {
+                          push_opted_out: t('notifications.blocked_push_opted_out'),
+                          email_no_consent: t('notifications.blocked_email_no_consent'),
+                          email_minor_without_guardian: t(
+                            'notifications.blocked_email_minor_without_guardian',
+                          ),
+                        },
+                        t('notifications.previewFiltered'),
+                      )}
+                    </div>
+                  ))}
+                  {preview.filterMissing || preview.filterInvalid ? (
+                    <div>{preview.filterInvalid ?? t('notifications.previewFilterMissing')}</div>
+                  ) : null}
+                </Alert>
+              ) : null}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={previewing}
+                  onClick={() => void previewCampaign()}
+                >
+                  {t('notifications.previewCta')}
+                </Button>
                 <Button type="submit">{t('notifications.launchCta')}</Button>
               </div>
             </form>
@@ -639,7 +760,9 @@ export default function NotificationsPage() {
                   >
                     <CellText
                       primary={campaign.name}
-                      sub={campaign.audienceType.replace(/_/g, ' ')}
+                      sub={`${campaign.audienceType.replace(/_/g, ' ')} · ${t(
+                        `notifications.purpose_${campaign.purpose ?? DEFAULT_CAMPAIGN_PURPOSE}`,
+                      )}`}
                     />
                     <CellText primary={campaign.channels.join(', ')} muted />
                     <CellText

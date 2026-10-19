@@ -67,6 +67,24 @@ class _PreferencesCard extends StatelessWidget {
                   : controller.setNewsletterOptIn,
             ),
           ),
+          // Nouvelles et offres de KPB par e-mail (correctifs 57, XC-06) :
+          // consentement distinct, NON par défaut. Visible seulement si le
+          // serveur connaît le champ.
+          if (controller.profile?.serverKnowsPromotions ?? false) ...[
+            const _RowDivider(),
+            _SettingRow(
+              icon: Icons.campaign_outlined,
+              color: KpbColors.warning,
+              title: 'profile_promotions_email'.tr,
+              subtitle: 'profile_promotions_email_desc'.tr,
+              trailing: Switch.adaptive(
+                key: const ValueKey<String>('profile-promotions-email'),
+                value: controller.profile?.promotionsEmailOptIn ?? false,
+                activeTrackColor: KpbColors.warning,
+                onChanged: controller.setPromotionsEmailOptIn,
+              ),
+            ),
+          ],
           const _RowDivider(),
           _SettingRow(
             icon: Icons.fingerprint_rounded,

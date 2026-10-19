@@ -59,6 +59,7 @@ class UserProfile {
     this.preferredCurrency = 'XOF',
     this.wantsScholarshipSupport = false,
     this.wantsScholarshipNewsletter = false,
+    this.promotionsEmailOptIn,
     this.disabledNotificationTypes = const [],
     this.availableDocuments = const [],
     this.consentedAt,
@@ -98,6 +99,18 @@ class UserProfile {
   /// GDPR requires an explicit, freely given consent. The backend stamps the
   /// consent timestamp; the app only carries the desired boolean.
   final bool wantsScholarshipNewsletter;
+
+  /// « Recevoir par e-mail les nouvelles et offres de KPB » (correctifs 57,
+  /// XC-06) — distinct de la newsletter bourses, NON par défaut.
+  ///
+  /// `null` : le serveur n'a pas (encore) dit ce qu'il en est — un serveur
+  /// antérieur ne connaît ni ce champ ni la clé `kpb_promotions`. L'app
+  /// n'affiche alors aucune des deux lignes de préférence et n'envoie pas le
+  /// champ (un serveur antérieur le refuserait en 400).
+  final bool? promotionsEmailOptIn;
+
+  /// Le serveur connaît les préférences « nouvelles et offres de KPB ».
+  bool get serverKnowsPromotions => promotionsEmailOptIn != null;
 
   /// KPB-169: the recurring notification families this student has opted OUT
   /// of, as stable keys ([NotificationOptOutType]). One list rather than one
@@ -183,6 +196,7 @@ class UserProfile {
     String? preferredCurrency,
     bool? wantsScholarshipSupport,
     bool? wantsScholarshipNewsletter,
+    bool? promotionsEmailOptIn,
     List<String>? disabledNotificationTypes,
     List<String>? availableDocuments,
     DateTime? consentedAt,
@@ -217,6 +231,7 @@ class UserProfile {
           wantsScholarshipSupport ?? this.wantsScholarshipSupport,
       wantsScholarshipNewsletter:
           wantsScholarshipNewsletter ?? this.wantsScholarshipNewsletter,
+      promotionsEmailOptIn: promotionsEmailOptIn ?? this.promotionsEmailOptIn,
       disabledNotificationTypes:
           disabledNotificationTypes ?? this.disabledNotificationTypes,
       availableDocuments: availableDocuments ?? this.availableDocuments,

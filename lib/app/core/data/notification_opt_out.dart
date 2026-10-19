@@ -43,6 +43,14 @@ abstract final class NotificationOptOutType {
   /// connaît donc la clé).
   static const assistBridge = 'assist_bridge';
 
+  /// Correctifs 57 (XC-06) — les PUSH des campagnes de l'équipe marquées
+  /// promotionnelles (offre, mise en avant, annonce). Les messages de service
+  /// ne la lisent pas. L'e-mail promotionnel, lui, est un consentement à part
+  /// (`UserProfile.promotionsEmailOptIn`, non par défaut). La ligne des
+  /// préférences ne s'affiche que si le serveur la connaît
+  /// (`UserProfile.serverKnowsPromotions`).
+  static const kpbPromotions = 'kpb_promotions';
+
   /// Every key this build understands. An unknown key coming back from a newer
   /// server is preserved as-is (see [applyOptOut]) rather than dropped, so an
   /// older app never silently re-enables a family it cannot render a row for.
@@ -53,6 +61,7 @@ abstract final class NotificationOptOutType {
     followedScholarshipUpdates,
     community,
     assistBridge,
+    kpbPromotions,
   ];
 }
 

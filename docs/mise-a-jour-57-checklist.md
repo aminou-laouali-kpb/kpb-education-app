@@ -322,7 +322,7 @@ gh workflow run release-preflight.yml --ref main \
 | Data Safety (Play), App Privacy (Apple) | **Pack 57 §4** | Lignes nouvelles : test « Mes 10 bourses » (Autres infos / Other Data), suivis et ouverture des notifications ; OneSignal reste « Partagé » tant que le repli tourne (`docs/CONSOLE_ANSWERS.md` §0sexies) |
 | Liste des SDK (si demandée) | Pack 57 §4.2 | OneSignal retiré, Firebase Messaging ajouté |
 | Questionnaire d'âge, *Government apps*, non-affiliation | `docs/CONSOLE_ANSWERS.md` §3 et §0quater ; pack 56 §4 | Inchangés |
-| XC-06, D5 | `docs/CONSOLE_ANSWERS.md` §0quater | Toujours ouverts |
+| XC-06, D5 | `docs/CONSOLE_ANSWERS.md` §0quater | D5 tranché le 18/10/2026. XC-06 **ouvert** : depuis les correctifs 57 (19/10/2026), l'e-mail promotionnel des campagnes admin est réservé aux consentants ; le push promotionnel reste en opt-out — À VALIDER (propriétaire) |
 
 ## 8. Soumettre 🔒
 
