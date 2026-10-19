@@ -24,8 +24,13 @@ import type { NotificationOptOutType } from '../../common/notification-types';
  *     avoir l'accord de son représentant légal (`guardianConsentedAt`), la
  *     même porte que le coach IA ; chaque e-mail porte un lien de
  *     désinscription (voir `promotions-unsubscribe.ts`) ;
- *   - **push** : jamais vers un compte qui a coupé `kpb_promotions`
- *     (Notifications → préférences, dans l'app).
+ *   - **push** (chantier juridique 57, App Store 4.5.4 : OPT-IN) : seulement
+ *     si le compte a activé « Nouvelles et offres de KPB par notification »
+ *     (`promotionsPushOptIn`, défaut NON, comptes existants compris) ET n'a
+ *     pas coupé `kpb_promotions` ; un mineur déclaré doit EN PLUS avoir
+ *     l'accord de son représentant légal, comme pour l'e-mail. Une build qui
+ *     ne connaît pas le champ ne peut pas l'activer : elle ne reçoit donc plus
+ *     de push promotionnel.
  *
  * La classification reste un choix humain fait dans l'admin : le code garantit
  * le filtre d'une campagne marquée promotionnelle, et le défaut prudent, pas
@@ -54,12 +59,15 @@ export interface CampaignConsentFields {
   email?: string | null;
   disabledNotificationTypes?: readonly string[] | null;
   promotionsEmailOptIn?: boolean | null;
+  promotionsPushOptIn?: boolean | null;
   birthDate?: Date | null;
   guardianConsentedAt?: Date | null;
 }
 
 export type CampaignChannelBlock =
+  | 'push_no_consent'
   | 'push_opted_out'
+  | 'push_minor_without_guardian'
   | 'email_no_consent'
   | 'email_minor_without_guardian';
 
@@ -84,9 +92,14 @@ export function campaignChannelBlock(
 ): CampaignChannelBlock | null {
   if (purpose !== 'promotional') return null;
   if (channel === 'push') {
-    return (recipient.disabledNotificationTypes ?? []).includes(PROMOTIONS_OPT_OUT)
-      ? 'push_opted_out'
-      : null;
+    if (recipient.promotionsPushOptIn !== true) return 'push_no_consent';
+    if ((recipient.disabledNotificationTypes ?? []).includes(PROMOTIONS_OPT_OUT)) {
+      return 'push_opted_out';
+    }
+    if (isDeclaredMinor(recipient.birthDate, now) && !recipient.guardianConsentedAt) {
+      return 'push_minor_without_guardian';
+    }
+    return null;
   }
   if (channel === 'email') {
     if (recipient.promotionsEmailOptIn !== true) return 'email_no_consent';

@@ -959,7 +959,17 @@ reviewed by the owner before the archive** (the in-app text is compiled).
   optional, kept while the account exists, erasable; the app now shows a consent checkbox on the
   test summary and sends nothing without it. Play/Apple rows unchanged (`docs/release-57-store-pack.md`
   §4); "Sensitive Info: No" still to confirm with counsel — *À VALIDER (owner)*.
-- **XC-06 (Marketing purpose) — SETTLED 19/10/2026**: promotional push stays opt-out, so the owner **declares the Marketing purpose** (Play Data Safety; Apple App Privacy « Developer's Advertising or Marketing »). History: the owner first chose "no Marketing purpose" **provided** no
+- **Promotional push is OPT-IN (legal fixes 57, 19/10/2026 — App Store guideline 4.5.4)**: a push
+  from a `promotional` admin campaign only goes to accounts that **turned on** "KPB news and offers
+  by notification" in the app's notification settings (`UserProfile.promotionsPushOptIn`, **false
+  by default for everyone, existing accounts included**, timestamped proof
+  `promotionsPushConsentedAt`) **and** did not turn off `kpb_promotions`; declared minors also need
+  guardian consent (same rule as email). Consent is collected in the app, never pre-ticked, and
+  withdrawn from the same switch. A build that does not know the field cannot opt in, so it no
+  longer receives promotional push. Enforced at preview and send (`campaign-purpose.ts`, unit and
+  Postgres tests). Service (`informational`) campaigns are unchanged. The **Marketing purpose stays
+  declared** (honest, costs nothing); say "opt-in" wherever a free-text field allows.
+- **XC-06 (Marketing purpose) — SETTLED 19/10/2026**: the owner **declares the Marketing purpose** (Play Data Safety; Apple App Privacy « Developer's Advertising or Marketing »); promotional push, first kept opt-out, is opt-in since the legal fixes above. History: the owner first chose "no Marketing purpose" **provided** no
   promotional message goes out without opt-in. *Fixes 57 (19/10/2026)*: admin campaigns now carry
   a purpose (`promotional` by default); a promotional **e-mail** only goes to accounts that ticked
   "KPB news and offers" (off by default; declared minors also need guardian consent) and carries a

@@ -21,6 +21,7 @@ const describePostgres =
  * `promotional` par défaut, l'aperçu compte ce qui partira RÉELLEMENT, l'envoi
  * ne touche que les comptes qui y ont droit, le consentement se pose (et
  * s'horodate) par le PATCH du profil, et le lien de désinscription le retire.
+ * Chantier juridique 57 : le push promotionnel exige lui aussi un opt-in.
  */
 describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
   jest.setTimeout(60_000);
@@ -66,6 +67,8 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
       ['nopush', { disabledNotificationTypes: ['kpb_promotions'] }],
       ['minor', { birthDate: new Date('2011-01-01T00:00:00Z') }],
       ['minorok', { birthDate: new Date('2011-01-01T00:00:00Z'), guardianConsentedAt: new Date() }],
+      // Jamais d'opt-in push (cas d'une build qui ne connaît pas le champ).
+      ['nooptin', { birthDate: new Date('2000-01-01T00:00:00Z') }],
     ];
     for (const [name, extra] of people) {
       await prisma.userProfile.create({
@@ -124,6 +127,9 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
     const profile = await prisma.userProfile.findUniqueOrThrow({ where: { id: id('adult') } });
     expect(profile.promotionsEmailOptIn).toBe(false);
     expect(profile.promotionsEmailConsentedAt).toBeNull();
+    // Chantier juridique 57 : l'opt-in push est NON par défaut, lui aussi.
+    expect(profile.promotionsPushOptIn).toBe(false);
+    expect(profile.promotionsPushConsentedAt).toBeNull();
   });
 
   it('le consentement se pose par le PATCH du profil, horodaté une seule fois', async () => {
@@ -141,6 +147,21 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
     });
   });
 
+  it('l’opt-in push se pose par le PATCH du profil, horodaté une seule fois', async () => {
+    for (const name of ['adult', 'nopush', 'minor', 'minorok']) {
+      await profiles.updateMe({ promotionsPushOptIn: true }, id(name));
+    }
+    const first = await prisma.userProfile.findUniqueOrThrow({ where: { id: id('adult') } });
+    expect(first.promotionsPushOptIn).toBe(true);
+    expect(first.promotionsPushConsentedAt).toBeInstanceOf(Date);
+    await profiles.updateMe({ promotionsPushOptIn: true }, id('adult'));
+    const again = await prisma.userProfile.findUniqueOrThrow({ where: { id: id('adult') } });
+    expect(again.promotionsPushConsentedAt).toEqual(first.promotionsPushConsentedAt);
+    expect((await profiles.getMe(id('nooptin'))) as Record<string, unknown>).toMatchObject({
+      promotionsPushOptIn: false,
+    });
+  });
+
   it('l’aperçu compte ce qui partira réellement, canal par canal', async () => {
     const promo = await notifications.previewAudience({
       audienceType: 'country',
@@ -149,15 +170,20 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
     });
     expect(promo).toMatchObject({
       purpose: 'promotional',
-      recipients: 4,
-      // « nopush » n'a plus aucun canal ouvert (push coupé, pas de consentement).
-      reachable: 3,
+      recipients: 5,
+      // « nopush » (push coupé, pas d'e-mail), « minor » (sans accord du
+      // représentant légal) et « nooptin » (aucun opt-in) n'ont aucun canal.
+      reachable: 2,
       byChannel: [
-        { channel: 'push', eligible: 3, blocked: { push_opted_out: 1 } },
+        {
+          channel: 'push',
+          eligible: 2,
+          blocked: { push_no_consent: 1, push_opted_out: 1, push_minor_without_guardian: 1 },
+        },
         {
           channel: 'email',
           eligible: 2,
-          blocked: { email_no_consent: 1, email_minor_without_guardian: 1 },
+          blocked: { email_no_consent: 2, email_minor_without_guardian: 1 },
         },
       ],
     });
@@ -167,7 +193,7 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
       channels: ['email'],
       purpose: 'informational',
     });
-    expect(info.byChannel).toEqual([{ channel: 'email', eligible: 4, blocked: {} }]);
+    expect(info.byChannel).toEqual([{ channel: 'email', eligible: 5, blocked: {} }]);
   });
 
   it('l’envoi promotionnel ne touche que les comptes qui y ont droit', async () => {
@@ -180,10 +206,10 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
     });
     campaignIds.push(created.id);
     expect(created.purpose).toBe('promotional');
-    expect(pushedTo.sort()).toEqual([id('adult'), id('minor'), id('minorok')].sort());
+    expect(pushedTo.sort()).toEqual([id('adult'), id('minorok')].sort());
     expect(mailedTo.sort()).toEqual([`${id('adult')}@example.test`, `${id('minorok')}@example.test`].sort());
     const deliveries = await prisma.notificationDelivery.findMany({ where: { campaignId: created.id } });
-    expect(deliveries).toHaveLength(5);
+    expect(deliveries).toHaveLength(4);
     expect(deliveries.every((d) => d.status === 'delivered')).toBe(true);
   });
 

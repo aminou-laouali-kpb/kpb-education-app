@@ -60,6 +60,8 @@ describePostgres('Communauté — PostgreSQL', () => {
   const posts = new CommunityPostsService(prismaService, access, composer, filterConfig, notifications, catalog);
   const moderation = new CommunityModerationService(prismaService, access, composer, filterConfig, notifications, posts);
   const purge = new CommunityPurgeCronService(prismaService);
+  // Signalement rédigé par Mallory, orphelin après la suppression de son compte.
+  let orphanReportId = '';
 
   // Horloge du scénario : trois heures avant l'instant réel (à la minute). Les
   // lignes écrites par le chemin commun des notifications portent l'heure réelle
@@ -546,10 +548,51 @@ describePostgres('Communauté — PostgreSQL', () => {
     const kept = await prisma.communityReport.findMany({ where: { targetKey: `post:${ids.davePost}` } });
     expect(kept).toHaveLength(1);
     expect(kept[0].reporterMemberId).toBeNull();
+    // Chantier juridique 57 : la date de suppression du compte est posée,
+    // point de départ des 12 mois de conservation.
+    expect(kept[0].reporterDeletedAt).toBeInstanceOf(Date);
     expect(await prisma.forumModerationAction.count({ where: { memberId: mallory.memberId } })).toBe(0);
     expect(await prisma.forumModerationAction.count({ where: { adminId: moderator.id } })).toBeGreaterThanOrEqual(3);
-    await prisma.communityReport.deleteMany({ where: { id: { in: kept.map((k) => k.id) } } });
+    orphanReportId = kept[0].id;
     delete ids.mallory;
+  });
+
+  it('purge : un signalement orphelin part 12 mois après la suppression du compte, pas avant', async () => {
+    const orphan = await prisma.communityReport.findUniqueOrThrow({ where: { id: orphanReportId } });
+    const deletedAt = orphan.reporterDeletedAt!.getTime();
+    // Orphelin d'avant la colonne (date de suppression inconnue) : 12 mois
+    // après sa création.
+    const legacy = await prisma.communityReport.create({
+      data: {
+        reporterMemberId: null,
+        targetType: 'post',
+        targetKey: `post:legacy-orphan-${orphanReportId}`,
+        reason: 'spam',
+        createdAt: new Date(deletedAt - 400 * 86_400_000),
+      },
+    });
+    // Un signalement dont l'auteur existe n'est jamais purgé par cette règle.
+    const carol = await viewer('carol');
+    const live = await prisma.communityReport.create({
+      data: {
+        reporterMemberId: carol.memberId,
+        targetType: 'post',
+        targetKey: `post:live-${orphanReportId}`,
+        reason: 'spam',
+        createdAt: new Date(deletedAt - 400 * 86_400_000),
+      },
+    });
+    try {
+      await purge.purge(new Date(deletedAt + 364 * 86_400_000));
+      expect(await prisma.communityReport.count({ where: { id: orphanReportId } })).toBe(1);
+      expect(await prisma.communityReport.count({ where: { id: legacy.id } })).toBe(0);
+      const result = await purge.purge(new Date(deletedAt + 366 * 86_400_000));
+      expect(result.reports).toBeGreaterThanOrEqual(1);
+      expect(await prisma.communityReport.count({ where: { id: orphanReportId } })).toBe(0);
+      expect(await prisma.communityReport.count({ where: { id: live.id } })).toBe(1);
+    } finally {
+      await prisma.communityReport.deleteMany({ where: { id: { in: [orphanReportId, legacy.id, live.id] } } });
+    }
   });
 
   it('purge : un contenu supprimé depuis plus de 30 jours disparaît', async () => {

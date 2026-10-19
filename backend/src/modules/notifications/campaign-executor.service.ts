@@ -34,6 +34,7 @@ const RECIPIENT_SELECT = {
   preferredLanguage: true,
   disabledNotificationTypes: true,
   promotionsEmailOptIn: true,
+  promotionsPushOptIn: true,
   birthDate: true,
   guardianConsentedAt: true,
 } as const;
@@ -136,7 +137,7 @@ export class CampaignExecutorService {
     // ── Finalité : qui a le droit de recevoir quoi (XC-06) ────────────────
     //
     // Une campagne promotionnelle ne crée AUCUNE livraison vers un compte qui
-    // n'y a pas droit sur ce canal (e-mail sans consentement, push coupé) :
+    // n'y a pas droit sur ce canal (e-mail ou push sans consentement, push coupé) :
     // rien n'est tenté, donc rien ne peut partir par erreur plus bas. Les
     // comptes qui n'ont plus aucun canal ouvert sortent de la liste.
     const purpose = parseCampaignPurpose(campaign.purpose);

@@ -4,7 +4,9 @@
 //   · le compte de non-lus du serveur alimente la cloche de l'accueil ;
 //   · la ligne « Bourses que je suis : ouverture » n'apparaît que si le
 //     serveur connaît le suivi (un backend plus ancien retirerait la clé) ;
-//   · autorisation refusée → « Notifications coupées » + réglages.
+//   · autorisation refusée → « Notifications coupées » + réglages ;
+//   · « Nouvelles et offres de KPB par notification » : opt-in, désactivé par
+//     défaut (chantier juridique 57, App Store 4.5.4).
 
 import 'dart:async';
 
@@ -15,6 +17,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
+import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/push_permission.dart';
 import 'package:karatou/app/core/services/remote_feature_flags.dart';
@@ -66,6 +69,7 @@ Future<MockApiClient> _pump(
   int unread = 0,
   bool unreadRouteExists = false,
   Future<Map<String, dynamic>> Function()? fetch,
+  UserProfile? profile,
 }) async {
   tester.view.physicalSize = const Size(1080, 3000);
   tester.view.devicePixelRatio = 1.0;
@@ -91,7 +95,7 @@ Future<MockApiClient> _pump(
     initialSnapshot: AppSnapshot(
       localeCode: 'fr',
       hasCompletedOnboarding: true,
-      profile: createTestProfile(),
+      profile: profile ?? createTestProfile(),
     ),
   );
   return api;
@@ -286,6 +290,45 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('assist-bridge-later')));
     await tester.pumpAndSettle();
     verify(() => api.reportAssistBridgeAction('ev_9', 'dismissed')).called(1);
+  });
+
+  // Chantier juridique 57 (App Store 4.5.4) : le push promotionnel est un
+  // OPT-IN explicite, désactivé par défaut, retirable à tout moment.
+  testWidgets(
+      'ligne « Nouvelles et offres de KPB par notification » : absente sur un '
+      'serveur qui ne connaît pas l\'opt-in', (tester) async {
+    await _pump(tester);
+    expect(find.text('kpb_promotions_pref_title'), findsNothing);
+  });
+
+  testWidgets(
+      '… présente, DÉSACTIVÉE par défaut ; l\'activer pose l\'opt-in et lève '
+      'la coupure, la couper le retire', (tester) async {
+    await _pump(
+      tester,
+      profile: createTestProfile().copyWith(
+        promotionsEmailOptIn: false,
+        promotionsPushOptIn: false,
+        disabledNotificationTypes: const ['kpb_promotions'],
+      ),
+    );
+    final toggle = find.byKey(const ValueKey<String>('notif-promotions-push'));
+    expect(find.text('kpb_promotions_pref_title'), findsOneWidget);
+    expect(tester.widget<Switch>(toggle).value, isFalse);
+
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    final controller = Get.find<AppController>();
+    expect(controller.profile!.promotionsPushOptIn, isTrue);
+    expect(controller.profile!.disabledNotificationTypes,
+        isNot(contains('kpb_promotions')));
+    expect(tester.widget<Switch>(toggle).value, isTrue);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(controller.profile!.promotionsPushOptIn, isFalse);
+    expect(tester.widget<Switch>(toggle).value, isFalse);
   });
 
   testWidgets('autorisation refusée : « Notifications coupées » + réglages',

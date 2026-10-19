@@ -710,7 +710,11 @@ export default function NotificationsPage() {
                       {channelCountLine(
                         count,
                         {
+                          push_no_consent: t('notifications.blocked_push_no_consent'),
                           push_opted_out: t('notifications.blocked_push_opted_out'),
+                          push_minor_without_guardian: t(
+                            'notifications.blocked_push_minor_without_guardian',
+                          ),
                           email_no_consent: t('notifications.blocked_email_no_consent'),
                           email_minor_without_guardian: t(
                             'notifications.blocked_email_minor_without_guardian',

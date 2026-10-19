@@ -108,6 +108,13 @@ export class UpdateProfileDto {
   @IsBoolean()
   promotionsEmailOptIn?: boolean;
 
+  // « Recevoir par notification les nouvelles et offres de KPB » (chantier
+  // juridique 57, App Store 4.5.4) : opt-in explicite, défaut NON. Le serveur
+  // horodate promotionsPushConsentedAt au passage false→true.
+  @IsOptional()
+  @IsBoolean()
+  promotionsPushOptIn?: boolean;
+
   // KPB-169: canonical per-type notification opt-outs. Unknown keys are
   // dropped server-side rather than rejected, so a newer client that knows one
   // extra type can still save the types this server does understand.

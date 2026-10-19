@@ -45,10 +45,12 @@ abstract final class NotificationOptOutType {
 
   /// Correctifs 57 (XC-06) — les PUSH des campagnes de l'équipe marquées
   /// promotionnelles (offre, mise en avant, annonce). Les messages de service
-  /// ne la lisent pas. L'e-mail promotionnel, lui, est un consentement à part
-  /// (`UserProfile.promotionsEmailOptIn`, non par défaut). La ligne des
-  /// préférences ne s'affiche que si le serveur la connaît
-  /// (`UserProfile.serverKnowsPromotions`).
+  /// ne la lisent pas. Depuis le chantier juridique 57 (App Store 4.5.4), le
+  /// push promotionnel exige EN PLUS un opt-in explicite
+  /// (`UserProfile.promotionsPushOptIn`, non par défaut) : l'interrupteur des
+  /// préférences l'écrit, et retire cette clé quand l'élève accepte.
+  /// L'e-mail promotionnel est un consentement à part
+  /// (`UserProfile.promotionsEmailOptIn`, non par défaut).
   static const kpbPromotions = 'kpb_promotions';
 
   /// Every key this build understands. An unknown key coming back from a newer

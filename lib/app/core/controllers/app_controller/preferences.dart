@@ -115,6 +115,27 @@ mixin _PreferencesMixin on _AppControllerBase {
     unawaited(updateProfile(current.copyWith(promotionsEmailOptIn: optIn)));
   }
 
+  /// « Recevoir par notification les nouvelles et offres de KPB » (chantier
+  /// juridique 57, App Store 4.5.4) : opt-in explicite, jamais coché à la
+  /// place de l'élève. Le serveur horodate le consentement au passage à
+  /// `true`. Accepter retire aussi la coupure `kpb_promotions` (sinon le oui
+  /// resterait sans effet) ; refuser retire l'opt-in. Sans effet tant que le
+  /// serveur n'a pas annoncé le champ ([UserProfile.serverKnowsPromotionsPush]).
+  void setPromotionsPushOptIn(bool optIn) {
+    final current = profile;
+    if (current == null || !current.serverKnowsPromotionsPush) return;
+    unawaited(updateProfile(current.copyWith(
+      promotionsPushOptIn: optIn,
+      disabledNotificationTypes: optIn
+          ? applyOptOut(
+              current.disabledNotificationTypes,
+              NotificationOptOutType.kpbPromotions,
+              optOut: false,
+            )
+          : null,
+    )));
+  }
+
   /// KPB-169: opt out of (or back into) ONE recurring notification family.
   /// Persisted via the profile PATCH; the other families are untouched, and a
   /// key this build doesn't know about is preserved rather than cleared.
@@ -202,6 +223,9 @@ mixin _PreferencesMixin on _AppControllerBase {
       // le PATCH entier (`forbidNonWhitelisted`).
       if (profile.promotionsEmailOptIn != null)
         'promotionsEmailOptIn': profile.promotionsEmailOptIn,
+      // Même règle pour l'opt-in du push promotionnel (chantier juridique 57).
+      if (profile.promotionsPushOptIn != null)
+        'promotionsPushOptIn': profile.promotionsPushOptIn,
       'disabledNotificationTypes': profile.disabledNotificationTypes,
       'availableDocuments': profile.availableDocuments,
       if (profile.monthlyBudgetEur != null)

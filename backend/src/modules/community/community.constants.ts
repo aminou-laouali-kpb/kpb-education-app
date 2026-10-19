@@ -56,6 +56,13 @@ export const COMMUNITY_MAX_PINNED = 3;
 /** Contenus supprimés par l'auteur ou l'équipe : purge définitive après (§12). */
 export const COMMUNITY_DELETED_RETENTION_DAYS = 30;
 
+/**
+ * Signalements rédigés par un compte depuis supprimé (orphelins) : purge
+ * définitive 12 mois (365 jours) après la suppression du compte — durée
+ * décidée par le propriétaire le 19/10/2026 (chantier juridique 57).
+ */
+export const COMMUNITY_ORPHAN_REPORT_RETENTION_DAYS = 365;
+
 /** Fenêtre des candidats du fil « Pour toi » (§10). */
 export const COMMUNITY_FOR_YOU_WINDOW_DAYS = 60;
 

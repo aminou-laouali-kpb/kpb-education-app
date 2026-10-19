@@ -1,6 +1,7 @@
 // Model library — split into domain part files.
 import 'package:flutter/material.dart';
 
+import '../data/notification_opt_out.dart';
 import '../ui/app_tokens.dart';
 
 part 'user.dart';

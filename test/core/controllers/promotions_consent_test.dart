@@ -33,7 +33,11 @@ class _CapturingApi extends MockApiClient {
   }
 }
 
-Future<(AppController, _CapturingApi)> _controller({bool? known}) async {
+Future<(AppController, _CapturingApi)> _controller({
+  bool? known,
+  bool? pushKnown,
+  List<String> disabled = const [],
+}) async {
   AppConfig.enableRemoteSyncOverride = false;
   final api = _CapturingApi();
   final base = createTestProfile();
@@ -42,8 +46,11 @@ Future<(AppController, _CapturingApi)> _controller({bool? known}) async {
       snapshot: AppSnapshot(
         localeCode: 'fr',
         hasCompletedOnboarding: true,
-        profile:
-            known == null ? base : base.copyWith(promotionsEmailOptIn: known),
+        profile: base.copyWith(
+          promotionsEmailOptIn: known,
+          promotionsPushOptIn: pushKnown,
+          disabledNotificationTypes: disabled,
+        ),
       ),
     ),
     apiClient: api,
@@ -74,6 +81,34 @@ void main() {
           fallbackLocale: 'fr');
       expect(profile.promotionsEmailOptIn, isNull);
       expect(profile.serverKnowsPromotions, isFalse);
+    });
+
+    test('opt-in push : absent = inconnu (et jamais « oui »)', () {
+      final profile = ProfileApiCodec.userProfileFromApi(
+          base({'promotionsEmailOptIn': true}),
+          fallbackLocale: 'fr');
+      expect(profile.promotionsPushOptIn, isNull);
+      expect(profile.serverKnowsPromotionsPush, isFalse);
+      expect(profile.receivesPromotionsPush, isFalse);
+    });
+
+    test('opt-in push : lu tel quel, et la coupure kpb_promotions prime', () {
+      final yes = ProfileApiCodec.userProfileFromApi(
+          base({'promotionsPushOptIn': true}),
+          fallbackLocale: 'fr');
+      expect(yes.serverKnowsPromotionsPush, isTrue);
+      expect(yes.receivesPromotionsPush, isTrue);
+      final cut = ProfileApiCodec.userProfileFromApi(
+          base({
+            'promotionsPushOptIn': true,
+            'disabledNotificationTypes': ['kpb_promotions'],
+          }),
+          fallbackLocale: 'fr');
+      expect(cut.receivesPromotionsPush, isFalse);
+      final no = ProfileApiCodec.userProfileFromApi(
+          base({'promotionsPushOptIn': false}),
+          fallbackLocale: 'fr');
+      expect(no.receivesPromotionsPush, isFalse);
     });
 
     test('serveur à jour : lit la valeur telle quelle', () {
@@ -123,5 +158,39 @@ void main() {
         NotificationOptOutType.kpbPromotions, true);
     await Future<void>.delayed(Duration.zero);
     expect(api.payloads.last['disabledNotificationTypes'], ['kpb_promotions']);
+  });
+
+  // Chantier juridique 57 (App Store 4.5.4) : push promotionnel en OPT-IN.
+  test('opt-in push : serveur antérieur, ni champ envoyé ni effet', () async {
+    final (controller, api) = await _controller(known: false);
+    await controller
+        .updateProfile(controller.profile!.copyWith(fullName: 'Awa D.'));
+    expect(api.payloads.last, isNot(contains('promotionsPushOptIn')));
+    final before = api.payloads.length;
+    controller.setPromotionsPushOptIn(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.payloads, hasLength(before));
+    expect(controller.profile!.promotionsPushOptIn, isNull);
+  });
+
+  test(
+      'opt-in push : accepter l\'envoie et lève la coupure ; refuser le retire',
+      () async {
+    final (controller, api) = await _controller(
+      known: false,
+      pushKnown: false,
+      disabled: const ['kpb_promotions', 'weekly_digest'],
+    );
+    controller.setPromotionsPushOptIn(true);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.payloads.last['promotionsPushOptIn'], isTrue);
+    expect(api.payloads.last['disabledNotificationTypes'], ['weekly_digest']);
+    expect(controller.profile!.receivesPromotionsPush, isTrue);
+    // Le consentement e-mail n'est pas touché.
+    expect(api.payloads.last['promotionsEmailOptIn'], isFalse);
+    controller.setPromotionsPushOptIn(false);
+    await Future<void>.delayed(Duration.zero);
+    expect(api.payloads.last['promotionsPushOptIn'], isFalse);
+    expect(controller.profile!.receivesPromotionsPush, isFalse);
   });
 }
