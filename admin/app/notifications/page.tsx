@@ -14,6 +14,15 @@ import {
   DEFAULT_CAMPAIGN_PURPOSE,
   previewBody,
 } from '../../lib/campaign-purpose';
+import {
+  CAMPAIGN_ROUTE_PRESETS,
+  campaignRouteForBody,
+  campaignRouteLabel,
+  campaignRoutePreset,
+  type CampaignRoutePresetKey,
+  CUSTOM_ROUTE_CHOICE,
+  isValidCampaignRoute,
+} from '../../lib/campaign-route';
 import { splitList } from '../../lib/ui';
 import {
   AdminTable,
@@ -101,6 +110,8 @@ interface NotificationCampaignItem {
   linkedCaseId: string | null;
   /** Absent d'un serveur antérieur aux correctifs 57. */
   purpose?: CampaignPurpose;
+  /** Route ouverte au tap ; `null` = accueil (audit 57, F11). */
+  route?: string | null;
 }
 
 interface NotificationDeliveryItem {
@@ -171,7 +182,13 @@ export default function NotificationsPage() {
     scheduledFor: '',
     linkedCaseId: '',
     purpose: DEFAULT_CAMPAIGN_PURPOSE as CampaignPurpose,
+    route: '',
   });
+  // Saisie libre ouverte par « Autre route… » (sinon : préréglage du menu).
+  const [customRoute, setCustomRoute] = useState(false);
+  const routeInvalid = !isValidCampaignRoute(campaignForm.route);
+  const routeLabelOf = (key: CampaignRoutePresetKey) =>
+    t(`notifications.route_${key}`);
   const [preview, setPreview] = useState<CampaignAudiencePreview | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
@@ -342,6 +359,10 @@ export default function NotificationsPage() {
         setErrorMessage(t('notifications.filtersJsonError'));
         return;
       }
+      if (routeInvalid) {
+        setErrorMessage(t('notifications.routeInvalid'));
+        return;
+      }
       await apiFetch('/admin/notifications/campaigns', {
         method: 'POST',
         body: {
@@ -355,6 +376,7 @@ export default function NotificationsPage() {
             : null,
           linkedCaseId: campaignForm.linkedCaseId || null,
           purpose: campaignForm.purpose,
+          route: campaignRouteForBody(campaignForm.route),
         },
       });
       setCampaignForm({
@@ -366,7 +388,9 @@ export default function NotificationsPage() {
         scheduledFor: '',
         linkedCaseId: '',
         purpose: DEFAULT_CAMPAIGN_PURPOSE,
+        route: '',
       });
+      setCustomRoute(false);
       setPreview(null);
       setStatusMessage(t('notifications.campaignCreated'));
       await loadNotifications();
@@ -691,6 +715,61 @@ export default function NotificationsPage() {
                   )}
                 </Field>
               </div>
+              <Field label={t('notifications.routeLabel')}>
+                {({ id }) => (
+                  <Select
+                    id={id}
+                    value={
+                      customRoute ||
+                      campaignRoutePreset(campaignForm.route) === null
+                        ? CUSTOM_ROUTE_CHOICE
+                        : campaignForm.route
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const custom = value === CUSTOM_ROUTE_CHOICE;
+                      setCustomRoute(custom);
+                      setCampaignForm((current) => ({
+                        ...current,
+                        route: custom ? '' : value,
+                      }));
+                    }}
+                  >
+                    {CAMPAIGN_ROUTE_PRESETS.map((preset) => (
+                      <option key={preset.key} value={preset.value}>
+                        {preset.value
+                          ? `${routeLabelOf(preset.key)} — ${preset.value}`
+                          : routeLabelOf(preset.key)}
+                      </option>
+                    ))}
+                    <option value={CUSTOM_ROUTE_CHOICE}>
+                      {t('notifications.route_custom')}
+                    </option>
+                  </Select>
+                )}
+              </Field>
+              {customRoute ? (
+                <Field
+                  label={t('notifications.routeCustomLabel')}
+                  error={routeInvalid ? t('notifications.routeInvalid') : undefined}
+                >
+                  {({ id, invalid }) => (
+                    <Input
+                      id={id}
+                      value={campaignForm.route}
+                      placeholder="/scholarships/…"
+                      aria-invalid={invalid || undefined}
+                      onChange={(e) =>
+                        setCampaignForm((current) => ({
+                          ...current,
+                          route: e.target.value,
+                        }))
+                      }
+                    />
+                  )}
+                </Field>
+              ) : null}
+              <p style={hintStyle}>{t('notifications.routeHint')}</p>
               {preview ? (
                 <Alert variant="info">
                   <div>
@@ -727,6 +806,12 @@ export default function NotificationsPage() {
                   {preview.filterMissing || preview.filterInvalid ? (
                     <div>{preview.filterInvalid ?? t('notifications.previewFilterMissing')}</div>
                   ) : null}
+                  <div>
+                    {t('notifications.previewRoute').replace(
+                      '{route}',
+                      campaignRouteLabel(campaignForm.route, routeLabelOf),
+                    )}
+                  </div>
                 </Alert>
               ) : null}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -738,7 +823,9 @@ export default function NotificationsPage() {
                 >
                   {t('notifications.previewCta')}
                 </Button>
-                <Button type="submit">{t('notifications.launchCta')}</Button>
+                <Button type="submit" disabled={routeInvalid}>
+                  {t('notifications.launchCta')}
+                </Button>
               </div>
             </form>
             <AdminTable
@@ -766,6 +853,9 @@ export default function NotificationsPage() {
                       primary={campaign.name}
                       sub={`${campaign.audienceType.replace(/_/g, ' ')} · ${t(
                         `notifications.purpose_${campaign.purpose ?? DEFAULT_CAMPAIGN_PURPOSE}`,
+                      )} · ${t('notifications.previewRoute').replace(
+                        '{route}',
+                        campaignRouteLabel(campaign.route, routeLabelOf),
                       )}`}
                     />
                     <CellText primary={campaign.channels.join(', ')} muted />

@@ -1336,7 +1336,18 @@
     "blocked_push_minor_without_guardian": "minors without guardian agreement",
     "blocked_push_opted_out": "turned off news and offers",
     "blocked_email_no_consent": "without email consent",
-    "blocked_email_minor_without_guardian": "minors without guardian agreement"
+    "blocked_email_minor_without_guardian": "minors without guardian agreement",
+    "routeLabel": "In-app route (on tap)",
+    "routeHint": "Optional. The screen the app opens when the student taps the notification; without a route, Home. No external link: an internal route only. A route the installed build does not know opens Home (“Privacy policy”: 2.3.1 (57) and later; 2.3.0 builds open Home).",
+    "route_home": "Home (default)",
+    "route_legalPrivacy": "Privacy policy",
+    "route_scholarships": "Scholarships",
+    "route_eef": "Études en France",
+    "route_profile": "Profile",
+    "route_custom": "Other route…",
+    "routeCustomLabel": "Route (starts with “/”)",
+    "routeInvalid": "Internal route only: “/” followed by letters, digits, “-”, “_” or “/” (200 characters at most).",
+    "previewRoute": "On tap: {route}"
   },
   "serviceSales": {
     "title": "Service sales",

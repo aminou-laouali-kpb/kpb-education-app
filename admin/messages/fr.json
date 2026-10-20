@@ -1336,7 +1336,18 @@
     "blocked_push_minor_without_guardian": "mineurs sans accord du représentant légal",
     "blocked_push_opted_out": "ont coupé les nouvelles et offres",
     "blocked_email_no_consent": "sans consentement e-mail",
-    "blocked_email_minor_without_guardian": "mineurs sans accord du représentant légal"
+    "blocked_email_minor_without_guardian": "mineurs sans accord du représentant légal",
+    "routeLabel": "Route dans l'app (au tap)",
+    "routeHint": "Facultatif. L'écran que l'app ouvre quand l'élève touche la notification ; sans route, l'accueil. Pas de lien externe : une route interne seulement. Une route que la build installée ne connaît pas ouvre l'accueil (« Politique de confidentialité » : 2.3.1 (57) et plus ; les 2.3.0 ouvrent l'accueil).",
+    "route_home": "Accueil (par défaut)",
+    "route_legalPrivacy": "Politique de confidentialité",
+    "route_scholarships": "Bourses",
+    "route_eef": "Études en France",
+    "route_profile": "Profil",
+    "route_custom": "Autre route…",
+    "routeCustomLabel": "Route (commence par « / »)",
+    "routeInvalid": "Route interne seulement : « / » suivi de lettres, chiffres, « - », « _ » ou « / » (200 caractères au plus).",
+    "previewRoute": "Au tap : {route}"
   },
   "serviceSales": {
     "title": "Ventes de services",

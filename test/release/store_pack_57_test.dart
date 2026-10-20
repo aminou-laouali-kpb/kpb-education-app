@@ -434,6 +434,48 @@ void main() {
     );
   });
 
+  group('« Notre politique évolue » (§6.5) : une route, jamais un lien', () {
+    final pack = _read(_packPath);
+    final notice = _section(pack, '### 6.5');
+
+    test('la campagne pose /legal/privacy, sans bouton ni URL externe', () {
+      // Audit 57, F11 : le modèle de campagne n'a ni bouton ni URL, et le DTO
+      // n'accepte qu'une route interne. Le pack ne doit plus promettre un
+      // « Lien du bouton » vers la page web.
+      expect(notice, contains('`/legal/privacy`'));
+      expect(notice, isNot(contains('Lien du bouton')));
+      expect(notice, isNot(contains('https://kpbeducation.cloud')));
+      expect(notice, isNot(contains('| Bouton |')));
+      expect(_flat(notice), contains('**ni bouton ni URL externe**'));
+      // Les anciennes builds ouvrent l'accueil ; le centre de notifications
+      // n'est pas alimenté par les campagnes (pas de promesse inverse).
+      expect(_flat(notice), contains('2.3.0 (54 à 56) et plus anciennes'));
+      expect(_flat(notice), contains("l'app ouvre l'**accueil**"));
+      expect(_flat(notice),
+          contains("**n'écrit rien** dans le centre de notifications"));
+    });
+
+    test('ce que le pack décrit, l\'admin et le serveur le font', () {
+      final dto = _read(
+        'backend/src/modules/notifications/dto/create-notification-campaign.dto.ts',
+      );
+      expect(dto, contains(r'@Matches(/^\/[A-Za-z0-9\-_/]*$/'));
+      expect(
+        _read('backend/src/modules/notifications/campaign-executor.service.ts'),
+        contains('...(campaign.route ? { route: campaign.route } : {})'),
+      );
+      // Le formulaire de l'admin envoie la route et propose la politique.
+      expect(
+        _read('admin/app/notifications/page.tsx'),
+        contains('route: campaignRouteForBody(campaignForm.route)'),
+      );
+      expect(
+        _read('admin/lib/campaign-route.ts'),
+        contains("{ value: '/legal/privacy', key: 'legalPrivacy' }"),
+      );
+    });
+  });
+
   group('Politique de confidentialité et inventaire', () {
     final fr = _read('lib/app/core/translations/app_translations_fr.dart');
     final en = _read('lib/app/core/translations/app_translations_en.dart');

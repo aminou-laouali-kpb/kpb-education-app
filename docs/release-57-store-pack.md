@@ -479,19 +479,41 @@ acceptée, et l'horodatage `consentedAt` de l'inscription n'est jamais redemand�
 `onboarding_screen.dart`, `profiles.service.ts`). Aucun écran n'est ajouté. À faire **au
 déploiement du serveur de la 57** (avant l'ouverture des paliers) : une campagne de l'admin en
 finalité **`informational`** (message de service, donc envoyée à tous, sans le filtre
-promotionnel), audience `all_users`, push, titre « Notre politique évolue », dont le texte invite à
-relire la politique (Profil → Informations légales) : nouveaux choix « Nouvelles et offres de KPB »
-(e-mail, notification), base légale, durées de conservation.
+promotionnel), audience `all_users`, canal **push**, titre « Notre politique évolue », dont le
+texte invite à relire la politique : nouveaux choix « Nouvelles et offres de KPB » (e-mail,
+notification), base légale, durées de conservation.
 
 **Texte validé par le propriétaire (19/10/2026)** — calendrier : **envoi le 24 octobre 2026**,
 application de la politique le **31 octobre 2026** (7 jours de préavis, avant la compétition du
-1er novembre). Lien du bouton : `https://kpbeducation.cloud/confidentialite.html`.
+1er novembre).
+
+**Où mène le tap (correctif de l'audit 57, F11).** Une campagne ne porte **ni bouton ni URL
+externe** : le modèle n'a que titre, texte et canaux, et le serveur n'accepte qu'une **route
+interne** de l'app (`route`, `^\/[A-Za-z0-9\-_/]*$`). Dans le formulaire de campagne de l'admin,
+champ **« Route dans l'app »** → **« Politique de confidentialité — `/legal/privacy` »** : la
+campagne pose `route = /legal/privacy`, l'aperçu et la liste des campagnes l'affichent (« Au tap :
+Politique de confidentialité (/legal/privacy) »). Au tap :
+- **2.3.1 (57)** : l'app ouvre la politique de confidentialité (route `/legal/privacy`, ajoutée
+  par la PR de correctifs de l'audit) ;
+- **2.3.0 (54 à 56) et plus anciennes** : la route leur est inconnue, l'app ouvre l'**accueil** ;
+  la politique reste à deux gestes (Profil → Informations légales).
+Le push n'a **pas de bouton d'action** : le tap ouvre la route. Les libellés d'action
+(`notif_cta_*`) sont ceux de l'app, dans sa liste de notifications, que les campagnes de l'admin
+n'alimentent pas : le push d'une campagne **n'écrit rien** dans le centre de notifications
+(`PushSenderService`), et le canal `in_app` n'a aucune voie d'envoi (ses livraisons sont marquées
+en échec, `campaign-executor.service.ts`). Le texte du push est donc **tout** ce que l'élève
+reçoit.
 
 | | FR | EN |
 |---|---|---|
 | Titre du push | Notre politique de confidentialité évolue | Our privacy policy is changing |
 | Texte du push | Communauté, parrainage, nouvelles options de confidentialité : découvre ce qui change et tes choix. | Community, referrals, new privacy options: see what's changing and your choices. |
-| Bouton | Lire la politique | Read the policy |
+| Route au tap | `/legal/privacy` (2.3.1) ; accueil sur les 2.3.0 | `/legal/privacy` (2.3.1); Home on 2.3.0 |
+
+Le « message dans l'app » ci-dessous, validé le 19/10/2026, **ne part pas avec la campagne** (pas
+de canal in-app) : c'est le résumé de ce qui change, que la politique publiée détaille (§10 et
+sections ajoutées). À VALIDER (propriétaire) : le garder comme texte de référence, ou le publier
+ailleurs (page web, e-mail de service).
 
 Message dans l'app (FR) :
 
