@@ -115,6 +115,11 @@ export interface PublicWinner {
 
 const AUDIT_PURPOSE = 'referral_campaign';
 const PUBLIC_CACHE_TTL_MS = 30_000;
+/**
+ * Plafond du cache du classement public (audit 57, F04 / F16) : une entrée par
+ * campagne publique, jamais par ville demandée ; au-delà, la plus ancienne part.
+ */
+export const PUBLIC_CACHE_MAX_ENTRIES = 256;
 
 type ParticipantWithAmbassador = ReferralCampaignParticipant & {
   ambassador: {
@@ -1293,12 +1298,30 @@ export class ReferralCampaignService {
    * Seuls les participants classables apparaissent (un mineur sans
    * autorisation parentale vérifiée n'apparaît pas).
    */
+  /**
+   * Classement public, filtré par ville si `city` est donnée.
+   *
+   * Le cache ne tient QUE la vue complète, une entrée par campagne (audit 57,
+   * F04 / F16) : `?city=` est une chaîne libre d'une route sans
+   * authentification, et une entrée par valeur reçue faisait grossir la
+   * mémoire sans borne (une campagne gelée ou close n'est jamais invalidée).
+   * La ville est normalisée (`placeKey`) et filtrée en mémoire sur la vue en
+   * cache : une ville absente de la campagne rend une liste vide, sans rien
+   * écrire.
+   */
   async publicLeaderboard(
     slug: string,
     city: string | undefined,
     now: Date = new Date(),
   ): Promise<PublicLeaderboard> {
-    const cacheKey = `${slug}\u0000${placeKey(city ?? '')}`;
+    const full = await this.publicView(slug, now);
+    const wanted = placeKey(city ?? '');
+    if (!wanted) return full;
+    return { ...full, entries: full.entries.filter((e) => placeKey(e.city) === wanted) };
+  }
+
+  private async publicView(slug: string, now: Date): Promise<PublicLeaderboard> {
+    const cacheKey = slug;
     const cached = this.publicCache.get(cacheKey);
     if (cached && now.getTime() - cached.at < PUBLIC_CACHE_TTL_MS) {
       return { ...cached.payload, serverTime: now.toISOString() };
@@ -1323,7 +1346,6 @@ export class ReferralCampaignService {
         }) === null,
     );
     const entries: PublicLeaderboardEntry[] = rankable
-      .filter((r) => !city || placeKey(r.city) === placeKey(city))
       .sort(
         (a, b) =>
           (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) ||
@@ -1385,8 +1407,22 @@ export class ReferralCampaignService {
       entries,
       winners,
     };
-    this.publicCache.set(cacheKey, { at: now.getTime(), payload });
+    this.cachePublic(cacheKey, { at: now.getTime(), payload });
     return payload;
+  }
+
+  /** Écrit une entrée : purge les expirées, puis borne la taille (la plus ancienne part). */
+  private cachePublic(key: string, entry: { at: number; payload: PublicLeaderboard }): void {
+    for (const [k, v] of this.publicCache) {
+      if (entry.at - v.at >= PUBLIC_CACHE_TTL_MS) this.publicCache.delete(k);
+    }
+    this.publicCache.delete(key);
+    while (this.publicCache.size >= PUBLIC_CACHE_MAX_ENTRIES) {
+      const oldest = this.publicCache.keys().next().value;
+      if (oldest === undefined) break;
+      this.publicCache.delete(oldest);
+    }
+    this.publicCache.set(key, entry);
   }
 
   /**
@@ -1497,9 +1533,7 @@ export class ReferralCampaignService {
   }
 
   private invalidatePublic(slug: string): void {
-    for (const key of this.publicCache.keys()) {
-      if (key.startsWith(`${slug}\u0000`)) this.publicCache.delete(key);
-    }
+    this.publicCache.delete(slug);
   }
 
   private async audit(

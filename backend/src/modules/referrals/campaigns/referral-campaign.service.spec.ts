@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 
 import type { PrismaService } from '../../prisma/prisma.service';
-import { ReferralCampaignService } from './referral-campaign.service';
+import { PUBLIC_CACHE_MAX_ENTRIES, ReferralCampaignService } from './referral-campaign.service';
 
 /**
  * Le classement PUBLIC ne doit rien laisser fuir : ni e-mail, ni identifiant
@@ -179,6 +179,53 @@ describe('ReferralCampaignService — classement public', () => {
     expect(reads).toBe(1);
     await svc.publicLeaderboard(campaign.slug, undefined, new Date(t0.getTime() + 31_000));
     expect(reads).toBe(2);
+  });
+
+  // Audit 57, F04 / F16 : `?city=` est une chaîne libre d'une route publique.
+  // Une entrée de cache par valeur reçue faisait grossir la mémoire sans borne
+  // (campagne gelée ou close : jamais invalidée).
+  describe('cache borné', () => {
+    const cacheOf = (svc: ReferralCampaignService) =>
+      (svc as unknown as { publicCache: Map<string, unknown> }).publicCache;
+
+    it('une seule entrée par campagne, quelles que soient les villes demandées (close comprise)', async () => {
+      const svc = service('closed', rows);
+      const t0 = new Date('2026-11-20T12:00:00Z');
+      for (let i = 0; i < 50; i += 1) {
+        const out = await svc.publicLeaderboard(campaign.slug, `ville-inventée-${i}`, t0);
+        // Ville absente de la campagne : liste vide.
+        expect(out.entries).toEqual([]);
+      }
+      const niamey = await svc.publicLeaderboard(campaign.slug, '  NIAMEY ', t0);
+      expect(niamey.entries.map((e) => e.name)).toEqual(['Aïcha K.']);
+      expect([...cacheOf(svc).keys()]).toEqual([campaign.slug]);
+      // La vue complète reste servie entière.
+      expect((await svc.publicLeaderboard(campaign.slug, undefined, t0)).entries).toHaveLength(4);
+    });
+
+    it(`au plus ${PUBLIC_CACHE_MAX_ENTRIES} entrées : la plus ancienne part, les expirées sont purgées`, async () => {
+      const client = {
+        referralCampaign: {
+          findUnique: async ({ where }: { where: { slug: string } }) => ({ ...campaign, slug: where.slug }),
+        },
+        referralCampaignParticipant: { findMany: async () => rows },
+        referralCampaignPrizeAward: { findMany: async () => [] },
+      };
+      const svc = new ReferralCampaignService({
+        execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService);
+      const t0 = new Date('2026-11-05T12:00:00Z');
+      for (let i = 0; i < PUBLIC_CACHE_MAX_ENTRIES + 10; i += 1) {
+        await svc.publicLeaderboard(`campagne-${i}`, undefined, t0);
+      }
+      const cache = cacheOf(svc);
+      expect(cache.size).toBe(PUBLIC_CACHE_MAX_ENTRIES);
+      expect(cache.has('campagne-0')).toBe(false);
+      expect(cache.has(`campagne-${PUBLIC_CACHE_MAX_ENTRIES + 9}`)).toBe(true);
+      // 31 s plus tard, une écriture purge tout ce qui a expiré.
+      await svc.publicLeaderboard('campagne-neuve', undefined, new Date(t0.getTime() + 31_000));
+      expect([...cache.keys()]).toEqual(['campagne-neuve']);
+    });
   });
 
   it('un brouillon ou un slug inconnu : 404', async () => {

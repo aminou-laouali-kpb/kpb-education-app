@@ -2178,7 +2178,11 @@ pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
 
 - `Cache-Control: public, max-age=30` (et cache serveur de 30 s), **30 requêtes / min / IP**,
   `Access-Control-Allow-Origin: *` (lu par `kpbeducation.cloud/classement/`, sans cookie).
-- 404 pour un slug inconnu ou une campagne `draft`. `?city=` filtre (sans accents ni casse).
+- 404 pour un slug inconnu ou une campagne `draft`. `?city=` filtre (sans accents ni casse) ;
+  une ville absente de la campagne rend `entries: []`. Cache serveur (audit 57, F04 / F16) : une
+  seule entrée par campagne (la vue complète, filtrée par ville en mémoire — jamais une entrée
+  par ville demandée), 256 campagnes au plus (la plus ancienne part), entrées expirées purgées à
+  chaque écriture.
 - Réponse — liste de champs **fermée** :
 
 ```json
