@@ -331,6 +331,28 @@ void main() {
     expect(tester.widget<Switch>(toggle).value, isFalse);
   });
 
+  // Audit 57, F14 : le lecteur d'écran lit le consentement ET son état sur
+  // l'interrupteur, pas « Interrupteur, désactivé » tout court.
+  testWidgets('interrupteur promotionnel : libellé et état lus ensemble',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    await _pump(
+      tester,
+      profile: createTestProfile().copyWith(
+        promotionsEmailOptIn: false,
+        promotionsPushOptIn: false,
+      ),
+    );
+    final toggle = find.byKey(const ValueKey<String>('notif-promotions-push'));
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    final node = tester.getSemantics(toggle);
+    expect(node.label, contains('kpb_promotions_pref_title'));
+    expect(node.label, contains('kpb_promotions_pref_subtitle'));
+    expect(node, isSemantics(hasToggledState: true, isToggled: false));
+    semantics.dispose();
+  });
+
   testWidgets('autorisation refusée : « Notifications coupées » + réglages',
       (tester) async {
     final permission = _FixedPermission(PushPermissionStatus.denied);
