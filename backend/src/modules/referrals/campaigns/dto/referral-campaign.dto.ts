@@ -274,11 +274,16 @@ export class RecordPayoutDto {
  * « Déclarer le prix forfait et réattribuer » (correctifs 57). `participantId`
  * est le lauréat que l'équipe voit à l'écran : si le prix a changé de main
  * entre-temps, le serveur refuse au lieu de déclarer forfait quelqu'un d'autre.
+ *
+ * Absent (ou null) : le prix affiché n'a plus de lauréat — il a supprimé son
+ * compte avant le versement (audit 57, F17). Le serveur n'accepte alors que si
+ * le prix de ce rang est bien orphelin.
  */
 export class ForfeitPrizeDto {
+  @IsOptional()
   @IsString()
   @Length(1, 64)
-  participantId!: string;
+  participantId?: string | null;
 
   /** Motif (ex. « injoignable 15 jours après la validation »), tracé. */
   @IsString()

@@ -83,6 +83,19 @@ export interface AvatarStream {
  * direction d'erreur pour une suppression, et un avis qui porte le dossier de
  * quelqu'un lui appartient assez pour lui être rendu.
  */
+/**
+ * Ce qui reste d'un compte supprimé dans les lignes qu'on garde pour leurs
+ * compteurs (livraisons de campagnes) ou leur comptabilité (prix de la
+ * compétition) : une étiquette neutre, jamais un nom ni un identifiant.
+ */
+export const DELETED_ACCOUNT_LABEL = 'Compte supprimé';
+/** `NotificationDelivery.recipientId` (NOT NULL) d'un compte supprimé. */
+export const DELETED_RECIPIENT_ID = 'compte-supprime';
+/** Motif d'un forfait dont le lauréat a supprimé son compte (`reason` NOT NULL). */
+export const ERASED_FORFEIT_REASON = 'Motif effacé (compte supprimé)';
+/** `AdminAuditEvent.changes` des actions de compétition visant un compte supprimé. */
+export const ERASED_AUDIT_CHANGES = { erased: 'account_deleted' } as const;
+
 function reviewsOfUser(userId: string, caseIds: string[]) {
   return {
     OR: [
@@ -90,6 +103,20 @@ function reviewsOfUser(userId: string, caseIds: string[]) {
       { reviewerUserId: null, caseId: { in: caseIds } },
     ],
   };
+}
+
+/** `voucherCode` d'une dépense de crédits (`metadata`), seule clé exportée. */
+function voucherCodeOf(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+  const code = (metadata as Record<string, unknown>).voucherCode;
+  return typeof code === 'string' && code ? code : null;
+}
+
+/** « •••• 4567 » : les 4 derniers caractères d'un numéro de versement. */
+function maskAccount(account: string): string {
+  const trimmed = account.trim();
+  if (!trimmed) return '';
+  return trimmed.length <= 4 ? '••••' : `•••• ${trimmed.slice(-4)}`;
 }
 
 @Injectable()
@@ -738,6 +765,49 @@ export class ProfilesService {
       // (`reporterDeletedAt`, purge quotidienne). On relève AVANT la
       // suppression les contenus d'autrui dont les compteurs vont bouger
       // (ses réponses et ses « utile »), recalculés APRÈS.
+      // Compétition ambassadeurs : relevés AVANT la cascade (la ligne
+      // `Ambassador` emporte ses participations) pour effacer ce qui survit à
+      // celle-ci — prix non versés et forfaits (SET NULL), et les traces du
+      // journal d'audit qui visent ces lignes (audit 57, F08 et F17).
+      const ambassadorRows = await prisma.ambassador.findMany({
+        where: { userProfileId: id },
+        select: { id: true },
+      });
+      const ambassadorIds = ambassadorRows.map((a) => a.id);
+      const participantIds = ambassadorIds.length
+        ? (
+            await prisma.referralCampaignParticipant.findMany({
+              where: { ambassadorId: { in: ambassadorIds } },
+              select: { id: true },
+            })
+          ).map((p) => p.id)
+        : [];
+      const forfeitIds = participantIds.length
+        ? (
+            await prisma.referralCampaignPrizeForfeit.findMany({
+              where: { participantId: { in: participantIds } },
+              select: { id: true },
+            })
+          ).map((f) => f.id)
+        : [];
+      const refereeCampaignRowIds = (
+        await prisma.referralCampaignReferral.findMany({
+          where: { refereeProfileId: id },
+          select: { id: true },
+        })
+      ).map((r) => r.id);
+      // `changes` des lignes Ambassador / participant : `userProfileId`, nom
+      // public, ville, statut de mineur, note d'autorisation parentale →
+      // effacés. Forfait et décision sur un filleul : `changes` ne porte que
+      // des identifiants de lignes supprimées et des rangs → gardés ; seul le
+      // motif libre (`reasonCode`) part.
+      const competitionAuditTargets = [
+        { entityType: 'Ambassador', ids: ambassadorIds, eraseChanges: true },
+        { entityType: 'ReferralCampaignParticipant', ids: participantIds, eraseChanges: true },
+        { entityType: 'ReferralCampaignPrizeForfeit', ids: forfeitIds, eraseChanges: false },
+        { entityType: 'ReferralCampaignReferral', ids: refereeCampaignRowIds, eraseChanges: false },
+      ].filter((t) => t.ids.length > 0);
+
       const communityMember = await prisma.communityMember.findUnique({
         where: { userId: id },
         select: { id: true },
@@ -789,6 +859,18 @@ export class ProfilesService {
         prisma.notificationDelivery.deleteMany({
           where: { caseId: { in: caseIds } },
         }),
+        // Livraisons des campagnes de l'équipe (diffusions : `caseId` NULL,
+        // `recipientId` = référence plate sans cascade). Les statistiques de
+        // campagne COMPTENT ces lignes (`campaignStats`, statut final de
+        // l'exécuteur) : on les garde, ANONYMISÉES — plus de nom civil ni
+        // d'identifiant de compte (audit 57, F05).
+        prisma.notificationDelivery.updateMany({
+          where: { recipientId: id },
+          data: {
+            recipientId: DELETED_RECIPIENT_ID,
+            recipientName: DELETED_ACCOUNT_LABEL,
+          },
+        }),
         // Rows that reference Case (must precede Case).
         prisma.appointment.deleteMany({ where: { userId: id } }),
         // ServicePurchase references PaymentIntent → delete it first.
@@ -821,6 +903,42 @@ export class ProfilesService {
         // et NULL pour tous les avis enregistrés avant que l'auteur vienne du
         // jeton : ceux-là se retrouvent par le dossier noté (voir reviewsOfUser).
         prisma.counsellorReview.deleteMany({ where: reviewsOfUser(id, caseIds) }),
+        // (2a) Compétition, AVANT la cascade : un prix NON versé et un forfait
+        // survivent à la suppression (SET NULL) — ils ne gardent plus ni le nom
+        // public ni le motif libre. Le prix VERSÉ reste tel quel (rang, nom
+        // public, montant, versement : la trace comptable que la politique
+        // annonce). Un prix non versé devenu orphelin se déclare forfait et se
+        // réattribue comme les autres (`forfeitPrize`, sans `participantId`).
+        prisma.referralCampaignPrizeAward.updateMany({
+          where: {
+            participantId: { in: participantIds },
+            payoutStatus: { not: 'paid' },
+          },
+          data: {
+            publicNameSnapshot: DELETED_ACCOUNT_LABEL,
+            note: null,
+            payoutReference: null,
+          },
+        }),
+        prisma.referralCampaignPrizeForfeit.updateMany({
+          where: { participantId: { in: participantIds } },
+          data: {
+            publicNameSnapshot: DELETED_ACCOUNT_LABEL,
+            reason: ERASED_FORFEIT_REASON,
+          },
+        }),
+        // Journal d'audit (jamais purgé) : l'action, l'auteur et la date
+        // restent — c'est la responsabilité de l'équipe — mais plus le lien
+        // vers le compte (`userProfileId`), le nom public, la ville, le statut
+        // de mineur, la note d'autorisation parentale ni les motifs libres.
+        ...competitionAuditTargets.map((target) =>
+          prisma.adminAuditEvent.updateMany({
+            where: { entityType: target.entityType, entityId: { in: target.ids } },
+            data: target.eraseChanges
+              ? { changes: ERASED_AUDIT_CHANGES, reasonCode: null }
+              : { reasonCode: null },
+          }),
+        ),
         // (2) L'utilisateur EN TANT QU'ambassadeur : la ligne `Ambassador` porte le
         // `payoutAccount`. Ses `referrals` / `commissions` / `withdrawals` ont
         // `ambassador … onDelete: Cascade` (relationMode foreignKeys), donc
@@ -838,7 +956,8 @@ export class ProfilesService {
         // anti-fraude, comme filleul ou comme parrain. En tant qu'ambassadeur,
         // ses participations partent par cascade avec la ligne `Ambassador` ;
         // un prix déjà versé garde sa trace comptable (`participantId` → NULL,
-        // nom public figé).
+        // nom public figé) ; les prix non versés et les forfaits sont
+        // anonymisés plus haut (2a).
         prisma.referralCampaignReferral.deleteMany({
           where: { refereeProfileId: id },
         }),
@@ -1215,6 +1334,13 @@ export class ProfilesService {
         campaignReferrals,
         referralSignals,
         communityMember,
+        referralAsReferee,
+        referralsAsReferrer,
+        creditTransactions,
+        ambassadorRow,
+        prizeAwards,
+        prizeForfeits,
+        campaignDeliveries,
       ] = await Promise.all([
         prisma.case.findMany({
           where: { userId: id },
@@ -1658,6 +1784,113 @@ export class ProfilesService {
             },
           },
         }),
+        // Parrainage (politique §8, audit 57 F07) : le rattachement de l'élève
+        // comme filleul (date seule : ni le nom ni l'identifiant du parrain),
+        // ses filleuls comme parrain (dates seules : le nombre est déjà
+        // affiché dans l'app), ses crédits (sans l'identifiant du filleul de
+        // `metadata`), son espace ambassadeur et ses prix et forfaits.
+        prisma.referral.findUnique({
+          where: { refereeProfileId: id },
+          select: { createdAt: true },
+        }),
+        prisma.referral.findMany({
+          where: { referrerId: id },
+          orderBy: { createdAt: 'asc' },
+          select: { createdAt: true },
+        }),
+        prisma.creditTransaction.findMany({
+          where: { profileId: id },
+          orderBy: { createdAt: 'asc' },
+          select: { amount: true, reason: true, metadata: true, createdAt: true },
+        }),
+        prisma.ambassador.findUnique({
+          where: { userProfileId: id },
+          select: {
+            code: true,
+            displayName: true,
+            campus: true,
+            city: true,
+            payoutMethod: true,
+            payoutAccount: true,
+            kycStatus: true,
+            totalReferrals: true,
+            totalCommissionsFCFA: true,
+            activatedAt: true,
+            approvedAt: true,
+            cashProgramEnabled: true,
+            referrals: {
+              orderBy: { signedUpAt: 'asc' },
+              select: {
+                status: true,
+                signedUpAt: true,
+                quizCompletedAt: true,
+                applicationCreatedAt: true,
+                premiumSubscribedAt: true,
+                placedAt: true,
+              },
+            },
+            commissions: {
+              orderBy: { earnedAt: 'asc' },
+              select: { amountFCFA: true, reason: true, label: true, earnedAt: true },
+            },
+            withdrawals: {
+              orderBy: { requestedAt: 'asc' },
+              select: {
+                amountFCFA: true,
+                method: true,
+                destinationAccount: true,
+                status: true,
+                requestedAt: true,
+                processedAt: true,
+                transactionId: true,
+              },
+            },
+          },
+        }),
+        prisma.referralCampaignPrizeAward.findMany({
+          where: { participant: { ambassador: { userProfileId: id } } },
+          orderBy: [{ createdAt: 'asc' }, { rank: 'asc' }],
+          select: {
+            rank: true,
+            publicNameSnapshot: true,
+            amountFcfa: true,
+            recipient: true,
+            payoutStatus: true,
+            payoutMethod: true,
+            payoutReference: true,
+            paidAmountFcfa: true,
+            paidAt: true,
+            createdAt: true,
+            campaign: { select: { slug: true, nameFr: true } },
+          },
+        }),
+        prisma.referralCampaignPrizeForfeit.findMany({
+          where: { participant: { ambassador: { userProfileId: id } } },
+          orderBy: { forfeitedAt: 'asc' },
+          select: {
+            rank: true,
+            publicNameSnapshot: true,
+            amountFcfa: true,
+            reason: true,
+            forfeitedAt: true,
+            campaign: { select: { slug: true, nameFr: true } },
+          },
+        }),
+        // Livraisons des campagnes de l'équipe (audit 57, F05) : la campagne,
+        // le canal, l'état et les dates — pas `recipientName`, ni les
+        // identifiants internes.
+        prisma.notificationDelivery.findMany({
+          where: { recipientId: id },
+          orderBy: { createdAt: 'asc' },
+          select: {
+            channel: true,
+            status: true,
+            createdAt: true,
+            deliveredAt: true,
+            openedAt: true,
+            campaign: { select: { name: true, templateId: true } },
+          },
+        }),
       ]);
 
       // Les avis que l'étudiant a rédigés sur ses conseillers : son nom, sa note
@@ -1761,6 +1994,39 @@ export class ProfilesService {
         orderBy: { occurredAt: 'asc' },
       });
 
+      // Titre public (celui qu'a vu l'élève) de chaque campagne reçue.
+      const templateIds = [
+        ...new Set(
+          campaignDeliveries
+            .map((d) => d.campaign.templateId)
+            .filter((v): v is string => !!v),
+        ),
+      ];
+      const templates = templateIds.length
+        ? await prisma.notificationTemplate.findMany({
+            where: { id: { in: templateIds } },
+            select: { id: true, titleFr: true, titleEn: true },
+          })
+        : [];
+      const templateById = new Map(templates.map((t) => [t.id, t]));
+      const campaignNotifications = campaignDeliveries.map((d) => {
+        const template = d.campaign.templateId
+          ? templateById.get(d.campaign.templateId)
+          : undefined;
+        return {
+          campaign: {
+            name: d.campaign.name,
+            titleFr: template?.titleFr ?? null,
+            titleEn: template?.titleEn ?? null,
+          },
+          channel: d.channel,
+          status: d.status,
+          sentAt: d.createdAt,
+          deliveredAt: d.deliveredAt,
+          openedAt: d.openedAt,
+        };
+      });
+
       return {
         profile,
         cases,
@@ -1784,11 +2050,43 @@ export class ProfilesService {
         eefInterest: eefInterest[0] ?? null,
         scholarshipMatchRuns,
         scholarshipAlertSubscriptions,
+        referral: {
+          code: row.referralCode,
+          creditBalance: row.reviewCredits,
+          asReferee: referralAsReferee
+            ? { attachedAt: referralAsReferee.createdAt }
+            : null,
+          asReferrer: {
+            count: referralsAsReferrer.length,
+            attachedAt: referralsAsReferrer.map((r) => r.createdAt),
+          },
+          creditTransactions: creditTransactions.map((t) => ({
+            amount: t.amount,
+            reason: t.reason,
+            ...(voucherCodeOf(t.metadata) ? { voucherCode: voucherCodeOf(t.metadata) } : {}),
+            createdAt: t.createdAt,
+          })),
+          ambassador: ambassadorRow
+            ? {
+                ...ambassadorRow,
+                // Le compte de versement est rendu masqué : l'export peut
+                // circuler, l'élève connaît son numéro.
+                payoutAccount: maskAccount(ambassadorRow.payoutAccount),
+                withdrawals: ambassadorRow.withdrawals.map((w) => ({
+                  ...w,
+                  destinationAccount: maskAccount(w.destinationAccount),
+                })),
+              }
+            : null,
+        },
         referralCampaigns: {
           asAmbassador: campaignParticipations,
           asReferee: campaignReferrals,
           attributionSignals: referralSignals,
+          prizes: prizeAwards,
+          prizeForfeits,
         },
+        campaignNotifications,
         community: communityMember
           ? {
               member: {

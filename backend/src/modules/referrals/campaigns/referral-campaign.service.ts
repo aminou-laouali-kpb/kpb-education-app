@@ -972,6 +972,9 @@ export class ReferralCampaignService {
    * - le classement (ordre réel, rangs) ne change pas ;
    * - idempotent : redéclarer le même lauréat rend l'état actuel sans rien
    *   écrire ; un lauréat qui a changé entre-temps ⇒ 409 ;
+   * - prix ORPHELIN (lauréat qui a supprimé son compte avant le versement,
+   *   `participantId` NULL, nom « Compte supprimé ») : déclaré sans
+   *   `participantId`, il passe au suivant de la même façon (audit 57, F17) ;
    * - audit `referral_campaign.prize_forfeited` dans la même transaction.
    */
   async forfeitPrize(
@@ -986,26 +989,33 @@ export class ReferralCampaignService {
     const prizes = parsePrizes(campaign.prizes) ?? [];
     const prize = prizes.find((p) => p.rank === rank);
     if (!prize) throw new NotFoundException('Aucun prix à ce rang.');
-    const participantId = dto.participantId.trim();
+    const participantId = dto.participantId?.trim() || null;
     const reason = dto.reason.trim();
     if (reason.length < 3) throw new BadRequestException('Un motif est requis pour déclarer un prix forfait.');
 
     try {
       const outcome = await this.db((db) =>
         db.$transaction(async (tx) => {
-          const already = await tx.referralCampaignPrizeForfeit.findFirst({
-            where: { campaignId, participantId },
-          });
-          if (already) return { replayed: true as const };
-
           const award = await tx.referralCampaignPrizeAward.findUnique({
             where: { campaignId_rank: { campaignId, rank } },
           });
-          if (!award || !award.participantId) {
-            throw new NotFoundException('Aucun lauréat à ce rang.');
-          }
+          // Rejeu : ce lauréat est déjà forfait — ou, sans lauréat, un forfait
+          // orphelin existe à ce rang et le prix n'est plus orphelin.
+          const already = participantId
+            ? await tx.referralCampaignPrizeForfeit.findFirst({ where: { campaignId, participantId } })
+            : award && award.participantId === null
+              ? null
+              : await tx.referralCampaignPrizeForfeit.findFirst({
+                  where: { campaignId, rank, participantId: null },
+                });
+          if (already) return { replayed: true as const };
+
+          if (!award) throw new NotFoundException('Aucun lauréat à ce rang.');
           if (award.payoutStatus === 'paid') {
             throw new ConflictException('Ce prix est déjà versé : il ne peut plus être déclaré forfait.');
+          }
+          if (award.participantId === null && participantId) {
+            throw new NotFoundException('Aucun lauréat à ce rang.');
           }
           if (award.participantId !== participantId) {
             throw new ConflictException({
@@ -1028,7 +1038,7 @@ export class ReferralCampaignService {
           const forfeited = new Set(
             forfeits.map((f) => f.participantId).filter((id): id is string => id !== null),
           );
-          forfeited.add(participantId);
+          if (participantId) forfeited.add(participantId);
           const awardByRank = new Map(awards.map((a) => [a.rank, a]));
           const slots = prizes.map((p) => {
             const a = awardByRank.get(p.rank);

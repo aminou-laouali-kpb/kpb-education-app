@@ -74,6 +74,12 @@ describe('ProfilesService — account deletion & export', () => {
     'referralCampaignParticipant',
     'referralCampaignReferral',
     'referralAttributionSignal',
+    // Prix et forfaits de la compétition, journal d'audit, modèles de campagne
+    // (audit 57, F05 / F07 / F08 / F17).
+    'referralCampaignPrizeAward',
+    'referralCampaignPrizeForfeit',
+    'adminAuditEvent',
+    'notificationTemplate',
     // Communauté (C1 + C2) : aucune fiche membre ici (findUnique → null).
     'communityMember',
     'communityReply',
@@ -179,6 +185,75 @@ describe('ProfilesService — account deletion & export', () => {
     expect(calls.indexOf('consentReceipt.deleteMany')).toBeLessThan(
       calls.indexOf('guardianAuthorization.deleteMany'),
     );
+  });
+
+  it('anonymise les livraisons de campagnes et les prix non versés AVANT la cascade (audit 57)', async () => {
+    const { client, calls } = makeFakePrisma({ email: 'a@b.com', supabaseUserId: null });
+    const updates: Record<string, unknown[]> = {};
+    for (const model of [
+      'notificationDelivery',
+      'referralCampaignPrizeAward',
+      'referralCampaignPrizeForfeit',
+      'adminAuditEvent',
+    ]) {
+      (client[model] as Record<string, unknown>).updateMany = (args: unknown) => {
+        calls.push(`${model}.updateMany`);
+        (updates[model] ??= []).push(args);
+        return { __op: `${model}.updateMany` };
+      };
+    }
+    (client.ambassador as Record<string, unknown>).findMany = async () => [{ id: 'amb-1' }];
+    (client.referralCampaignParticipant as Record<string, unknown>).findMany = async () => [
+      { id: 'part-1' },
+    ];
+    (client.referralCampaignPrizeForfeit as Record<string, unknown>).findMany = async () => [
+      { id: 'forf-1' },
+    ];
+    const prisma = {
+      execute: async (fn: (c: unknown) => unknown) => fn(client),
+    } as unknown as PrismaService;
+
+    await new ProfilesService(prisma, fakeStorage).deleteMe('user-1');
+
+    expect(updates.notificationDelivery).toEqual([
+      {
+        where: { recipientId: 'user-1' },
+        data: { recipientId: 'compte-supprime', recipientName: 'Compte supprimé' },
+      },
+    ]);
+    expect(updates.referralCampaignPrizeAward).toEqual([
+      {
+        where: { participantId: { in: ['part-1'] }, payoutStatus: { not: 'paid' } },
+        data: { publicNameSnapshot: 'Compte supprimé', note: null, payoutReference: null },
+      },
+    ]);
+    expect(updates.referralCampaignPrizeForfeit).toEqual([
+      {
+        where: { participantId: { in: ['part-1'] } },
+        data: { publicNameSnapshot: 'Compte supprimé', reason: 'Motif effacé (compte supprimé)' },
+      },
+    ]);
+    expect(updates.adminAuditEvent).toEqual(
+      expect.arrayContaining([
+        {
+          where: { entityType: 'Ambassador', entityId: { in: ['amb-1'] } },
+          data: { changes: { erased: 'account_deleted' }, reasonCode: null },
+        },
+        {
+          where: { entityType: 'ReferralCampaignParticipant', entityId: { in: ['part-1'] } },
+          data: { changes: { erased: 'account_deleted' }, reasonCode: null },
+        },
+        {
+          where: { entityType: 'ReferralCampaignPrizeForfeit', entityId: { in: ['forf-1'] } },
+          data: { reasonCode: null },
+        },
+      ]),
+    );
+    // La cascade (Ambassador → participations → SET NULL sur prix et forfaits)
+    // vient APRÈS : sinon plus rien ne relie ces lignes au compte.
+    for (const op of ['referralCampaignPrizeAward.updateMany', 'referralCampaignPrizeForfeit.updateMany']) {
+      expect(calls.indexOf(op)).toBeLessThan(calls.indexOf('ambassador.deleteMany'));
+    }
   });
 
   it('hard-deletes Supabase Auth before the local transaction', async () => {

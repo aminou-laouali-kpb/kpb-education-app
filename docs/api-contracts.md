@@ -2058,6 +2058,29 @@ boîte d'envoi (`dedupeKey`, `pushNotBefore`, `pushAttempts`, `pushLockedUntil`,
 `pushLastError`, `pushProvider`, `pushBatchId`). Prouvé contre PostgreSQL :
 `profiles.postgres.spec.ts` (export, puis cascade à la suppression).
 
+Depuis l'audit 57 (20/10/2026), l'export porte aussi (prouvé contre PostgreSQL :
+`profiles-residues.postgres.spec.ts`) :
+
+- `campaignNotifications` : les livraisons des campagnes de l'équipe reçues par l'élève —
+  `campaign {name, titleFr, titleEn}`, `channel`, `status`, `sentAt`, `deliveredAt`,
+  `openedAt` ; sans `recipientName` ni identifiants internes ;
+- `referral` : `code`, `creditBalance`, `asReferee {attachedAt}` (ou null ; ni nom ni
+  identifiant du parrain), `asReferrer {count, attachedAt[]}`, `creditTransactions[]`
+  (`amount`, `reason`, `voucherCode` pour une dépense, `createdAt` ; jamais l'identifiant du
+  filleul), `ambassador` (ou null : code, nom affiché, campus, ville, moyen et compte de
+  versement **masqué** « •••• 1234 », statut KYC, totaux, dates, statuts et dates des filleuls
+  sans leur nom, commissions, retraits à destination masquée) ;
+- `referralCampaigns.prizes` (campagne, rang, nom public figé, montant, bénéficiaire, état,
+  moyen, référence et date du versement) et `referralCampaigns.prizeForfeits` (campagne, rang,
+  nom public figé, montant, motif, date).
+
+À la suppression du compte, les livraisons de campagnes non liées à un dossier sont
+**anonymisées** (`recipientId = "compte-supprime"`, `recipientName = "Compte supprimé"`) : les
+statistiques de campagne les comptent toujours ; les prix non versés et les forfaits perdent nom
+public et motif (« Compte supprimé », « Motif effacé (compte supprimé) ») ; le journal d'audit
+des lignes de compétition du compte perd `changes` personnels et motifs (`docs/data-inventory.md`
+§6).
+
 ## Liste des bourses : recherche, statut et tri (chantier I)
 
 `GET /scholarships` (élève connecté, `StudentAuthGuard`) garde ses paramètres d'avant
@@ -2212,7 +2235,7 @@ SuperAdmin. `Cache-Control: private, no-store`. Chaque écriture crée un `Admin
 | `GET /admin/referral-campaigns/:id/participants/:pid/referrals` | Filleuls : nom, e-mail, dates, statut, signaux, décision |
 | `POST /admin/referral-campaigns/:id/referrals/:rid/decision` | `{decision: validated\|excluded\|clear, reason?}` — motif requis pour exclure |
 | `GET /admin/referral-campaigns/:id/prizes` | `{items, forfeits}` : lauréats (prix par rang, `participantId`) et prix déclarés forfait (`rank, participantId, publicNameSnapshot, amountFcfa, reason, forfeitedAt, forfeitedByAdminId, replacedByParticipantId`) |
-| `POST /admin/referral-campaigns/:id/prizes/:rank/forfeit` | **Correctifs 57** — « Déclarer le prix forfait et réattribuer » : `{participantId, reason}` (motif 3–500 caractères). Podium validé exigé (409) ; 404 sans prix ou sans lauréat à ce rang ; **409 si ce prix est déjà versé** ; 409 `prize_holder_changed` si le lauréat du rang n'est plus `participantId`. Le lauréat est marqué forfait (table `ReferralCampaignPrizeForfeit`) et ne pourra plus recevoir de prix dans la campagne, même à une revalidation ; les prix **non versés** à partir de ce rang passent, dans l'ordre, aux suivants **classés** sans prix ni forfait (le 3e monte au 2e prix, le 4e entre au 3e) ; un prix versé ne bouge jamais ; plus de candidat ⇒ prix non attribué (ligne retirée). Le classement (rangs) ne change pas. **Idempotent** : redéclarer le même lauréat rend `{items, forfeits}` sans rien écrire. Audit `referral_campaign.prize_forfeited` (purpose `referral_campaign`, motif dans `reasonCode`) dans la même transaction. Réponse : `{items, forfeits}` |
+| `POST /admin/referral-campaigns/:id/prizes/:rank/forfeit` | **Correctifs 57** — « Déclarer le prix forfait et réattribuer » : `{participantId, reason}` (motif 3–500 caractères). **Audit 57 (F17)** : `participantId` absent ou null = prix **orphelin** (lauréat qui a supprimé son compte avant le versement : `participantId` null, nom « Compte supprimé ») — accepté seulement si le prix de ce rang est bien orphelin ; il passe au suivant de la même façon (forfait enregistré avec `participantId` null). Podium validé exigé (409) ; 404 sans prix à ce rang, ou `participantId` donné sur un prix orphelin ; **409 si ce prix est déjà versé** ; 409 `prize_holder_changed` si le lauréat du rang n'est plus `participantId`. Le lauréat est marqué forfait (table `ReferralCampaignPrizeForfeit`) et ne pourra plus recevoir de prix dans la campagne, même à une revalidation ; les prix **non versés** à partir de ce rang passent, dans l'ordre, aux suivants **classés** sans prix ni forfait (le 3e monte au 2e prix, le 4e entre au 3e) ; un prix versé ne bouge jamais ; plus de candidat ⇒ prix non attribué (ligne retirée). Le classement (rangs) ne change pas. **Idempotent** : redéclarer le même lauréat rend `{items, forfeits}` sans rien écrire. Audit `referral_campaign.prize_forfeited` (purpose `referral_campaign`, motif dans `reasonCode`) dans la même transaction. Réponse : `{items, forfeits}` |
 | `POST /admin/referral-campaigns/:id/prizes/:rank/payout` | `{payoutReference, paidAt?, paidAmountFcfa?, recipient?, payoutMethod?, note?}` ; lauréat mineur → `recipient: parent` exigé |
 | `GET /admin/referral-campaigns/:id/export.csv?scope=leaderboard\|referrals` | CSV (BOM, cellules neutralisées) |
 | `GET /admin/ambassadors?search=&approved=yes\|no` | Ambassadeurs |
