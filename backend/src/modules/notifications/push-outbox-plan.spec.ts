@@ -178,13 +178,15 @@ describe('planUserPush', () => {
           cycleId: 'cyc',
           type: 'scholarship_opened',
           kind: 'scholarship_opened',
-          notificationKey: 'scholarship-opened:cyc:u1',
+          // L'id de la ligne, pas la dedupeKey (qui porte l'id du compte).
+          notificationKey: only.id,
           ref: 'scholarship-opened:cyc',
         },
         idempotencyKey: 'scholarship-opened:cyc:u1',
         collapseKey: openingCollapseKey('scholarship-opened:cyc:u1'),
       });
       expect(plan.send?.collapseKey).toMatch(/^kpb-[0-9a-f]{32}$/);
+      expect(JSON.stringify(plan.send?.data)).not.toContain('u1');
     });
 
     it('la langue est choisie à l’envoi', () => {

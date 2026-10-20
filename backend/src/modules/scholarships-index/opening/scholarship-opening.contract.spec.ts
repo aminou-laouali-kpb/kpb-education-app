@@ -194,13 +194,15 @@ describe('scholarship-opening.contract', () => {
     });
 
     it('annonce seule : la route que les builds ≤ 56 savent ouvrir, et la clé de tap', () => {
-      expect(openingPushData({ scholarshipId: 's1', cycleId: 'c1', userId: 'u1' })).toEqual({
+      // Clé de tap = id opaque de la ligne du fil, jamais l'id du compte
+      // (la charge part chez Google / OneSignal — audit 57, F06).
+      expect(openingPushData({ scholarshipId: 's1', cycleId: 'c1', notificationId: 'n-row-1' })).toEqual({
         route: '/scholarships/s1',
         scholarshipId: 's1',
         cycleId: 'c1',
         type: 'scholarship_opened',
         kind: 'scholarship_opened',
-        notificationKey: 'scholarship-opened:c1:u1',
+        notificationKey: 'n-row-1',
         ref: 'scholarship-opened:c1',
       });
     });

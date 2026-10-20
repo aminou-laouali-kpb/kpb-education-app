@@ -294,7 +294,7 @@ describe('PushOutboxWorkerService', () => {
         'u1',
         "C'est ouvert",
         'corps',
-        expect.objectContaining({ notificationKey: 'scholarship-opened:c-a:u1' }),
+        expect.objectContaining({ notificationKey: 'a' }),
         { collapseKey: expect.stringMatching(/^kpb-/), idempotencyKey: 'scholarship-opened:c-a:u1' },
       ]);
       expect(tally).toMatchObject({ accepted: 2, acceptedPushes: 2 });

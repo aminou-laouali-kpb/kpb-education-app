@@ -130,6 +130,18 @@ export class NotificationDispatchService {
       const isEnglish = (input.preferredLanguage ?? '')
         .toLowerCase()
         .startsWith('en');
+      // `notificationKey` : rendu par l'application au tap (`POST
+      // /me/push-opens`) pour passer le rappel en lu. C'est l'identifiant
+      // OPAQUE de la ligne du fil, pas la `dedupeKey` : celle-ci porte presque
+      // toujours l'id du compte (`weekly-digest:<semaine>:<userId>`…), et la
+      // charge `data` part chez Google (FCM) et OneSignal — la politique promet
+      // qu'aucun identifiant de compte n'y figure (audit 57, F06).
+      const feedRow = await this.prisma.execute((p) =>
+        p.userNotification.findUnique({
+          where: { dedupeKey: input.dedupeKey },
+          select: { id: true },
+        }),
+      );
       const ok = await this.push.sendToUser(
         input.userId,
         isEnglish ? input.title.en : input.title.fr,
@@ -138,9 +150,7 @@ export class NotificationDispatchService {
           ...(input.data ?? {}),
           route: input.route,
           type: input.kind,
-          // Rendu par l'application au tap (`POST /me/push-opens`) : le rappel
-          // passe en lu dans le fil sans que l'élève ait à le rouvrir.
-          notificationKey: input.dedupeKey,
+          ...(feedRow ? { notificationKey: feedRow.id } : {}),
         },
       );
       if (!ok) return 'push_failed';

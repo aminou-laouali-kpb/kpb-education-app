@@ -600,7 +600,9 @@ export const OPENING_BUNDLE_MAX_REFS = 20;
 /**
  * Annonce seule. Les builds ≤ 56 ne lisent que `route` et `scholarshipId` ;
  * `notificationKey` permet à la build FCM de marquer l'entrée lue au tap
- * (`POST /me/push-opens`) sans code nouveau.
+ * (`POST /me/push-opens`) sans code nouveau. C'est l'identifiant opaque de la
+ * ligne `UserNotification`, jamais la `dedupeKey` (qui porte l'id du compte) :
+ * la charge part chez Google et OneSignal (audit 57, F06).
  */
 export type OpeningPushData = {
   route: string;
@@ -628,7 +630,8 @@ export type OpeningBundlePushData = {
 export function openingPushData(input: {
   scholarshipId: string;
   cycleId: string;
-  userId: string;
+  /** `UserNotification.id` de la ligne annoncée. */
+  notificationId: string;
 }): OpeningPushData {
   return {
     route: scholarshipRoute(input.scholarshipId),
@@ -636,7 +639,7 @@ export function openingPushData(input: {
     cycleId: input.cycleId,
     type: SCHOLARSHIP_OPENED_KIND,
     kind: SCHOLARSHIP_OPENED_KIND,
-    notificationKey: openingDedupeKey(input.cycleId, input.userId),
+    notificationKey: input.notificationId,
     ref: openingRef(input.cycleId),
   };
 }

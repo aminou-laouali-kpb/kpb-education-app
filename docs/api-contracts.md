@@ -1801,13 +1801,23 @@ Existantes, mêmes formes, sémantique ajustée :
 ### Charge utile push v1 (données, toutes des chaînes)
 
 Annonce seule — route que les builds ≤ 56 savent ouvrir ; `notificationKey`
-permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`) :
+permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`). Depuis l'audit 57
+(F06), c'est l'identifiant **opaque** de la ligne `UserNotification` (`<nid>`), plus la
+`dedupeKey` `scholarship-opened:<cid>:<uid>` : la charge part chez Google (FCM) et OneSignal, et
+n'y porte plus l'identifiant du compte. Même règle pour tous les rappels du fil
+(`NotificationDispatchService` : bourse du jour, récap, relances, dates limites, communauté,
+passerelle…) :
 
 ```json
 { "route": "/scholarships/<sid>", "scholarshipId": "<sid>", "cycleId": "<cid>",
   "type": "scholarship_opened", "kind": "scholarship_opened",
-  "notificationKey": "scholarship-opened:<cid>:<uid>", "ref": "scholarship-opened:<cid>" }
+  "notificationKey": "<nid>", "ref": "scholarship-opened:<cid>" }
 ```
+
+`POST /me/push-opens {notificationKey}` accepte les deux formes — l'identifiant de la ligne et
+l'ancienne `dedupeKey` des pushs déjà partis —, toujours bornées à l'élève connecté
+(`userId` du jeton). L'app (2.3.0 comme 2.3.1) renvoie la valeur telle quelle
+(`pushOpenedPayload`) sans en lire le format.
 
 Push groupé — `count` compte toutes les lignes, `refs` et `scholarshipIds`
 portent les 20 plus récentes ; **pas** de `scholarshipId` (un lecteur ancien

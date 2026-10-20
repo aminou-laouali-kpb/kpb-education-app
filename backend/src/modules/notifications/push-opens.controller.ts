@@ -19,7 +19,11 @@ class PushOpenedDto {
   @MaxLength(64)
   campaignId?: string;
 
-  /** Rappel du fil (`UserNotification.dedupeKey`) : marqué lu. */
+  /**
+   * Rappel du fil, marqué lu. Deux formes acceptées : l'identifiant opaque de
+   * la ligne (`UserNotification.id`, ce que le serveur envoie depuis l'audit
+   * 57, F06) et l'ancienne `dedupeKey` (pushs déjà partis avant ce correctif).
+   */
   @IsOptional()
   @IsString()
   @MaxLength(256)
@@ -65,7 +69,11 @@ export class PushOpensController {
     if (input.notificationKey) {
       const result = await this.prisma.execute((p) =>
         p.userNotification.updateMany({
-          where: { dedupeKey: input.notificationKey, userId, readAt: null },
+          where: {
+            userId,
+            readAt: null,
+            OR: [{ id: input.notificationKey }, { dedupeKey: input.notificationKey }],
+          },
           data: { readAt: now },
         }),
       );

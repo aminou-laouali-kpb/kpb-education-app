@@ -18,7 +18,12 @@ describe('NotificationDispatchService', () => {
     >();
     const created: string[] = [];
     const updated: Array<{ dedupeKey: string; pushedAt: Date | null }> = [];
-    const sends: Array<{ userId: string; title: string; body: string }> = [];
+    const sends: Array<{
+      userId: string;
+      title: string;
+      body: string;
+      data?: Record<string, string>;
+    }> = [];
 
     const client = {
       userNotification: {
@@ -38,6 +43,8 @@ describe('NotificationDispatchService', () => {
           }
           return { count };
         },
+        findUnique: async ({ where }: { where: { dedupeKey: string } }) =>
+          rows.has(where.dedupeKey) ? { id: `row-${created.indexOf(where.dedupeKey) + 1}` } : null,
         count: async () => opts.pushesInWindow ?? 0,
         update: async ({
           where,
@@ -59,8 +66,13 @@ describe('NotificationDispatchService', () => {
     } as unknown as PrismaService;
     const push = {
       isConfigured: opts.pushConfigured ?? true,
-      sendToUser: async (userId: string, title: string, body: string) => {
-        sends.push({ userId, title, body });
+      sendToUser: async (
+        userId: string,
+        title: string,
+        body: string,
+        data?: Record<string, string>,
+      ) => {
+        sends.push({ userId, title, body, data });
         return true;
       },
     } as unknown as PushSenderService;
@@ -105,6 +117,22 @@ describe('NotificationDispatchService', () => {
     expect(sends[0].title).toBe('Bourse à J-7'); // FR user
     expect(updated).toHaveLength(1);
     expect(updated[0].pushedAt).toEqual(daytime);
+  });
+
+  // Audit 57, F06 : la charge `data` part chez Google (FCM) et OneSignal. La
+  // clé de tap est l'id OPAQUE de la ligne du fil, pas la dedupeKey qui porte
+  // l'id du compte (« …:u1:d7 »).
+  it('envoie l’id opaque de la ligne du fil, jamais l’id du compte', async () => {
+    const { service, sends } = makeService();
+    await service.dispatch({ ...baseInput(daytime), data: { type: 'x', scholarshipId: 'sch-1' } });
+    expect(sends).toHaveLength(1);
+    expect(sends[0].data).toEqual({
+      type: 'deadline_reminder',
+      scholarshipId: 'sch-1',
+      route: '/deadlines',
+      notificationKey: 'row-1',
+    });
+    expect(JSON.stringify(sends[0].data)).not.toContain('u1');
   });
 
   it('pushes the English copy for an EN user', async () => {

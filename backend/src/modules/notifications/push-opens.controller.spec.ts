@@ -39,18 +39,21 @@ describe('PushOpensController', () => {
     expect(reminderUpdate).not.toHaveBeenCalled();
   });
 
-  it('marque lu le rappel du fil de cet élève', async () => {
+  // Deux formes (audit 57, F06) : l'id opaque de la ligne (pushs envoyés
+  // depuis le correctif) et l'ancienne dedupeKey (pushs déjà partis) —
+  // toujours bornées à l'élève connecté.
+  it.each([
+    ['l’id opaque de la ligne', 'cm2n0tif1cat10n'],
+    ['l’ancienne dedupeKey', 'deadline:usr-42:sch-9:7'],
+  ])('marque lu le rappel du fil de cet élève (%s)', async (_label, key) => {
     const { prisma, deliveryUpdate, reminderUpdate } = makePrisma();
-    await new PushOpensController(prisma).opened(
-      { notificationKey: 'deadline:usr-42:sch-9:7' },
-      req,
-    );
+    await new PushOpensController(prisma).opened({ notificationKey: key }, req);
 
     expect(reminderUpdate).toHaveBeenCalledWith({
       where: {
-        dedupeKey: 'deadline:usr-42:sch-9:7',
         userId: 'usr-42',
         readAt: null,
+        OR: [{ id: key }, { dedupeKey: key }],
       },
       data: { readAt: expect.any(Date) },
     });

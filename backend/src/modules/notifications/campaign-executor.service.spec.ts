@@ -173,6 +173,22 @@ describe('CampaignExecutorService', () => {
     );
   });
 
+  // Audit 57, F06 : la charge part chez Google (FCM) ou OneSignal — jamais
+  // l'identifiant du compte, son e-mail ni son nom.
+  it('la charge push ne porte que la campagne et la route, aucun identifiant de compte', async () => {
+    const h = makeService({
+      channels: ['push'],
+      template: TEMPLATE,
+      route: '/scholarships/abc',
+      recipients: [
+        { id: 'acct-7f3k9', preferredLanguage: 'fr', email: 'aicha.secret@example.com', promotionsPushOptIn: true },
+      ],
+    });
+    await h.service.execute('c1');
+    expect(h.pushData()).toEqual([{ campaignId: 'c1', route: '/scholarships/abc' }]);
+    expect(JSON.stringify(h.pushData())).not.toMatch(/acct-7f3k9|aicha/);
+  });
+
   it('sans route, n’en invente pas (l’app ouvre l’accueil)', async () => {
     const h = makeService({ channels: ['push'], template: TEMPLATE });
     await h.service.execute('c1');
