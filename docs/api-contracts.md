@@ -2180,10 +2180,13 @@ Un filleul est **qualifié** à `qualifiedAt = max(rattachement, création du co
 du profil)` si : rattachement (`Referral.createdAt`) dans `[startsAt, endsAt[` ; compte créé dans
 la fenêtre (règle par défaut `requireAccountCreatedInWindow`) ; e-mail vérifié (profil relié à
 Supabase, `supabaseUserId`) ; profil complété (`campaigns/profile-completion.ts` : élève,
-consentement, téléphone, date de naissance, ≥ 1 domaine, ≥ 1 pays visé, accord du tuteur si
-mineur — les champs obligatoires de l'onboarding de la build 56 ; le pays de résidence n'en fait
-pas partie) ; et `qualifiedAt < endsAt`. `UserProfile.profileCompletedAt` est posé une fois, au
-`PATCH /profiles/me` qui complète le profil (ou au recalcul). Statuts : `pending`, `qualified`,
+téléphone, date de naissance, ≥ 1 domaine, ≥ 1 pays visé, accord du tuteur si mineur — les champs
+obligatoires de l'onboarding de la build 56 ; le pays de résidence n'en fait pas partie ; la case
+de consentement est obligatoire à l'onboarding mais `UserProfile.consentedAt` n'est envoyé par
+aucune build : le prédicat ne le lit pas, audit 57 F15) ; et `qualifiedAt < endsAt`.
+`UserProfile.profileCompletedAt` est posé une fois, au `PATCH /profiles/me` qui complète le profil
+(ou au recalcul) ; la migration de données `20261028120000_profile_completion_without_consent`
+date à `updatedAt` les profils déjà complets. Statuts : `pending`, `qualified`,
 `flagged` (signal automatique, ne compte pas), `excluded` (décision de l'équipe). Signaux :
 `disposable_email`, `device_duplicate`, `ip_burst`, `ip_block_burst`, `velocity_burst`,
 `referee_is_participant`. Classement : qualifiés décroissants, puis instant où le compte a été

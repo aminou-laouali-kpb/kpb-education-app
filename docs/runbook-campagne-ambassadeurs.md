@@ -33,6 +33,14 @@ est serveur, la gestion est dans la console admin, le classement est une page we
    - Correctifs 57 (19/10/2026) : le déploiement complet suivant applique aussi la migration
      additive `20261026130000_referral_prize_forfeit` (table neuve, vide) qui porte « Déclarer le
      prix forfait et réattribuer » (§7). À déployer **avant** la validation du podium.
+   - Correctifs de l'audit 57 (20/10/2026) : le déploiement complet applique aussi la migration
+     de données `20261028120000_profile_completion_without_consent` (aucun changement de
+     schéma) : « profil complété » ne dépend plus de `UserProfile.consentedAt`, qu'aucune build
+     n'envoie — sans ce correctif, aucun filleul n'aurait été qualifié. **À déployer avant le
+     1er novembre**, puis, la campagne lancée, **Recalculer maintenant** une fois (fiche de la
+     campagne ; `POST /api/admin/referral-campaigns/<id>/recompute`) : le rapport doit répondre
+     sans erreur. Avant le 1er à 00 h (UTC+1), aucun rattachement n'est dans la fenêtre : 0
+     filleul est normal.
 2. Variables (toutes facultatives, défauts sûrs) : `REFERRAL_CODE_HOURLY_LIMIT` (30),
    `REFERRAL_SIGNAL_RETENTION_DAYS` (180), `KPB_REFERRAL_SIGNAL_SECRET` (sinon `KPB_JWT_SECRET`),
    `AMBASSADOR_SELF_ACTIVATION_ENABLED` (faux : laisser faux).

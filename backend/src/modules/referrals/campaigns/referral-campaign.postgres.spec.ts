@@ -48,6 +48,8 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
       verified: boolean;
       fullName: string;
       countryOfResidence: string;
+      /** false : profil complet SANS `profileCompletedAt` — le recalcul doit le dater. */
+      stamped: boolean;
     }> = {},
   ) {
     const complete = over.complete ?? true;
@@ -62,13 +64,17 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
         supabaseUserId: over.verified === false ? null : `sup-${id}`,
         phone: complete ? '+227 90 00 00 00' : '',
         countryOfResidence: over.countryOfResidence ?? 'Niger',
-        consentedAt: complete ? (over.createdAt ?? T('2026-11-02T08:00:00Z')) : null,
+        // `consentedAt` n'est JAMAIS posé : aucune build ni le serveur ne
+        // l'écrit (audit 57, F15). L'injecter ici masquait que la production ne
+        // qualifiait aucun filleul.
+        consentedAt: null,
         birthDate: over.birthDate ?? T('2004-03-01T00:00:00Z'),
         guardianConsentedAt: over.guardianConsentedAt ?? null,
         fieldIds: complete ? ['d01'] : [],
         targetCountryIds: complete ? ['fr'] : [],
         createdAt: over.createdAt ?? T('2026-11-02T08:00:00Z'),
-        profileCompletedAt: complete ? (over.createdAt ?? T('2026-11-02T08:00:00Z')) : null,
+        profileCompletedAt:
+          complete && over.stamped !== false ? (over.createdAt ?? T('2026-11-02T08:00:00Z')) : null,
       },
     });
     ids[key] = id;
@@ -137,6 +143,7 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
           { rank: 3, amountFcfa: 30000 },
         ],
         eligibleCities: ['Maradi', 'Niamey', 'Cotonou', 'Abidjan', 'Douala'],
+        rulesUrl: 'https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html',
       },
       actor,
       'rq4',
@@ -213,12 +220,17 @@ describePostgres('Compétition ambassadeurs — PostgreSQL', () => {
       ['c2', '2026-11-03T15:00:00Z'],
       ['c3', '2026-11-04T15:00:00Z'],
     ] as const) {
-      await profile(k, { createdAt: T('2026-11-02T14:00:00Z') });
+      // c3 : profil complet sans date de complétion ni `consentedAt` — c'est
+      // le recalcul qui le date (chemin `completedNow`).
+      await profile(k, { createdAt: T('2026-11-02T14:00:00Z'), stamped: k !== 'c3' });
       await attach(k, ids.a3personal.toLowerCase(), at, `197.0.0.${k.slice(1)}`);
     }
 
     const report = await campaigns.recompute(campaignId, T('2026-11-09T12:00:00Z'));
     expect(report.created).toBe(13);
+    expect(report.profilesStamped).toBe(1);
+    const c3 = await prisma.userProfile.findUniqueOrThrow({ where: { id: ids.c3 } });
+    expect(c3).toMatchObject({ consentedAt: null, profileCompletedAt: T('2026-11-09T12:00:00Z') });
 
     const board = await campaigns.adminLeaderboard(campaignId);
     const by = Object.fromEntries(board.items.map((i) => [i.city, i]));
