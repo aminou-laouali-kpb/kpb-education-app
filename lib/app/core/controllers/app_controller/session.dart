@@ -361,15 +361,32 @@ mixin _SessionMixin on _AppControllerBase {
     await _pushProfileUpdate();
   }
 
+  /// Temps accordé au retrait du jeton push côté serveur avant d'effacer la
+  /// session (F25) : au-delà, la déconnexion continue sans lui.
+  static const Duration _pushDetachBudget = Duration(seconds: 3);
+
   Future<void> logout() async {
     unawaited(AnalyticsService.instance.logLogout());
-    unawaited(PushService.instance.logout());
+    // Retrait du jeton push côté serveur AVANT d'effacer la session (audit 57,
+    // F25). Lancé en dernier, le DELETE partait après `signOut` (Dio pose
+    // l'en-tête dans une tâche ultérieure) : sans jeton d'accès, 401, et
+    // l'appareil restait rattaché au compte. Au mieux : borné, et sans
+    // attente hors ligne — la déconnexion ne bloque jamais.
+    final pushDetached = PushService.instance.logout();
     // Keep the historical logout contract: callers that do not await this
     // Future must still observe an anonymous in-memory state immediately.
     // Session/cache cleanup remains awaited below before the Future completes.
     _resetUserState();
     _persist();
     update();
+    if (ConnectivityService.instance.isOnline) {
+      try {
+        await pushDetached.timeout(_pushDetachBudget);
+      } catch (_) {
+        // Délai dépassé : le jeton invalidé chez FCM fera répondre
+        // `UNREGISTERED` au prochain envoi, et le serveur le supprimera.
+      }
+    }
     if (Get.isRegistered<AuthService>()) {
       await Get.find<AuthService>().clearSession();
     }
