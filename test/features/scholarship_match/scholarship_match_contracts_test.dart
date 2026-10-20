@@ -133,10 +133,10 @@ void main() {
       'annualTuitionBudgetEur',
       'preferredCurrency',
       'wantsScholarshipSupport',
-      'scholarshipNewsletterOptIn',
-      'disabledNotificationTypes',
+      // Les consentements (lettre d'information, coupures de notifications,
+      // accord IA) ne partent plus qu'après un geste de l'élève (audit 57,
+      // F24) : test/core/controllers/consent_sync_test.dart.
       'availableDocuments',
-      'aiConsentedAt',
     });
   });
 

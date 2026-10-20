@@ -80,6 +80,10 @@ mixin _SessionMixin on _AppControllerBase {
     _pendingOrientationAnswers = Map.of(snapshot.pendingOrientationAnswers);
     pendingOrientationQuestionIndex = snapshot.pendingOrientationQuestionIndex;
     _profileNeedsPush = snapshot.profileNeedsPush;
+    _pendingConsentKeys
+      ..clear()
+      ..addAll(
+          snapshot.pendingConsentKeys.where(ProfileConsentFields.all.contains));
     _clampShippedLocale();
     if (snapshot.localeCode != localeCode ||
         snapshot.profile?.preferredLanguage != profile?.preferredLanguage) {
@@ -180,6 +184,7 @@ mixin _SessionMixin on _AppControllerBase {
     hasCompletedOnboarding = true;
     profile = null;
     _profileNeedsPush = false;
+    _pendingConsentKeys.clear();
     _persist();
     update();
   }
@@ -197,6 +202,7 @@ mixin _SessionMixin on _AppControllerBase {
     hasCompletedOnboarding = false;
     profile = null;
     _profileNeedsPush = false;
+    _pendingConsentKeys.clear();
     _persist();
     update();
   }
@@ -238,7 +244,7 @@ mixin _SessionMixin on _AppControllerBase {
 
   void saveOnboardingProgress(int step, UserProfile partialProfile) {
     onboardingStep = step;
-    profile = partialProfile;
+    profile = _fromOnboarding(partialProfile);
     _profileNeedsPush = true;
     _persist();
     unawaited(_pushProfileUpdate());
@@ -273,7 +279,7 @@ mixin _SessionMixin on _AppControllerBase {
     if (ageDeclaration != null && birthDate != null) {
       final current = profile!;
       final withAge = current.copyWith(birthDate: birthDate);
-      profile = withAge.isMinor && ageDeclaration.guardianConsented
+      final next = withAge.isMinor && ageDeclaration.guardianConsented
           ? withAge.copyWith(
               guardianName: ageDeclaration.guardianName,
               guardianContact: ageDeclaration.guardianContact,
@@ -281,12 +287,38 @@ mixin _SessionMixin on _AppControllerBase {
                   current.guardianConsentedAt ?? DateTime.now(),
             )
           : withAge;
+      _pendingConsentKeys.addAll(ProfileConsentFields.changed(current, next));
+      profile = next;
       _profileNeedsPush = true;
     }
     _persist();
     update();
     if (birthDate != null) unawaited(_pushProfileUpdate());
     Get.offAllNamed(AppRoutes.home);
+  }
+
+  /// Le profil que l'onboarding vient de reconstruire, prêt à remplacer le
+  /// profil local (F24).
+  ///
+  /// L'onboarding ne montre que la lettre d'information et l'accord du
+  /// représentant légal : seuls eux peuvent devenir des consentements « en
+  /// attente ». Les autres (offres KPB, coupures de notifications, accord IA)
+  /// sont absents du profil qu'il reconstruit de zéro ; on garde ceux qu'on
+  /// connaissait au lieu de les remplacer par « rien », qui serait ensuite
+  /// affiché — et, avant ce correctif, renvoyé au serveur.
+  UserProfile _fromOnboarding(UserProfile built) {
+    final previous = profile;
+    final next = ProfileConsentFields.carryOver(
+      built,
+      previous,
+      ProfileConsentFields.all.difference(ProfileConsentFields.onboardingOwned),
+    );
+    _pendingConsentKeys.addAll(ProfileConsentFields.changed(
+      previous,
+      next,
+      keys: ProfileConsentFields.onboardingOwned,
+    ));
+    return next;
   }
 
   /// Email du compte connecté (Supabase), ou `null` hors session.
@@ -307,7 +339,7 @@ mixin _SessionMixin on _AppControllerBase {
   /// instead of a stale/empty server copy. Push failures still resolve (the
   /// screen falls back to local scoring); `_profileNeedsPush` keeps the retry.
   Future<void> completeOnboardingSynced(UserProfile newProfile) async {
-    profile = newProfile;
+    profile = _fromOnboarding(newProfile);
     localeCode = newProfile.preferredLanguage;
     // Apply the language chosen during onboarding to all `.tr` strings.
     _applyLocaleToUi();
@@ -381,6 +413,7 @@ mixin _SessionMixin on _AppControllerBase {
   void _resetUserState() {
     profile = null;
     _profileNeedsPush = false;
+    _pendingConsentKeys.clear();
     hasCompletedOnboarding = false;
     isGuestMode = false;
     latestOrientationSession = null;
@@ -465,7 +498,9 @@ mixin _SessionMixin on _AppControllerBase {
     final current = profile;
     return <String, dynamic>{
       'exportedAt': DateTime.now().toIso8601String(),
-      'profile': current == null ? null : _userProfilePayload(current),
+      'profile': current == null
+          ? null
+          : _userProfilePayload(current, allConsents: true),
     };
   }
 

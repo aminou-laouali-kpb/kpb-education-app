@@ -21,6 +21,7 @@ import '../config/app_config.dart';
 import '../config/app_routes.dart';
 import '../data/mock_catalog.dart';
 import '../data/notification_opt_out.dart';
+import '../data/profile_consent_fields.dart';
 import '../data/orientation_engine.dart';
 import '../data/orientation_questions_m4.dart';
 import '../data/roadmap_engine.dart';
@@ -189,7 +190,9 @@ abstract class _AppControllerBase extends GetxController {
   Future<void> _deleteRemoteSavedItem(SavedItem item);
   Future<void> _pushProfileUpdate();
   String _savedItemKey(SavedItemType type, String itemId);
-  Map<String, dynamic> _userProfilePayload(UserProfile profile);
+  Map<String, dynamic> _userProfilePayload(UserProfile profile,
+      {bool allConsents = false});
+  UserProfile _withPendingConsents(UserProfile fromServer);
   Future<void> flushPendingCaseMessages();
   bool isSaved(SavedItemType type, String itemId);
   Future<void> ensureSaved(SavedItemType type, String itemId);
@@ -293,6 +296,10 @@ abstract class _AppControllerBase extends GetxController {
 
   /// True after local profile edits until PATCH `/profiles/me` succeeds (offline sync conflict avoidance).
   bool _profileNeedsPush = false;
+
+  /// Consentements changés ICI et pas encore accusés par le serveur (F24) :
+  /// les seuls que le PATCH du profil transporte. Voir [ProfileConsentFields].
+  final Set<String> _pendingConsentKeys = <String>{};
   DateTime? _lastSyncAttemptAt;
   DateTime? _syncBackoffUntil;
   static const Duration _minSyncInterval = Duration(seconds: 30);
@@ -433,6 +440,7 @@ abstract class _AppControllerBase extends GetxController {
         reviewCredits: _reviewCredits,
         completedRoadmapSteps: _completedRoadmapSteps,
         profileNeedsPush: _profileNeedsPush,
+        pendingConsentKeys: _pendingConsentKeys,
         onboardingStep: onboardingStep,
         onboardingSkipped: onboardingSkipped,
         caseLastReadAt: _caseLastReadAt.map(
