@@ -115,6 +115,11 @@ export interface PublicWinner {
 
 const AUDIT_PURPOSE = 'referral_campaign';
 const PUBLIC_CACHE_TTL_MS = 30_000;
+/** Le lien du règlement publiable : une adresse https, sans espace. */
+export function isHttpsRulesUrl(url: string | null | undefined): boolean {
+  return /^https:\/\/[^\s]+$/.test((url ?? '').trim());
+}
+
 /**
  * Plafond du cache du classement public (audit 57, F04 / F16) : une entrée par
  * campagne publique, jamais par ville demandée ; au-delà, la plus ancienne part.
@@ -456,7 +461,7 @@ export class ReferralCampaignService {
     if (dto.rulesText !== undefined) data.rulesText = dto.rulesText.trim() || null;
     if (dto.rulesUrl !== undefined) {
       const url = dto.rulesUrl.trim();
-      if (url && !/^https:\/\/[^\s]+$/.test(url)) {
+      if (url && !isHttpsRulesUrl(url)) {
         throw new BadRequestException('rulesUrl doit être une adresse https.');
       }
       data.rulesUrl = url || null;
@@ -510,6 +515,14 @@ export class ReferralCampaignService {
       const prizes = parsePrizes(current.prizes);
       if (!prizes || prizes.length === 0) {
         throw new BadRequestException('Définis au moins un prix avant de lancer.');
+      }
+      // Le règlement n'est publié que par son LIEN (`rulesUrl`, https) : la page
+      // publique et l'écran « Compétition » n'affichent « Lire le règlement »
+      // qu'avec lui, et le texte collé reste interne (audit 57, F20).
+      if (!isHttpsRulesUrl(current.rulesUrl)) {
+        throw new BadRequestException(
+          'Pose le lien https du règlement (« Lien du règlement ») avant de lancer : le texte collé n’est pas publié.',
+        );
       }
     }
     if (action === 'unfreeze' && current.podiumValidatedAt) {

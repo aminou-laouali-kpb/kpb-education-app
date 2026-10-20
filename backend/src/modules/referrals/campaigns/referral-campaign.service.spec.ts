@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import type { PrismaService } from '../../prisma/prisma.service';
 import { PUBLIC_CACHE_MAX_ENTRIES, ReferralCampaignService } from './referral-campaign.service';
@@ -286,5 +286,72 @@ describe('ReferralCampaignService — classement public', () => {
   it('avant la clôture : aucun lauréat public (podium provisoire)', async () => {
     const out = await service('frozen', rows, awards).publicLeaderboard(campaign.slug, undefined);
     expect(out.winners).toEqual([]);
+  });
+});
+
+// Audit 57, F20 : le règlement n'est publié que par son lien https — la page
+// publique et l'écran « Compétition » n'affichent « Lire le règlement »
+// qu'avec lui, le texte collé reste interne. Lancer sans lien est refusé.
+describe('ReferralCampaignService — lancement', () => {
+  function launchable(over: Record<string, unknown>) {
+    const updates: unknown[] = [];
+    const draft = {
+      id: 'c1',
+      slug: 'c1',
+      status: 'draft',
+      prizes: [{ rank: 1, amountFcfa: 1000 }],
+      rulesText: 'Règlement collé',
+      rulesUrl: null,
+      timeZone: 'Africa/Lagos',
+      startsAt: new Date('2026-10-31T23:00:00Z'),
+      endsAt: new Date('2026-11-10T23:00:00Z'),
+      podiumValidatedAt: null,
+      ...over,
+    };
+    const tx = {
+      referralCampaign: {
+        updateMany: async (args: unknown) => {
+          updates.push(args);
+          return { count: 1 };
+        },
+        findUniqueOrThrow: async () => ({ ...draft, status: 'live' }),
+      },
+      adminAuditEvent: { create: async () => ({}) },
+    };
+    const client = {
+      referralCampaign: { findUnique: async () => draft },
+      $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
+    };
+    const svc = new ReferralCampaignService({
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService);
+    return { svc, updates };
+  }
+  const actor = { id: 'admin-1', role: 'admin' };
+
+  it.each([
+    ['sans lien (texte seul)', null],
+    ['lien vide', '  '],
+    ['lien http', 'http://kpbeducation.cloud/reglement.html'],
+  ])('refuse %s, sans rien écrire', async (_label, rulesUrl) => {
+    const { svc, updates } = launchable({ rulesUrl });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toThrow(
+      'Pose le lien https du règlement',
+    );
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toBeInstanceOf(BadRequestException);
+    expect(updates).toEqual([]);
+  });
+
+  it('lance avec un lien https', async () => {
+    const { svc, updates } = launchable({
+      rulesUrl: 'https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html',
+    });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).resolves.toMatchObject({ status: 'live' });
+    expect(updates).toHaveLength(1);
+  });
+
+  it('le prix reste exigé en premier', async () => {
+    const { svc } = launchable({ prizes: [] });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toThrow('Définis au moins un prix');
   });
 });
