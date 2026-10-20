@@ -131,10 +131,23 @@ const NAV_LINKS: readonly NavLinkDefinition[] = [
     href: '/notifications',
     labelKey: 'nav.notifications',
     icon: 'notifications',
+    // `NotificationsController` : Commercial, ContentManager, Admin,
+    // SuperAdmin. Ni le conseiller ni le modérateur (403 au chargement).
+    visibleForRole: (role) =>
+      hasAdminCapability(role, AdminCapability.ManageNotificationCampaigns),
   },
   { href: '/users', labelKey: 'nav.users', icon: 'users' },
   { href: '/reports', labelKey: 'nav.reports', icon: 'reports' },
 ];
+
+function isNavLinkVisible(link: NavLinkDefinition, role: string): boolean {
+  return !link.visibleForRole || link.visibleForRole(role);
+}
+
+/** Les entrées du menu qu'un rôle voit — le filtre même du rendu. */
+export function visibleNavHrefs(role: string): string[] {
+  return NAV_LINKS.filter((link) => isNavLinkVisible(link, role)).map((link) => link.href);
+}
 
 function initialsOf(fullName: string): string {
   return fullName
@@ -238,10 +251,7 @@ export function DashboardShell({
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_LINKS.filter(
-            (link) =>
-              !link.visibleForRole || link.visibleForRole(session.user.role),
-          ).map((link) => {
+          {NAV_LINKS.filter((link) => isNavLinkVisible(link, session.user.role)).map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link

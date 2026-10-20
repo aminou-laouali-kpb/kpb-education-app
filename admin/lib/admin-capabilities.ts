@@ -134,6 +134,16 @@ export enum AdminCapability {
    * barrière d'affichage.
    */
   ViewCommunityIdentity = 'view_community_identity',
+  /**
+   * Notifications : modèles, campagnes, aperçu de l'audience, livraisons.
+   *
+   * Miroir exact du `@Roles(Commercial, ContentManager, Admin, SuperAdmin)` de
+   * classe de `NotificationsController` (audit 57, F22) : sans elle, le menu
+   * proposait « Notifications » au conseiller et au modérateur, que le
+   * contrôleur refuse (403 à chaque chargement). Présentation seulement : le
+   * serveur reste seul juge.
+   */
+  ManageNotificationCampaigns = 'manage_notification_campaigns',
 }
 
 const ALL_ROLES = Object.freeze([
@@ -161,6 +171,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewAiAggregateCosts,
   ]),
   [InternalRole.Commercial]: Object.freeze([
+    AdminCapability.ManageNotificationCampaigns,
     AdminCapability.ViewReferralCampaigns,
     AdminCapability.ViewInterestList,
     AdminCapability.ViewReviewRequestMetadata,
@@ -170,6 +181,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.RecruitPilotParticipants,
   ]),
   [InternalRole.ContentManager]: Object.freeze([
+    AdminCapability.ManageNotificationCampaigns,
     AdminCapability.ModerateCommunity,
     AdminCapability.ReadCommunityDiscussions,
     AdminCapability.ViewScholarshipContent,
@@ -219,6 +231,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.SanctionCommunityMembers,
     AdminCapability.ConfigureCommunityFilters,
     AdminCapability.ViewCommunityIdentity,
+    AdminCapability.ManageNotificationCampaigns,
   ]),
   [InternalRole.SuperAdmin]: Object.freeze(
     Object.values(AdminCapability),
