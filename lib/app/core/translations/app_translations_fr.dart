@@ -3111,6 +3111,8 @@ const Map<String, String> appTranslationsFr = {
   'data_rights_section': 'Mes données',
   'export_data': 'Exporter mes données',
   'export_data_subject': 'Export de mes données KPB',
+  // Partage système (audit 57, F12) : la feuille de partage n'a pas pu s'ouvrir.
+  'share_error': 'Le partage n\'a pas pu s\'ouvrir. Réessaie.',
   'export_data_error':
       'Impossible d\'exporter tes données pour le moment. Réessaie.',
   'delete_account': 'Supprimer mon compte',

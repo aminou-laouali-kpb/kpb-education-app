@@ -21,6 +21,7 @@ import 'package:flutter/widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../utils/share_link.dart';
+import '../utils/share_origin.dart';
 import 'analytics_service.dart';
 
 class ShareCardService {
@@ -32,12 +33,18 @@ class ShareCardService {
   /// Returns true when the share sheet was handed a file, false when we fell
   /// back to a text-only share. Never throws — a failed share must not take a
   /// screen down.
+  ///
+  /// [originContext] : le bouton touché. Sur iPad, la feuille de partage s'y
+  /// ancre ; sans origine, elle refusait de s'ouvrir (audit 57, F12).
   Future<bool> shareBoundary({
     required GlobalKey boundaryKey,
     required String text,
     required ShareSource source,
+    BuildContext? originContext,
     double pixelRatio = 3,
   }) async {
+    // Calculée AVANT le rendu de l'image : le bouton peut avoir disparu après.
+    final origin = shareOriginFor(originContext);
     File? file;
     try {
       final boundary = boundaryKey.currentContext?.findRenderObject()
@@ -66,6 +73,7 @@ class ShareCardService {
           text: text,
           files:
               file == null ? null : [XFile(file.path, mimeType: 'image/png')],
+          sharePositionOrigin: origin,
         ),
       );
     } catch (_) {

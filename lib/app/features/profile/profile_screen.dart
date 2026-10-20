@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
@@ -17,6 +16,7 @@ import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/utils/country_utils.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/utils/study_level.dart';
+import '../../core/utils/share_origin.dart';
 import '../community/community_screen.dart';
 import '../community/hub/community_entry.dart';
 import '../community/hub/community_member_screen.dart';
@@ -176,7 +176,7 @@ class ProfileScreen extends StatelessWidget {
                       _LegalCard(),
                       const SizedBox(height: 12),
                       _DataRightsCard(
-                        onExport: () => _exportData(context, controller),
+                        onExport: (origin) => _exportData(origin, controller),
                         onDelete: () =>
                             _confirmDeleteAccount(context, controller),
                       ),
@@ -267,20 +267,26 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  /// [origin] : la ligne « Exporter mes données », où la feuille de partage
+  /// s'ancre sur iPad (audit 57, F12).
   Future<void> _exportData(
-      BuildContext context, AppController controller) async {
+      BuildContext origin, AppController controller) async {
+    final String text;
     try {
       final data = await controller.exportData();
       const encoder = JsonEncoder.withIndent('  ');
-      await SharePlus.instance.share(
-        ShareParams(
-          text: encoder.convert(data),
-          subject: 'export_data_subject'.tr,
-        ),
-      );
+      text = encoder.convert(data);
     } catch (_) {
       KpbToast.error('export_data_error'.tr);
+      return;
     }
+    if (!origin.mounted) return;
+    await kpbShare(
+      origin,
+      text: text,
+      subject: 'export_data_subject'.tr,
+      errorMessage: 'export_data_error'.tr,
+    );
   }
 
   void _confirmDeleteAccount(BuildContext context, AppController controller) {

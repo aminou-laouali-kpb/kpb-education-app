@@ -306,7 +306,7 @@ class _ScholarshipMatchResultsScreenState
     }
   }
 
-  Future<void> _share(MatchRun run) async {
+  Future<void> _share(MatchRun run, BuildContext origin) async {
     final names = run.items
         .where((i) => i.available)
         .map((i) => '• ${i.name}')
@@ -320,6 +320,7 @@ class _ScholarshipMatchResultsScreenState
       text: 'scholarship_match_share_text'
           .trParams({'list': names, 'link': link}),
       source: ShareSource.match,
+      originContext: origin,
     );
   }
 
@@ -605,13 +606,15 @@ class _ScholarshipMatchResultsScreenState
         ),
       if (shown > 0) ...[
         const SizedBox(height: KpbSpacing.sm),
-        OutlinedButton.icon(
-          key: const ValueKey<String>('match-share'),
-          style:
-              OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-          onPressed: () => unawaited(_share(run)),
-          icon: const Icon(Icons.ios_share_rounded),
-          label: Text('scholarship_match_share'.tr),
+        Builder(
+          builder: (button) => OutlinedButton.icon(
+            key: const ValueKey<String>('match-share'),
+            style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48)),
+            onPressed: () => unawaited(_share(run, button)),
+            icon: const Icon(Icons.ios_share_rounded),
+            label: Text('scholarship_match_share'.tr),
+          ),
         ),
       ],
       const SizedBox(height: KpbSpacing.sm),

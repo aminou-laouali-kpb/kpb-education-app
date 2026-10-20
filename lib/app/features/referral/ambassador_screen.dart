@@ -8,13 +8,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/whatsapp_utils.dart';
+import '../../core/utils/share_origin.dart';
 import '../../core/services/remote_feature_flags.dart';
 import 'ambassador_competition_screen.dart';
 import 'referral_screen.dart';
@@ -102,7 +102,7 @@ class _AmbassadorScreenState extends State<AmbassadorScreen> {
     setState(() => _tab = i);
   }
 
-  Future<void> _shareCode() async {
+  Future<void> _shareCode(BuildContext origin) async {
     final d = _dash;
     if (d == null) return;
     // @link → the smart store-redirect page, so the recipient has something
@@ -111,8 +111,7 @@ class _AmbassadorScreenState extends State<AmbassadorScreen> {
       'code': d.ambassador.code,
       'link': AppConfig.appDownloadUrl,
     });
-    await SharePlus.instance.share(ShareParams(text: msg));
-    _toast('amb_toast_share'.tr);
+    if (await kpbShare(origin, text: msg)) _toast('amb_toast_share'.tr);
   }
 
   Future<void> _withdraw() async {
@@ -288,8 +287,11 @@ class _AmbassadorApplication extends StatelessWidget {
 
 class _DashboardTab extends StatelessWidget {
   const _DashboardTab({required this.d, required this.onShare});
+
+  /// Reçoit le contexte du bouton touché : la feuille de partage s'y ancre
+  /// sur iPad (audit 57, F12).
   final AmbassadorDashboard d;
-  final VoidCallback onShare;
+  final ValueChanged<BuildContext> onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -370,24 +372,27 @@ class _DashboardTab extends StatelessWidget {
                         ],
                       ),
                     ),
-                    GestureDetector(
-                      onTap: onShare,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: KpbColors.whatsapp,
-                          borderRadius: BorderRadius.circular(100),
+                    Builder(
+                      builder: (button) => GestureDetector(
+                        onTap: () => onShare(button),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: KpbColors.whatsapp,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            const Icon(Icons.chat,
+                                size: 15, color: Colors.white),
+                            const SizedBox(width: 6),
+                            Text('amb_share'.tr,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800)),
+                          ]),
                         ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.chat, size: 15, color: Colors.white),
-                          const SizedBox(width: 6),
-                          Text('amb_share'.tr,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w800)),
-                        ]),
                       ),
                     ),
                   ],

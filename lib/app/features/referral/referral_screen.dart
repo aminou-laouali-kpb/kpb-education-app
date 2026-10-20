@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/config/app_config.dart';
@@ -15,6 +14,7 @@ import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/utils/external_link.dart';
+import '../../core/utils/share_origin.dart';
 import 'ambassador_competition_screen.dart';
 import 'referral_outcome_messages.dart';
 
@@ -185,13 +185,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
         'link': AppConfig.appDownloadUrl,
       });
 
-  Future<void> _inviteOnWhatsApp() async {
+  Future<void> _inviteOnWhatsApp(BuildContext origin) async {
     final text = _inviteMessage();
     final waUri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
     unawaited(AnalyticsService.instance.logReferralInviteShared());
     if (!await kpbOpenExternalUrl(waUri)) {
       // WhatsApp not installed → OS share sheet with the same message.
-      await SharePlus.instance.share(ShareParams(text: text));
+      if (origin.mounted) await kpbShare(origin, text: text);
     }
   }
 
@@ -288,10 +288,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       const SizedBox(height: KpbSpacing.md),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: _code.isEmpty ? null : _inviteOnWhatsApp,
-                          icon: const Icon(Icons.share_rounded, size: 18),
-                          label: Text('referral_invite_whatsapp'.tr),
+                        child: Builder(
+                          builder: (button) => FilledButton.icon(
+                            onPressed: _code.isEmpty
+                                ? null
+                                : () => _inviteOnWhatsApp(button),
+                            icon: const Icon(Icons.share_rounded, size: 18),
+                            label: Text('referral_invite_whatsapp'.tr),
+                          ),
                         ),
                       ),
                     ],

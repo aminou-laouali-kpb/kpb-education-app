@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/controllers/app_controller.dart';
@@ -26,6 +25,7 @@ import '../../core/ui/app_tokens.dart';
 import '../../core/utils/external_link.dart';
 import '../../core/utils/intake_label.dart';
 import '../../core/utils/program_intakes.dart';
+import '../../core/utils/share_origin.dart';
 import '../../core/ui/components/kpb_toast.dart';
 import '../../core/ui/components/us_visa_notice.dart';
 
@@ -1097,7 +1097,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
     });
   }
 
-  Future<void> _shareWhatsApp() async {
+  Future<void> _shareWhatsApp(BuildContext origin) async {
     final text = _shareText();
     final waUri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
     if (await kpbOpenExternalUrl(waUri)) {
@@ -1108,17 +1108,17 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
       ));
     } else {
       // WhatsApp unavailable → OS share sheet with the same message.
-      await SharePlus.instance.share(ShareParams(text: text));
+      final shared = origin.mounted && await kpbShare(origin, text: text);
       unawaited(AnalyticsService.instance.logShareCard(
         source: ShareSource.match.wireName,
         withImage: false,
-        success: true,
+        success: shared,
       ));
     }
     if (mounted) unawaited(Navigator.of(context).maybePop());
   }
 
-  Future<void> _download() async {
+  Future<void> _download(BuildContext origin) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
@@ -1129,6 +1129,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
         boundaryKey: _cardKey,
         text: _shareText(),
         source: ShareSource.match,
+        originContext: origin,
       );
       if (!withImage && mounted) {
         KpbToast.error('match_card_share_error'.tr);
@@ -1156,24 +1157,28 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
               children: [
                 Expanded(
                   flex: 14,
-                  child: _ActionButton(
-                    bg: KpbColors.whatsapp,
-                    fg: Colors.white,
-                    icon: Icons.chat_rounded,
-                    label: 'match_card_share_whatsapp'.tr,
-                    onTap: _busy ? null : _shareWhatsApp,
+                  child: Builder(
+                    builder: (button) => _ActionButton(
+                      bg: KpbColors.whatsapp,
+                      fg: Colors.white,
+                      icon: Icons.chat_rounded,
+                      label: 'match_card_share_whatsapp'.tr,
+                      onTap: _busy ? null : () => _shareWhatsApp(button),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   flex: 10,
-                  child: _ActionButton(
-                    bg: Colors.white,
-                    fg: KpbColors.brandNavy,
-                    icon: Icons.download_rounded,
-                    label: 'match_card_download'.tr,
-                    busy: _busy,
-                    onTap: _busy ? null : _download,
+                  child: Builder(
+                    builder: (button) => _ActionButton(
+                      bg: Colors.white,
+                      fg: KpbColors.brandNavy,
+                      icon: Icons.download_rounded,
+                      label: 'match_card_download'.tr,
+                      busy: _busy,
+                      onTap: _busy ? null : () => _download(button),
+                    ),
                   ),
                 ),
               ],
