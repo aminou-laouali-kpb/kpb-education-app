@@ -308,7 +308,10 @@ aucun SDK nouveau.
   et `confidentialite.html` — à relire par le propriétaire **avant l'archive** ; finalité
   « prévention de la fraude » à ajouter à la ligne Play « Identifiants d'appareil » (§4.1) ; pied
   de l'écran « Compétition » présent et testé ; `rulesUrl` à poser sur la campagne avant d'ouvrir
-  `features.referralLeaderboard` (data-inventory §6 et §6 bis).
+  `features.referralLeaderboard` (data-inventory §6 et §6 bis) : le règlement est publié à
+  `https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+  (`web/public/reglement-ambassadeurs-2026-11.html`), et le serveur refuse de lancer la campagne
+  sans `rulesUrl` en https ; le champ « Règlement (texte) » reste interne.
 
 ---
 
@@ -353,7 +356,7 @@ ouvert pour les seconds (`RemoteFeatureFlags`). « Prod. 16/10 » = mesure du 16
 | `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Hors de la 57 : bot « Passerelle » (C3 bis) ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après au moins 2 semaines de `shadow` et moins de 10 % de faux positifs (critères validés le 18/10/2026, `docs/runbook-bot-passerelle.md`) ; source coach fermée ; ne pas toucher |
 | `referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | fermé | absente | `false` | Parrainage : après la Data safety Play reportée (§4.1) et la politique à jour ; dernière des trois (`docs/runbook-campagne-ambassadeurs.md` §8) |
 | `referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | fermé | absente | `false` | Parrainage : avec ou juste après `referralLeaderboard`, avant le 1er novembre 2026 si la 57 est à 100 % |
-| `referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | fermé | absente | `false` | Parrainage : avant le 1er novembre 2026 (début de la compétition), `rulesUrl` posé sur la campagne ; À VALIDER (propriétaire) |
+| `referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | fermé | absente | `false` | Parrainage : avant le 1er novembre 2026 (début de la compétition), `rulesUrl` posé sur la campagne (`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`, publié) ; À VALIDER (propriétaire) |
 
 **Ordre d'ouverture après la 57** (chaque étape séparée de la précédente par au moins quelques
 jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :

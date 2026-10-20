@@ -1528,6 +1528,7 @@
       "countries": "Eligible countries (empty = all)",
       "rulesUrl": "Rules link (https)",
       "rulesText": "Rules (text)",
+      "rulesTextHint": "Internal use, not published — the “Read the rules” button uses the link (https) above, required to launch.",
       "errorSlug": "Lowercase letters, digits and dashes, at least 3 characters.",
       "errorRequired": "Required.",
       "errorDate": "Date as YYYY-MM-DD.",

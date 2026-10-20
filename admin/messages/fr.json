@@ -1528,6 +1528,7 @@
       "countries": "Pays éligibles (vide = tous)",
       "rulesUrl": "Lien du règlement (https)",
       "rulesText": "Règlement (texte)",
+      "rulesTextHint": "Usage interne, non publié — le bouton « Lire le règlement » utilise le lien (https) ci-dessus, obligatoire pour lancer.",
       "errorSlug": "Minuscules, chiffres et tirets, 3 caractères au moins.",
       "errorRequired": "Obligatoire.",
       "errorDate": "Date au format AAAA-MM-JJ.",

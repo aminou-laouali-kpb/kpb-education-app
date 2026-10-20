@@ -289,6 +289,13 @@ export interface CampaignFormInput {
   countriesText: string;
 }
 
+/**
+ * Le règlement publié de la compétition de novembre 2026 (audit 57, F20) :
+ * `web/public/reglement-ambassadeurs-2026-11.html`. Seul ce lien est servi au
+ * public (bouton « Lire le règlement ») ; le serveur refuse de lancer sans lui.
+ */
+export const NOVEMBER_2026_RULES_URL = 'https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html';
+
 /** Valeurs par défaut du formulaire : la compétition de novembre 2026. */
 export const NOVEMBER_2026_DEFAULTS: CampaignFormInput = {
   slug: 'ambassadeurs-novembre-2026',
@@ -299,7 +306,7 @@ export const NOVEMBER_2026_DEFAULTS: CampaignFormInput = {
   timeZone: 'Africa/Lagos',
   prizesText: '100000, 50000, 30000',
   rulesText: '',
-  rulesUrl: '',
+  rulesUrl: NOVEMBER_2026_RULES_URL,
   citiesText: 'Maradi, Niamey, Cotonou, Abidjan, Douala',
   countriesText: '',
 };

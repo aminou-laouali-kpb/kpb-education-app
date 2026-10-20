@@ -5,8 +5,10 @@ Compétition de **novembre 2026** : du 1er au 10/11 inclus, heure d'Afrique de l
 Abidjan, Douala (pilotables). Décisions du propriétaire du 17/10/2026, complétées le
 18/10/2026 (versement sous 7 jours, prix perdu après 15 jours et passé au suivant, résultats le
 17 novembre 2026, droit des Émirats arabes unis (Dubaï), proches de l'équipe exclus, pièce
-d'identité au versement, empreintes 180 jours). Règlement (texte arrêté le 18/10/2026, à relire
-par le propriétaire avant publication) : `docs/reglement-competition-ambassadeurs-novembre-2026.md`.
+d'identité au versement, empreintes 180 jours). Règlement (texte arrêté le 18/10/2026) :
+`docs/reglement-competition-ambassadeurs-novembre-2026.md`, **publié** à
+`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+(`web/public/reglement-ambassadeurs-2026-11.html`, servi par `deploy.yml`, `scope=web` ou `full`).
 
 **Tout fonctionne avec l'app installée (2.3.0, build 56), sans nouvelle build** : le comptage
 est serveur, la gestion est dans la console admin, le classement est une page web.
@@ -53,8 +55,16 @@ est serveur, la gestion est dans la console admin, le classement est une page we
 
 Console admin → **Compétition ambassadeurs** → **Nouvelle campagne**. Le formulaire est
 prérempli pour novembre : slug `ambassadeurs-novembre-2026`, 2026-11-01 → 2026-11-10,
-`Africa/Lagos`, prix « 100000, 50000, 30000 », villes. Ajouter le lien du règlement (https) ou
-son texte une fois validé. **Créer** → la campagne est un **brouillon** (invisible du public).
+`Africa/Lagos`, prix « 100000, 50000, 30000 », villes. **Lien du règlement (https)** = `rulesUrl`
+= `https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html` — **obligatoire** : c'est le
+seul règlement publié (bouton « Lire le règlement » de la page du classement et de l'écran
+« Compétition »), et le serveur **refuse de lancer** une campagne sans `rulesUrl` en https. Le
+champ « Règlement (texte) » est **interne** (non publié : ni la page publique ni l'app ne le
+lisent) ; le laisser vide ou y garder une note pour l'équipe. **Créer** → la campagne est un
+**brouillon** (invisible du public).
+
+Contrôle avant de lancer : `curl -sI https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+→ 200 (la page part avec le déploiement de `web/public`).
 
 Contrôle : l'en-tête affiche « UTC : 2026-10-31T23:00:00.000Z → 2026-11-10T23:00:00.000Z
 (exclu) ». La borne de fin est exclusive : le 10/11 à 23 h 59 locale compte, minuit non.
@@ -91,7 +101,8 @@ UTC+1).
 Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0 du store :
 
 1. Créer une campagne de **test** : slug `test-interne-oct-2026`, du **jour même** au jour même,
-   prix « 1, 1, 1 », aucune ville (toutes). Créer.
+   prix « 1, 1, 1 », aucune ville (toutes), même `rulesUrl` que ci-dessus (sans lien https, le
+   lancement est refusé). Créer.
 2. Activer un compte « ambassadeur » de test (son e-mail, ville Niamey) et l'inscrire. S'il est
    mineur ou sans date de naissance, mettre « Âge » = Majeur (c'est un test) ou vérifier
    l'autorisation.
