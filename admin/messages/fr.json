@@ -1684,6 +1684,8 @@
     "forfeit": "Déclarer le prix forfait et réattribuer",
     "forfeitConfirm": "Déclarer forfait",
     "forfeitHint": "{name} perd le prix n° {rank} (règlement : injoignable ou sans informations de versement 15 jours après la validation). Le prix passe au suivant classé qui n'a pas encore de prix ; les prix déjà versés ne bougent pas ; le classement public garde l'ordre réel. Action tracée, sans retour arrière dans l'outil.",
+    "orphanWinner": "Lauréat : compte supprimé",
+    "forfeitOrphanHint": "le lauréat a supprimé son compte, le prix non versé est orphelin. Le déclarer forfait le fait passer au suivant classé.",
     "forfeitReason": "Motif (obligatoire)",
     "forfeitReasonPlaceholder": "Ex. injoignable depuis le 18/11 (3 appels, 2 messages WhatsApp)",
     "forfeitsTitle": "Prix déclarés forfait",

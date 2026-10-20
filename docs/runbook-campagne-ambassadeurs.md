@@ -168,7 +168,11 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
    - ne change pas le classement public (ordre réel) ; une fois la campagne **close**, le podium
      de la page publique montre les lauréats **effectifs**.
    L'action est idempotente (un double clic ne déclare rien deux fois) et marche **avant comme
-   après** un premier versement : plus besoin d'attendre ni de traiter hors outil. Elle n'a pas
+   après** un premier versement : plus besoin d'attendre ni de traiter hors outil.
+   **Lauréat qui a supprimé son compte → prix orphelin → Déclarer forfait** : la ligne du prix
+   non versé affiche « Lauréat : compte supprimé » (nom public « Compte supprimé », plus de
+   participant) ; « Déclarer le prix forfait et réattribuer » l'envoie sans participant et le prix
+   passe au suivant classé, comme ci-dessus (audit 57). Elle n'a pas
    de retour arrière dans l'outil : vérifier le délai de 15 jours avant de la lancer. Le nouveau
    lauréat est contacté et versé comme les autres (pièce d'identité, 7 jours).
    Les résultats définitifs sont annoncés le **17 novembre 2026**.

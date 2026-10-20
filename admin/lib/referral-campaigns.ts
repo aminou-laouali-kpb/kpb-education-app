@@ -121,11 +121,32 @@ export interface PrizeForfeit {
 
 /**
  * « Déclarer le prix forfait et réattribuer » n'a de sens que pour un prix
- * attribué et NON versé : le serveur refuse le reste (409), l'écran ne le
- * propose pas.
+ * NON versé : le serveur refuse un prix versé (409), l'écran ne le propose pas.
+ * Un prix ORPHELIN (lauréat qui a supprimé son compte : `participantId` null,
+ * nom public « Compte supprimé ») se déclare forfait aussi, pour passer au
+ * suivant classé (audit 57).
  */
 export function canForfeit(award: Pick<PrizeAward, 'payoutStatus' | 'participantId'>): boolean {
-  return award.payoutStatus !== 'paid' && award.participantId !== null;
+  return award.payoutStatus !== 'paid';
+}
+
+/** Prix non versé dont le lauréat a supprimé son compte. */
+export function isOrphanPrize(award: Pick<PrizeAward, 'payoutStatus' | 'participantId'>): boolean {
+  return award.payoutStatus !== 'paid' && award.participantId === null;
+}
+
+/**
+ * Corps de `POST …/prizes/:rank/forfeit` : `participantId` (garde contre un
+ * lauréat changé entre-temps) seulement quand il existe ; omis pour un prix
+ * orphelin, que le DTO accepte sans lui.
+ */
+export function forfeitBody(
+  award: Pick<PrizeAward, 'participantId'>,
+  reason: string,
+): { participantId?: string; reason: string } {
+  return award.participantId === null
+    ? { reason: reason.trim() }
+    : { participantId: award.participantId, reason: reason.trim() };
 }
 
 /**
@@ -383,7 +404,7 @@ export const campaignsApi = {
     }),
   prizes: (id: string) =>
     apiFetch<{ items: PrizeAward[]; forfeits?: PrizeForfeit[] }>(`${BASE}/${id}/prizes`),
-  forfeit: (id: string, rank: number, body: { participantId: string; reason: string }) =>
+  forfeit: (id: string, rank: number, body: { participantId?: string; reason: string }) =>
     apiFetch<{ items: PrizeAward[]; forfeits: PrizeForfeit[] }>(`${BASE}/${id}/prizes/${rank}/forfeit`, {
       method: 'POST',
       body,

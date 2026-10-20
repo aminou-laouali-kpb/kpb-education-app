@@ -269,6 +269,19 @@ void main() {
         contains("@Post(':id/recompute')"),
       );
       expect(rollout, contains('`$_auditMigration`'));
+      // La commande du chantier serveur remplit l'emplacement réservé.
+      expect(rollout,
+          contains('`POST /api/admin/referral-campaigns/<id>/recompute`'));
+      expect(rollout, contains('**déployée avant le 1er novembre**'));
+      expect(doc.contains('À COMPLÉTER'), isFalse);
+      // Prix orphelin (lauréat qui a supprimé son compte) : runbook §7.
+      final runbook = _read('docs/runbook-campagne-ambassadeurs.md')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      expect(
+        runbook,
+        contains('**Lauréat qui a supprimé son compte → prix orphelin → '
+            'Déclarer forfait**'),
+      );
     });
 
     test('XC-06 et textes juridiques : l\'état tranché, pas « ouvert »', () {

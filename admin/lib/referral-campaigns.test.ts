@@ -9,6 +9,8 @@ import {
   buildCampaignPayload,
   canForfeit,
   editableFields,
+  forfeitBody,
+  isOrphanPrize,
   inviteUrl,
   NOVEMBER_2026_DEFAULTS,
   NOVEMBER_2026_RULES_URL,
@@ -196,9 +198,35 @@ describe('messages de la compétition', () => {
 });
 
 describe('canForfeit (correctifs 57)', () => {
-  it('seulement un prix attribué et non versé', () => {
+  it('seulement un prix non versé', () => {
     expect(canForfeit({ payoutStatus: 'pending', participantId: 'p1' })).toBe(true);
     expect(canForfeit({ payoutStatus: 'paid', participantId: 'p1' })).toBe(false);
-    expect(canForfeit({ payoutStatus: 'pending', participantId: null })).toBe(false);
+    expect(canForfeit({ payoutStatus: 'paid', participantId: null })).toBe(false);
+  });
+
+  it('un prix orphelin (lauréat qui a supprimé son compte) se déclare forfait (audit 57)', () => {
+    expect(canForfeit({ payoutStatus: 'pending', participantId: null })).toBe(true);
+    expect(isOrphanPrize({ payoutStatus: 'pending', participantId: null })).toBe(true);
+    expect(isOrphanPrize({ payoutStatus: 'pending', participantId: 'p1' })).toBe(false);
+    expect(isOrphanPrize({ payoutStatus: 'paid', participantId: null })).toBe(false);
+  });
+
+  it('la requête omet participantId pour un prix orphelin, le garde sinon', () => {
+    expect(forfeitBody({ participantId: null }, '  compte supprimé le 12/11  ')).toEqual({
+      reason: 'compte supprimé le 12/11',
+    });
+    expect('participantId' in forfeitBody({ participantId: null }, 'x')).toBe(false);
+    expect(forfeitBody({ participantId: 'p1' }, ' injoignable ')).toEqual({
+      participantId: 'p1',
+      reason: 'injoignable',
+    });
+  });
+
+  it('le libellé « Lauréat : compte supprimé » existe dans les deux langues', () => {
+    const parrainage = (messages: Messages) => messages.parrainage as Messages;
+    expect(parrainage(fr).orphanWinner).toBe('Lauréat : compte supprimé');
+    expect(parrainage(en).orphanWinner).toBe('Winner: account deleted');
+    expect(parrainage(fr).forfeitOrphanHint).toBeTruthy();
+    expect(parrainage(en).forfeitOrphanHint).toBeTruthy();
   });
 });

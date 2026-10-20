@@ -58,6 +58,19 @@ describe('modales des prix : l’erreur du serveur est dans la modale (F21)', ()
     expect(alert).toBeLessThan(html.indexOf('<textarea'));
   });
 
+  it('prix orphelin : la modale dit « Lauréat : compte supprimé »', () => {
+    const html = render(
+      <ForfeitFormBody
+        draft={{ award: { ...award, participantId: null, publicNameSnapshot: 'Compte supprimé' }, reason: '' }}
+        error={null}
+        onChange={noop}
+      />,
+    );
+    expect(html).toContain('Lauréat : compte supprimé');
+    const normal = render(<ForfeitFormBody draft={{ award, reason: '' }} error={null} onChange={noop} />);
+    expect(normal).not.toContain('Lauréat : compte supprimé');
+  });
+
   it('sans erreur, aucune alerte rouge', () => {
     const html = render(
       <PayoutFormBody draft={{ rank: 1, reference: '', date: '', recipient: 'parent' }} error={null} onChange={noop} />,

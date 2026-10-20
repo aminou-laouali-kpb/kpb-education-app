@@ -434,13 +434,14 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    confidentialité et la Data safety à jour (pack §4.3) et le `rulesUrl` posé sur la campagne
    (`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html` ; le lancement est refusé sans
    lui). À VALIDER (propriétaire) : l'ordre et les dates.
-10. **Recalcul de la compétition avant le 1er novembre** (après le déploiement de la PR de
-    correctifs de l'audit 57 et sa migration `20261028120000_profile_completion_without_consent`) :
-    console admin → **Compétition ambassadeurs** → la campagne → **Recalculer maintenant**
-    (`POST /admin/referral-campaigns/:id/recompute`, idempotent ; le calcul automatique tourne aussi
-    toutes les 5 minutes). Contrôle : un filleul de test au profil complet passe « qualifié »
-    (`docs/runbook-campagne-ambassadeurs.md` §5). ⟨À COMPLÉTER par le chantier serveur de la PR de
-    correctifs s'il prévoit une autre commande ; à défaut, celle-ci suffit.⟩
+10. **Recalcul de la compétition avant le 1er novembre** : la migration
+    `20261028120000_profile_completion_without_consent` (PR de correctifs de l'audit 57) est
+    **déployée avant le 1er novembre** (étape 1), puis console admin → **Compétition
+    ambassadeurs** → la campagne → **Recalculer maintenant**, c'est-à-dire
+    `POST /api/admin/referral-campaigns/<id>/recompute` (route `POST /admin/referral-campaigns/:id/recompute`,
+    idempotente ; le calcul automatique tourne aussi toutes les 5 minutes). Contrôle : un filleul
+    de test au profil complet passe « qualifié » (`docs/runbook-campagne-ambassadeurs.md` §1 et
+    §5).
 11. **`roll-omnes-fall-2027`** (reconduction des rentrées OMNES d'automne 2026 en 2027) : seulement
     quand la 57 est installée chez la **majorité** des comptes actifs (`GET /admin/app-builds`,
     « part des comptes actifs sur cette build ou une plus récente » au-dessus de 50 % pour la 57).

@@ -15,7 +15,9 @@ import {
   canForfeit,
   editableFields,
   formatFcfa,
+  forfeitBody,
   inviteUrl,
+  isOrphanPrize,
   isPrizeHolderChanged,
   type Leaderboard,
   type LeaderboardItem,
@@ -792,14 +794,15 @@ function PrizesTab({
 
   /** « Déclarer le prix forfait et réattribuer » (correctifs 57). */
   async function saveForfeit() {
-    if (!forfeit?.award.participantId) return;
+    if (!forfeit || !canForfeit(forfeit.award)) return;
     setBusy(true);
     setModalError(null);
     try {
-      const res = await campaignsApi.forfeit(campaign.id, forfeit.award.rank, {
-        participantId: forfeit.award.participantId,
-        reason: forfeit.reason.trim(),
-      });
+      const res = await campaignsApi.forfeit(
+        campaign.id,
+        forfeit.award.rank,
+        forfeitBody(forfeit.award, forfeit.reason),
+      );
       setAwards(res.items ?? []);
       setForfeits(res.forfeits ?? []);
       setForfeit(null);
@@ -848,7 +851,10 @@ function PrizesTab({
           {awards.map((a) => (
             <AdminTableRow key={a.id}>
               <CellText primary={a.rank} />
-              <CellText primary={a.publicNameSnapshot} />
+              <CellText
+                primary={a.publicNameSnapshot}
+                sub={isOrphanPrize(a) ? t('parrainage.orphanWinner') : undefined}
+              />
               <CellText primary={formatFcfa(a.amountFcfa, locale)} />
               <CellText primary={t(`parrainage.recipient.${a.recipient}`)} />
               <CellText
@@ -981,6 +987,11 @@ export function ForfeitFormBody({
   return (
     <div style={{ display: 'grid', gap: 10 }}>
       {error ? <Alert variant="danger">{error}</Alert> : null}
+      {isOrphanPrize(draft.award) ? (
+        <Alert variant="info">
+          <strong>{t('parrainage.orphanWinner')}</strong> — {t('parrainage.forfeitOrphanHint')}
+        </Alert>
+      ) : null}
       <Alert variant="warning">
         {t('parrainage.forfeitHint')
           .replace('{rank}', String(draft.award.rank))
