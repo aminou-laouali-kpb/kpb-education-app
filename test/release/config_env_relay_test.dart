@@ -371,4 +371,65 @@ void main() {
           '${missing.map((v) => '  - $v').join('\n')}',
     );
   });
+  // Audit 57, F03 : le test précédent ne voit que `process.env.X`. Les
+  // lectures INDIRECTES — `readEnvInt('KPB_…')`, `readEnvHour('KPB_…')`,
+  // `readHour(env, 'KPB_…')`, `requiredSecret(env, 'KPB_…')`,
+  // `{ name: 'KPB_…' }`, `limitEnv: 'KPB_…'` — lui échappaient :
+  // `KPB_PUSH_MAX_PER_DAY` était lue par le dispatcher, ni relayée ni
+  // documentée, et la poser sur le VPS n'avait aucun effet. Ici : toute chaîne
+  // littérale qui N'EST QU'un nom `KPB_…` dans le code du backend (hors
+  // commentaires et tests) doit être relayée.
+  test(
+      'chaque variable KPB_* nommée par le backend (lecture indirecte) entre '
+      'dans le conteneur', () {
+    final literal = RegExp(r'''['"](KPB_[A-Z0-9_]+)['"]''');
+    final blockComment = RegExp(r'/\*[\s\S]*?\*/');
+    final lineComment = RegExp(r'^\s*//.*$', multiLine: true);
+    final relayedAny = RegExp(r'^\s*-\s+([A-Z][A-Z0-9_]+)=', multiLine: true)
+        .allMatches(File('docker-compose.yml').readAsStringSync())
+        .map((m) => m.group(1)!)
+        .toSet();
+    // Nommées par le backend mais volontairement NON relayées :
+    // `KPB_ALLOW_PRODUCTION_SEED` lève, pour UN lancement posé à la main, le
+    // refus des seeds sur la production (`common/seed-safety.ts`) ; le relayer
+    // l'installerait à demeure dans le conteneur.
+    const intentionallyNotRelayed = {'KPB_ALLOW_PRODUCTION_SEED'};
+    final named = <String>{};
+    for (final file in Directory('backend/src')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.ts') && !f.path.endsWith('.spec.ts'))) {
+      final code = file
+          .readAsStringSync()
+          .replaceAll(blockComment, '')
+          .replaceAll(lineComment, '');
+      named.addAll(literal.allMatches(code).map((m) => m.group(1)!));
+    }
+    // Non-vacuité : les formes indirectes connues sont bien vues.
+    for (final variable in [
+      'KPB_PUSH_MAX_PER_DAY', // readEnvInt
+      'KPB_PUSH_QUIET_START', // readEnvHour / readHour
+      'KPB_PUSH_OUTBOX_BATCH', // { name: … }
+    ]) {
+      expect(named, contains(variable),
+          reason: 'Garde morte : $variable n\'est plus vue dans backend/src.');
+    }
+    final missing = named
+        .difference(relayedAny)
+        .difference(intentionallyNotRelayed)
+        .toList()
+      ..sort();
+    expect(
+      missing,
+      isEmpty,
+      reason: 'Nommées par backend/src (lecture indirecte) mais absentes du '
+          'bloc environment: de docker-compose.yml :\n'
+          '${missing.map((v) => '  - $v').join('\n')}',
+    );
+    // Et documentée, comme ses voisines.
+    expect(_read(_envExampleDecl, '.env.example'),
+        contains('KPB_PUSH_MAX_PER_DAY'),
+        reason:
+            'KPB_PUSH_MAX_PER_DAY n\'est pas documentée dans .env.example.');
+  });
 }

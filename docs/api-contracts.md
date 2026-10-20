@@ -1668,6 +1668,12 @@ ou plus envoyables ensemble partent en un push groupé. Pas d'annonce
 rétroactive : tout cycle ouvert ou activé avant la migration porte
 `openingPreExisting = true`.
 
+Rappels du fil (`NotificationDispatchService` : bourse du jour, récap, relances,
+dates limites, communauté, passerelle) : mêmes heures calmes, et au plus
+`KPB_PUSH_MAX_PER_DAY` push par élève sur 24 h glissantes (vide = 3, borné à
+[1, 50], relayé par `docker-compose.yml`) ; au-delà, le rappel reste dans le fil
+sans sonner.
+
 ### Erreurs
 
 Corps de `GlobalExceptionFilter` : `{statusCode, message, requestId, code?, details?, timestamp}`.

@@ -117,6 +117,10 @@ services:
       # dispatcher et par le worker d'annonce.
       - KPB_PUSH_QUIET_START=${KPB_PUSH_QUIET_START:-}
       - KPB_PUSH_QUIET_END=${KPB_PUSH_QUIET_END:-}
+      # Plafond de push des rappels par élève sur 24 h glissantes (dispatcher :
+      # bourse du jour, récap, relances, dates limites, communauté,
+      # passerelle). Vide = 3 ; borné à [1, 50].
+      - KPB_PUSH_MAX_PER_DAY=${KPB_PUSH_MAX_PER_DAY:-}
       # Compétition ambassadeurs (docs/runbook-campagne-ambassadeurs.md). Vide =
       # défaut : 30 rattachements par code et par heure, empreintes conservées
       # 180 jours, clé des empreintes = KPB_JWT_SECRET, auto-activation fermée.
