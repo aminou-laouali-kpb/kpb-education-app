@@ -185,6 +185,59 @@ void main() {
       );
       expect(block, contains('Apple is not a sponsor'));
       expect(block, contains('official rules'));
+      // Communauté et passerelle (décision du propriétaire du 20/10/2026,
+      // audit 57 F02) : dans le binaire, fermées, DÉCLARÉES dès la 57 — dans la
+      // même phrase « OFF at review time », après le parrainage.
+      expect(
+        block,
+        matches(RegExp(
+          r'OFF at review time: [^\n]*features\.referralLeaderboard[^\n]*'
+          r'features\.community, a student Q&A[^\n]*'
+          r'features\.assistBridge, a settings switch',
+        )),
+      );
+      final remote = block.substring(
+        block.indexOf('REMOTELY ACTIVATED FEATURES'),
+      );
+      for (final safeguard in [
+        'pre-publication filter',
+        'report',
+        'block',
+        'rules accepted before posting',
+        'staff moderation',
+        'no private messages',
+      ]) {
+        expect(
+          remote,
+          contains(safeguard),
+          reason: 'la communauté est déclarée sans « $safeguard »',
+        );
+      }
+      // La ligne UGC ne nie plus l'existence d'un espace public.
+      final ugc = RegExp(r'USER-GENERATED CONTENT\n([^\n]*)')
+          .firstMatch(block)!
+          .group(1)!;
+      expect(ugc, isNot(contains('No public feed')));
+      expect(ugc.toLowerCase(), isNot(contains('forum')));
+      expect(ugc, contains('None reachable at review time'));
+      expect(ugc, contains('declared in the age rating'));
+      // Ce que les notes affirment, le code le fait : aucune route de
+      // messages privés, signalement, blocage et charte côté serveur, le
+      // filtre « en attente de revue », le drapeau fermé par défaut.
+      final student = _read(
+        'backend/src/modules/community/community-student.controller.ts',
+      );
+      expect(student, contains("@Post('reports')"));
+      expect(student, contains("@Post('members/:memberId/block')"));
+      expect(student, contains("@Post('charter/accept')"));
+      expect(student.toLowerCase(), isNot(contains('message')));
+      expect(
+        _read('backend/src/modules/community/community-content-filter.ts'),
+        contains('en attente de revue'),
+      );
+      final features = _controllerFeatures();
+      expect(features['community'], contains('enabled('));
+      expect(features['assistBridge'], contains("=== 'on'"));
     });
 
     test('le texte ne promet rien, ne chiffre rien, sans pourcentage', () {

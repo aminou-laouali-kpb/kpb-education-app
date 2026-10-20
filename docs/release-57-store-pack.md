@@ -60,6 +60,7 @@
 | I (#360) | Liste des bourses lisible (statut, filtres, tri), **cache hors ligne** des bourses, fiche ; onboarding V2 ; code OTP collé et validé au 6e chiffre | Liste, hors ligne, OTP : oui. Onboarding V2 : **non** |
 | K (#361) | Accueil « **Ta prochaine étape** » : une action, sept blocs, chacun avec un interrupteur serveur ouvert par défaut, chacun replié quand son appel échoue | Oui |
 | Parrainage côté app (17/10/2026) | **Play Install Referrer** (Android, une fois par installation, code prérempli jamais validé sans l'élève) ; **identifiant d'installation** (UUID v4 aléatoire) en `X-KPB-Device-Id` sur `POST /referrals/redeem` seulement ; étape facultative « code de ton parrain » en fin d'onboarding ; écran « **Compétition ambassadeurs** » (phase, compte à rebours, rang, compteurs, code, classement public, règlement) ; messages clairs sur chaque erreur de code (écran Parrainage compris) | Messages d'erreur et identifiant : oui. Referrer, étape, compétition : **non** (trois drapeaux fermés, §5) |
+| Communauté C1 + C2 (#365), bots « Vérif » (#366) et « Passerelle » (#367) | Questions-réponses entre élèves, modérées : filtre avant publication (coordonnées, WhatsApp, demandes d'argent, mobile money, liens hors liste blanche, insultes → « en attente de revue »), signalement, blocage, charte en quatre règles acceptée avant la 1re publication, file de modération de l'équipe, sanctions ; aucun message privé. Bot « Vérif » : réponses préparées depuis les données vérifiées, validées par un admin (mode `auto` seulement après 50 réponses validées sans correction). « Passerelle » : suggestions privées de l'équipe, interrupteur dans les préférences des notifications | **Non** : `features.community` et `features.assistBridge` fermés ; **déclarées dès la 57** (§3, §4.4) |
 
 **Ce que la 57 change dans le binaire** (à re-prouver sur le SHA final, checklist étape 0) :
 `pubspec.yaml` gagne `firebase_messaging` et perd `onesignal_flutter` (#351), puis gagne
@@ -74,8 +75,8 @@ par l'AAR `installreferrer` 2.2 (lue le 17/10/2026), jamais affichée à l'utili
 n'a pas été régénéré par #351** : il cite encore `onesignal_flutter` et ne cite pas
 `firebase_messaging` ; le `pod install` de l'archive le réécrira (checklist étape 4).
 
-**Ce que la 57 ne contient PAS** : les écoles partenaires (chantiers E et J, non faits) ; le
-forum ; un envoi hebdomadaire « nouvelles bourses compatibles » (l'opt-in est enregistré, aucun
+**Ce que la 57 ne contient PAS** : les écoles partenaires (chantiers E et J, non faits) ; de
+messages privés entre élèves ; un envoi hebdomadaire « nouvelles bourses compatibles » (l'opt-in est enregistré, aucun
 envoi n'est codé) ; une permission **demandée à l'utilisateur** ; un hôte nouveau (l'écran de la
 compétition ouvre `kpbeducation.cloud/classement/`, domaine déjà servi, et le `rulesUrl` servi par
 le backend).
@@ -152,7 +153,7 @@ Le champ est limité à **4 000 caractères** (à vérifier à la saisie dans Ap
 texte ci-dessous **remplace** celui du pack 56 §3 : à coller **seul**, en anglais. Paragraphes
 continus (chaque retour à la ligne compte pour un caractère).
 
-<!-- notes-for-review: chars=3553 bytes=3556 reserve=160 -->
+<!-- notes-for-review: chars=3935 bytes=3938 reserve=160 -->
 
 ```
 SIGN-IN
@@ -168,7 +169,7 @@ AI FEATURES
 Six features call a third-party LLM (OpenRouter and Groq, United States): the assistant "KPB Intelligence", the orientation questionnaire and four writing tools. All six sit behind an explicit, timestamped in-app AI consent enforced server-side; a declared minor also needs a guardian's recorded consent. Answers are presented as indicative. The app never adds the student's name to a prompt. Prompts are not used for provider training.
 
 USER-GENERATED CONTENT
-No public feed, forum or user-to-user messaging. A student writes only to the KPB advisor of their own case. A parent can read a case only if the student shares it.
+None reachable at review time: a student writes only to the KPB advisor of their own case, which a parent reads only if the student shares it. The community below is declared in the age rating and privacy answers.
 
 AGE
 Accounts require 16+. Under 18, a guardian's name, contact and consent are required before the profile can be completed.
@@ -177,16 +178,17 @@ NEW IN THIS VERSION
 "Follow" on a scholarship saves it and sends a notification when it opens and before its deadline. Notification permission is never asked at launch: only after a short explanation, at the first "Follow". A "My follows" screen and an in-app notification list are added; viewed scholarships stay readable offline; Home shows one "next step" card. Push notifications now use Firebase Cloud Messaging; the OneSignal SDK is removed.
 
 REMOTELY ACTIVATED FEATURES (guideline 2.3.1)
-Switched from our server (api.kpbeducation.cloud/api/config/app). The "Études en France" space is open (flag eefSpace). OFF at review time: features.scholarshipMatch, a scholarship eligibility test (nationality, date of birth, diploma, grades, languages) that shows up to 10 scholarships, never a percentage; features.onboardingV2, a shorter sign-up flow; features.eefHelpBubble and features.eefPrivateSchools, WhatsApp help inside the space; features.referralOnboardingCode and features.referralLeaderboard, an optional referral-code step after sign-up and a referral contest screen for ambassadors registered by our team (organiser KPB Global L.L.C-FZ, official rules linked, Apple is not a sponsor, no prize amount shown in the app). None adds a permission, SDK or host on iOS. Test answers are not sent to schools, analytics or notifications. Also remote: a dismissible "update available" banner (recommendedVersion).
+Switched from our server (api.kpbeducation.cloud/api/config/app). The "Études en France" space is open (flag eefSpace). OFF at review time: features.scholarshipMatch, a scholarship eligibility test (nationality, date of birth, diploma, grades, languages) that shows up to 10 scholarships, never a percentage; features.onboardingV2, a shorter sign-up flow; features.eefHelpBubble and features.eefPrivateSchools, WhatsApp help inside the space; features.referralOnboardingCode and features.referralLeaderboard, an optional referral-code step after sign-up and a referral contest screen for ambassadors registered by our team (organiser KPB Global L.L.C-FZ, official rules linked, Apple is not a sponsor, no prize amount shown in the app); features.community, a student Q&A (posts and replies seen by signed-in students; pre-publication filter holding contact details, money requests and links for staff review; report; block; rules accepted before posting; staff moderation; no private messages); features.assistBridge, a settings switch for private KPB-team suggestions. None adds a permission, SDK or host on iOS. Test answers are not sent to schools, analytics or notifications. Also remote: a dismissible "update available" banner (recommendedVersion).
 
 NOT AFFILIATED WITH ANY GOVERNMENT. KPB Education is a private guidance service, not affiliated with Campus France or any French administration, and does not process applications. The demo account is a test account: its declarations are excluded from our advisors' call lists.
 ```
 
-**Décompte (script, 17/10/2026, parrainage ajouté).** Marqueurs `<ADDRESS>` et `<METHOD>` remplacés par la place
-qu'on leur réserve — **40** et **120** caractères — : **3 553 caractères** (3 556 octets en
-UTF-8), soit **447 caractères sous la limite**. Sans les marqueurs : 3 410 caractères. Le test
-`test/release/store_pack_57_test.dart` refait ce calcul à chaque exécution et exige au moins 50
-caractères de marge.
+**Décompte (script, 20/10/2026, communauté et passerelle déclarées — audit 57, F02).** Marqueurs
+`<ADDRESS>` et `<METHOD>` remplacés par la place qu'on leur réserve — **40** et **120** caractères
+— : **3 935 caractères** (3 938 octets en UTF-8), soit **65 caractères sous la limite**. Sans les
+marqueurs : 3 775 caractères. Le test `test/release/store_pack_57_test.dart` refait ce calcul à
+chaque exécution et exige au moins 50 caractères de marge : une adresse ou une méthode de compte de
+démonstration plus longue que sa réserve se paie ailleurs dans le texte.
 
 **À contrôler avant de coller**, sur le SHA final et le jour même :
 
@@ -195,10 +197,15 @@ caractères de marge.
    remplacer la phrase par « The "Études en France" space is OFF at review time (flag eefSpace) »
    et recompter. À VALIDER (propriétaire) : que l'espace reste ouvert pendant la revue.
 2. **« OFF at review time » pour `scholarshipMatch`, `onboardingV2`, `eefHelpBubble`,
-   `eefPrivateSchools`, `referralOnboardingCode`, `referralLeaderboard`** : les six valent `false`
-   (ou sont absentes) au moment de soumettre (checklist étape 8), ainsi que
-   `referralInstallReferrer` (Android seulement, non cité aux notes Apple). Le relecteur ne voit ni
-   le test, ni le nouvel onboarding, ni l'étape du code, ni l'écran de la compétition. Si la
+   `eefPrivateSchools`, `referralOnboardingCode`, `referralLeaderboard`, `community`,
+   `assistBridge`** : les huit valent `false` (ou sont absentes) au moment de soumettre (checklist
+   étape 8), ainsi que `referralInstallReferrer` (Android seulement, non cité aux notes Apple). Le
+   relecteur ne voit ni le test, ni le nouvel onboarding, ni l'étape du code, ni l'écran de la
+   compétition, ni la communauté (lien profond : écran « La communauté arrive bientôt », routes
+   `/community/*` en 404), ni l'interrupteur « Suggestions de l'équipe KPB ». La communauté et la
+   passerelle sont **déclarées dès la 57** (décision du propriétaire du 20/10/2026) : notes
+   ci-dessus, classification d'âge et formulaires de confidentialité (§4.4) — leur ouverture plus
+   tard ne demande donc pas de nouvelle soumission. Si la
    compétition doit être **ouverte** pendant la revue, la phrase change (« ON at review time » est
    interdit par le test : reformuler et recompter) et le `rulesUrl` de la campagne doit être posé —
    Apple 5.3.2 exige le règlement dans l'app et « Apple n'est pas sponsor ». À VALIDER
@@ -313,6 +320,30 @@ aucun SDK nouveau.
   (`web/public/reglement-ambassadeurs-2026-11.html`), et le serveur refuse de lancer la campagne
   sans `rulesUrl` en https ; le champ « Règlement (texte) » reste interne.
 
+### 4.4 Communauté et passerelle — déclarées dès la soumission de la 57 (décision du 20/10/2026)
+
+La communauté (C1 + C2, #365) et le bot « Passerelle » (#367) sont **dans le binaire de la 57**,
+derrière `features.community` et `features.assistBridge` (fermés), sans aucun verrou de
+compilation : ouvrir le drapeau suffit à les montrer. Décision du propriétaire du 20/10/2026 : les
+**déclarer à Apple et à Google dès la 57** (notes de revue §3, classification d'âge, formulaires de
+confidentialité), plutôt que de lier leur ouverture à une soumission future. Lignes à saisir (détail
+et preuves : `docs/CONSOLE_ANSWERS.md` §3 bis, `docs/STORE_READINESS.md` §5) :
+
+| Formulaire | Ligne | Réponse |
+|---|---|---|
+| Play — Sécurité des données | Activité dans l'app — **Autre contenu généré par l'utilisateur** : publications, réponses, signalements (motif) | Collecté ; **non partagé** ; **facultatif** (la communauté l'est) ; Fonctionnalité de l'app, et Prévention de la fraude, sécurité et conformité (filtre anti-arnaque, modération) ; supprimé avec le compte, inclus dans l'export |
+| Play — Sécurité des données | Activité dans l'app — **Autres actions** : charte acceptée, « utile », discussions suivies, membres bloqués | Collecté ; non partagé ; facultatif ; Fonctionnalité de l'app |
+| Apple — App Privacy | **User Content — Other User Content** | Collecté ; lié ; pas de suivi ; App Functionality |
+| Apple — classification d'âge | Capacités : **contenu généré par les utilisateurs** | **Oui** — public entre élèves connectés, modéré (filtre, signalement, blocage, charte, file de l'équipe) |
+| Apple — classification d'âge | Capacités : **messagerie et discussion** | **Non** : aucun message privé entre élèves ; À VALIDER (propriétaire) avec l'intitulé exact de la grille du jour |
+| Google Play — questionnaire IARC | **Interaction entre utilisateurs / partage de contenu** | **Oui** (publications et réponses publiques entre élèves, modérées) ; partage de la localisation : Non ; achats : Non |
+| Les deux | Passerelle (`assistBridge`) | Rien de plus : elle lit ce que l'élève vient de publier (déjà déclaré) et lui envoie une notification privée par le chemin existant (`docs/CONSOLE_ANSWERS.md` §3 ter) |
+
+Le relecteur ne voit ni l'une ni l'autre (OFF à la revue) ; leur ouverture, après l'approbation,
+n'appelle plus de nouvelle soumission ni de changement de formulaire. La politique in-app et
+`confidentialite.html` (section « Communauté d'entraide ») et les CGU (charte en quatre règles, « pas
+de messages privés ») les décrivent déjà.
+
 ---
 
 ## 5. Drapeaux `features.*` de `/config/app` — défaut, valeur au lancement, ordre d'ouverture
@@ -352,8 +383,8 @@ ouvert pour les seconds (`RemoteFeatureFlags`). « Prod. 16/10 » = mesure du 16
 | `homeCounselor` | `KPB_HOME_COUNSELOR_ENABLED` | ouvert | absente | ouvert (`true`) | Interrupteur d'urgence |
 | `onboardingV2` | `KPB_ONBOARDING_V2_ENABLED` | fermé | absente | `false` | **Étape 2** de l'ordre ci-dessous : quand la 57 est à 100 % sur les deux boutiques et stable |
 | `scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | fermé | absente | `false` | **Étape 4**, la dernière : nationalité tranchée (consentement explicite, 18/10/2026 ; case dans l'app), puis la porte des 90 % de couverture, la recette en préproduction et la relecture des textes |
-| `community` | `KPB_COMMUNITY_ENABLED` | fermé | absente | `false` | Hors de la 57 : la communauté (C1 + C2) s'ouvre avec la build qui l'affiche et les déclarations stores mises à jour (`docs/STORE_READINESS.md`, `docs/CONSOLE_ANSWERS.md` §3 bis) ; ne pas toucher |
-| `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Hors de la 57 : bot « Passerelle » (C3 bis) ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après au moins 2 semaines de `shadow` et moins de 10 % de faux positifs (critères validés le 18/10/2026, `docs/runbook-bot-passerelle.md`) ; source coach fermée ; ne pas toucher |
+| `community` | `KPB_COMMUNITY_ENABLED` | fermé | absente | `false` | Communauté (C1 + C2) : **dans la 57 et déclarée dès sa soumission** (décision du propriétaire du 20/10/2026 : notes de revue §3, classification d'âge et formulaires, §4.4, `docs/CONSOLE_ANSWERS.md` §3 bis, `docs/STORE_READINESS.md`) ; OFF à la revue (« OFF at review time ») ; son ouverture est une décision d'exploitation du propriétaire, après l'approbation, sans nouvelle soumission ; À VALIDER (propriétaire) : la date |
+| `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Bot « Passerelle » (C3 bis), déclaré aux notes de revue de la 57 ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après au moins 2 semaines de `shadow` et moins de 10 % de faux positifs (critères validés le 18/10/2026, `docs/runbook-bot-passerelle.md`) ; source coach fermée ; ne pas toucher avant l'ouverture de la communauté |
 | `referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | fermé | absente | `false` | Parrainage : après la Data safety Play reportée (§4.1) et la politique à jour ; dernière des trois (`docs/runbook-campagne-ambassadeurs.md` §8) |
 | `referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | fermé | absente | `false` | Parrainage : avec ou juste après `referralLeaderboard`, avant le 1er novembre 2026 si la 57 est à 100 % |
 | `referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | fermé | absente | `false` | Parrainage : avant le 1er novembre 2026 (début de la compétition), `rulesUrl` posé sur la campagne (`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`, publié) ; À VALIDER (propriétaire) |
@@ -560,6 +591,7 @@ de préavis.
 | **l** | Corrections juridiques (19/10/2026) | **Validées** : push promotionnel en opt-in ; base légale complétée (exécution du service, consentements listés, intérêt légitime pour l'analytique avec droit d'opposition et pour l'anti-fraude du parrainage, obligation légale pour la trace des prix versés) ; transferts sans « acceptation de la politique » ; signalements orphelins 12 mois (purge quotidienne) ; durées analytiques distinguées ; information des changements par notification (§6.5) ; mineurs absents du classement public sans autorisation vérifiée. Textes **à relire par le propriétaire** ; durée de rétention PostHog / Firebase Analytics **À VALIDER (propriétaire)** | `docs/data-inventory.md` §5 bis, §8 ; §6.5 |
 | **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique **rédigée le 18/10/2026** (à relire avant l'archive) et Data safety à reporter (identifiant d'installation) ; pied de l'écran « Compétition » retenu et testé ; ordre d'ouverture des trois drapeaux — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
 | **j** | Règlement de la compétition (18/10/2026) | **Tranché** : Wave sous 7 jours ; prix perdu après 15 jours et passé au suivant ; résultats le 17 novembre 2026 ; droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com ; proches de l'équipe exclus ; pièce d'identité au versement ; fiscalité à la charge du lauréat ; empreintes 180 jours. **Correctifs 57** : « Déclarer le prix forfait et réattribuer » (onglet Prix de l'admin) réattribue un prix non versé au suivant classé, même après un premier versement ; un prix versé ne bouge jamais (`docs/runbook-campagne-ambassadeurs.md` §7) | `docs/reglement-competition-ambassadeurs-novembre-2026.md` |
+| **m** | Communauté et passerelle dans la 57 (20/10/2026) | **Tranché** : déclarées à Apple et à Google **dès la soumission de la 57** (fonctions modérées, OFF au moment de la revue) : notes de revue, classification d'âge (contenu généré par les utilisateurs, interaction entre utilisateurs), Data safety / App Privacy (« Autre contenu généré par l'utilisateur ») ; ouverture ensuite sans nouvelle soumission | §3, §4.4, §5 ; `docs/CONSOLE_ANSWERS.md` §3 bis |
 | **k** | Conservations et bots (18/10/2026) | **Tranché** : empreintes 180 jours, événements « Passerelle » 12 mois, contenus supprimés de la communauté 30 jours ; textes et seuils « Passerelle » validés, `shadow` ≥ 2 semaines, < 10 % de faux positifs ; « Vérif » en `auto` après 50 réponses validées sans correction | `docs/data-inventory.md` §6, §7, §7 bis, §7 ter ; runbooks des bots |
 
 ---

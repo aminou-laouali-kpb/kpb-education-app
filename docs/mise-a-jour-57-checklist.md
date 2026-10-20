@@ -134,6 +134,8 @@ servir `RELEASE`.
    `KPB_SCHOLARSHIP_MATCH_ENABLED` et `KPB_ONBOARDING_V2_ENABLED` **absents ou `false`** ;
    `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` et
    `KPB_REFERRAL_LEADERBOARD_ENABLED` (parrainage) **absents ou `false`** ;
+   `KPB_COMMUNITY_ENABLED` **absent ou `false`** et `KPB_ASSIST_BRIDGE_MODE` **absent ou `shadow`**
+   (communauté et passerelle, déclarées « OFF at review time ») ;
    `KPB_SCHOLARSHIP_OPENING_MODE` **absent ou `legacy`** ; aucune clé `KPB_FOLLOW_*` /
    `KPB_HOME_*` à `false`.
 3. Actions → **Deploy backend (VPS)** (`deploy.yml`) → `ref` = `RELEASE`, `scope` = `full`. Le
@@ -157,8 +159,8 @@ curl -fsS https://api.kpbeducation.cloud/api/config/app \
   | jq '.features | {eef, eefTeaser, eefSpace, eefHelpBubble, eefPrivateSchools, scholarshipMatch, onboardingV2, followPushPrimer, homeNextStep}'
 #   attendu : false, true, true, false, false, false, false, true, true
 curl -fsS https://api.kpbeducation.cloud/api/config/app \
-  | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'
-#   attendu : false, false, false (parrainage, fermé à la soumission)
+  | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard, community, assistBridge}'
+#   attendu : false, false, false, false, false (parrainage, communauté et passerelle : fermés à la soumission)
 curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scholarships/match/state   # 404 (drapeau fermé, avant toute authentification)
 ```
 
@@ -166,7 +168,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scho
   continuer** (la 57 ne recevrait aucune notification). `push.oneSignal` doit rester `true` : c'est
   le repli des builds 53 et 56.
 - **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** (ou l'un des trois drapeaux du
-  parrainage) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
+  parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
   l'`api`, relancer la commande.
 - **Si `eefSpace` vaut `false`** : la phrase « The "Études en France" space is open » des notes de
   revue est fausse ; prendre la variante du pack §3, point 1, et recompter.
@@ -312,7 +314,8 @@ gh workflow run release-preflight.yml --ref main \
    jamais** ouvrir `scholarshipMatch` en production pour la recette.
 3. Avant de soumettre, revérifier l'étape 2 (drapeaux) : `scholarshipMatch` et `onboardingV2` à
    `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`, `referralInstallReferrer`,
-   `referralOnboardingCode` et `referralLeaderboard` à `false`.
+   `referralOnboardingCode` et `referralLeaderboard` à `false`, `community` et `assistBridge` à
+   `false` (déclarés « OFF at review time »).
 4. Un ✗ non résolu bloque la soumission.
 
 ## 7. Consoles
@@ -321,7 +324,8 @@ gh workflow run release-preflight.yml --ref main \
 |---|---|---|
 | Data Safety (Play), App Privacy (Apple) | **Pack 57 §4** | Lignes nouvelles : test « Mes 10 bourses » (Autres infos / Other Data), suivis et ouverture des notifications ; OneSignal reste « Partagé » tant que le repli tourne (`docs/CONSOLE_ANSWERS.md` §0sexies) |
 | Liste des SDK (si demandée) | Pack 57 §4.2 | OneSignal retiré, Firebase Messaging ajouté |
-| Questionnaire d'âge, *Government apps*, non-affiliation | `docs/CONSOLE_ANSWERS.md` §3 et §0quater ; pack 56 §4 | Inchangés |
+| Questionnaire d'âge (Apple, IARC), Data Safety / App Privacy de la communauté | **Pack 57 §4.4** ; `docs/CONSOLE_ANSWERS.md` §3 bis | **Changent dès la 57** (décision du propriétaire du 20/10/2026) : communauté déclarée — contenu généré par les utilisateurs et interaction entre utilisateurs **Oui** (modérés), « Autre contenu généré par l'utilisateur » ; messagerie privée Non |
+| *Government apps*, non-affiliation | `docs/CONSOLE_ANSWERS.md` §0quater ; pack 56 §4 | Inchangés |
 | XC-06, D5 | `docs/CONSOLE_ANSWERS.md` §0quater | D5 tranché le 18/10/2026. XC-06 **ouvert** : depuis les correctifs 57 (19/10/2026), l'e-mail promotionnel des campagnes admin est réservé aux consentants ; le push promotionnel reste en opt-out — À VALIDER (propriétaire) |
 
 ## 8. Soumettre 🔒
@@ -335,7 +339,8 @@ gh workflow run release-preflight.yml --ref main \
   10 %**. L'AAB importé est celui du run de `RELEASE`.
 - Avant d'appuyer : la commande de l'étape 2 (`/config/app`) → `scholarshipMatch=false`,
   `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, les trois drapeaux du
-  parrainage à `false`, `eefSpace` conforme au texte des notes de revue.
+  parrainage à `false`, `community=false`, `assistBridge=false`, `eefSpace` conforme au texte des
+  notes de revue.
 - **Le jour de l'envoi**, reporter dans `docs/release-ledger.md` le SHA de `RELEASE` et « téléversée
   le … » sur la ligne `57` — après l'étape 5, jamais pendant.
 

@@ -149,7 +149,7 @@ preuves : `docs/release-57-store-pack.md` §4 et `docs/data-inventory.md` §6 bi
 | Play — **Play Install Referrer** (SDK Android `play_install_referrer` 0.5.0 → Google `installreferrer` 2.2) | **Non collecté** : URL de référence, horodatages et version d'installation sont lus et traités **sur l'appareil** ; seul `ref` est gardé localement pour préremplir un champ ; le code ne part qu'au rattachement **confirmé** par l'élève (le rattachement par code est déjà couvert par « Autres actions », KPB-69) | `referral_attribution.dart` (`captureInstallReferrerOnce`, aucun appel réseau) |
 | Apple — **Identifiers / Device ID** | Inchangé (déjà déclaré, lié, non utilisé pour le suivi) ; finalité **App Functionality** couvre la prévention de la fraude. Aucun SDK nouveau sur iOS | `ios/Runner/PrivacyInfo.xcprivacy` (`NSPrivacyCollectedDataTypeDeviceID`) |
 | Apple — **Tracking** | **Non**, inchangé : l'Install Referrer est Android seulement, sert à préremplir un code de parrain, ne joint rien à des données tierces | — |
-| Classification d'âge | Inchangée : l'écran « Compétition ambassadeurs » n'ajoute ni interaction entre utilisateurs ni contenu généré ; un concours avec prix (Apple 5.3) se signale aux notes de revue (pack 57 §3) | — |
+| Classification d'âge | L'écran « Compétition ambassadeurs » n'y change rien (ni interaction entre utilisateurs ni contenu généré ; un concours avec prix, Apple 5.3, se signale aux notes de revue, pack 57 §3). **La communauté, elle, la change dès la 57** : voir §3 bis (décision du propriétaire du 20/10/2026) | — |
 
 **Politique (18/10/2026)** : la politique in-app (FR/EN) et `web/public/confidentialite.html`
 nomment désormais l'identifiant d'installation (finalité prévention de la fraude), la lecture du
@@ -275,9 +275,9 @@ compilé) — sans quoi « declaration inconsistent with privacy policy ».
 |---|---|---|
 | Âge contractuel minimum | **16** | CGU `conditions.html:29` ; in-app `app_translations.dart:704` |
 | Accès web illimité | **Non** | lecteur YouTube non navigable (`IgnorePointer`, `controls:0`) ; liens sortants en `externalApplication` |
-| Interaction entre utilisateurs | **Non** (vérifié sur la 53) | Community derrière `!mvpOnly` défaut true ; forum 404 sous `MvpGuard` |
-| Contenu généré par l'utilisateur | **Oui — visible staff, jamais public** | 3 écritures, aucune publique |
-| Signalement de contenu / blocage | **Signalement IA : Oui. Blocage : N/A** | `ai_content_report_sheet.dart` → `POST /cases` |
+| Interaction entre utilisateurs | **Oui dès la 57** (communauté, §3 bis). Jusqu'à la 56 : Non (vérifié sur la 53) | 53 à 56 : Community derrière `!mvpOnly` défaut true ; forum 404 sous `MvpGuard`. 57 : §3 bis |
+| Contenu généré par l'utilisateur | **Oui — public et modéré dès la 57** (§3 bis) ; s'y ajoutent 3 écritures visibles du staff seulement | §3 bis ; 3 écritures, aucune publique |
+| Signalement de contenu / blocage | **Oui / Oui dès la 57** (§3 bis) ; signalement IA : Oui | `ai_content_report_sheet.dart` → `POST /cases` ; §3 bis |
 | IA générative, texte libre | **Oui — 6 surfaces** | coach, test d'orientation, CV, lettre de motivation, simulateur d'entretien, relecture de document → OpenRouter |
 | Localisation | **Non** | aucun plugin géo |
 | Jeux d'argent | **Non** | absence exhaustive |
@@ -286,16 +286,21 @@ compilé) — sans quoi « declaration inconsistent with privacy policy ».
 
 > **Recommandé :** saisir ces réponses et laisser chaque questionnaire calculer la
 > tranche. **Ne pas** reporter l'ancien couple « Apple 12+ / Google Teen » (dérivé
-> d'un module communautaire qui ne ship pas et sans les 6 surfaces d'IA).
+> d'un ancien module communautaire et sans les 6 surfaces d'IA) : avec la 57, ce sont
+> les lignes du §3 bis qui décrivent la communauté.
 
-### 3 bis. Communauté (C1 + C2) — ⚠️ À APPLIQUER LE JOUR OÙ LE DRAPEAU S'OUVRE
+### 3 bis. Communauté (C1 + C2) — DÉCLARÉE DÈS LA SOUMISSION DE LA 57 (décision du propriétaire du 20/10/2026)
 
-Tant que `KPB_COMMUNITY_ENABLED` vaut `false` (défaut, `docker-compose.yml`), le tableau
-ci-dessus reste juste : les routes élève `/community/*` répondent 404 et l'app n'affiche pas la
-communauté. **Le jour de la bascule** (et pas avant), dans la même soumission que la build qui
-l'affiche, remplacer ces lignes :
+La communauté est **dans le binaire de la 57**, derrière le drapeau distant `features.community`
+(`KPB_COMMUNITY_ENABLED`, `false` par défaut, `docker-compose.yml`) **sans verrou de compilation** :
+c'est donc la 57 « qui l'affiche » — ouvrir le drapeau suffit, sans nouvelle build. Tant qu'il est
+fermé, les routes élève `/community/*` répondent 404 et l'app montre « La communauté arrive
+bientôt » : le relecteur ne la voit pas (« OFF at review time », pack 57 §3). Décision du
+propriétaire du 20/10/2026 : **la déclarer à Apple et à Google dès la soumission de la 57**
+(notes de revue, classification d'âge, formulaires de confidentialité) — **avec la 57, pas « le
+jour de la bascule »**. Saisir ces lignes à la place des lignes correspondantes du §3 :
 
-| Item | Réponse à la bascule | Preuve (serveur, `docs/community-api-contract.md`) |
+| Item | Réponse (dès la 57) | Preuve (serveur, `docs/community-api-contract.md`) |
 |---|---|---|
 | Interaction entre utilisateurs | **Oui** — publications et réponses publiques entre élèves, **sans message privé** ni mention d'utilisateur | `community-student.controller.ts` ; aucun DM (§1 du contrat) |
 | Contenu généré par l'utilisateur | **Oui — public, modéré** : filtre avant publication (coordonnées, WhatsApp, demandes d'argent, mobile money, liens hors liste blanche, insultes FR/EN) → « en attente de revue » ; file de modération de l'équipe (délai cible 24 h) | `community-content-filter.ts`, `GET /admin/community/queue` |
@@ -306,14 +311,23 @@ l'affiche, remplacer ces lignes :
 | Apple « User Generated Content » (Guideline 1.2) | filtre + signalement + blocage + contact + modération : **tous présents côté serveur** ; contact = équipe KPB (WhatsApp / e-mail existants) | — |
 | Play « Contenu généré par les utilisateurs » / IARC « les utilisateurs peuvent interagir » | **Oui**, modéré | idem |
 
-Sécurité des données (Play) / étiquettes (Apple) à la bascule : ajouter **Autre contenu généré par
-l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au compte,
-finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'export (§4). CGU et
-politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) : sections
-« Communauté d'entraide » **rédigées le 18/10/2026**, à relire par le propriétaire **avant**
-d'ouvrir. *À VALIDER (propriétaire) : délai de modération annoncé, adresse de contact affichée.*
+Sécurité des données (Play) / étiquettes (Apple) **dès la 57** : ajouter **Autre contenu généré
+par l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au
+compte, facultatif, finalités Fonctionnalité de l'app et Prévention de la fraude, sécurité et
+conformité (filtre anti-arnaque, modération) ; supprimé avec le compte, inclus dans l'export (§4) ;
+« Autres actions » : charte acceptée, « utile », discussions suivies, membres bloqués. Apple :
+*User Content → Other User Content* (lié, pas de suivi, App Functionality). Questionnaire d'âge
+Apple (capacités) : contenu généré par les utilisateurs **Oui** ; messagerie et discussion **Non**
+(aucun message privé) — À VALIDER (propriétaire) avec l'intitulé exact de la grille du jour.
+Lignes prêtes : `docs/release-57-store-pack.md` §4.4. CGU et politique
+(`web/public/conditions.html`, `confidentialite.html`, textes in-app) : sections « Communauté
+d'entraide » **validées par le propriétaire le 19/10/2026**. *À VALIDER (propriétaire) : délai de
+modération annoncé, adresse de contact affichée.*
 
 ### 3 ter. Bot « Passerelle » (C3 bis) — rien à changer tant que la source coach reste fermée
+
+Déclaré aux notes de revue de la 57 (`features.assistBridge`, OFF à la revue : « a settings switch
+for private KPB-team suggestions »), comme la communauté (§3 bis).
 
 La passerelle (`docs/runbook-bot-passerelle.md`) ne collecte **aucune donnée nouvelle** : elle lit
 les publications et réponses que l'élève vient d'écrire (déjà déclarées au §3 bis) et lui envoie
