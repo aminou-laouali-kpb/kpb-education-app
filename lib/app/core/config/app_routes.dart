@@ -8,6 +8,7 @@ import '../../features/community/hub/community_hub_screen.dart';
 import '../../features/community/hub/community_post_screen.dart';
 import '../../features/deadlines/deadline_calendar_screen.dart';
 import '../../features/eligibility/eligibility_simulator_screen.dart';
+import '../../features/legal/legal_pages.dart';
 import '../../features/etudes_en_france/eef_catalog_screen.dart';
 import '../../features/etudes_en_france/eef_entry.dart';
 import '../../features/orientation/orientation_screen.dart';
@@ -120,6 +121,11 @@ class AppRoutes {
   static const String services = '/services';
   static const String profile = '/profile';
 
+  /// La politique de confidentialité, joignable par une notification (audit
+  /// 57, F11) : la campagne « Notre politique évolue » doit ouvrir le texte,
+  /// pas l'accueil. Nom figé, partagé avec la console et la documentation.
+  static const String legalPrivacy = '/legal/privacy';
+
   /// Intentionally not under `/cases/...` so it never collides with `/cases/:id` (e.g. id "create").
   static const String caseCreate = '/new-case';
   static const String caseDetail = '/cases/:id';
@@ -199,6 +205,8 @@ class AppRoutes {
       salon,
       services,
       profile,
+      // Campagne « Notre politique évolue » (F11) : le tap ouvre la politique.
+      legalPrivacy,
       // Scholarship-opening push notifications land on this acquisition screen.
       scholarships,
       scholarshipMatch,
@@ -358,6 +366,7 @@ class AppRoutes {
     GetPage(name: salon, page: () => const SalonScreen()),
     GetPage(name: services, page: () => const ServicePackagesScreen()),
     GetPage(name: profile, page: () => const ProfileScreen()),
+    GetPage(name: legalPrivacy, page: () => const PrivacyPolicyScreen()),
     GetPage(
       name: caseCreate,
       page: () => const CaseCreateScreen(),
