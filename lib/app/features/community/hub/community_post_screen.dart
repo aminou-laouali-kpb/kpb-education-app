@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../core/models/community.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/community_store.dart';
+import '../../../core/services/remote_feature_flags.dart';
 import '../../../core/ui/app_tokens.dart';
 import '../../../core/ui/components/kpb_async_view.dart';
 import '../../../core/ui/components/kpb_toast.dart';
@@ -64,6 +65,18 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
   bool _deleted = false;
   bool _logged = false;
 
+  /// `_load` a été lancé au moins une fois.
+  bool _started = false;
+
+  /// Démarrage à froid sur une notification (F10) : les drapeaux distants ne
+  /// sont pas encore arrivés. On attend [_flagsWait] avant de conclure que la
+  /// communauté est fermée ; s'ils arrivent plus tard, l'écran se recharge
+  /// quand même.
+  static const Duration _flagsWait =
+      Duration(seconds: 8); // kpb-allow-duration: attente réseau des drapeaux
+  Timer? _flagsGrace;
+  bool _flagsWaitOver = false;
+
   final CommunityMentionController _reply = CommunityMentionController();
   final FocusNode _replyFocus = FocusNode();
   bool _sendingReply = false;
@@ -77,20 +90,44 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
     _post = widget.initialPost;
     _reply.addListener(() => setState(() {}));
     _store.addListener(_onStore);
-    if (_store.enabled) unawaited(_load());
+    RemoteFeatureFlags.instance.flagsVersion.addListener(_onStore);
+    if (_store.enabled) {
+      _started = true;
+      unawaited(_load());
+    } else if (!RemoteFeatureFlags.instance.featuresServed) {
+      _flagsGrace = Timer(_flagsWait, () {
+        if (mounted) setState(() => _flagsWaitOver = true);
+      });
+    }
   }
 
   @override
   void dispose() {
+    _flagsGrace?.cancel();
+    RemoteFeatureFlags.instance.flagsVersion.removeListener(_onStore);
     _store.removeListener(_onStore);
     _reply.dispose();
     _replyFocus.dispose();
     super.dispose();
   }
 
+  /// Le magasin ou les drapeaux distants ont changé. Si la communauté vient
+  /// de s'ouvrir (drapeaux arrivés après le montage), la discussion se charge.
   void _onStore() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    if (_started || !_store.enabled) return;
+    _started = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_load());
+    });
   }
+
+  /// Drapeaux pas encore servis, serveur muet, attente pas encore écoulée.
+  bool get _awaitingFlags =>
+      !RemoteFeatureFlags.instance.featuresServed &&
+      !_store.serverDisabled &&
+      !_flagsWaitOver;
 
   Future<void> _load() async {
     setState(() {
@@ -618,8 +655,13 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Lien profond ou notification avec le drapeau fermé : message honnête.
-    if (!_store.enabled) return const CommunityUnavailableScreen();
+    // Lien profond ou notification avec le drapeau fermé : message honnête —
+    // mais seulement une fois les drapeaux connus. Au démarrage à froid, ils
+    // n'ont pas encore répondu : squelette, pas « arrive bientôt » (F10).
+    if (!_store.enabled) {
+      if (_awaitingFlags) return _buildAwaitingFlags();
+      return const CommunityUnavailableScreen();
+    }
     final post = _post;
     return PopScope(
       canPop: false,
@@ -672,6 +714,26 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
               if (post != null && post.isDetail) _buildReplyBar(post),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAwaitingFlags() {
+    return Scaffold(
+      key: const ValueKey<String>('comm-post-awaiting-flags'),
+      backgroundColor: KpbColors.canvas,
+      appBar: AppBar(
+        backgroundColor: KpbColors.canvas,
+        surfaceTintColor: Colors.transparent,
+        title: Text('comm_discussion'.tr, style: KpbTextStyles.titleLg),
+      ),
+      body: Semantics(
+        label: 'async_loading'.tr,
+        liveRegion: true,
+        child: const SingleChildScrollView(
+          padding: EdgeInsets.all(KpbSpacing.md),
+          child: CommunityFeedSkeleton(count: 2),
         ),
       ),
     );
@@ -730,59 +792,80 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
               onHashtag: _openHashtag,
               onHelpful: _togglePostHelpful,
             ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                KpbSpacing.md, KpbSpacing.md, KpbSpacing.md, KpbSpacing.sm),
-            child: Semantics(
-              header: true,
-              child: Text(
-                communityReplyCountLabel(post.replyCount),
-                style: KpbTextStyles.titleMd,
-              ),
-            ),
-          ),
-          if (replies.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: KpbSpacing.md),
-              child: Text(
-                post.viewer.isAuthor
-                    ? 'comm_no_replies_author'.tr
-                    : 'comm_no_replies'.tr,
-                style: KpbTextStyles.bodySm,
-              ),
-            ),
-          for (final reply in replies)
+          // Ouverte depuis le fil (résumé), sans réseau ni cache (F13) : les
+          // réponses n'ont pas été chargées. Ni « N réponses » ni « Pas encore
+          // de réponse » — l'erreur, et « Réessayer ».
+          if (!post.isDetail && _failure != null)
+            _repliesFailure(_failure!)
+          else ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                  KpbSpacing.md, 0, KpbSpacing.md, KpbSpacing.sm + 2),
-              child: _ReplyTile(
-                key: ValueKey<String>('comm-reply-${reply.id}'),
-                reply: reply,
-                onMember: _openMember,
-                onMention: openCommunityEntity,
-                onHashtag: _openHashtag,
-                onHelpful: () => _toggleReplyHelpful(reply),
-                onMenu: () => _showReplyMenu(reply),
+                  KpbSpacing.md, KpbSpacing.md, KpbSpacing.md, KpbSpacing.sm),
+              child: Semantics(
+                header: true,
+                child: Text(
+                  communityReplyCountLabel(post.replyCount),
+                  style: KpbTextStyles.titleMd,
+                ),
               ),
             ),
-          if (_repliesCursor != null)
-            Center(
-              child: _loadingMore
-                  ? const Padding(
-                      padding: EdgeInsets.all(KpbSpacing.sm),
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+            if (replies.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: KpbSpacing.md),
+                child: Text(
+                  post.viewer.isAuthor
+                      ? 'comm_no_replies_author'.tr
+                      : 'comm_no_replies'.tr,
+                  style: KpbTextStyles.bodySm,
+                ),
+              ),
+            for (final reply in replies)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    KpbSpacing.md, 0, KpbSpacing.md, KpbSpacing.sm + 2),
+                child: _ReplyTile(
+                  key: ValueKey<String>('comm-reply-${reply.id}'),
+                  reply: reply,
+                  onMember: _openMember,
+                  onMention: openCommunityEntity,
+                  onHashtag: _openHashtag,
+                  onHelpful: () => _toggleReplyHelpful(reply),
+                  onMenu: () => _showReplyMenu(reply),
+                ),
+              ),
+            if (_repliesCursor != null)
+              Center(
+                child: _loadingMore
+                    ? const Padding(
+                        padding: EdgeInsets.all(KpbSpacing.sm),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: _loadMoreReplies,
+                        child: Text('comm_load_more_replies'.tr),
                       ),
-                    )
-                  : TextButton(
-                      onPressed: _loadMoreReplies,
-                      child: Text('comm_load_more_replies'.tr),
-                    ),
-            ),
+              ),
+          ],
         ],
       ),
+    );
+  }
+
+  /// Les réponses n'ont pas pu être chargées (F13).
+  Widget _repliesFailure(CommunityException failure) {
+    final notFound = failure.failure == CommunityFailure.notFound;
+    return KpbAsyncView(
+      key: const ValueKey<String>('comm-replies-error'),
+      phase: KpbAsyncPhase.error,
+      errorTitle:
+          notFound ? 'comm_err_not_found'.tr : 'comm_load_failed_title'.tr,
+      errorMessage: notFound ? null : communityFailureMessage(failure),
+      onRetry: notFound || _loading ? null : _load,
+      builder: (_) => const SizedBox.shrink(),
     );
   }
 
