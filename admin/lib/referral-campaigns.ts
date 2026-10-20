@@ -128,6 +128,23 @@ export function canForfeit(award: Pick<PrizeAward, 'payoutStatus' | 'participant
   return award.payoutStatus !== 'paid' && award.participantId !== null;
 }
 
+/**
+ * Le 409 `prize_holder_changed` : le lauréat du rang a changé entre la lecture
+ * et l'action (forfait déclaré par un autre admin, recalcul). La liste affichée
+ * est périmée : la recharger (audit 57, F21).
+ */
+export function isPrizeHolderChanged(e: unknown): boolean {
+  const err = e as { status?: number; body?: string } | null;
+  if (!err || err.status !== 409 || typeof err.body !== 'string') return false;
+  try {
+    const parsed = JSON.parse(err.body) as { code?: unknown; message?: unknown };
+    const nested = parsed.message as { code?: unknown } | undefined;
+    return parsed.code === 'prize_holder_changed' || nested?.code === 'prize_holder_changed';
+  } catch {
+    return false;
+  }
+}
+
 export interface AmbassadorRow {
   id: string;
   code: string;
