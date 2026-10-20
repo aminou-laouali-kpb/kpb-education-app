@@ -15,6 +15,8 @@ import { createHash } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 
 const ONESIGNAL_API_URL = 'https://onesignal.com/api/v1/notifications';
+/** API « utilisateurs » de OneSignal (suppression par alias `external_id`). */
+const ONESIGNAL_USERS_API = 'https://api.onesignal.com/apps';
 
 /** Un journal n'est pas une décharge : on garde de quoi diagnostiquer. */
 const MAX_LOGGED_BODY = 500;
@@ -142,6 +144,39 @@ export class OneSignalSenderService {
     );
   }
 
+  /**
+   * Efface l'utilisateur OneSignal d'un compte supprimé : l'alias
+   * `external_id` (= `UserProfile.id`, posé par `OneSignal.login` dans les
+   * builds ≤ 56), ses 4 étiquettes et ses abonnements (audit 57, F09).
+   * `DELETE /apps/{app_id}/users/by/external_id/{id}` — 404 = déjà absent.
+   *
+   * Au mieux : ne lève jamais, ne journalise jamais l'identifiant ; l'appelant
+   * décide quoi dire d'un échec.
+   */
+  async deleteUser(externalId: string): Promise<OneSignalDeleteOutcome> {
+    if (!this.isConfigured) return 'unconfigured';
+    if (!externalId) return 'absent';
+    const key = this.restApiKey!;
+    try {
+      const response = await fetch(
+        `${ONESIGNAL_USERS_API}/${encodeURIComponent(this.appId!)}/users/by/external_id/${encodeURIComponent(externalId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            // Clés « v2 » (os_v2_…) : schéma `Key` ; anciennes clés REST : `Basic`.
+            authorization: key.startsWith('os_v2_') ? `Key ${key}` : `Basic ${key}`,
+          },
+          signal: AbortSignal.timeout(10_000),
+        },
+      );
+      if (response.ok) return 'deleted';
+      if (response.status === 404) return 'absent';
+      return 'failed';
+    } catch {
+      return 'failed';
+    }
+  }
+
   /** Un appel, aucune journalisation : les deux méthodes publiques en décident. */
   private async attempt(
     userId: string,
@@ -233,6 +268,9 @@ export type OneSignalFailureReason =
   | 'not_subscribed'
   | 'zero_recipients'
   | 'provider_errors';
+
+/** Effacement d'un utilisateur OneSignal (`deleteUser`). */
+export type OneSignalDeleteOutcome = 'deleted' | 'absent' | 'unconfigured' | 'failed';
 
 export interface OneSignalDetailedResult {
   status: OneSignalSendStatus;

@@ -1,3 +1,6 @@
+import { Logger } from '@nestjs/common';
+
+import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ProfilesService } from './profiles.service';
@@ -254,6 +257,37 @@ describe('ProfilesService — account deletion & export', () => {
     for (const op of ['referralCampaignPrizeAward.updateMany', 'referralCampaignPrizeForfeit.updateMany']) {
       expect(calls.indexOf(op)).toBeLessThan(calls.indexOf('ambassador.deleteMany'));
     }
+  });
+
+  it('efface l’utilisateur OneSignal après la purge, sans bloquer la suppression (audit 57, F09)', async () => {
+    const { client, calls } = makeFakePrisma({ email: 'a@b.com', supabaseUserId: null });
+    const prisma = {
+      execute: async (fn: (c: unknown) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const oneSignal = {
+      isConfigured: true,
+      deleteUser: jest.fn(async () => {
+        calls.push('oneSignal.deleteUser');
+        return 'failed' as const;
+      }),
+    } as unknown as OneSignalSenderService;
+
+    await expect(
+      new ProfilesService(prisma, fakeStorage, undefined, oneSignal).deleteMe('user-1'),
+    ).resolves.toEqual({ deleted: true, authIdentityRemoved: false });
+
+    expect(oneSignal.deleteUser).toHaveBeenCalledWith('user-1');
+    expect(calls.indexOf('oneSignal.deleteUser')).toBeGreaterThan(calls.indexOf('userProfile.delete'));
+    // L'échec est journalisé, sans l'identifiant du compte.
+    const logged = warn.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(logged).toContain('OneSignal user deletion failed');
+    expect(logged).not.toContain('user-1');
+
+    // Sans clés OneSignal : rien n'est demandé.
+    const unconfigured = { isConfigured: false, deleteUser: jest.fn() } as unknown as OneSignalSenderService;
+    await new ProfilesService(prisma, fakeStorage, undefined, unconfigured).deleteMe('user-1');
+    expect(unconfigured.deleteUser).not.toHaveBeenCalled();
   });
 
   it('hard-deletes Supabase Auth before the local transaction', async () => {

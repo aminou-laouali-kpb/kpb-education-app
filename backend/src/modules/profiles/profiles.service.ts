@@ -11,6 +11,7 @@ import {
 import type { UserProfile } from '@prisma/client';
 
 import { NewsletterSyncService } from '../newsletter/newsletter-sync.service';
+import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
 import {
   NotificationOptOutType,
   sanitizeOptOutTypes,
@@ -129,6 +130,8 @@ export class ProfilesService {
     // Optional so unit tests constructing the service positionally keep
     // working; when absent, the reconciliation cron alone syncs Mautic.
     @Optional() private readonly newsletterSync?: NewsletterSyncService,
+    // Optionnel pour la même raison ; sans lui, rien n'est demandé à OneSignal.
+    @Optional() private readonly oneSignal?: OneSignalSenderService,
   ) {}
 
   // Returned ONLY when the database is not configured. Kept readonly and never
@@ -1218,10 +1221,34 @@ export class ProfilesService {
       purged.newsletterSyncedOptIn,
     );
 
+    // OneSignal (repli des builds ≤ 56, audit 57 F09) : ces builds ont posé
+    // `external_id = UserProfile.id` et 4 étiquettes chez OneSignal, que rien
+    // n'effaçait. Même règle que Mautic : hors transaction, au mieux — la
+    // suppression locale tient même si OneSignal ne répond pas.
+    await this.forgetOneSignalUser(id);
+
     return {
       deleted: true,
       authIdentityRemoved: purged.authIdentityRemoved,
     };
+  }
+
+  /// Efface l'utilisateur OneSignal du compte supprimé quand les clés OneSignal
+  /// sont posées. Ne lève jamais ; un échec est journalisé SANS l'identifiant.
+  private async forgetOneSignalUser(id: string): Promise<void> {
+    if (!this.oneSignal?.isConfigured) return;
+    try {
+      const outcome = await this.oneSignal.deleteUser(id);
+      if (outcome === 'failed') {
+        this.logger.warn(
+          'OneSignal user deletion failed for a deleted account (best effort, no retry path).',
+        );
+      }
+    } catch {
+      this.logger.warn(
+        'OneSignal user deletion failed for a deleted account (best effort, no retry path).',
+      );
+    }
   }
 
   /// Hard-delete the Supabase Auth identity via the Admin REST API. Production
