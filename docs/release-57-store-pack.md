@@ -2,7 +2,9 @@
 
 > **À quoi sert ce fichier.** La 57 est une **release unique** qui embarque les chantiers B, C,
 > D, F, G, H, I et K (PR #353 à #361), plus la bascule des notifications vers Firebase Cloud
-> Messaging (#351) et les correctifs #349 et #350. Ce fichier rassemble ce qu'il faut *coller*
+> Messaging (#351), les correctifs #349 et #350, les PR #362 à #374 (chantier L, catalogue,
+> compétition, communauté et bots, parrainage, finalisation, correctifs et corrections juridiques)
+> et la PR de correctifs de l'audit 57. Ce fichier rassemble ce qu'il faut *coller*
 > dans les consoles — notes de version, « Notes for Review » **recomptées**, réponses **Data
 > Safety** (Play) et **App Privacy** (Apple) — le **tableau de tous les drapeaux** de
 > `/config/app` avec leur valeur au lancement, et le **plan de déploiement par étapes**
@@ -40,7 +42,8 @@
 > **Mise à jour du 18/10/2026 (finalisation)** : version **`2.3.1+57` posée** (`pubspec.yaml`,
 > préflights, registre) ; décisions du propriétaire du 18/10/2026 reportées (§4, §5, §7) ;
 > politique de confidentialité et CGU **rédigées** pour la communauté, les bots, le parrainage, la
-> compétition et la nationalité — **à relire par le propriétaire avant l'archive** ; export RGPD
+> compétition et la nationalité — **validées par le propriétaire le 19/10/2026** (après les
+> corrections juridiques #372 ; enregistrements de session PostHog : 30 jours, #374) ; export RGPD
 > complété des notifications in-app ; compilation Android avec `play_install_referrer` vérifiée par
 > la CI (§8).
 
@@ -229,8 +232,8 @@ Mêmes réponses que `docs/CONSOLE_ANSWERS.md` (§1, §2), **sauf les lignes ci-
 `docs/data-inventory.md` (§2 et §5). Le sens de l'erreur est choisi comme pour XC-06 :
 sur-déclarer coûte une ligne, sous-déclarer coûte une soumission (« declaration inconsistent with
 privacy policy »). La politique in-app et `web/public/confidentialite.html` décrivent le test,
-les suivis et les notifications (mise à jour du 16/10/2026) et, depuis le 18/10/2026 (texte à
-relire par le propriétaire), la nationalité sur consentement explicite, la communauté, les bots,
+les suivis et les notifications (mise à jour du 16/10/2026) et, depuis le 18/10/2026 (textes
+validés par le propriétaire le 19/10/2026), la nationalité sur consentement explicite, la communauté, les bots,
 le parrainage (identifiant d'installation, lien d'invitation) et la compétition.
 
 **Quand reporter ?** Les lignes du test « Mes 10 bourses » portent sur une fonction **dans le
@@ -284,7 +287,7 @@ aucun SDK nouveau.
 
 ### 4.3 Points qui restent ouverts
 
-- **XC-06** (finalité Marketing des coordonnées) : **tranché le 19/10/2026 — finalité « Marketing » DÉCLARÉE** (Play Data Safety et Apple App Privacy, coordonnées et identifiants de notification). **Chantier juridique 57 (19/10/2026, App Store 4.5.4)** : le push promotionnel passe en **opt-in** — il ne part qu'aux comptes qui ont activé « Nouvelles et offres de KPB par notification » (`promotionsPushOptIn`, non par défaut, comptes existants compris, preuve horodatée ; mineur : accord du représentant légal en plus) et n'ont pas coupé `kpb_promotions` ; une build qui ne connaît pas le champ n'en reçoit plus. Deux interrupteurs distincts (e-mail, notification), aucun coché d'avance. La finalité « Marketing » **reste déclarée** (honnête, sans coût) ; préciser « opt-in » (`docs/CONSOLE_ANSWERS.md` §0quater, ligne « chantier juridique 57 »). Historique : réduit par les correctifs 57
+- **XC-06** (finalité Marketing des coordonnées) : **tranché le 19/10/2026 — finalité « Marketing » DÉCLARÉE** (Play Data Safety et Apple App Privacy, coordonnées et identifiants de notification). **Chantier juridique 57 (19/10/2026, App Store 4.5.4)** : le push promotionnel passe en **opt-in** — il ne part qu'aux comptes qui ont activé « Nouvelles et offres de KPB par notification » (`promotionsPushOptIn`, non par défaut, comptes existants compris, preuve horodatée ; mineur : accord du représentant légal en plus) et n'ont pas coupé `kpb_promotions` ; une build qui ne connaît pas le champ n'en reçoit plus. Deux interrupteurs distincts (e-mail, notification), aucun coché d'avance. La finalité « Marketing » **reste déclarée** (honnête, sans coût) ; préciser « opt-in » (`docs/CONSOLE_ANSWERS.md` §0quater, ligne « chantier juridique 57 »). **Plus rien à valider sur XC-06.** Historique (dépassé par ce qui précède) : réduit par les correctifs 57
   (19/10/2026). Décision du propriétaire du 18/10/2026 : pas de finalité « Marketing », **sous
   réserve** qu'aucun envoi promotionnel ne parte sans opt-in. Depuis les correctifs 57, une campagne
   de l'admin porte une finalité (`promotional` par défaut) : l'**e-mail** promotionnel ne part
@@ -294,7 +297,8 @@ aucun SDK nouveau.
   **opt-out**, pas un opt-in. Restent donc non garantis par le code : le push en opt-out, la
   classification humaine des campagnes, et les coordonnées envoyées à l'équipe commerciale. La
   décision n'est **pas** reportée dans les formulaires (`docs/CONSOLE_ANSWERS.md` §0quater,
-  « Suivi du 18/10/2026 » et « Suivi du 19/10/2026 »). À VALIDER (propriétaire).
+  « Suivi du 18/10/2026 » et « Suivi du 19/10/2026 »). Ce point a été tranché le 19/10/2026
+  (opt-in e-mail et push, finalité déclarée), ci-dessus.
 - **D5** (prix FCFA) : **tranché le 18/10/2026** — affichés à titre indicatif, payés hors store
   (`docs/store-listing-copy.md` §9 ; notes de revue §3 cohérentes).
 - **Nationalité** : base légale **consentement explicite**, saisie facultative, conservée tant que
@@ -305,14 +309,15 @@ aucun SDK nouveau.
   juridique (§4.1, §4.2) et le texte sur les mineurs de 16 et 17 ans (`docs/data-inventory.md` §5).
   **Correctifs 57** : bouton « Effacer ma nationalité » dans l'espace « Mes 10 bourses »
   (`DELETE /profiles/me/nationality` : nationalité(s) et résultats du test effacés, cache local
-  vidé) ; privacy@kpbeducation.com reste possible ; politique mise à jour (à relire).
+  vidé) ; privacy@kpbeducation.com reste possible ; politique mise à jour (validée le 19/10/2026).
 - **Export** : corrigé le 18/10/2026 — les notifications in-app (`UserNotification`) figurent dans
   `GET /profiles/me/export` (clé `notifications`) ; la politique le dit (section 8).
-  `NotificationDelivery` (livraisons des campagnes admin) n'y est toujours pas.
+  La PR de correctifs de l'audit 57 y ajoute les livraisons des campagnes admin
+  (`NotificationDelivery`), le parrainage et les prix.
 - **Parrainage (2.3.1)** : mention de l'identifiant d'installation, de la lecture du lien
   d'invitation (Install Referrer) et de la compétition (nom public, autorisation parentale,
   empreintes anti-fraude 180 jours, organisateur) **rédigée le 18/10/2026** dans la politique in-app
-  et `confidentialite.html` — à relire par le propriétaire **avant l'archive** ; finalité
+  et `confidentialite.html`, **validée par le propriétaire le 19/10/2026** ; finalité
   « prévention de la fraude » à ajouter à la ligne Play « Identifiants d'appareil » (§4.1) ; pied
   de l'écran « Compétition » présent et testé ; `rulesUrl` à poser sur la campagne avant d'ouvrir
   `features.referralLeaderboard` (data-inventory §6 et §6 bis) : le règlement est publié à
@@ -400,7 +405,7 @@ jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
 3. **Mode d'ouverture** `outbox_alerts` puis `outbox_followers` (§6.3).
 4. **`KPB_SCHOLARSHIP_MATCH_ENABLED=true`**, seulement quand : la collecte de la nationalité est
    tranchée (consentement explicite, décision du propriétaire du 18/10/2026 ; case de consentement
-   dans l'app) et les textes de la politique relus ; `GET /admin/scholarships/eligibility-coverage` en
+   dans l'app) et les textes de la politique validés (19/10/2026) ; `GET /admin/scholarships/eligibility-coverage` en
    production montre au moins 90 % de bourses publiques structurées et fraîches ; la recette
    « Mes 10 bourses » de `docs/device-qa-build57.md` est jouée en préproduction ; les déclarations
    du §4 sont reportées. Procédure : registre, entrée du 15/10/2026 « chantier D ».
@@ -418,18 +423,26 @@ conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le p
 ### 6.1 Ordre : serveur, puis admin, puis app
 
 1. **Serveur** — workflow « Deploy backend (VPS) » (`deploy.yml`, `scope=full`) au SHA `RELEASE`,
-   **avant** le préflight de release. Six migrations additives entre `28ac82d` et `RELEASE` :
-   `20261013120000_notification_delivery_opened_at`, `20261013121500_profile_last_app_build`,
-   `20261015120000…120200_scholarship_follow_*` (trois fichiers) et
-   `20261020120000_scholarship_match_v1`. Préalables de `docs/api-contracts.md` (« Migrations
-   `20261015120000…120200_scholarship_follow_*` — exploitation ») : `db-info.yml`, la requête sur
-   `ScholarshipCycle.academicYear` qui doit être vide, les index en `CONCURRENTLY` au-delà d'environ
-   un million de lignes, **gel des activations admin** pendant le déploiement.
-   Chantier juridique 57 : deux migrations additives de plus,
-   `20261027120000_promotions_push_opt_in` (opt-in push, `false` pour tous) et
-   `20261027130000_community_report_orphan_retention` (date de suppression du signaleur).
+   **avant** le préflight de release. **Seize migrations** additives entre `28ac82d` et `RELEASE`
+   (quinze jusqu'à `8c215b5`, plus celle de la PR de correctifs de l'audit 57), nommées une à une à
+   l'étape 1 de la checklist : `20261013120000_notification_delivery_opened_at`,
+   `20261013121500_profile_last_app_build`, `20261015120000_scholarship_follow_fanout`,
+   `20261015120100_scholarship_follow_indexes`,
+   `20261015120200_scholarship_follow_notification_backfill`, `20261020120000_scholarship_match_v1`,
+   `20261021120000_program_recognition`, `20261022120000_referral_campaigns`,
+   `20261023120000_community`, `20261024120000_community_verif_bot`,
+   `20261025120000_assist_bridge`, `20261026120000_campaign_purpose_promotions_consent`,
+   `20261026130000_referral_prize_forfeit`, `20261027120000_promotions_push_opt_in`,
+   `20261027130000_community_report_orphan_retention` et
+   `20261028120000_profile_completion_without_consent`. Préalables de `docs/api-contracts.md`
+   (« Migrations `20261015120000…120200_scholarship_follow_*` — exploitation ») : `db-info.yml`, la
+   requête sur `ScholarshipCycle.academicYear` qui doit être vide, les index en `CONCURRENTLY`
+   au-delà d'environ un million de lignes, **gel des activations admin** pendant le déploiement.
    `FCM_SERVICE_ACCOUNT_JSON` posé (sinon la 57 ne reçoit rien, §1.1). Puis `catalog:reconcile
-   --dry-run` et `--apply` (catalogue 1.5.0).
+   --dry-run` et `--apply` (catalogue 1.5.0), puis les opérations catalogue de la 57
+   (`dedupe-omnes`, `import-omnes-spring`, `import-igensia`, `import-north-america` ; checklist,
+   étape 1, point 5). `roll-omnes-fall-2027` attend que la 57 soit majoritaire (checklist, étape 9 :
+   les builds 2.3.0 afficheraient les dates reconduites sans « à confirmer »).
 2. **Admin** — dans le même passage du workflow (il remplace `api` et `admin` ensemble) ou, à la
    main, après la santé de l'`api`. Le nouvel admin envoie `notify` à l'activation d'un cycle, qu'un
    backend plus ancien refuse : jamais l'admin avant le serveur.
@@ -588,8 +601,8 @@ de préavis.
 | **f** | Seuils et durées des paliers Play | Ceux du §6.2 | §6.2 |
 | **g** | `outbox_followers` pour les favoris des anciennes builds | Quand la 57 est majoritaire | §6.3 |
 | **h** | XC-06 (finalité Marketing), D5 (prix FCFA) | **D5 tranché le 18/10/2026** (indicatif, payé hors store). **XC-06 tranché le 19/10/2026** : finalité « Marketing » déclarée ; l'e-mail promotionnel reste réservé par le code aux consentants (lien de désinscription) ; **push promotionnel en opt-in depuis le chantier juridique 57** (App Store 4.5.4), la finalité reste déclarée | §4.3 ; `docs/CONSOLE_ANSWERS.md` §0quater |
-| **l** | Corrections juridiques (19/10/2026) | **Validées** : push promotionnel en opt-in ; base légale complétée (exécution du service, consentements listés, intérêt légitime pour l'analytique avec droit d'opposition et pour l'anti-fraude du parrainage, obligation légale pour la trace des prix versés) ; transferts sans « acceptation de la politique » ; signalements orphelins 12 mois (purge quotidienne) ; durées analytiques distinguées ; information des changements par notification (§6.5) ; mineurs absents du classement public sans autorisation vérifiée. Textes **à relire par le propriétaire** ; durée de rétention PostHog / Firebase Analytics **À VALIDER (propriétaire)** | `docs/data-inventory.md` §5 bis, §8 ; §6.5 |
-| **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique **rédigée le 18/10/2026** (à relire avant l'archive) et Data safety à reporter (identifiant d'installation) ; pied de l'écran « Compétition » retenu et testé ; ordre d'ouverture des trois drapeaux — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
+| **l** | Corrections juridiques (19/10/2026) | **Validées** : push promotionnel en opt-in ; base légale complétée (exécution du service, consentements listés, intérêt légitime pour l'analytique avec droit d'opposition et pour l'anti-fraude du parrainage, obligation légale pour la trace des prix versés) ; transferts sans « acceptation de la politique » ; signalements orphelins 12 mois (purge quotidienne) ; durées analytiques distinguées ; information des changements par notification (§6.5) ; mineurs absents du classement public sans autorisation vérifiée. Textes **validés par le propriétaire le 19/10/2026** ; enregistrements de session PostHog : **30 jours** (lu dans le projet le 19/10/2026) ; durée de rétention des **événements** PostHog / Firebase Analytics **À VALIDER (propriétaire)** | `docs/data-inventory.md` §5 bis, §8 ; §6.5 |
+| **i** | Parrainage côté app dans la 57 (décidé le 17/10/2026) | Livré fermé ; politique **rédigée le 18/10/2026, validée le 19/10/2026** et Data safety à reporter (identifiant d'installation) ; pied de l'écran « Compétition » retenu et testé ; ordre d'ouverture des trois drapeaux — À VALIDER (propriétaire) | §1, §4, §5 ; `docs/runbook-campagne-ambassadeurs.md` §8 |
 | **j** | Règlement de la compétition (18/10/2026) | **Tranché** : Wave sous 7 jours ; prix perdu après 15 jours et passé au suivant ; résultats le 17 novembre 2026 ; droit des Émirats arabes unis (Dubaï), réclamations à contact@kpbeducation.com ; proches de l'équipe exclus ; pièce d'identité au versement ; fiscalité à la charge du lauréat ; empreintes 180 jours. **Correctifs 57** : « Déclarer le prix forfait et réattribuer » (onglet Prix de l'admin) réattribue un prix non versé au suivant classé, même après un premier versement ; un prix versé ne bouge jamais (`docs/runbook-campagne-ambassadeurs.md` §7) | `docs/reglement-competition-ambassadeurs-novembre-2026.md` |
 | **m** | Communauté et passerelle dans la 57 (20/10/2026) | **Tranché** : déclarées à Apple et à Google **dès la soumission de la 57** (fonctions modérées, OFF au moment de la revue) : notes de revue, classification d'âge (contenu généré par les utilisateurs, interaction entre utilisateurs), Data safety / App Privacy (« Autre contenu généré par l'utilisateur ») ; ouverture ensuite sans nouvelle soumission | §3, §4.4, §5 ; `docs/CONSOLE_ANSWERS.md` §3 bis |
 | **k** | Conservations et bots (18/10/2026) | **Tranché** : empreintes 180 jours, événements « Passerelle » 12 mois, contenus supprimés de la communauté 30 jours ; textes et seuils « Passerelle » validés, `shadow` ≥ 2 semaines, < 10 % de faux positifs ; « Vérif » en `auto` après 50 réponses validées sans correction | `docs/data-inventory.md` §6, §7, §7 bis, §7 ter ; runbooks des bots |

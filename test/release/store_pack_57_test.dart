@@ -307,11 +307,33 @@ void main() {
       expect(open, contains('À VALIDER (propriétaire)'));
       expect(open, contains('features.scholarshipMatch'));
       // Décisions du propriétaire du 18/10/2026 : la nationalité est tranchée
-      // (consentement explicite) ; XC-06 est tranché le 19/10/2026 : le push
-      // promotionnel reste en opt-out, la finalité « Marketing » est déclarée.
+      // (consentement explicite) ; XC-06 est tranché le 19/10/2026 : la
+      // finalité « Marketing » est déclarée, l'e-mail ET le push promotionnels
+      // sont en opt-in (`campaign-purpose.ts`).
       expect(open, contains('consentement explicite'));
       expect(open, contains('XC-06'));
       expect(open, contains('finalité « Marketing » DÉCLARÉE'));
+      expect(open, contains('**Plus rien à valider sur XC-06.**'));
+    });
+
+    test('les textes juridiques sont validés (19/10/2026), plus « à relire »',
+        () {
+      // Audit 57, F01 : le pack disait encore « à relire par le propriétaire
+      // avant l'archive » alors que son §8 disait « validés le 19/10/2026 ».
+      expect(pack.contains('à relire par le propriétaire'), isFalse);
+      expect(pack.contains('(à relire'), isFalse);
+      expect(_flat(pack),
+          contains('**validées par le propriétaire le 19/10/2026**'));
+      final decisions = _flat(_section(pack, '## 7. Décisions'));
+      expect(decisions,
+          contains('Textes **validés par le propriétaire le 19/10/2026**'));
+      expect(decisions,
+          contains('enregistrements de session PostHog : **30 jours**'));
+      // Seule la durée des ÉVÉNEMENTS analytiques reste ouverte.
+      expect(
+          decisions,
+          contains(
+              'durée de rétention des **événements** PostHog / Firebase Analytics **À VALIDER (propriétaire)**'));
     });
   });
 

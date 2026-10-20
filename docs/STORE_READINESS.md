@@ -958,8 +958,8 @@ Owner decision of 17/10/2026: the app side of the referral programme ships in bu
 Full lines to paste: `docs/release-57-store-pack.md` §4, `docs/CONSOLE_ANSWERS.md` §0septies.
 Privacy policy (web + in-app): the installation identifier (fraud prevention), the invite-link
 reading (prefill only, nothing sent without confirmation), the HMAC fingerprints (180 days, owner
-decision of 18/10/2026) and the contest are now named — text **drafted on 18/10/2026, to be
-reviewed by the owner before the archive** (the in-app text is compiled).
+decision of 18/10/2026) and the contest are now named — text **drafted on 18/10/2026, validated
+by the owner on 19/10/2026** (the in-app text is compiled).
 
 ### Owner decisions of 18/10/2026 — what they change for the stores
 
