@@ -164,4 +164,24 @@ FROM "AdminUser"
 WHERE "isActive" AND "role" IN ('admin', 'super_admin')
 GROUP BY 1 ORDER BY 1;
 
+\echo ''
+\echo '    Build 57 - prealables des migrations scholarship_follow (docs/api-contracts.md) :'
+\echo '    au-dela d environ 1 million de lignes, construire les index AVANT le deploiement.'
+SELECT (SELECT COUNT(*) FROM "SavedItem") AS saved_items,
+       (SELECT COUNT(*) FROM "UserNotification") AS user_notifications;
+
+\echo ''
+\echo '    Cycles a academicYear invalide : DOIT etre vide avant le deploiement de la 57.'
+SELECT "scholarshipId", "academicYear" FROM "ScholarshipCycle"
+WHERE NOT CASE
+  WHEN "academicYear" ~ '^\d{4}$' THEN true
+  WHEN "academicYear" ~ '^\d{4}-\d{4}$'
+    THEN split_part("academicYear", '-', 2)::int = split_part("academicYear", '-', 1)::int + 1
+  ELSE false
+END;
+
+\echo ''
+\echo '    Index INVALID (CONCURRENTLY rate) : DOIT etre vide.'
+SELECT indexrelid::regclass AS index_invalide FROM pg_index WHERE NOT indisvalid;
+
 COMMIT;
