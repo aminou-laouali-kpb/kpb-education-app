@@ -20,13 +20,19 @@ Contrat : `docs/community-api-contract.md` §15 (comportement) et §8.10 (consol
 Toute autre valeur de mode vaut `shadow` (jamais `on` par accident) ; seule `true` ouvre la source
 coach. La source communauté ne produit rien tant que `KPB_COMMUNITY_ENABLED` est fermé.
 
-Sur le VPS, dans le `.env` lu par `docker-compose.yml` :
+Par le workflow **VPS ops** (Actions → « VPS ops (feature flag / catalogue) »), pas en éditant le
+`.env` en SSH — le port 22 du VPS n'est pas joignable depuis un poste de travail :
 
-```bash
-KPB_ASSIST_BRIDGE_MODE=on        # ou shadow / off
-docker compose up -d api         # recrée le conteneur avec la nouvelle valeur
-curl -s https://api.kpbeducation.cloud/api/config/app | jq .features.assistBridge   # true en mode on
-```
+| Action | Écrit | `features.assistBridge` | Simulation par défaut |
+|---|---|---|---|
+| vps-ops → assist-bridge-on | `KPB_ASSIST_BRIDGE_MODE=on` | `true` | oui : décocher `dry_run` pour appliquer |
+| vps-ops → assist-bridge-shadow | `KPB_ASSIST_BRIDGE_MODE=shadow` | `false` | non (retour arrière, agit tout de suite) |
+| vps-ops → assist-bridge-off | `KPB_ASSIST_BRIDGE_MODE=off` | `false` | non |
+
+Le job sauvegarde le `.env`, remplace la clé, recrée `api` à l'identique, vérifie la valeur lue
+par le conteneur puis `features.assistBridge` sur `/config/app`. La source coach
+(`KPB_ASSIST_BRIDGE_COACH`) n'a pas d'action : elle reste fermée tant que la politique de
+confidentialité n'en parle pas.
 
 ## 2. Le parcours conseillé : `shadow` → lecture des stats → `on`
 
@@ -49,7 +55,8 @@ curl -s https://api.kpbeducation.cloud/api/config/app | jq .features.assistBridg
 
 ## 3. Retour arrière
 
-- **Couper l'envoi** : `KPB_ASSIST_BRIDGE_MODE=shadow` (ou `off`) puis `docker compose up -d api`.
+- **Couper l'envoi** : vps-ops → assist-bridge-shadow (ou assist-bridge-off), qui agit même
+  `dry_run` coché.
   Les notifications déjà envoyées restent dans le fil des élèves (elles sont privées, aucun contenu
   public à retirer). `features.assistBridge` repasse à `false` : l'interrupteur des préférences
   disparaît, la clé `assist_bridge` déjà posée reste respectée.

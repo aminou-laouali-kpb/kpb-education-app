@@ -112,6 +112,20 @@ jobs:
           esac
           unset service_key payload role
 
+          # Build 57 (decision d + closed flags). Presence only for the FCM
+          # secret; the flag values are not secrets and are printed as-is.
+          fcm="$(sed -n 's/^FCM_SERVICE_ACCOUNT_JSON=//p' .env | head -n 1)"
+          if [ -n "$fcm" ]; then echo 'FCM_SERVICE_ACCOUNT_JSON: present (value withheld).'
+          else echo '::warning::FCM_SERVICE_ACCOUNT_JSON is absent: pushes fall back to OneSignal.'; fi
+          unset fcm
+          for key in KPB_COMMUNITY_ENABLED KPB_COMMUNITY_VERIF_BOT_MODE KPB_ASSIST_BRIDGE_MODE KPB_ASSIST_BRIDGE_COACH \
+                     KPB_REFERRAL_LEADERBOARD_ENABLED KPB_REFERRAL_ONBOARDING_CODE_ENABLED KPB_REFERRAL_INSTALL_REFERRER_ENABLED \
+                     KPB_SCHOLARSHIP_MATCH_ENABLED KPB_PUSH_MAX_PER_DAY; do
+            value="$(sed -n "s/^${key}=//p" .env | head -n 1)"
+            echo "${key}=${value:-<absent: default>}"
+          done
+          unset value
+
           docker compose config --quiet
           echo 'Compose production configuration: renderable.'
 

@@ -561,12 +561,101 @@ eef_flag_off() {
   recreate_api_same_image
 }
 
+# ── Les drapeaux distants de la build 57 ────────────────────────────────────
+#
+# Parrainage (trois clés), communauté, bot « Passerelle », bot « Vérif ». Le plan
+# d'ouverture (docs/release-57-store-pack.md §5, docs/runbook-campagne-ambassadeurs.md
+# §8, docs/mise-a-jour-57-checklist.md §9) disait « poser la variable dans le `.env`
+# de production, recréer api » — en SSH, depuis un poste où le port 22 n'est pas
+# joignable. Même modèle que les interrupteurs de la 56 :
+#
+#   • les clés et les VALEURS sont écrites ici, jamais reçues : changer une valeur
+#     passe par une PR ;
+#   • ce qui OUVRE (ou expose davantage) SIMULE par défaut et n'écrit que sur un
+#     « false » explicite ; ce qui REFERME agit tout de suite, sans dépendre du code
+#     déployé — on doit toujours pouvoir revenir en arrière ;
+#   • le `.env` est sauvegardé, la clé REMPLACÉE, `api` recréé à l'identique ;
+#   • après recréation, la valeur lue par le PROCESSUS est comparée à la valeur
+#     écrite (`docker inspect`, voir `effective_env`) ; le workflow prouve ensuite,
+#     depuis l'extérieur, la clé `features.*` servie par `/config/app` — sauf pour le
+#     bot Vérif, que `/config/app` ne sert pas.
+#
+# Valeurs permises, relues dans le code qui les lit :
+#   KPB_REFERRAL_*_ENABLED, KPB_COMMUNITY_ENABLED : seule `true` ouvre
+#     (app-config.controller.ts, `enabled`) ;
+#   KPB_ASSIST_BRIDGE_MODE : shadow (défaut) | on | off — `features.assistBridge`
+#     n'est vrai qu'à `on` (assist-bridge.config.ts) ;
+#   KPB_COMMUNITY_VERIF_BOT_MODE : review (défaut) | auto | off
+#     (community-verif-bot.config.ts).
+FLAGS57_ENV_RE='^KPB_(REFERRAL_(INSTALL_REFERRER|ONBOARDING_CODE|LEADERBOARD)_ENABLED|COMMUNITY_ENABLED|ASSIST_BRIDGE_MODE|COMMUNITY_VERIF_BOT_MODE)='
+
+# Les drapeaux de la 57 dans le `.env` : des drapeaux publics, jamais un secret.
+show_flags57() {
+  grep -E "$FLAGS57_ENV_RE" .env || echo "(aucun drapeau de la 57 posé : défauts de docker-compose.yml)"
+}
+
+# Le backend déployé doit porter le code qui LIT la clé. Sans ce contrôle l'action
+# « réussit » (le `.env` est écrit, le conteneur recréé) et rien ne change : un
+# déploiement d'un commit antérieur à la 57 ne lit pas ces variables. On cherche
+# dans le fichier COMPILÉ du conteneur, comme `eef_flag_on`.
+require_backend_reads() { # fichier_compilé motif action
+  if ! docker compose exec -T api grep -q "$2" "$1"; then
+    echo "::error::Le backend déployé ne porte pas ${2} (${1} ne le contient pas) : ${3} n'aurait aucun effet visible. Déployer d'abord le backend de la build 57 (deploy.yml, scope=full)."
+    exit 1
+  fi
+}
+
+# Après recréation : la valeur que le processus lit VRAIMENT. Un `.env` écrit mais
+# non relu (relais absent, recréation sautée) se voit ici, pas trois jours après.
+prove_container_env() { # clé valeur
+  local got
+  got=$(effective_env "$1" || true)
+  if [ "$got" != "$2" ]; then
+    echo "::error::après recréation, kpb_api lit ${1}=« ${got:-<absente>} », attendu « ${2} » : le .env n'a pas été relu. L'opération n'est PAS faite."
+    exit 1
+  fi
+  echo "kpb_api lit ${1}=${2} ✅"
+}
+
+# Pose UNE clé de la 57 à UNE valeur écrite dans ce script.
+#   flag57_set clé valeur action open fichier_compilé motif   (ouverture : simule par défaut)
+#   flag57_set clé valeur action close                        (retour arrière : agit)
+flag57_set() {
+  local env_key="$1" value="$2" action="$3" kind="$4"
+  require_relay "$env_key"
+  if [ "$kind" = "open" ]; then
+    require_backend_reads "$5" "$6" "$action"
+    # Contrôle d'abord, écrit ensuite — et seulement sur un « false » EXPLICITE,
+    # comme `eef_flag_on` : une ouverture ne part pas sur une coquille.
+    if [ "$DRY_RUN" != "false" ]; then
+      echo "── SIMULATION : les contrôles passent, rien n'est écrit. Décocher « dry_run » pour appliquer ${action} (${env_key}=${value}). ──"
+      exit 0
+    fi
+  fi
+  cp -p .env ".env.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+  set_env_key "$env_key" "$value"
+  echo "── .env après écriture ──"; show_flags57
+  recreate_api_same_image
+  prove_container_env "$env_key" "$value"
+}
+
+# Prévenir, sans bloquer, quand une étape antérieure du plan n'est pas faite : la
+# recette allume et éteint dans l'ordre qui l'arrange, comme pour la bulle.
+warn_unless_true() { # clé message
+  if ! grep -qE "^${1}=true" .env; then
+    echo "::warning::${1} n'est pas à true dans le .env : $2"
+  fi
+}
+
 show_state() {
   echo "── Drapeaux EEF dans le .env ──"
   grep -E '^KPB_EEF' .env || echo "(aucune variable KPB_EEF posée)"
   echo
   echo "── Portes de version dans le .env (jamais de valeur libre ici) ──"
   grep -E '^KPB_(MIN|RECOMMENDED)_APP_VERSION=' .env || echo "(aucune : minVersion 0.0.0, aucun bandeau)"
+  echo
+  echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots) ──"
+  show_flags57
   echo
   show_push_state
   show_llm_state
@@ -1189,6 +1278,94 @@ case "$ACTION" in
       echo "── APPLICATION ──"
       docker compose exec -T api npm run eef:reconcile -- --apply --expect-programs "$EEF_EXPECTED_PROGRAMS" ${reconcile_args[@]+"${reconcile_args[@]}"}
     fi
+    ;;
+
+  # ── Drapeaux de la 57 (voir `flag57_set`) ────────────────────────────────
+  # Ordre du plan : classement, puis code à l'onboarding, puis Install Referrer.
+  referral-leaderboard-on)
+    # Écran « Compétition ambassadeurs » (`features.referralLeaderboard`), avant le
+    # 1er novembre 2026 ; `rulesUrl` posé sur la campagne.
+    flag57_set KPB_REFERRAL_LEADERBOARD_ENABLED true referral-leaderboard-on open \
+      dist/modules/config/app-config.controller.js KPB_REFERRAL_LEADERBOARD_ENABLED
+    ;;
+
+  referral-leaderboard-off)
+    flag57_set KPB_REFERRAL_LEADERBOARD_ENABLED false referral-leaderboard-off close
+    ;;
+
+  referral-onboarding-code-on)
+    # Étape « code de ton parrain » en fin d'onboarding (`features.referralOnboardingCode`).
+    warn_unless_true KPB_REFERRAL_LEADERBOARD_ENABLED "l'ordre conseillé ouvre d'abord le classement (referral-leaderboard-on)."
+    flag57_set KPB_REFERRAL_ONBOARDING_CODE_ENABLED true referral-onboarding-code-on open \
+      dist/modules/config/app-config.controller.js KPB_REFERRAL_ONBOARDING_CODE_ENABLED
+    ;;
+
+  referral-onboarding-code-off)
+    flag57_set KPB_REFERRAL_ONBOARDING_CODE_ENABLED false referral-onboarding-code-off close
+    ;;
+
+  referral-install-referrer-on)
+    # Lecture du Play Install Referrer (`features.referralInstallReferrer`) : la
+    # DERNIÈRE des trois, une fois la Data safety Play reportée.
+    echo "Rappel : n'ouvrir qu'avec la Data safety Play à jour (docs/release-57-store-pack.md §4.1)."
+    warn_unless_true KPB_REFERRAL_ONBOARDING_CODE_ENABLED "l'ordre conseillé ouvre l'Install Referrer en dernier, après referral-onboarding-code-on."
+    flag57_set KPB_REFERRAL_INSTALL_REFERRER_ENABLED true referral-install-referrer-on open \
+      dist/modules/config/app-config.controller.js KPB_REFERRAL_INSTALL_REFERRER_ENABLED
+    ;;
+
+  referral-install-referrer-off)
+    flag57_set KPB_REFERRAL_INSTALL_REFERRER_ENABLED false referral-install-referrer-off close
+    ;;
+
+  community-on)
+    # Communauté (`features.community` ET les routes élève /community/*). Décision
+    # d'exploitation du propriétaire, après l'approbation de la 57.
+    echo "Rappel : déclarations stores, CGU et politique de confidentialité à jour (docs/release-57-store-pack.md §5)."
+    flag57_set KPB_COMMUNITY_ENABLED true community-on open \
+      dist/modules/config/app-config.controller.js KPB_COMMUNITY_ENABLED
+    ;;
+
+  community-off)
+    flag57_set KPB_COMMUNITY_ENABLED false community-off close
+    ;;
+
+  assist-bridge-on)
+    # Bot « Passerelle » : ENVOIE (`features.assistBridge` vrai). Seul mode qui
+    # expose : il simule par défaut. Critères (18/10/2026) : au moins 2 semaines de
+    # `shadow` avec la communauté ouverte, moins de 10 % de faux positifs
+    # (docs/runbook-bot-passerelle.md §2) — ce script ne peut pas les mesurer.
+    echo "Rappel : au moins 2 semaines de shadow, < 10 % de faux positifs relus (docs/runbook-bot-passerelle.md §2)."
+    warn_unless_true KPB_COMMUNITY_ENABLED "la communauté est fermée : la source communauté ne produit rien."
+    flag57_set KPB_ASSIST_BRIDGE_MODE on assist-bridge-on open \
+      dist/modules/config/app-config.controller.js assistBridge
+    ;;
+
+  assist-bridge-shadow)
+    # Retour arrière (et défaut) : détecte et journalise, n'envoie rien.
+    flag57_set KPB_ASSIST_BRIDGE_MODE shadow assist-bridge-shadow close
+    ;;
+
+  assist-bridge-off)
+    flag57_set KPB_ASSIST_BRIDGE_MODE off assist-bridge-off close
+    ;;
+
+  verif-bot-auto)
+    # Bot « Vérif » : publie SEUL les brouillons sûrs. Seul mode qui expose : il
+    # simule par défaut. Règle (18/10/2026) : 50 réponses validées sans correction
+    # (docs/runbook-bot-verif.md §2) — ce script ne peut pas les compter.
+    echo "Rappel : 50 réponses validées sans correction avant auto (docs/runbook-bot-verif.md §2)."
+    warn_unless_true KPB_COMMUNITY_ENABLED "la communauté est fermée : le bot n'a rien à traiter."
+    flag57_set KPB_COMMUNITY_VERIF_BOT_MODE auto verif-bot-auto open \
+      dist/modules/community/community-verif-bot.config.js KPB_COMMUNITY_VERIF_BOT_MODE
+    ;;
+
+  verif-bot-review)
+    # Retour arrière (et défaut) : le bot prépare, un admin publie.
+    flag57_set KPB_COMMUNITY_VERIF_BOT_MODE review verif-bot-review close
+    ;;
+
+  verif-bot-off)
+    flag57_set KPB_COMMUNITY_VERIF_BOT_MODE off verif-bot-off close
     ;;
 
   *)

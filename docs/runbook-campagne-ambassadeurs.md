@@ -218,17 +218,26 @@ retenu le 18/10/2026, gardé par `test/features/referral/ambassador_competition_
 **Ordre d'ouverture conseillé** — À VALIDER (propriétaire) — (après la 57 à 100 % sur les deux boutiques, et la politique de
 confidentialité / la Data safety à jour — `docs/release-57-store-pack.md` §4 et §5) :
 
-1. `KPB_REFERRAL_LEADERBOARD_ENABLED=true` avant le **1er novembre 2026** (début de la
-   compétition) : les participants voient la phase « à venir » et leur code.
-2. `KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true` en même temps ou juste après : les filleuls
-   saisissent le code dès l'inscription.
-3. `KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true` en dernier, une fois la Data safety Play
-   reportée (lecture du referrer).
+Chaque étape est une action fermée du workflow **VPS ops** (Actions → « VPS ops (feature flag /
+catalogue) »), pas une édition du `.env` en SSH — le port 22 du VPS n'est pas joignable depuis un
+poste de travail. Lancer d'abord avec `dry_run` coché (le job contrôle le relais compose et le
+backend déployé, n'écrit rien), puis décocher pour appliquer : le job sauvegarde le `.env`, pose la
+seule clé de l'action, recrée `api` à l'identique, vérifie la valeur lue par le conteneur et la
+clé `features.*` servie par `/config/app`.
+
+1. vps-ops → referral-leaderboard-on (`KPB_REFERRAL_LEADERBOARD_ENABLED=true`) avant le
+   **1er novembre 2026** (début de la compétition) : les participants voient la phase « à venir »
+   et leur code.
+2. vps-ops → referral-onboarding-code-on (`KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true`) en même
+   temps ou juste après : les filleuls saisissent le code dès l'inscription.
+3. vps-ops → referral-install-referrer-on (`KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true`) en
+   dernier, une fois la Data safety Play reportée (lecture du referrer).
 
 Vérification : `curl -s https://api.kpbeducation.cloud/api/config/app | jq '.features |
-{referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'`. Retour arrière :
-remettre la variable à `false` (ou la retirer) dans le `.env` de production et recréer le
-conteneur `api` ; l'app se replie au prochain démarrage. La recette appareil est dans
+{referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'` (le job l'a déjà
+prouvé). Retour arrière : vps-ops → referral-leaderboard-off, referral-onboarding-code-off ou
+referral-install-referrer-off — ils agissent tout de suite, `dry_run` coché ou non, et ne dépendent
+pas du code déployé ; l'app se replie au prochain démarrage. La recette appareil est dans
 `docs/device-qa-build57.md` (section « Parrainage »).
 
 ## 9. Exploitation et données
