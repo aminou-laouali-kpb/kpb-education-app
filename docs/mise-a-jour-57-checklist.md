@@ -222,8 +222,11 @@ curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scho
   continuer** (la 57 ne recevrait aucune notification). `push.oneSignal` doit rester `true` : c'est
   le repli des builds 53 et 56.
 - **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** (ou l'un des trois drapeaux du
-  parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
-  l'`api`, relancer la commande.
+  parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; pour une clé de la 57,
+  Actions → **VPS ops** → `referral-leaderboard-off`, `referral-onboarding-code-off`,
+  `referral-install-referrer-off`, `community-off` ou `assist-bridge-shadow` (un retour arrière agit
+  même `dry_run` coché) ; pour `scholarshipMatch` / `onboardingV2`, remettre la variable à `false`
+  dans le `.env` et recréer l'`api` ; puis relancer la commande.
 - **Si `eefSpace` vaut `false`** : la phrase « The "Études en France" space is open » des notes de
   revue est fausse ; prendre la variante du pack §3, point 1, et recompter.
 - Sur le Mac, avant l'étape 4 : `flutter --version` (3.44.1), `python3 --version`,
@@ -433,7 +436,16 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    s'ouvrent selon `docs/runbook-campagne-ambassadeurs.md` §8, **après** la politique de
    confidentialité et la Data safety à jour (pack §4.3) et le `rulesUrl` posé sur la campagne
    (`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html` ; le lancement est refusé sans
-   lui). À VALIDER (propriétaire) : l'ordre et les dates.
+   lui). À VALIDER (propriétaire) : l'ordre et les dates. Pas d'édition du `.env` en SSH (port 22
+   injoignable) : Actions → **VPS ops**, chaque action d'abord `dry_run` coché, puis décoché, dans
+   cet ordre et avant le 1er novembre :
+   1. `referral-leaderboard-on` (`KPB_REFERRAL_LEADERBOARD_ENABLED=true`) ;
+   2. `referral-onboarding-code-on` (`KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true`) ;
+   3. `referral-install-referrer-on` (`KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true`).
+   Le job prouve la clé `features.*` servie par `/config/app` ; retour arrière par l'action `-off`
+   correspondante. Plus tard, mêmes règles : `community-on` (communauté), `assist-bridge-on`
+   (après au moins 2 semaines de `shadow`, `docs/runbook-bot-passerelle.md` §2), `verif-bot-auto`
+   (après 50 réponses validées sans correction, `docs/runbook-bot-verif.md` §2).
 10. **Recalcul de la compétition avant le 1er novembre** : la migration
     `20261028120000_profile_completion_without_consent` (PR de correctifs de l'audit 57) est
     **déployée avant le 1er novembre** (étape 1), puis console admin → **Compétition

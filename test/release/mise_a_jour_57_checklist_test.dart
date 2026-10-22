@@ -255,6 +255,48 @@ void main() {
               'seulement quand la 57 est installée chez la majorité des comptes actifs'));
     });
 
+    test(
+        'drapeaux du parrainage : actions VPS ops, dans l\'ordre, sans SSH '
+        '(port 22 injoignable)', () {
+      final rollout = _section(doc, '## 9.').replaceAll(RegExp(r'\s+'), ' ');
+      final start = rollout.indexOf('**Parrainage**');
+      expect(start, isNot(-1));
+      final step = rollout.substring(start, rollout.indexOf('10. ', start));
+      final order = [
+        '`referral-leaderboard-on` (`KPB_REFERRAL_LEADERBOARD_ENABLED=true`)',
+        '`referral-onboarding-code-on` (`KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true`)',
+        '`referral-install-referrer-on` (`KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true`)',
+      ].map(step.indexOf).toList();
+      expect(order.first, isNot(-1), reason: step);
+      for (var i = 1; i < order.length; i++) {
+        expect(order[i], greaterThan(order[i - 1]), reason: step);
+      }
+      expect(step, contains('Pas d\'édition du `.env` en SSH'));
+      for (final later in [
+        'community-on',
+        'assist-bridge-on',
+        'verif-bot-auto'
+      ]) {
+        expect(step, contains('`$later`'));
+      }
+      final vpsOps = _read('.github/workflows/vps-ops.yml');
+      for (final action in [
+        'referral-leaderboard-on',
+        'referral-onboarding-code-on',
+        'referral-install-referrer-on',
+        'community-on',
+        'assist-bridge-on',
+        'verif-bot-auto',
+      ]) {
+        expect(vpsOps, contains('          - $action\n'));
+      }
+      // Le contrôle de départ (§2) renvoie vers les retours arrière VPS ops.
+      final step2 = _section(doc, '## 2. Vérifications de départ')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      expect(step2, contains('`referral-leaderboard-off`'));
+      expect(step2, contains('`assist-bridge-shadow`'));
+    });
+
     test('recalcul de la compétition avant le 1er novembre', () {
       final rollout = _section(doc, '## 9.').replaceAll(RegExp(r'\s+'), ' ');
       expect(rollout,

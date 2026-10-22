@@ -26,16 +26,20 @@ Le bot ne travaille que si la communauté reçoit des publications (`KPB_COMMUNI
 
 ## 2. Changer de mode (sans build)
 
-Sur le VPS, dans le `.env` lu par `docker-compose.yml` :
+Par le workflow **VPS ops** (Actions → « VPS ops (feature flag / catalogue) »), pas en éditant le
+`.env` en SSH — le port 22 du VPS n'est pas joignable depuis un poste de travail :
 
-```bash
-KPB_COMMUNITY_VERIF_BOT_MODE=auto     # ou review / off
-docker compose up -d api              # recrée le conteneur avec la nouvelle valeur
-```
+| Action | Écrit | Simulation par défaut |
+|---|---|---|
+| vps-ops → verif-bot-auto | `KPB_COMMUNITY_VERIF_BOT_MODE=auto` | oui : décocher `dry_run` pour appliquer |
+| vps-ops → verif-bot-review | `KPB_COMMUNITY_VERIF_BOT_MODE=review` | non (retour arrière, agit tout de suite) |
+| vps-ops → verif-bot-off | `KPB_COMMUNITY_VERIF_BOT_MODE=off` | non |
 
-La console affiche le mode en tête de l'onglet Bot Vérif (`GET /admin/community/bot/stats` →
-`mode`). Retour arrière : remettre `review` et recréer le conteneur ; les réponses déjà publiées
-restent (les masquer ou supprimer depuis Contenus si besoin, avec motif).
+Le job sauvegarde le `.env`, remplace la clé, recrée `api` à l'identique et vérifie que le
+conteneur lit bien la nouvelle valeur (`/config/app` ne sert pas ce mode). La console affiche le
+mode en tête de l'onglet Bot Vérif (`GET /admin/community/bot/stats` → `mode`). Retour arrière :
+vps-ops → verif-bot-review ; les réponses déjà publiées restent (les masquer ou supprimer depuis
+Contenus si besoin, avec motif).
 
 ### Avant de passer en `auto` (décision finale du propriétaire, 18/10/2026)
 

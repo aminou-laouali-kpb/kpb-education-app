@@ -412,9 +412,28 @@ jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
 
 Les interrupteurs `eefHelpBubble` et `eefPrivateSchools` suivent leur propre calendrier (pack 56
 §7), comme les trois drapeaux du parrainage (compétition du 1er au 10 novembre 2026, ordre
-conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le propriétaire). Aucune action `vps-ops` n'écrit les clés des chantiers G, K, D et I ni celles du parrainage : elles se posent dans le
-`.env` de production, puis le conteneur `api` est recréé. À VALIDER (propriétaire) : qui écrit ce
-`.env`, et la trace qu'on en garde.
+conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le propriétaire).
+
+Le port 22 du VPS n'étant pas joignable depuis un poste de travail, les drapeaux du parrainage, de
+la communauté et des deux bots s'ouvrent et se referment par des **actions fermées du workflow
+« VPS ops »** (`vps-ops.yml`), jamais en éditant le `.env` en SSH. Chacune n'écrit qu'**une** clé, à
+une valeur écrite dans `.github/scripts/vps-ops.sh`, sauvegarde le `.env`, recrée `api` à
+l'identique, vérifie la valeur lue par le conteneur puis la clé `features.*` servie par
+`/config/app`. Les ouvertures simulent par défaut (`dry_run` coché) ; les retours arrière agissent
+tout de suite. La trace est l'exécution du workflow (qui, quand, journal).
+
+| Action `vps-ops` | Clé écrite | `/config/app` après |
+|---|---|---|
+| `referral-leaderboard-on` / `-off` | `KPB_REFERRAL_LEADERBOARD_ENABLED=true` / `false` | `referralLeaderboard` |
+| `referral-onboarding-code-on` / `-off` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED=true` / `false` | `referralOnboardingCode` |
+| `referral-install-referrer-on` / `-off` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED=true` / `false` | `referralInstallReferrer` |
+| `community-on` / `-off` | `KPB_COMMUNITY_ENABLED=true` / `false` | `community` |
+| `assist-bridge-on` / `-shadow` / `-off` | `KPB_ASSIST_BRIDGE_MODE=on` / `shadow` / `off` | `assistBridge` (vrai seulement à `on`) |
+| `verif-bot-auto` / `-review` / `-off` | `KPB_COMMUNITY_VERIF_BOT_MODE=auto` / `review` / `off` | aucune clé servie : la preuve est la valeur lue par le conteneur |
+
+Aucune action `vps-ops` n'écrit en revanche les clés des chantiers G, K, D et I : elles se posent
+dans le `.env` de production, puis le conteneur `api` est recréé. À VALIDER (propriétaire) : qui
+écrit ce `.env`, et la trace qu'on en garde.
 
 ---
 
