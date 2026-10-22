@@ -71,26 +71,26 @@
     "test:integration:referral-campaign": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/referrals/campaigns/referral-campaign.postgres.spec.ts src/modules/referrals/campaigns/profile-completion.postgres.spec.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1032.0",
+    "@aws-sdk/client-s3": "^3.1152.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/platform-socket.io": "^11.0.0",
     "@nestjs/schedule": "^5.0.0",
-    "@nestjs/throttler": "^6.5.0",
+    "@nestjs/throttler": "^6.7.1",
     "@nestjs/websockets": "^11.0.0",
     "@prisma/client": "^6.6.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1",
+    "class-validator": "^0.15.1",
     "compression": "^1.8.1",
-    "helmet": "^8.1.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "9.0.3",
     "prisma": "^6.6.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3",
+    "socket.io": "^4.8.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
@@ -109,10 +109,10 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.2",
-    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/eslint-plugin": "^8.71.2",
     "@typescript-eslint/parser": "^8.60.0",
-    "eslint": "^10.4.0",
-    "jest": "^30.3.0",
-    "ts-jest": "^29.4.9"
+    "eslint": "^10.13.0",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15"
   }
 }
