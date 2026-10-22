@@ -24,6 +24,13 @@ RUN npm run build
 FROM node:22-alpine AS runtime
 
 ENV NODE_ENV=production
+# Les scripts d'exploitation (`npm run verify:*`, imports catalogue lancés par
+# deploy.yml et vps-ops) passent par ts-node. Sans transpile-only, ts-node
+# vérifie les types de tout le graphe importé : depuis la 57 cela dépasse le tas
+# de Node sous la limite de 768 Mo du conteneur (deploy du 22/10/2026 arrêté sur
+# « JavaScript heap out of memory »). Les types sont déjà vérifiés par la CI
+# (`npm run typecheck:scripts`) sur le SHA exact que le déploiement exige.
+ENV TS_NODE_TRANSPILE_ONLY=true
 WORKDIR /app
 
 RUN apk add --no-cache dumb-init openssl \
