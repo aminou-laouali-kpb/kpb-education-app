@@ -115,6 +115,16 @@ export interface PublicWinner {
 
 const AUDIT_PURPOSE = 'referral_campaign';
 const PUBLIC_CACHE_TTL_MS = 30_000;
+/** Le lien du règlement publiable : une adresse https, sans espace. */
+export function isHttpsRulesUrl(url: string | null | undefined): boolean {
+  return /^https:\/\/[^\s]+$/.test((url ?? '').trim());
+}
+
+/**
+ * Plafond du cache du classement public (audit 57, F04 / F16) : une entrée par
+ * campagne publique, jamais par ville demandée ; au-delà, la plus ancienne part.
+ */
+export const PUBLIC_CACHE_MAX_ENTRIES = 256;
 
 type ParticipantWithAmbassador = ReferralCampaignParticipant & {
   ambassador: {
@@ -451,7 +461,7 @@ export class ReferralCampaignService {
     if (dto.rulesText !== undefined) data.rulesText = dto.rulesText.trim() || null;
     if (dto.rulesUrl !== undefined) {
       const url = dto.rulesUrl.trim();
-      if (url && !/^https:\/\/[^\s]+$/.test(url)) {
+      if (url && !isHttpsRulesUrl(url)) {
         throw new BadRequestException('rulesUrl doit être une adresse https.');
       }
       data.rulesUrl = url || null;
@@ -505,6 +515,14 @@ export class ReferralCampaignService {
       const prizes = parsePrizes(current.prizes);
       if (!prizes || prizes.length === 0) {
         throw new BadRequestException('Définis au moins un prix avant de lancer.');
+      }
+      // Le règlement n'est publié que par son LIEN (`rulesUrl`, https) : la page
+      // publique et l'écran « Compétition » n'affichent « Lire le règlement »
+      // qu'avec lui, et le texte collé reste interne (audit 57, F20).
+      if (!isHttpsRulesUrl(current.rulesUrl)) {
+        throw new BadRequestException(
+          'Pose le lien https du règlement (« Lien du règlement ») avant de lancer : le texte collé n’est pas publié.',
+        );
       }
     }
     if (action === 'unfreeze' && current.podiumValidatedAt) {
@@ -972,6 +990,9 @@ export class ReferralCampaignService {
    * - le classement (ordre réel, rangs) ne change pas ;
    * - idempotent : redéclarer le même lauréat rend l'état actuel sans rien
    *   écrire ; un lauréat qui a changé entre-temps ⇒ 409 ;
+   * - prix ORPHELIN (lauréat qui a supprimé son compte avant le versement,
+   *   `participantId` NULL, nom « Compte supprimé ») : déclaré sans
+   *   `participantId`, il passe au suivant de la même façon (audit 57, F17) ;
    * - audit `referral_campaign.prize_forfeited` dans la même transaction.
    */
   async forfeitPrize(
@@ -986,26 +1007,33 @@ export class ReferralCampaignService {
     const prizes = parsePrizes(campaign.prizes) ?? [];
     const prize = prizes.find((p) => p.rank === rank);
     if (!prize) throw new NotFoundException('Aucun prix à ce rang.');
-    const participantId = dto.participantId.trim();
+    const participantId = dto.participantId?.trim() || null;
     const reason = dto.reason.trim();
     if (reason.length < 3) throw new BadRequestException('Un motif est requis pour déclarer un prix forfait.');
 
     try {
       const outcome = await this.db((db) =>
         db.$transaction(async (tx) => {
-          const already = await tx.referralCampaignPrizeForfeit.findFirst({
-            where: { campaignId, participantId },
-          });
-          if (already) return { replayed: true as const };
-
           const award = await tx.referralCampaignPrizeAward.findUnique({
             where: { campaignId_rank: { campaignId, rank } },
           });
-          if (!award || !award.participantId) {
-            throw new NotFoundException('Aucun lauréat à ce rang.');
-          }
+          // Rejeu : ce lauréat est déjà forfait — ou, sans lauréat, un forfait
+          // orphelin existe à ce rang et le prix n'est plus orphelin.
+          const already = participantId
+            ? await tx.referralCampaignPrizeForfeit.findFirst({ where: { campaignId, participantId } })
+            : award && award.participantId === null
+              ? null
+              : await tx.referralCampaignPrizeForfeit.findFirst({
+                  where: { campaignId, rank, participantId: null },
+                });
+          if (already) return { replayed: true as const };
+
+          if (!award) throw new NotFoundException('Aucun lauréat à ce rang.');
           if (award.payoutStatus === 'paid') {
             throw new ConflictException('Ce prix est déjà versé : il ne peut plus être déclaré forfait.');
+          }
+          if (award.participantId === null && participantId) {
+            throw new NotFoundException('Aucun lauréat à ce rang.');
           }
           if (award.participantId !== participantId) {
             throw new ConflictException({
@@ -1028,7 +1056,7 @@ export class ReferralCampaignService {
           const forfeited = new Set(
             forfeits.map((f) => f.participantId).filter((id): id is string => id !== null),
           );
-          forfeited.add(participantId);
+          if (participantId) forfeited.add(participantId);
           const awardByRank = new Map(awards.map((a) => [a.rank, a]));
           const slots = prizes.map((p) => {
             const a = awardByRank.get(p.rank);
@@ -1283,12 +1311,30 @@ export class ReferralCampaignService {
    * Seuls les participants classables apparaissent (un mineur sans
    * autorisation parentale vérifiée n'apparaît pas).
    */
+  /**
+   * Classement public, filtré par ville si `city` est donnée.
+   *
+   * Le cache ne tient QUE la vue complète, une entrée par campagne (audit 57,
+   * F04 / F16) : `?city=` est une chaîne libre d'une route sans
+   * authentification, et une entrée par valeur reçue faisait grossir la
+   * mémoire sans borne (une campagne gelée ou close n'est jamais invalidée).
+   * La ville est normalisée (`placeKey`) et filtrée en mémoire sur la vue en
+   * cache : une ville absente de la campagne rend une liste vide, sans rien
+   * écrire.
+   */
   async publicLeaderboard(
     slug: string,
     city: string | undefined,
     now: Date = new Date(),
   ): Promise<PublicLeaderboard> {
-    const cacheKey = `${slug}\u0000${placeKey(city ?? '')}`;
+    const full = await this.publicView(slug, now);
+    const wanted = placeKey(city ?? '');
+    if (!wanted) return full;
+    return { ...full, entries: full.entries.filter((e) => placeKey(e.city) === wanted) };
+  }
+
+  private async publicView(slug: string, now: Date): Promise<PublicLeaderboard> {
+    const cacheKey = slug;
     const cached = this.publicCache.get(cacheKey);
     if (cached && now.getTime() - cached.at < PUBLIC_CACHE_TTL_MS) {
       return { ...cached.payload, serverTime: now.toISOString() };
@@ -1313,7 +1359,6 @@ export class ReferralCampaignService {
         }) === null,
     );
     const entries: PublicLeaderboardEntry[] = rankable
-      .filter((r) => !city || placeKey(r.city) === placeKey(city))
       .sort(
         (a, b) =>
           (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER) ||
@@ -1375,8 +1420,22 @@ export class ReferralCampaignService {
       entries,
       winners,
     };
-    this.publicCache.set(cacheKey, { at: now.getTime(), payload });
+    this.cachePublic(cacheKey, { at: now.getTime(), payload });
     return payload;
+  }
+
+  /** Écrit une entrée : purge les expirées, puis borne la taille (la plus ancienne part). */
+  private cachePublic(key: string, entry: { at: number; payload: PublicLeaderboard }): void {
+    for (const [k, v] of this.publicCache) {
+      if (entry.at - v.at >= PUBLIC_CACHE_TTL_MS) this.publicCache.delete(k);
+    }
+    this.publicCache.delete(key);
+    while (this.publicCache.size >= PUBLIC_CACHE_MAX_ENTRIES) {
+      const oldest = this.publicCache.keys().next().value;
+      if (oldest === undefined) break;
+      this.publicCache.delete(oldest);
+    }
+    this.publicCache.set(key, entry);
   }
 
   /**
@@ -1487,9 +1546,7 @@ export class ReferralCampaignService {
   }
 
   private invalidatePublic(slug: string): void {
-    for (const key of this.publicCache.keys()) {
-      if (key.startsWith(`${slug}\u0000`)) this.publicCache.delete(key);
-    }
+    this.publicCache.delete(slug);
   }
 
   private async audit(

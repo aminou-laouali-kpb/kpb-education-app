@@ -267,7 +267,7 @@ function buildSend(
         // Non nuls : `rowSkipReason` a écarté les lignes sans bourse ni cycle.
         scholarshipId: lead.scholarshipId ?? '',
         cycleId: lead.cycleId ?? '',
-        userId: user.userId,
+        notificationId: lead.id,
       }),
       idempotencyKey: lead.dedupeKey,
       collapseKey: openingCollapseKey(lead.dedupeKey),

@@ -9,8 +9,11 @@ import {
   buildCampaignPayload,
   canForfeit,
   editableFields,
+  forfeitBody,
+  isOrphanPrize,
   inviteUrl,
   NOVEMBER_2026_DEFAULTS,
+  NOVEMBER_2026_RULES_URL,
   parseList,
   parsePrizeAmounts,
   prizeAmountsText,
@@ -60,7 +63,28 @@ describe('formulaire de campagne', () => {
         { rank: 3, amountFcfa: 30000 },
       ],
       eligibleCities: ['Maradi', 'Niamey', 'Cotonou', 'Abidjan', 'Douala'],
+      rulesUrl: NOVEMBER_2026_RULES_URL,
     });
+  });
+
+  it('le règlement prérempli est la page publiée (audit 57, F20)', () => {
+    expect(NOVEMBER_2026_RULES_URL).toBe('https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html');
+    // La page existe dans le site statique servi par nginx.
+    const page = readFileSync(
+      join(__dirname, '..', '..', 'web', 'public', 'reglement-ambassadeurs-2026-11.html'),
+      'utf8',
+    );
+    expect(page).toContain('KPB Global L.L.C-FZ');
+    expect(page).toContain('Apple et Google ne sont ni organisateurs ni partenaires');
+  });
+
+  it('« Règlement (texte) » dit qu’il est interne et que le bouton utilise le lien (FR/EN)', () => {
+    const hint = (messages: Messages) =>
+      ((messages.parrainage as Messages).form as Messages).rulesTextHint as string;
+    expect(hint(fr)).toContain('non publié');
+    expect(hint(fr)).toContain('« Lire le règlement » utilise le lien');
+    expect(hint(en)).toContain('not published');
+    expect(hint(en)).toContain('uses the link');
   });
 
   it('signale les erreurs de saisie sans appeler le serveur', () => {
@@ -174,9 +198,35 @@ describe('messages de la compétition', () => {
 });
 
 describe('canForfeit (correctifs 57)', () => {
-  it('seulement un prix attribué et non versé', () => {
+  it('seulement un prix non versé', () => {
     expect(canForfeit({ payoutStatus: 'pending', participantId: 'p1' })).toBe(true);
     expect(canForfeit({ payoutStatus: 'paid', participantId: 'p1' })).toBe(false);
-    expect(canForfeit({ payoutStatus: 'pending', participantId: null })).toBe(false);
+    expect(canForfeit({ payoutStatus: 'paid', participantId: null })).toBe(false);
+  });
+
+  it('un prix orphelin (lauréat qui a supprimé son compte) se déclare forfait (audit 57)', () => {
+    expect(canForfeit({ payoutStatus: 'pending', participantId: null })).toBe(true);
+    expect(isOrphanPrize({ payoutStatus: 'pending', participantId: null })).toBe(true);
+    expect(isOrphanPrize({ payoutStatus: 'pending', participantId: 'p1' })).toBe(false);
+    expect(isOrphanPrize({ payoutStatus: 'paid', participantId: null })).toBe(false);
+  });
+
+  it('la requête omet participantId pour un prix orphelin, le garde sinon', () => {
+    expect(forfeitBody({ participantId: null }, '  compte supprimé le 12/11  ')).toEqual({
+      reason: 'compte supprimé le 12/11',
+    });
+    expect('participantId' in forfeitBody({ participantId: null }, 'x')).toBe(false);
+    expect(forfeitBody({ participantId: 'p1' }, ' injoignable ')).toEqual({
+      participantId: 'p1',
+      reason: 'injoignable',
+    });
+  });
+
+  it('le libellé « Lauréat : compte supprimé » existe dans les deux langues', () => {
+    const parrainage = (messages: Messages) => messages.parrainage as Messages;
+    expect(parrainage(fr).orphanWinner).toBe('Lauréat : compte supprimé');
+    expect(parrainage(en).orphanWinner).toBe('Winner: account deleted');
+    expect(parrainage(fr).forfeitOrphanHint).toBeTruthy();
+    expect(parrainage(en).forfeitOrphanHint).toBeTruthy();
   });
 });

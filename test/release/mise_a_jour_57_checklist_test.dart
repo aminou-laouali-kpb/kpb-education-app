@@ -20,6 +20,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _path = 'docs/mise-a-jour-57-checklist.md';
 
+/// La dernière migration du backend de production (`28ac82d`) : tout ce qui
+/// est plus récent passe au déploiement de la 57.
+const _lastProductionMigration = '20260930120000_eef_search_text_and_acronym';
+
+/// La migration de la PR de correctifs de l'audit 57 (nom figé entre les
+/// chantiers serveur, app et docs).
+const _auditMigration = '20261028120000_profile_completion_without_consent';
+
 String _read(String path) => File(path).readAsStringSync();
 
 List<({int start, int end, String text})> _blocksAt(String doc) =>
@@ -139,20 +147,164 @@ void main() {
       expect(step1, contains('`ref` = `RELEASE`'));
       expect(step1, contains('**`api` puis `admin`**'));
       expect(step1, contains('FCM_SERVICE_ACCOUNT_JSON'));
-      // Les six migrations, chacune nommée et présente dans le dépôt.
-      final migrations = RegExp(
+      // Audit 57, F00 : l'étape 1 nomme EXACTEMENT les migrations que
+      // `prisma migrate deploy` passera — chaque dossier du dépôt plus récent
+      // que la dernière migration de la production (`28ac82d`), plus celle
+      // de la PR de correctifs de l'audit (nom figé entre les chantiers) tant
+      // qu'elle n'est pas encore sur cette branche. Ni oubli, ni invention.
+      final named = RegExp(
         r'`(2026\d{10}_[a-z0-9_]+)`',
       ).allMatches(step1).map((m) => m.group(1)!).toSet();
-      expect(migrations, hasLength(6));
-      for (final migration in migrations) {
-        expect(
-          File(
-            'backend/prisma/migrations/$migration/migration.sql',
-          ).existsSync(),
-          isTrue,
-          reason: 'la migration $migration n\'existe pas',
-        );
+      final onDisk = Directory('backend/prisma/migrations')
+          .listSync()
+          .whereType<Directory>()
+          .map((d) => d.uri.pathSegments.where((p) => p.isNotEmpty).last)
+          .where((name) => name.compareTo(_lastProductionMigration) > 0)
+          .toSet();
+      expect(onDisk, hasLength(greaterThanOrEqualTo(15)),
+          reason: 'lecture du dossier des migrations cassée');
+      expect(named, onDisk.union({_auditMigration}));
+      expect(named, hasLength(16));
+      expect(flat, contains('**Seize migrations**'));
+      expect(flat.contains('Six migrations'), isFalse);
+      expect(flat.contains('six migrations'), isFalse);
+      // Le pack §6.1 nomme les mêmes.
+      final pack = _read('docs/release-57-store-pack.md');
+      final packDeploy = _section(pack, '## 6. Déploiement');
+      final packNamed = RegExp(
+        r'`(2026\d{10}_[a-z0-9_]+)`',
+      ).allMatches(packDeploy).map((m) => m.group(1)!).toSet();
+      expect(packNamed, named);
+    });
+
+    test('§0.3 attend le vrai diff de pubspec.yaml et la vraie liste de PR',
+        () {
+      // Audit 57, F00 : « exactement six lignes » et « #351 SEULEMENT »
+      // bloquaient l'archive sur un code correct.
+      final step = _section(doc, '### 0.3');
+      expect(step.contains('#351 SEULEMENT'), isFalse);
+      expect(step.contains('exactement six lignes'), isFalse);
+      expect(step, contains('exactement treize lignes'));
+      expect(step, contains(r"grep -v '^[+-][[:space:]]*#'"));
+      // Les treize lignes attendues, une par ligne de commentaire.
+      final expected = RegExp(r'^#     ([+-].*)$', multiLine: true)
+          .allMatches(step)
+          .map((m) => m.group(1)!)
+          .toList();
+      expect(expected, hasLength(13));
+      final pubspecLines = _read('pubspec.yaml').split('\n').toSet();
+      for (final line in expected) {
+        final content = line.substring(1);
+        if (line.startsWith('+')) {
+          expect(pubspecLines, contains(content),
+              reason: 'pubspec.yaml n\'a pas « $content »');
+        } else {
+          expect(pubspecLines.contains(content), isFalse,
+              reason: 'pubspec.yaml a encore « $content »');
+        }
       }
+      expect(expected, contains('+  play_install_referrer: ^0.5.0'));
+      expect(expected, contains('+version: ${_pubspec().name}+57'));
+      // Les PR depuis la 56, jusqu'à #374, et la PR de correctifs.
+      final flatStep = step.replaceAll(RegExp(r'\s+'), ' ');
+      expect(flatStep, contains('#356 à #374'));
+      expect(flatStep, contains('#362 (bloc assets du'));
+      expect(flatStep, contains('#368 (play_install_referrer)'));
+      expect(flatStep, contains('PR de correctifs de l\'audit 57'));
+    });
+
+    test(
+        'catalogue de la 57 : opérations nommées, reconduction OMNES après la 57',
+        () {
+      final step1 = _section(doc, '## 1. Serveur, puis admin');
+      final order = [
+        '`dedupe-omnes`',
+        '`import-omnes-spring`',
+        '`import-igensia`',
+        '`import-north-america`',
+      ].map(step1.indexOf).toList();
+      expect(order.first, isNot(-1));
+      for (var i = 1; i < order.length; i++) {
+        expect(order[i], greaterThan(order[i - 1]));
+      }
+      final vpsOps = _read('.github/workflows/vps-ops.yml');
+      for (final action in [
+        'dedupe-omnes',
+        'import-omnes-spring',
+        'import-igensia',
+        'import-north-america',
+        'roll-omnes-fall-2027',
+      ]) {
+        expect(vpsOps, contains('          - $action'));
+      }
+      // Audit 57, F19 : la reconduction attend que la 57 soit majoritaire
+      // (les 2.3.0 affichent les dates reconduites sans « à confirmer »).
+      final rollout = _section(doc, '## 9.').replaceAll(RegExp(r'\s+'), ' ');
+      final roll = rollout.indexOf('**`roll-omnes-fall-2027`**');
+      expect(roll, isNot(-1));
+      final rule = rollout.substring(roll);
+      expect(rule, contains('**majorité** des comptes actifs'));
+      expect(rule, contains('`GET /admin/app-builds`'));
+      final runbook = _read('docs/runbook-rentrees-partenaires.md')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      expect(runbook,
+          contains('**Quand lancer la reconduction (audit 57, F19).**'));
+      expect(
+          runbook,
+          contains(
+              'seulement quand la 57 est installée chez la majorité des comptes actifs'));
+    });
+
+    test('recalcul de la compétition avant le 1er novembre', () {
+      final rollout = _section(doc, '## 9.').replaceAll(RegExp(r'\s+'), ' ');
+      expect(rollout,
+          contains('**Recalcul de la compétition avant le 1er novembre**'));
+      expect(
+          rollout, contains('`POST /admin/referral-campaigns/:id/recompute`'));
+      expect(
+        _read(
+          'backend/src/modules/referrals/campaigns/'
+          'admin-referral-campaigns.controller.ts',
+        ),
+        contains("@Post(':id/recompute')"),
+      );
+      expect(rollout, contains('`$_auditMigration`'));
+      // La commande du chantier serveur remplit l'emplacement réservé.
+      expect(rollout,
+          contains('`POST /api/admin/referral-campaigns/<id>/recompute`'));
+      expect(rollout, contains('**déployée avant le 1er novembre**'));
+      expect(doc.contains('À COMPLÉTER'), isFalse);
+      // Prix orphelin (lauréat qui a supprimé son compte) : runbook §7.
+      final runbook = _read('docs/runbook-campagne-ambassadeurs.md')
+          .replaceAll(RegExp(r'\s+'), ' ');
+      expect(
+        runbook,
+        contains('**Lauréat qui a supprimé son compte → prix orphelin → '
+            'Déclarer forfait**'),
+      );
+    });
+
+    test('XC-06 et textes juridiques : l\'état tranché, pas « ouvert »', () {
+      // Audit 57, F01.
+      final consoles = _section(doc, '## 7. Consoles');
+      final flatConsoles = consoles.replaceAll(RegExp(r'\s+'), ' ');
+      expect(flatConsoles, contains('**XC-06 tranché le 19/10/2026**'));
+      expect(flatConsoles, contains('finalité « Marketing » **déclarée**'));
+      expect(flatConsoles,
+          contains('e-mail **et** push promotionnels en **opt-in**'));
+      expect(consoles.contains('opt-out'), isFalse);
+      expect(consoles.contains('XC-06 **ouvert**'), isFalse);
+      // Et le code dit bien opt-in pour le push.
+      expect(
+        _read('backend/src/modules/notifications/campaign-purpose.ts'),
+        contains(
+            "if (recipient.promotionsPushOptIn !== true) return 'push_no_consent';"),
+      );
+      final decisions = _section(doc, '## 0. Ce qui doit être vrai');
+      expect(decisions.replaceAll(RegExp(r'\s+'), ' '),
+          contains('**Validés par le propriétaire le 19/10/2026**'));
+      expect(decisions.contains('Relus par le juridique **avant l\'archive**'),
+          isFalse);
     });
 
     test('le préflight : requires-new, ref, dérogation après la preuve', () {

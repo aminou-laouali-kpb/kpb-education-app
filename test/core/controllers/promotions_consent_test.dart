@@ -186,8 +186,8 @@ void main() {
     expect(api.payloads.last['promotionsPushOptIn'], isTrue);
     expect(api.payloads.last['disabledNotificationTypes'], ['weekly_digest']);
     expect(controller.profile!.receivesPromotionsPush, isTrue);
-    // Le consentement e-mail n'est pas touché.
-    expect(api.payloads.last['promotionsEmailOptIn'], isFalse);
+    // Le consentement e-mail n'est pas touché : il ne part même pas (F24).
+    expect(api.payloads.last, isNot(contains('promotionsEmailOptIn')));
     controller.setPromotionsPushOptIn(false);
     await Future<void>.delayed(Duration.zero);
     expect(api.payloads.last['promotionsPushOptIn'], isFalse);

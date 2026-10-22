@@ -121,11 +121,49 @@ export interface PrizeForfeit {
 
 /**
  * « Déclarer le prix forfait et réattribuer » n'a de sens que pour un prix
- * attribué et NON versé : le serveur refuse le reste (409), l'écran ne le
- * propose pas.
+ * NON versé : le serveur refuse un prix versé (409), l'écran ne le propose pas.
+ * Un prix ORPHELIN (lauréat qui a supprimé son compte : `participantId` null,
+ * nom public « Compte supprimé ») se déclare forfait aussi, pour passer au
+ * suivant classé (audit 57).
  */
 export function canForfeit(award: Pick<PrizeAward, 'payoutStatus' | 'participantId'>): boolean {
-  return award.payoutStatus !== 'paid' && award.participantId !== null;
+  return award.payoutStatus !== 'paid';
+}
+
+/** Prix non versé dont le lauréat a supprimé son compte. */
+export function isOrphanPrize(award: Pick<PrizeAward, 'payoutStatus' | 'participantId'>): boolean {
+  return award.payoutStatus !== 'paid' && award.participantId === null;
+}
+
+/**
+ * Corps de `POST …/prizes/:rank/forfeit` : `participantId` (garde contre un
+ * lauréat changé entre-temps) seulement quand il existe ; omis pour un prix
+ * orphelin, que le DTO accepte sans lui.
+ */
+export function forfeitBody(
+  award: Pick<PrizeAward, 'participantId'>,
+  reason: string,
+): { participantId?: string; reason: string } {
+  return award.participantId === null
+    ? { reason: reason.trim() }
+    : { participantId: award.participantId, reason: reason.trim() };
+}
+
+/**
+ * Le 409 `prize_holder_changed` : le lauréat du rang a changé entre la lecture
+ * et l'action (forfait déclaré par un autre admin, recalcul). La liste affichée
+ * est périmée : la recharger (audit 57, F21).
+ */
+export function isPrizeHolderChanged(e: unknown): boolean {
+  const err = e as { status?: number; body?: string } | null;
+  if (!err || err.status !== 409 || typeof err.body !== 'string') return false;
+  try {
+    const parsed = JSON.parse(err.body) as { code?: unknown; message?: unknown };
+    const nested = parsed.message as { code?: unknown } | undefined;
+    return parsed.code === 'prize_holder_changed' || nested?.code === 'prize_holder_changed';
+  } catch {
+    return false;
+  }
 }
 
 export interface AmbassadorRow {
@@ -272,6 +310,13 @@ export interface CampaignFormInput {
   countriesText: string;
 }
 
+/**
+ * Le règlement publié de la compétition de novembre 2026 (audit 57, F20) :
+ * `web/public/reglement-ambassadeurs-2026-11.html`. Seul ce lien est servi au
+ * public (bouton « Lire le règlement ») ; le serveur refuse de lancer sans lui.
+ */
+export const NOVEMBER_2026_RULES_URL = 'https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html';
+
 /** Valeurs par défaut du formulaire : la compétition de novembre 2026. */
 export const NOVEMBER_2026_DEFAULTS: CampaignFormInput = {
   slug: 'ambassadeurs-novembre-2026',
@@ -282,7 +327,7 @@ export const NOVEMBER_2026_DEFAULTS: CampaignFormInput = {
   timeZone: 'Africa/Lagos',
   prizesText: '100000, 50000, 30000',
   rulesText: '',
-  rulesUrl: '',
+  rulesUrl: NOVEMBER_2026_RULES_URL,
   citiesText: 'Maradi, Niamey, Cotonou, Abidjan, Douala',
   countriesText: '',
 };
@@ -359,7 +404,7 @@ export const campaignsApi = {
     }),
   prizes: (id: string) =>
     apiFetch<{ items: PrizeAward[]; forfeits?: PrizeForfeit[] }>(`${BASE}/${id}/prizes`),
-  forfeit: (id: string, rank: number, body: { participantId: string; reason: string }) =>
+  forfeit: (id: string, rank: number, body: { participantId?: string; reason: string }) =>
     apiFetch<{ items: PrizeAward[]; forfeits: PrizeForfeit[] }>(`${BASE}/${id}/prizes/${rank}/forfeit`, {
       method: 'POST',
       body,

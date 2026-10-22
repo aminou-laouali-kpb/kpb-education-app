@@ -24,7 +24,6 @@ function referee(id: string, over: Partial<QualificationReferee> = {}): Qualific
     createdAt: T('2026-11-02T10:00:00Z'),
     profileCompletedAt: T('2026-11-02T10:20:00Z'),
     accountType: 'student',
-    consentedAt: T('2026-11-02T10:20:00Z'),
     phone: '+227 90 00 00 00',
     birthDate: T('2005-01-01T00:00:00Z'),
     guardianConsentedAt: null,

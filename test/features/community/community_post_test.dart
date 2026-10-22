@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:karatou/app/core/models/community.dart';
 import 'package:karatou/app/core/services/community_store.dart';
+import 'package:karatou/app/core/services/remote_feature_flags.dart';
 import 'package:karatou/app/features/community/hub/community_post_screen.dart';
 
 import 'community_test_support.dart';
@@ -282,12 +283,97 @@ void main() {
   testWidgets('drapeau fermé : la route de notification ne montre rien',
       (tester) async {
     resetCommunityWorld(flag: false);
+    // Le serveur a répondu, et la communauté est fermée.
+    RemoteFeatureFlags.instance
+        .debugSetFeaturesForTest(const <String, bool>{'community': false});
     useTallPhone(tester);
     final api = FakeCommunityApi();
     await pumpCommunityApp(tester,
         api: api, child: const CommunityPostScreen(postId: 'cp_1'));
     expect(find.text('La communauté arrive bientôt'), findsOneWidget);
     expect(find.text('Délai de réponse Campus France ?'), findsNothing);
+  });
+
+  // Audit 57, F10 : démarrage à froid sur une notification. L'écran se monte
+  // avant que `/config/app` ait répondu ; il ne doit ni conclure « fermée »,
+  // ni rester bloqué quand les drapeaux arrivent.
+  group('drapeaux arrivés après le montage (F10)', () {
+    testWidgets('squelette, puis la discussion quand la communauté s\'ouvre',
+        (tester) async {
+      resetCommunityWorld(flag: false);
+      useTallPhone(tester);
+      final api = FakeCommunityApi();
+      await pumpCommunityApp(tester,
+          api: api,
+          settle: false,
+          child: const CommunityPostScreen(
+              postId: 'cp_1', source: 'notification'));
+      await tester.pump();
+
+      expect(find.byKey(const ValueKey('comm-post-awaiting-flags')),
+          findsOneWidget);
+      expect(find.text('La communauté arrive bientôt'), findsNothing);
+      expect(api.detailCalls, 0);
+
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest(const <String, bool>{'community': true});
+      await tester.pumpAndSettle();
+
+      expect(api.detailCalls, 1);
+      expect(find.text('Délai de réponse Campus France ?'), findsOneWidget);
+      expect(find.text('La communauté arrive bientôt'), findsNothing);
+    });
+
+    testWidgets('drapeaux jamais arrivés : « bientôt » après l\'attente',
+        (tester) async {
+      resetCommunityWorld(flag: false);
+      useTallPhone(tester);
+      final api = FakeCommunityApi();
+      await pumpCommunityApp(tester,
+          api: api,
+          settle: false,
+          child: const CommunityPostScreen(
+              postId: 'cp_1', source: 'notification'));
+      await tester.pump(const Duration(seconds: 9));
+      await tester.pumpAndSettle();
+      expect(find.text('La communauté arrive bientôt'), findsOneWidget);
+
+      // Arrivés en retard, et ouverts : la discussion se charge quand même.
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest(const <String, bool>{'community': true});
+      await tester.pumpAndSettle();
+      expect(find.text('Délai de réponse Campus France ?'), findsOneWidget);
+    });
+  });
+
+  // Audit 57, F13 : ouverte depuis le fil (résumé), sans réseau ni cache.
+  testWidgets(
+      'depuis le fil, hors ligne sans cache : erreur et « Réessayer », '
+      'pas « N réponses » puis « Pas encore de réponse »', (tester) async {
+    useTallPhone(tester);
+    final api = FakeCommunityApi()
+      ..detailError = const CommunityException(CommunityFailure.offline);
+    final summary = CommunityPost.fromJson(postJson(replyCount: 3))!;
+    expect(summary.isDetail, isFalse);
+    await pumpCommunityApp(tester,
+        api: api,
+        child: CommunityPostScreen(postId: 'cp_1', initialPost: summary));
+
+    expect(find.text('Délai de réponse Campus France ?'), findsOneWidget);
+    expect(find.byKey(const ValueKey('comm-replies-error')), findsOneWidget);
+    expect(find.text('Impossible de charger'), findsOneWidget);
+    expect(find.text('Pas de connexion. Vérifie ton réseau, puis réessaie.'),
+        findsOneWidget);
+    expect(find.text('3 réponses'), findsNothing);
+    expect(find.textContaining('Pas encore de réponse'), findsNothing);
+
+    // Le réseau revient : « Réessayer » charge la discussion.
+    api.detailError = null;
+    await tester.tap(find.text('Réessayer'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('comm-replies-error')), findsNothing);
+    expect(find.byKey(const ValueKey('comm-reply-cr_1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('comm-reply-field')), findsOneWidget);
   });
 
   test('le type de rapport suit le contrat', () {

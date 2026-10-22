@@ -375,12 +375,21 @@ class FakeCommunityApi extends MockApiClient {
     ))!;
   }
 
+  /// Non nul : `fetchCommunityPost` lève cette erreur (hors ligne…).
+  Object? detailError;
+  int detailCalls = 0;
+
   @override
   Future<({CommunityPostDetail detail, Map<String, dynamic> raw})>
-      fetchCommunityPost(String postId, {String? lang}) async => (
-            detail: CommunityPostDetail.fromJson(detail)!,
-            raw: detail,
-          );
+      fetchCommunityPost(String postId, {String? lang}) async {
+    detailCalls++;
+    final error = detailError;
+    if (error != null) throw error;
+    return (
+      detail: CommunityPostDetail.fromJson(detail)!,
+      raw: detail,
+    );
+  }
 
   @override
   Future<CommunityReply> createCommunityReply({

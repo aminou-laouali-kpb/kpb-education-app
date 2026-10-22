@@ -35,6 +35,17 @@ h2.first { margin-top: 0; }
 p.updated { color: var(--muted); font-size: 13px; margin: 0 0 24px; }
 p, li { color: var(--slate); font-size: 15px; }
 ul { padding-left: 22px; }
+ol { padding-left: 22px; }
+/* Tableau du règlement de la compétition (prix par rang). */
+.rules-table { border-collapse: collapse; margin: 8px 0 12px; background: #ffffff; }
+.rules-table th, .rules-table td {
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  text-align: left;
+  color: var(--slate);
+  font-size: 15px;
+}
+.rules-table th { color: var(--navy); font-weight: 700; }
 a { color: var(--blue); }
 .card {
   background: #ffffff;

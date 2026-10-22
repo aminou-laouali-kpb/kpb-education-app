@@ -2,11 +2,15 @@
 
 > **Texte arrêté par les décisions du propriétaire du 18/10/2026** (versement, délais, date
 > des résultats, droit applicable, réclamations, exclusions, pièce d'identité, fiscalité,
-> conservation des empreintes) — rédigé le 18/10/2026, **à relire par le propriétaire avant
-> publication**. Une fois relu, ce texte est collé dans la campagne (champ « Règlement ») ou
-> publié à une adresse https donnée dans « Lien du règlement » : la page publique du
-> classement et l'écran « Compétition » de l'application affichent alors le bouton « Lire le
-> règlement ».
+> conservation des empreintes). **Publié** (audit 57, F20) à
+> `https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+> (`web/public/reglement-ambassadeurs-2026-11.html` : même texte, sans les notes internes ni les
+> mentions de décision). **Ce lien est le seul publié** : il se pose dans « Lien du règlement
+> (https) » de la campagne (`rulesUrl`), et c'est lui que la page publique du classement et
+> l'écran « Compétition » de l'application ouvrent par le bouton « Lire le règlement » ; le
+> lancement de la campagne est refusé sans lui. Le champ « Règlement (texte) » de la console
+> reste **interne** : il n'est servi ni à la page publique ni à l'application. Toute
+> modification du fond se reporte ici **et** dans la page web, dans la même PR.
 
 ## 1. Organisateur
 
@@ -131,8 +135,7 @@ le classement provisoire sur la même page. Les résultats définitifs sont anno
   compte retire sa participation et ses filleuls de la compétition ; la trace d'un prix
   déjà versé est gardée pour la comptabilité.
 - La compétition est décrite dans la politique de confidentialité (section « Parrainage et
-  compétition des ambassadeurs », rédigée le 18/10/2026, à relire par le propriétaire) :
-  `https://kpbeducation.cloud/confidentialite.html`.
+  compétition des ambassadeurs ») : `https://kpbeducation.cloud/confidentialite.html`.
 
 ## 10. Divers
 

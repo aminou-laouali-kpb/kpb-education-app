@@ -268,6 +268,7 @@ class RemoteFeatureFlags {
     instance._catalogAttribution = null;
     instance._usVisaSuspension = UsVisaSuspension.fallback;
     instance._loaded = false;
+    instance._featuresServed = false;
     instance.flagsVersion.value = 0;
   }
 
@@ -279,6 +280,7 @@ class RemoteFeatureFlags {
   EefCatalogAttribution? _catalogAttribution;
   UsVisaSuspension _usVisaSuspension = UsVisaSuspension.fallback;
   bool _loaded = false;
+  bool _featuresServed = false;
 
   /// Incrémenté à chaque rafraîchissement réussi. Les écrans qui dépendent d'un
   /// drapeau écoutent ce compteur pour se reconstruire une fois la réponse
@@ -287,6 +289,12 @@ class RemoteFeatureFlags {
 
   /// True quand une réponse serveur a été lue avec succès au moins une fois.
   bool get loaded => _loaded;
+
+  /// Les drapeaux `features` viennent-ils du serveur (ou d'un test) ? Faux
+  /// tant que `/config/app` n'a pas répondu : un drapeau fermé veut alors dire
+  /// « pas encore su », pas « fermé ». Un écran ouvert par une notification au
+  /// démarrage à froid attend cette réponse avant de conclure (audit 57, F10).
+  bool get featuresServed => _featuresServed;
 
   /// La fenêtre de campagne servie, ou [EefCampaignWindow.empty].
   EefCampaignWindow get eefCampaign => _campaign;
@@ -471,6 +479,7 @@ class RemoteFeatureFlags {
   @visibleForTesting
   void debugSetFeaturesForTest(Map<String, bool> features) {
     _features = Map<String, bool>.unmodifiable(features);
+    _featuresServed = true;
     flagsVersion.value++;
   }
 
@@ -490,6 +499,7 @@ class RemoteFeatureFlags {
           EefCatalogAttribution.fromJson(config['eefCatalog']);
       _usVisaSuspension = UsVisaSuspension.fromJson(config['usVisaSuspension']);
       _loaded = true;
+      _featuresServed = true;
       flagsVersion.value++;
     } catch (error) {
       // Fail closed : on garde les replis de compilation. Volontairement pas

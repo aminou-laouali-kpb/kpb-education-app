@@ -1206,7 +1206,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     required ValueChanged<bool> onReceiveChanged,
     Key? switchKey,
   }) {
-    return Row(
+    // Un seul nœud pour le lecteur d'écran : libellé, explication et état de
+    // l'interrupteur lus ensemble (audit 57, F14). Sans ça, le focus sur
+    // l'interrupteur annonçait « Interrupteur, désactivé » sans dire de quel
+    // consentement il s'agit.
+    return MergeSemantics(
+        child: Row(
       children: [
         Container(
           width: 38,
@@ -1245,7 +1250,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         const SizedBox(width: 10),
         Switch(key: switchKey, value: receive, onChanged: onReceiveChanged),
       ],
-    );
+    ));
   }
 
   Future<void> _requestPush() async {

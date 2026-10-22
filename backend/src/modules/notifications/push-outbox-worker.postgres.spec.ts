@@ -264,13 +264,25 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     };
   }
 
-  /** Les lignes couvertes par les push envoyés (un groupé en couvre `count`). */
-  const coveredKeys = () =>
-    sent.flatMap((push) =>
+  /**
+   * Les lignes couvertes par les push envoyés (un groupé en couvre `count`).
+   * Un push seul porte l'id OPAQUE de sa ligne (audit 57, F06), relu ici en
+   * `dedupeKey` ; aucune charge ne porte l'id du compte.
+   */
+  const coveredKeys = async () => {
+    for (const push of sent) expect(JSON.stringify(push.data)).not.toContain(push.userId);
+    const ids = sent.map((push) => push.data.notificationKey).filter((id): id is string => !!id);
+    const rows = await prisma.userNotification.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, dedupeKey: true },
+    });
+    const keyOf = new Map(rows.map((r) => [r.id, r.dedupeKey]));
+    return sent.flatMap((push) =>
       push.data.notificationKey
-        ? [push.data.notificationKey]
+        ? [keyOf.get(push.data.notificationKey) ?? `inconnu:${push.data.notificationKey}`]
         : push.data.refs.split(',').map((ref) => `${ref}:${push.userId}`),
     );
+  };
 
   // ── 7. Deux workers ───────────────────────────────────────────────────────
 
@@ -284,7 +296,7 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     }
     const [a, b] = await Promise.all([worker().runOnce(anchor), worker().runOnce(anchor)]);
     expect(a.accepted + b.accepted).toBe(40);
-    expect(coveredKeys().sort()).toEqual(keys.sort());
+    expect((await coveredKeys()).sort()).toEqual(keys.sort());
     expect(
       await prisma.userNotification.count({
         where: { cycleId: cycle.cid, pushStatus: 'accepted', pushedAt: { not: null } },
@@ -503,7 +515,7 @@ describePostgres('Boîte d’envoi push — intégration PostgreSQL', () => {
     expect(sent).toHaveLength(0);
 
     await worker().runOnce(at(6));
-    expect(coveredKeys().sort()).toEqual(rows.map((row) => row.key).sort());
+    expect((await coveredKeys()).sort()).toEqual(rows.map((row) => row.key).sort());
 
     const late = await a.finalize(
       sendOf(rows[0].id, rows[0].key),

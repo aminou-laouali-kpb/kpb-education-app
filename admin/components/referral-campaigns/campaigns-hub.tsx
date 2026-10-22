@@ -241,6 +241,9 @@ export function CampaignFields({
             />
           )}
         </Field>
+        <p style={{ margin: '4px 0 0', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+          {t('parrainage.form.rulesTextHint')}
+        </p>
       </div>
     </div>
   );

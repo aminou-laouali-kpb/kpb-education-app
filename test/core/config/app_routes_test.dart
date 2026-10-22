@@ -242,7 +242,9 @@ void main() {
       // « bientôt » quand le drapeau est fermé.
       expect(names, contains(AppRoutes.community));
       expect(names, contains(AppRoutes.communityPost));
-      expect(names.length, equals(27));
+      // Campagne « Notre politique évolue » (audit 57, F11).
+      expect(names, contains(AppRoutes.legalPrivacy));
+      expect(names.length, equals(28));
     });
   });
 }

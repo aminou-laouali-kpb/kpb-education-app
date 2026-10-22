@@ -88,6 +88,11 @@ mixin _PreferencesMixin on _AppControllerBase {
   }
 
   Future<void> updateProfile(UserProfile newProfile) async {
+    // Tout consentement que ce geste change part au prochain PATCH, et lui
+    // seul (F24). Les appelants partent tous de `profile.copyWith(...)` : la
+    // différence est exactement ce que l'élève vient de toucher.
+    _pendingConsentKeys
+        .addAll(ProfileConsentFields.changed(profile, newProfile));
     profile = newProfile;
     _profileNeedsPush = true;
     _persist();
@@ -168,7 +173,18 @@ mixin _PreferencesMixin on _AppControllerBase {
       return;
     }
     try {
-      await _apiClient.updateProfile(_userProfilePayload(profile!));
+      final sent = profile!;
+      // Valeurs des consentements en attente telles qu'envoyées : un geste
+      // fait PENDANT la requête (valeur changée depuis) reste en attente.
+      final sentConsents = <String, Object?>{
+        for (final key in _pendingConsentKeys)
+          key: ProfileConsentFields.valueOf(sent, key),
+      };
+      await _apiClient.updateProfile(_userProfilePayload(sent));
+      _pendingConsentKeys.removeWhere((key) =>
+          sentConsents.containsKey(key) &&
+          ProfileConsentFields.same(
+              sentConsents[key], ProfileConsentFields.valueOf(profile, key)));
       _profileNeedsPush = false;
       _persist();
     } catch (e, s) {
@@ -184,8 +200,25 @@ mixin _PreferencesMixin on _AppControllerBase {
     }
   }
 
+  /// Le profil à appliquer quand le serveur répond : SA valeur fait foi pour
+  /// chaque consentement, sauf ceux que l'élève vient de changer ici et que le
+  /// serveur n'a pas encore accusés (F24).
   @override
-  Map<String, dynamic> _userProfilePayload(UserProfile profile) {
+  UserProfile _withPendingConsents(UserProfile fromServer) =>
+      ProfileConsentFields.carryOver(
+          fromServer, profile, _pendingConsentKeys.toList());
+
+  /// Corps du PATCH `/profiles/me`.
+  ///
+  /// Les consentements ([ProfileConsentFields]) n'y figurent QUE s'ils sont en
+  /// attente (geste de l'élève sur cet appareil). Les renvoyer à chaque synchro
+  /// annulait un désabonnement fait par le lien de l'e-mail ou sur un autre
+  /// téléphone, et le serveur horodatait un faux consentement (audit 57, F24).
+  /// [allConsents] : export local des données, où tout doit figurer.
+  @override
+  Map<String, dynamic> _userProfilePayload(UserProfile profile,
+      {bool allConsents = false}) {
+    bool sends(String key) => allConsents || _pendingConsentKeys.contains(key);
     return <String, dynamic>{
       'fullName': profile.fullName,
       // Pas d'`email` : c'est l'identité d'authentification, le serveur ne
@@ -218,26 +251,32 @@ mixin _PreferencesMixin on _AppControllerBase {
       'annualTuitionBudgetEur': profile.annualTuitionBudgetEur,
       'preferredCurrency': profile.preferredCurrency,
       'wantsScholarshipSupport': profile.wantsScholarshipSupport,
-      'scholarshipNewsletterOptIn': profile.wantsScholarshipNewsletter,
+      if (sends(ProfileConsentFields.newsletter))
+        'scholarshipNewsletterOptIn': profile.wantsScholarshipNewsletter,
       // Seulement si le serveur l'a annoncé : un serveur antérieur refuserait
       // le PATCH entier (`forbidNonWhitelisted`).
-      if (profile.promotionsEmailOptIn != null)
+      if (profile.promotionsEmailOptIn != null &&
+          sends(ProfileConsentFields.promotionsEmail))
         'promotionsEmailOptIn': profile.promotionsEmailOptIn,
       // Même règle pour l'opt-in du push promotionnel (chantier juridique 57).
-      if (profile.promotionsPushOptIn != null)
+      if (profile.promotionsPushOptIn != null &&
+          sends(ProfileConsentFields.promotionsPush))
         'promotionsPushOptIn': profile.promotionsPushOptIn,
-      'disabledNotificationTypes': profile.disabledNotificationTypes,
+      if (sends(ProfileConsentFields.notificationOptOuts))
+        'disabledNotificationTypes': profile.disabledNotificationTypes,
       'availableDocuments': profile.availableDocuments,
       if (profile.monthlyBudgetEur != null)
         'monthlyBudgetEur': profile.monthlyBudgetEur,
-      if (profile.aiConsentedAt != null)
+      if (profile.aiConsentedAt != null &&
+          sends(ProfileConsentFields.aiConsent))
         'aiConsentedAt': profile.aiConsentedAt!.toIso8601String(),
       if (profile.birthDate != null)
         'birthDate': profile.birthDate!.toIso8601String(),
       if (profile.guardianName != null) 'guardianName': profile.guardianName,
       if (profile.guardianContact != null)
         'guardianContact': profile.guardianContact,
-      if (profile.guardianConsentedAt != null)
+      if (profile.guardianConsentedAt != null &&
+          sends(ProfileConsentFields.guardianConsent))
         'guardianConsentedAt': profile.guardianConsentedAt!.toIso8601String(),
     };
   }

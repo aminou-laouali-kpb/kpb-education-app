@@ -264,4 +264,51 @@ describe('OneSignalSenderService', () => {
         '(no subscribed device, or no delivery platform configured on the OneSignal app).',
     ]);
   });
+
+  // Audit 57, F09 : à la suppression du compte, l'utilisateur OneSignal
+  // (external_id = id du compte, 4 étiquettes) est effacé.
+  describe('deleteUser', () => {
+    it('appelle DELETE …/users/by/external_id/<id> avec la clé REST', async () => {
+      const fetchMock = jest.fn(async () => ({ ok: true, status: 200 }) as Response);
+      global.fetch = fetchMock as unknown as typeof fetch;
+      await expect(new OneSignalSenderService().deleteUser('user 1')).resolves.toBe('deleted');
+      expect(fetchMock).toHaveBeenCalledWith(
+        'https://api.onesignal.com/apps/app-id/users/by/external_id/user%201',
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: { authorization: 'Basic rest-key' },
+        }),
+      );
+    });
+
+    it('clé v2 : schéma « Key »', async () => {
+      process.env.ONESIGNAL_REST_API_KEY = 'os_v2_app_abc';
+      const fetchMock = jest.fn(async () => ({ ok: true, status: 200 }) as Response);
+      global.fetch = fetchMock as unknown as typeof fetch;
+      await new OneSignalSenderService().deleteUser('u1');
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ headers: { authorization: 'Key os_v2_app_abc' } }),
+      );
+    });
+
+    it('404 = déjà absent ; erreur HTTP ou réseau = échec, sans lever', async () => {
+      mockFetch(async () => ({ ok: false, status: 404 }));
+      await expect(new OneSignalSenderService().deleteUser('u1')).resolves.toBe('absent');
+      mockFetch(async () => ({ ok: false, status: 500 }));
+      await expect(new OneSignalSenderService().deleteUser('u1')).resolves.toBe('failed');
+      mockFetch(async () => {
+        throw new Error('ENOTFOUND');
+      });
+      await expect(new OneSignalSenderService().deleteUser('u1')).resolves.toBe('failed');
+    });
+
+    it('sans clés OneSignal : aucun appel', async () => {
+      delete process.env.ONESIGNAL_REST_API_KEY;
+      const fetchMock = jest.fn();
+      global.fetch = fetchMock as unknown as typeof fetch;
+      await expect(new OneSignalSenderService().deleteUser('u1')).resolves.toBe('unconfigured');
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
 });

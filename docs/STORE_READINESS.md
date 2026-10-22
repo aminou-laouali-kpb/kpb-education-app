@@ -893,16 +893,19 @@ questionnaire caveat is that the 16 floor lives only in a client form; the
 report path still needs the internal-track/back-office operational evidence
 described above.
 
-### Community (C1 + C2) — ⚠️ TO APPLY ON THE DAY THE FLAG OPENS
+### Community (C1 + C2) — DECLARED WITH THE BUILD 57 SUBMISSION (owner decision of 20/10/2026)
 
-The table above stays true **while `KPB_COMMUNITY_ENABLED=false`** (default,
-`docker-compose.yml`): every student route `/community/*` answers 404
-`{ disabled: true }` before authentication (`community.feature.ts`), and the app
-hides the community. On the day the remote flag `features.community` is turned
-on — in the same submission as the build that shows it, never before — the
-answers change:
+Build 57 ships the community in the binary, behind the remote flag `features.community`
+(`KPB_COMMUNITY_ENABLED=false` by default, `docker-compose.yml`) with **no compile-time lock**:
+build 57 *is* the build that shows it — turning the flag on is enough, no new build. While the flag
+is off, every student route `/community/*` answers 404 `{ disabled: true }` before authentication
+(`community.feature.ts`) and the app shows "La communauté arrive bientôt", so the reviewer never
+reaches it ("OFF at review time", `docs/release-57-store-pack.md` §3). Owner decision of
+20/10/2026: **declare it to Apple and Google with the build 57 submission** (review notes, age
+rating, privacy forms), not on the day the flag opens. Enter these answers in place of the matching
+build-49 rows of the table above:
 
-| Questionnaire item | Answer at the flip | Reason (server, contract `docs/community-api-contract.md`) |
+| Questionnaire item | Answer (from build 57) | Reason (server, contract `docs/community-api-contract.md`) |
 |---|---|---|
 | Users interact with each other | **Yes** — public posts and replies between students; **no private messages**, no user mentions | `community-student.controller.ts`; §1 of the contract |
 | User-generated content | **Yes — public, moderated** | pre-publication filter (phone/WhatsApp/e-mail, money requests, mobile money, links outside an allowlist, FR/EN insults) → "pending review", visible to the author only (`community-content-filter.ts`); staff queue `GET /admin/community/queue` (target: 24 h) |
@@ -912,14 +915,18 @@ answers change:
 | Minors (16–17) | minimal public profile (first name + initial, country, badges); never e-mail, phone, age or location | `community-presenter.ts` (`memberAuthor`) |
 
 Apple Guideline 1.2 (filter, report, block, contact, timely moderation) and Google
-Play's UGC policy are covered server-side; the app agent wires the report/block
-entry points. Data safety / privacy labels at the flip: add **Other user-generated
-content** (posts, replies, reports) — collected, **not shared**, linked to the
-account, App functionality; deleted with the account, included in the export (§6).
-ToS and privacy policy (web + in-app): "Community" sections **drafted on 18/10/2026**
-(charter in four rules, prohibited content, moderation, sanctions, reporting, no private
-messages; 30-day retention of deleted content, hard deletion with the account) — to be reviewed
-by the owner **before** opening.
+Play's UGC policy are covered server-side; the app wires the report/block entry points.
+Data safety / privacy labels **from build 57**: add **Other user-generated content** (posts,
+replies, reports) — collected, **not shared**, linked to the account, optional, App
+functionality plus Fraud prevention, security and compliance (anti-scam filter, moderation);
+deleted with the account, included in the export (§6). Apple age rating (capabilities):
+user-generated content **Yes**; messaging and chat **No** (no private messages) — À VALIDER
+(owner) against the exact wording of the current form. Ready-to-enter rows:
+`docs/release-57-store-pack.md` §4.4. ToS and privacy policy (web + in-app): "Community" sections
+(charter in four rules, prohibited content, moderation, sanctions, reporting, no private messages;
+30-day retention of deleted content, hard deletion with the account) — **validated by the owner on
+19/10/2026**. The "Passerelle" bot (`features.assistBridge`) is declared in the same review notes
+(a settings switch for private KPB-team suggestions) and collects nothing new.
 *À VALIDER (owner): announced moderation delay, contact address shown in the app.*
 
 ---
@@ -945,13 +952,14 @@ Owner decision of 17/10/2026: the app side of the referral programme ships in bu
   (no user prompt).
 - **Ambassador contest screen** — reads `GET /referrals/campaigns/current`; shows no amount; footer
   names the organiser (KPB Global L.L.C-FZ) and says Apple and Google are neither organisers nor
-  partners (Apple 5.3.2). No user-to-user interaction, no UGC: age rating unchanged.
+  partners (Apple 5.3.2). No user-to-user interaction, no UGC: the contest screen leaves the age
+  rating unchanged (the community, declared with build 57 above, is what changes it).
 
 Full lines to paste: `docs/release-57-store-pack.md` §4, `docs/CONSOLE_ANSWERS.md` §0septies.
 Privacy policy (web + in-app): the installation identifier (fraud prevention), the invite-link
 reading (prefill only, nothing sent without confirmation), the HMAC fingerprints (180 days, owner
-decision of 18/10/2026) and the contest are now named — text **drafted on 18/10/2026, to be
-reviewed by the owner before the archive** (the in-app text is compiled).
+decision of 18/10/2026) and the contest are now named — text **drafted on 18/10/2026, validated
+by the owner on 19/10/2026** (the in-app text is compiled).
 
 ### Owner decisions of 18/10/2026 — what they change for the stores
 

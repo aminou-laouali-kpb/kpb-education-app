@@ -83,7 +83,7 @@ rouvre tout seul à la revue suivante.
 | **LIV-09** | **Wikimedia Commons** est un destinataire | La politique publiée le nomme (IP + user-agent dès qu'un logo s'affiche). Ajouté au tableau §5. Reporter la **même réponse que pour YouTube** dans Data Safety (Play) et App Privacy (Apple). | Dev (fait ici) · Ops (consoles) |
 | **XC-06** | **Finalités commerciales** des coordonnées | La politique publiée dit que (a) les déclarations d'intérêt sont lues par l'équipe commerciale pour rappeler l'étudiant et (b) dès qu'un dossier est déposé, nom, e-mail, téléphone, WhatsApp et contact du tuteur partent par e-mail aux commerciaux. Or les tableaux §1.2 et §2 ne déclarent que « Fonctionnalité / Compte ». **⚠️ À TRANCHER avec le juridique** — recommandation : ajouter la finalité **Marketing** (Play : « Advertising or marketing » ; Apple : « Developer's Advertising or Marketing ») sur Nom, E-mail, Téléphone et listes d'intérêt, pour que les consoles ne contredisent pas la politique. Le sens de l'erreur est choisi : sur-déclarer coûte une ligne, sous-déclarer coûte une soumission (« declaration inconsistent with privacy policy »). | **Juridique** |
 | **XC-06** | **Suivi du 18/10/2026 — décision NON reportée** | Le propriétaire a décidé le 18/10/2026 de **ne pas déclarer de finalité « Marketing »** pour les coordonnées, **sous réserve** qu'aucun envoi promotionnel ne parte sans opt-in explicite. Vérification du code : la newsletter (Mautic) n'est alimentée qu'après consentement (`newsletter-sync.service.ts`, `resolveNewsletterAction`) ; le récapitulatif hebdomadaire est fermé par défaut et respecte la désinscription `weekly_digest` ; **mais les campagnes de l'admin** (`campaign-executor.service.ts`) envoient un modèle **libre** en push et par e-mail (Resend) à des audiences larges (`all_users`, `all_students`, pays, niveau…) **sans aucun filtre de consentement ni de désinscription** — le code permet donc un envoi promotionnel sans opt-in. En outre, la politique dit que l'équipe commerciale reçoit les coordonnées à chaque dossier déposé et rappelle les déclarants d'intérêt (ces derniers sur consentement). **Ne pas déclarer « pas de Marketing » en l'état** : soit ajouter la finalité (recommandation d'origine), soit réserver par écrit (ou par le code) les campagnes admin aux messages de service et/ou à un opt-in, puis trancher. **À VALIDER (propriétaire).** | **Propriétaire** |
-| **XC-06** | **Suivi du 19/10/2026 — correctifs 57 (ce que le code garantit désormais)** | Les campagnes de l'admin portent une **finalité** (`NotificationCampaign.purpose`) : `informational` (service) ou `promotional`, **`promotional` par défaut** (texte libre, et toutes les campagnes antérieures). Pour une campagne promotionnelle, le code garantit, à l'aperçu comme à l'envoi (`campaign-purpose.ts`, tests unitaires et Postgres) : **e-mail** seulement aux comptes qui ont coché « Nouvelles et offres de KPB » (`promotionsEmailOptIn`, **non par défaut**, consentement horodaté, distinct de la newsletter bourses) — et, pour un mineur déclaré, avec en plus l'accord de son représentant légal —, avec un **lien de désinscription en un clic** et `List-Unsubscribe` dans chaque e-mail (sans secret de signature, l'e-mail ne part pas) ; **push** jamais vers un compte qui a coupé « Nouvelles et offres de KPB » (`kpb_promotions`). La politique (in-app et `confidentialite.html`) le dit (ajout marqué « à relire par le propriétaire »). **Ce qui n'est PAS garanti par le code, donc XC-06 reste ouvert** : (1) le **push promotionnel est en opt-out** (autorisation des notifications du téléphone + interrupteur dédié), pas en opt-in explicite — si la réserve du 18/10 vise aussi le push, elle n'est tenue que par un consentement à ajouter (même mécanique que l'e-mail) ; (2) la **classification** d'une campagne reste un choix humain dans l'admin (une offre marquée « information de service » échapperait aux filtres) ; (3) l'**équipe commerciale** reçoit toujours les coordonnées à chaque dossier déposé et rappelle les déclarants d'intérêt (sur consentement) — question juridique inchangée. **À VALIDER (propriétaire)** : accepter le push en opt-out ou demander l'opt-in ; puis trancher la case Marketing avec (3). | **Propriétaire** |
+| **XC-06** | **Suivi du 19/10/2026 — correctifs 57 (HISTORIQUE : dépassé par la ligne « chantier juridique 57 » ci-dessous, qui tranche XC-06)** | Les campagnes de l'admin portent une **finalité** (`NotificationCampaign.purpose`) : `informational` (service) ou `promotional`, **`promotional` par défaut** (texte libre, et toutes les campagnes antérieures). Pour une campagne promotionnelle, le code garantit, à l'aperçu comme à l'envoi (`campaign-purpose.ts`, tests unitaires et Postgres) : **e-mail** seulement aux comptes qui ont coché « Nouvelles et offres de KPB » (`promotionsEmailOptIn`, **non par défaut**, consentement horodaté, distinct de la newsletter bourses) — et, pour un mineur déclaré, avec en plus l'accord de son représentant légal —, avec un **lien de désinscription en un clic** et `List-Unsubscribe` dans chaque e-mail (sans secret de signature, l'e-mail ne part pas) ; **push** jamais vers un compte qui a coupé « Nouvelles et offres de KPB » (`kpb_promotions`). La politique (in-app et `confidentialite.html`) le dit (ajout marqué « à relire par le propriétaire »). **Ce qui n'est PAS garanti par le code, donc XC-06 reste ouvert** : (1) le **push promotionnel est en opt-out** (autorisation des notifications du téléphone + interrupteur dédié), pas en opt-in explicite — si la réserve du 18/10 vise aussi le push, elle n'est tenue que par un consentement à ajouter (même mécanique que l'e-mail) ; (2) la **classification** d'une campagne reste un choix humain dans l'admin (une offre marquée « information de service » échapperait aux filtres) ; (3) l'**équipe commerciale** reçoit toujours les coordonnées à chaque dossier déposé et rappelle les déclarants d'intérêt (sur consentement) — question juridique inchangée. **À VALIDER (propriétaire)** : accepter le push en opt-out ou demander l'opt-in ; puis trancher la case Marketing avec (3). | **Propriétaire** |
 | **XC-06** | **Décision du 19/10/2026 — TRANCHÉ** | Le propriétaire garde le **push promotionnel en opt-out** (désactivable dans les réglages de notification, clé `kpb_promotions`) et **déclare donc la finalité « Marketing »** : Play Data Safety (adresse e-mail, identifiants de l'appareil/notification : « Marketing » coché en plus des finalités existantes) et Apple App Privacy (« Third-Party Advertising » NON, « Developer's Advertising or Marketing » OUI). L'e-mail promotionnel reste réservé par le code aux comptes consentants. |
 | **XC-06** | **Suivi du 19/10/2026 (chantier juridique 57) — push promotionnel désormais en OPT-IN (App Store 4.5.4)** | Apple (4.5.4) exige pour le push promotionnel un consentement **explicite, préalable, recueilli dans l'app et retirable dans l'app**. Le code l'impose désormais (`campaign-purpose.ts`, tests unitaires et Postgres) : un push d'une campagne `promotional` ne part qu'aux comptes qui ont **activé** « Nouvelles et offres de KPB par notification » (`UserProfile.promotionsPushOptIn`, **non par défaut pour tous, comptes existants compris**, preuve horodatée `promotionsPushConsentedAt`) **et** n'ont pas coupé `kpb_promotions` ; mineur déclaré : accord du représentant légal en plus (même règle que l'e-mail). Une build qui ne connaît pas le champ ne peut pas l'activer, donc ne reçoit plus de push promotionnel. Choix d'interface : **deux interrupteurs distincts** (e-mail dans Profil, notification dans les réglages des notifications), plutôt qu'un consentement unique — l'e-mail avait déjà son consentement horodaté, et le réutiliser pour le push aurait fait passer pour consentants au push des comptes qui n'avaient accepté que l'e-mail. Les messages de service (`informational`) ne changent pas. **Formulaires** : la finalité **« Marketing » reste déclarée** (Play Data Safety ; Apple « Developer's Advertising or Marketing ») — c'est honnête (e-mail et push promotionnels existent) et ça ne coûte rien ; préciser **opt-in** partout où un champ libre le permet. Restent hors du code : la classification humaine d'une campagne, et les coordonnées envoyées à l'équipe commerciale. | Dev (fait) · Ops (consoles) |
 | **XC-06** | « Langue du consentement » | Corrigé §1.2 : `EefInterest` n'a pas de colonne de langue. Soit retirer l'affirmation (fait), soit ajouter `consentLocale` avec une `eef-consent-v2` — **non fait**, voir `docs/eef-consent-v1.md`. | Juridique + Dev |
@@ -149,14 +149,15 @@ preuves : `docs/release-57-store-pack.md` §4 et `docs/data-inventory.md` §6 bi
 | Play — **Play Install Referrer** (SDK Android `play_install_referrer` 0.5.0 → Google `installreferrer` 2.2) | **Non collecté** : URL de référence, horodatages et version d'installation sont lus et traités **sur l'appareil** ; seul `ref` est gardé localement pour préremplir un champ ; le code ne part qu'au rattachement **confirmé** par l'élève (le rattachement par code est déjà couvert par « Autres actions », KPB-69) | `referral_attribution.dart` (`captureInstallReferrerOnce`, aucun appel réseau) |
 | Apple — **Identifiers / Device ID** | Inchangé (déjà déclaré, lié, non utilisé pour le suivi) ; finalité **App Functionality** couvre la prévention de la fraude. Aucun SDK nouveau sur iOS | `ios/Runner/PrivacyInfo.xcprivacy` (`NSPrivacyCollectedDataTypeDeviceID`) |
 | Apple — **Tracking** | **Non**, inchangé : l'Install Referrer est Android seulement, sert à préremplir un code de parrain, ne joint rien à des données tierces | — |
-| Classification d'âge | Inchangée : l'écran « Compétition ambassadeurs » n'ajoute ni interaction entre utilisateurs ni contenu généré ; un concours avec prix (Apple 5.3) se signale aux notes de revue (pack 57 §3) | — |
+| Classification d'âge | L'écran « Compétition ambassadeurs » n'y change rien (ni interaction entre utilisateurs ni contenu généré ; un concours avec prix, Apple 5.3, se signale aux notes de revue, pack 57 §3). **La communauté, elle, la change dès la 57** : voir §3 bis (décision du propriétaire du 20/10/2026) | — |
 
 **Politique (18/10/2026)** : la politique in-app (FR/EN) et `web/public/confidentialite.html`
 nomment désormais l'identifiant d'installation (finalité prévention de la fraude), la lecture du
 lien d'invitation (préremplissage, rien de transmis sans confirmation), les empreintes HMAC
 (180 jours) et la compétition (section « Parrainage et compétition des ambassadeurs »). Texte
-rédigé le 18/10/2026, **à relire par le propriétaire avant l'archive** (le texte in-app est
-compilé) — sans quoi « declaration inconsistent with privacy policy ».
+rédigé le 18/10/2026, **validé par le propriétaire le 19/10/2026** (le texte in-app est compilé :
+les formulaires doivent dire la même chose, sans quoi « declaration inconsistent with privacy
+policy »).
 
 ---
 
@@ -275,9 +276,9 @@ compilé) — sans quoi « declaration inconsistent with privacy policy ».
 |---|---|---|
 | Âge contractuel minimum | **16** | CGU `conditions.html:29` ; in-app `app_translations.dart:704` |
 | Accès web illimité | **Non** | lecteur YouTube non navigable (`IgnorePointer`, `controls:0`) ; liens sortants en `externalApplication` |
-| Interaction entre utilisateurs | **Non** (vérifié sur la 53) | Community derrière `!mvpOnly` défaut true ; forum 404 sous `MvpGuard` |
-| Contenu généré par l'utilisateur | **Oui — visible staff, jamais public** | 3 écritures, aucune publique |
-| Signalement de contenu / blocage | **Signalement IA : Oui. Blocage : N/A** | `ai_content_report_sheet.dart` → `POST /cases` |
+| Interaction entre utilisateurs | **Oui dès la 57** (communauté, §3 bis). Jusqu'à la 56 : Non (vérifié sur la 53) | 53 à 56 : Community derrière `!mvpOnly` défaut true ; forum 404 sous `MvpGuard`. 57 : §3 bis |
+| Contenu généré par l'utilisateur | **Oui — public et modéré dès la 57** (§3 bis) ; s'y ajoutent 3 écritures visibles du staff seulement | §3 bis ; 3 écritures, aucune publique |
+| Signalement de contenu / blocage | **Oui / Oui dès la 57** (§3 bis) ; signalement IA : Oui | `ai_content_report_sheet.dart` → `POST /cases` ; §3 bis |
 | IA générative, texte libre | **Oui — 6 surfaces** | coach, test d'orientation, CV, lettre de motivation, simulateur d'entretien, relecture de document → OpenRouter |
 | Localisation | **Non** | aucun plugin géo |
 | Jeux d'argent | **Non** | absence exhaustive |
@@ -286,16 +287,21 @@ compilé) — sans quoi « declaration inconsistent with privacy policy ».
 
 > **Recommandé :** saisir ces réponses et laisser chaque questionnaire calculer la
 > tranche. **Ne pas** reporter l'ancien couple « Apple 12+ / Google Teen » (dérivé
-> d'un module communautaire qui ne ship pas et sans les 6 surfaces d'IA).
+> d'un ancien module communautaire et sans les 6 surfaces d'IA) : avec la 57, ce sont
+> les lignes du §3 bis qui décrivent la communauté.
 
-### 3 bis. Communauté (C1 + C2) — ⚠️ À APPLIQUER LE JOUR OÙ LE DRAPEAU S'OUVRE
+### 3 bis. Communauté (C1 + C2) — DÉCLARÉE DÈS LA SOUMISSION DE LA 57 (décision du propriétaire du 20/10/2026)
 
-Tant que `KPB_COMMUNITY_ENABLED` vaut `false` (défaut, `docker-compose.yml`), le tableau
-ci-dessus reste juste : les routes élève `/community/*` répondent 404 et l'app n'affiche pas la
-communauté. **Le jour de la bascule** (et pas avant), dans la même soumission que la build qui
-l'affiche, remplacer ces lignes :
+La communauté est **dans le binaire de la 57**, derrière le drapeau distant `features.community`
+(`KPB_COMMUNITY_ENABLED`, `false` par défaut, `docker-compose.yml`) **sans verrou de compilation** :
+c'est donc la 57 « qui l'affiche » — ouvrir le drapeau suffit, sans nouvelle build. Tant qu'il est
+fermé, les routes élève `/community/*` répondent 404 et l'app montre « La communauté arrive
+bientôt » : le relecteur ne la voit pas (« OFF at review time », pack 57 §3). Décision du
+propriétaire du 20/10/2026 : **la déclarer à Apple et à Google dès la soumission de la 57**
+(notes de revue, classification d'âge, formulaires de confidentialité) — **avec la 57, pas « le
+jour de la bascule »**. Saisir ces lignes à la place des lignes correspondantes du §3 :
 
-| Item | Réponse à la bascule | Preuve (serveur, `docs/community-api-contract.md`) |
+| Item | Réponse (dès la 57) | Preuve (serveur, `docs/community-api-contract.md`) |
 |---|---|---|
 | Interaction entre utilisateurs | **Oui** — publications et réponses publiques entre élèves, **sans message privé** ni mention d'utilisateur | `community-student.controller.ts` ; aucun DM (§1 du contrat) |
 | Contenu généré par l'utilisateur | **Oui — public, modéré** : filtre avant publication (coordonnées, WhatsApp, demandes d'argent, mobile money, liens hors liste blanche, insultes FR/EN) → « en attente de revue » ; file de modération de l'équipe (délai cible 24 h) | `community-content-filter.ts`, `GET /admin/community/queue` |
@@ -306,14 +312,23 @@ l'affiche, remplacer ces lignes :
 | Apple « User Generated Content » (Guideline 1.2) | filtre + signalement + blocage + contact + modération : **tous présents côté serveur** ; contact = équipe KPB (WhatsApp / e-mail existants) | — |
 | Play « Contenu généré par les utilisateurs » / IARC « les utilisateurs peuvent interagir » | **Oui**, modéré | idem |
 
-Sécurité des données (Play) / étiquettes (Apple) à la bascule : ajouter **Autre contenu généré par
-l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au compte,
-finalité Fonctionnalité de l'app ; supprimé avec le compte, inclus dans l'export (§4). CGU et
-politique (`web/public/conditions.html`, `confidentialite.html`, textes in-app) : sections
-« Communauté d'entraide » **rédigées le 18/10/2026**, à relire par le propriétaire **avant**
-d'ouvrir. *À VALIDER (propriétaire) : délai de modération annoncé, adresse de contact affichée.*
+Sécurité des données (Play) / étiquettes (Apple) **dès la 57** : ajouter **Autre contenu généré
+par l'utilisateur** (publications, réponses, signalements) — collecté, **non partagé**, lié au
+compte, facultatif, finalités Fonctionnalité de l'app et Prévention de la fraude, sécurité et
+conformité (filtre anti-arnaque, modération) ; supprimé avec le compte, inclus dans l'export (§4) ;
+« Autres actions » : charte acceptée, « utile », discussions suivies, membres bloqués. Apple :
+*User Content → Other User Content* (lié, pas de suivi, App Functionality). Questionnaire d'âge
+Apple (capacités) : contenu généré par les utilisateurs **Oui** ; messagerie et discussion **Non**
+(aucun message privé) — À VALIDER (propriétaire) avec l'intitulé exact de la grille du jour.
+Lignes prêtes : `docs/release-57-store-pack.md` §4.4. CGU et politique
+(`web/public/conditions.html`, `confidentialite.html`, textes in-app) : sections « Communauté
+d'entraide » **validées par le propriétaire le 19/10/2026**. *À VALIDER (propriétaire) : délai de
+modération annoncé, adresse de contact affichée.*
 
 ### 3 ter. Bot « Passerelle » (C3 bis) — rien à changer tant que la source coach reste fermée
+
+Déclaré aux notes de revue de la 57 (`features.assistBridge`, OFF à la revue : « a settings switch
+for private KPB-team suggestions »), comme la communauté (§3 bis).
 
 La passerelle (`docs/runbook-bot-passerelle.md`) ne collecte **aucune donnée nouvelle** : elle lit
 les publications et réponses que l'élève vient d'écrire (déjà déclarées au §3 bis) et lui envoie

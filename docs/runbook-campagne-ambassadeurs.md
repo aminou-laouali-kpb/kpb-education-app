@@ -5,8 +5,10 @@ Compétition de **novembre 2026** : du 1er au 10/11 inclus, heure d'Afrique de l
 Abidjan, Douala (pilotables). Décisions du propriétaire du 17/10/2026, complétées le
 18/10/2026 (versement sous 7 jours, prix perdu après 15 jours et passé au suivant, résultats le
 17 novembre 2026, droit des Émirats arabes unis (Dubaï), proches de l'équipe exclus, pièce
-d'identité au versement, empreintes 180 jours). Règlement (texte arrêté le 18/10/2026, à relire
-par le propriétaire avant publication) : `docs/reglement-competition-ambassadeurs-novembre-2026.md`.
+d'identité au versement, empreintes 180 jours). Règlement (texte arrêté le 18/10/2026) :
+`docs/reglement-competition-ambassadeurs-novembre-2026.md`, **publié** à
+`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+(`web/public/reglement-ambassadeurs-2026-11.html`, servi par `deploy.yml`, `scope=web` ou `full`).
 
 **Tout fonctionne avec l'app installée (2.3.0, build 56), sans nouvelle build** : le comptage
 est serveur, la gestion est dans la console admin, le classement est une page web.
@@ -33,6 +35,14 @@ est serveur, la gestion est dans la console admin, le classement est une page we
    - Correctifs 57 (19/10/2026) : le déploiement complet suivant applique aussi la migration
      additive `20261026130000_referral_prize_forfeit` (table neuve, vide) qui porte « Déclarer le
      prix forfait et réattribuer » (§7). À déployer **avant** la validation du podium.
+   - Correctifs de l'audit 57 (20/10/2026) : le déploiement complet applique aussi la migration
+     de données `20261028120000_profile_completion_without_consent` (aucun changement de
+     schéma) : « profil complété » ne dépend plus de `UserProfile.consentedAt`, qu'aucune build
+     n'envoie — sans ce correctif, aucun filleul n'aurait été qualifié. **À déployer avant le
+     1er novembre**, puis, la campagne lancée, **Recalculer maintenant** une fois (fiche de la
+     campagne ; `POST /api/admin/referral-campaigns/<id>/recompute`) : le rapport doit répondre
+     sans erreur. Avant le 1er à 00 h (UTC+1), aucun rattachement n'est dans la fenêtre : 0
+     filleul est normal.
 2. Variables (toutes facultatives, défauts sûrs) : `REFERRAL_CODE_HOURLY_LIMIT` (30),
    `REFERRAL_SIGNAL_RETENTION_DAYS` (180), `KPB_REFERRAL_SIGNAL_SECRET` (sinon `KPB_JWT_SECRET`),
    `AMBASSADOR_SELF_ACTIVATION_ENABLED` (faux : laisser faux).
@@ -45,8 +55,16 @@ est serveur, la gestion est dans la console admin, le classement est une page we
 
 Console admin → **Compétition ambassadeurs** → **Nouvelle campagne**. Le formulaire est
 prérempli pour novembre : slug `ambassadeurs-novembre-2026`, 2026-11-01 → 2026-11-10,
-`Africa/Lagos`, prix « 100000, 50000, 30000 », villes. Ajouter le lien du règlement (https) ou
-son texte une fois validé. **Créer** → la campagne est un **brouillon** (invisible du public).
+`Africa/Lagos`, prix « 100000, 50000, 30000 », villes. **Lien du règlement (https)** = `rulesUrl`
+= `https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html` — **obligatoire** : c'est le
+seul règlement publié (bouton « Lire le règlement » de la page du classement et de l'écran
+« Compétition »), et le serveur **refuse de lancer** une campagne sans `rulesUrl` en https. Le
+champ « Règlement (texte) » est **interne** (non publié : ni la page publique ni l'app ne le
+lisent) ; le laisser vide ou y garder une note pour l'équipe. **Créer** → la campagne est un
+**brouillon** (invisible du public).
+
+Contrôle avant de lancer : `curl -sI https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html`
+→ 200 (la page part avec le déploiement de `web/public`).
 
 Contrôle : l'en-tête affiche « UTC : 2026-10-31T23:00:00.000Z → 2026-11-10T23:00:00.000Z
 (exclu) ». La borne de fin est exclusive : le 10/11 à 23 h 59 locale compte, minuit non.
@@ -83,7 +101,8 @@ UTC+1).
 Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0 du store :
 
 1. Créer une campagne de **test** : slug `test-interne-oct-2026`, du **jour même** au jour même,
-   prix « 1, 1, 1 », aucune ville (toutes). Créer.
+   prix « 1, 1, 1 », aucune ville (toutes), même `rulesUrl` que ci-dessus (sans lien https, le
+   lancement est refusé). Créer.
 2. Activer un compte « ambassadeur » de test (son e-mail, ville Niamey) et l'inscrire. S'il est
    mineur ou sans date de naissance, mettre « Âge » = Majeur (c'est un test) ou vérifier
    l'autorisation.
@@ -149,7 +168,11 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
    - ne change pas le classement public (ordre réel) ; une fois la campagne **close**, le podium
      de la page publique montre les lauréats **effectifs**.
    L'action est idempotente (un double clic ne déclare rien deux fois) et marche **avant comme
-   après** un premier versement : plus besoin d'attendre ni de traiter hors outil. Elle n'a pas
+   après** un premier versement : plus besoin d'attendre ni de traiter hors outil.
+   **Lauréat qui a supprimé son compte → prix orphelin → Déclarer forfait** : la ligne du prix
+   non versé affiche « Lauréat : compte supprimé » (nom public « Compte supprimé », plus de
+   participant) ; « Déclarer le prix forfait et réattribuer » l'envoie sans participant et le prix
+   passe au suivant classé, comme ci-dessus (audit 57). Elle n'a pas
    de retour arrière dans l'outil : vérifier le délai de 15 jours avant de la lancer. Le nouveau
    lauréat est contacté et versé comme les autres (pièce d'identité, 7 jours).
    Les résultats définitifs sont annoncés le **17 novembre 2026**.

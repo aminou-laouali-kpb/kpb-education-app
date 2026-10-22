@@ -63,6 +63,16 @@ rentrée décalée (janvier – mars 2027) ne bougent pas.
   l'automne 2027 et tarif 2027-2028) : `docs/omnes-rentrees-reconduites-2027.md`.
   Une date confirmée se corrige dans l'admin en retirant les deux marques.
 
+**Quand lancer la reconduction (audit 57, F19).** Seule la build **57 (2.3.1)** lit
+`intakeEstimated` / `rolledFromIntake` et affiche « à confirmer ». Les builds **2.3.0 (≤ 56)**
+lisent seulement `intake` : après la reconduction, elles afficheraient « Rentrée 01/10/2027 » et
+le tarif 2026-2027 **comme confirmés** (le serveur sert la même fiche à toutes les builds). Règle :
+lancer `roll-omnes-fall-2027` **seulement quand la 57 est installée chez la majorité des comptes
+actifs** — `GET /admin/app-builds`, « part des comptes actifs sur cette build ou une plus récente »
+au-dessus de 50 % pour la 57 —, donc après le déploiement par paliers (checklist de la 57,
+étape 9). `dedupe-omnes`, `import-omnes-spring` et `import-igensia` n'ont pas cette contrainte
+(aucune date reconduite) et partent avec la release (checklist, étape 1, point 5).
+
 **Ordre et interactions.** À passer après `dedupe-omnes` et
 `import-omnes-spring`. L'import de printemps n'écrit que des dates de
 janvier – mars 2027 : il ne réintroduit aucune date 2026 et ne double pas une
@@ -93,7 +103,8 @@ ne deviennent jamais des écoles (`assertTargetsAreSchools`).
 ## Procédure
 
 Pour chacune des opérations, dans cet ordre (`dedupe-omnes`,
-`import-omnes-spring`, `roll-omnes-fall-2027`, puis `import-igensia`) —
+`import-omnes-spring`, `import-igensia` avec la release ; `roll-omnes-fall-2027`
+plus tard, quand la 57 est majoritaire — voir « Quand lancer la reconduction ») —
 Actions → **VPS ops** → Run workflow :
 
 1. **Simulation** : `action` = l'opération, `dry_run` coché. Lire le rapport :

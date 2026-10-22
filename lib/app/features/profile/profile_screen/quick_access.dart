@@ -182,7 +182,10 @@ class _LegalCard extends StatelessWidget {
 
 class _DataRightsCard extends StatelessWidget {
   const _DataRightsCard({required this.onExport, required this.onDelete});
-  final VoidCallback onExport;
+
+  /// Reçoit le contexte de la ligne touchée : la feuille de partage s'y ancre
+  /// sur iPad (audit 57, F12).
+  final ValueChanged<BuildContext> onExport;
   final VoidCallback onDelete;
 
   @override
@@ -196,11 +199,13 @@ class _DataRightsCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             children: _withDividers([
-              _QuickAccessTile(
-                icon: Icons.download_outlined,
-                color: KpbColors.textMuted,
-                label: 'export_data'.tr,
-                onTap: onExport,
+              Builder(
+                builder: (tile) => _QuickAccessTile(
+                  icon: Icons.download_outlined,
+                  color: KpbColors.textMuted,
+                  label: 'export_data'.tr,
+                  onTap: () => onExport(tile),
+                ),
               ),
               _QuickAccessTile(
                 icon: Icons.delete_outline_rounded,

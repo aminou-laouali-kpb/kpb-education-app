@@ -67,10 +67,12 @@ mixin _CatalogSyncMixin on _AppControllerBase {
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);
-            profile = ProfileApiCodec.userProfileFromApi(
+            // La valeur du serveur fait foi, consentements compris (F24) :
+            // un désabonnement fait ailleurs remplace la copie locale.
+            profile = _withPendingConsents(ProfileApiCodec.userProfileFromApi(
               profileJson,
               fallbackLocale: localeCode,
-            );
+            ));
             localeCode = profile?.preferredLanguage ?? localeCode;
             _clampShippedLocale();
           } else {

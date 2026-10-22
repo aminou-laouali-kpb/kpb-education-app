@@ -1,7 +1,7 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import type { PrismaService } from '../../prisma/prisma.service';
-import { ReferralCampaignService } from './referral-campaign.service';
+import { PUBLIC_CACHE_MAX_ENTRIES, ReferralCampaignService } from './referral-campaign.service';
 
 /**
  * Le classement PUBLIC ne doit rien laisser fuir : ni e-mail, ni identifiant
@@ -181,6 +181,53 @@ describe('ReferralCampaignService — classement public', () => {
     expect(reads).toBe(2);
   });
 
+  // Audit 57, F04 / F16 : `?city=` est une chaîne libre d'une route publique.
+  // Une entrée de cache par valeur reçue faisait grossir la mémoire sans borne
+  // (campagne gelée ou close : jamais invalidée).
+  describe('cache borné', () => {
+    const cacheOf = (svc: ReferralCampaignService) =>
+      (svc as unknown as { publicCache: Map<string, unknown> }).publicCache;
+
+    it('une seule entrée par campagne, quelles que soient les villes demandées (close comprise)', async () => {
+      const svc = service('closed', rows);
+      const t0 = new Date('2026-11-20T12:00:00Z');
+      for (let i = 0; i < 50; i += 1) {
+        const out = await svc.publicLeaderboard(campaign.slug, `ville-inventée-${i}`, t0);
+        // Ville absente de la campagne : liste vide.
+        expect(out.entries).toEqual([]);
+      }
+      const niamey = await svc.publicLeaderboard(campaign.slug, '  NIAMEY ', t0);
+      expect(niamey.entries.map((e) => e.name)).toEqual(['Aïcha K.']);
+      expect([...cacheOf(svc).keys()]).toEqual([campaign.slug]);
+      // La vue complète reste servie entière.
+      expect((await svc.publicLeaderboard(campaign.slug, undefined, t0)).entries).toHaveLength(4);
+    });
+
+    it(`au plus ${PUBLIC_CACHE_MAX_ENTRIES} entrées : la plus ancienne part, les expirées sont purgées`, async () => {
+      const client = {
+        referralCampaign: {
+          findUnique: async ({ where }: { where: { slug: string } }) => ({ ...campaign, slug: where.slug }),
+        },
+        referralCampaignParticipant: { findMany: async () => rows },
+        referralCampaignPrizeAward: { findMany: async () => [] },
+      };
+      const svc = new ReferralCampaignService({
+        execute: async (fn: (c: typeof client) => unknown) => fn(client),
+      } as unknown as PrismaService);
+      const t0 = new Date('2026-11-05T12:00:00Z');
+      for (let i = 0; i < PUBLIC_CACHE_MAX_ENTRIES + 10; i += 1) {
+        await svc.publicLeaderboard(`campagne-${i}`, undefined, t0);
+      }
+      const cache = cacheOf(svc);
+      expect(cache.size).toBe(PUBLIC_CACHE_MAX_ENTRIES);
+      expect(cache.has('campagne-0')).toBe(false);
+      expect(cache.has(`campagne-${PUBLIC_CACHE_MAX_ENTRIES + 9}`)).toBe(true);
+      // 31 s plus tard, une écriture purge tout ce qui a expiré.
+      await svc.publicLeaderboard('campagne-neuve', undefined, new Date(t0.getTime() + 31_000));
+      expect([...cache.keys()]).toEqual(['campagne-neuve']);
+    });
+  });
+
   it('un brouillon ou un slug inconnu : 404', async () => {
     await expect(service('draft', rows).publicLeaderboard(campaign.slug, undefined)).rejects.toBeInstanceOf(
       NotFoundException,
@@ -239,5 +286,72 @@ describe('ReferralCampaignService — classement public', () => {
   it('avant la clôture : aucun lauréat public (podium provisoire)', async () => {
     const out = await service('frozen', rows, awards).publicLeaderboard(campaign.slug, undefined);
     expect(out.winners).toEqual([]);
+  });
+});
+
+// Audit 57, F20 : le règlement n'est publié que par son lien https — la page
+// publique et l'écran « Compétition » n'affichent « Lire le règlement »
+// qu'avec lui, le texte collé reste interne. Lancer sans lien est refusé.
+describe('ReferralCampaignService — lancement', () => {
+  function launchable(over: Record<string, unknown>) {
+    const updates: unknown[] = [];
+    const draft = {
+      id: 'c1',
+      slug: 'c1',
+      status: 'draft',
+      prizes: [{ rank: 1, amountFcfa: 1000 }],
+      rulesText: 'Règlement collé',
+      rulesUrl: null,
+      timeZone: 'Africa/Lagos',
+      startsAt: new Date('2026-10-31T23:00:00Z'),
+      endsAt: new Date('2026-11-10T23:00:00Z'),
+      podiumValidatedAt: null,
+      ...over,
+    };
+    const tx = {
+      referralCampaign: {
+        updateMany: async (args: unknown) => {
+          updates.push(args);
+          return { count: 1 };
+        },
+        findUniqueOrThrow: async () => ({ ...draft, status: 'live' }),
+      },
+      adminAuditEvent: { create: async () => ({}) },
+    };
+    const client = {
+      referralCampaign: { findUnique: async () => draft },
+      $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
+    };
+    const svc = new ReferralCampaignService({
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService);
+    return { svc, updates };
+  }
+  const actor = { id: 'admin-1', role: 'admin' };
+
+  it.each([
+    ['sans lien (texte seul)', null],
+    ['lien vide', '  '],
+    ['lien http', 'http://kpbeducation.cloud/reglement.html'],
+  ])('refuse %s, sans rien écrire', async (_label, rulesUrl) => {
+    const { svc, updates } = launchable({ rulesUrl });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toThrow(
+      'Pose le lien https du règlement',
+    );
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toBeInstanceOf(BadRequestException);
+    expect(updates).toEqual([]);
+  });
+
+  it('lance avec un lien https', async () => {
+    const { svc, updates } = launchable({
+      rulesUrl: 'https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html',
+    });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).resolves.toMatchObject({ status: 'live' });
+    expect(updates).toHaveLength(1);
+  });
+
+  it('le prix reste exigé en premier', async () => {
+    const { svc } = launchable({ prizes: [] });
+    await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toThrow('Définis au moins un prix');
   });
 });

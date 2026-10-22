@@ -1,3 +1,6 @@
+import { Logger } from '@nestjs/common';
+
+import { OneSignalSenderService } from '../notifications/onesignal-sender.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ProfilesService } from './profiles.service';
@@ -74,6 +77,12 @@ describe('ProfilesService — account deletion & export', () => {
     'referralCampaignParticipant',
     'referralCampaignReferral',
     'referralAttributionSignal',
+    // Prix et forfaits de la compétition, journal d'audit, modèles de campagne
+    // (audit 57, F05 / F07 / F08 / F17).
+    'referralCampaignPrizeAward',
+    'referralCampaignPrizeForfeit',
+    'adminAuditEvent',
+    'notificationTemplate',
     // Communauté (C1 + C2) : aucune fiche membre ici (findUnique → null).
     'communityMember',
     'communityReply',
@@ -179,6 +188,106 @@ describe('ProfilesService — account deletion & export', () => {
     expect(calls.indexOf('consentReceipt.deleteMany')).toBeLessThan(
       calls.indexOf('guardianAuthorization.deleteMany'),
     );
+  });
+
+  it('anonymise les livraisons de campagnes et les prix non versés AVANT la cascade (audit 57)', async () => {
+    const { client, calls } = makeFakePrisma({ email: 'a@b.com', supabaseUserId: null });
+    const updates: Record<string, unknown[]> = {};
+    for (const model of [
+      'notificationDelivery',
+      'referralCampaignPrizeAward',
+      'referralCampaignPrizeForfeit',
+      'adminAuditEvent',
+    ]) {
+      (client[model] as Record<string, unknown>).updateMany = (args: unknown) => {
+        calls.push(`${model}.updateMany`);
+        (updates[model] ??= []).push(args);
+        return { __op: `${model}.updateMany` };
+      };
+    }
+    (client.ambassador as Record<string, unknown>).findMany = async () => [{ id: 'amb-1' }];
+    (client.referralCampaignParticipant as Record<string, unknown>).findMany = async () => [
+      { id: 'part-1' },
+    ];
+    (client.referralCampaignPrizeForfeit as Record<string, unknown>).findMany = async () => [
+      { id: 'forf-1' },
+    ];
+    const prisma = {
+      execute: async (fn: (c: unknown) => unknown) => fn(client),
+    } as unknown as PrismaService;
+
+    await new ProfilesService(prisma, fakeStorage).deleteMe('user-1');
+
+    expect(updates.notificationDelivery).toEqual([
+      {
+        where: { recipientId: 'user-1' },
+        data: { recipientId: 'compte-supprime', recipientName: 'Compte supprimé' },
+      },
+    ]);
+    expect(updates.referralCampaignPrizeAward).toEqual([
+      {
+        where: { participantId: { in: ['part-1'] }, payoutStatus: { not: 'paid' } },
+        data: { publicNameSnapshot: 'Compte supprimé', note: null, payoutReference: null },
+      },
+    ]);
+    expect(updates.referralCampaignPrizeForfeit).toEqual([
+      {
+        where: { participantId: { in: ['part-1'] } },
+        data: { publicNameSnapshot: 'Compte supprimé', reason: 'Motif effacé (compte supprimé)' },
+      },
+    ]);
+    expect(updates.adminAuditEvent).toEqual(
+      expect.arrayContaining([
+        {
+          where: { entityType: 'Ambassador', entityId: { in: ['amb-1'] } },
+          data: { changes: { erased: 'account_deleted' }, reasonCode: null },
+        },
+        {
+          where: { entityType: 'ReferralCampaignParticipant', entityId: { in: ['part-1'] } },
+          data: { changes: { erased: 'account_deleted' }, reasonCode: null },
+        },
+        {
+          where: { entityType: 'ReferralCampaignPrizeForfeit', entityId: { in: ['forf-1'] } },
+          data: { reasonCode: null },
+        },
+      ]),
+    );
+    // La cascade (Ambassador → participations → SET NULL sur prix et forfaits)
+    // vient APRÈS : sinon plus rien ne relie ces lignes au compte.
+    for (const op of ['referralCampaignPrizeAward.updateMany', 'referralCampaignPrizeForfeit.updateMany']) {
+      expect(calls.indexOf(op)).toBeLessThan(calls.indexOf('ambassador.deleteMany'));
+    }
+  });
+
+  it('efface l’utilisateur OneSignal après la purge, sans bloquer la suppression (audit 57, F09)', async () => {
+    const { client, calls } = makeFakePrisma({ email: 'a@b.com', supabaseUserId: null });
+    const prisma = {
+      execute: async (fn: (c: unknown) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+    const oneSignal = {
+      isConfigured: true,
+      deleteUser: jest.fn(async () => {
+        calls.push('oneSignal.deleteUser');
+        return 'failed' as const;
+      }),
+    } as unknown as OneSignalSenderService;
+
+    await expect(
+      new ProfilesService(prisma, fakeStorage, undefined, oneSignal).deleteMe('user-1'),
+    ).resolves.toEqual({ deleted: true, authIdentityRemoved: false });
+
+    expect(oneSignal.deleteUser).toHaveBeenCalledWith('user-1');
+    expect(calls.indexOf('oneSignal.deleteUser')).toBeGreaterThan(calls.indexOf('userProfile.delete'));
+    // L'échec est journalisé, sans l'identifiant du compte.
+    const logged = warn.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(logged).toContain('OneSignal user deletion failed');
+    expect(logged).not.toContain('user-1');
+
+    // Sans clés OneSignal : rien n'est demandé.
+    const unconfigured = { isConfigured: false, deleteUser: jest.fn() } as unknown as OneSignalSenderService;
+    await new ProfilesService(prisma, fakeStorage, undefined, unconfigured).deleteMe('user-1');
+    expect(unconfigured.deleteUser).not.toHaveBeenCalled();
   });
 
   it('hard-deletes Supabase Auth before the local transaction', async () => {

@@ -1668,6 +1668,12 @@ ou plus envoyables ensemble partent en un push groupé. Pas d'annonce
 rétroactive : tout cycle ouvert ou activé avant la migration porte
 `openingPreExisting = true`.
 
+Rappels du fil (`NotificationDispatchService` : bourse du jour, récap, relances,
+dates limites, communauté, passerelle) : mêmes heures calmes, et au plus
+`KPB_PUSH_MAX_PER_DAY` push par élève sur 24 h glissantes (vide = 3, borné à
+[1, 50], relayé par `docker-compose.yml`) ; au-delà, le rappel reste dans le fil
+sans sonner.
+
 ### Erreurs
 
 Corps de `GlobalExceptionFilter` : `{statusCode, message, requestId, code?, details?, timestamp}`.
@@ -1801,13 +1807,23 @@ Existantes, mêmes formes, sémantique ajustée :
 ### Charge utile push v1 (données, toutes des chaînes)
 
 Annonce seule — route que les builds ≤ 56 savent ouvrir ; `notificationKey`
-permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`) :
+permet à la build FCM de marquer l'entrée lue au tap (`POST /me/push-opens`). Depuis l'audit 57
+(F06), c'est l'identifiant **opaque** de la ligne `UserNotification` (`<nid>`), plus la
+`dedupeKey` `scholarship-opened:<cid>:<uid>` : la charge part chez Google (FCM) et OneSignal, et
+n'y porte plus l'identifiant du compte. Même règle pour tous les rappels du fil
+(`NotificationDispatchService` : bourse du jour, récap, relances, dates limites, communauté,
+passerelle…) :
 
 ```json
 { "route": "/scholarships/<sid>", "scholarshipId": "<sid>", "cycleId": "<cid>",
   "type": "scholarship_opened", "kind": "scholarship_opened",
-  "notificationKey": "scholarship-opened:<cid>:<uid>", "ref": "scholarship-opened:<cid>" }
+  "notificationKey": "<nid>", "ref": "scholarship-opened:<cid>" }
 ```
+
+`POST /me/push-opens {notificationKey}` accepte les deux formes — l'identifiant de la ligne et
+l'ancienne `dedupeKey` des pushs déjà partis —, toujours bornées à l'élève connecté
+(`userId` du jeton). L'app (2.3.0 comme 2.3.1) renvoie la valeur telle quelle
+(`pushOpenedPayload`) sans en lire le format.
 
 Push groupé — `count` compte toutes les lignes, `refs` et `scholarshipIds`
 portent les 20 plus récentes ; **pas** de `scholarshipId` (un lecteur ancien
@@ -2058,6 +2074,29 @@ boîte d'envoi (`dedupeKey`, `pushNotBefore`, `pushAttempts`, `pushLockedUntil`,
 `pushLastError`, `pushProvider`, `pushBatchId`). Prouvé contre PostgreSQL :
 `profiles.postgres.spec.ts` (export, puis cascade à la suppression).
 
+Depuis l'audit 57 (20/10/2026), l'export porte aussi (prouvé contre PostgreSQL :
+`profiles-residues.postgres.spec.ts`) :
+
+- `campaignNotifications` : les livraisons des campagnes de l'équipe reçues par l'élève —
+  `campaign {name, titleFr, titleEn}`, `channel`, `status`, `sentAt`, `deliveredAt`,
+  `openedAt` ; sans `recipientName` ni identifiants internes ;
+- `referral` : `code`, `creditBalance`, `asReferee {attachedAt}` (ou null ; ni nom ni
+  identifiant du parrain), `asReferrer {count, attachedAt[]}`, `creditTransactions[]`
+  (`amount`, `reason`, `voucherCode` pour une dépense, `createdAt` ; jamais l'identifiant du
+  filleul), `ambassador` (ou null : code, nom affiché, campus, ville, moyen et compte de
+  versement **masqué** « •••• 1234 », statut KYC, totaux, dates, statuts et dates des filleuls
+  sans leur nom, commissions, retraits à destination masquée) ;
+- `referralCampaigns.prizes` (campagne, rang, nom public figé, montant, bénéficiaire, état,
+  moyen, référence et date du versement) et `referralCampaigns.prizeForfeits` (campagne, rang,
+  nom public figé, montant, motif, date).
+
+À la suppression du compte, les livraisons de campagnes non liées à un dossier sont
+**anonymisées** (`recipientId = "compte-supprime"`, `recipientName = "Compte supprimé"`) : les
+statistiques de campagne les comptent toujours ; les prix non versés et les forfaits perdent nom
+public et motif (« Compte supprimé », « Motif effacé (compte supprimé) ») ; le journal d'audit
+des lignes de compétition du compte perd `changes` personnels et motifs (`docs/data-inventory.md`
+§6).
+
 ## Liste des bourses : recherche, statut et tri (chantier I)
 
 `GET /scholarships` (élève connecté, `StudentAuthGuard`) garde ses paramètres d'avant
@@ -2145,7 +2184,11 @@ pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
 
 - `Cache-Control: public, max-age=30` (et cache serveur de 30 s), **30 requêtes / min / IP**,
   `Access-Control-Allow-Origin: *` (lu par `kpbeducation.cloud/classement/`, sans cookie).
-- 404 pour un slug inconnu ou une campagne `draft`. `?city=` filtre (sans accents ni casse).
+- 404 pour un slug inconnu ou une campagne `draft`. `?city=` filtre (sans accents ni casse) ;
+  une ville absente de la campagne rend `entries: []`. Cache serveur (audit 57, F04 / F16) : une
+  seule entrée par campagne (la vue complète, filtrée par ville en mémoire — jamais une entrée
+  par ville demandée), 256 campagnes au plus (la plus ancienne part), entrées expirées purgées à
+  chaque écriture.
 - Réponse — liste de champs **fermée** :
 
 ```json
@@ -2180,10 +2223,13 @@ Un filleul est **qualifié** à `qualifiedAt = max(rattachement, création du co
 du profil)` si : rattachement (`Referral.createdAt`) dans `[startsAt, endsAt[` ; compte créé dans
 la fenêtre (règle par défaut `requireAccountCreatedInWindow`) ; e-mail vérifié (profil relié à
 Supabase, `supabaseUserId`) ; profil complété (`campaigns/profile-completion.ts` : élève,
-consentement, téléphone, date de naissance, ≥ 1 domaine, ≥ 1 pays visé, accord du tuteur si
-mineur — les champs obligatoires de l'onboarding de la build 56 ; le pays de résidence n'en fait
-pas partie) ; et `qualifiedAt < endsAt`. `UserProfile.profileCompletedAt` est posé une fois, au
-`PATCH /profiles/me` qui complète le profil (ou au recalcul). Statuts : `pending`, `qualified`,
+téléphone, date de naissance, ≥ 1 domaine, ≥ 1 pays visé, accord du tuteur si mineur — les champs
+obligatoires de l'onboarding de la build 56 ; le pays de résidence n'en fait pas partie ; la case
+de consentement est obligatoire à l'onboarding mais `UserProfile.consentedAt` n'est envoyé par
+aucune build : le prédicat ne le lit pas, audit 57 F15) ; et `qualifiedAt < endsAt`.
+`UserProfile.profileCompletedAt` est posé une fois, au `PATCH /profiles/me` qui complète le profil
+(ou au recalcul) ; la migration de données `20261028120000_profile_completion_without_consent`
+date à `updatedAt` les profils déjà complets. Statuts : `pending`, `qualified`,
 `flagged` (signal automatique, ne compte pas), `excluded` (décision de l'équipe). Signaux :
 `disposable_email`, `device_duplicate`, `ip_burst`, `ip_block_burst`, `velocity_burst`,
 `referee_is_participant`. Classement : qualifiés décroissants, puis instant où le compte a été
@@ -2201,7 +2247,7 @@ SuperAdmin. `Cache-Control: private, no-store`. Chaque écriture crée un `Admin
 | `GET /admin/referral-campaigns` | Liste + compteurs |
 | `POST /admin/referral-campaigns` | Création (`draft`) : `{slug, nameFr, nameEn, startDate, endDate, timeZone?, prizes?, rulesText?, rulesUrl?, eligibleCities?, eligibleCountries?, qualificationRule?}` — jours inclusifs lus dans `timeZone` (défaut `Africa/Lagos`). 409 slug pris |
 | `GET/PATCH /admin/referral-campaigns/:id` | Lecture / édition ; `live` et `frozen` : noms et règlement seulement (400 `campaign_field_locked`) |
-| `POST /admin/referral-campaigns/:id/transition` | `{action: launch\|freeze\|unfreeze\|validate_podium\|close}` ; 409 si impossible. `close` exige le podium validé ; `validate_podium` refusé après un versement (après un premier versement, un prix perdu se réattribue par `…/prizes/:rank/forfeit`) ; une revalidation saute les participants déclarés forfait |
+| `POST /admin/referral-campaigns/:id/transition` | `{action: launch\|freeze\|unfreeze\|validate_podium\|close}` ; 409 si impossible. `launch` : 400 « Définis au moins un prix avant de lancer. » sans prix, puis **400 « Pose le lien https du règlement (« Lien du règlement ») avant de lancer : le texte collé n’est pas publié. »** sans `rulesUrl` https (audit 57, F20 : seul le lien est publié — page `/classement/` et écran « Compétition » ; `rulesText` reste interne). `close` exige le podium validé ; `validate_podium` refusé après un versement (après un premier versement, un prix perdu se réattribue par `…/prizes/:rank/forfeit`) ; une revalidation saute les participants déclarés forfait |
 | `POST /admin/referral-campaigns/:id/recompute` | Recalcul : `{created, updated, deleted, unchanged, participantsUpdated, profilesStamped, skipped?}` |
 | `GET /admin/referral-campaigns/:id/leaderboard?city=&country=` | Classement complet (non classables compris, `unrankableReason`) |
 | `POST /admin/referral-campaigns/:id/participants` | `{ambassadorId \| email, publicName?, city?, country?, minorStatus?}` ; ambassadeur activé exigé, ville/pays éligibles, nom public sans e-mail ni numéro |
@@ -2209,7 +2255,7 @@ SuperAdmin. `Cache-Control: private, no-store`. Chaque écriture crée un `Admin
 | `GET /admin/referral-campaigns/:id/participants/:pid/referrals` | Filleuls : nom, e-mail, dates, statut, signaux, décision |
 | `POST /admin/referral-campaigns/:id/referrals/:rid/decision` | `{decision: validated\|excluded\|clear, reason?}` — motif requis pour exclure |
 | `GET /admin/referral-campaigns/:id/prizes` | `{items, forfeits}` : lauréats (prix par rang, `participantId`) et prix déclarés forfait (`rank, participantId, publicNameSnapshot, amountFcfa, reason, forfeitedAt, forfeitedByAdminId, replacedByParticipantId`) |
-| `POST /admin/referral-campaigns/:id/prizes/:rank/forfeit` | **Correctifs 57** — « Déclarer le prix forfait et réattribuer » : `{participantId, reason}` (motif 3–500 caractères). Podium validé exigé (409) ; 404 sans prix ou sans lauréat à ce rang ; **409 si ce prix est déjà versé** ; 409 `prize_holder_changed` si le lauréat du rang n'est plus `participantId`. Le lauréat est marqué forfait (table `ReferralCampaignPrizeForfeit`) et ne pourra plus recevoir de prix dans la campagne, même à une revalidation ; les prix **non versés** à partir de ce rang passent, dans l'ordre, aux suivants **classés** sans prix ni forfait (le 3e monte au 2e prix, le 4e entre au 3e) ; un prix versé ne bouge jamais ; plus de candidat ⇒ prix non attribué (ligne retirée). Le classement (rangs) ne change pas. **Idempotent** : redéclarer le même lauréat rend `{items, forfeits}` sans rien écrire. Audit `referral_campaign.prize_forfeited` (purpose `referral_campaign`, motif dans `reasonCode`) dans la même transaction. Réponse : `{items, forfeits}` |
+| `POST /admin/referral-campaigns/:id/prizes/:rank/forfeit` | **Correctifs 57** — « Déclarer le prix forfait et réattribuer » : `{participantId, reason}` (motif 3–500 caractères). **Audit 57 (F17)** : `participantId` absent ou null = prix **orphelin** (lauréat qui a supprimé son compte avant le versement : `participantId` null, nom « Compte supprimé ») — accepté seulement si le prix de ce rang est bien orphelin ; il passe au suivant de la même façon (forfait enregistré avec `participantId` null). Podium validé exigé (409) ; 404 sans prix à ce rang, ou `participantId` donné sur un prix orphelin ; **409 si ce prix est déjà versé** ; 409 `prize_holder_changed` si le lauréat du rang n'est plus `participantId`. Le lauréat est marqué forfait (table `ReferralCampaignPrizeForfeit`) et ne pourra plus recevoir de prix dans la campagne, même à une revalidation ; les prix **non versés** à partir de ce rang passent, dans l'ordre, aux suivants **classés** sans prix ni forfait (le 3e monte au 2e prix, le 4e entre au 3e) ; un prix versé ne bouge jamais ; plus de candidat ⇒ prix non attribué (ligne retirée). Le classement (rangs) ne change pas. **Idempotent** : redéclarer le même lauréat rend `{items, forfeits}` sans rien écrire. Audit `referral_campaign.prize_forfeited` (purpose `referral_campaign`, motif dans `reasonCode`) dans la même transaction. Réponse : `{items, forfeits}` |
 | `POST /admin/referral-campaigns/:id/prizes/:rank/payout` | `{payoutReference, paidAt?, paidAmountFcfa?, recipient?, payoutMethod?, note?}` ; lauréat mineur → `recipient: parent` exigé |
 | `GET /admin/referral-campaigns/:id/export.csv?scope=leaderboard\|referrals` | CSV (BOM, cellules neutralisées) |
 | `GET /admin/ambassadors?search=&approved=yes\|no` | Ambassadeurs |

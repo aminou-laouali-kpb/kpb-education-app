@@ -2856,6 +2856,8 @@ const Map<String, String> appTranslationsEn = {
   'data_rights_section': 'My data',
   'export_data': 'Export my data',
   'export_data_subject': 'My KPB data export',
+  // System share sheet (audit 57, F12): the sheet could not open.
+  'share_error': 'Sharing could not open. Try again.',
   'export_data_error':
       'Could not export your data right now. Please try again.',
   'delete_account': 'Delete my account',

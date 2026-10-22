@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/utils/country_utils.dart';
 import '../../core/utils/program_intakes.dart';
+import '../../core/utils/share_origin.dart';
 import '../cases/case_composer_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
@@ -130,10 +132,12 @@ class _InstitutionCompareScreenState extends State<InstitutionCompareScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        _circleButton(
-          icon: Icons.ios_share_rounded,
-          onTap: () => _shareComparison(inst1, inst2),
-          tooltip: 'a11y_share'.tr,
+        Builder(
+          builder: (button) => _circleButton(
+            icon: Icons.ios_share_rounded,
+            onTap: () => _shareComparison(button, inst1, inst2),
+            tooltip: 'a11y_share'.tr,
+          ),
         ),
       ],
     );
@@ -576,7 +580,8 @@ class _InstitutionCompareScreenState extends State<InstitutionCompareScreen> {
     return null;
   }
 
-  void _shareComparison(InstitutionModel inst1, InstitutionModel inst2) {
+  void _shareComparison(
+      BuildContext origin, InstitutionModel inst1, InstitutionModel inst2) {
     final name1 = _controller.resolve(inst1.name);
     final name2 = _controller.resolve(inst2.name);
     String line(String name, ProfileFit? fit) => fit == null
@@ -584,7 +589,8 @@ class _InstitutionCompareScreenState extends State<InstitutionCompareScreen> {
         : 'compare_share_line'.trParams({'name': name, 'fit': fit.labelKey.tr});
     final fit1 = _controller.institutionFit(inst1);
     final fit2 = _controller.institutionFit(inst2);
-    SharePlus.instance.share(ShareParams(
+    unawaited(kpbShare(
+      origin,
       text: 'compare_share_header'.tr +
           line(name1, fit1) +
           'compare_share_tuition'

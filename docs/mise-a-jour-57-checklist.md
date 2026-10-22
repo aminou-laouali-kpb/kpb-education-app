@@ -3,7 +3,9 @@
 > **Ce que ce fichier est.** L'ordre exact des opérations pour préparer, déployer, archiver,
 > vérifier, soumettre et déployer **par étapes** la 57, avec les commandes. Il **succède** à
 > `docs/mise-a-jour-56-checklist.md`. La 57 est une release unique : chantiers B, C, D, F, G, H, I,
-> K (PR #353 à #361), bascule des notifications vers FCM (#351), correctifs #349 et #350. Les textes
+> K (PR #353 à #361), bascule des notifications vers FCM (#351), correctifs #349 et #350, puis
+> #362 à #374 (chantier L, catalogue, compétition, communauté et bots, parrainage, finalisation,
+> correctifs et corrections juridiques) et la **PR de correctifs de l'audit 57**. Les textes
 > à coller, les déclarations de confidentialité, le tableau des drapeaux et le plan de déploiement
 > sont dans `docs/release-57-store-pack.md` ; la recette appareil dans `docs/device-qa-build57.md` ;
 > les données dans `docs/data-inventory.md`.
@@ -22,8 +24,9 @@
 >
 > **Ce que la mise à jour ne fait PAS** : ouvrir `features.scholarshipMatch` ou
 > `features.onboardingV2`, passer le mode d'ouverture hors de `legacy`, allumer la bulle ou les
-> écoles privées, relever `KPB_MIN_APP_VERSION`, envoyer une notification de masse. Tout cela vient
-> après, dans l'ordre du pack §5 et §6.
+> écoles privées, relever `KPB_MIN_APP_VERSION`, envoyer une notification de masse (hors la
+> notification de service « Notre politique évolue », pack §6.5), lancer `roll-omnes-fall-2027`,
+> ouvrir `features.community`. Tout cela vient après, dans l'ordre du pack §5 et §6 et de l'étape 9.
 
 ## Ce qui change par rapport à la checklist de la 56
 
@@ -33,10 +36,16 @@
   OneSignal : sans le backend de #351 et `FCM_SERVICE_ACCOUNT_JSON`, elle ne reçoit aucune
   notification. Le backend se déploie **avant** l'app, au SHA `RELEASE` (étape 1), puis
   l'admin, puis l'app.
-- **Six migrations** à passer (étape 1), avec les préalables de `docs/api-contracts.md`.
-- **Dépendances et manifestes changent** (#351) : `firebase_messaging` remplace
-  `onesignal_flutter` ; deux `meta-data` FCM dans le manifeste Android. Le contrôle « rien ne doit
-  bouger » devient « exactement ceci doit bouger » (étape 0.3).
+- **Seize migrations** à passer (étape 1) : les quinze ajoutées depuis la production (`28ac82d`)
+  jusqu'à `8c215b5`, plus `20261028120000_profile_completion_without_consent` (PR de correctifs de
+  l'audit 57), avec les préalables de `docs/api-contracts.md`.
+- **Dépendances et manifestes changent** (#351, #362, #368) : `firebase_messaging` remplace
+  `onesignal_flutter` ; `play_install_referrer` entre ; le bloc `assets` est réduit (chantier L1) ;
+  deux `meta-data` FCM dans le manifeste Android. Le contrôle « rien ne doit bouger » devient
+  « exactement ceci doit bouger » (étape 0.3).
+- **Opérations catalogue** (IGENSIA, OMNES 2027, Amérique du Nord) : à lancer en production après
+  le déploiement (étape 1, point 5) ; la reconduction OMNES 2027 attend que la 57 soit majoritaire
+  (étape 9).
 - **Déploiement par paliers** : Play 10 % → 50 % → 100 %, publication progressive iOS (étape 8),
   puis `KPB_RECOMMENDED_APP_VERSION` et, bien plus tard, `KPB_MIN_APP_VERSION` (étape 9).
 - La recette est `docs/device-qa-build57.md` (petit appareil, texte agrandi, lecteurs d'écran,
@@ -49,8 +58,8 @@
 | | Décision | Conséquence sur l'archive |
 |---|---|---|
 | **a** | **Version marketing** : `2.3.1` — décidée par le propriétaire le 16/10/2026 | Elle est compilée : à poser dans la PR de préparation (§0.2) |
-| **b** | **Textes de la politique de confidentialité** (in-app, compilés) sur le test, la nationalité, les mineurs de 16 et 17 ans, la conservation | Relus par le juridique **avant l'archive** : après, le texte in-app ne change qu'avec une 58. La page web, elle, se republie seule (`deploy.yml`, `scope=web`) |
-| **c** | **Collecte de la nationalité** — À VALIDER (propriétaire) | Ne bloque pas l'archive : `features.scholarshipMatch` part fermé. Bloque l'ouverture du drapeau |
+| **b** | **Textes de la politique de confidentialité** (in-app, compilés) sur le test, la nationalité, les mineurs de 16 et 17 ans, la conservation | **Validés par le propriétaire le 19/10/2026** (#374) ; enregistrements de session PostHog : 30 jours. Après l'archive, le texte in-app ne change qu'avec une 58 ; la page web, elle, se republie seule (`deploy.yml`, `scope=web`) |
+| **c** | **Collecte de la nationalité** — tranchée le 18/10/2026 (consentement explicite, facultative, effaçable) | Ne bloque pas l'archive : `features.scholarshipMatch` part fermé. Son ouverture suit le pack §5, étape 4 |
 | **d** | **`FCM_SERVICE_ACCOUNT_JSON`** présent dans le `.env` de production | Bloque le lancement : sans lui, la 57 ne reçoit aucune notification |
 
 ### 0.2 La PR de préparation de la 57 (avant de relever `RELEASE`)
@@ -102,17 +111,37 @@ test "$(git rev-parse origin/main)" = "$RELEASE" && echo "RELEASE = tête de mai
 ```bash
 git show "$RELEASE:pubspec.yaml" | grep '^version:'        # version: 2.3.1+57
 git merge-base --is-ancestor 28ac82d "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
-git log --oneline 28ac82d.."$RELEASE" -- backend admin docker-compose.yml   # #351, #353, #356, #357, #358, #360, #361 (relevé du 16/10/2026)
-# Dépendances et manifestes depuis la 56 : #351 SEULEMENT (FCM à la place de OneSignal).
+git log --oneline 28ac82d.."$RELEASE" -- backend admin docker-compose.yml
+#   attendu (relevé du 20/10/2026 sur 8c215b5) : #351, #353, #356, #357, #358, #360, #361, #363, #364,
+#   #365, #366, #367, #368, #369, #370, #371, #372 — plus la PR de correctifs de l'audit 57
+git log --oneline --first-parent c9a5ef6.."$RELEASE"
+#   attendu : toutes les PR depuis la 56 — #349, #350, #351, #353, #356 à #374 (#352, #354 et #355
+#   ne sont pas sur main), puis la PR de correctifs de l'audit 57, et rien d'autre
+# Dépendances et manifestes depuis la 56 : #351 (FCM à la place de OneSignal), #362 (bloc assets du
+# chantier L1), #368 (play_install_referrer), #369 (version) — `git log c9a5ef6.."$RELEASE" -- pubspec.yaml pubspec.lock`.
 # c9a5ef6 = la préparation de la 56 (#327) ; le remplacer par le SHA archivé de la 56 dès qu'il est
 # reporté au registre (§0.2) — #328, fusionnée après, ne touche aucun de ces fichiers.
 git diff --stat c9a5ef6 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle
 #   attendu : AndroidManifest.xml, Info.plist, pubspec.lock — rien d'autre (PrivacyInfo et build.gradle inchangés)
-git diff -U0 c9a5ef6 "$RELEASE" -- pubspec.yaml | grep '^[+-]' | grep -v '^[+-]#' | grep -v '^+++\|^---'
-#   exactement six lignes : -version: 2.3.0+56, +version: 2.3.1+57, les deux lignes de commentaire
-#   « + # Push : FCM en direct… » et « + # garde les jetons… », +firebase_messaging: ^16.2.0,
-#   -onesignal_flutter: ^5.0.0 (relevé du 16/10/2026 sans la ligne version, qui n'est pas encore posée)
+git diff -U0 c9a5ef6 "$RELEASE" -- pubspec.yaml | grep '^[+-]' | grep -v '^+++\|^---' | grep -v '^[+-][[:space:]]*#'
+#   exactement treize lignes (relevé du 20/10/2026 sur 8c215b5 ; les commentaires, même indentés, sont
+#   filtrés — sans ce filtre, 35 lignes) :
+#     -version: 2.3.0+56
+#     +version: 2.3.1+57
+#     +  firebase_messaging: ^16.2.0
+#     -  onesignal_flutter: ^5.0.0
+#     +  play_install_referrer: ^0.5.0
+#     -    - assets/
+#     -    - assets/svgs/
+#     -    - assets/images/
+#     -    - assets/services/
+#     -    - assets/icon/
+#     -    - assets/images/bg_imgs/
+#     -    - assets/images/on_boarding_img/
+#     -    - assets/gifs/
+#   La PR de correctifs de l'audit 57 ne touche pas pubspec.yaml : le compte reste 13. Si une PR
+#   fusionnée avant RELEASE le modifie, recompter et arbitrer avant d'archiver.
 git ls-tree -r --name-only "$RELEASE" | grep -c '^pubspec_overrides.yaml$'   # 0 : le fichier ne doit pas être suivi
 git show "$RELEASE:pubspec.lock" | grep -c 'onesignal_flutter'                # 0
 ```
@@ -134,18 +163,45 @@ servir `RELEASE`.
    `KPB_SCHOLARSHIP_MATCH_ENABLED` et `KPB_ONBOARDING_V2_ENABLED` **absents ou `false`** ;
    `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` et
    `KPB_REFERRAL_LEADERBOARD_ENABLED` (parrainage) **absents ou `false`** ;
+   `KPB_COMMUNITY_ENABLED` **absent ou `false`** et `KPB_ASSIST_BRIDGE_MODE` **absent ou `shadow`**
+   (communauté et passerelle, déclarées « OFF at review time ») ;
    `KPB_SCHOLARSHIP_OPENING_MODE` **absent ou `legacy`** ; aucune clé `KPB_FOLLOW_*` /
    `KPB_HOME_*` à `false`.
 3. Actions → **Deploy backend (VPS)** (`deploy.yml`) → `ref` = `RELEASE`, `scope` = `full`. Le
-   workflow sauvegarde la base, passe les **six migrations** additives
-   (`20261013120000_notification_delivery_opened_at`, `20261013121500_profile_last_app_build`,
-   `20261015120000_scholarship_follow_fanout`, `20261015120100_scholarship_follow_indexes`,
-   `20261015120200_scholarship_follow_notification_backfill`,
-   `20261020120000_scholarship_match_v1`), remplace **`api` puis `admin`**, vérifie la santé et
-   revient à l'image précédente si elle échoue. Il publie aussi `web/public`, donc la politique de
-   confidentialité mise à jour.
+   workflow sauvegarde la base, passe les **seize migrations** additives (`prisma migrate deploy`,
+   dans cet ordre) :
+   - `20261013120000_notification_delivery_opened_at`, `20261013121500_profile_last_app_build` ;
+   - `20261015120000_scholarship_follow_fanout`, `20261015120100_scholarship_follow_indexes`,
+     `20261015120200_scholarship_follow_notification_backfill` (préalables du point 1) ;
+   - `20261020120000_scholarship_match_v1` ;
+   - `20261021120000_program_recognition` (prérequis des imports catalogue du point 5) ;
+   - `20261022120000_referral_campaigns` (tables de la compétition ; rattrapages idempotents :
+     code ambassadeur normalisé — laissé vide en cas de doublon, l'index unique tolère plusieurs
+     vides —, `cashProgramEnabled`, `profileCompletedAt` des profils déjà complets) ;
+   - `20261023120000_community`, `20261024120000_community_verif_bot` (`ALTER TYPE … ADD VALUE`),
+     `20261025120000_assist_bridge` ;
+   - `20261026120000_campaign_purpose_promotions_consent`, `20261026130000_referral_prize_forfeit`,
+     `20261027120000_promotions_push_opt_in`, `20261027130000_community_report_orphan_retention` ;
+   - `20261028120000_profile_completion_without_consent` (PR de correctifs de l'audit 57 :
+     rattrapage de `profileCompletedAt` sans `consentedAt`, que rien n'écrit).
+   Aucune n'utilise `CONCURRENTLY` ni ne détruit de colonne. Comparer le journal du workflow à cette
+   liste : une migration de plus ou de moins arrête la release. Le workflow remplace ensuite
+   **`api` puis `admin`**, vérifie la santé et revient à l'image précédente si elle échoue. Il publie
+   aussi `web/public`, donc la politique de confidentialité mise à jour et le règlement de la
+   compétition (`reglement-ambassadeurs-2026-11.html`).
 4. Catalogue 1.5.0 : `catalog:reconcile --dry-run`, relire, puis `--apply` (registre, entrée du
    15/10/2026 « chantier D », point 4).
+5. **Catalogue de la 57 en production** (Actions → **VPS ops** ; pour chacune : simulation
+   `dry_run` coché, lecture du rapport, application `dry_run` décoché — le job enchaîne
+   `npm run verify:catalog`, qui doit finir sur `OK` —, puis nouvelle simulation → `TOTAL : 0
+   écriture(s)`), dans cet ordre :
+   1. `dedupe-omnes`, puis `import-omnes-spring` (`docs/runbook-rentrees-partenaires.md`,
+      « Procédure » : comptes attendus) ;
+   2. `import-igensia` (même runbook) ;
+   3. `import-north-america` (`docs/runbook-catalogue-amerique-du-nord.md` : d'abord la marge de
+      `verify:catalog` sous la limite de 1 000 formations des builds installées) ;
+   4. **pas** `roll-omnes-fall-2027` à ce stade : les builds 2.3.0 (≤ 56) affichent les dates
+      reconduites **sans** « à confirmer » ; il attend que la 57 soit majoritaire (étape 9).
 
 ## 2. Vérifications de départ (5 min)
 
@@ -157,8 +213,8 @@ curl -fsS https://api.kpbeducation.cloud/api/config/app \
   | jq '.features | {eef, eefTeaser, eefSpace, eefHelpBubble, eefPrivateSchools, scholarshipMatch, onboardingV2, followPushPrimer, homeNextStep}'
 #   attendu : false, true, true, false, false, false, false, true, true
 curl -fsS https://api.kpbeducation.cloud/api/config/app \
-  | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard}'
-#   attendu : false, false, false (parrainage, fermé à la soumission)
+  | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard, community, assistBridge}'
+#   attendu : false, false, false, false, false (parrainage, communauté et passerelle : fermés à la soumission)
 curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scholarships/match/state   # 404 (drapeau fermé, avant toute authentification)
 ```
 
@@ -166,7 +222,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scho
   continuer** (la 57 ne recevrait aucune notification). `push.oneSignal` doit rester `true` : c'est
   le repli des builds 53 et 56.
 - **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** (ou l'un des trois drapeaux du
-  parrainage) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
+  parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; remettre la variable à `false` dans le `.env`, recréer
   l'`api`, relancer la commande.
 - **Si `eefSpace` vaut `false`** : la phrase « The "Études en France" space is open » des notes de
   revue est fausse ; prendre la variante du pack §3, point 1, et recompter.
@@ -312,7 +368,8 @@ gh workflow run release-preflight.yml --ref main \
    jamais** ouvrir `scholarshipMatch` en production pour la recette.
 3. Avant de soumettre, revérifier l'étape 2 (drapeaux) : `scholarshipMatch` et `onboardingV2` à
    `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`, `referralInstallReferrer`,
-   `referralOnboardingCode` et `referralLeaderboard` à `false`.
+   `referralOnboardingCode` et `referralLeaderboard` à `false`, `community` et `assistBridge` à
+   `false` (déclarés « OFF at review time »).
 4. Un ✗ non résolu bloque la soumission.
 
 ## 7. Consoles
@@ -321,8 +378,9 @@ gh workflow run release-preflight.yml --ref main \
 |---|---|---|
 | Data Safety (Play), App Privacy (Apple) | **Pack 57 §4** | Lignes nouvelles : test « Mes 10 bourses » (Autres infos / Other Data), suivis et ouverture des notifications ; OneSignal reste « Partagé » tant que le repli tourne (`docs/CONSOLE_ANSWERS.md` §0sexies) |
 | Liste des SDK (si demandée) | Pack 57 §4.2 | OneSignal retiré, Firebase Messaging ajouté |
-| Questionnaire d'âge, *Government apps*, non-affiliation | `docs/CONSOLE_ANSWERS.md` §3 et §0quater ; pack 56 §4 | Inchangés |
-| XC-06, D5 | `docs/CONSOLE_ANSWERS.md` §0quater | D5 tranché le 18/10/2026. XC-06 **ouvert** : depuis les correctifs 57 (19/10/2026), l'e-mail promotionnel des campagnes admin est réservé aux consentants ; le push promotionnel reste en opt-out — À VALIDER (propriétaire) |
+| Questionnaire d'âge (Apple, IARC), Data Safety / App Privacy de la communauté | **Pack 57 §4.4** ; `docs/CONSOLE_ANSWERS.md` §3 bis | **Changent dès la 57** (décision du propriétaire du 20/10/2026) : communauté déclarée — contenu généré par les utilisateurs et interaction entre utilisateurs **Oui** (modérés), « Autre contenu généré par l'utilisateur » ; messagerie privée Non |
+| *Government apps*, non-affiliation | `docs/CONSOLE_ANSWERS.md` §0quater ; pack 56 §4 | Inchangés |
+| XC-06, D5 | `docs/CONSOLE_ANSWERS.md` §0quater (ligne « chantier juridique 57 ») ; pack 57 §4.3 | D5 tranché le 18/10/2026. **XC-06 tranché le 19/10/2026** : finalité « Marketing » **déclarée** (Play Data Safety, Apple App Privacy) ; e-mail **et** push promotionnels en **opt-in** (`campaign-purpose.ts` : `promotionsEmailOptIn`, `promotionsPushOptIn`, aucun par défaut) ; écrire « opt-in » dans tout champ libre |
 
 ## 8. Soumettre 🔒
 
@@ -335,7 +393,8 @@ gh workflow run release-preflight.yml --ref main \
   10 %**. L'AAB importé est celui du run de `RELEASE`.
 - Avant d'appuyer : la commande de l'étape 2 (`/config/app`) → `scholarshipMatch=false`,
   `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, les trois drapeaux du
-  parrainage à `false`, `eefSpace` conforme au texte des notes de revue.
+  parrainage à `false`, `community=false`, `assistBridge=false`, `eefSpace` conforme au texte des
+  notes de revue.
 - **Le jour de l'envoi**, reporter dans `docs/release-ledger.md` le SHA de `RELEASE` et « téléversée
   le … » sur la ligne `57` — après l'étape 5, jamais pendant.
 
@@ -372,5 +431,20 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
 8. Ne jamais poser `KPB_EEF_ENABLED=true`. Aucun tag `v2.3.1` poussé pendant la release.
 9. **Parrainage** (compétition du 1er au 10 novembre 2026) : les trois `KPB_REFERRAL_*_ENABLED`
    s'ouvrent selon `docs/runbook-campagne-ambassadeurs.md` §8, **après** la politique de
-   confidentialité et la Data safety à jour (pack §4.3) et le `rulesUrl` posé sur la campagne.
-   À VALIDER (propriétaire) : l'ordre et les dates.
+   confidentialité et la Data safety à jour (pack §4.3) et le `rulesUrl` posé sur la campagne
+   (`https://kpbeducation.cloud/reglement-ambassadeurs-2026-11.html` ; le lancement est refusé sans
+   lui). À VALIDER (propriétaire) : l'ordre et les dates.
+10. **Recalcul de la compétition avant le 1er novembre** : la migration
+    `20261028120000_profile_completion_without_consent` (PR de correctifs de l'audit 57) est
+    **déployée avant le 1er novembre** (étape 1), puis console admin → **Compétition
+    ambassadeurs** → la campagne → **Recalculer maintenant**, c'est-à-dire
+    `POST /api/admin/referral-campaigns/<id>/recompute` (route `POST /admin/referral-campaigns/:id/recompute`,
+    idempotente ; le calcul automatique tourne aussi toutes les 5 minutes). Contrôle : un filleul
+    de test au profil complet passe « qualifié » (`docs/runbook-campagne-ambassadeurs.md` §1 et
+    §5).
+11. **`roll-omnes-fall-2027`** (reconduction des rentrées OMNES d'automne 2026 en 2027) : seulement
+    quand la 57 est installée chez la **majorité** des comptes actifs (`GET /admin/app-builds`,
+    « part des comptes actifs sur cette build ou une plus récente » au-dessus de 50 % pour la 57).
+    Avant, les builds 2.3.0 (≤ 56) afficheraient « Rentrée 01/10/2027 » et le tarif 2026-2027 comme
+    confirmés (`docs/runbook-rentrees-partenaires.md`, « Quand lancer la reconduction »).
+    Procédure : simulation, application, nouvelle simulation, comme au point 5 de l'étape 1.

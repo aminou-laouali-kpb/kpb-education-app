@@ -185,6 +185,59 @@ void main() {
       );
       expect(block, contains('Apple is not a sponsor'));
       expect(block, contains('official rules'));
+      // Communauté et passerelle (décision du propriétaire du 20/10/2026,
+      // audit 57 F02) : dans le binaire, fermées, DÉCLARÉES dès la 57 — dans la
+      // même phrase « OFF at review time », après le parrainage.
+      expect(
+        block,
+        matches(RegExp(
+          r'OFF at review time: [^\n]*features\.referralLeaderboard[^\n]*'
+          r'features\.community, a student Q&A[^\n]*'
+          r'features\.assistBridge, a settings switch',
+        )),
+      );
+      final remote = block.substring(
+        block.indexOf('REMOTELY ACTIVATED FEATURES'),
+      );
+      for (final safeguard in [
+        'pre-publication filter',
+        'report',
+        'block',
+        'rules accepted before posting',
+        'staff moderation',
+        'no private messages',
+      ]) {
+        expect(
+          remote,
+          contains(safeguard),
+          reason: 'la communauté est déclarée sans « $safeguard »',
+        );
+      }
+      // La ligne UGC ne nie plus l'existence d'un espace public.
+      final ugc = RegExp(r'USER-GENERATED CONTENT\n([^\n]*)')
+          .firstMatch(block)!
+          .group(1)!;
+      expect(ugc, isNot(contains('No public feed')));
+      expect(ugc.toLowerCase(), isNot(contains('forum')));
+      expect(ugc, contains('None reachable at review time'));
+      expect(ugc, contains('declared in the age rating'));
+      // Ce que les notes affirment, le code le fait : aucune route de
+      // messages privés, signalement, blocage et charte côté serveur, le
+      // filtre « en attente de revue », le drapeau fermé par défaut.
+      final student = _read(
+        'backend/src/modules/community/community-student.controller.ts',
+      );
+      expect(student, contains("@Post('reports')"));
+      expect(student, contains("@Post('members/:memberId/block')"));
+      expect(student, contains("@Post('charter/accept')"));
+      expect(student.toLowerCase(), isNot(contains('message')));
+      expect(
+        _read('backend/src/modules/community/community-content-filter.ts'),
+        contains('en attente de revue'),
+      );
+      final features = _controllerFeatures();
+      expect(features['community'], contains('enabled('));
+      expect(features['assistBridge'], contains("=== 'on'"));
     });
 
     test('le texte ne promet rien, ne chiffre rien, sans pourcentage', () {
@@ -254,11 +307,33 @@ void main() {
       expect(open, contains('À VALIDER (propriétaire)'));
       expect(open, contains('features.scholarshipMatch'));
       // Décisions du propriétaire du 18/10/2026 : la nationalité est tranchée
-      // (consentement explicite) ; XC-06 est tranché le 19/10/2026 : le push
-      // promotionnel reste en opt-out, la finalité « Marketing » est déclarée.
+      // (consentement explicite) ; XC-06 est tranché le 19/10/2026 : la
+      // finalité « Marketing » est déclarée, l'e-mail ET le push promotionnels
+      // sont en opt-in (`campaign-purpose.ts`).
       expect(open, contains('consentement explicite'));
       expect(open, contains('XC-06'));
       expect(open, contains('finalité « Marketing » DÉCLARÉE'));
+      expect(open, contains('**Plus rien à valider sur XC-06.**'));
+    });
+
+    test('les textes juridiques sont validés (19/10/2026), plus « à relire »',
+        () {
+      // Audit 57, F01 : le pack disait encore « à relire par le propriétaire
+      // avant l'archive » alors que son §8 disait « validés le 19/10/2026 ».
+      expect(pack.contains('à relire par le propriétaire'), isFalse);
+      expect(pack.contains('(à relire'), isFalse);
+      expect(_flat(pack),
+          contains('**validées par le propriétaire le 19/10/2026**'));
+      final decisions = _flat(_section(pack, '## 7. Décisions'));
+      expect(decisions,
+          contains('Textes **validés par le propriétaire le 19/10/2026**'));
+      expect(decisions,
+          contains('enregistrements de session PostHog : **30 jours**'));
+      // Seule la durée des ÉVÉNEMENTS analytiques reste ouverte.
+      expect(
+          decisions,
+          contains(
+              'durée de rétention des **événements** PostHog / Firebase Analytics **À VALIDER (propriétaire)**'));
     });
   });
 
@@ -432,6 +507,48 @@ void main() {
         expect(deploy, contains('follow:mirror-alerts -- --apply'));
       },
     );
+  });
+
+  group('« Notre politique évolue » (§6.5) : une route, jamais un lien', () {
+    final pack = _read(_packPath);
+    final notice = _section(pack, '### 6.5');
+
+    test('la campagne pose /legal/privacy, sans bouton ni URL externe', () {
+      // Audit 57, F11 : le modèle de campagne n'a ni bouton ni URL, et le DTO
+      // n'accepte qu'une route interne. Le pack ne doit plus promettre un
+      // « Lien du bouton » vers la page web.
+      expect(notice, contains('`/legal/privacy`'));
+      expect(notice, isNot(contains('Lien du bouton')));
+      expect(notice, isNot(contains('https://kpbeducation.cloud')));
+      expect(notice, isNot(contains('| Bouton |')));
+      expect(_flat(notice), contains('**ni bouton ni URL externe**'));
+      // Les anciennes builds ouvrent l'accueil ; le centre de notifications
+      // n'est pas alimenté par les campagnes (pas de promesse inverse).
+      expect(_flat(notice), contains('2.3.0 (54 à 56) et plus anciennes'));
+      expect(_flat(notice), contains("l'app ouvre l'**accueil**"));
+      expect(_flat(notice),
+          contains("**n'écrit rien** dans le centre de notifications"));
+    });
+
+    test('ce que le pack décrit, l\'admin et le serveur le font', () {
+      final dto = _read(
+        'backend/src/modules/notifications/dto/create-notification-campaign.dto.ts',
+      );
+      expect(dto, contains(r'@Matches(/^\/[A-Za-z0-9\-_/]*$/'));
+      expect(
+        _read('backend/src/modules/notifications/campaign-executor.service.ts'),
+        contains('...(campaign.route ? { route: campaign.route } : {})'),
+      );
+      // Le formulaire de l'admin envoie la route et propose la politique.
+      expect(
+        _read('admin/app/notifications/page.tsx'),
+        contains('route: campaignRouteForBody(campaignForm.route)'),
+      );
+      expect(
+        _read('admin/lib/campaign-route.ts'),
+        contains("{ value: '/legal/privacy', key: 'legalPrivacy' }"),
+      );
+    });
   });
 
   group('Politique de confidentialité et inventaire', () {

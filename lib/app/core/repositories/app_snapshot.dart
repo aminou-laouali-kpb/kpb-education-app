@@ -30,6 +30,7 @@ class AppSnapshot {
     this.reviewCredits = 0,
     this.completedRoadmapSteps = const {},
     this.profileNeedsPush = false,
+    this.pendingConsentKeys = const {},
     this.onboardingStep = 0,
     this.onboardingSkipped = false,
     this.caseLastReadAt = const {},
@@ -38,6 +39,11 @@ class AppSnapshot {
 
   /// Local profile edits not yet confirmed by PATCH `/profiles/me`; avoids overwriting on sync.
   final bool profileNeedsPush;
+
+  /// Consentements changés sur CET appareil et pas encore accusés par le
+  /// serveur (audit 57, F24) : seuls eux partent dans le PATCH du profil. Voir
+  /// `ProfileConsentFields`.
+  final Set<String> pendingConsentKeys;
 
   final String localeCode;
   final bool hasCompletedOnboarding;

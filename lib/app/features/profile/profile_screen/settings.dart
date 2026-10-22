@@ -160,7 +160,7 @@ class _SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final row = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
@@ -192,6 +192,11 @@ class _SettingRow extends StatelessWidget {
         ],
       ),
     );
+    // Un interrupteur se lit avec son libellé et son explication, en un seul
+    // nœud (audit 57, F14) : sinon « Interrupteur, désactivé », sans dire
+    // lequel. Les autres commandes (choix de langue : deux boutons) gardent
+    // leurs nœuds à elles.
+    return trailing is Switch ? MergeSemantics(child: row) : row;
   }
 }
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/utils/ai_error_message.dart';
+import '../../core/utils/share_origin.dart';
 import '../ai_advisor/ai_consent.dart';
 import '../ai_advisor/ai_disclosure_banner.dart';
 import '../etudes_en_france/eef_help_line.dart';
@@ -480,9 +480,7 @@ class _LetterCardState extends State<_LetterCard> {
                   button: true,
                   label: 'letters_share_tooltip'.tr,
                   child: GestureDetector(
-                    onTap: () => SharePlus.instance.share(
-                      ShareParams(text: _displayText),
-                    ),
+                    onTap: () => kpbShare(context, text: _displayText),
                     child: Container(
                       height: 46,
                       padding: const EdgeInsets.symmetric(horizontal: 14),

@@ -22,7 +22,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/referral_campaign.dart';
@@ -32,6 +31,7 @@ import '../../core/ui/kpb_components.dart';
 import '../../core/ui/skeleton.dart';
 import '../../core/utils/external_link.dart';
 import '../../core/utils/share_link.dart';
+import '../../core/utils/share_origin.dart';
 
 /// L'écran autonome (entrée depuis l'écran Parrainage).
 class AmbassadorCompetitionScreen extends StatelessWidget {
@@ -505,15 +505,16 @@ class _CodeCard extends StatelessWidget {
 
   final String code;
 
-  Future<void> _share() async {
+  Future<void> _share(BuildContext origin) async {
     final link = buildInviteLink(
       source: ShareSource.competition,
       referralCode: code,
     );
     unawaited(AnalyticsService.instance.logReferralInviteShared());
-    await SharePlus.instance.share(ShareParams(
+    await kpbShare(
+      origin,
       text: 'comp_share_message'.trParams({'code': code, 'link': link}),
-    ));
+    );
   }
 
   @override
@@ -551,11 +552,13 @@ class _CodeCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: KpbSpacing.sm),
-          FilledButton.icon(
-            key: const ValueKey('comp-share'),
-            onPressed: _share,
-            icon: const Icon(Icons.share_rounded, size: 18),
-            label: Text('comp_share_cta'.tr),
+          Builder(
+            builder: (button) => FilledButton.icon(
+              key: const ValueKey('comp-share'),
+              onPressed: () => _share(button),
+              icon: const Icon(Icons.share_rounded, size: 18),
+              label: Text('comp_share_cta'.tr),
+            ),
           ),
         ],
       ),

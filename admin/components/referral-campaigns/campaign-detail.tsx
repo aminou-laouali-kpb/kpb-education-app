@@ -15,7 +15,10 @@ import {
   canForfeit,
   editableFields,
   formatFcfa,
+  forfeitBody,
   inviteUrl,
+  isOrphanPrize,
+  isPrizeHolderChanged,
   type Leaderboard,
   type LeaderboardItem,
   type PrizeAward,
@@ -730,12 +733,13 @@ function PrizesTab({
 }: Readonly<{ campaign: Campaign; board: Leaderboard; canManage: boolean }>) {
   const { t, locale } = useLocale();
   const [awards, setAwards] = useState<PrizeAward[]>([]);
-  const [payout, setPayout] = useState<{ rank: number; reference: string; date: string; recipient: string } | null>(
-    null,
-  );
+  const [payout, setPayout] = useState<PayoutDraft | null>(null);
   const [forfeits, setForfeits] = useState<PrizeForfeit[]>([]);
   const [forfeit, setForfeit] = useState<{ award: PrizeAward; reason: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Le refus d'un versement ou d'un forfait s'affiche DANS la modale ouverte
+  // (audit 57, F21) : l'alerte de l'onglet est derrière l'overlay, inerte.
+  const [modalError, setModalError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -753,10 +757,26 @@ function PrizesTab({
     void load();
   }, [load, campaign.podiumValidatedAt]);
 
+  function openPayout(next: PayoutDraft | null) {
+    setModalError(null);
+    setPayout(next);
+  }
+
+  function openForfeit(next: ForfeitDraft | null) {
+    setModalError(null);
+    setForfeit(next);
+  }
+
+  /** Erreur dans la modale ; le lauréat a changé ⇒ la liste est rechargée. */
+  async function failInModal(e: unknown) {
+    setModalError(errorText(e, t('parrainage.saveError')));
+    if (isPrizeHolderChanged(e)) await load();
+  }
+
   async function savePayout() {
     if (!payout) return;
     setBusy(true);
-    setError(null);
+    setModalError(null);
     try {
       await campaignsApi.payout(campaign.id, payout.rank, {
         payoutReference: payout.reference.trim(),
@@ -766,7 +786,7 @@ function PrizesTab({
       setPayout(null);
       await load();
     } catch (e) {
-      setError(errorText(e, t('parrainage.saveError')));
+      await failInModal(e);
     } finally {
       setBusy(false);
     }
@@ -774,19 +794,20 @@ function PrizesTab({
 
   /** « Déclarer le prix forfait et réattribuer » (correctifs 57). */
   async function saveForfeit() {
-    if (!forfeit?.award.participantId) return;
+    if (!forfeit || !canForfeit(forfeit.award)) return;
     setBusy(true);
-    setError(null);
+    setModalError(null);
     try {
-      const res = await campaignsApi.forfeit(campaign.id, forfeit.award.rank, {
-        participantId: forfeit.award.participantId,
-        reason: forfeit.reason.trim(),
-      });
+      const res = await campaignsApi.forfeit(
+        campaign.id,
+        forfeit.award.rank,
+        forfeitBody(forfeit.award, forfeit.reason),
+      );
       setAwards(res.items ?? []);
       setForfeits(res.forfeits ?? []);
       setForfeit(null);
     } catch (e) {
-      setError(errorText(e, t('parrainage.saveError')));
+      await failInModal(e);
     } finally {
       setBusy(false);
     }
@@ -830,7 +851,10 @@ function PrizesTab({
           {awards.map((a) => (
             <AdminTableRow key={a.id}>
               <CellText primary={a.rank} />
-              <CellText primary={a.publicNameSnapshot} />
+              <CellText
+                primary={a.publicNameSnapshot}
+                sub={isOrphanPrize(a) ? t('parrainage.orphanWinner') : undefined}
+              />
               <CellText primary={formatFcfa(a.amountFcfa, locale)} />
               <CellText primary={t(`parrainage.recipient.${a.recipient}`)} />
               <CellText
@@ -842,14 +866,14 @@ function PrizesTab({
                   <Button
                     size="sm"
                     onClick={() =>
-                      setPayout({ rank: a.rank, reference: '', date: new Date().toISOString().slice(0, 10), recipient: a.recipient })
+                      openPayout({ rank: a.rank, reference: '', date: new Date().toISOString().slice(0, 10), recipient: a.recipient })
                     }
                   >
                     {t('parrainage.recordPayout')}
                   </Button>
                 ) : null}
                 {canManage && canForfeit(a) ? (
-                  <Button size="sm" variant="dangerOutline" onClick={() => setForfeit({ award: a, reason: '' })}>
+                  <Button size="sm" variant="dangerOutline" onClick={() => openForfeit({ award: a, reason: '' })}>
                     {t('parrainage.forfeit')}
                   </Button>
                 ) : null}
@@ -875,11 +899,11 @@ function PrizesTab({
       <Modal
         open={forfeit !== null}
         title={t('parrainage.forfeit')}
-        onClose={() => setForfeit(null)}
+        onClose={() => openForfeit(null)}
         busy={busy}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setForfeit(null)} disabled={busy}>
+            <Button variant="secondary" onClick={() => openForfeit(null)} disabled={busy}>
               {t('parrainage.cancel')}
             </Button>
             <Button
@@ -893,34 +917,16 @@ function PrizesTab({
           </>
         }
       >
-        {forfeit ? (
-          <div style={{ display: 'grid', gap: 10 }}>
-            <Alert variant="warning">
-              {t('parrainage.forfeitHint')
-                .replace('{rank}', String(forfeit.award.rank))
-                .replace('{name}', forfeit.award.publicNameSnapshot)}
-            </Alert>
-            <Field label={t('parrainage.forfeitReason')}>
-              {({ id }) => (
-                <Textarea
-                  id={id}
-                  value={forfeit.reason}
-                  placeholder={t('parrainage.forfeitReasonPlaceholder')}
-                  onChange={(e) => setForfeit({ ...forfeit, reason: e.target.value })}
-                />
-              )}
-            </Field>
-          </div>
-        ) : null}
+        {forfeit ? <ForfeitFormBody draft={forfeit} error={modalError} onChange={setForfeit} /> : null}
       </Modal>
       <Modal
         open={payout !== null}
         title={t('parrainage.recordPayout')}
-        onClose={() => setPayout(null)}
+        onClose={() => openPayout(null)}
         busy={busy}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setPayout(null)} disabled={busy}>
+            <Button variant="secondary" onClick={() => openPayout(null)} disabled={busy}>
               {t('parrainage.cancel')}
             </Button>
             <Button onClick={savePayout} loading={busy} disabled={!payout || payout.reference.trim().length < 2}>
@@ -929,30 +935,78 @@ function PrizesTab({
           </>
         }
       >
-        {payout ? (
-          <div style={{ display: 'grid', gap: 10 }}>
-            <Alert variant="info">{t('parrainage.payoutHint')}</Alert>
-            <Field label={t('parrainage.payoutReference')}>
-              {({ id }) => (
-                <Input id={id} value={payout.reference} onChange={(e) => setPayout({ ...payout, reference: e.target.value })} />
-              )}
-            </Field>
-            <Field label={t('parrainage.payoutDate')}>
-              {({ id }) => (
-                <Input id={id} type="date" value={payout.date} onChange={(e) => setPayout({ ...payout, date: e.target.value })} />
-              )}
-            </Field>
-            <Field label={t('parrainage.colRecipient')}>
-              {({ id }) => (
-                <Select id={id} value={payout.recipient} onChange={(e) => setPayout({ ...payout, recipient: e.target.value })}>
-                  <option value="ambassador">{t('parrainage.recipient.ambassador')}</option>
-                  <option value="parent">{t('parrainage.recipient.parent')}</option>
-                </Select>
-              )}
-            </Field>
-          </div>
-        ) : null}
+        {payout ? <PayoutFormBody draft={payout} error={modalError} onChange={setPayout} /> : null}
       </Modal>
+    </div>
+  );
+}
+
+type PayoutDraft = { rank: number; reference: string; date: string; recipient: string };
+type ForfeitDraft = { award: PrizeAward; reason: string };
+
+/** Contenu de la modale « Noter le versement » : l'erreur du serveur en tête. */
+export function PayoutFormBody({
+  draft,
+  error,
+  onChange,
+}: Readonly<{ draft: PayoutDraft; error: string | null; onChange: (next: PayoutDraft) => void }>) {
+  const { t } = useLocale();
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {error ? <Alert variant="danger">{error}</Alert> : null}
+      <Alert variant="info">{t('parrainage.payoutHint')}</Alert>
+      <Field label={t('parrainage.payoutReference')}>
+        {({ id }) => (
+          <Input id={id} value={draft.reference} onChange={(e) => onChange({ ...draft, reference: e.target.value })} />
+        )}
+      </Field>
+      <Field label={t('parrainage.payoutDate')}>
+        {({ id }) => (
+          <Input id={id} type="date" value={draft.date} onChange={(e) => onChange({ ...draft, date: e.target.value })} />
+        )}
+      </Field>
+      <Field label={t('parrainage.colRecipient')}>
+        {({ id }) => (
+          <Select id={id} value={draft.recipient} onChange={(e) => onChange({ ...draft, recipient: e.target.value })}>
+            <option value="ambassador">{t('parrainage.recipient.ambassador')}</option>
+            <option value="parent">{t('parrainage.recipient.parent')}</option>
+          </Select>
+        )}
+      </Field>
+    </div>
+  );
+}
+
+/** Contenu de la modale « Déclarer le prix forfait » : l'erreur du serveur en tête. */
+export function ForfeitFormBody({
+  draft,
+  error,
+  onChange,
+}: Readonly<{ draft: ForfeitDraft; error: string | null; onChange: (next: ForfeitDraft) => void }>) {
+  const { t } = useLocale();
+  return (
+    <div style={{ display: 'grid', gap: 10 }}>
+      {error ? <Alert variant="danger">{error}</Alert> : null}
+      {isOrphanPrize(draft.award) ? (
+        <Alert variant="info">
+          <strong>{t('parrainage.orphanWinner')}</strong> — {t('parrainage.forfeitOrphanHint')}
+        </Alert>
+      ) : null}
+      <Alert variant="warning">
+        {t('parrainage.forfeitHint')
+          .replace('{rank}', String(draft.award.rank))
+          .replace('{name}', draft.award.publicNameSnapshot)}
+      </Alert>
+      <Field label={t('parrainage.forfeitReason')}>
+        {({ id }) => (
+          <Textarea
+            id={id}
+            value={draft.reason}
+            placeholder={t('parrainage.forfeitReasonPlaceholder')}
+            onChange={(e) => onChange({ ...draft, reason: e.target.value })}
+          />
+        )}
+      </Field>
     </div>
   );
 }

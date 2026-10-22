@@ -108,7 +108,6 @@ describe('règles de campagne', () => {
 describe('profil complété (app installée 2.3.0)', () => {
   const complete = {
     accountType: 'student',
-    consentedAt: new Date('2026-11-02'),
     phone: '+227 90000000',
     birthDate: new Date('2004-01-01'),
     guardianConsentedAt: null,
@@ -117,10 +116,9 @@ describe('profil complété (app installée 2.3.0)', () => {
   };
   const now = new Date('2026-11-05');
 
-  it('exige consentement, téléphone, naissance, un domaine et un pays visé', () => {
+  it('exige téléphone, naissance, un domaine et un pays visé', () => {
     expect(isProfileComplete(complete, now)).toBe(true);
     for (const missing of [
-      { consentedAt: null },
       { phone: '  ' },
       { birthDate: null },
       { fieldIds: [] },
@@ -129,6 +127,12 @@ describe('profil complété (app installée 2.3.0)', () => {
     ]) {
       expect(isProfileComplete({ ...complete, ...missing }, now)).toBe(false);
     }
+  });
+
+  it('n’exige PAS UserProfile.consentedAt : aucune build ne l’envoie (audit 57, F15)', () => {
+    // La colonne reste NULL pour tous les comptes réels : l'exiger rendait tout
+    // filleul « en attente » à jamais. La case est obligatoire à l'onboarding.
+    expect(isProfileComplete({ ...complete, ...{ consentedAt: null } }, now)).toBe(true);
   });
 
   it('n’exige PAS le pays de résidence (facultatif dans la build 56)', () => {
