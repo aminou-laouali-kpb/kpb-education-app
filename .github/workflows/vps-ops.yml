@@ -30,6 +30,16 @@ name: VPS ops (feature flag / catalogue)
 # deux fois la même clé prend la dernière, ce qui rend le fichier illisible pour
 # la personne qui le relit ensuite.
 #
+# Les drapeaux distants de la build 57 suivent la même règle (branches `referral-*`,
+# `community-*`, `assist-bridge-*`, `verif-bot-*`) : elles n'écrivent que
+# `KPB_REFERRAL_LEADERBOARD_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED`,
+# `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_COMMUNITY_ENABLED` (`true`/`false`),
+# `KPB_ASSIST_BRIDGE_MODE` (`on`/`shadow`/`off`) et `KPB_COMMUNITY_VERIF_BOT_MODE`
+# (`auto`/`review`/`off`), une clé par action, valeur écrite dans le script. Ce qui
+# ouvre simule par défaut ; ce qui referme agit tout de suite. Le plan d'ouverture
+# (docs/runbook-campagne-ambassadeurs.md §8) disait « éditer le `.env` en SSH » :
+# c'est ici qu'il s'exécute.
+#
 # ── PUBLICATION DU CATALOGUE ────────────────────────────────────────────────
 #
 # `publish-catalog` suit `docs/catalog-verification-sop.md`, à UNE différence
@@ -91,8 +101,22 @@ on:
           - eef-publish
           - eef-reconcile
           - reviews-purge-orphans
+          - referral-leaderboard-on
+          - referral-leaderboard-off
+          - referral-onboarding-code-on
+          - referral-onboarding-code-off
+          - referral-install-referrer-on
+          - referral-install-referrer-off
+          - community-on
+          - community-off
+          - assist-bridge-on
+          - assist-bridge-shadow
+          - assist-bridge-off
+          - verif-bot-auto
+          - verif-bot-review
+          - verif-bot-off
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true
@@ -486,4 +510,49 @@ jobs:
           else:
               assert str(space).lower() == before, "features.eefSpace=%r, il valait %s avant : cette operation ne devait pas le toucher" % (space, before)
           print(key, "=", got, "| eef =", features["eef"], "| eefSpace =", space, "(avant :", before + ")")
+          ' < "$config"
+
+      # Drapeaux de la build 57 (parrainage, communauté, bot « Passerelle ») : la
+      # preuve vient de `/config/app`, ce que l'app lira. Même forme que la preuve
+      # des interrupteurs de la 56 : clé et valeur dérivées en bash par un `case`
+      # fermé, une action inconnue refusée. Le bot « Vérif » n'a PAS de clé
+      # `features.*` (`/config/app` ne sert pas son mode) : sa preuve est faite par
+      # le script, sur l'environnement du conteneur recréé. Un retour arrière se
+      # prouve toujours ; une ouverture seulement si elle a été appliquée.
+      - name: Prouver l'état du drapeau 57 (parrainage, communauté, passerelle)
+        if: ${{ success() && ((inputs.action == 'referral-leaderboard-on' && !inputs.dry_run) || inputs.action == 'referral-leaderboard-off' || (inputs.action == 'referral-onboarding-code-on' && !inputs.dry_run) || inputs.action == 'referral-onboarding-code-off' || (inputs.action == 'referral-install-referrer-on' && !inputs.dry_run) || inputs.action == 'referral-install-referrer-off' || (inputs.action == 'community-on' && !inputs.dry_run) || inputs.action == 'community-off' || (inputs.action == 'assist-bridge-on' && !inputs.dry_run) || inputs.action == 'assist-bridge-shadow' || inputs.action == 'assist-bridge-off') }}
+        env:
+          HEALTH_URL: ${{ secrets.VPS_HEALTH_URL }}
+          ACTION: ${{ inputs.action }}
+        run: |
+          set -euo pipefail
+          case "$ACTION" in
+            referral-leaderboard-on|referral-leaderboard-off) WANT_KEY=referralLeaderboard ;;
+            referral-onboarding-code-on|referral-onboarding-code-off) WANT_KEY=referralOnboardingCode ;;
+            referral-install-referrer-on|referral-install-referrer-off) WANT_KEY=referralInstallReferrer ;;
+            community-on|community-off) WANT_KEY=community ;;
+            assist-bridge-on|assist-bridge-shadow|assist-bridge-off) WANT_KEY=assistBridge ;;
+            *) echo "::error::Action inconnue pour la preuve : ${ACTION}"; exit 1 ;;
+          esac
+          # `assistBridge` n'est vrai qu'en mode `on` : `shadow` et `off` le servent faux.
+          case "$ACTION" in
+            *-on) WANT_OPEN=true ;;
+            *) WANT_OPEN=false ;;
+          esac
+          export WANT_KEY WANT_OPEN
+          # Fichier, pas tube : voir l'étape « Vérifier depuis l'extérieur ».
+          config="$(mktemp)"
+          curl -fsS --retry 10 --retry-delay 3 --retry-all-errors --max-time 10 \
+            -o "$config" "${HEALTH_URL}/api/config/app"
+          # AUCUNE apostrophe dans le programme Python (voir l'étape de l'espace).
+          python3 -c '
+          import json, os, sys
+          d = json.load(sys.stdin)
+          features = d.get("features") or {}
+          key = os.environ["WANT_KEY"]
+          want = os.environ["WANT_OPEN"] == "true"
+          assert key in features, "features.%s absent : backend anterieur a la 57 en production" % key
+          got = features[key]
+          assert got is want, "features.%s=%r, attendu %r" % (key, got, want)
+          print(key, "=", got)
           ' < "$config"
