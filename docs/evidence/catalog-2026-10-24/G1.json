@@ -1,0 +1,238 @@
+{
+ "group": "G1",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "uwc_burkina_faso_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://bf.uwc.org/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications are currently closed. Register your interest and get notified once applications open. »",
+     "replacementUrl": null,
+     "note": "Comité national UWC Burkina Faso actif ; candidatures pas encore ouvertes au 24/10, cohérent avec status forecast. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_bf_home.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://bf.uwc.org/eligibility-criteria/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Candidates applying through UWC Burkina Faso must: Be a citizen of Burkina Faso , Hold permanent residency in Burkina Faso. »",
+     "replacementUrl": null,
+     "note": "Âge : nés entre le 1/9/2009 et le 31/8/2011, compatible avec « 16 à 18 ans à l'inscription » ; Seconde à Terminale ; anglais de base ; une seule candidature par an. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_bf_elig.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://bf.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Receive an offer for a UWC placement, which may be fully or partially funded depending on demonstrated need »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_bf_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "application",
+     "url": "https://apply.uwc.org/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Through the UWC national committee (NC) in your country of residence or citizenship »",
+     "replacementUrl": null,
+     "note": "Portail UWC (SurveyMonkey Apply) : création de compte, Eligibility Profile, puis programme du comité national. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_uwc_apply.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://bf.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Application Open: November 1st, 2026 Application Deadline: January 3rd, 2027 Selection Activities: February 2027 Final Decisions Announced: March 2027 »",
+     "replacementUrl": null,
+     "note": "Ouverture le 01/11/2026, postérieure au 24/10/2026 : forecast + confirmed reste correct. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_bf_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Pages inchangées depuis le 29/09 ; dates officielles 1er nov. 2026 – 3 janv. 2027 toujours publiées et pas encore ouvertes au 24/10 : la fiche (forecast, dates confirmées) est exacte."
+  },
+  {
+   "catalogId": "uwc_kenya_entry_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://ke.uwc.org/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Can I apply via UWC Kenya? How do I apply? What are the criteria? »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_ke_home.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://ke.uwc.org/eligibility-criteria/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applicants turning 19 years in 2027 must do so after 1st September 2027. »",
+     "replacementUrl": null,
+     "note": "Citoyenneté/résidence kényane, niveaux scolaires à décembre 2026 et règle d'une candidature par an inchangés. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_ke_elig.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://ke.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Receive an offer for a UWC placement , which may be fully or partially funded depending on demonstrated need »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_ke_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "application",
+     "url": "https://ke.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Combine all the above documents into one pdf document and submit to: »",
+     "replacementUrl": null,
+     "note": "Formulaire Applicant Information, relevés 2025-2026, deux recommandations, frais d'entretien KES 3,000 avec exemptions au cas par cas : inchangés. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_ke_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://ke.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Entry 2027 application window is now open from 1st July – 31st December 2026. »",
+     "replacementUrl": null,
+     "note": "Clôture 31/12/2026 non atteinte au 24/10/2026 : status open correct ; dépôt des pièces uniquement du 1er au 31/12/2026. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_ke_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Pages inchangées ; fenêtre 1er juil. – 31 déc. 2026 toujours ouverte au 24/10 (dépôt des documents du 1er au 31 déc.) : fiche exacte."
+  },
+  {
+   "catalogId": "uwc_tanzania_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://tz.uwc.org/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications are currently closed. Register your interest and get notified once applications open. »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tz_home.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://tz.uwc.org/eligibility-criteria/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Candidates must be able to physically attend ALL interviews and financial assessments (if selected) in Dar es Salaam. »",
+     "replacementUrl": null,
+     "note": "Âge 16-18 à l'inscription, Form Four CSEE / IGCSE / MYP, citoyen ou résident permanent : inchangés. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tz_elig.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://tz.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Receive an offer for a UWC place , which may be fully or partially funded depending on demonstrated need »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tz_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "application",
+     "url": "https://tz.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Completing an online application form with personal details, academic background, extracurricular activities, and motivations for applying to UWC. »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tz_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://tz.uwc.org/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Application open: December 8 th , 2025 Application deadline: January 16 th , 2026 »",
+     "replacementUrl": null,
+     "note": "Seules les dates du cycle précédent restent affichées ; aucune date 2027 publiée au 24/10 : forecast + estimated reste correct. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tz_howto.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Site toujours « Applications are currently closed », seules les dates 2025-2026 affichées : la prévision estimée (déc. 2026 – janv. 2027) reste valable."
+  },
+  {
+   "catalogId": "turkiye_scholarships_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.turkiyeburslari.gov.tr/fulltimeprograms",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« These are scholarships provided at associate, bachelor’s, master’s and PhD levels. »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tr_full.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://turkiyeburslari.gov.tr/scholarshipsprograms",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« For associate and bachelor's degree programmes: Under 21 years of age. For master’s programs: being under the age of 30 »",
+     "replacementUrl": null,
+     "note": "Seuils 70 % / 75 % / 90 % (santé), citoyens de tous pays, exclusion des citoyens et ex-citoyens turcs : inchangés. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tr_progs.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.turkiyeburslari.gov.tr/whyturkiyescholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« housing allowance of 6.000 TL for students studying in Istanbul and Ankara and 5.000 TL for those studying in other cities. »",
+     "replacementUrl": null,
+     "note": "Allocations 6.500 TL (licence) et 9.500 TL (master), 12 choix, cours de turc d'un an, assurance santé, billet d'avion : inchangés. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tr_why.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "application",
+     "url": "https://tbbs.turkiyeburslari.gov.tr/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« You need to register before initiating an application. Signing up is free of charge and will take approximately 2 minutes. »",
+     "replacementUrl": null,
+     "note": "Page de connexion TBBS courte (965 caractères) mais complète et lisible, pas un blocage. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tr_tbbs.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.turkiyeburslari.gov.tr/calendar",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« General Application Period Application Period January 10 – February 20 »",
+     "replacementUrl": null,
+     "note": "Calendrier annuel générique, sans annonce propre au cycle 2027 : forecast + estimated reste correct. Relu par curl le 24/10/2026 : /tmp/claude-0/-home-user-kpb-education-app/ddd7858d-9c83-50af-9377-ce3cec6e6b72/scratchpad/w1024/agent_pages/g0_tr_cal.txt (texte identique à l'instantané du 29/09, hors bruit de navigation)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Calendrier annuel (10 janv. – 20 févr.), critères et avantages inchangés ; aucune annonce 2027 spécifique : la prévision estimée reste exacte."
+  }
+ ]
+}

@@ -88,7 +88,7 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
     tags: ['secondary', 'bachelor', 'master', 'africa', 'mastercard-foundation', 'partner-managed', 'no-central-deadline', 'fully-funded'],
     relatedFieldIds: ['d01', 'd02', 'd03', 'd04', 'd05', 'd06', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12'],
     baseMatch: 76,
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'uct_international_refugee_2027',
@@ -157,7 +157,7 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
     tags: ['master', 'doctorate', 'south-africa', 'uct', 'international-students', 'refugees', 'no-published-call', 'partially-funded'],
     relatedFieldIds: ['d01', 'd02', 'd03', 'd04', 'd05', 'd06', 'd07', 'd08', 'd09', 'd10', 'd11', 'd12'],
     baseMatch: 70,
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'up_mastercard_scholars_2027',

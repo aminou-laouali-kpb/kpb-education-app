@@ -172,7 +172,7 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
       ],
       relatedFieldIds: ['d01', 'd02', 'd03', 'd07'],
       baseMatch: 80,
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:11:00.000Z',
     }),
     record({
       id: 'alu_scholarship_2027',
@@ -331,7 +331,7 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
       ],
       relatedFieldIds: ['d01', 'd02', 'd07'],
       baseMatch: 80,
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:14:00.000Z',
     }),
     record({
       id: 'auc_excellence_2027',
@@ -355,8 +355,8 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
         'Open — Fall 2027 intake: priority for the highest scholarship percentages when admission, scholarship and financial need applications are submitted by 1 February 2027 (early admission); regular admission until 1 June 2027',
       ],
       description: [
-        'Programme de bourses d’excellence de l’American University in Cairo, ouvert aux candidats internationaux avec une catégorie « diversité internationale » dédiée. Les bourses reposent à la fois sur l’excellence et sur le besoin financier, et se cumulent jusqu’à 100 % des frais de scolarité. La page du programme, mise à jour le 6 octobre 2026, publie désormais les échéances de bourse Spring 2027 et Fall 2027, et la page des exigences de Licence publie le 1er novembre pour Spring 2027, le 1er février pour l’admission anticipée Fall 2027 et le 1er juin pour l’admission régulière Fall 2027.',
-        'Excellence scholarship programme of the American University in Cairo, open to international applicants through a dedicated international diversity category. The scholarships are based on both excellence and financial need and combine up to 100% of tuition. The programme page, updated on 6 October 2026, now publishes the Spring 2027 and Fall 2027 scholarship deadlines, and the undergraduate requirements page publishes 1 November for Spring 2027, 1 February for Fall 2027 early admission and 1 June for Fall 2027 regular admission.',
+        'Programme de bourses d’excellence de l’American University in Cairo, ouvert aux candidats internationaux avec une catégorie « diversité internationale » dédiée. Les bourses reposent à la fois sur l’excellence et sur le besoin financier, et se cumulent jusqu’à 100 % des frais de scolarité. La page du programme, mise à jour le 15 octobre 2026, publie désormais les échéances de bourse Spring 2027 et Fall 2027, et la page des exigences de Licence publie le 1er novembre pour Spring 2027, le 1er février pour l’admission anticipée Fall 2027 et le 1er juin pour l’admission régulière Fall 2027.',
+        'Excellence scholarship programme of the American University in Cairo, open to international applicants through a dedicated international diversity category. The scholarships are based on both excellence and financial need and combine up to 100% of tuition. The programme page, updated on 15 October 2026, now publishes the Spring 2027 and Fall 2027 scholarship deadlines, and the undergraduate requirements page publishes 1 November for Spring 2027, 1 February for Fall 2027 early admission and 1 June for Fall 2027 regular admission.',
       ],
       advantages: [
         [
@@ -364,24 +364,24 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
           'Up to 100% of tuition fees by combining several scholarship categories',
         ],
         [
-          'Catégorie réussite académique : couverture de 20 % à 60 % des frais',
-          'Academic Achievement category: coverage from 20% to 60% of fees',
+          'Catégorie réussite académique : couverture à partir de 20 %, jusqu’à 100 % pour les meilleurs résultats de chaque type de certificat',
+          'Academic Achievement category: coverage from 20%, up to 100% for the highest-scoring top achievers in each certificate type',
         ],
         [
-          'Catégorie diversité internationale : couverture de 20 % à 30 %, réservée aux candidats déposant comme étudiants internationaux',
-          'International Diversity category: coverage from 20% to 30%, reserved for applicants applying as international students',
+          'Catégorie diversité internationale : couverture jusqu’à 30 %, réservée aux candidats déposant comme étudiants internationaux',
+          'International Diversity category: coverage up to 30%, reserved for applicants applying as international students',
         ],
         [
-          'Catégorie talents : 20 % à 30 % pour le sport, la musique, les arts de la scène et les arts',
-          'Talents category: 20% to 30% for athletics, music, performing arts and arts',
+          'Catégorie talents : jusqu’à 30 % pour le sport, la musique, les arts de la scène et les arts',
+          'Talents category: up to 30% for athletics, music, performing arts and arts',
         ],
         [
-          'Catégorie leadership et service communautaire : 20 % à 30 %',
-          'Leadership and Community Service category: 20% to 30%',
+          'Catégorie leadership et service communautaire : jusqu’à 30 %',
+          'Leadership and Community Service category: up to 30%',
         ],
         [
-          'Catégorie majeures d’arts libéraux sélectionnées : 20 % à 30 % (anthropologie, études arabes, égyptologie, littérature anglaise et comparée, cinéma, histoire, études du Moyen-Orient, technologie musicale, arts musicaux (interprétation), philosophie, sociologie, théâtre, arts visuels)',
-          'Selected liberal arts majors category: 20% to 30% (Anthropology, Arabic Studies, Egyptology, English and Comparative Literature, Film, History, Middle East Studies, Music Technology, Musical Arts in Performance, Philosophy, Sociology, Theatre, Visual Arts)',
+          'Catégorie majeures d’arts libéraux sélectionnées : jusqu’à 30 % (anthropologie, études arabes, égyptologie, littérature anglaise et comparée, cinéma, histoire, études du Moyen-Orient, musique, philosophie, sociologie, théâtre, arts visuels)',
+          'Selected liberal arts majors category: up to 30% (Anthropology, Arabic Studies, Egyptology, English and Comparative Literature, Film, History, Middle East Studies, Music, Philosophy, Sociology, Theatre, Visual Arts)',
         ],
       ],
       eligibility: [
@@ -501,6 +501,6 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
         'd11',
       ],
       baseMatch: 79,
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:14:00.000Z',
     }),
   ];

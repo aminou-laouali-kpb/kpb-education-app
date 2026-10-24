@@ -59,7 +59,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://www.turkiyeburslari.gov.tr/calendar',
     },
     tags: ['bachelor', 'master', 'turkiye', 'government', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:10:00.000Z',
   }),
   record({
     id: 'turkiye_isdb_joint_2027_forecast',
@@ -67,7 +67,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     name: ['Programme conjoint Türkiye–BID — prévision 2027', 'Türkiye–IsDB Joint Scholarship — 2027 forecast'],
     country: ['tur', 'Turquie', 'Türkiye'],
     levelLabel: ['Licence et Master', 'Bachelor and Master'],
-    fundingLabel: ['Master : financement complet ; Licence : prêt sans intérêt remboursable après les études', 'Master: fully funded; Bachelor: interest-free loan repayable after graduation'],
+    fundingLabel: ['Master : financement complet ; Licence : prêt remboursable après les études et l’emploi', 'Master: fully funded; Bachelor: loan repayable after graduation and employment'],
     fundingType: 'partially_funded',
     deadlineLabel: ['Prévision 2027 — environ du 10 janvier au 20 février 2027, à reconfirmer', '2027 forecast — approximately 10 January to 20 February 2027, to be reconfirmed'],
     description: [
@@ -116,7 +116,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://www.turkiyeburslari.gov.tr/announcements/ytb-islamic-development-bank-isdb-joint-scholarship-program-2026-applicaiton-period-122',
     },
     tags: ['bachelor', 'master', 'turkiye', 'isdb'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:12:00.000Z',
   }),
   record({
     id: 'stipendium_hungaricum_2027_forecast',
@@ -231,7 +231,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://scholarships.studyinromania.gov.ro/scholarship-about',
     },
     tags: ['bachelor', 'master', 'romania', 'government', 'romanian-language'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:12:00.000Z',
   }),
   record({
     id: 'brunei_government_scholarship_2027_forecast',
@@ -289,7 +289,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://www.mfa.gov.bn/pages/online-bdgs.aspx',
     },
     tags: ['bachelor', 'master', 'brunei', 'government', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:12:00.000Z',
   }),
   record({
     id: 'kazakhstan_foreign_students_2027_forecast',
@@ -347,7 +347,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://oq.gov.kz/en/news/1504',
     },
     tags: ['bachelor', 'master', 'kazakhstan', 'government', 'tuition'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'heydar_aliyev_grant_2027_forecast',
@@ -405,7 +405,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://studyinazerbaijan.edu.az/H.Aliyev_IEG_CALL_18.04.pdf',
     },
     tags: ['bachelor', 'master', 'azerbaijan', 'government', 'nomination', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'taiwan_icdf_2027',
@@ -464,7 +464,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://www.icdf.org.tw/wSite/ct?ctNode=31562&mp=2&xItem=12505',
     },
     tags: ['bachelor', 'master', 'taiwan', 'icdf', 'future-cycle', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'open_doors_russia_2027',
@@ -517,11 +517,14 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     sources: {
       overview: 'https://od.globaluni.ru/about',
       eligibility: 'https://od.globaluni.ru/index.php/rules',
-      benefits: 'https://od.globaluni.ru/about',
+      // L'allocation mensuelle n'est plus décrite sur /about : elle l'est dans
+      // la FAQ de l'accueil (« The scholarship covers tuition fees and provides
+      // a monthly stipend »), relue le 24/10/2026.
+      benefits: 'https://od.globaluni.ru/',
       application: 'https://od.globaluni.ru/',
       cycle: 'https://od.globaluni.ru/',
     },
     tags: ['bachelor', 'master', 'russia', 'olympiad', 'open', 'tuition'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
 ];

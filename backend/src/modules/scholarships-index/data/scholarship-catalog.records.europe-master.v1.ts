@@ -192,7 +192,7 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         'open',
       ],
       relatedFieldIds: ['d01', 'd02', 'd03', 'd04', 'd07', 'd08', 'd09'],
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:14:00.000Z',
     }),
     record({
       id: 'daad_epos_2027',
@@ -354,7 +354,7 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         'estimated-open-date',
       ],
       relatedFieldIds: ['d02', 'd03', 'd04', 'd05', 'd08', 'd09'],
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:14:00.000Z',
     }),
     record({
       id: 'erasmus_mundus_joint_masters_2027',
@@ -531,6 +531,6 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         'd09',
         'd11',
       ],
-      checkedAt: '2026-09-29T12:00:00.000Z',
+      checkedAt: '2026-10-24T07:13:00.000Z',
     }),
   ];

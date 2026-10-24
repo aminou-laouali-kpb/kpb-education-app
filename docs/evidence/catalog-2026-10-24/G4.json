@@ -1,0 +1,276 @@
+{
+ "group": "G4",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "qatar_university_international_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/types.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Qatar University offers this scholarship to international students who apply to undergraduate programs »",
+     "replacementUrl": null,
+     "note": ""
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/types.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« A minimum high school average of 95%. Applicant must receive the final acceptance in the university. »",
+     "replacementUrl": null,
+     "note": "Exclusions transfert/visiting/non-degree/second bachelor, non-cumul et maintien GPA 3.0 + 12 h toujours publiés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/types.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Exemption from tuition fees Exemption from textbook fees 500 QR monthly salary Student housing (two students per room) »",
+     "replacementUrl": null,
+     "note": "Billet aller-retour annuel et permis de résidence sous parrainage QU toujours listés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.qu.edu.qa/en-us/students/admission/undergraduate/apply",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Pay the application fee (QR 200) through the online admission application. »",
+     "replacementUrl": null,
+     "note": "Copie certifiée du relevé du secondaire et originaux après admission toujours exigés."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/scholarships-timeline.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Timeline to apply for scholarship in Spring 2027 semester New undergraduate applicants who are residents of the State of Qatar »",
+     "replacementUrl": null,
+     "note": "La page ne publie plus que le calendrier Spring 2027 (bourses résidents/employés/étudiants actuels, 11/10–11/11/2026) ; aucune fenêtre International Students Scholarship pour Fall 2027 n'est publiée : le statut forecast/estimated (≈1–25 mars 2027) reste cohérent. La fenêtre Fall 2026 (1–25 mars 2026) n'apparaît plus sur la page."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Bourse, critères (95 %), avantages et procédure inchangés. Le calendrier officiel ne couvre que le printemps 2027 sans fenêtre internationale : la prévision estimée mars 2027 reste valable."
+  },
+  {
+   "catalogId": "york_pise_2027_forecast",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://futurestudents.yorku.ca/presidents-international-scholarship-excellence",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« $180,000 CAD valued over four years ($45,000/year) »",
+     "replacementUrl": null,
+     "note": "Avantages (Career Ready Conference, mentors, réseau facultés) inchangés ; cycle Fall 2027 annoncé."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Have a minimum final admission average of 80% (A) or equivalent. Be officially nominated by a guidance counsellor, principal or senior school official. »",
+     "replacementUrl": null,
+     "note": "Max deux nominations par école, statut international, Reference Number : inchangés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://futurestudents.yorku.ca/financing-your-degree/international-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The President’s International Scholarship of Excellence is a high-value award that cannot be combined with entrance scholarships. »",
+     "replacementUrl": null,
+     "note": ""
+    },
+    {
+     "kind": "application",
+     "url": "https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The maximum word count for this statement is 500 words. »",
+     "replacementUrl": null,
+     "note": "Liste 3 activités / 3 prix, profil financier, lettre de référence signée sur papier à en-tête : inchangés."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The President's International Scholarship of Excellence Application opens November 1, 2026 ! »",
+     "replacementUrl": null,
+     "note": "Nouveau : date d'ouverture publiée (1er novembre 2026). Le formulaire est encore fermé (« The scholarship application is now closed »). Clôtures inchangées : 27/01/2027 et 04/02/2027 à 23 h 59 EST."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "cycle.opensAt",
+     "from": "(absent)",
+     "to": "2026-11-01T04:00:00.000Z",
+     "evidence": "« The President's International Scholarship of Excellence Application opens November 1, 2026 ! » https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides (minuit heure de Toronto, encore EDT UTC-4 le 01/11/2026 à 00 h ; aucune heure n'est publiée)"
+    },
+    {
+     "field": "deadlineLabelEn",
+     "from": "2027-2028 forecast — student deadline 27 January 2027, 11:59 p.m. ET; nomination 4 February 2027",
+     "to": "2027-2028 — application opens 1 November 2026; student deadline 27 January 2027, 11:59 p.m. EST; nomination 4 February 2027",
+     "evidence": "« Student Application Deadline: January 27, 2027 at 11:59 p.m. EST » https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides"
+    },
+    {
+     "field": "description",
+     "from": "The form has not reopened yet and no opening date is published.",
+     "to": "The form is still closed but York has published its opening date: 1 November 2026.",
+     "evidence": "« The scholarship application is now closed . » + « Application opens November 1, 2026 ! » https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides"
+    },
+    {
+     "field": "cycle.status",
+     "from": "forecast",
+     "to": "forecast jusqu'au 01/11/2026, puis open (ouverture officielle publiée) ; dateConfidence reste confirmed",
+     "evidence": "« Application opens November 1, 2026 ! » https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides"
+    }
+   ],
+   "summary": "Tout est confirmé (180 000 CAD, critères, pièces, clôtures 27/01 et 04/02/2027) ; York publie désormais l'ouverture du formulaire au 1er novembre 2026 : ajouter opensAt et corriger la description qui dit l'inverse."
+  },
+  {
+   "catalogId": "uoft_lester_b_pearson_2027",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://future.utoronto.ca/pearson-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Lester B. Pearson International Scholarship is the university's most prestigious award for international students. »",
+     "replacementUrl": null,
+     "note": "≈37 lauréats par an ; mise en garde contre les agents toujours présente."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://future.utoronto.ca/pearson-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« enrolled in your final year of senior secondary school in 2026/2027 or have graduated no earlier than June 2026 »",
+     "replacementUrl": null,
+     "note": "Nomination par l'école (un élève par an), début septembre 2027, exclusion post-secondaire : inchangés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://future.utoronto.ca/pearson-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« the Pearson Scholarships cover tuition, books, incidental fees, and full residence support for four years »",
+     "replacementUrl": null,
+     "note": ""
+    },
+    {
+     "kind": "application",
+     "url": "https://future.utoronto.ca/pearson-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« High schools can only nominate one student per year. »",
+     "replacementUrl": null,
+     "note": "Lien privé après nomination ; OUAC avant le 16/10/2026 ; dossier avant le 06/11/2026."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://future.utoronto.ca/pearson-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The deadline to complete the Pearson International Scholarship application and submit all required documentation is November 6, 2026 . »",
+     "replacementUrl": null,
+     "note": "Dates inchangées (ouverture nominations 06/07/2026, nomination 09/10, OUAC 16/10, dossier 06/11/2026). Au 24/10/2026, la nomination et l'OUAC sont déjà clos : seuls les élèves déjà nominés peuvent encore déposer."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "deadlineLabelEn",
+     "from": "Open — school nomination by 9 October 2026, Pearson application by 6 November 2026",
+     "to": "Open to already-nominated students only — school nominations (9 October 2026) and OUAC admission (16 October 2026) are closed; Pearson application and documents by 6 November 2026",
+     "evidence": "« School nomination deadline: October 9, 2026 Student OUAC admission application deadline: October 16, 2026 » https://future.utoronto.ca/pearson-scholarships"
+    },
+    {
+     "field": "cycle.status",
+     "from": "open",
+     "to": "open (inchangé) — à passer en closed après le 2026-11-06T23:59:59Z",
+     "evidence": "« Student scholarship application deadline and documentation submission deadline: November 6, 2026 » https://future.utoronto.ca/pearson-scholarships"
+    }
+   ],
+   "summary": "Page inchangée : couverture complète 4 ans, nomination par l'école, clôture du dossier le 6 novembre 2026. Statut open toujours exact, mais le libellé doit préciser que nominations et OUAC sont clos depuis le 9 et le 16 octobre."
+  },
+  {
+   "catalogId": "chevening_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.chevening.org/scholarships/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« pursue one-year master's degrees in the UK »",
+     "replacementUrl": null,
+     "note": "Instantané vide (000) ; curl en échec (HTTP/2 INTERNAL_ERROR, 3 essais) ; lu via WebFetch. Financement FCDO toujours mentionné."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.chevening.org/resource-hub/guidance/eligibility/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« equivalent to 2,800 hours »",
+     "replacementUrl": null,
+     "note": "Lu via WebFetch : citoyenneté pays éligible, retour 2 ans, diplôme ≥ 2 ans avant la clôture, trois cours + offre inconditionnelle, exclusions (citoyens britanniques, résidents UK, employés liés, ancienne bourse UK) inchangés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.chevening.org/faqs/what-does-a-chevening-scholarship-cover/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« A contribution of up to £75 for TB testing, where this is required »",
+     "replacementUrl": null,
+     "note": "Lu via WebFetch : frais de scolarité, voyage économique, allocations arrivée/départ/top-up, visa, allocation mensuelle (taux Londres/hors Londres) inchangés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.chevening.org/apply/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Closed for applications »",
+     "replacementUrl": null,
+     "note": "Lu via WebFetch : candidature par la page pays ; toutes les fiches pays affichées sont fermées, cohérent avec le statut closed. Page pays Sénégal : « Applications for 2027-2028 Chevening Scholarships are now closed. »"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.chevening.org/scholarships/application-timeline/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The deadline to receive and submit at least one unconditional UK university offer is 17:00 BST (UK time) on 8 July 2027. »",
+     "replacementUrl": null,
+     "note": "Lu via WebFetch : ouverture « August 2026 », clôture « October 2026 » à 11:00 UTC (jour exact renvoyé aux pages pays, qui affichent désormais « now closed » sans dates) ; entretiens mars–avril 2027 ; aucun cycle 2028-2029 annoncé. Les jours exacts 04/08 et 06/10 ne sont plus citables mot pour mot aujourd'hui mais rien ne les contredit."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Sources Chevening lues via WebFetch (curl bloqué) : campagne 2027-2028 close, critères, avantages et calendrier (offre inconditionnelle 8 juillet 2027) inchangés ; aucun cycle suivant annoncé. Fiche exacte telle quelle."
+  }
+ ]
+}
