@@ -65,7 +65,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       cycle: 'https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/scholarships-timeline.aspx',
     },
     tags: ['bachelor', 'qatar', 'university', 'forecast', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:10:00.000Z',
   }),
   record({
     id: 'york_pise_2027_forecast',
@@ -76,12 +76,12 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     fundingLabel: ['180 000 CAD sur quatre ans ; dépenses restantes possibles', 'CAD 180,000 over four years; remaining costs may apply'],
     fundingType: 'partially_funded',
     deadlineLabel: [
-      'Prévision 2027-2028 — clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est ; nomination le 4 février 2027',
-      '2027-2028 forecast — student deadline 27 January 2027, 11:59 p.m. ET; nomination 4 February 2027',
+      'À venir — formulaire ouvert à partir du 1er novembre 2026 ; clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est ; nomination le 4 février 2027',
+      'Upcoming — form opens 1 November 2026; student deadline 27 January 2027, 11:59 p.m. ET; nomination 4 February 2027',
     ],
     description: [
-      'Grande bourse d’entrée de York University pour lycéens internationaux démontrant excellence scolaire, leadership et engagement bénévole ou parascolaire. York publie désormais son cycle d’entrée d’automne 2027 (relevé le 29/09/2026) : clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est, et nomination par l’école le 4 février 2027. Le formulaire n’est pas encore rouvert et aucune date d’ouverture n’est publiée.',
-      'Major York University entrance award for international high-school students demonstrating academic excellence, leadership and volunteer or extracurricular engagement. York now publishes its Fall 2027 entry cycle (checked 29/09/2026): student deadline 27 January 2027 at 11:59 p.m. Eastern Time, school nomination 4 February 2027. The form has not reopened yet and no opening date is published.',
+      'Grande bourse d’entrée de York University pour lycéens internationaux démontrant excellence scolaire, leadership et engagement bénévole ou parascolaire. York publie désormais son cycle d’entrée d’automne 2027 (relevé le 29/09/2026) : clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est, et nomination par l’école le 4 février 2027. Le formulaire, encore fermé, ouvre le 1er novembre 2026 (relevé le 24/10/2026).',
+      'Major York University entrance award for international high-school students demonstrating academic excellence, leadership and volunteer or extracurricular engagement. York now publishes its Fall 2027 entry cycle (checked 29/09/2026): student deadline 27 January 2027 at 11:59 p.m. Eastern Time, school nomination 4 February 2027. The form, still closed, opens on 1 November 2026 (checked 24/10/2026).',
     ],
     advantages: [
       ['45 000 CAD par année sur quatre ans', 'CAD 45,000 per year over four years'],
@@ -120,10 +120,11 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       status: 'forecast',
       dateConfidence: 'confirmed',
       // 27/01/2027 à 23 h 59, heure de l'Est (UTC-5) : la page York publie
-      // désormais le cycle Fall 2027 en dates fermes. Aucune date d'ouverture
-      // n'est publiée et le formulaire n'est pas rouvert — `opensAt` reste
-      // absent, ce qu'un cycle confirmé autorise (validator: « opensAt is
-      // optional »).
+      // désormais le cycle Fall 2027 en dates fermes. Le 24/10/2026, elle
+      // publie aussi l'ouverture : « Application opens November 1, 2026 »
+      // (minuit à Toronto, encore à l'heure d'été UTC-4). `forecast` jusqu'à
+      // cette date, puis `open`.
+      opensAt: '2026-11-01T04:00:00.000Z',
       closesAt: '2027-01-28T04:59:00.000Z',
       sourceUrl: 'https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides',
     },
@@ -135,7 +136,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       cycle: 'https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides',
     },
     tags: ['bachelor', 'canada', 'york', 'leadership', 'forecast', 'school-nomination'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:10:00.000Z',
   }),
   record({
     id: 'uoft_lester_b_pearson_2027',
@@ -146,8 +147,8 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     fundingLabel: ['Financement complet des coûts universitaires publiés pendant quatre ans', 'Full published university-cost coverage for four years'],
     fundingType: 'fully_funded',
     deadlineLabel: [
-      'Ouvert — nomination du lycée avant le 9 octobre 2026, dossier Pearson avant le 6 novembre 2026',
-      'Open — school nomination by 9 October 2026, Pearson application by 6 November 2026',
+      'Ouvert, pour les élèves déjà nommés uniquement — la nomination du lycée (9 octobre 2026) et la demande d’admission OUAC (16 octobre 2026) sont closes ; dossier Pearson et pièces avant le 6 novembre 2026',
+      'Open to already-nominated students only — school nomination (9 October 2026) and OUAC admission application (16 October 2026) have closed; Pearson application and documents by 6 November 2026',
     ],
     description: [
       'Bourse de l’Université de Toronto pour environ 37 étudiants internationaux exceptionnels. Point décisif : on ne peut pas se présenter soi-même. Seul le lycée fréquenté peut nommer le candidat, via le portail officiel, et il ne peut nommer qu’un seul élève par an. Aucune agence ni aucun « agent » éducatif ne peut déposer de candidature.',
@@ -196,6 +197,6 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       cycle: 'https://future.utoronto.ca/pearson-scholarships',
     },
     tags: ['bachelor', 'canada', 'toronto', 'open', 'school-nomination', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:10:00.000Z',
   }),
 ];

@@ -1,0 +1,245 @@
+{
+ "group": "G6",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "australia_awards_africa_2028_forecast",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://australiaawardsafrica.org/awards/types-of-awards/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The next round of applications will open from 1 February 2027. »",
+     "replacementUrl": null,
+     "note": "Refetched by curl on 24/10/2026 (agent_pages/g5_aa_types.txt): content identical to the 29/09 snapshot. The 5 priority areas are unchanged."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://australiaawardsafrica.org/awards/apply/",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« Not already hold or be undertaking a Master’s degree or equivalent (equivalent to a Master’s degree in home country). »",
+     "replacementUrl": "https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf",
+     "note": "Refetched by curl on 24/10/2026 (agent_pages/g5_aa_apply.txt). The visible page only shows the notice that the 2027 intake is closed. The eligibility list in the 29/09 snapshot ('Citizen of an eligible African country…') sits inside an HTML comment <!-- … --> in the raw source, so it is not displayed. The listed criteria (25 countries, age 25, 5 years of experience, IELTS 6.5/TOEFL 84/PTE 58) are supported word for word by the official 2027 Africa Profile PDF (snapshot pages/5f454bc1070a.txt; PDF re-downloaded on 24/10, md5 identical 149097159737b9de862b6d802c4219cd; text copied to agent_pages/g5_aa_profile_snapshot_md5-identical.txt). The evidence is taken from that PDF."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« contribution to living expenses »",
+     "replacementUrl": null,
+     "note": "PDF re-downloaded on 24/10/2026 and identical to the snapshot (same md5). Return air travel, establishment allowance, tuition, OSHC, introductory academic program, supplementary academic support and fieldwork allowance are all present. The PDF also mentions 'Reasonable accommodation for scholars with disabilities', which the fiche does not list (optional)."
+    },
+    {
+     "kind": "application",
+     "url": "https://oasis.dfat.gov.au/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications for the 2027 intake of the following scholarship schemes have closed: »",
+     "replacementUrl": null,
+     "note": "Refetched by curl on 24/10/2026 (agent_pages/g5_oasis.txt): 'Australia Awards Scholarships' is still in the list of closed 2027 intakes. No 2028 intake has been announced on OASIS."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://australiaawardsafrica.org/awards/apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications for the 2028 Intake will open in February 2027. »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_aa_apply.txt). The opening (February 2027; '1 February 2027' on types-of-awards) is supported. No closing date is published for 2028: 30/04/2027 stays an estimate (reference: 1 Feb to 30 Apr 2026 in the 2027 PDF). Status forecast/estimated is still correct."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "source.url",
+     "from": "eligibility: https://australiaawardsafrica.org/awards/apply/",
+     "to": "eligibility: https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf",
+     "evidence": "« Not already hold or be undertaking a Master’s degree or equivalent (equivalent to a Master’s degree in home country). » — https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf (the apply page now displays only « Applications for the Australia Awards Scholarships 2027 Intake are now closed. Applications for the 2028 Intake will open in February 2027. », and its criteria list is commented out in the HTML)"
+    }
+   ],
+   "summary": "Fiche still accurate (2027 intake closed, 2028 opening announced for 1 February 2027, close estimated). Only fix: the 'eligibility' source (apply page) no longer displays the criteria, which are commented out in the HTML, so it should point to the official 2027 Africa Profile PDF."
+  },
+  {
+   "catalogId": "gates_cambridge_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.gatescambridge.org/programme/the-scholarship/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Each year Gates Cambridge offers around 70 full-cost scholarships to outstanding applicants from countries outside the UK »",
+     "replacementUrl": null,
+     "note": "Refetched by curl on 24/10/2026 (agent_pages/g5_gc_scholarship.txt): text identical to the snapshot, apart from whitespace."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.gatescambridge.org/apply/eligibility/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« a citizen of any country outside the United Kingdom »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_gc_elig.txt), identical. PhD (full or part-time pilot), MLitt and full-time one-year courses; MASt, MBA and part-time degrees other than the PhD are excluded; the remainder of a course already started cannot be funded. All consistent with the fiche."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.gatescambridge.org/programme/the-scholarship/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« one economy single airfare at both the beginning and end of the course »",
+     "replacementUrl": null,
+     "note": "£23,152 at the 2026-27 rate, academic development £750 to £4,000, children allowance £12,793, 'No funding is provided for a partner', and bench fees not covered: all still on the page (24/10)."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.gatescambridge.org/apply/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« In addition to two academic references for admission, Gates Cambridge applicants must arrange for someone to submit a reference »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_gc_how.txt), identical: combined form on the Graduate Application Portal, 4 questions (200/200/300/300 words), research proposal for PhD only."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.gatescambridge.org/apply/timeline/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Dependent on your course – either Tuesday 8th December 2026 or Wednesday 6th January 2027 (see Course Directory). »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_gc_timeline.txt): 'Applications for entry in the academic year 2027/8 are now open.' Opening 11 September 2026, notification 8 March 2027, panels 22–23 March 2027. Still open on 24/10/2026, so status open/confirmed is correct."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "All five Gates Cambridge pages refetched on 24/10/2026 are identical to the snapshots and support the fiche; the international round is still open (8 Dec 2026 / 6 Jan 2027). No changes needed."
+  },
+  {
+   "catalogId": "cmu_africa_mastercard_2027",
+   "verdict": "unverifiable",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.africa.engineering.cmu.edu/impact/mastercard-foundation-scholars.html",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Snapshot empty (000). On 24/10/2026, curl failed three times (also with --cacert /root/.ccr/ca-bundle.crt): 'SSL certificate problem: unable to get local issuer certificate'. The same error occurs for every cmu.edu host tried (www.cmu.edu/africa, engineering.cmu.edu/africa, the CMU-Africa home page). WebFetch returns HTTP 503 Service Unavailable. Search finds only third-party aggregators (excluded). No official replacement page was readable."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.africa.engineering.cmu.edu/admissions/faq.html",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Same blockage: curl SSL error 60, WebFetch 503 (24/10/2026)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.africa.engineering.cmu.edu/impact/mastercard-foundation-scholars.html",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Same blockage as overview."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.africa.engineering.cmu.edu/admissions/how-to-apply/index.html",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "curl SSL error 60, WebFetch 503 on this URL, on the non-www variant and on the French version admissions-french/how-to-apply (24/10/2026)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.africa.engineering.cmu.edu/admissions/how-to-apply/index.html",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Not readable. Third-party search results mention 15 December (early) / 15 January (final), which matches the fiche, but these sources are not official and are not used as proof. On today's date, 15/01/2027 is not yet passed, so 'open' stays plausible but unconfirmed."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "No official CMU-Africa page could be read on 24/10/2026 (SSL error from curl on every cmu.edu host, HTTP 503 from WebFetch, empty snapshots). The fiche cannot be re-verified; keep the 07/10/2026 checkedAt unchanged."
+  },
+  {
+   "catalogId": "knight_hennessy_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://knight-hennessy.stanford.edu/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Knight-Hennessy Scholars is a fully-endowed, multidisciplinary leadership development program for graduate students at Stanford University. »",
+     "replacementUrl": null,
+     "note": "Refetched by curl on 24/10/2026 (agent_pages/g5_kh_home.txt): identical to the snapshot. No 2028 cohort announcement."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://knight-hennessy.stanford.edu/admission/before-you-apply/eligibility",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Current college students are eligible if you will earn your first degree by September 2027. »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_kh_elig.txt), identical: January 2020 or later, military January 2018, HCP/MLA/JSD/MLS/coterminal programmes excluded."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://knight-hennessy.stanford.edu/program-overview/funding",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« A travel stipend intended to cover an economy-class ticket for one annual trip to and from Stanford »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_kh_funding.txt), identical: tuition, stipend, relocation/technology stipend, enrichment funds in years 2–3."
+    },
+    {
+     "kind": "application",
+     "url": "https://apply.knight-hennessy.stanford.edu/apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Apply to join the 2027 cohort »",
+     "replacementUrl": null,
+     "note": "Login portal (curl 200 on 24/10/2026, agent_pages/g5_kh_apply.txt). The text is short (about 680 characters), which is normal for an application portal: it confirms that a separate online KHS application exists. Required materials are detailed on the your-applications page (Online application form, Resume, Transcript & Test Scores, Recommendation Letters, Short Answers & Essay)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://knight-hennessy.stanford.edu/admission/preparing-your-applications/your-applications",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Varies by program. The earlier of these two dates: the degree program application deadline for KHS applicants or December 1, 2026 »",
+     "replacementUrl": null,
+     "note": "Refetched on 24/10/2026 (agent_pages/g5_kh_yourapps.txt): opening June 1, 2026, deadline October 6, 2026 at 1:00 pm Pacific Time, finalists notified 27/01/2027, scholars 16/03/2027. Closing date passed, so status closed/confirmed is correct. Next cycle not announced."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "All Knight-Hennessy pages refetched on 24/10/2026 are identical to the snapshots and support the fiche: the 2027 campaign closed on 6 October 2026 (1:00 pm PT), and the 2028 cycle is not yet announced. No changes needed."
+  }
+ ]
+}

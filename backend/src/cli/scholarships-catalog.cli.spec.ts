@@ -137,7 +137,10 @@ describe('scholarships-catalog CLI', () => {
     // AUC passent `open` (26 et 10), et Gates Cambridge et CMU-Africa entrent
     // au catalogue, lus aux sources ce jour-là — l'horloge avance au 07/10
     // pour que leur `verifiedAt` ne soit pas dans le futur : 28 et 12.
-    const now = new Date('2026-10-07T18:00:00.000Z');
+    // 24/10 depuis la relecture mensuelle du même jour (nouvelle vague de
+    // `verifiedAt`) : aucune clôture entre le 07/10 et le 24/10, les comptes
+    // publiables ne bougent pas.
+    const now = new Date('2026-10-24T18:00:00.000Z');
 
     // POURQUOI CES CHIFFRES ONT CHANGÉ LE 20/08/2026 — 31 → 30 et 11 → 10.
     //
@@ -188,13 +191,14 @@ describe('scholarships-catalog CLI', () => {
     // depuis le 30/09 : UP Mastercard, confirmée, est close ; 8 depuis le
     // 06/10 : Chevening et Knight-Hennessy, confirmés, sont clos ; 10 depuis
     // le 07/10 : Eiffel et AUC Excellence publient leurs dates 2027 (open) ;
-    // 12 le même jour : Gates Cambridge et CMU-Africa entrent, dates confirmées.
-    it('publishes only the 12 confirmed-date records under --confirmed-only', () => {
+    // 12 le même jour : Gates Cambridge et CMU-Africa entrent, dates confirmées ;
+    // 13 depuis le 24/10 : le Swedish Institute publie ses dates 2027.
+    it('publishes only the 13 confirmed-date records under --confirmed-only', () => {
       const published = SCHOLARSHIP_CATALOG_V1.records
         .map((_, index) => decidePublication(rowFromRecord(index), now, true))
         .filter((item) => item.publish);
 
-      expect(published).toHaveLength(12);
+      expect(published).toHaveLength(13);
       expect(published.every((item) => item.confidence === 'confirmed')).toBe(true);
       expect(published.map((item) => item.id)).not.toContain('mccall_macbain_2027');
     });

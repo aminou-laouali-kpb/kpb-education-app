@@ -1,0 +1,251 @@
+{
+ "group": "G9",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "erasmus_mundus_joint_masters_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://erasmus-plus.ec.europa.eu/opportunities/individuals/students/erasmus-mundus-joint-masters",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Students apply directly to the institution running their chosen programme. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_em_overview.txt), texte identique à l'instantané."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://erasmus-plus.ec.europa.eu/programme-guide/part-b/key-action-2/erasmus-mundus-action",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Students who have previously obtained an EMJM scholarship are not eligible to apply for an additional scholarship under the EMJM. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_em_guide.txt), texte identique à l'instantané. Le guide confirme aussi diplôme de 1er cycle ou niveau équivalent reconnu, ouverture « from all over the world », règle des 10 % par nationalité."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://erasmus-plus.ec.europa.eu/programme-guide/part-b/key-action-2/erasmus-mundus-action",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The scholarship is calculated as: 1 400 Euros/month x DS Where DS = duration of the Master programme. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_em_guide.txt), texte identique à l'instantané. Couverture travel/visa/installation/subsistence, réduction pour prior learning (min. 1 an), 18 bourses NDICI + 3 IPA III : confirmés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Interested students should visit the program's official website and directly contact the consortium for information on courses, application procedures, and scholarship availability. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_em_catalogue.txt), texte identique à l'instantané. Le catalogue précise que certains masters ne proposent plus de bourses (fin de financement), conforme à la fiche."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Most master’s programmes require applications to be submitted between October and January for courses commencing the following academic year. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_em_catalogue.txt), texte identique à l'instantané. Aucune date centrale publiée : forecast/estimated (oct. 2026 – janv. 2027) reste cohérent au 24/10/2026, chaque consortium ayant son propre calendrier."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Les trois pages officielles (Erasmus+, guide du programme, catalogue EACEA) sont inchangées depuis le 29/09 et soutiennent la fiche ; la fenêtre estimée octobre–janvier reste valide, pas de date centrale à confirmer."
+  },
+  {
+   "catalogId": "mastercard_foundation_scholars_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://mastercardfdn.org/en/what-we-do/our-programs/mastercard-foundation-scholars-program/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Mastercard Foundation Scholars Program is a global initiative designed to develop the next generation of transformative leaders »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_mc_overview.txt) : seules des différences techniques (attributs d'iframe YouTube), contenu identique."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://mastercardfdn.org/en/articles/becoming-a-mastercard-foundation-scholar/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« For a graduate (Master’s) degree, candidates must be 35 years old or under when they apply. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_mc_becoming.txt), texte identique à l'instantané. 29 ans pour la licence, engagement éthique, ambitions > ressources, priorité femmes/réfugiés/handicap : confirmés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://mastercardfdn.org/en/frequently-asked-questions/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Financial support includes, but is not limited to, tuition fees, accommodation, books and other scholastic materials, mentoring, counselling, leadership development »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_mc_faq.txt), texte identique à l'instantané. Billet retour, remboursement des frais de dossier si sélectionné, pas de doctorat : confirmés dans la FAQ."
+    },
+    {
+     "kind": "application",
+     "url": "https://mastercardfdn.org/en/what-we-do/our-programs/mastercard-foundation-scholars-program/where-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Partner institutions have their own application processes, deadlines, and admission fees. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_mc_where.txt), différences purement techniques. Le répertoire des partenaires se charge en JavaScript (« Error loading data » en texte brut) mais les filtres « Applications Open / Applications Closed » et la procédure sont visibles."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://mastercardfdn.org/en/frequently-asked-questions/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Each partner in the Mastercard Foundation Scholars Program sets their own deadline. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_mc_faq.txt), texte identique à l'instantané. Fenêtre indicative forecast/estimated cohérente avec l'absence de date unique."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Les quatre pages officielles de la Fondation sont inchangées et soutiennent la fiche (pas de date unique, âges 29/35 ans, pas de doctorat, couverture) ; aucune correction."
+  },
+  {
+   "catalogId": "uct_international_refugee_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://uct.ac.za/students/fees-funding-postgraduate-degree-funding-bursaries-scholarships/international-and-refugee-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« A limited number of scholarships are available annually to international and refugee students for postgraduate study in any discipline at UCT. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_uct_intl.txt), texte identique à l'instantané."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.uct.ac.za/sites/default/files/media/documents/uct-handbook-14-2027-final.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Individuals who are employed full-time (more than 20 hours per week) are not eligible for UCT postgraduate funding support. »",
+     "replacementUrl": null,
+     "note": "Instantané texte du 29/09 relu ; PDF re-téléchargé par curl le 24/10 : MD5 identique à l'instantané brut (2b0023f1…), texte extrait dans agent_pages/g8_uct_handbook14_2027.txt. Le handbook confirme aussi renouvellement et durées (1 an Honours, 2 ans Master, 3 ans Doctorat) et l'obligation de demande d'admission."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://uct.ac.za/students/fees-funding-postgraduate-degree-funding-bursaries-scholarships/international-and-refugee-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« All UCT international and refugee students' scholarships are supplementary as a contribution towards the cost of attendance. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_uct_intl.txt), texte identique à l'instantané. Renouvellement/durées confirmés par le handbook 14 (2027)."
+    },
+    {
+     "kind": "application",
+     "url": "https://uct.ac.za/students/fees-funding-postgraduate-degree-funding/applications-and-requirements",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Ideally, you should do this at least 7 months before you intend to begin your degree. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_uct_apps.txt), texte identique à l'instantané. NRF juin/juillet (Master) et octobre (Honours), autres prix UCT avant mi-novembre : confirmés."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://uct.ac.za/students/fees-funding-postgraduate-degree-funding-bursaries-scholarships/international-and-refugee-scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The call for applications for 2026 will not open, due to funding constraints. »",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 relu ; page re-téléchargée par curl le 24/10 (agent_pages/g8_uct_intl.txt), texte identique à l'instantané. Toujours aucun appel 2027 au 24/10/2026 : statut suspended + estimated maintenu (clôture estimée 10/11/2026 encore future). La mention « as of 29 September 2026 » du libellé/description reste exacte mais pourrait être rafraîchie au 24 octobre 2026."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Pages UCT et handbook 14 (2027) inchangés : la notice « call for 2026 will not open » est toujours la dernière publiée, aucun appel 2027 ; fiche suspendue confirmée telle quelle."
+  },
+  {
+   "catalogId": "up_mastercard_scholars_2027",
+   "verdict": "unverifiable",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.up.ac.za/mastercard-foundation-scholars-program",
+     "readVia": "snapshot",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 = page Cloudflare 403 (752 car.). Retenté le 24/10 : curl -> 403 Cloudflare « Sorry, you have been blocked » (agent_pages/g8_up_main.txt), WebFetch -> HTTP 403. Pas de contournement de l'anti-robot."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.up.ac.za/mastercard-foundation-scholars-program/application-instructions",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« is open to African students who are first-year master's students with a grade point average (GPA) of at least 70%. »",
+     "replacementUrl": "https://drupalwebprod-files.up.ac.za/Public/2026-04/Postgraduate%202027%20form.pdf?VersionId=wT9TyJp00LoHjEblzmWvtYNGOJptQU9i",
+     "note": "Instantané du 29/09 = page Cloudflare 403 (752 car.). Retenté le 24/10 : curl -> 403 Cloudflare « Sorry, you have been blocked » (agent_pages/g8_up_instr.txt), WebFetch -> HTTP 403. Pas de contournement de l'anti-robot. Remplacement officiel UP trouvé : formulaire postgraduate 2027 (PDF, curl, agent_pages/g8_up_pg_form_2027.txt) et formulaire undergraduate 2027 (agent_pages/g8_up_ug_form_2027.txt). Ils contredisent en partie la fiche : GPA ≥ 70 %, master 1re année uniquement (pas d'Honours mentionné), facultés PG listées = EMS, NAS, EBIT, Humanities (sauf Psychologie), Law, Education ; Law UG « Open to only applicants from SADC ». La page d'instructions elle-même reste illisible."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.up.ac.za/mastercard-foundation-scholars-program/what-program-covers",
+     "readVia": "snapshot",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané du 29/09 = page Cloudflare 403 (752 car.). Retenté le 24/10 : curl -> 403 Cloudflare « Sorry, you have been blocked » (agent_pages/g8_up_covers.txt), WebFetch -> HTTP 403. Pas de contournement de l'anti-robot. Aucune page officielle de remplacement listant la couverture trouvée (les formulaires 2027 ne la détaillent pas)."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.up.ac.za/mastercard-foundation-scholars-program/how-apply",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« ensure that the university receives all required documentation no later than September 30 September 2026. Apply by 30 June 2026 for admission into a faculty. »",
+     "replacementUrl": "https://drupalwebprod-files.up.ac.za/Public/2026-04/Postgraduate%202027%20form.pdf?VersionId=wT9TyJp00LoHjEblzmWvtYNGOJptQU9i",
+     "note": "Instantané du 29/09 = page Cloudflare 403 (752 car.). Retenté le 24/10 : curl -> 403 Cloudflare « Sorry, you have been blocked » (agent_pages/g8_up_how.txt), WebFetch -> HTTP 403. Pas de contournement de l'anti-robot. Remplacement : formulaire PG 2027 officiel (envoi à mcfsp@up.ac.za après admission provisoire), conforme à la procédure de la fiche."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.up.ac.za/mastercard-foundation-scholars-program/how-apply",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« ensure that the University receives all required documentation no later than 31st August 2026. »",
+     "replacementUrl": "https://drupalwebprod-files.up.ac.za/Public/2026-04/Undergraduate%202027%20form.pdf?VersionId=g8EUc_j39M72ckx5q7B2wqzkDC6DrPSz",
+     "note": "Instantané du 29/09 = page Cloudflare 403 (752 car.). Retenté le 24/10 : curl -> 403 Cloudflare « Sorry, you have been blocked » (agent_pages/g8_up_how.txt), WebFetch -> HTTP 403. Pas de contournement de l'anti-robot. Formulaire UG 2027 : 31/08/2026 ; formulaire PG 2027 : 30/09/2026 ; admission 30/06/2026. Les deux dates sont passées au 24/10/2026 : statut closed / confirmed / closesAt 2026-09-30 exacts."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "eligibility",
+     "from": "Open to Undergraduate, Honours and Master students",
+     "to": "Open to first-year undergraduate students and first-year Master's students (2027 forms do not mention Honours); GPA of at least 70%; must not already hold a degree at the same level",
+     "evidence": "« is open to African students who are first-year master's students with a grade point average (GPA) of at least 70%. » + « Applicants should not already have obtained a Masters Degree/Qualification » — https://drupalwebprod-files.up.ac.za/Public/2026-04/Postgraduate%202027%20form.pdf?VersionId=wT9TyJp00LoHjEblzmWvtYNGOJptQU9i"
+    },
+    {
+     "field": "eligibility",
+     "from": "Postgraduate: limited to the Faculties of Natural and Agricultural Sciences, Economic and Management Sciences, Humanities for Honours or Masters in Political Studies or International Studies only, and Engineering for continuing students",
+     "to": "Postgraduate (2027 form): Economic and Management Sciences; Natural and Agricultural Sciences; Engineering, Built Environment and IT; Humanities (except Psychology); Law; Education. Undergraduate: Law open only to SADC applicants",
+     "evidence": "PG form lists « Engineering, Built Environment and Information Technology », « Natural and Agricultural Sciences », « Law », « Education » (Humanities listée avec exclusion des degrés de Psychologie) — https://drupalwebprod-files.up.ac.za/Public/2026-04/Postgraduate%202027%20form.pdf?VersionId=wT9TyJp00LoHjEblzmWvtYNGOJptQU9i ; « Law (Open to only applicants from SADC) » — https://drupalwebprod-files.up.ac.za/Public/2026-04/Undergraduate%202027%20form.pdf?VersionId=g8EUc_j39M72ckx5q7B2wqzkDC6DrPSz"
+    }
+   ],
+   "summary": "Toutes les pages up.ac.za restent bloquées (Cloudflare 403, curl et WebFetch) : vue d'ensemble et avantages non vérifiables. Les formulaires officiels 2027 confirment les dates (31/08 UG, 30/09 PG, statut closed correct) mais contredisent les critères d'éligibilité de la fiche (GPA 70 %, master 1re année, liste des facultés) — à revoir humainement."
+  }
+ ]
+}

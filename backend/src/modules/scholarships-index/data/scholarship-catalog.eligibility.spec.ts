@@ -81,7 +81,7 @@ describe('brouillons d’éligibilité — règles de rédaction', () => {
       expect(item.eligibility!.structuredBy).toBe('draft');
     }
     const report = validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, {
-      now: new Date('2026-10-07T18:00:00.000Z'),
+      now: new Date('2026-10-24T18:00:00.000Z'),
       includeVolumeTargets: false,
     });
     expect(report.issues).toEqual([]);
@@ -205,7 +205,7 @@ describe('resolveEligibilityDraft / attachStructuredEligibility', () => {
     });
     const report = validateScholarshipCatalog(
       { ...SCHOLARSHIP_CATALOG_V1, records: [{ ...bare, eligibility: resolved }] },
-      { now: new Date('2026-10-07T18:00:00.000Z'), includeVolumeTargets: false },
+      { now: new Date('2026-10-24T18:00:00.000Z'), includeVolumeTargets: false },
     );
     expect(report.issues.map((issue) => issue.code)).toEqual(
       expect.arrayContaining(['invalid_eligibility_criterion', 'criterion_quote_not_in_record']),

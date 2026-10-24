@@ -1,0 +1,282 @@
+{
+ "group": "G8",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "alu_scholarship_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.alueducation.com/financial-aid-at-alu/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« All ALU sponsored aid is based primarily on demonstrated financial need »",
+     "replacementUrl": null,
+     "note": "Page relue en direct le 24/10/2026 (curl 200, texte identique à l'instantané) : agent_pages/g7_alu_finaid.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://help.alueducation.com/support/solutions/articles/204000012922-who-is-eligible-for-financial-aid-",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Strong National Exam Scores of at least a B average Aged 23 and below. »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_alu_help.txt. L'écart d'âge 23 (help centre) / 26 (page Financial Aid : « Aged 26 and below. ») persiste, la fiche le signale déjà."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.alueducation.com/financial-aid-at-alu/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« full-ride scholarships covering full tuition and additional financial support throughout the scholars’ journey at ALU »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_alu_finaid.txt. Grants : « applied as a fee waiver to a student’s invoice only »."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.alueducation.com/apply-now/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Stage 3 – Finances: This final stage will help you to understand the financial contribution »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_alu_apply.txt. Frais confirmés : « $3000 for BEL and BSE and $4000 for IBT »."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.alueducation.com/apply-now/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« January 2027 Applications closes 30 November 2026 »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_alu_apply.txt. Seule date publiée = intake janvier 2027 (clôture 30/11/2026, encore à venir au 24/10/2026). Aucune date pour septembre 2027 : le statut forecast/estimated reste juste. Remarque : le menu du formulaire ne propose que « January 2027 May 2027 » pour 2027 (pas encore septembre 2027)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Les trois pages ALU, relues en direct le 24/10/2026, sont inchangées et soutiennent la fiche (aides fondées sur le besoin, grants en exonération, clôture du 30/11/2026 pour janvier 2027). Le cycle septembre 2027 reste une prévision non publiée."
+  },
+  {
+   "catalogId": "auc_excellence_2027",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.aucegypt.edu/admissions/scholarships",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The more scholarships you combine, the higher the percentage of your tuition coverage — up to 100%. »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_auc_schol.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.aucegypt.edu/admissions/undergraduate",
+     "readVia": "curl",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Transfer applicants who completed less than 60 credit hours (less than two years) in an accredited university, with an acceptable score, are eligible to apply for the Excellence Scholarship . »",
+     "replacementUrl": null,
+     "note": "L'instantané du 29/09 était un 403 ; page lue cette fois par curl (200), texte enregistré : agent_pages/g7_auc_ug.txt (readVia = curl : lecture directe, l'instantané étant un 403). Confirme aussi l'anglais (« The University does not exempt applicants from this requirement solely on the basis of citizenship »), les 2 lettres de recommandation et le code TOEFL 0903. « Last Updated : Oct 05, 2026 »."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.aucegypt.edu/admissions/tuition-and-financial-assistance",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« $735 Undergraduate international students »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_auc_tuition.txt ; page générale qui renvoie au programme d'excellence (« up to 100% »). Les pourcentages par catégorie sont sur la page excellence-program (voir corrections)."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.aucegypt.edu/admissions/scholarships/excellence-program",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« Coverage starts at 20% and can reach 100% for highest scoring top achievers »",
+     "replacementUrl": null,
+     "note": "Curl 403 au 1er essai puis 200 au 2e ; texte identique à l'instantané : agent_pages/g7_auc_excel.txt (« Last Updated : Oct 15, 2026 »). Les dates et la procédure sont soutenues ; mais la catégorie Academic Achievement (fiche : 20–60 %), la liste des majors (« Music » seul) et la date de mise à jour (fiche : 6 octobre) divergent. Procédure détaillée confirmée sur la sous-page officielle https://www.aucegypt.edu/admissions/scholarships/how-to-apply (agent_pages/g7_auc_howto.txt) : « Indicate “Yes” when asked if you are interested in applying for a scholarship. »"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.aucegypt.edu/admissions/undergraduate",
+     "readVia": "curl",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« 1 Nov Spring 2027 1 Feb Fall 2027 Early Admission 1 Jun Fall 2027 Regular Admission »",
+     "replacementUrl": null,
+     "note": "Lu par curl (200) et enregistré : agent_pages/g7_auc_ug.txt. Statut open / confirmed / clôture 01/06/2027 toujours exacts au 24/10/2026. Page excellence : « Regular Admission : June 1, 2027 »."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "advantagesEn",
+     "from": "Academic Achievement category: coverage from 20% to 60% of fees",
+     "to": "Academic Achievement category: coverage from 20%, up to 100% for the highest-scoring top achievers in each certificate",
+     "evidence": "« Coverage starts at 20% and can reach 100% for highest scoring top achievers in the various certificates » — https://www.aucegypt.edu/admissions/scholarships/excellence-program"
+    },
+    {
+     "field": "advantagesEn",
+     "from": "International Diversity / Talents / Leadership and Community Service / Selected liberal arts majors: coverage from 20% to 30%",
+     "to": "Coverage up to 30% (la page ne publie plus de plancher de 20 % pour ces catégories)",
+     "evidence": "« Coverage up to 30%. Certificate scores are a factor in selection for this category. » — https://www.aucegypt.edu/admissions/scholarships/excellence-program"
+    },
+    {
+     "field": "advantagesEn",
+     "from": "(… Film, History, Middle East Studies, Music Technology, Musical Arts in Performance, Philosophy, Sociology, Theatre, Visual Arts)",
+     "to": "(… Film, History, Middle East Studies, Music, Philosophy, Sociology, Theatre, Visual Arts)",
+     "evidence": "« Middle East Studies , Music , Philosophy , Sociology , Theatre , and Visual Arts » — https://www.aucegypt.edu/admissions/scholarships/excellence-program"
+    },
+    {
+     "field": "description",
+     "from": "The programme page, updated on 6 October 2026",
+     "to": "The programme page, updated on 15 October 2026",
+     "evidence": "« Last Updated : Oct 15, 2026 » — https://www.aucegypt.edu/admissions/scholarships/excellence-program"
+    }
+   ],
+   "summary": "Toutes les pages AUC ont pu être lues (la page undergraduate, bloquée le 29/09, répond désormais). Le cycle (ouvert, clôture 1er juin 2027) est confirmé, mais la page excellence (mise à jour le 15/10/2026) contredit les pourcentages de la catégorie Academic Achievement (20 % à 100 %) et la liste des majors : corrections à faire."
+  },
+  {
+   "catalogId": "eiffel_excellence_master_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.campusfrance.org/en/france-excellence-eiffel-scholarship-program",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« encourages applicants from foreign countries up to 29 years old at master’s level »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_eif_overview.txt. Les affirmations de la fiche (binationaux dont français exclus) et (pas de frais de visa) figurent dans la plaquette officielle liée depuis cette page (https://ressources.campusfrance.org/pratique/programmes/en/plaquette_eiffel_1_en.pdf, agent_pages/g7_eif_plaquette1_en_pdf.txt) : « Candidates with dual nationality, one of which is French, are not eligible. » et « Where applicable, no visa fees »."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.campusfrance.org/en/the-france-excellence-eiffel-scholarship-program",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications sent directly by students or by foreign institutions will be declared ineligible. »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_eif_elig.txt. Durées 12/24/36 mois et 7 domaines confirmés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.campusfrance.org/en/france-excellence-eiffel-scholarship-implementation",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Eiffel scholarship recipients receive a monthly allowance of €1,200 (from January 2026) »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_eif_impl.txt. Billet d'avion remboursé « not to exceed 50% of the maximum rate », exonération des droits en établissement public, assurance temporaire, logement CROUS : conformes."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.campusfrance.org/fr/faq-appel-a-candidature-a-la-bourse-eiffel",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« chaque établissement ne pourra présenter plus de 40 candidatures par domaine et par volet »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique) : agent_pages/g7_eif_faq.txt. Aussi : « Sur le volet Master, seuls les candidats résidant actuellement à l'étranger sont éligibles. »"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.campusfrance.org/en/actu/call-for-france-excellence-eiffel-applications-2027",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« is open until January 6, 2027 , and is exclusively for French higher education institutions »",
+     "replacementUrl": null,
+     "note": "Relue en direct (curl 200, identique ; « Updated : 09/10/2026 ») : agent_pages/g7_eif_call.txt. La page affiche toujours aussi « open until January 8, 2027 », d'où la mention de la fiche. Page programme : « Deadline for the reception of applications by Campus France: January 6, 2027 included » et résultats « from the 12th of April, 2027 ». La date interne UTBM (28/10/2026) ne vient pas de ces sources et n'a pas été vérifiée. Statut open / confirmed exact au 24/10/2026."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Les cinq pages Campus France, relues en direct le 24/10/2026, sont inchangées et soutiennent la fiche (allocation de 1 200 €, limite de 29 ans, dépôt par l'établissement, clôture au 6 janvier 2027). Seule la date interne UTBM du 28/10 n'a pas de source parmi celles de la fiche."
+  },
+  {
+   "catalogId": "daad_epos_2027",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.daad.de/en/information-services-for-higher-education-institutions/further-information-on-daad-programmes/epos/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The EPOS programme offers individual scholarships to participants from developing countries »",
+     "replacementUrl": null,
+     "note": "Curl 403 (3 essais) ; WebFetch 503 au 1er essai puis lu au 2e. Citation issue de WebFetch (non vérifiable mot pour mot). La page renvoie à la base de bourses DAAD pour l'appel en cours."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/?detail=50076777",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Candidates have at least two years' professional experience »",
+     "replacementUrl": null,
+     "note": "Curl 403 ; lu par WebFetch. Également : « should normally not be more than six years old », séjour en Allemagne > 15 mois exclu, licence « usually a four-year course », « upper third ». La page précise que l'expérience compte « after the Bachelor's degree » (nuance absente de la fiche)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/?detail=50076777",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« monthly payments of 992 euros for graduates »",
+     "replacementUrl": null,
+     "note": "Lu par WebFetch. Assurance santé/accident/RC, frais de voyage, « Monthly rent subsidy », allocation famille et durée « 12 to 42 months » confirmés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/?detail=50076777",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications have only to be sent to the respective course directly! »",
+     "replacementUrl": null,
+     "note": "Lu par WebFetch. Modèle Europass recommandé, lettre unique pour 3 cursus max., lettre employeur avec en-tête, signature et tampon : conformes. Le résumé WebFetch n'a trouvé ni la mention (sélection achevée en mars) ni (pas d'admission préalable requise) : à revérifier à la main."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_epos_deadlines.pdf",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« for Intake 2027/2028 »",
+     "replacementUrl": null,
+     "note": "Curl 403 ; PDF récupéré via WebFetch (binaire), texte extrait localement et enregistré : agent_pages/g7_daad_epos_deadlines_pdf.txt (« ST42 - EPOS Deadlines - Stand 06/2026 », chaque cursus porte « see website of the course »). La page de la base de bourses renvoie aussi à la « List of all Postgraduate courses with application deadlines 2027/2028 » (WebFetch)."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "cycle.status",
+     "from": "forecast",
+     "to": "open",
+     "evidence": "« for Intake 2027/2028 » / « Stand 06/2026 » — https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_epos_deadlines.pdf : la liste officielle du cycle 2027/2028 est publiée depuis juin 2026 et la date d'ouverture estimée (15/05/2026) est passée ; garder dateConfidence = estimated (les dates sont propres à chaque cursus)."
+    },
+    {
+     "field": "deadlineLabelEn/Fr",
+     "from": "Estimated opening — one deadline per course, from spring 2026 to late January 2027 depending on the chosen programme",
+     "to": "Open — one deadline per course (see each course website), from spring 2026 to late January 2027 depending on the chosen programme; some deadlines may already have passed",
+     "evidence": "« see website of the course » — liste DAAD 2027/2028 (PDF ci-dessus)"
+    },
+    {
+     "field": "eligibility",
+     "from": "Have at least two years of relevant professional experience, assessed at the date of application",
+     "to": "Have at least two years of relevant professional experience after the Bachelor's degree, assessed at the date of application",
+     "evidence": "« at least two years of relevant work experience after the Bachelor's degree » — https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/?detail=50076777 (WebFetch)"
+    }
+   ],
+   "summary": "Toutes les pages DAAD bloquent curl (403) mais ont été lues via WebFetch (le PDF a été extrait en local). Le contenu de la bourse est confirmé ; propositions : passer le cycle de forecast à open (liste officielle 2027/2028 publiée, dates propres à chaque cursus) et préciser que l'expérience compte après la licence."
+  }
+ ]
+}

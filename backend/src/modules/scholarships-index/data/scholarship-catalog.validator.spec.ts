@@ -31,12 +31,12 @@ const NOW = new Date('2026-08-10T12:00:00.000Z');
 
 // Le catalogue REEL porte les vagues de vérification successives ; la plus
 // récente est l'ajout de Gates Cambridge et CMU-Africa, lus aux sources le
-// 07/10/2026 (la re-vérification complète date du 29/09/2026). Les tests qui
+// 07/10/2026, puis la relecture mensuelle complète du 24/10/2026. Les tests qui
 // valident SCHOLARSHIP_CATALOG_V1 entier ont besoin d'une horloge postérieure
 // à la vague la plus récente — sous [NOW], elle serait « dans le futur » et le
 // validateur la signalerait. [NOW] reste l'horloge des fixtures synthétiques,
 // qui datent du 10/08.
-const CATALOG_NOW = new Date('2026-10-07T18:00:00.000Z');
+const CATALOG_NOW = new Date('2026-10-24T18:00:00.000Z');
 
 function validRecord(): VerifiedScholarshipCatalogRecord {
   const checkedAt = '2026-07-15T12:00:00.000Z';
@@ -446,13 +446,13 @@ describe('versioned scholarship catalog', () => {
     // 30 jours après la vague la PLUS RÉCENTE (24/08, re-vérification des 10
     // publiées), pas après la première : au 11/09 les 10 re-vérifiées étaient
     // encore fraîches et ce compte serait 24, pas 34.
-    // Depuis le 07/10 (Gates Cambridge, CMU-Africa), l'horloge est placée plus
+    // Depuis le 24/10 (relecture mensuelle), l'horloge est placée plus
     // de 30 jours après la vague la plus récente : toutes les fiches, 36,
     // sont alors périmées par l'âge et non parce qu'elles seraient « dans le
     // futur ».
     const report = validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, {
       includeVolumeTargets: false,
-      now: new Date('2026-11-08T00:00:00.000Z'),
+      now: new Date('2026-11-30T00:00:00.000Z'),
     });
 
     expect(report.valid).toBe(false);

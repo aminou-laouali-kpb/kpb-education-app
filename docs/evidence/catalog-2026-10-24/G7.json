@@ -1,0 +1,238 @@
+{
+ "group": "G7",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "rhodes_southern_africa_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The Rhodes Scholarship is a fully-funded postgraduate award which enables talented people from around the world to study full-time at the University of Oxford»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_rhodes.txt)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.rhodeshouse.ox.ac.uk/media/y4plyclm/southern-africa-information-for-candidates-document-2027-final.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Residency: You must have been resident in South Africa, Botswana, Lesotho, Malawi, Namibia»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; PDF re-téléchargé par curl le 24/10/2026, binaire identique (même md5) à l'instantané (copie texte : agent_pages/g6_rhodes_sa.txt). Nationalité/résidence (6 pays + réfugiés en Afrique du Sud), âge 19–25 non révolu au 01/10/2027 avec exceptions, licence d'ici juillet 2027, First/GPA 3,70, anglais niveau supérieur : conformes."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The Rhodes Scholarship covers University of Oxford course fees, as well as providing an annual stipend.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_rhodes.txt). Allocation 2025-26 toujours affichée à 20 400 £ ; frais de candidature Oxford, visa + IHS, deux vols, settling-in allowance confirmés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Applications for the Rhodes Scholarship are now closed.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_rhodes.txt). La page ajoute : « You can sign up to our mailing list to be notified when applications reopen in 2027, for entry to University of Oxford in 2028. »"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.rhodeshouse.ox.ac.uk/media/y4plyclm/southern-africa-information-for-candidates-document-2027-final.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Applications Close: 23:59 SAST, Monday 03 August 2026»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; PDF re-téléchargé par curl le 24/10/2026, binaire identique (même md5) à l'instantané (copie texte : agent_pages/g6_rhodes_sa.txt). Ouverture « 00:01 SAST, Monday 01 June 2026 », références « 23:59 SAST, Monday 17 August 2026 » : conformes à opensAt/closesAt ; statut closed correct au 24/10/2026."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Fiche conforme : candidatures 2027 Afrique australe closes le 03/08/2026 (références 17/08/2026), page officielle indiquant la réouverture en 2027 ; statut closed/confirmed et dates exacts, aucune correction."
+  },
+  {
+   "catalogId": "eth_zurich_esop_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The Excellence Scholarship & Opportunity Programme (ESOP) supports students with a scholarship, mentorship and a network of the ETH Foundation.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_eth.txt)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«If you are already enrolled in a Master's degree programme at ETH Zurich, or hold a Master degree, you are not eligible for ESOP.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_eth.txt). Top 10 %/grade A, premier créneau de candidature, entretien en février : conformes."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«CHF 12'000 per semester, from HS27 onwards 13'500 CHF»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_eth.txt). Exonération des frais, durée régulière 3–4 semestres, ~60 bourses 2027/28, décision fin mars : conformes."
+    },
+    {
+     "kind": "application",
+     "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«ESOP applications are supplied via eApply (online Master application).»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_eth.txt). Pré-proposition de mémoire et deux professeurs référents si le programme n'en demande pas : conformes."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The next application window is open Nov, 1 - Nov, 30 2026, 11.59h, MEZ for a start in the Master programme in HS27.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_eth.txt). 11h59 MEZ (CET, UTC+1) = 10:59 UTC : closesAt correct. Ouverture le 01/11/2026, donc forecast/confirmed reste juste au 24/10/2026 (passera à open le 01/11)."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Fiche conforme : fenêtre ESOP 1–30/11/2026 (11h59 MEZ) publiée officiellement pour l'entrée HS27, 13 500 CHF/semestre dès HS27 ; statut forecast/confirmed juste jusqu'au 01/11/2026."
+  },
+  {
+   "catalogId": "jj_wbgsp_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.worldbank.org/en/programs/scholarships/jj-wbgsp",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Dates of the 2027 application windows for developing country nationals have been announced.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_wb.txt). 44 programmes participants dans 24 universités confirmés."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://thedocs.worldbank.org/en/doc/fb18adc82a2cc6746503a520fe18a3f9-0050052026/original/2027-Application-Guidelines-for-DevelopingCountryNationals-W1.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Not be a dual citizen of any developed country.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; PDF re-téléchargé par curl le 24/10/2026, binaire identique (même md5) à l'instantané (copie texte : agent_pages/g6_wb_guide.txt). Guide 2027 Window 1 « Updated August 2026 » ; licence ≥ 3 ans avant la date limite, emploi rémunéré à plein temps, 3 ans sur 6, admission inconditionnelle hors pays : conformes. Annexe 1 (2027) inclut Benin, Burkina Faso, Cameroon, Chad, Côte d'Ivoire, Guinea, Mali, Niger, Senegal, Togo."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.worldbank.org/en/programs/scholarships/jj-wbgsp",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«A JJ/WBGSP scholarship provides tuition, a monthly living stipend, round-trip airfare, health insurance, and travel allowance.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_wb.txt). 600 USD par trajet et durée max deux ans confirmés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.worldbank.org/en/programs/scholarships/jj-wbgsp",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The link to the JJ/WBGSP application form will only be communicated to candidates admitted unconditionally»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_wb.txt)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.worldbank.org/en/programs/scholarships/jj-wbgsp",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Application Window #1 from January 18 to February 26, 2027»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_wb.txt). La page affiche aussi « Application Window #2 from March 29 to May 21, 2027 ». Dates officielles pour le cycle 2027 : confirmed correct ; ouverture future, forecast correct au 24/10/2026."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Fiche conforme : fenêtres 2027 (18/01–26/02 et 29/03–21/05/2027) toujours publiées, guide W1 d'août 2026 et liste de pays inchangés ; statut forecast/confirmed correct."
+  },
+  {
+   "catalogId": "ashesi_scholarship_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://ashesi.edu.gh/scholarships/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«The initial selection process is need-blind.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_ash_sch.txt). Catégories Extreme/High/Medium/Low Need, ~50 % d'étudiants aidés et 25 % ne payant rien : conformes."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://admissions.ashesi.edu.gh/courses/course/257-first-year-student",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«We also do not accept scholarship and international applications for the Late Admissions period.»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_ash_fy.txt). Le portail n'affiche toujours que l'année 2026/27 : « Application deadline Nov 16, 2026, 11:59:59 PM Greenwich Mean Time » (entrée 11/01/2027). Frais 25 $/GHs150 et C6 WASSCE conformes."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://ashesi.edu.gh/scholarships/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Some categories of scholarships cover not only the full tuition, but also cover housing, meals on campus, learning materials»",
+     "replacementUrl": null,
+     "note": "Instantané relu ; page re-téléchargée par curl le 24/10/2026, texte identique à l'instantané (copie : agent_pages/g6_ash_sch.txt)."
+    },
+    {
+     "kind": "application",
+     "url": "https://ashesi.edu.gh/how-to-apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Please note that Ashesi does not grant merit-based scholarships for undergraduate programs.»",
+     "replacementUrl": null,
+     "note": "Instantané relu (récupéré le 24/10/2026, calendrier de la page daté du 24 octobre ; copie : agent_pages/g6_ash_how_snapshot.txt). Nouvelle tentative curl le 24/10 bloquée par le défi JavaScript Sucuri (HTTP 307), donc non re-téléchargée. Formulaire d'aide financière, bouton « submit », entretien : conformes."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://ashesi.edu.gh/our-two-intake-cycle/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "«Round 1 June September or January Round 2 August September or January Round 3 October January Round 4 December January»",
+     "replacementUrl": null,
+     "note": "Instantané relu (récupéré le 24/10/2026, calendrier de la page daté du 24 octobre ; copie : agent_pages/g6_ash_cycle_snapshot.txt). Nouvelle tentative curl bloquée par Sucuri (HTTP 307). Aucune date 2027-2028 publiée : estimated reste justifié. Remarque : estimatedOpenAt (01/09/2026) est déjà passé alors que le portail ne propose pas encore l'année 2027/28 ; aucune date officielle ne permet de la corriger."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Fiche conforme : aide 100 % sur critères sociaux, quatre rounds (juin/août/oct./déc.), portail limité à l'entrée janvier 2027 (clôture 16/11/2026) ; cycle 2027-2028 toujours estimé. À surveiller : estimatedOpenAt du 01/09/2026 est dépassé sans ouverture officielle visible."
+  }
+ ]
+}

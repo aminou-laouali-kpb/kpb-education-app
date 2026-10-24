@@ -64,7 +64,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://www.chevening.org/scholarships/application-timeline/',
     },
     tags: ['master', 'uk', 'government', 'closed', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:17:00.000Z',
   }),
   record({
     id: 'mccall_macbain_2027',
@@ -137,7 +137,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://mccallmacbainscholars.org/apply/',
     },
     tags: ['master', 'canada', 'mcgill', 'closed', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'schwarzman_scholars_2027',
@@ -197,23 +197,23 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://www.schwarzmanscholars.org/admissions/application-instructions/',
     },
     tags: ['master', 'china', 'tsinghua', 'closed', 'leadership', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'si_global_professionals_2027_forecast',
     levels: ['master'],
-    name: ['Bourse SI pour professionnels mondiaux — prévision 2027', 'SI Scholarship for Global Professionals — 2027 forecast'],
+    name: ['Bourse SI pour professionnels mondiaux — appel 2027', 'SI Scholarship for Global Professionals — 2027 call'],
     country: ['swe', 'Suède', 'Sweden'],
     levelLabel: ['Master', 'Master'],
     fundingLabel: ['Financement complet publié, hors certains coûts', 'Published full funding, with specified exclusions'],
     fundingType: 'fully_funded',
     deadlineLabel: [
-      'Prévision 2027 — fenêtre de deux semaines attendue en février, à reconfirmer',
-      '2027 forecast — two-week window expected in February, to be reconfirmed',
+      'À venir — dépôt de la bourse du 8 au 24 février 2027 (clôture à 14 h 59, heure d’Europe centrale) ; candidature aux Masters sur UniversityAdmissions.se du 16 octobre 2026 au 15 janvier 2027',
+      'Upcoming — scholarship portal open 8–24 February 2027 (closes 14:59 CET); Master applications on UniversityAdmissions.se from 16 October 2026 to 15 January 2027',
     ],
     description: [
-      'Bourse du Swedish Institute pour professionnels de 34 pays éligibles admis à un Master en anglais, dans les domaines gouvernance, santé publique, entrepreneuriat et innovation, et STEM. La page officielle affiche « Application closed » pour l’appel de référence, ouvert du 9 au 25 février 2026, et confirme que la bourse est offerte une fois par an : aucune suspension ni coupe budgétaire n’y est annoncée. Les dates et critères du prochain appel devront être reconfirmés ; le cycle affiché estime le rythme officiel 2026.',
-      'Swedish Institute scholarship for professionals from 34 eligible countries admitted to an English-taught Master, in governance, public health, entrepreneurship and innovation, and STEM. The official page shows “Application closed” for the reference call, open 9 to 25 February 2026, and confirms the scholarship runs once a year: no suspension or budget cut is announced there. Next-call dates and criteria must be reconfirmed; the displayed cycle estimates the official 2026 cadence.',
+      'Bourse du Swedish Institute pour professionnels de 34 pays éligibles admis à un Master en anglais, dans les domaines gouvernance, santé publique, entrepreneuriat et innovation, et STEM. L’appel 2027-2028 est publié (relevé le 24/10/2026) : candidature aux Masters sur University Admissions du 16 octobre 2026 au 15 janvier 2027, modèles de documents SI publiés le 13 novembre 2026, dépôt de la bourse du 8 au 24 février 2027 (14 h 59, heure d’Europe centrale), résultats le 22 avril 2027.',
+      'Swedish Institute scholarship for professionals from 34 eligible countries admitted to an English-taught Master, in governance, public health, entrepreneurship and innovation, and STEM. The 2027-2028 call is published (checked 24/10/2026): Master applications on University Admissions from 16 October 2026 to 15 January 2027, SI document templates published on 13 November 2026, scholarship portal open 8–24 February 2027 (14:59 CET), results on 22 April 2027.',
     ],
     advantages: [
       ['Prise en charge complète des frais de scolarité', 'Full tuition fee coverage'],
@@ -223,33 +223,36 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       ['L’assurance, les frais de candidature universitaire et les membres de famille ne sont pas couverts', 'Insurance, university application fee and family members are not covered'],
     ],
     eligibility: [
-      ['Être citoyen d’un des 34 pays éligibles publiés par SI, sans obligation d’y résider ; côté Afrique francophone, l’appel de référence liste le Sénégal et le Maroc', 'Be a citizen of one of SI’s 34 published eligible countries, with no residence requirement; on the francophone-Africa side, the reference call lists Senegal and Morocco'],
+      ['Être citoyen d’un des 34 pays éligibles publiés par SI, sans obligation d’y résider ; côté Afrique francophone, l’appel 2027 liste le Sénégal et le Maroc', 'Be a citizen of one of SI’s 34 published eligible countries, with no residence requirement; on the francophone-Africa side, the 2027 call lists Senegal and Morocco'],
       ['Postuler à un Master en anglais déclaré admissible par SI', 'Apply to an English-taught Master listed as SI-eligible'],
       ['Être redevable des frais de scolarité et être admis selon le calendrier University Admissions', 'Be liable for tuition and admitted under the University Admissions timeline'],
-      ['Démontrer une expérience professionnelle suffisante ; de nombreux pays africains exigent au moins 3 000 heures dans l’appel de référence', 'Demonstrate sufficient work experience; many African countries require at least 3,000 hours in the reference call'],
+      ['Démontrer une expérience professionnelle suffisante ; de nombreux pays africains exigent au moins 3 000 heures, cumulées chez trois employeurs au maximum', 'Demonstrate sufficient work experience; many African countries require at least 3,000 hours, accumulated with at most three employers'],
       ['Démontrer une expérience de leadership professionnel ou dans la société civile', 'Demonstrate leadership through employment or civil-society engagement'],
       ['Ne relever d’aucune exclusion publiée liée à la résidence/étude en Suède, à une bourse SI antérieure ou à la citoyenneté suédoise/UE', 'Not fall under published exclusions related to Swedish residence/study, a prior SI award or Swedish/EU citizenship'],
     ],
     requirements: [
       ['Candidature préalable aux Masters via UniversityAdmissions.se', 'Prior Master applications through UniversityAdmissions.se'],
-      ['CV selon le modèle SI', 'CV using the SI template'],
+      ['CV selon le modèle SI 2027-2028, trois pages au maximum', 'CV on the SI 2027–2028 template, at most three pages'],
       ['Preuves d’emploi et de leadership selon les formulaires SI', 'Work and leadership evidence using SI forms'],
       ['Copie du passeport ou de la pièce d’identité', 'Passport or identity copy'],
       ['Deux lettres de recommandation (modèle SI), signées et tamponnées', 'Two letters of reference (SI template), signed and stamped'],
-      ['Motivation rédigée dans le portail de candidature SI ; modèles et pièces à reconfirmer au prochain appel', 'Motivation written in the SI application portal; templates and documents to be reconfirmed at the next call'],
+      ['Motivation rédigée dans le portail de candidature SI ; modèles des pièces publiés le 13 novembre 2026', 'Motivation written in the SI application portal; document templates published on 13 November 2026'],
     ],
     steps: [
       ['Choisir des Masters SI', 'Choose SI-eligible Masters', 'À publication de la liste, identifier les programmes compatibles avec son impact de développement.', 'When the list is published, identify programmes aligned with the applicant’s development impact.'],
-      ['Postuler aux universités', 'Apply to universities', 'Déposer les Masters via University Admissions avant leur date de janvier.', 'Submit Master applications through University Admissions by the January deadline.'],
+      ['Postuler aux universités', 'Apply to universities', 'Déposer les Masters via University Admissions entre le 16 octobre 2026 et le 15 janvier 2027.', 'Submit Master applications through University Admissions between 16 October 2026 and 15 January 2027.'],
       ['Préparer les modèles SI', 'Prepare SI templates', 'Faire signer et valider CV, emplois, leadership, identité et motivation.', 'Complete and validate the CV, work, leadership, identity and motivation documents.'],
-      ['Déposer dans la courte fenêtre SI', 'Submit in the short SI window', 'Téléverser la bourse pendant les deux semaines officielles une fois les dates reconfirmées.', 'Upload the scholarship during the official two-week window once dates are reconfirmed.'],
+      ['Déposer dans la courte fenêtre SI', 'Submit in the short SI window', 'Téléverser la bourse entre le 8 et le 24 février 2027, avant 14 h 59 (heure d’Europe centrale) le dernier jour.', 'Upload the scholarship between 8 and 24 February 2027, before 14:59 CET on the final day.'],
     ],
     cycle: {
       academicYear: '2027-2028',
+      // Appel 2027 publié (relu le 24/10/2026) : « Submit your SI Scholarship
+      // application here between 8-24 February 2027 », portail fermé à
+      // 14:59 CET le dernier jour. Aucune heure d'ouverture : minuit CET.
       status: 'forecast',
-      dateConfidence: 'estimated',
-      estimatedOpenAt: '2027-02-09T00:00:00.000Z',
-      estimatedCloseAt: '2027-02-25T13:59:59.000Z',
+      dateConfidence: 'confirmed',
+      opensAt: '2027-02-07T23:00:00.000Z',
+      closesAt: '2027-02-24T13:59:00.000Z',
       sourceUrl: 'https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/',
     },
     sources: {
@@ -260,7 +263,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/',
     },
     tags: ['master', 'sweden', 'government', 'leadership', 'forecast', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:13:00.000Z',
   }),
   record({
     id: 'daad_helmut_schmidt_2027',
@@ -392,13 +395,16 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
     },
     sources: {
       overview: 'https://australiaawardsafrica.org/awards/types-of-awards/',
-      eligibility: 'https://australiaawardsafrica.org/awards/apply/',
+      // Depuis le 24/10/2026, la page « apply » n'affiche plus les critères
+      // (ils sont passés en commentaire HTML) : l'éligibilité se lit dans le
+      // profil Afrique 2027, inchangé.
+      eligibility: 'https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf',
       benefits: 'https://australiaawardsafrica.org/resources/Africa-Profile-2027-Intake.pdf',
       application: 'https://oasis.dfat.gov.au/',
       cycle: 'https://australiaawardsafrica.org/awards/apply/',
     },
     tags: ['master', 'australia', 'africa', 'government', 'forecast', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:15:00.000Z',
   }),
   record({
     id: 'gates_cambridge_2027',
@@ -476,7 +482,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://www.gatescambridge.org/apply/timeline/',
     },
     tags: ['master', 'doctorate', 'uk', 'cambridge', 'university', 'open', 'fully-funded'],
-    checkedAt: '2026-10-07T11:40:00.000Z',
+    checkedAt: '2026-10-24T07:15:00.000Z',
   }),
   record({
     id: 'cmu_africa_mastercard_2027',
