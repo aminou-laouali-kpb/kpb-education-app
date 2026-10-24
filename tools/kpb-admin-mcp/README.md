@@ -59,7 +59,9 @@ en plus de la phrase de confirmation exigée par l'outil.
 
 ## Garde-fous appliqués par le MCP
 
-- Envoi en deux étapes : brouillon, puis `confirmation: "ENVOYER <draftId>"`.
+- Envoi en deux étapes : brouillon, puis `confirmation: "ENVOYER <draftId>"`. L'agent
+  `kpb-notifications` (sous-agent) ne fait que le brouillon : c'est la session principale qui
+  envoie, après le feu vert écrit de l'humain.
   Un brouillon expire au bout de 24 h.
 - Route au tap vérifiée contre les routes que l'app sait ouvrir (miroir de
   `AppRoutes.normalizeExternalRoute`). Une route inconnue dépose l'élève sur
