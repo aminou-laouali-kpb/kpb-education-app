@@ -69,6 +69,13 @@ en plus de la phrase de confirmation exigée par l'outil.
   il faut alors programmer l'envoi avec `scheduledFor`.
 - Un contenu déjà annoncé est refusé.
 - Audience vide ou filtre manquant : refusé.
+- **Finalité obligatoire** (`purpose`, sans défaut) : `informational` (message de
+  service — politique, compte, maintenance — envoyé à toute l'audience) ou
+  `promotional` (offre, nouvelle bourse, mise en avant — seulement aux comptes
+  ayant accepté « Nouvelles et offres de KPB »). Une annonce de contenu
+  (`reason` autre que `other`) ne peut pas partir en `informational`. Le
+  récapitulatif affiche `reachable` : les comptes réellement joignables après
+  le filtre de consentement ; 0 joignable est refusé.
 
 État local (nouveautés vues, annonces, brouillons) :
 `~/.kpb-agent/state.json` (`KPB_AGENT_STATE_DIR`). Au premier appel,

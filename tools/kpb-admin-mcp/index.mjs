@@ -68,6 +68,8 @@ const KNOWN_ROUTES = new Set([
   '/', '/search', '/new-case', '/orientation', '/eligibility',
   '/etudes-en-france', '/etudes-en-france/catalogue', '/saved', '/deadlines',
   '/alumni', '/salon', '/services', '/profile', '/scholarships', '/success-lab',
+  // Build 2.3.1 (57) : les builds plus anciennes ouvrent l'accueil.
+  '/legal/privacy', '/scholarship-match', '/community',
 ]);
 // Routes à un segment variable (id ou slug), vide ou imbriqué refusé comme
 // dans l'app. `/parcours/<slug>` : ouvrable depuis la PR #284 — un build plus
@@ -76,6 +78,7 @@ const PARAM_ROUTES = [
   /^\/scholarships\/[^/]+$/,
   /^\/parcours\/[^/]+$/,
   /^\/cases\/[^/]+$/,
+  /^\/community\/posts\/[^/]+$/,
   /^\/success-lab\/[^/]+(\/(diagnostic|study-review|schedule|submission|outcome))?$/,
 ];
 function routeIsNavigable(route) {
@@ -400,13 +403,26 @@ const audienceSchema = {
   filters: z.record(z.unknown()).default({}),
 };
 
+// Finalité de la campagne (XC-06, backend `campaign-purpose.ts`). SANS valeur
+// par défaut : le backend retombe sur « promotional » quand elle manque, ce
+// qui réserve l'envoi aux comptes ayant accepté « Nouvelles et offres de KPB ».
+// Un message de service (politique, maintenance) envoyé ainsi n'atteindrait
+// presque personne ; une offre déclarée « informational » contournerait le
+// consentement. L'agent doit donc choisir, et l'humain le voit au récapitulatif.
+const purposeSchema = z
+  .enum(['informational', 'promotional'])
+  .describe(
+    "informational = message de service (compte, dossier, maintenance, politique, conditions) : part à toute l'audience. " +
+      "promotional = offre, mise en avant, nouvelle bourse ou contenu : seulement aux comptes ayant accepté « Nouvelles et offres de KPB » (push et e-mail distincts).",
+  );
+
 server.registerTool(
   'kpb_preview_audience',
   {
     description:
       "Combien d'élèves une audience toucherait (total + répartition FR/EN), sans rien envoyer. " +
       'Filtres : country→{countryId}, country_of_residence→{countryCode}, study_level→{levels:[...]}, account_type→{accountType}, single_user→{userId}, all_students_except_countries→{exceptCountries:[...] | "eef_suspended"} (EXIGÉ), eef_interest→{} ou {exceptCountries:[...]} (déclarants Études en France ; "eef_suspended" = les pays suspendus servis par /config/app). ATTENTION : `country` filtre sur le pays de RÉSIDENCE, pas sur le pays visé.',
-    inputSchema: audienceSchema,
+    inputSchema: { ...audienceSchema, purpose: purposeSchema },
   },
   tool(async (a) => ok(await api('POST', '/admin/notifications/campaigns/preview', a))),
 );
@@ -426,6 +442,7 @@ server.registerTool(
       body: localized(150),
       route: z.string().describe("Écran ouvert au tap, ex. /scholarships/<id>, /parcours/<slug>, /etudes-en-france, /alumni"),
       ...audienceSchema,
+      purpose: purposeSchema,
       scheduledFor: z.string().datetime().optional().describe('ISO 8601 UTC. Absent = envoi immédiat au feu vert.'),
       contentIds: z.array(z.string()).default([]).describe('Ids du contenu annoncé (bourse, établissement…), pour l\'historique anti-doublon.'),
     },
@@ -440,15 +457,24 @@ server.registerTool(
       if (/[A-Z]{6,}/.test(d.title[lang] + d.body[lang])) warnings.push(`Majuscules en rafale dans le texte ${lang}.`);
     }
 
+    if (d.purpose === 'informational' && d.reason !== 'other') {
+      problems.push(
+        `Une annonce « ${d.reason} » est promotionnelle : seule une information de service (reason « other ») peut partir en « informational ».`,
+      );
+    }
     const preview = await api('POST', '/admin/notifications/campaigns/preview', {
       audienceType: d.audienceType,
       filters: d.filters,
+      purpose: d.purpose,
     });
     if (preview.filterMissing) problems.push(`L'audience ${d.audienceType} exige son filtre.`);
     // Un filtre PRÉSENT mais mal formé (jeton d'exclusion mal écrit…) : le backend
     // le dit, et refuse l'envoi. Le répéter ici évite un brouillon « envoyable ».
     if (preview.filterInvalid) problems.push(`Filtre inutilisable : ${preview.filterInvalid}.`);
     if (preview.recipients === 0) problems.push('Audience vide : 0 destinataire.');
+    // `reachable` : comptes qui recevront vraiment le push après le filtre de
+    // consentement de la finalité. Absent sur un backend antérieur à la 57.
+    else if (preview.reachable === 0) problems.push(`Aucun compte joignable après le filtre de consentement (finalité ${d.purpose}).`);
 
     // ── Études en France ────────────────────────────────────────────────
     // `/etudes-en-france/catalogue` n'existe que dans les builds 2.3.0 (54) et
@@ -481,7 +507,9 @@ server.registerTool(
       recap: {
         name: d.name,
         audience: `${d.audienceType} ${JSON.stringify(d.filters)}`,
+        purpose: d.purpose,
         recipients: preview.recipients,
+        reachable: preview.reachable,
         byLanguage: preview.byLanguage,
         when: d.scheduledFor ?? 'immédiat, au feu vert',
         route: d.route,
@@ -553,6 +581,7 @@ server.registerTool(
       filters: draft.filters,
       channels: ['push'],
       route: draft.route,
+      purpose: draft.purpose,
       ...(draft.scheduledFor ? { scheduledFor: draft.scheduledFor } : {}),
     });
 
