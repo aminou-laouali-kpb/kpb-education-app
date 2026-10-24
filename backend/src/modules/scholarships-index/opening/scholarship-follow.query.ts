@@ -402,6 +402,20 @@ export interface NewFollowerCountRow {
  * deux ensembles dérivés. Le profil n'est pas relu : favoris et alertes ont
  * une clé étrangère vers `UserProfile`. Une cible sans nouvel abonné n'a pas
  * de ligne (0). `targets` ne doit pas être vide.
+ *
+ * « Déjà prévenu pour ce cycle » est un `EXISTS` de la LISTE DE SÉLECTION
+ * d'une CTE `MATERIALIZED` (comme `alreadyNotified` dans `follow_base`), filtré
+ * ensuite — jamais un `NOT EXISTS` du `WHERE`. Ce dernier devient une
+ * anti-jointure, dont le planificateur choisit librement la forme. Mesuré en
+ * CI : `UserNotification` analysée pleine de lignes mortes (transactions
+ * annulées) — 0 ligne vue, ses pages comptées — est estimée à 1 ligne ; la
+ * boucle imbriquée parcourt alors TOUT l'index `dedupeKey` pour chaque
+ * candidat, la clé en simple filtre de jointure (8 s à 20 000 abonnés, 56 M
+ * comparaisons, croissance quadratique). Dans la liste de sélection, la
+ * sous-requête reste un sous-plan paramétré par la ligne : une recherche par
+ * la clé unique par candidat, quel que soit l'état des statistiques. La CTE
+ * matérialisée empêche aussi de repousser le filtre `NOT "alreadyNotified"`
+ * dans le `WHERE` d'origine.
  */
 export function newFollowerCountsSql(
   scope: OpeningAudienceScope,
@@ -445,17 +459,23 @@ export function newFollowerCountsSql(
         max(src."mutedAt") AS "mutedAt"
       FROM new_src src
       GROUP BY 1, 2, 3, 4
+    ),
+    new_candidate AS MATERIALIZED (
+      SELECT
+        u."scholarshipId",
+        EXISTS (
+          SELECT 1 FROM "UserNotification" n
+          WHERE n."dedupeKey" = u."dedupePrefix" || u."userId"
+        ) AS "alreadyNotified"
+      FROM new_user u
+      WHERE u."mutedAt" IS NULL
+        AND ${followSinceExpr} > u."since"
     )
-    SELECT u."scholarshipId", count(*)::int AS "newFollowers"
-    FROM new_user u
-    WHERE u."mutedAt" IS NULL
-      AND ${followSinceExpr} > u."since"
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserNotification" n
-        WHERE n."dedupeKey" = u."dedupePrefix" || u."userId"
-      )
-    GROUP BY u."scholarshipId"
-    ORDER BY u."scholarshipId"
+    SELECT c."scholarshipId", count(*)::int AS "newFollowers"
+    FROM new_candidate c
+    WHERE NOT c."alreadyNotified"
+    GROUP BY c."scholarshipId"
+    ORDER BY c."scholarshipId"
   `;
 }
 

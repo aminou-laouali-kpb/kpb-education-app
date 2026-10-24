@@ -38,7 +38,12 @@ import {
  *    lignes — 0 ligne vue, ses pages comptées. Le profil, aplati
  *    en jointure, passait alors en boucle externe et l'agrégat des abonnés
  *    était recalculé pour chaque profil (13 s à 5 000, plus de 170 s à
- *    20 000) : d'où l'`OFFSET 0` du `LATERAL`.
+ *    20 000) : d'où l'`OFFSET 0` du `LATERAL`. Le même état sur
+ *    `UserNotification` (lignes mortes des transactions annulées : 0 ligne
+ *    vue, ses pages comptées) faisait de l'ancien `NOT EXISTS` du compte des
+ *    nouveaux abonnés une anti-jointure qui parcourait tout l'index
+ *    `dedupeKey` pour chaque candidat (8 s à 20 000 en CI) : d'où l'`EXISTS`
+ *    en liste de sélection de `new_candidate`.
  *
  * Tout se passe dans des transactions annulées : rien à nettoyer, et les
  * lignes insérées n'existent pour aucune statistique.
@@ -492,8 +497,9 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
       const prefix = `fq-scale-${sfx}-`;
       const cycleId = `${prefix}cycle`;
       const timings: string[] = [];
-      // Ce qu'un échec montre pour être compris sans rejouer la CI : le plan
-      // retenu et ce que le planificateur croyait des tables à cet instant.
+      // Ce qu'un échec montre pour être compris sans rejouer la CI : les plans
+      // retenus (comptes, lignes, nouveaux abonnés) et ce que le planificateur
+      // croyait des tables à cet instant.
       let lastPlan = '';
       let lastStats = '';
 
@@ -528,30 +534,40 @@ describePostgres('Requête de suivi — même sémantique, plan sans statistique
               // L'état mesuré en CI après un autoanalyze : hors de la
               // transaction, l'ANALYZE ne voit aucun des profils insérés
               // ci-dessus (0 ligne) mais compte leurs pages, tandis que les
-              // autres tables gardent des estimations non nulles.
+              // autres tables gardent des estimations non nulles. Même chose
+              // pour `UserNotification` (état mesuré en CI, run 40125937368 :
+              // 0 ligne, 650 pages), qui rendait quadratique le `NOT EXISTS`
+              // du compte des nouveaux abonnés.
               await prisma.$executeRawUnsafe(`ANALYZE "UserProfile"`);
+              await prisma.$executeRawUnsafe(`ANALYZE "UserNotification"`);
             }
             const nestedOnly = plan === 'naturel' ? 'on' : 'off';
             await tx.$executeRawUnsafe(`SET LOCAL enable_hashjoin = ${nestedOnly}`);
             await tx.$executeRawUnsafe(`SET LOCAL enable_mergejoin = ${nestedOnly}`);
-            lastStats = await tableStats(tx);
-            lastPlan = `${to} abonnés, plan ${plan}, comptes :\n${await explain(
-              tx,
-              followerAudienceCountsSql(...args),
-            )}`;
-            const [[counts], countMs] = await timed(() =>
-              tx.$queryRaw<FollowerAudienceCounts[]>(followerAudienceCountsSql(...args)),
-            );
-            const [rows, rowsMs] = await timed(() =>
-              tx.$queryRaw<FollowerRow[]>(followerRowsSql(...args)),
-            );
             // Colonne « Abonnés à prévenir » d'un cycle annoncé avant tout
             // suivi : chacun est nouveau, et personne n'est prévenu pour ce
             // cycle.
+            const measured = {
+              comptes: followerAudienceCountsSql(...args),
+              lignes: followerRowsSql(...args),
+              nouveaux: newFollowerCountsSql(scope, [
+                { scholarshipId: sid, cycleId, since: new Date(0) },
+              ]),
+            };
+            lastStats = await tableStats(tx);
+            // Le plan de CHAQUE requête mesurée : celle qui dépasse la borne
+            // peut être n'importe laquelle des trois.
+            const plans: string[] = [];
+            for (const [label, query] of Object.entries(measured)) {
+              plans.push(`${to} abonnés, plan ${plan}, ${label} :\n${await explain(tx, query)}`);
+            }
+            lastPlan = plans.join('\n\n');
+            const [[counts], countMs] = await timed(() =>
+              tx.$queryRaw<FollowerAudienceCounts[]>(measured.comptes),
+            );
+            const [rows, rowsMs] = await timed(() => tx.$queryRaw<FollowerRow[]>(measured.lignes));
             const [[fresh], newMs] = await timed(() =>
-              tx.$queryRaw<NewFollowerCountRow[]>(
-                newFollowerCountsSql(scope, [{ scholarshipId: sid, cycleId, since: new Date(0) }]),
-              ),
+              tx.$queryRaw<NewFollowerCountRow[]>(measured.nouveaux),
             );
             timings.push(
               `${to} abonnés, plan ${plan} : comptes ${countMs} ms, lignes ${rowsMs} ms, nouveaux ${newMs} ms`,
