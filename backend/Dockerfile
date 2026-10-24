@@ -1,6 +1,6 @@
 # Install the intentionally small runtime dependency set separately from the
 # compiler, linter, and test toolchain used by the builder.
-FROM node:22-alpine AS production-deps
+FROM node:26-alpine AS production-deps
 
 WORKDIR /app
 COPY package*.json ./
@@ -8,7 +8,7 @@ RUN npm ci --omit=dev --ignore-scripts \
   && npm cache clean --force
 
 # Build and generate the platform-specific Prisma client.
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 WORKDIR /app
 RUN apk add --no-cache openssl
@@ -21,7 +21,7 @@ RUN npm run build
 # Prisma and ts-node are deliberate runtime dependencies because deployment
 # runs `docker compose run --rm api npx prisma migrate deploy` and can execute
 # the existing TypeScript seed. All other development tooling stays behind.
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 
 ENV NODE_ENV=production
 # Les scripts d'exploitation (`npm run verify:*`, imports catalogue lancés par
