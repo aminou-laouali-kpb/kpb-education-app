@@ -1,0 +1,245 @@
+{
+ "group": "G2",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "turkiye_isdb_joint_2027_forecast",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.turkiyeburslari.gov.tr/announcements/ytb-islamic-development-bank-isdb-joint-scholarship-program-2026-applicaiton-period-122",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Türkiye Scholarships – IsDB Joint Scholarship Program is co-funded by the Presidency for Turks Abroad and Related Communities (YTB) »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 (agent_pages/g1_tr_isdb.txt), identique à l'instantané."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.turkiyeburslari.gov.tr/scholarshipsprograms",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Graduates or those who will graduate at the end of the current academic year (before August) »",
+     "replacementUrl": null,
+     "note": "Relu par curl (g1_tr_programs.txt) ; critères d'âge inchangés : « For master’s programs: being under the age of 30 »."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.turkiyeburslari.gov.tr/partneredprograms",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« Associate degree and bachelor degree students are required to repay the loan after graduation and employment, in easy installments, to the IsDB Education Trust (IET) »",
+     "replacementUrl": null,
+     "note": "Avantages confirmés (stipend, logement, frais, assurance, turc, billet). Le caractère « interest-free » du prêt Licence (champ funding) n'apparaît pas sur la page."
+    },
+    {
+     "kind": "application",
+     "url": "https://tbbs.turkiyeburslari.gov.tr/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« You need to register before initiating an application. »",
+     "replacementUrl": null,
+     "note": "Page de connexion TBBS courte (≈990 car.) mais complète et non bloquée ; relue par curl (g1_tr_tbbs.txt)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.turkiyeburslari.gov.tr/announcements/ytb-islamic-development-bank-isdb-joint-scholarship-program-2026-applicaiton-period-122",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Application Dates: 10 January – 20 February 2026 »",
+     "replacementUrl": null,
+     "note": "Aucune annonce 2027 au 24/10/2026 (derniers posts : 2/2/2026). Prévision estimée cohérente."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "funding",
+     "to": "Master: fully funded; Bachelor: loan repayable after graduation and employment, in instalments, to the IsDB Education Trust",
+     "evidence": "« Associate degree and bachelor degree students are required to repay the loan after graduation and employment, in easy installments » https://www.turkiyeburslari.gov.tr/partneredprograms",
+     "from": "Master: fully funded; Bachelor: interest-free loan repayable after graduation"
+    }
+   ],
+   "summary": "Toutes les sources lues et à jour (aucune annonce 2027, prévision 10/01–20/02/2027 cohérente). Seule correction : la source officielle ne qualifie pas le prêt Licence d'« interest-free »."
+  },
+  {
+   "catalogId": "stipendium_hungaricum_2027_forecast",
+   "verdict": "unverifiable",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://stipendiumhungaricum.hu/about/",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Page de maintenance Tempus (curl 24/10/2026 + WebFetch) : « The websites of Tempus Public Foundation are temporarily unavailable. » Aucun contenu officiel de remplacement trouvé (tka.hu et PDF wp-content également en maintenance, studyinhungary.hu injoignable)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://stipendiumhungaricum.hu/apply/",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Page de maintenance Tempus (curl 24/10/2026 + WebFetch) : « The websites of Tempus Public Foundation are temporarily unavailable. » Aucun contenu officiel de remplacement trouvé (tka.hu et PDF wp-content également en maintenance, studyinhungary.hu injoignable)."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://stipendiumhungaricum.hu/about/",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Page de maintenance Tempus (curl 24/10/2026 + WebFetch) : « The websites of Tempus Public Foundation are temporarily unavailable. » Aucun contenu officiel de remplacement trouvé (tka.hu et PDF wp-content également en maintenance, studyinhungary.hu injoignable). Les montants (HUF 43 700, 40 000, 65 000) ne peuvent pas être revérifiés."
+    },
+    {
+     "kind": "application",
+     "url": "https://apply.stipendiumhungaricum.hu/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Stipendium Hungaricum application system is open! »",
+     "replacementUrl": null,
+     "note": "Portail DreamApply relu par curl (g1_sh_portal.txt) ; dernière annonce d'ouverture : 17 Nov 2025 (cycle 2026/2027). Aucun appel 2027/2028 publié au 24/10/2026."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://stipendiumhungaricum.hu/apply/",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The deadline for submitting your application is 15 January 2026, 2 p.m. (Central European Time) »",
+     "replacementUrl": "https://apply.stipendiumhungaricum.hu/news/new/135-stipendium-hungaricum-application-system-open",
+     "note": "/apply/ en maintenance ; remplacement sur le portail officiel du même opérateur (Tempus). Le cycle précédent confirme la base de l'estimation ; l'appel 2026/27 avait été annoncé le 28/10/2025 (news 134), donc un appel 2027/28 est probable sous peu — à revérifier début novembre."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Le site stipendiumhungaricum.hu (et tous les sites Tempus) est en maintenance : présentation, éligibilité et avantages illisibles. Le portail officiel confirme seulement le calendrier 2026/27 et l'absence d'appel 2027/28 à ce jour ; ne pas rafraîchir la date de vérification."
+  },
+  {
+   "catalogId": "romania_mfa_scholarship_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://scholarships.studyinromania.gov.ro/scholarship-about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Each year, the Romanian Government, through the Ministry of Foreign Affairs, provides a number of scholarships to citizens from non-EU countries. »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 (g1_ro_about.txt)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://scholarships.studyinromania.gov.ro/scholarship-about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Please note that scholarships are NOT awarded in the fields of MEDICINE, DENTAL MEDICINE and PHARMACY. »",
+     "replacementUrl": null,
+     "note": "Moyenne ≥ 7, non-UE, exclusions et langue roumaine en Licence/Master confirmées."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://scholarships.studyinromania.gov.ro/scholarship-about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« financing the tuition expenses for the Romanian language preparatory year; »",
+     "replacementUrl": null,
+     "note": "Exonération des frais, bourse mensuelle, subvention de logement en résidence (selon places) confirmées."
+    },
+    {
+     "kind": "application",
+     "url": "https://scholarships.studyinromania.gov.ro/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Ministry of Foreign Affairs Scholarships for non-EU citizens »",
+     "replacementUrl": null,
+     "note": "Page d'accueil courte (≈1 600 car.) mais complète, non bloquée ; relue par curl (g1_ro_home.txt)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://scholarships.studyinromania.gov.ro/scholarship-about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications can be submitted only via the online platform, between 16 February 2026 and 31 March 2026 »",
+     "replacementUrl": null,
+     "note": "Toujours le cycle 2026 ; aucune date 2027 publiée au 24/10/2026. Prévision 16/02–31/03/2027 cohérente."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Page officielle relue : programme, critères, avantages et procédure inchangés ; aucun calendrier 2027 publié, la prévision estimée reste valable."
+  },
+  {
+   "catalogId": "brunei_government_scholarship_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.mfa.gov.bn/pages/online-bdgs.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Ministry of Foreign Affairs is pleased to invite applications for the Government of Brunei Darussalam Scholarship to Foreign Students Tenable in Brunei Darussalam »",
+     "replacementUrl": null,
+     "note": "Relu par curl le 24/10/2026 (g1_bn_mfa.txt) ; page active (actualités du 23 October 2026)."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.mfa.gov.bn/pages/online-bdgs.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Bruneians, Brunei Permanent Residents and international students studying/who have studied in Brunei tertiary institutions are NOT eligible. »",
+     "replacementUrl": null,
+     "note": "Âges 25/35 au 1er juillet et seuils d'anglais (Credit 6, C, IELTS 6.0, TOEFL 550) confirmés."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.mfa.gov.bn/pages/online-bdgs.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« a monthly personal allowance of BND$500.00; »",
+     "replacementUrl": null,
+     "note": "BND 150 repas, BND 600 livres, vols, logement, bagages, assurance confirmés."
+    },
+    {
+     "kind": "application",
+     "url": "https://www.mfa.gov.bn/pages/online-bdgs.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« To apply, please fill in the online Application Form at the following link – BDGS Application Form. »",
+     "replacementUrl": null,
+     "note": "Candidatures séparées UBD/UTB confirmées."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.mfa.gov.bn/pages/online-bdgs.aspx",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The closing date for application of the Scholarship is 15 February 2026. »",
+     "replacementUrl": null,
+     "note": "Page toujours sur la session 2026/2027 (ouverture 15 December 2025) ; aucune annonce 2027/2028 au 24/10/2026. Prévision 15/12/2026–15/02/2027 cohérente."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Page du MFA brunéien relue : critères, avantages et procédure inchangés ; pas encore d'annonce 2027/2028, prévision maintenue."
+  }
+ ]
+}

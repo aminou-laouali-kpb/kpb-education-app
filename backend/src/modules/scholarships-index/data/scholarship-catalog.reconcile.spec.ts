@@ -352,7 +352,7 @@ describe('planScholarshipReconciliation', () => {
     it('ne remplace pas une vérification humaine plus récente par un tampon plus ancien', () => {
       const record = recordById('york_pise_2027_forecast');
       const row = rowAsCreatedFrom(record);
-      row.lastVerifiedAt = new Date('2026-10-05T10:00:00.000Z');
+      row.lastVerifiedAt = new Date('2026-10-30T10:00:00.000Z');
       row.verifiedById = 'admin-42';
       row.verifiedByName = 'Relecteur KPB';
       row.sourceUrl = 'https://futurestudents.yorku.ca/corrigee-par-le-relecteur';
@@ -377,7 +377,7 @@ describe('planScholarshipReconciliation', () => {
     it("garde la source consultée par le relecteur, pas celle du dépôt", () => {
       const record = recordById('york_pise_2027_forecast');
       const row = rowAsCreatedFrom(record);
-      row.lastVerifiedAt = new Date('2026-10-05T10:00:00.000Z');
+      row.lastVerifiedAt = new Date('2026-10-30T10:00:00.000Z');
       row.verifiedByName = 'Relecteur KPB';
       row.sourceUrl = 'https://futurestudents.yorku.ca/corrigee-par-le-relecteur';
 

@@ -65,7 +65,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       cycle: 'https://knight-hennessy.stanford.edu/admission/preparing-your-applications/your-applications',
     },
     tags: ['master', 'usa', 'stanford', 'closed', 'leadership', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:15:00.000Z',
   }),
   record({
     id: 'rhodes_southern_africa_2027',
@@ -131,7 +131,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       cycle: 'https://www.rhodeshouse.ox.ac.uk/media/y4plyclm/southern-africa-information-for-candidates-document-2027-final.pdf',
     },
     tags: ['master', 'uk', 'oxford', 'southern-africa', 'closed', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:11:00.000Z',
   }),
   record({
     id: 'eth_zurich_esop_2027',
@@ -191,7 +191,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       cycle: 'https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html',
     },
     tags: ['master', 'switzerland', 'eth-zurich', 'future-cycle', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:11:00.000Z',
   }),
   record({
     id: 'jj_wbgsp_2027_forecast',
@@ -258,6 +258,6 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       cycle: 'https://www.worldbank.org/en/programs/scholarships/jj-wbgsp',
     },
     tags: ['master', 'development', 'world-bank', 'forecast', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    checkedAt: '2026-10-24T07:11:00.000Z',
   }),
 ];

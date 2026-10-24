@@ -1,0 +1,272 @@
+{
+ "group": "G3",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "kazakhstan_foreign_students_2027_forecast",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://oq.gov.kz/en/b-ship",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« SCHOLARSHIP PROGRAM OF THE REPUBLIC OF KAZAKHSTAN Foreign citizens, including individuals of Kazakh nationality who are not citizens of the Republic of Kazakhstan »",
+     "replacementUrl": null,
+     "note": "Instantané relu et page recontrôlée par curl le 24/10 (contenu identique hors pied de page). NB : cette page indique encore un GPA Master de 2.33/4, l’appel 2026 (news/1504) exige 3.0/4 — la fiche suit l’appel 2026, ce qui est correct.",
+     "savedPage": "agent_pages/g2_kz_bship.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://oq.gov.kz/en/news/1504",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The document should be from an educational institution with a GPA of at least 3.0 (out of 4.0) or its equivalent »",
+     "replacementUrl": null,
+     "note": "Contenu identique au 24/10 (curl). Seuils langue confirmés : IELTS 5.5, TOEFL iBT 46, DELF/DALF B2, TestDaF B2, HSK 4 ; dispense si études antérieures dans la langue du programme.",
+     "savedPage": "agent_pages/g2_kz_news1504.txt"
+    },
+    {
+     "kind": "benefits",
+     "url": "https://oq.gov.kz/en/b-ship",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Scholarship COVERS: – full cost of tuition fees; – monthly allowance, depending on the academic progress. »",
+     "replacementUrl": null,
+     "note": "La page exclut aussi « travel cost; – accommodation expences; – visa, medical insurance expences ».",
+     "savedPage": "agent_pages/g2_kz_bship.txt"
+    },
+    {
+     "kind": "application",
+     "url": "https://studyin.kz/admission",
+     "readVia": "replacement",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applicants can apply online from 30 March to 31 May 2026 until 23:59 Astana time at the following link: https://studyin.kz/admission »",
+     "replacementUrl": "https://bolashak.gov.kz/en/scholarship-program",
+     "note": "studyin.kz/admission est une application JS vide (« You need to enable JavaScript to run this app »), WebFetch ne renvoie que « Studyin » ; https://studyin.kz/ renvoie 502. Remplacée par la page officielle de l’opérateur (JSC Center for International Programs / bolashak.gov.kz), qui renvoie vers le même portail.",
+     "savedPage": "agent_pages/g2_kz_bol_sp.txt"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://oq.gov.kz/en/news/1504",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applicants can apply online from 30 March to 31 May 2026 until 23:59 Astana time »",
+     "replacementUrl": null,
+     "note": "Aucune annonce 2027 trouvée (oq.gov.kz, bolashak.gov.kz) au 24/10/2026 : la prévision estimated 30/03–31/05/2027 reste fondée sur le cycle 2026.",
+     "savedPage": "agent_pages/g2_kz_news1504.txt"
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "source.url (kind=application)",
+     "from": "https://studyin.kz/admission",
+     "to": "https://bolashak.gov.kz/en/scholarship-program",
+     "evidence": "« Applicants can apply online from 30 March to 31 May 2026 until 23:59 Astana time at the following link: https://studyin.kz/admission » — https://bolashak.gov.kz/en/scholarship-program (studyin.kz/admission : page JS illisible)"
+    }
+   ],
+   "summary": "Fiche conforme aux pages oq.gov.kz (appel 2026, 490/50 places, avantages, critères) ; cycle 2027 toujours une prévision sans annonce officielle. Seule correction : la source « application » studyin.kz/admission est illisible (SPA JS) et doit être remplacée par la page officielle de l’opérateur bolashak.gov.kz/en/scholarship-program."
+  },
+  {
+   "catalogId": "heydar_aliyev_grant_2027_forecast",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://studyinazerbaijan.edu.az/financial-support",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« 100 educational grants will be provided annually. »",
+     "replacementUrl": null,
+     "note": "Contenu identique au 24/10 (curl). La page indique aussi « offered annually for a period of 5 years, starting from the 2026–2027 academic year ».",
+     "savedPage": "agent_pages/g2_az_finsup.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://studyinazerbaijan.edu.az/H.Aliyev_IEG_CALL_18.04.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Undergraduate and general medicine programs – foreign nationals below 35 years as of »",
+     "replacementUrl": null,
+     "note": "PDF re-téléchargé le 24/10 : MD5 identique à l’instantané. Âge au 15.09.2026, note minimale 70/100, IELTS 5 / 5.5 confirmés.",
+     "savedPage": "pages/9d0828f8f737.txt"
+    },
+    {
+     "kind": "benefits",
+     "url": "https://studyinazerbaijan.edu.az/H.Aliyev_IEG_CALL_18.04.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Monthly allowance of 800 AZN (470 USD)* for accommodation, daily expenses, educational »",
+     "replacementUrl": null,
+     "note": "Frais de scolarité + prépa linguistique, vol annuel, 200 AZN médical, visa et titre de séjour confirmés.",
+     "savedPage": "pages/9d0828f8f737.txt"
+    },
+    {
+     "kind": "application",
+     "url": "https://studyinazerbaijan.edu.az/financial-support",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« To see the details of the application process, required documents, selection criteria, and key deadlines, please click here. »",
+     "replacementUrl": null,
+     "note": "La procédure détaillée (nomination puis SIACAS portal.edu.az du 1er au 10 juin) figure dans l’appel PDF lié.",
+     "savedPage": "agent_pages/g2_az_finsup.txt"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://studyinazerbaijan.edu.az/H.Aliyev_IEG_CALL_18.04.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« From Feb 16 to April 15, 2026 »",
+     "replacementUrl": null,
+     "note": "Aucun appel 2027-2028 publié au 24/10/2026 (page /news : dernier appel = 2026-2027, publié le 2.11.2026 [format m.j.a]). Prévision estimated maintenue.",
+     "savedPage": "pages/9d0828f8f737.txt"
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Toutes les sources relues (PDF identique à l’instantané) et conformes : 100 bourses/an, avantages, critères d’âge et de note, calendrier 2026 servant de base à la prévision 2027. Aucun appel 2027-2028 publié ; statut forecast/estimated inchangé."
+  },
+  {
+   "catalogId": "taiwan_icdf_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.icdf.org.tw/wSite/ct?ctNode=31562&mp=2&xItem=12505",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« offers full scholarships to outstanding students from partner countries to pursue higher education in Taiwan »",
+     "replacementUrl": null,
+     "note": "Instantané vide (000) ; page relue par curl le 24/10 (après 2 resets de connexion) et enregistrée dans agent_pages/g2_tw_main.txt.",
+     "savedPage": "agent_pages/g2_tw_main.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.icdf.org.tw/wSite/DownloadFile?type=attach&file=f1784095315535.pdf&realname=2026+TaiwanICDF+Scholarship+Application+Guidebook.+v3.pdf",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Have never had any scholarship revoked by any ROC(Taiwan) government agency or related institution »",
+     "replacementUrl": null,
+     "note": "PDF re-téléchargé le 24/10 : MD5 identique. Guide 2026 (licence réservée aux pays alliés, marqués *) — la fiche signale bien que la liste 2027 est à reconfirmer.",
+     "savedPage": "pages/88fd67ed878f.txt"
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.icdf.org.tw/wSite/DownloadFile?file=f1764223019963.pdf&realname=Scope+of+Scholarship+2026.pdf&type=attach",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Housing: All students must reside in the student dormitories. »",
+     "replacementUrl": null,
+     "note": "PDF identique (MD5). Billet A/R, logement, scolarité, crédits, assurance, livres, allocation mensuelle confirmés.",
+     "savedPage": "pages/e581c62547db.txt"
+    },
+    {
+     "kind": "application",
+     "url": "https://www.icdf.org.tw/wSite/ct?ctNode=31566&mp=2&xItem=69338",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« (Application Dates: December 1, 2026 - March 15, 2027) »",
+     "replacementUrl": null,
+     "note": "Contenu identique au 24/10 (curl), hors compteur de visites.",
+     "savedPage": "agent_pages/g2_tw_app.txt"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.icdf.org.tw/wSite/ct?ctNode=31562&mp=2&xItem=12505",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The 2027 TaiwanICDF Scholarship applications open from December 1, 2026 to March 15, 2027! »",
+     "replacementUrl": null,
+     "note": "Dates officiellement publiées (confirmed). Au 24/10/2026 la campagne n’est pas encore ouverte : statut forecast cohérent jusqu’au 1/12/2026.",
+     "savedPage": "agent_pages/g2_tw_main.txt"
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Toutes les sources lues (page principale récupérée par curl, PDF identiques) et conformes : cycle 2027 publié du 1/12/2026 au 15/03/2027, avantages et critères inchangés. Rien à corriger ; passer le statut à open le 1/12/2026."
+  },
+  {
+   "catalogId": "open_doors_russia_2027",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://od.globaluni.ru/about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Open Doors has been held annually since 2017. »",
+     "replacementUrl": null,
+     "note": "Contenu identique au 24/10 (curl).",
+     "savedPage": "agent_pages/g2_od_about.txt"
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://od.globaluni.ru/index.php/rules",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applicants aged between 20 and 33 as of the registration opening date are eligible to participate in the Master’s track »",
+     "replacementUrl": null,
+     "note": "Licence 16–23 ans, Master 20–33 ans, langues russe/anglais confirmés (règles 2026).",
+     "savedPage": "agent_pages/g2_od_rules.txt"
+    },
+    {
+     "kind": "benefits",
+     "url": "https://od.globaluni.ru/about",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« Free tuition for the chosen study program, taught in English or Russian. »",
+     "replacementUrl": null,
+     "note": "La page /about confirme scolarité gratuite et année préparatoire de russe, mais NE mentionne PAS l’allocation mensuelle ni les frais exclus : ces deux points ne sont soutenus que par la FAQ de la page d’accueil (« The scholarship covers tuition fees and provides a monthly stipend. »).",
+     "savedPage": "agent_pages/g2_od_about.txt"
+    },
+    {
+     "kind": "application",
+     "url": "https://od.globaluni.ru/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« register on the Open Doors website; select a track and Subject area; compile a portfolio »",
+     "replacementUrl": null,
+     "note": "Instantané vide (000) ; page relue par curl le 24/10 (26 175 caractères) et enregistrée dans agent_pages/g2_od_home.txt.",
+     "savedPage": "agent_pages/g2_od_home.txt"
+    },
+    {
+     "kind": "cycle",
+     "url": "https://od.globaluni.ru/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« 1 November 2026 Open Doors registration deadline »",
+     "replacementUrl": null,
+     "note": "Ouverture 20/08/2026, 1re étape jusqu’au 13/11, résultats 13/11, 2e étape 13/11–21/12/2026 : tout confirmé. Au 24/10/2026 la clôture n’est pas passée : statut open correct.",
+     "savedPage": "agent_pages/g2_od_home.txt"
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "source.url (kind=benefits)",
+     "from": "https://od.globaluni.ru/about",
+     "to": "ajouter https://od.globaluni.ru/#a-faq (FAQ officielle) comme source benefits, en plus de /about",
+     "evidence": "« The scholarship covers tuition fees and provides a monthly stipend. » — https://od.globaluni.ru/ (section FAQ)"
+    }
+   ],
+   "summary": "Calendrier, éligibilité et procédure confirmés ; campagne toujours ouverte (clôture 1/11/2026). Seule correction : la source benefits /about ne mentionne ni l’allocation mensuelle ni les frais exclus, qu’il faut sourcer par la FAQ officielle de la page d’accueil."
+  }
+ ]
+}

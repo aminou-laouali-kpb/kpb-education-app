@@ -1,0 +1,287 @@
+{
+ "group": "G5",
+ "readAt": "2026-10-24",
+ "records": [
+  {
+   "catalogId": "mccall_macbain_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://mccallmacbainscholars.org/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« McCall MacBain Scholars connect with mentors and participate in an interdisciplinary leadership program while pursuing a fully funded master’s or professional degree at McGill University. »",
+     "replacementUrl": null,
+     "note": "Page d'accueil officielle : la phrase « Applications are open for Summer/Fall 2027 entry. » y subsiste (texte non mis à jour par l'organisme) ; elle est contredite par /apply/ et par le portail, qui indiquent tous deux la clôture. Nature et organisme inchangés."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://mccallmacbainscholars.org/apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« You earned your first bachelor’s degree more than five years ago, and were 30 years or younger on January 1st, 2026 »",
+     "replacementUrl": null,
+     "note": "Les trois voies d'éligibilité (licence d'ici août 2027, diplôme depuis janvier 2021, ou ≤30 ans au 1/1/2026) et les exigences McGill sont inchangées. Recopie curl identique : agent_pages/g4_mmb_apply.txt."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://mccallmacbainscholars.org/faq/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« a living stipend of $2,300 CAD per month during academic terms, a one-time relocation grant, and options for summer funding »",
+     "replacementUrl": null,
+     "note": "FAQ confirme aussi « Scholars not enrolled full-time may apply for up to $5,000 ». Un ancien bloc FAQ (2023) mentionne encore $2,000 CAD : archive non à jour, sans effet."
+    },
+    {
+     "kind": "application",
+     "url": "https://apply.mccallmacbainscholars.org/apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications are closed for the 2027 cohort of McCall MacBain Scholars. »",
+     "replacementUrl": null,
+     "note": "Page courte (1083 car.) mais complète et cohérente ; re-téléchargée par curl le 24/10, contenu identique (agent_pages/g4_mmb_portal.txt)."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://mccallmacbainscholars.org/apply/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Applications for Summer/Fall 2027 are closed. »",
+     "replacementUrl": null,
+     "note": "Échéances confirmées sur la page : « International Students and graduates of universities located in other countries had the following deadline: August 19, 2026 4:00 PM Eastern Time » (= 2026-08-19T20:00Z) et 23 septembre 2026 pour Canada/USA. Statut closed correct au 24/10/2026 ; prochaine ouverture non publiée."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Toutes les sources relues le 24/10/2026 : candidatures 2027 closes (19/08/2026 international, 23/09/2026 Canada/USA), avantages et éligibilité inchangés. Fiche conforme ; seule la page d'accueil officielle affiche encore un texte « Applications are open » périmé."
+  },
+  {
+   "catalogId": "schwarzman_scholars_2027",
+   "verdict": "confirmed",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.schwarzmanscholars.org/program-experience/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Schwarzman Scholars is a fully-funded, one-year master’s degree and leadership program at Tsinghua University in Beijing, China. »",
+     "replacementUrl": null,
+     "note": ""
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://www.schwarzmanscholars.org/admissions/application-instructions/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Candidates must be at least 18 but not yet 29 years of age as of August 1 of their Schwarzman Scholars enrollment year »",
+     "replacementUrl": null,
+     "note": "La page est passée au cycle 2028-2029 (exemple chiffré : 1er août 2028), mais la règle générale (18 à <29 ans au 1er août de l'année d'entrée ; diplôme avant le 1er août de l'année d'entrée ; dispense d'anglais après 2 ans d'études en anglais) correspond à la fiche 2027-2028. Page /admissions/eligibility/ relue par curl : agent_pages/g4_sch_elig.txt."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://www.schwarzmanscholars.org/program-experience/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Tuition & Fees Room & Board in-country study tour Travel to and from Beijing Health Insurance Stipend for personal expenses »",
+     "replacementUrl": null,
+     "note": ""
+    },
+    {
+     "kind": "application",
+     "url": "https://www.schwarzmanscholars.org/admissions/application-instructions/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« Register three recommenders by providing their names, professional titles, and contact details. »",
+     "replacementUrl": null,
+     "note": "Profil 100 mots, CV 2 pages max, essais 750/500 mots, deux réponses courtes de 100 mots, vidéo « highly recommended but is not required », exclusion des membres de la famille : inchangés."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://www.schwarzmanscholars.org/admissions/application-instructions/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The application window for the class of 2027-2028 is now closed. »",
+     "replacementUrl": null,
+     "note": "Statut closed confirmé. Les dates exactes 8/04/2026 et 9/09/2026 ne sont plus affichées (page basculée sur le cycle suivant) : non re-vérifiables mais antérieures et cohérentes avec la clôture. Le libellé de la fiche (cycle 2028–2029 annoncé pour avril–septembre 2027) est confirmé : « The U.S. and Global application for the class of 2028-2029 will be open from April 2027 to September 2027. »"
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Relu le 24/10/2026 : la fenêtre 2027-2028 est close et la page annonce le cycle 2028-2029 (avril–septembre 2027), comme la fiche. Avantages, éligibilité et pièces inchangés ; seules les dates exactes 2026 ne sont plus affichées."
+  },
+  {
+   "catalogId": "si_global_professionals_2027_forecast",
+   "verdict": "needs_changes",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The Swedish Institute awards academic scholarships for master’s studies in Sweden. »",
+     "replacementUrl": null,
+     "note": "Même bourse, 34 pays, mêmes 4 domaines (Governance, Public Health, Entrepreneurship and Innovation, STEM). La page porte désormais l'appel 2027/2028 ; le texte 'Application closed' cité par la fiche n'y figure plus."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« must have at least 3,000 hours of work experience prior to February 2027. »",
+     "replacementUrl": null,
+     "note": "Sénégal et Maroc toujours dans la liste des 34 pays ; exclusions (études/diplôme suédois, 2 ans de résidence, ancien boursier SI, citoyenneté UE/EEE) inchangées. Nouveau détail : les 3 000 h doivent provenir d'au plus trois employeurs."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« A monthly allowance of SEK 12,000 to cover your living expenses throughout the study period. »",
+     "replacementUrl": null,
+     "note": "Frais de scolarité, voyage SEK 15 000, réseau NFGP, exclusions (assurance, famille, frais University Admissions) inchangés."
+    },
+    {
+     "kind": "application",
+     "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« You must use SI’s provided template for CV 2027/2028. The CV should not exceed three pages. »",
+     "replacementUrl": null,
+     "note": "Pièces inchangées (CV, preuve d'expérience, deux lettres de référence signées/tamponnées, passeport/ID, motivation dans le portail). Modèles publiés le 13 novembre 2026."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/",
+     "readVia": "snapshot",
+     "readable": true,
+     "supportsClaims": false,
+     "evidence": "« Submit your SI Scholarship application here between 8-24 February 2027. The application portal closes at 14:59 CET on the final day. »",
+     "replacementUrl": null,
+     "note": "Les dates 2027 sont désormais officiellement publiées : la fiche (estimation 9–25/02/2027) doit passer en dates confirmées 8–24/02/2027. Statut reste forecast : le portail n'ouvre que le 8/02/2027. Candidatures Master sur University Admissions ouvertes « 16 Oct 2026 - 15 Jan 2027 »."
+    }
+   ],
+   "proposedChanges": [
+    {
+     "field": "cycle.dateConfidence",
+     "from": "estimated",
+     "to": "confirmed",
+     "evidence": "« Submit your SI Scholarship application here between 8-24 February 2027. » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "cycle.opensAt",
+     "from": "(absent) ; estimatedOpenAt 2027-02-09T00:00:00.000Z",
+     "to": "2027-02-08T00:00:00.000Z (et supprimer estimatedOpenAt)",
+     "evidence": "« Apply for a Global Professionals scholarship Date: 8 Feb 2027 - 24 Feb 2027 » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "cycle.closesAt",
+     "from": "(absent) ; estimatedCloseAt 2027-02-25T13:59:59.000Z",
+     "to": "2027-02-24T13:59:00.000Z (14:59 CET ; supprimer estimatedCloseAt)",
+     "evidence": "« The application portal closes at 14:59 CET on the final day. » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "cycle.status",
+     "from": "forecast",
+     "to": "forecast (inchangé : ouverture le 8 février 2027)",
+     "evidence": "« Opens for applications 8 February » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "deadlineLabelEn",
+     "from": "2027 forecast — two-week window expected in February, to be reconfirmed",
+     "to": "Upcoming — SI scholarship portal open 8–24 February 2027 (closes 14:59 CET); Master applications on UniversityAdmissions.se 16 October 2026 – 15 January 2027 (deadlineLabelFr à aligner)",
+     "evidence": "« 1. Apply for a master's programme - 16 Oct 2026 - 15 Jan 2027 » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "description",
+     "from": "The official page shows “Application closed” for the reference call, open 9 to 25 February 2026 ... Next-call dates and criteria must be reconfirmed; the displayed cycle estimates the official 2026 cadence.",
+     "to": "The official 2027/2028 call is published: Master applications on University Admissions 16 October 2026 – 15 January 2027, SI documents and eligible programmes published 13 November 2026, scholarship portal open 8–24 February 2027 (14:59 CET), results on 22 April 2027.",
+     "evidence": "« 22 April 2027 : SI Scholarship announcement. » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "eligibility",
+     "from": "on the francophone-Africa side, the reference call lists Senegal and Morocco ; many African countries require at least 3,000 hours in the reference call",
+     "to": "Remplacer « reference call » par « 2027 call » : au moins 3 000 heures d'expérience avant février 2027, cumulées chez trois employeurs au maximum",
+     "evidence": "« The 3,000 hours must have been accumulated from a maximum of three employers. » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    },
+    {
+     "field": "autre (keyRequirementsEn / steps)",
+     "from": "CV using the SI template ... templates and documents to be reconfirmed at the next call ; Submit Master applications through University Admissions by the January deadline",
+     "to": "CV on the SI 2027/2028 template, max three pages ; templates published 13 November 2026 ; Master applications by 15 January 2027 ; scholarship upload 8–24 February 2027",
+     "evidence": "« Templates for the listed documents will be published here on 13 November . » https://si.se/en/apply/scholarships/swedish-institute-scholarships-for-global-professionals/"
+    }
+   ],
+   "summary": "L'appel SI 2027/2028 est officiellement publié : portail ouvert du 8 au 24 février 2027 (14:59 CET), candidatures Master du 16/10/2026 au 15/01/2027. Passer le cycle en dates confirmées (statut forecast jusqu'au 8/02) et actualiser libellé, description et mentions « reference call » ; avantages et critères inchangés."
+  },
+  {
+   "catalogId": "daad_helmut_schmidt_2027",
+   "verdict": "unverifiable",
+   "sources": [
+    {
+     "kind": "overview",
+     "url": "https://www.daad.de/en/information-services-for-higher-education-institutions/further-information-on-daad-programmes/ppgg/",
+     "readVia": "webfetch",
+     "readable": true,
+     "supportsClaims": true,
+     "evidence": "« The DAAD Helmut-Schmidt-Programme (known as Public Policy and Good Governance) supports future leaders »",
+     "replacementUrl": "https://www2.daad.de/deutschland/stipendium/datenbank/en/21148-scholarship-database/?origin=194&status=3&page=1&detail=50026397",
+     "note": "URL d'origine illisible (403 instantané/curl, 503 WebFetch). Remplacement officiel lu UNIQUEMENT via WebFetch (citation résumée, non vérifiable mot pour mot) : la fiche base de données DAAD existe toujours et renvoie au PDF 'Current Announcement' pour critères, dates et montants."
+    },
+    {
+     "kind": "eligibility",
+     "url": "https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané 403 ; curl x3 le 24/10 : réponse 403 Forbidden 'Request forbidden by administrative rules' (tout *.daad.de bloqué, y compris FAQ, liste des cours et base www2) ; WebFetch x2 : HTTP 503. Aucune page officielle de remplacement lisible ne reprend ces informations (la fiche base de données www2.daad.de renvoie au PDF 'Current Announcement')."
+    },
+    {
+     "kind": "benefits",
+     "url": "https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané 403 ; curl x3 le 24/10 : réponse 403 Forbidden 'Request forbidden by administrative rules' (tout *.daad.de bloqué, y compris FAQ, liste des cours et base www2) ; WebFetch x2 : HTTP 503. Aucune page officielle de remplacement lisible ne reprend ces informations (la fiche base de données www2.daad.de renvoie au PDF 'Current Announcement')."
+    },
+    {
+     "kind": "application",
+     "url": "https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané 403 ; curl x3 le 24/10 : réponse 403 Forbidden 'Request forbidden by administrative rules' (tout *.daad.de bloqué, y compris FAQ, liste des cours et base www2) ; WebFetch x2 : HTTP 503. Aucune page officielle de remplacement lisible ne reprend ces informations (la fiche base de données www2.daad.de renvoie au PDF 'Current Announcement')."
+    },
+    {
+     "kind": "cycle",
+     "url": "https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf",
+     "readVia": "webfetch",
+     "readable": false,
+     "supportsClaims": false,
+     "evidence": "",
+     "replacementUrl": null,
+     "note": "Instantané 403 ; curl x3 le 24/10 : réponse 403 Forbidden 'Request forbidden by administrative rules' (tout *.daad.de bloqué, y compris FAQ, liste des cours et base www2) ; WebFetch x2 : HTTP 503. Aucune page officielle de remplacement lisible ne reprend ces informations (la fiche base de données www2.daad.de renvoie au PDF 'Current Announcement'). Par simple comparaison de dates, la clôture du 31/07/2026 est passée : le statut closed reste logiquement correct, mais non relu."
+    }
+   ],
+   "proposedChanges": [],
+   "summary": "Le PDF officiel 'Current Announcement' (éligibilité, avantages, procédure, cycle) reste illisible : 403 sur tout daad.de via curl et 503 via WebFetch. Seule l'existence du programme est confirmée via la base de données DAAD ; ne pas rafraîchir checkedAt."
+  }
+ ]
+}
