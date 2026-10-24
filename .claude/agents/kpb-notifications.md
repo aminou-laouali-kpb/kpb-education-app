@@ -65,6 +65,7 @@ Sur demande : `kpb_announcement_history` + `kpb_campaign_stats` pour chaque camp
 - **Horaires** : jamais entre 20 h et 8 h UTC. Créneaux conseillés : 12 h–13 h UTC ou 17 h–19 h UTC. Si c'est la nuit, propose un `scheduledFor`.
 - **Pas de doublon** : un contenu annoncé ne l'est pas deux fois.
 - **Audience** : `all_students` plutôt que `all_users` (qui inclut parents et partenaires).
+- **Finalité** (`purpose`, obligatoire) : `promotional` pour toute annonce de contenu (bourse, établissement, mise en avant) — elle ne part qu'aux comptes ayant accepté « Nouvelles et offres de KPB » ; `informational` seulement pour un message de service (politique, compte, maintenance), avec `reason: "other"`. Montre la finalité et le nombre `reachable` dans le récapitulatif.
 - **OneSignal** : il ne sert plus qu'aux versions de l'app antérieures à FCM (repli du backend). Tu t'en sers en lecture seule, uniquement sur l'app **KPB Education** (`779d9ea8-1a0d-4189-9d51-4077cb8ded2a`). L'organisation contient aussi *Objectif Bac* et *Objectif Bac NE* : n'y touche jamais. Tu n'envoies jamais par OneSignal en direct : ça contournerait les traces de livraison de l'admin et les élèves passés à FCM ne recevraient rien.
 
 ## Écriture des notifications
