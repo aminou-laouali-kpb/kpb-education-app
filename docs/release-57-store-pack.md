@@ -401,21 +401,31 @@ jours, pour ne pas mêler les signaux ; chacune se referme seule, sans build) :
    interrupteurs d'urgence ouverts, `onboardingV2` et `scholarshipMatch` fermés) et
    `KPB_SCHOLARSHIP_OPENING_MODE=legacy`. La 57 part ainsi.
 2. **`KPB_ONBOARDING_V2_ENABLED=true`**, quand la 57 est à 100 % sur Play, la publication
-   progressive iOS terminée, et les critères du §6.2 tenus. Seule la 57 lit la clé.
+   progressive iOS terminée, et les critères du §6.2 tenus. Seule la 57 lit la clé. Action
+   `onboarding-v2-on` (tableau ci-dessous).
 3. **Mode d'ouverture** `outbox_alerts` puis `outbox_followers` (§6.3).
 4. **`KPB_SCHOLARSHIP_MATCH_ENABLED=true`**, seulement quand : la collecte de la nationalité est
    tranchée (consentement explicite, décision du propriétaire du 18/10/2026 ; case de consentement
    dans l'app) et les textes de la politique validés (19/10/2026) ; `GET /admin/scholarships/eligibility-coverage` en
    production montre au moins 90 % de bourses publiques structurées et fraîches ; la recette
    « Mes 10 bourses » de `docs/device-qa-build57.md` est jouée en préproduction ; les déclarations
-   du §4 sont reportées. Procédure : registre, entrée du 15/10/2026 « chantier D ».
+   du §4 sont reportées. Procédure : registre, entrée du 15/10/2026 « chantier D ». Action
+   `scholarship-match-on` (tableau ci-dessous) ; elle rappelle le consentement à la nationalité
+   (décision c) et prévient, sans bloquer, si l'onboarding V2 (étape 2) n'est pas encore ouvert.
+
+**Fenêtre de recette TestFlight, puis revue Apple.** Pendant la revue, `onboardingV2` et
+`scholarshipMatch` valent **`false`** (checklist 57 §6 et §8). Une fenêtre de recette sur
+TestFlight peut les ouvrir (`onboarding-v2-on`, `scholarship-match-on` : seule la 57 lit ces clés,
+absente des boutiques), mais elle se **referme avant la soumission** par `onboarding-v2-off` et
+`scholarship-match-off`, qui agissent même `dry_run` coché ; l'étape 2 de la checklist
+(`/config/app`) le prouve ensuite. Les deux ouvertures l'affichent en avertissement, sans bloquer.
 
 Les interrupteurs `eefHelpBubble` et `eefPrivateSchools` suivent leur propre calendrier (pack 56
 §7), comme les trois drapeaux du parrainage (compétition du 1er au 10 novembre 2026, ordre
 conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le propriétaire).
 
 Le port 22 du VPS n'étant pas joignable depuis un poste de travail, les drapeaux du parrainage, de
-la communauté et des deux bots s'ouvrent et se referment par des **actions fermées du workflow
+la communauté, des deux bots, de « Mes 10 bourses » et de l'onboarding V2 s'ouvrent et se referment par des **actions fermées du workflow
 « VPS ops »** (`vps-ops.yml`), jamais en éditant le `.env` en SSH. Chacune n'écrit qu'**une** clé, à
 une valeur écrite dans `.github/scripts/vps-ops.sh`, sauvegarde le `.env`, recrée `api` à
 l'identique, vérifie la valeur lue par le conteneur puis la clé `features.*` servie par
@@ -430,8 +440,10 @@ tout de suite. La trace est l'exécution du workflow (qui, quand, journal).
 | `community-on` / `-off` | `KPB_COMMUNITY_ENABLED=true` / `false` | `community` |
 | `assist-bridge-on` / `-shadow` / `-off` | `KPB_ASSIST_BRIDGE_MODE=on` / `shadow` / `off` | `assistBridge` (vrai seulement à `on`) |
 | `verif-bot-auto` / `-review` / `-off` | `KPB_COMMUNITY_VERIF_BOT_MODE=auto` / `review` / `off` | aucune clé servie : la preuve est la valeur lue par le conteneur |
+| `onboarding-v2-on` / `onboarding-v2-off` | `KPB_ONBOARDING_V2_ENABLED=true` / `false` | `onboardingV2` |
+| `scholarship-match-on` / `scholarship-match-off` | `KPB_SCHOLARSHIP_MATCH_ENABLED=true` / `false` | `scholarshipMatch` (la même clé ouvre ou coupe `/scholarships/match/*`) |
 
-Aucune action `vps-ops` n'écrit en revanche les clés des chantiers G, K, D et I : elles se posent
+Aucune action `vps-ops` n'écrit en revanche les autres clés des chantiers G et K : elles se posent
 dans le `.env` de production, puis le conteneur `api` est recréé. À VALIDER (propriétaire) : qui
 écrit ce `.env`, et la trace qu'on en garde.
 
