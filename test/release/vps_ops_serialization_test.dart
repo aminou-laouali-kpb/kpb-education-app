@@ -143,6 +143,18 @@ void main() {
               'elles échoueraient sur le VPS en « ACTION inconnue »');
     });
 
+    test('les drapeaux restants de la 57 sont des deux côtés', () {
+      for (final action in [
+        'onboarding-v2-on',
+        'onboarding-v2-off',
+        'scholarship-match-on',
+        'scholarship-match-off',
+      ]) {
+        expect(menuActions(), contains(action));
+        expect(scriptBranches(), contains(action));
+      }
+    });
+
     test('chaque branche du script est proposée au menu', () {
       final unreachable = scriptBranches().difference(menuActions());
       expect(unreachable, isEmpty,

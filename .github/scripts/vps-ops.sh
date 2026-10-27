@@ -563,7 +563,8 @@ eef_flag_off() {
 
 # ── Les drapeaux distants de la build 57 ────────────────────────────────────
 #
-# Parrainage (trois clés), communauté, bot « Passerelle », bot « Vérif ». Le plan
+# Parrainage (trois clés), communauté, bot « Passerelle », bot « Vérif », test
+# « Mes 10 bourses » (chantier D), onboarding V2 (chantier I). Le plan
 # d'ouverture (docs/release-57-store-pack.md §5, docs/runbook-campagne-ambassadeurs.md
 # §8, docs/mise-a-jour-57-checklist.md §9) disait « poser la variable dans le `.env`
 # de production, recréer api » — en SSH, depuis un poste où le port 22 n'est pas
@@ -581,13 +582,14 @@ eef_flag_off() {
 #     bot Vérif, que `/config/app` ne sert pas.
 #
 # Valeurs permises, relues dans le code qui les lit :
-#   KPB_REFERRAL_*_ENABLED, KPB_COMMUNITY_ENABLED : seule `true` ouvre
-#     (app-config.controller.ts, `enabled`) ;
+#   KPB_REFERRAL_*_ENABLED, KPB_COMMUNITY_ENABLED, KPB_SCHOLARSHIP_MATCH_ENABLED,
+#   KPB_ONBOARDING_V2_ENABLED : seule `true` ouvre (app-config.controller.ts,
+#     `enabled`) ;
 #   KPB_ASSIST_BRIDGE_MODE : shadow (défaut) | on | off — `features.assistBridge`
 #     n'est vrai qu'à `on` (assist-bridge.config.ts) ;
 #   KPB_COMMUNITY_VERIF_BOT_MODE : review (défaut) | auto | off
 #     (community-verif-bot.config.ts).
-FLAGS57_ENV_RE='^KPB_(REFERRAL_(INSTALL_REFERRER|ONBOARDING_CODE|LEADERBOARD)_ENABLED|COMMUNITY_ENABLED|ASSIST_BRIDGE_MODE|COMMUNITY_VERIF_BOT_MODE)='
+FLAGS57_ENV_RE='^KPB_(REFERRAL_(INSTALL_REFERRER|ONBOARDING_CODE|LEADERBOARD)_ENABLED|COMMUNITY_ENABLED|ASSIST_BRIDGE_MODE|COMMUNITY_VERIF_BOT_MODE|SCHOLARSHIP_MATCH_ENABLED|ONBOARDING_V2_ENABLED)='
 
 # Les drapeaux de la 57 dans le `.env` : des drapeaux publics, jamais un secret.
 show_flags57() {
@@ -654,7 +656,7 @@ show_state() {
   echo "── Portes de version dans le .env (jamais de valeur libre ici) ──"
   grep -E '^KPB_(MIN|RECOMMENDED)_APP_VERSION=' .env || echo "(aucune : minVersion 0.0.0, aucun bandeau)"
   echo
-  echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots) ──"
+  echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots, « Mes 10 bourses », onboarding V2) ──"
   show_flags57
   echo
   show_push_state
@@ -1366,6 +1368,39 @@ case "$ACTION" in
 
   verif-bot-off)
     flag57_set KPB_COMMUNITY_VERIF_BOT_MODE off verif-bot-off close
+    ;;
+
+  # Les deux drapeaux « chantiers » de la 57. Au lancement, et pendant TOUTE la
+  # revue Apple, ils valent `false` (checklist 57 §2, §6 et §8). L'ouverture sert
+  # une fenêtre de recette TestFlight (seule la 57 lit ces clés) ou l'ouverture
+  # définitive du pack 57 §5 ; le `-off` la referme avant la soumission.
+  onboarding-v2-on)
+    # Onboarding « la valeur d'abord » (`features.onboardingV2`) : étape 2 du pack
+    # 57 §5, quand la 57 est à 100 % sur les deux boutiques et stable.
+    echo "::warning::La revue Apple exige features.onboardingV2=false : refermer par onboarding-v2-off avant de soumettre (docs/mise-a-jour-57-checklist.md §6 et §8)."
+    echo "Rappel : ouverture définitive à l'étape 2 du pack 57 §5 (57 à 100 % sur les deux boutiques, critères du §6.2) ; avant, une fenêtre de recette ne touche que les testeurs."
+    flag57_set KPB_ONBOARDING_V2_ENABLED true onboarding-v2-on open \
+      dist/modules/config/app-config.controller.js KPB_ONBOARDING_V2_ENABLED
+    ;;
+
+  onboarding-v2-off)
+    flag57_set KPB_ONBOARDING_V2_ENABLED false onboarding-v2-off close
+    ;;
+
+  scholarship-match-on)
+    # « Mes 10 bourses » (`features.scholarshipMatch` ET les routes
+    # /scholarships/match/*, 404 tant qu'il est fermé) : étape 4, la DERNIÈRE, du
+    # pack 57 §5. Le test collecte la nationalité : décision c (18/10/2026),
+    # consentement explicite, case dans l'app.
+    echo "::warning::La revue Apple exige features.scholarshipMatch=false : refermer par scholarship-match-off avant de soumettre (docs/mise-a-jour-57-checklist.md §6 et §8)."
+    echo "Rappel : nationalité collectée seulement avec consentement explicite (décision c, 18/10/2026 ; case dans l'app). Ouverture définitive à l'étape 4 du pack 57 §5 : couverture d'au moins 90 % (GET /admin/scholarships/eligibility-coverage), recette en préproduction, déclarations du §4 reportées."
+    warn_unless_true KPB_ONBOARDING_V2_ENABLED "l'ordre du pack 57 §5 ouvre l'onboarding V2 (étape 2, onboarding-v2-on) avant « Mes 10 bourses » (étape 4)."
+    flag57_set KPB_SCHOLARSHIP_MATCH_ENABLED true scholarship-match-on open \
+      dist/modules/config/app-config.controller.js KPB_SCHOLARSHIP_MATCH_ENABLED
+    ;;
+
+  scholarship-match-off)
+    flag57_set KPB_SCHOLARSHIP_MATCH_ENABLED false scholarship-match-off close
     ;;
 
   *)

@@ -1,5 +1,5 @@
 // Les drapeaux distants de la 57 dans « VPS ops » : parrainage, communauté, bot
-// « Passerelle », bot « Vérif ».
+// « Passerelle », bot « Vérif », test « Mes 10 bourses », onboarding V2.
 //
 // Le plan d'ouverture (docs/runbook-campagne-ambassadeurs.md §8,
 // docs/release-57-store-pack.md §5, docs/mise-a-jour-57-checklist.md §9) disait
@@ -88,6 +88,14 @@ const _flags = <_Flag>[
   _Flag('verif-bot-review', 'KPB_COMMUNITY_VERIF_BOT_MODE', 'review', null,
       false),
   _Flag('verif-bot-off', 'KPB_COMMUNITY_VERIF_BOT_MODE', 'off', null, false),
+  _Flag('onboarding-v2-on', 'KPB_ONBOARDING_V2_ENABLED', 'true', 'onboardingV2',
+      true, _controller, 'KPB_ONBOARDING_V2_ENABLED'),
+  _Flag('onboarding-v2-off', 'KPB_ONBOARDING_V2_ENABLED', 'false',
+      'onboardingV2', false),
+  _Flag('scholarship-match-on', 'KPB_SCHOLARSHIP_MATCH_ENABLED', 'true',
+      'scholarshipMatch', true, _controller, 'KPB_SCHOLARSHIP_MATCH_ENABLED'),
+  _Flag('scholarship-match-off', 'KPB_SCHOLARSHIP_MATCH_ENABLED', 'false',
+      'scholarshipMatch', false),
 ];
 
 /// Un `.env` de production plausible : chaque drapeau de la 57 à son défaut, et
@@ -101,6 +109,8 @@ const _baseEnv = 'KPB_EEF_TEASER_ENABLED=true\n'
     'KPB_COMMUNITY_ENABLED=false\n'
     'KPB_ASSIST_BRIDGE_MODE=shadow\n'
     'KPB_COMMUNITY_VERIF_BOT_MODE=review\n'
+    'KPB_SCHOLARSHIP_MATCH_ENABLED=false\n'
+    'KPB_ONBOARDING_V2_ENABLED=false\n'
     'POSTGRES_PASSWORD=s3cret\n';
 
 // ── Un faux `docker` ──────────────────────────────────────────────────────────
@@ -343,6 +353,8 @@ Map<String, Object?> _served(Map<String, Object?> over,
           'referralInstallReferrer': false,
           'community': false,
           'assistBridge': false,
+          'scholarshipMatch': false,
+          'onboardingV2': false,
           ...over,
         }.entries)
           if (!absent.contains(e.key)) e.key: e.value,
@@ -458,6 +470,26 @@ void main() {
         expect(text, isNot(contains('docker compose up -d api')));
       });
     }
+
+    test(
+        'la checklist 57 referme « Mes 10 bourses » et l\'onboarding V2 '
+        'par VPS ops avant la revue', () {
+      final text = File('docs/mise-a-jour-57-checklist.md')
+          .readAsStringSync()
+          .replaceAll(RegExp(r'\s+'), ' ');
+      for (final action in [
+        'onboarding-v2-on',
+        'onboarding-v2-off',
+        'scholarship-match-on',
+        'scholarship-match-off',
+      ]) {
+        expect(text, contains('`$action`'), reason: action);
+        expect(actions, contains(action));
+      }
+      // Plus de « remettre la variable à false dans le .env » pour ces clés.
+      expect(text, isNot(contains('remettre la variable à `false`')));
+      expect(text, contains('refermer** toute fenêtre de recette'));
+    });
 
     test('le pack 57 liste chaque action et sa clé', () {
       final pack = File('docs/release-57-store-pack.md').readAsStringSync();
@@ -692,6 +724,63 @@ void main() {
     test('les critères non mesurables sont rappelés à la simulation', () {
       expect(_runOps('assist-bridge-on').output, contains('2 semaines'));
       expect(_runOps('verif-bot-auto').output, contains('50 réponses'));
+    });
+
+    test(
+        '« Mes 10 bourses » avant l\'onboarding V2 (pack 57 §5, étapes 2 et 4)',
+        () {
+      final run = _runOps('scholarship-match-on');
+      expect(run.exitCode, 0, reason: run.output);
+      expect(run.output, contains('::warning::KPB_ONBOARDING_V2_ENABLED'));
+      expect(run.output, contains('onboarding-v2-on'));
+      final after = _runOps('scholarship-match-on',
+          initialEnv: '${_baseEnv}KPB_ONBOARDING_V2_ENABLED=true\n');
+      expect(after.exitCode, 0, reason: after.output);
+      expect(after.output,
+          isNot(contains('::warning::KPB_ONBOARDING_V2_ENABLED')));
+    });
+
+    test('la revue Apple exige ces deux drapeaux fermés : -off rappelé', () {
+      for (final (action, key, off) in [
+        ('onboarding-v2-on', 'onboardingV2', 'onboarding-v2-off'),
+        ('scholarship-match-on', 'scholarshipMatch', 'scholarship-match-off'),
+      ]) {
+        for (final dry in [null, 'false']) {
+          final run = _runOps(action, dryRun: dry);
+          expect(run.exitCode, 0, reason: run.output);
+          expect(
+              run.output,
+              contains('::warning::La revue Apple exige '
+                  'features.$key=false : refermer par $off'));
+        }
+      }
+    });
+
+    test('« Mes 10 bourses » : consentement à la nationalité rappelé', () {
+      final out = _runOps('scholarship-match-on').output;
+      expect(out, contains('consentement explicite (décision c'));
+      expect(out, contains('90 %'));
+    });
+  });
+
+  group('show-state et le .env après écriture listent les deux clés', () {
+    test(
+        'le motif des drapeaux 57 couvre « Mes 10 bourses » et l\'onboarding V2',
+        () {
+      final run = _runOps('onboarding-v2-off');
+      expect(run.exitCode, 0, reason: run.output);
+      final shown =
+          run.output.substring(run.output.indexOf('── .env après écriture ──'));
+      expect(shown, contains('KPB_SCHOLARSHIP_MATCH_ENABLED=false'));
+      expect(shown, contains('KPB_ONBOARDING_V2_ENABLED=false'));
+      expect(shown, isNot(contains('POSTGRES_PASSWORD')));
+      // `show-state` passe par la même fonction.
+      final showState =
+          RegExp(r'\nshow_state\(\) \{\n(.*?)\n\}\n', dotAll: true)
+              .firstMatch(script)!
+              .group(1)!;
+      expect(showState, contains('show_flags57'));
+      expect(showState, contains('« Mes 10 bourses », onboarding V2'));
     });
   });
 

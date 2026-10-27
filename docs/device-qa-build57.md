@@ -19,8 +19,9 @@
 >   local (voie 1 de la fiche 54, §B) avec `KPB_SCHOLARSHIP_MATCH_ENABLED=true`. À VALIDER
 >   (propriétaire) : l'existence et l'adresse de la préproduction.
 > - **Onboarding V2** (`features.onboardingV2`) : la clé n'est lue que par la 57, absente des
->   boutiques pendant la recette ; une fenêtre en production (`KPB_ONBOARDING_V2_ENABLED=true` dans
->   le `.env`, `api` recréée) ne touche que les testeurs. **La refermer avant de soumettre.**
+>   boutiques pendant la recette ; une fenêtre en production (`KPB_ONBOARDING_V2_ENABLED=true`, posée
+>   sans SSH par Actions → **VPS ops** → `onboarding-v2-on`) ne touche que les testeurs. **La
+>   refermer avant de soumettre** : `onboarding-v2-off`.
 > - **Tuer et relancer l'app après chaque bascule de drapeau** (lus au démarrage).
 > - **Envoyer une notification à un seul compte** : À VALIDER (propriétaire) — le moyen retenu
 >   (campagne de l'admin ciblée sur le compte du testeur, ou annonce d'ouverture d'une bourse de

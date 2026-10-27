@@ -160,7 +160,8 @@ servir `RELEASE`.
    requête sur `ScholarshipCycle.academicYear` doit être vide ; **geler les activations de cycles
    dans l'admin** pendant le déploiement.
 2. **`.env` de production** : `FCM_SERVICE_ACCOUNT_JSON` posé (décision d) ;
-   `KPB_SCHOLARSHIP_MATCH_ENABLED` et `KPB_ONBOARDING_V2_ENABLED` **absents ou `false`** ;
+   `KPB_SCHOLARSHIP_MATCH_ENABLED` et `KPB_ONBOARDING_V2_ENABLED` **absents ou `false`** (sinon,
+   sans SSH : Actions → **VPS ops** → `scholarship-match-off` / `onboarding-v2-off`) ;
    `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` et
    `KPB_REFERRAL_LEADERBOARD_ENABLED` (parrainage) **absents ou `false`** ;
    `KPB_COMMUNITY_ENABLED` **absent ou `false`** et `KPB_ASSIST_BRIDGE_MODE` **absent ou `shadow`**
@@ -224,9 +225,8 @@ curl -s -o /dev/null -w '%{http_code}\n' https://api.kpbeducation.cloud/api/scho
 - **Si `scholarshipMatch` ou `onboardingV2` vaut `true`** (ou l'un des trois drapeaux du
   parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; pour une clé de la 57,
   Actions → **VPS ops** → `referral-leaderboard-off`, `referral-onboarding-code-off`,
-  `referral-install-referrer-off`, `community-off` ou `assist-bridge-shadow` (un retour arrière agit
-  même `dry_run` coché) ; pour `scholarshipMatch` / `onboardingV2`, remettre la variable à `false`
-  dans le `.env` et recréer l'`api` ; puis relancer la commande.
+  `referral-install-referrer-off`, `community-off`, `assist-bridge-shadow`, `scholarship-match-off`
+  ou `onboarding-v2-off` (un retour arrière agit même `dry_run` coché) ; puis relancer la commande.
 - **Si `eefSpace` vaut `false`** : la phrase « The "Études en France" space is open » des notes de
   revue est fausse ; prendre la variante du pack §3, point 1, et recompter.
 - Sur le Mac, avant l'étape 4 : `flutter --version` (3.44.1), `python3 --version`,
@@ -368,9 +368,13 @@ gh workflow run release-preflight.yml --ref main \
    propriétaire pour chacun). Installer **la ligne `2.3.1 (57)`** ; Android : `versionCode` 57.
 2. Dérouler **`docs/device-qa-build57.md`** en entier, sur l'artefact. Les cas « Mes 10 bourses » et
    onboarding V2 se jouent hors production (préproduction ou fenêtre décrite dans la fiche) : **ne
-   jamais** ouvrir `scholarshipMatch` en production pour la recette.
-3. Avant de soumettre, revérifier l'étape 2 (drapeaux) : `scholarshipMatch` et `onboardingV2` à
-   `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`, `referralInstallReferrer`,
+   jamais** ouvrir `scholarshipMatch` en production pour la recette. Une fenêtre de recette
+   TestFlight s'ouvre sans SSH par Actions → **VPS ops** → `onboarding-v2-on` (et, sur décision du
+   propriétaire, `scholarship-match-on`), `dry_run` coché puis décoché.
+3. Avant de soumettre, **refermer** toute fenêtre de recette : Actions → **VPS ops** →
+   `onboarding-v2-off` et `scholarship-match-off` (ils agissent même `dry_run` coché ; la revue
+   Apple se fait drapeaux fermés). Puis revérifier l'étape 2 (drapeaux) : `scholarshipMatch` et
+   `onboardingV2` à `false`, `eefHelpBubble` et `eefPrivateSchools` à `false`, `referralInstallReferrer`,
    `referralOnboardingCode` et `referralLeaderboard` à `false`, `community` et `assistBridge` à
    `false` (déclarés « OFF at review time »).
 4. Un ✗ non résolu bloque la soumission.
@@ -395,7 +399,7 @@ gh workflow run release-preflight.yml --ref main \
 - **Google Play** : production, notes = pack 57 §2 (bloc Google Play), **déploiement par paliers à
   10 %**. L'AAB importé est celui du run de `RELEASE`.
 - Avant d'appuyer : la commande de l'étape 2 (`/config/app`) → `scholarshipMatch=false`,
-  `onboardingV2=false`, `eefHelpBubble=false`, `eefPrivateSchools=false`, les trois drapeaux du
+  `onboardingV2=false` (sinon `scholarship-match-off` / `onboarding-v2-off` dans **VPS ops**), `eefHelpBubble=false`, `eefPrivateSchools=false`, les trois drapeaux du
   parrainage à `false`, `community=false`, `assistBridge=false`, `eefSpace` conforme au texte des
   notes de revue.
 - **Le jour de l'envoi**, reporter dans `docs/release-ledger.md` le SHA de `RELEASE` et « téléversée
@@ -418,7 +422,9 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
    (`lib/app/core/services/app_version_gate.dart`). Quand Play est à 100 % et la publication iOS
    terminée : PR sur `RECOMMENDED_APP_VERSION` dans `.github/scripts/vps-ops.sh`, puis
    `recommended-version-set` (simulation, puis application). Sans effet sur la 53.
-4. **`KPB_ONBOARDING_V2_ENABLED=true`** quand la 57 est à 100 % et stable (pack §5, étape 2).
+4. **`KPB_ONBOARDING_V2_ENABLED=true`** quand la 57 est à 100 % et stable (pack §5, étape 2) :
+   Actions → **VPS ops** → `onboarding-v2-on` (simulation, puis `dry_run` décoché) ; retour arrière
+   `onboarding-v2-off`.
 5. **Mode d'ouverture** — dans cet ordre, jamais en sautant une marche :
    - `KPB_SCHOLARSHIP_OPENING_MODE=legacy` au lancement (défaut) ;
    - `outbox_alerts` après le déploiement de l'admin et une première activation surveillée ;
@@ -427,7 +433,9 @@ Détail et seuils : **pack 57 §6** (À VALIDER (propriétaire) pour les seuils)
      doivent être prévenus (pack §6.3).
    `KPB_PUSH_OUTBOX_ENABLED=false` arrête le worker en urgence.
 6. **`KPB_SCHOLARSHIP_MATCH_ENABLED=true`** en dernier, après la validation juridique de la
-   nationalité, la porte des 90 % de couverture et la recette en préproduction (pack §5, étape 4).
+   nationalité, la porte des 90 % de couverture et la recette en préproduction (pack §5, étape 4) :
+   Actions → **VPS ops** → `scholarship-match-on` (simulation, puis `dry_run` décoché) ; retour
+   arrière `scholarship-match-off`.
 7. **`KPB_MIN_APP_VERSION`** reste `0.0.0`. Le passer à `2.3.1` seulement au-delà d'**environ 85 %**
    des comptes actifs en 2.3.1 ou plus (`GET /admin/app-builds`), jamais pendant un palier Play :
    il enferme sinon les 53 et 56 derrière un écran sans sortie.

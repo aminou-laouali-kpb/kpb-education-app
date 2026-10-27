@@ -31,14 +31,18 @@ name: VPS ops (feature flag / catalogue)
 # la personne qui le relit ensuite.
 #
 # Les drapeaux distants de la build 57 suivent la même règle (branches `referral-*`,
-# `community-*`, `assist-bridge-*`, `verif-bot-*`) : elles n'écrivent que
+# `community-*`, `assist-bridge-*`, `verif-bot-*`, `scholarship-match-*`,
+# `onboarding-v2-*`) : elles n'écrivent que
 # `KPB_REFERRAL_LEADERBOARD_ENABLED`, `KPB_REFERRAL_ONBOARDING_CODE_ENABLED`,
-# `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_COMMUNITY_ENABLED` (`true`/`false`),
+# `KPB_REFERRAL_INSTALL_REFERRER_ENABLED`, `KPB_COMMUNITY_ENABLED`,
+# `KPB_SCHOLARSHIP_MATCH_ENABLED`, `KPB_ONBOARDING_V2_ENABLED` (`true`/`false`),
 # `KPB_ASSIST_BRIDGE_MODE` (`on`/`shadow`/`off`) et `KPB_COMMUNITY_VERIF_BOT_MODE`
 # (`auto`/`review`/`off`), une clé par action, valeur écrite dans le script. Ce qui
 # ouvre simule par défaut ; ce qui referme agit tout de suite. Le plan d'ouverture
 # (docs/runbook-campagne-ambassadeurs.md §8) disait « éditer le `.env` en SSH » :
-# c'est ici qu'il s'exécute.
+# c'est ici qu'il s'exécute. « Mes 10 bourses » et l'onboarding V2 valent `false`
+# pendant la revue Apple : une fenêtre de recette TestFlight se referme par leur
+# action `-off` avant la soumission (docs/mise-a-jour-57-checklist.md §6).
 #
 # ── PUBLICATION DU CATALOGUE ────────────────────────────────────────────────
 #
@@ -115,8 +119,12 @@ on:
           - verif-bot-auto
           - verif-bot-review
           - verif-bot-off
+          - onboarding-v2-on
+          - onboarding-v2-off
+          - scholarship-match-on
+          - scholarship-match-off
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true
@@ -518,9 +526,11 @@ jobs:
       # fermé, une action inconnue refusée. Le bot « Vérif » n'a PAS de clé
       # `features.*` (`/config/app` ne sert pas son mode) : sa preuve est faite par
       # le script, sur l'environnement du conteneur recréé. Un retour arrière se
-      # prouve toujours ; une ouverture seulement si elle a été appliquée.
-      - name: Prouver l'état du drapeau 57 (parrainage, communauté, passerelle)
-        if: ${{ success() && ((inputs.action == 'referral-leaderboard-on' && !inputs.dry_run) || inputs.action == 'referral-leaderboard-off' || (inputs.action == 'referral-onboarding-code-on' && !inputs.dry_run) || inputs.action == 'referral-onboarding-code-off' || (inputs.action == 'referral-install-referrer-on' && !inputs.dry_run) || inputs.action == 'referral-install-referrer-off' || (inputs.action == 'community-on' && !inputs.dry_run) || inputs.action == 'community-off' || (inputs.action == 'assist-bridge-on' && !inputs.dry_run) || inputs.action == 'assist-bridge-shadow' || inputs.action == 'assist-bridge-off') }}
+      # prouve toujours ; une ouverture seulement si elle a été appliquée. Même
+      # preuve pour « Mes 10 bourses » (`scholarshipMatch`) et l'onboarding V2
+      # (`onboardingV2`).
+      - name: Prouver l'état du drapeau 57 (parrainage, communauté, passerelle, « Mes 10 bourses », onboarding V2)
+        if: ${{ success() && ((inputs.action == 'referral-leaderboard-on' && !inputs.dry_run) || inputs.action == 'referral-leaderboard-off' || (inputs.action == 'referral-onboarding-code-on' && !inputs.dry_run) || inputs.action == 'referral-onboarding-code-off' || (inputs.action == 'referral-install-referrer-on' && !inputs.dry_run) || inputs.action == 'referral-install-referrer-off' || (inputs.action == 'community-on' && !inputs.dry_run) || inputs.action == 'community-off' || (inputs.action == 'assist-bridge-on' && !inputs.dry_run) || inputs.action == 'assist-bridge-shadow' || inputs.action == 'assist-bridge-off' || (inputs.action == 'onboarding-v2-on' && !inputs.dry_run) || inputs.action == 'onboarding-v2-off' || (inputs.action == 'scholarship-match-on' && !inputs.dry_run) || inputs.action == 'scholarship-match-off') }}
         env:
           HEALTH_URL: ${{ secrets.VPS_HEALTH_URL }}
           ACTION: ${{ inputs.action }}
@@ -532,6 +542,8 @@ jobs:
             referral-install-referrer-on|referral-install-referrer-off) WANT_KEY=referralInstallReferrer ;;
             community-on|community-off) WANT_KEY=community ;;
             assist-bridge-on|assist-bridge-shadow|assist-bridge-off) WANT_KEY=assistBridge ;;
+            onboarding-v2-on|onboarding-v2-off) WANT_KEY=onboardingV2 ;;
+            scholarship-match-on|scholarship-match-off) WANT_KEY=scholarshipMatch ;;
             *) echo "::error::Action inconnue pour la preuve : ${ACTION}"; exit 1 ;;
           esac
           # `assistBridge` n'est vrai qu'en mode `on` : `shadow` et `off` le servent faux.
