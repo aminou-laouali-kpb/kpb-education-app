@@ -445,6 +445,47 @@ void main() {
       );
     });
 
+    // Audit build 57, n° 3 : le ☰ ne répondait pas pendant la 1re visite d'un
+    // invité. `enterGuestMode()` puis `Get.offAll` montent deux coquilles ; le
+    // démontage de l'une laissait la référence globale vide ou sur l'autre.
+    testWidgets('le ☰ ouvre le tiroir de SA coquille après un double montage',
+        (tester) async {
+      final snapshot = AppSnapshot(
+        localeCode: 'fr',
+        hasCompletedOnboarding: true,
+        profile: createTestProfile(),
+      );
+      await pumpTestApp(
+        tester,
+        child: const Stack(
+          textDirection: TextDirection.ltr,
+          children: [
+            AppShell(key: ValueKey('shell_a')),
+            AppShell(key: ValueKey('shell_b')),
+          ],
+        ),
+        initialSnapshot: snapshot,
+      );
+      // La coquille montée en dernier part : elle vide la référence globale.
+      await tester.pumpWidget(
+        TestAppWrapper(
+          controller: Get.find<AppController>(),
+          child: const Stack(
+            textDirection: TextDirection.ltr,
+            children: [AppShell(key: ValueKey('shell_a'))],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsNothing);
+
+      await tester.tap(find.byTooltip('tools_drawer_title'.tr));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Drawer), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
         'the tools button shows on Home only, and the edge-swipe follows it',
         (tester) async {
