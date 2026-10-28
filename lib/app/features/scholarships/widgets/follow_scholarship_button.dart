@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../core/controllers/app_controller.dart';
 import '../../../core/ui/app_tokens.dart';
+import '../../../core/ui/components/kpb_guest_gate.dart';
 import 'follow_push_primer.dart';
 
 /// Les trois formes du bouton.
@@ -48,6 +49,28 @@ class FollowScholarshipButton extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
 
   Future<void> _toggle(BuildContext context, AppController controller) async {
+    // Un invité ne suit rien en local : le suivi passait sans mur, puis la
+    // fiche, réservée aux comptes, affichait « Erreur de connexion » en
+    // boucle (audit build 57, n° 9). Il voit le mur, comme l'onglet Bourses.
+    // Un suivi déjà posé par une build plus ancienne se retire toujours.
+    if (controller.isGuestMode &&
+        !controller.isFollowingScholarship(scholarshipId)) {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (sheetContext) => SafeArea(
+          child: KpbGuestGate(
+            source: 'follow_gate',
+            icon: Icons.bookmark_add_outlined,
+            titleKey: 'scholarships_auth_required_title',
+            bodyKey: 'scholarships_auth_required_body',
+            ctaKey: 'scholarships_auth_required_cta',
+            onConverted: () => Navigator.of(sheetContext).pop(),
+          ),
+        ),
+      );
+      return;
+    }
     final following = controller.toggleScholarshipFollow(scholarshipId);
     onChanged?.call(following);
     if (following) await FollowPushPrimer.maybePrime(context);

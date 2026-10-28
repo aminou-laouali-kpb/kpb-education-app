@@ -14,6 +14,7 @@ import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/push_permission.dart';
 import 'package:karatou/app/core/services/remote_feature_flags.dart';
+import 'package:karatou/app/core/ui/components/kpb_guest_gate.dart';
 import 'package:karatou/app/features/scholarships/widgets/follow_push_primer.dart';
 import 'package:karatou/app/features/scholarships/widgets/follow_scholarship_button.dart';
 
@@ -221,7 +222,10 @@ void main() {
         reason: 'le système ne reposerait pas la question');
   });
 
-  testWidgets('invité : le suivi est local, aucune feuille', (tester) async {
+  // Audit build 57, n° 9 : le suivi local d'un invité menait à une fiche
+  // réservée aux comptes, donc à « Erreur de connexion » en boucle.
+  testWidgets('invité : « Suivre » ouvre le mur, ne suit rien, aucune demande',
+      (tester) async {
     final permission = _FakePermission(PushPermissionStatus.notDetermined);
     PushPermission.debugOverride = permission;
     await _pump(tester, guest: true);
@@ -229,6 +233,11 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('follow-chevening')));
     await tester.pumpAndSettle();
 
+    expect(find.byType(KpbGuestGate), findsOneWidget);
+    expect(
+      Get.find<AppController>().isFollowingScholarship('chevening'),
+      isFalse,
+    );
     expect(find.byKey(const ValueKey('push-primer-sheet')), findsNothing);
     expect(permission.requests, 0);
   });
