@@ -72,7 +72,10 @@ class _AppShellState extends State<AppShell> {
 
         final pages = <Widget>[
           const HomeScreen(),
-          LiveScholarshipsScreen(apiClient: controller.apiClient),
+          LiveScholarshipsScreen(
+            apiClient: controller.apiClient,
+            embeddedInShell: true,
+          ),
           UniversitiesScreen(
             key: ValueKey(fieldFilter ?? 'all'),
             initialFieldId: fieldFilter,

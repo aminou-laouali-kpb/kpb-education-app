@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -774,6 +776,67 @@ void main() {
       );
       expect(find.textContaining('Ouverture estimée'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  // Audit build 57, n° 1 : après « Suivre » depuis une fiche ouverte par
+  // l'onglet Bourses, `AppController.update()` reconstruit la coquille pendant
+  // que la fiche est empilée ; `Navigator.canPop` valait alors vrai et la flèche
+  // restait après le retour. La toucher dépilait la seule page : écran noir.
+  group('flèche retour de l\'onglet Bourses', () {
+    Widget shellLike(MockApiClient mock) => _wrap(
+          GetBuilder<AppController>(
+            builder: (_) => LiveScholarshipsScreen(
+              apiClient: mock,
+              embeddedInShell: true,
+            ),
+          ),
+        );
+
+    testWidgets(
+        'jamais de flèche dans la coquille, même après un update() '
+        'pendant qu\'une fiche est empilée', (tester) async {
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+      await _seed(mock);
+
+      await tester.pumpWidget(shellLike(mock));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Retour'), findsNothing);
+
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      unawaited(navigator.push(MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('fiche')),
+      )));
+      await tester.pumpAndSettle();
+      // « Suivre » sur la fiche : la coquille se reconstruit sous la fiche.
+      Get.find<AppController>().update();
+      await tester.pump();
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text('fiche'), findsNothing);
+      expect(find.byTooltip('Retour'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('la flèche reste quand la liste est ouverte par un lien',
+        (tester) async {
+      final mock = MockApiClient();
+      _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+      await _seed(mock);
+
+      await tester.pumpWidget(_wrap(const Scaffold(body: Text('accueil'))));
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      unawaited(navigator.push(MaterialPageRoute<void>(
+        builder: (_) => LiveScholarshipsScreen(apiClient: mock),
+      )));
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Retour'), findsOneWidget);
+      await tester.tap(find.byTooltip('Retour'));
+      await tester.pumpAndSettle();
+      expect(find.text('accueil'), findsOneWidget);
     });
   });
 }

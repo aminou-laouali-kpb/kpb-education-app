@@ -68,9 +68,20 @@ String scholarshipFlag(LiveScholarshipModel scholarship) {
 /// Displays scholarships filtered and ranked by the user's profile.
 class LiveScholarshipsScreen extends StatefulWidget {
   /// Optional [apiClient] for tests; production uses [AppApiClient] when null.
-  const LiveScholarshipsScreen({super.key, this.apiClient});
+  const LiveScholarshipsScreen({
+    super.key,
+    this.apiClient,
+    this.embeddedInShell = false,
+  });
 
   final AppApiClient? apiClient;
+
+  /// Vrai quand la liste est l'onglet Bourses de la coquille : elle n'a alors
+  /// jamais de flèche retour. `Navigator.canPop` y était lu au moment d'une
+  /// reconstruction déclenchée pendant qu'une fiche était empilée (« Suivre »
+  /// appelle `AppController.update()`) ; la flèche restait ensuite, et la
+  /// toucher dépilait la seule page : écran noir (audit build 57, n° 1).
+  final bool embeddedInShell;
 
   @override
   State<LiveScholarshipsScreen> createState() => _LiveScholarshipsScreenState();
@@ -210,7 +221,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                 surfaceTintColor: KpbColors.canvas,
                 elevation: 0,
                 automaticallyImplyLeading: false,
-                leading: Navigator.canPop(context)
+                leading: !widget.embeddedInShell && Navigator.canPop(context)
                     ? IconButton(
                         tooltip: 'a11y_back'.tr,
                         icon: const Icon(
