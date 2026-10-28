@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/models/app_models.dart';
+import '../../core/ui/app_tokens.dart';
 import 'case_tunnel_flow.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
@@ -29,6 +30,25 @@ class CaseComposerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // La feuille peint son propre fond : trois appelants l'ouvrent avec
+    // `backgroundColor: Colors.transparent`, et depuis une fiche bourse le
+    // formulaire se mêlait à la page dessous (audit build 57, n° 5b).
+    final theme = Theme.of(context);
+    return Material(
+      key: const ValueKey<String>('case-composer-sheet-surface'),
+      color:
+          theme.bottomSheetTheme.backgroundColor ?? theme.colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(KpbRadius.xl),
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: _content(context),
+    );
+  }
+
+  Widget _content(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
         left: 20,

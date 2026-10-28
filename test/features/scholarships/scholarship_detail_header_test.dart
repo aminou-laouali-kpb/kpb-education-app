@@ -468,6 +468,14 @@ void main() {
       expect(sheet.scholarshipId, isNull);
       expect(sheet.title, 'Chevening');
       verifyNever(() => mock.listCasesForScholarship(any()));
+
+      // Audit build 57, n° 5b : ouverte avec un fond de route transparent,
+      // la feuille doit peindre elle-même un fond opaque.
+      final surface = tester.widget<Material>(
+        find.byKey(const ValueKey<String>('case-composer-sheet-surface')),
+      );
+      expect(surface.color, isNotNull);
+      expect(surface.color!.a, 1.0);
     });
 
     testWidgets(
