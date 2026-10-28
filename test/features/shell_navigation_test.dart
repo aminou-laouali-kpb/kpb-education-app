@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/navigation/shell_tabs.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/ui/components/kpb_sample_data_banner.dart';
 import 'package:karatou/app/features/shell/app_shell.dart';
 
 import '../widget_test_helpers.dart';
@@ -99,6 +100,38 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+    });
+
+    // Audit build 57, n° 2 : pas de « connexion au serveur impossible »
+    // pendant que la 1re synchro avance ; seulement si elle a échoué.
+    testWidgets('bandeau « Données d\'exemple » seulement après la 1re synchro',
+        (tester) async {
+      await pumpTestApp(
+        tester,
+        child: const AppShell(),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
+      final controller = Get.find<AppController>()
+        ..catalogDataState = CatalogDataState.sample
+        ..catalogFirstSyncSettled = false;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsNothing);
+
+      controller.catalogFirstSyncSettled = true;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsOneWidget);
+
+      controller.catalogDataState = CatalogDataState.live;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsNothing);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('starts on Home tab (index 0)', (tester) async {

@@ -130,6 +130,21 @@ mixin _SessionMixin on _AppControllerBase {
         ..addAll(decoded.scholarships.isNotEmpty
             ? decoded.scholarships
             : MockCatalog.scholarships);
+      // Aucune liste n'est retombée sur l'échantillon : ce sont les vraies
+      // lignes du dernier chargement. Les appeler « données d'exemple » était
+      // faux à chaque lancement d'un élève qui revient (audit build 57, n° 2).
+      // « offline » est l'état exact (réelles, datées) ; son bandeau attend la
+      // fin de la 1re synchro, voir `catalogFirstSyncSettled`.
+      // Une liste vide dans l'échantillon (les bourses) n'y injecte rien.
+      bool real(List<Object> fromCache, List<Object> sample) =>
+          fromCache.isNotEmpty || sample.isEmpty;
+      if (real(decoded.fields, MockCatalog.fields) &&
+          real(decoded.countries, MockCatalog.countries) &&
+          real(decoded.institutions, MockCatalog.institutions) &&
+          real(decoded.programs, MockCatalog.programs) &&
+          real(decoded.scholarships, MockCatalog.scholarships)) {
+        _setCatalogDataState(CatalogDataState.offline);
+      }
     } else {
       fields
         ..clear()
@@ -151,6 +166,8 @@ mixin _SessionMixin on _AppControllerBase {
       ..clear()
       ..addAll(MockCatalog.academyCourses);
     _applyMvpCountryLock();
+    // Sans synchro distante, l'état du catalogue est déjà définitif.
+    if (!AppConfig.enableRemoteSync) catalogFirstSyncSettled = true;
     if (AppConfig.enableRemoteSync) {
       // Local d'abord : la synchro part en arrière-plan au lieu de bloquer
       // `runApp` (environ 10 requêtes, 3 tentatives, 15 s de timeout — sur

@@ -294,6 +294,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
       );
     } finally {
       isSyncing = false;
+      catalogFirstSyncSettled = true;
       if (!syncDone.isCompleted) syncDone.complete();
       update();
     }

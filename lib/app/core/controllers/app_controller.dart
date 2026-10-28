@@ -200,6 +200,7 @@ abstract class _AppControllerBase extends GetxController {
   void _resetScholarshipFollowState();
   Future<void> syncPushIdentity();
   Future<void> syncRemoteData({bool silent = false, bool force = false});
+  void _setCatalogDataState(CatalogDataState state);
 
   /// Expose the API client for feature screens that need direct calls.
   AppApiClient get apiClient => _apiClient;
@@ -255,6 +256,12 @@ abstract class _AppControllerBase extends GetxController {
   /// Guards the failure path: a sync that dies before reaching the catalog must
   /// not relabel already-loaded real data as "sample".
   bool _catalogEverLoadedRealRows = false;
+
+  /// Vrai dès que la 1re synchro du catalogue de la session est terminée,
+  /// réussie ou non. Avant, aucun bandeau de catalogue : « connexion au
+  /// serveur impossible » s'affichait pendant que la synchro avançait, alors
+  /// que le serveur répondait (audit build 57, n° 2).
+  bool catalogFirstSyncSettled = false;
   UserProfile? profile;
   OrientationSession? latestOrientationSession;
 
