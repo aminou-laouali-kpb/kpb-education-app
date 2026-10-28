@@ -3168,9 +3168,6 @@ const Map<String, String> appTranslationsFr = {
       'Pas encore de match — explore le catalogue pour découvrir les écoles.',
   'aha_estimate_note':
       'Estimation — complète ton profil pour plus de précision.',
-  'aha_zone_green': 'Correspond très bien à ton profil',
-  'aha_zone_yellow': 'Correspond en partie à ton profil',
-  'aha_zone_blue': 'Moins aligné avec ton profil actuel',
   'aha_cta': 'Découvrir mon espace',
   'aha_see_all_cta': 'Voir toutes les universités',
   // ── PR2 · Écoles / Destinations / Fiche restyle (App-engagement) ──

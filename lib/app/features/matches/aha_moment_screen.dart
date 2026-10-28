@@ -9,6 +9,7 @@ import '../../core/navigation/shell_tabs.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/ui/components/program_intake_line.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/utils/tuition_utils.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
 /// Post-onboarding AHA moment (Phase 0 / P0-D — kit US-003): the first thing
@@ -258,12 +259,6 @@ class _MatchCard extends StatelessWidget {
 
   final SchoolMatch match;
 
-  String get _zoneKey => switch (match.zone) {
-        SchoolMatchZone.green => 'aha_zone_green',
-        SchoolMatchZone.yellow => 'aha_zone_yellow',
-        SchoolMatchZone.blue => 'aha_zone_blue',
-      };
-
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<AppController>();
@@ -282,8 +277,15 @@ class _MatchCard extends StatelessWidget {
     final flag = country?.flagEmoji ?? '';
     final location =
         institution == null ? '' : ctrl.resolve(institution.location);
-    final fees =
-        institution == null ? '' : ctrl.resolve(institution.tuitionLabel);
+    // L'étiquette d'origine, plus l'équivalent FCFA quand il est exact
+    // (parité EUR/XOF fixe) : « 8 850 €/an » seul ne parlait pas à un élève
+    // qui a saisi son budget en FCFA (audit build 57, n° 8).
+    final fees = institution == null
+        ? ''
+        : TuitionUtils.tuitionForDisplay(
+            ctrl.resolve(institution.tuitionLabel),
+            ctrl.profile?.preferredCurrency,
+          );
     // La formation du match, quand le catalogue local la connaît : ses
     // rentrées (le repli de secours n'a pas de formation, donc pas de ligne).
     final program = match.programId.isEmpty
@@ -357,8 +359,9 @@ class _MatchCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
           ],
-          Text(_zoneKey.tr,
-              style: const TextStyle(fontSize: 11, color: KpbColors.textFaint)),
+          // Une seule étiquette de compatibilité, le badge : la ligne de zone
+          // en ajoutait une seconde, parfois contradictoire (« Bon match » et
+          // « Correspond en partie », audit build 57, n° 8).
           if (narrative.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(

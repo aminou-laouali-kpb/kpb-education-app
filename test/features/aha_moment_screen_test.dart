@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:karatou/app/core/controllers/app_controller.dart';
+import 'package:karatou/app/core/data/mock_catalog.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/core/ui/components/profile_fit_badge.dart';
 import 'package:karatou/app/features/matches/aha_moment_screen.dart';
@@ -147,5 +149,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(Get.currentRoute, '/');
+  });
+
+  // Audit build 57, n° 8 (volet app) : deux étiquettes de compatibilité sur la
+  // même carte (« Bon match » et « Correspond en partie »), et des frais en
+  // euros seulement pour un élève qui pense son budget en FCFA.
+  testWidgets('une seule étiquette de compatibilité, et les frais en FCFA',
+      (tester) async {
+    final inEuros = MockCatalog.institutions.firstWhere(
+      (i) => i.tuitionLabel.fr.contains('€'),
+    );
+    final api = MockApiClient();
+    when(() => api.getAhaMatches()).thenAnswer(
+      (_) async => {
+        'items': [matchJson(institutionId: inEuros.id, zone: 'yellow')],
+        'isEstimate': false,
+      },
+    );
+
+    await pumpTestApp(tester,
+        child: const AhaMomentScreen(), mockApiClient: api);
+    // Tiroir : la carte est rendue et l'établissement résolu.
+    expect(
+        Get.find<AppController>().institutionByIdOrNull(inEuros.id), isNotNull);
+    expect(find.byType(ProfileFitBadge), findsOneWidget);
+
+    expect(find.textContaining('Correspond'), findsNothing);
+    expect(find.textContaining('FCFA'), findsOneWidget);
   });
 }
