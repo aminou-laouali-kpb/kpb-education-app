@@ -289,7 +289,7 @@ const Map<String, String> appTranslationsFr = {
   'parent_hello': 'Bonjour, @name',
   'parent_linked_readonly': 'Compte parent — lié à @child (lecture seule)',
   'parent_advisor_title': 'Parler au conseiller KPB',
-  'parent_advisor_sub': 'WhatsApp · réponse en ~2 h',
+  'parent_advisor_sub': 'WhatsApp · réponse sous 24 h',
   'parent_privacy_note':
       'C\'est votre enfant qui contrôle ce que vous voyez, champ par champ, depuis son app. L\'avancement du dossier et les échéances restent toujours visibles.',
   'parent_case_title': 'Dossier partagé',
@@ -1899,7 +1899,7 @@ const Map<String, String> appTranslationsFr = {
   // ── Contact conseiller KPB (Home, App-engagement handoff) ──
   'home_counselor_cta_title': 'Parler à un conseiller KPB',
   'home_counselor_cta_subtitle':
-      'Sur WhatsApp, avec ton profil déjà partagé. Réponse en ~2h.',
+      'Sur WhatsApp, avec un message déjà prêt. Réponse sous 24 h.',
   'sample_data_notice':
       'Données d’exemple — connexion au serveur impossible. Le catalogue affiché n’est pas encore à jour.',
   'freshness_saved': 'données enregistrées',
@@ -3003,7 +3003,7 @@ const Map<String, String> appTranslationsFr = {
   'amb_appbar': 'Espace ambassadeur',
   'amb_apply_title': 'Programme Ambassadeur',
   'amb_apply_body':
-      'Le programme Ambassadeur (parrainage rémunéré) ouvre sur candidature. Contacte un conseiller KPB pour le rejoindre, ou découvre notre programme de parrainage gratuit.',
+      'Le programme Ambassadeur ouvre sur candidature. Contacte un conseiller KPB pour le rejoindre, ou découvre notre programme de parrainage gratuit.',
   'amb_apply_cta_advisor': 'Contacter un conseiller',
   'amb_apply_cta_referral': 'Découvrir le parrainage',
   'amb_apply_wa_prefill':

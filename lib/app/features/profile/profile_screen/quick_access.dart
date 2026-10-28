@@ -21,11 +21,16 @@ class _QuickAccessCard extends StatelessWidget {
     if (controller.isStudent) {
       add(Icons.card_giftcard_outlined, KpbColors.gold, 'referral_title'.tr,
           () => Get.to(() => const ReferralScreen()));
-      add(
-          Icons.diversity_3_outlined,
-          KpbColors.actionPrimary,
-          'referral_become_ambassador'.tr,
-          () => Get.to(() => const AmbassadorScreen()));
+      // Programme rémunéré coupé (KPB-160) : la tuile le proposait à tout
+      // élève, mineurs compris (audit build 57, n° 4). La compétition reste
+      // joignable par « Parrainer » pour ceux qui y participent.
+      if (AppConfig.ambassadorCashEnabled) {
+        add(
+            Icons.diversity_3_outlined,
+            KpbColors.actionPrimary,
+            'referral_become_ambassador'.tr,
+            () => Get.to(() => const AmbassadorScreen()));
+      }
       add(
           Icons.psychology_outlined,
           KpbColors.actionPrimary,

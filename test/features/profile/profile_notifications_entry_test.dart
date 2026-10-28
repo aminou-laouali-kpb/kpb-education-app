@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/features/notifications/notifications_screen.dart';
 import 'package:karatou/app/features/profile/profile_screen.dart';
@@ -35,5 +36,27 @@ void main() {
     await tester.tap(entry);
     await tester.pumpAndSettle();
     expect(find.byType(NotificationsScreen), findsOneWidget);
+  });
+
+  // Audit build 57, n° 4 : la tuile proposait le programme rémunéré, coupé
+  // exprès, à tout élève (mineurs compris).
+  testWidgets('pas de tuile « Espace ambassadeur » programme rémunéré fermé',
+      (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1440, 4000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await pumpTestApp(
+      tester,
+      child: const ProfileScreen(),
+      initialSnapshot: AppSnapshot(
+        localeCode: 'fr',
+        hasCompletedOnboarding: true,
+        profile: createTestProfile(),
+      ),
+    );
+
+    // Tiroir : les accès rapides sont bien rendus.
+    expect(find.text('referral_title'), findsWidgets);
+    expect(find.text('referral_become_ambassador'),
+        AppConfig.ambassadorCashEnabled ? findsOneWidget : findsNothing);
   });
 }
