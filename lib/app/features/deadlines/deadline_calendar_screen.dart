@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
-import '../../core/data/roadmap_engine.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/followed_scholarships_store.dart';
 import '../../core/ui/kpb_components.dart';
@@ -62,7 +61,7 @@ bool _isPastDay(DateTime deadline, DateTime now) {
       .isBefore(DateTime(n.year, n.month, n.day));
 }
 
-enum _MilestoneKind { scholarship, roadmap, caseStep, document }
+enum _MilestoneKind { scholarship, caseStep, document }
 
 enum _MilestoneFilter { all, saved, cases, upcoming }
 
@@ -277,11 +276,10 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
             !_isPastDay(entry.deadline!, now) &&
             entry.deadline!.difference(now).inDays <= 30)
         .length;
-    final caseLinked = entries
-        .where((entry) =>
-            entry.kind == _MilestoneKind.caseStep ||
-            entry.kind == _MilestoneKind.document)
-        .length;
+    // Un dossier compte une fois : ses pièces manquantes ne sont pas des
+    // dossiers (« 2 Dossiers » pour 1, audit build 57, n° 7).
+    final caseLinked =
+        entries.where((entry) => entry.kind == _MilestoneKind.caseStep).length;
     return {'upcoming': upcoming, 'urgent': urgent, 'cases': caseLinked};
   }
 
@@ -317,29 +315,9 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
         ),
       );
 
-      // Horizon métier d'une feuille de route sans date limite connue.
-      final roadmapDeadline =
-          deadline ?? now.add(const Duration(days: 90)); // kpb-allow-duration
-      for (final step in RoadmapEngine.getSteps()) {
-        if (controller.isStepCompleted(scholarship.id, step.type)) continue;
-        entries.add(
-          _MilestoneEntry(
-            id: 'roadmap-${scholarship.id}-${step.type.name}',
-            title: controller.resolve(step.title),
-            subtitle: '$title · ${controller.resolve(step.description)}',
-            kind: _MilestoneKind.roadmap,
-            deadline: RoadmapEngine.calculateDate(
-              roadmapDeadline,
-              step.daysBeforeDeadline,
-            ),
-            // Une étape calculée depuis une date ESTIMÉE est elle-même une
-            // projection : pas de compte à rebours au jour près.
-            deadlineIsEstimated: scholarship.deadlineIsEstimated,
-            isSaved: true,
-            route: detailRoute,
-          ),
-        );
-      }
+      // Pas d'étapes « Roadmap » génériques (J-60…J-15) : pour une bourse
+      // qui clôt dans 6 jours, 4 sur 5 étaient déjà « Passée » et l'élève se
+      // croyait en retard (audit build 57, n° 7). Seule la date de la bourse.
     }
 
     // Bourses suivies que le catalogue local ne connaît pas (fiche plus
@@ -371,16 +349,16 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
 
     for (final item in controller.cases) {
       if (_isClosedCase(item.status)) continue;
-      // Échéance métier d'un dossier sans prochaine date : une semaine.
-      final fallbackDue =
-          item.updatedAt.add(const Duration(days: 7)); // kpb-allow-duration
+      // Sans date fixée par le conseiller : « Date à confirmer », hors des
+      // compteurs. L'ancien repli « mise à jour + 7 jours » inventait un délai
+      // que personne n'avait donné (audit build 57, n° 7).
       entries.add(
         _MilestoneEntry(
           id: 'case-next-${item.id}',
           title: controller.resolve(item.nextStepTitle),
           subtitle: '${item.referenceCode} · ${controller.resolve(item.title)}',
           kind: _MilestoneKind.caseStep,
-          deadline: item.scheduledAt ?? fallbackDue,
+          deadline: item.scheduledAt,
           isSaved: false,
           route: '/cases/${item.id}',
         ),
@@ -395,7 +373,7 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
             subtitle: 'deadlines_missing_document'
                 .trParams({'code': item.referenceCode}),
             kind: _MilestoneKind.document,
-            deadline: fallbackDue,
+            deadline: null,
             isSaved: false,
             route: '/cases/${item.id}',
           ),
@@ -721,8 +699,6 @@ class _MilestoneTile extends StatelessWidget {
     switch (entry.kind) {
       case _MilestoneKind.scholarship:
         return Icons.school_outlined;
-      case _MilestoneKind.roadmap:
-        return Icons.route_outlined;
       case _MilestoneKind.caseStep:
         return Icons.folder_open_outlined;
       case _MilestoneKind.document:
@@ -734,8 +710,6 @@ class _MilestoneTile extends StatelessWidget {
     switch (entry.kind) {
       case _MilestoneKind.scholarship:
         return 'deadlines_kind_scholarship'.tr;
-      case _MilestoneKind.roadmap:
-        return 'deadlines_kind_roadmap'.tr;
       case _MilestoneKind.caseStep:
         return 'deadlines_kind_case'.tr;
       case _MilestoneKind.document:

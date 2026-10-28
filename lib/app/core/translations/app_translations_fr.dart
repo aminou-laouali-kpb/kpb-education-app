@@ -924,7 +924,6 @@ const Map<String, String> appTranslationsFr = {
   'deadlines_stat_within_30_days': '≤ 30 jours',
   'deadlines_badge_tracked': 'Suivi',
   'deadlines_kind_scholarship': 'Bourse',
-  'deadlines_kind_roadmap': 'Roadmap',
   'deadlines_kind_case': 'Dossier',
   'deadlines_kind_document': 'Document',
   'deadlines_status_past': 'Passée',
