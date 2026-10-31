@@ -140,7 +140,7 @@ describe('scholarships-catalog CLI', () => {
     // 24/10 depuis la relecture mensuelle du même jour (nouvelle vague de
     // `verifiedAt`) : aucune clôture entre le 07/10 et le 24/10, les comptes
     // publiables ne bougent pas.
-    const now = new Date('2026-10-24T18:00:00.000Z');
+    const now = new Date('2026-10-31T19:00:00.000Z');
 
     // POURQUOI CES CHIFFRES ONT CHANGÉ LE 20/08/2026 — 31 → 30 et 11 → 10.
     //
