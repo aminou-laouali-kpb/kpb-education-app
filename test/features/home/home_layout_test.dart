@@ -397,9 +397,8 @@ void main() {
       final bell = find.descendant(
           of: bar, matching: find.byKey(const ValueKey('home-bell')));
       final followed = find.byKey(const ValueKey('home-followed-entry'));
-      final search = find.byKey(const ValueKey('home-search-entry'));
       expect(bell, findsOneWidget);
-      for (final button in [bell, followed, search]) {
+      for (final button in [bell, followed]) {
         final size = tester.getSize(button);
         expect(size.width, greaterThanOrEqualTo(48));
         expect(size.height, greaterThanOrEqualTo(48));
@@ -407,20 +406,22 @@ void main() {
     });
 
     // Audit build 57, T6-04 : la recherche globale n'avait aucune porte visible.
-    testWidgets('une loupe dans l\'en-tête ouvre la recherche', (tester) async {
+    testWidgets('un champ de recherche en tête de l\'accueil l\'ouvre',
+        (tester) async {
       await _pump(tester, snapshot: _student());
-      await tester.tap(find.byKey(const ValueKey('home-search-entry')));
+      final pill = find.byKey(const ValueKey('home-search-entry'));
+      expect(pill, findsOneWidget);
+      expect(tester.getSize(pill).height, greaterThanOrEqualTo(48));
+      await tester.tap(pill);
       await tester.pumpAndSettle();
       expect(find.text('page-recherche'), findsOneWidget);
     });
 
-    testWidgets(
-        'iPhone SE, texte 1,5 : trois boutons et la salutation, sans '
-        'débordement', (tester) async {
+    testWidgets('iPhone SE, texte 1,5 : le champ tient sans débordement',
+        (tester) async {
       await _pump(tester,
           snapshot: _student(), size: const Size(375, 4000), textScale: 1.5);
       expect(find.byKey(const ValueKey('home-search-entry')), findsOneWidget);
-      expect(find.byKey(const ValueKey('home-bell')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

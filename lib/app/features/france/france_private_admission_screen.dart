@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
@@ -104,6 +105,7 @@ class FrancePrivateAdmissionScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: KpbColors.navy,
             foregroundColor: Colors.white,
+            systemOverlayStyle: SystemUiOverlayStyle.light,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration:

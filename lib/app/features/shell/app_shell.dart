@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
@@ -63,6 +64,16 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // L'accueil et les onglets ont un fond clair : icônes de barre d'état
+    // sombres, y compris au retour d'un écran qui les avait changées (audit
+    // build 57, T6-16).
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: _buildShell(context),
+    );
+  }
+
+  Widget _buildShell(BuildContext context) {
     final controller = Get.find<AppController>();
 
     return GetBuilder<AppController>(
