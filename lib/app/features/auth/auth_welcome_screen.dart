@@ -9,6 +9,7 @@ import '../../core/controllers/app_controller.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/ui/app_tokens.dart';
+import '../legal/legal_links.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../shell/app_root_shell.dart';
 import 'magic_link_email_screen.dart';
@@ -161,6 +162,14 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
                             icon: Icons.support_agent_rounded,
                             label: 'auth_intelligence_benefit_support'.tr,
                           ),
+                          SizedBox(height: gap),
+                          // Avant de donner son adresse, l'élève peut lire à
+                          // quoi il consent (audit build 57, T1-20).
+                          Text(
+                            'auth_terms_notice'.tr,
+                            style: KpbTextStyles.caption,
+                          ),
+                          const LegalLinksRow(),
                         ],
                       ),
                     ),

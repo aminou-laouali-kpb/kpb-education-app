@@ -1756,6 +1756,9 @@ const Map<String, String> appTranslationsFr = {
   'profile_quick_verified_alumni_mentors': 'Mentors alumni vérifiés',
   'profile_quick_become_alumni_mentor': 'Devenir mentor alumni',
   'profile_quick_virtual_salon': 'Salon KPB Virtuel',
+  'legal_links_contact': 'Nous contacter',
+  'auth_terms_notice':
+      'En créant ton compte, tu acceptes les conditions d\'utilisation et la politique de confidentialité de KPB Education.',
   'profile_privacy_policy': 'Politique de confidentialité',
   'profile_terms_of_service': 'Conditions d\'utilisation',
   'account_type_commercial_2': 'Commercial',

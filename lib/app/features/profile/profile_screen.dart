@@ -26,6 +26,7 @@ import '../parcours/parcours_screen.dart';
 import '../premium/premium_screen.dart';
 import '../referral/ambassador_screen.dart';
 import '../referral/referral_screen.dart';
+import '../legal/legal_links.dart';
 import '../legal/legal_pages.dart';
 import '../onboarding/onboarding_m2_constants.dart';
 import '../orientation/orientation_screen.dart';
