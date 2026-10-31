@@ -305,9 +305,9 @@ const Map<String, String> appTranslationsFr = {
       'Les messages privés entre votre enfant et son conseiller ne sont pas partagés.',
   'parent_pay_title': 'Paiements',
   'parent_pay_sub': 'Payez pour votre enfant — via votre conseiller KPB',
-  'parent_premium_title': 'Karatou Premium pour @child',
+  'parent_premium_title': 'Pass Karatou pour @child',
   'parent_premium_sub': 'Copilote illimité · lettres illimitées · live VIP',
-  'parent_premium_item': 'Karatou Premium',
+  'parent_premium_item': 'Pass Karatou',
   'parent_premium_cta': 'Activer via le conseiller KPB',
   // --- App-engagement: Student Profil + honest Premium ---
   'profile_target_universities': 'Mes universités cibles',
@@ -320,11 +320,11 @@ const Map<String, String> appTranslationsFr = {
   'profile_parent_access_desc':
       'Relie un parent avec un code d\'invitation pour partager ta progression. Tu choisis ce qu\'il peut voir, dossier par dossier.',
   'profile_parent_access_cta': 'Relier un parent',
-  'profile_premium_card_title': 'Karatou Premium',
+  'profile_premium_card_title': 'Pass Karatou',
   'profile_premium_card_sub': 'Bientôt — activez via un conseiller KPB',
-  'premium_screen_title': 'Karatou Premium',
+  'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Bientôt disponible',
-  'premium_hero_title': 'Passez à Karatou Premium',
+  'premium_hero_title': 'Passe au Pass Karatou',
   'premium_hero_sub':
       'Premium arrive bientôt. En attendant, un conseiller KPB peut t\'accompagner — sans aucun paiement dans l\'application.',
   'premium_value_ai_coach':
@@ -339,11 +339,12 @@ const Map<String, String> appTranslationsFr = {
   'premium_row_ai_coach': 'Messages KPB Intelligence',
   'premium_free_ai_coach': '@count / sem.',
   'premium_unlimited_soon': 'Illimité (bientôt)',
-  'premium_how_title': 'Comment activer Premium',
+  'premium_how_title': 'Comment ça marche',
   'premium_how_body':
-      'Aucun paiement dans l\'application. Premium arrive bientôt — un conseiller KPB te guidera pour l\'activer.',
+      'Aucun paiement dans l\'application. Le Pass arrive bientôt — un conseiller KPB peut déjà t\'aider.',
   'premium_wa_prefill':
-      'Bonjour KPB, je souhaite en savoir plus sur Karatou Premium.',
+      'Bonjour KPB, je souhaite en savoir plus sur le Pass Karatou.',
+  'premium_advisor_cta': 'Parler à un conseiller KPB',
   'premium_no_payment_note': 'Karatou ne propose aucun paiement intégré.',
   // ── Ce qu'est le Pass, en une carte ──────────────────────────
   //

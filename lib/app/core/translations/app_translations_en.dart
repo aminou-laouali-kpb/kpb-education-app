@@ -291,9 +291,9 @@ const Map<String, String> appTranslationsEn = {
       'Private messages between your child and their advisor aren\'t shared.',
   'parent_pay_title': 'Payments',
   'parent_pay_sub': 'Pay for your child — via your KPB advisor',
-  'parent_premium_title': 'Karatou Premium for @child',
+  'parent_premium_title': 'Pass Karatou for @child',
   'parent_premium_sub': 'Unlimited copilot · unlimited letters · VIP live',
-  'parent_premium_item': 'Karatou Premium',
+  'parent_premium_item': 'Pass Karatou',
   'parent_premium_cta': 'Activate via the KPB advisor',
   // --- App-engagement: Student Profil + honest Premium ---
   'profile_target_universities': 'My target universities',
@@ -305,11 +305,11 @@ const Map<String, String> appTranslationsEn = {
   'profile_parent_access_desc':
       'Link a parent with an invite code to share your progress. You choose what they can see, case by case.',
   'profile_parent_access_cta': 'Link a parent',
-  'profile_premium_card_title': 'Karatou Premium',
+  'profile_premium_card_title': 'Pass Karatou',
   'profile_premium_card_sub': 'Coming soon — activate via a KPB advisor',
-  'premium_screen_title': 'Karatou Premium',
+  'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Coming soon',
-  'premium_hero_title': 'Upgrade to Karatou Premium',
+  'premium_hero_title': 'Get the Pass Karatou',
   'premium_hero_sub':
       'Premium is coming soon. In the meantime, a KPB advisor can help you — with no in-app payment.',
   'premium_value_ai_coach':
@@ -323,11 +323,12 @@ const Map<String, String> appTranslationsEn = {
   'premium_row_ai_coach': 'KPB Intelligence messages',
   'premium_free_ai_coach': '@count / week',
   'premium_unlimited_soon': 'Unlimited (coming soon)',
-  'premium_how_title': 'How to activate Premium',
+  'premium_how_title': 'How it works',
   'premium_how_body':
-      'No in-app payment. Premium is coming soon — a KPB advisor will guide you to activate it.',
+      'No in-app payment. The Pass is coming soon — a KPB advisor can already help you.',
   'premium_wa_prefill':
-      'Hello KPB, I\'d like to learn more about Karatou Premium.',
+      'Hello KPB, I\'d like to learn more about the Pass Karatou.',
+  'premium_advisor_cta': 'Talk to a KPB advisor',
   'premium_no_payment_note': 'Karatou has no in-app payment.',
   'premium_pitch_title': 'Apply from A to Z, with support',
   'premium_pitch_body':

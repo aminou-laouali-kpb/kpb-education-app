@@ -374,12 +374,17 @@ class _ActiveCaseCard extends StatelessWidget {
       case CaseStatus.underReview:
         return (color: KpbColors.warning, label: 'case_status_under_review'.tr);
       case CaseStatus.counselorAssigned:
+        // Pastille pleine : `decorSky` portait du blanc à 2,14:1 (audit build 57,
+        // T7-19). `actionPrimary` donne 5,2:1.
         return (
-          color: KpbColors.decorSky,
+          color: KpbColors.actionPrimary,
           label: 'case_status_counselor_assigned'.tr
         );
       case CaseStatus.submitted:
-        return (color: KpbColors.decorSky, label: 'case_status_submitted'.tr);
+        return (
+          color: KpbColors.actionPrimary,
+          label: 'case_status_submitted'.tr
+        );
       case CaseStatus.applicationSubmitted:
         return (
           color: KpbColors.actionPrimary,
@@ -392,7 +397,7 @@ class _ActiveCaseCard extends StatelessWidget {
         );
       default:
         return (
-          color: KpbColors.textFaint,
+          color: KpbColors.textMuted,
           label: 'case_status_in_progress'.tr
         );
     }

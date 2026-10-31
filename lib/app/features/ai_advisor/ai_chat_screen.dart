@@ -705,7 +705,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 // Vert WhatsApp = token marque externe (allowlist §10.4),
                 // même CTA que les autres hand-offs conseiller de l'app.
                 backgroundColor: KpbColors.whatsapp,
-                foregroundColor: Colors.white,
+                foregroundColor: KpbColors.brandNavy,
                 padding: const EdgeInsets.symmetric(vertical: 13),
               ),
               icon: const Icon(Icons.chat_rounded, size: 18),
@@ -779,7 +779,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 decoration: InputDecoration(
                   hintText: 'coach_input_hint'.tr,
                   hintStyle:
-                      const TextStyle(color: KpbColors.textFaint, fontSize: 13),
+                      const TextStyle(color: KpbColors.textMuted, fontSize: 13),
                   border: InputBorder.none,
                   isCollapsed: true,
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/kpb_theme_ext.dart';
 import '../ai_advisor/ai_consent.dart';
@@ -240,18 +241,22 @@ class KpbToolsDrawer extends StatelessWidget {
             color: KpbColors.sky,
             builder: () => const FlightEstimatorScreen(),
           ),
-        _ToolEntry(
-          labelKey: 'tools_housing',
-          icon: Icons.home_work_outlined,
-          color: KpbColors.warning,
-          builder: () => const HousingEstimatorScreen(),
-        ),
-        _ToolEntry(
-          labelKey: 'tools_impact',
-          icon: Icons.insights_outlined,
-          color: KpbColors.gold,
-          builder: () => const ImpactDashboardScreen(),
-        ),
+        // Le Logement est « V1.1+ » : masqué du Profil par `mvpOnly`, il l'est
+        // aussi ici (audit build 57, T6-10).
+        if (!AppConfig.mvpOnly)
+          _ToolEntry(
+            labelKey: 'tools_housing',
+            icon: Icons.home_work_outlined,
+            color: KpbColors.warning,
+            builder: () => const HousingEstimatorScreen(),
+          ),
+        if (RemoteFeatureFlags.instance.publicImpactStatsEnabled)
+          _ToolEntry(
+            labelKey: 'tools_impact',
+            icon: Icons.insights_outlined,
+            color: KpbColors.gold,
+            builder: () => const ImpactDashboardScreen(),
+          ),
       ];
 }
 

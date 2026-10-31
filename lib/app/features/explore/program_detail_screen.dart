@@ -1160,7 +1160,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
                   child: Builder(
                     builder: (button) => _ActionButton(
                       bg: KpbColors.whatsapp,
-                      fg: Colors.white,
+                      fg: KpbColors.brandNavy,
                       icon: Icons.chat_rounded,
                       label: 'match_card_share_whatsapp'.tr,
                       onTap: _busy ? null : () => _shareWhatsApp(button),

@@ -429,6 +429,11 @@ class RemoteFeatureFlags {
   bool get referralOnboardingCodeEnabled =>
       _flag('referralOnboardingCode', false);
 
+  /// Les statistiques d'impact publiques (`GET /impact/stats`). Fermées côté
+  /// serveur par défaut : tant qu'elles le sont, aucune porte ne mène à
+  /// « Tableau d'impact » (audit build 57, T5-15 et T6-09 : impasse permanente).
+  bool get publicImpactStatsEnabled => _flag('publicImpactStats', false);
+
   /// L'écran « Compétition ambassadeurs » (rang, compteurs, compte à rebours).
   bool get referralLeaderboardEnabled => _flag('referralLeaderboard', false);
 

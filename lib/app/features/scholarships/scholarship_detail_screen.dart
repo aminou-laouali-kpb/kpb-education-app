@@ -996,7 +996,7 @@ class _MetaTile extends StatelessWidget {
               label.toUpperCase(),
               style: const TextStyle(
                 fontSize: KpbFontSize.xs,
-                color: KpbColors.textFaint,
+                color: KpbColors.textMuted,
                 fontWeight: FontWeight.w800,
               ),
             ),
