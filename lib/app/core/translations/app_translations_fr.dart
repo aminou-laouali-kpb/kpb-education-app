@@ -41,6 +41,9 @@ const Map<String, String> appTranslationsFr = {
   'guest_ai_tool_gate_title': 'Connecte-toi pour utiliser les outils IA',
   'guest_ai_tool_gate_body':
       'Le générateur de CV, les lettres de motivation et le simulateur d\'entretien travaillent à partir de ton profil. Un compte est nécessaire pour les personnaliser.',
+  'ai_chat_gate_title': 'Crée ton compte pour poser tes questions',
+  'ai_chat_gate_body':
+      'KPB Intelligence répond en français à tes questions sur les bourses, les écoles et le budget. Il faut un compte gratuit pour discuter avec lui.',
   'guest_ai_tool_gate_cta': 'Créer mon compte gratuit',
   // Authentifié mais sans profil en cache : synchronisation inaboutie.
   // Ni un invité, ni un refus de consentement.

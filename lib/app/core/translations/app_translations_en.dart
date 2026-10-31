@@ -37,6 +37,9 @@ const Map<String, String> appTranslationsEn = {
   'guest_ai_tool_gate_title': 'Sign in to use the AI tools',
   'guest_ai_tool_gate_body':
       'The CV generator, cover letters and interview simulator work from your profile. An account is required to personalise them.',
+  'ai_chat_gate_title': 'Create your account to ask your questions',
+  'ai_chat_gate_body':
+      'KPB Intelligence answers your questions about scholarships, schools and budget. A free account is needed to chat with it.',
   'guest_ai_tool_gate_cta': 'Create my free account',
   'profile_sync_pending_title': 'Profile not synced yet',
   'profile_sync_pending_body':
