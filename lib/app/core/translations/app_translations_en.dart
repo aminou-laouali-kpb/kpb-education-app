@@ -1417,6 +1417,9 @@ const Map<String, String> appTranslationsEn = {
   'case_message_dictate': 'Dictate my message',
   'case_contact_phone': 'Phone',
   'case_recap_contact': 'Contact',
+  'phone_no_plus':
+      'Leave out the “+”: the country code is already chosen on the left.',
+  'phone_digits_range': 'Between 7 and 12 digits.',
   'cases_filter_all': 'All',
   'cases_filter_empty_title': 'No case of this type',
   'cases_filter_empty_body': 'Your other cases are under “All”.',

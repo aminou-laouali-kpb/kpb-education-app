@@ -1563,6 +1563,8 @@ const Map<String, String> appTranslationsFr = {
   'case_message_dictate': 'Dicter mon message',
   'case_contact_phone': 'Téléphone',
   'case_recap_contact': 'Contact',
+  'phone_no_plus': 'Sans le « + » : l\'indicatif est déjà choisi à gauche.',
+  'phone_digits_range': 'Entre 7 et 12 chiffres.',
   'cases_filter_all': 'Tous',
   'cases_filter_empty_title': 'Aucun dossier de ce type',
   'cases_filter_empty_body': 'Tes autres dossiers sont dans « Tous ».',
