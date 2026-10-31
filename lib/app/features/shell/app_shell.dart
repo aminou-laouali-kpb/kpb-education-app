@@ -243,53 +243,60 @@ class _KpbFloatingNavBar extends StatelessWidget {
             ),
           ),
         ),
-        child: Row(
-          children: [
-            _NavItem(
-              key: const ValueKey('kpb_nav_home'),
-              icon: Icons.home_outlined,
-              selectedIcon: Icons.home_rounded,
-              label: 'nav_home'.tr,
-              isSelected: currentIndex == StudentShellTab.home,
-              onTap: () => onTap(StudentShellTab.home),
-            ),
-            // The source design gives the university search the second slot.
-            _NavItem(
-              key: const ValueKey('kpb_nav_universities'),
-              icon: Icons.school_outlined,
-              selectedIcon: Icons.school_rounded,
-              label: 'nav_universities'.tr,
-              isSelected: currentIndex == StudentShellTab.universities,
-              onTap: () => onTap(StudentShellTab.universities),
-            ),
-            _NavItem(
-              key: const ValueKey('kpb_nav_scholarships'),
-              // La cloche est réservée aux notifications : les bourses ont
-              // leur propre icône (programme UX, « une notion, un mot »).
-              icon: Icons.workspace_premium_outlined,
-              selectedIcon: Icons.workspace_premium_rounded,
-              label: 'nav_scholarships'.tr,
-              isSelected: currentIndex == StudentShellTab.scholarships,
-              onTap: () => onTap(StudentShellTab.scholarships),
-            ),
-            _NavItem(
-              key: const ValueKey('kpb_nav_cases'),
-              icon: Icons.folder_copy_outlined,
-              selectedIcon: Icons.folder_copy_rounded,
-              label: 'nav_cases'.tr,
-              isSelected: currentIndex == StudentShellTab.cases,
-              onTap: () => onTap(StudentShellTab.cases),
-              badgeCount: Get.find<AppController>().totalUnreadCaseMessages,
-            ),
-            _NavItem(
-              key: const ValueKey('kpb_nav_profile'),
-              icon: Icons.person_outline_rounded,
-              selectedIcon: Icons.person_rounded,
-              label: 'nav_profile'.tr,
-              isSelected: currentIndex == StudentShellTab.profile,
-              onTap: () => onTap(StudentShellTab.profile),
-            ),
-          ],
+        // Comme les barres d'onglets natives d'iOS et d'Android, la barre ne suit
+        // pas toute la taille du texte : à 1,5 le FittedBox réduisait seulement
+        // « Universités », et les libellés n'avaient plus la même taille (audit
+        // build 57, T7-12). Le FittedBox reste en filet de sécurité à 360 dp.
+        child: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.2,
+          child: Row(
+            children: [
+              _NavItem(
+                key: const ValueKey('kpb_nav_home'),
+                icon: Icons.home_outlined,
+                selectedIcon: Icons.home_rounded,
+                label: 'nav_home'.tr,
+                isSelected: currentIndex == StudentShellTab.home,
+                onTap: () => onTap(StudentShellTab.home),
+              ),
+              // The source design gives the university search the second slot.
+              _NavItem(
+                key: const ValueKey('kpb_nav_universities'),
+                icon: Icons.school_outlined,
+                selectedIcon: Icons.school_rounded,
+                label: 'nav_universities'.tr,
+                isSelected: currentIndex == StudentShellTab.universities,
+                onTap: () => onTap(StudentShellTab.universities),
+              ),
+              _NavItem(
+                key: const ValueKey('kpb_nav_scholarships'),
+                // La cloche est réservée aux notifications : les bourses ont
+                // leur propre icône (programme UX, « une notion, un mot »).
+                icon: Icons.workspace_premium_outlined,
+                selectedIcon: Icons.workspace_premium_rounded,
+                label: 'nav_scholarships'.tr,
+                isSelected: currentIndex == StudentShellTab.scholarships,
+                onTap: () => onTap(StudentShellTab.scholarships),
+              ),
+              _NavItem(
+                key: const ValueKey('kpb_nav_cases'),
+                icon: Icons.folder_copy_outlined,
+                selectedIcon: Icons.folder_copy_rounded,
+                label: 'nav_cases'.tr,
+                isSelected: currentIndex == StudentShellTab.cases,
+                onTap: () => onTap(StudentShellTab.cases),
+                badgeCount: Get.find<AppController>().totalUnreadCaseMessages,
+              ),
+              _NavItem(
+                key: const ValueKey('kpb_nav_profile'),
+                icon: Icons.person_outline_rounded,
+                selectedIcon: Icons.person_rounded,
+                label: 'nav_profile'.tr,
+                isSelected: currentIndex == StudentShellTab.profile,
+                onTap: () => onTap(StudentShellTab.profile),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -323,7 +330,16 @@ class _NavItem extends StatelessWidget {
       child: Semantics(
         button: true,
         selected: isSelected,
-        label: label,
+        // Un seul nœud par onglet : sans excludeSemantics, le lecteur d'écran
+        // lisait chaque libellé deux fois (celui-ci, puis le Text enfant), et
+        // n'annonçait pas la pastille (audit build 57, T7-12).
+        excludeSemantics: true,
+        label: badgeCount > 0
+            ? 'nav_badge_a11y'.trParams({
+                'label': label,
+                'count': badgeCount > 9 ? '9+' : '$badgeCount',
+              })
+            : label,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -420,7 +436,7 @@ class _NavBadge extends StatelessWidget {
         count > 9 ? '9+' : '$count',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 8,
+          fontSize: 10,
           height: 1.1,
           fontWeight: FontWeight.w800,
         ),

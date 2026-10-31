@@ -2490,6 +2490,7 @@ const Map<String, String> appTranslationsFr = {
       'Ouvre un dossier depuis Mes leads pour discuter avec un étudiant.',
   'search': 'Rechercher',
   'nav_scholarships': 'Bourses',
+  'nav_badge_a11y': '@label, @count message(s) non lu(s)',
   'nav_cases': 'Dossiers',
   'nav_saved': 'Sauvegardés',
   'nav_profile': 'Profil',

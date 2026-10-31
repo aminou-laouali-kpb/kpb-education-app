@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
@@ -132,6 +133,48 @@ void main() {
       await tester.pump();
       expect(find.byType(KpbSampleDataBanner), findsNothing);
       await tester.pumpAndSettle();
+    });
+
+    // Audit build 57, T7-12 : au texte agrandi les libellés n'avaient plus la
+    // même taille, et le lecteur d'écran lisait chaque onglet deux fois.
+    testWidgets(
+        'barre d\'onglets : échelle plafonnée à 1,2, un nœud par onglet',
+        (tester) async {
+      final handle = tester.ensureSemantics();
+      await pumpTestApp(
+        tester,
+        child: const MediaQuery(
+          data: MediaQueryData(textScaler: TextScaler.linear(1.5)),
+          child: AppShell(),
+        ),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
+
+      for (final tab in const [
+        'kpb_nav_home',
+        'kpb_nav_universities',
+        'kpb_nav_scholarships',
+        'kpb_nav_cases',
+        'kpb_nav_profile',
+      ]) {
+        final label = find.descendant(
+          of: find.byKey(ValueKey(tab)),
+          matching: find.byType(RichText),
+        );
+        final paragraph = tester.renderObject<RenderParagraph>(label.first);
+        // 12 sp × 1,2 = 14,4 au plus, même si le téléphone demande 1,5.
+        expect(paragraph.textScaler.scale(12), lessThanOrEqualTo(14.5),
+            reason: tab);
+      }
+
+      // Un seul nœud lisible par onglet (le libellé n'est plus dit deux fois).
+      expect(find.bySemanticsLabel('nav_home'), findsOneWidget);
+      expect(find.bySemanticsLabel('nav_universities'), findsOneWidget);
+      handle.dispose();
     });
 
     testWidgets('starts on Home tab (index 0)', (tester) async {

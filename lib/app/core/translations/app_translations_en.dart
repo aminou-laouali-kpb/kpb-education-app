@@ -2271,6 +2271,7 @@ const Map<String, String> appTranslationsEn = {
       'Open a case from My leads to chat with a student.',
   'search': 'Search',
   'nav_scholarships': 'Scholarships',
+  'nav_badge_a11y': '@label, @count unread message(s)',
   'nav_cases': 'My Cases',
   'nav_saved': 'Saved',
   'nav_profile': 'Profile',
