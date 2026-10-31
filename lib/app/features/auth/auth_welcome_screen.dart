@@ -92,167 +92,176 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
             final titleSize = isCompact ? 30.0 : 34.0;
             final sidePadding = constraints.maxWidth < 380 ? 28.0 : 40.0;
 
+            // Espacements resserrés sur petit écran ou texte agrandi : les trois
+            // actions doivent rester visibles sans défiler (audit build 57,
+            // T1-04 et T7-13).
+            final tight =
+                isCompact || MediaQuery.textScalerOf(context).scale(1) > 1.2;
+            final gap = tight ? 12.0 : 28.0;
+            final benefitGap = tight ? 10.0 : 17.0;
+
+            // Les ACTIONS sont hors de la zone défilante, en bas ; seul le
+            // texte de présentation défile. Avant, tout défilait ensemble et
+            // « Explorer sans compte » descendait sous la ligne de flottaison.
             return Padding(
               padding: EdgeInsets.fromLTRB(sidePadding, 24, sidePadding, 20),
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minHeight: constraints.maxHeight - 44),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Image.asset(
-                          'assets/images/logo/kpb-education-logo-full.png',
-                          width: 150,
-                          fit: BoxFit.contain,
-                          semanticLabel: 'KPB Education',
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        'auth_intelligence_title'.tr,
-                        style: TextStyle(
-                          color: KpbColors.brandNavy,
-                          fontSize: titleSize,
-                          fontWeight: FontWeight.w800,
-                          height: 1.04,
-                          letterSpacing: -1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      Text(
-                        'auth_intelligence_body'.tr,
-                        style: const TextStyle(
-                          color: KpbColors.textMuted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          height: 1.42,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                      // Une icône « % » annonçait un pourcentage de
-                      // compatibilité que l'app n'affiche pas (et ne doit pas
-                      // afficher) : les formations sont CLASSÉES, rien de plus.
-                      _BenefitRow(
-                        icon: Icons.sort_rounded,
-                        label: 'auth_intelligence_benefit_fit'.tr,
-                      ),
-                      const SizedBox(height: 17),
-                      _BenefitRow(
-                        icon: Icons.smart_toy_outlined,
-                        label: 'auth_intelligence_benefit_ai'.tr,
-                      ),
-                      const SizedBox(height: 17),
-                      _BenefitRow(
-                        icon: Icons.support_agent_rounded,
-                        label: 'auth_intelligence_benefit_support'.tr,
-                      ),
-                      const SizedBox(height: 28),
-                      SizedBox(
-                        height: 58,
-                        child: OutlinedButton.icon(
-                          onPressed: _googleLoading ? null : _signInWithGoogle,
-                          icon: _googleLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: KpbColors.actionPrimary,
-                                  ),
-                                )
-                              : const FaIcon(
-                                  FontAwesomeIcons.google,
-                                  size: 19,
-                                  color: KpbColors.googleBlue,
-                                ),
-                          label: Text('auth_continue_google'.tr),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: KpbColors.brandNavy,
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(
-                              color: KpbColors.border,
-                              width: 1.5,
-                            ),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(20)),
-                            ),
-                            textStyle: const TextStyle(
-                              fontFamily: KpbTextStyles.bodyFamily,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Image.asset(
+                              'assets/images/logo/kpb-education-logo-full.png',
+                              width: 150,
+                              fit: BoxFit.contain,
+                              semanticLabel: 'KPB Education',
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        height: 58,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            _pendingMethod = 'email';
-                            Get.to(
-                              () => MagicLinkEmailScreen(
-                                  authService: authService),
-                            );
-                          },
-                          icon:
-                              const Icon(Icons.mail_outline_rounded, size: 23),
-                          label: Text('auth_receive_email_link'.tr),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: KpbColors.actionPrimary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(20)),
-                            ),
-                            textStyle: const TextStyle(
-                              fontFamily: KpbTextStyles.bodyFamily,
-                              fontSize: 17,
+                          SizedBox(height: gap),
+                          Text(
+                            'auth_intelligence_title'.tr,
+                            style: TextStyle(
+                              color: KpbColors.brandNavy,
+                              fontSize: titleSize,
                               fontWeight: FontWeight.w800,
+                              height: 1.04,
+                              letterSpacing: -1.25,
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          'auth_intelligence_note'.tr,
-                          textAlign: TextAlign.center,
-                          // textMuted, pas textFaint : ce texte est PORTEUR DE
-                          // SENS (il annonce KPB Intelligence) sur fond clair, où
-                          // textFaint rend 2,56:1 — sous le seuil AA de 4,5:1 — et
-                          // le FittedBox le rétrécit encore. Le token s'interdit
-                          // lui-même cet usage ; un test le calcule désormais.
-                          style: const TextStyle(
-                            color: KpbColors.textMuted,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          SizedBox(height: gap),
+                          Text(
+                            'auth_intelligence_body'.tr,
+                            style: const TextStyle(
+                              color: KpbColors.textMuted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.42,
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      TextButton(
-                        onPressed: _continueAsGuest,
-                        style: TextButton.styleFrom(
-                          foregroundColor: KpbColors.textMuted,
-                          minimumSize: const Size(0, 44),
-                          textStyle: const TextStyle(
-                            fontFamily: KpbTextStyles.bodyFamily,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                          SizedBox(height: gap),
+                          // Une icône « % » annonçait un pourcentage de
+                          // compatibilité que l'app n'affiche pas (et ne doit pas
+                          // afficher) : les formations sont CLASSÉES, rien de plus.
+                          _BenefitRow(
+                            icon: Icons.sort_rounded,
+                            label: 'auth_intelligence_benefit_fit'.tr,
                           ),
-                        ),
-                        child: Text('auth_explore_guest'.tr),
+                          SizedBox(height: benefitGap),
+                          _BenefitRow(
+                            icon: Icons.smart_toy_outlined,
+                            label: 'auth_intelligence_benefit_ai'.tr,
+                          ),
+                          SizedBox(height: benefitGap),
+                          _BenefitRow(
+                            icon: Icons.support_agent_rounded,
+                            label: 'auth_intelligence_benefit_support'.tr,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  SizedBox(height: tight ? 12 : 20),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 58),
+                    child: OutlinedButton.icon(
+                      onPressed: _googleLoading ? null : _signInWithGoogle,
+                      icon: _googleLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: KpbColors.actionPrimary,
+                              ),
+                            )
+                          : const FaIcon(
+                              FontAwesomeIcons.google,
+                              size: 19,
+                              color: KpbColors.googleBlue,
+                            ),
+                      label: Text('auth_continue_google'.tr),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: KpbColors.brandNavy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: KpbColors.border,
+                          width: 1.5,
+                        ),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                        ),
+                        textStyle: const TextStyle(
+                          fontFamily: KpbTextStyles.bodyFamily,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 58),
+                    child: FilledButton.icon(
+                      onPressed: () {
+                        _pendingMethod = 'email';
+                        Get.to(
+                          () => MagicLinkEmailScreen(authService: authService),
+                        );
+                      },
+                      icon: const Icon(Icons.mail_outline_rounded, size: 23),
+                      label: Text('auth_receive_email_link'.tr),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: KpbColors.actionPrimary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                        ),
+                        textStyle: const TextStyle(
+                          fontFamily: KpbTextStyles.bodyFamily,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Sans FittedBox : il rétrécissait la note jusqu'à
+                  // l'illisible ; elle passe à la ligne.
+                  Text(
+                    'auth_intelligence_note'.tr,
+                    textAlign: TextAlign.center,
+                    // textMuted, pas textFaint : ce texte est PORTEUR DE
+                    // SENS (il annonce KPB Intelligence) sur fond clair, où
+                    // textFaint rend 2,56:1 — sous le seuil AA de 4,5:1 — et
+                    // le FittedBox le rétrécit encore. Le token s'interdit
+                    // lui-même cet usage ; un test le calcule désormais.
+                    style: const TextStyle(
+                      color: KpbColors.textMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: _continueAsGuest,
+                    style: TextButton.styleFrom(
+                      foregroundColor: KpbColors.textMuted,
+                      minimumSize: const Size(0, 44),
+                      textStyle: const TextStyle(
+                        fontFamily: KpbTextStyles.bodyFamily,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    child: Text('auth_explore_guest'.tr),
+                  ),
+                ],
               ),
             );
           },
@@ -285,7 +294,7 @@ class _BenefitRow extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: KpbColors.gray700,
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 height: 1.24,
               ),
