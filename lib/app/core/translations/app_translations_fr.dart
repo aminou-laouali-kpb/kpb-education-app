@@ -1674,7 +1674,6 @@ const Map<String, String> appTranslationsFr = {
   'institution_kpb_expert': 'Expert KPB',
   'institution_enroll_via_kpb': 'S\'inscrire via KPB',
   'learn_more': 'En savoir plus',
-  'institution_premium_support_guaranteed': 'Accompagnement Premium Garanti',
   'institution_premium_support': 'Accompagnement Premium',
   'institution_kpb_benefits': 'Avantages KPB Education',
   'institution_priority_admission': 'Admission Prioritaire',
