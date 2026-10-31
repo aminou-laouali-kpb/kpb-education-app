@@ -25,7 +25,10 @@ class LegalLinksRow extends StatelessWidget {
       foregroundColor: KpbColors.textMuted,
       minimumSize: const Size(0, 44),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      textStyle: const TextStyle(
+        fontSize: KpbFontSize.sm,
+        fontWeight: FontWeight.w700,
+      ),
     );
     return Wrap(
       alignment: WrapAlignment.center,

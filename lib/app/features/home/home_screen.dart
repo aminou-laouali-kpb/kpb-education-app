@@ -257,6 +257,15 @@ class HomeScreen extends StatelessWidget {
       // drapeau coupé). KPB Intelligence n'a plus de doublon ici : son entrée
       // unique est un bloc de l'accueil.
       actions: [
+        // La recherche globale n'avait aucune porte visible : une seule, au fond
+        // du Profil et seulement sans université enregistrée (audit build 57,
+        // T6-04).
+        IconButton(
+          key: const ValueKey<String>('home-search-entry'),
+          tooltip: 'search'.tr,
+          icon: const Icon(Icons.search_rounded, color: KpbColors.brandNavy),
+          onPressed: () => Get.toNamed<void>(AppRoutes.search),
+        ),
         _NotifBellChip(
           // Le point s'allume aussi pour les non-lus du fil serveur
           // (« bourse ouverte »), pas seulement pour l'activité des dossiers.

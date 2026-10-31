@@ -128,6 +128,7 @@ Future<AppController> _pump(
       locale: translated ? const Locale('fr') : null,
       getPages: [
         GetPage(name: '/saved', page: () => const Text('page-mes-suivis')),
+        GetPage(name: '/search', page: () => const Text('page-recherche')),
         GetPage(name: '/deadlines', page: () => const Text('page-echeances')),
         GetPage(
           name: '/scholarships/:id',
@@ -396,12 +397,31 @@ void main() {
       final bell = find.descendant(
           of: bar, matching: find.byKey(const ValueKey('home-bell')));
       final followed = find.byKey(const ValueKey('home-followed-entry'));
+      final search = find.byKey(const ValueKey('home-search-entry'));
       expect(bell, findsOneWidget);
-      for (final button in [bell, followed]) {
+      for (final button in [bell, followed, search]) {
         final size = tester.getSize(button);
         expect(size.width, greaterThanOrEqualTo(48));
         expect(size.height, greaterThanOrEqualTo(48));
       }
+    });
+
+    // Audit build 57, T6-04 : la recherche globale n'avait aucune porte visible.
+    testWidgets('une loupe dans l\'en-tête ouvre la recherche', (tester) async {
+      await _pump(tester, snapshot: _student());
+      await tester.tap(find.byKey(const ValueKey('home-search-entry')));
+      await tester.pumpAndSettle();
+      expect(find.text('page-recherche'), findsOneWidget);
+    });
+
+    testWidgets(
+        'iPhone SE, texte 1,5 : trois boutons et la salutation, sans '
+        'débordement', (tester) async {
+      await _pump(tester,
+          snapshot: _student(), size: const Size(375, 4000), textScale: 1.5);
+      expect(find.byKey(const ValueKey('home-search-entry')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-bell')), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

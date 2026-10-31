@@ -162,6 +162,9 @@ void main() {
     // « Mes suivis » est joignable depuis l'en-tête de l'onglet Bourses.
     expect(find.byKey(const ValueKey<String>('scholarships-followed-entry')),
         findsOneWidget);
+    // La recherche globale a sa loupe ici aussi (audit build 57, T6-04).
+    expect(find.byKey(const ValueKey<String>('scholarships-search-entry')),
+        findsOneWidget);
 
     expect(tester.takeException(), isNull);
   });

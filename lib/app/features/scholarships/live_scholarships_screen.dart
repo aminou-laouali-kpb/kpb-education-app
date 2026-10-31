@@ -255,6 +255,15 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                       onPressed: _openSuccessLab,
                     ),
                   IconButton(
+                    key: const ValueKey<String>('scholarships-search-entry'),
+                    tooltip: 'search'.tr,
+                    icon: const Icon(
+                      Icons.search_rounded,
+                      color: KpbColors.brandNavy,
+                    ),
+                    onPressed: () => Get.toNamed<void>(AppRoutes.search),
+                  ),
+                  IconButton(
                     key: const ValueKey<String>('scholarships-followed-entry'),
                     tooltip: 'followed_title'.tr,
                     icon: const Icon(
