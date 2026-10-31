@@ -185,7 +185,8 @@ void main() {
     // Et les synchros suivantes non plus.
     await controller.syncRemoteData(force: true);
     expect(server.state['promotionsEmailOptIn'], isFalse);
-    expect(api.patches, isNotEmpty);
+    // Audit build 57, T8-07 : sans geste local, la synchro n'écrit rien.
+    expect(api.patches, isEmpty);
   });
 
   test(
@@ -257,10 +258,17 @@ void main() {
       guardianConsentedAt: DateTime(2026, 9, 1),
     );
 
+    // Un geste fait hors ligne reste en attente : au retour du réseau, la
+    // synchro pousse les champs ordinaires, et JAMAIS un consentement non
+    // touché.
+    ConnectivityService.instance.debugSetOnline(false);
+    await controller
+        .updateProfile(controller.profile!.copyWith(fullName: 'Test User'));
+    ConnectivityService.instance.debugSetOnline(true);
     await controller.syncRemoteData(force: true);
 
     expect(api.patches, isNotEmpty,
-        reason: 'la synchro pousse toujours les champs ordinaires');
+        reason: 'un geste en attente pousse les champs ordinaires');
     for (final patch in api.patches) {
       for (final key in ProfileConsentFields.all) {
         expect(patch, isNot(contains(key)), reason: key);
@@ -268,6 +276,42 @@ void main() {
       expect(patch['fullName'], 'Test User',
           reason: 'les champs ordinaires partent toujours');
     }
+  });
+
+  // Audit build 57, T8-07 : chaque synchro réécrivait tout le profil serveur
+  // avec la copie du téléphone avant de le relire.
+  test('(e) sans geste local : aucun PATCH, la valeur du serveur est adoptée',
+      () async {
+    final server = _Server(_serverProfile());
+    server.state['fullName'] = 'Nom corrigé par le conseiller';
+    final (controller, api, _) = await _device(server);
+
+    await controller.syncRemoteData(force: true);
+    await controller.syncRemoteData(force: true);
+
+    expect(api.patches, isEmpty);
+    expect(controller.profile!.fullName, 'Nom corrigé par le conseiller');
+  });
+
+  test('(f) avec un geste en attente : PATCH puis relecture', () async {
+    final server = _Server(_serverProfile());
+    final (controller, api, _) = await _device(server);
+
+    ConnectivityService.instance.debugSetOnline(false);
+    await controller
+        .updateProfile(controller.profile!.copyWith(fullName: 'Awa D.'));
+    expect(api.patches, isEmpty, reason: 'hors ligne : rien ne part');
+    ConnectivityService.instance.debugSetOnline(true);
+
+    await controller.syncRemoteData(force: true);
+
+    expect(api.patches, hasLength(1));
+    expect(api.patches.single['fullName'], 'Awa D.');
+    expect(server.state['fullName'], 'Awa D.');
+    expect(controller.profile!.fullName, 'Awa D.');
+    // Accusé : la synchro suivante n'écrit plus rien.
+    await controller.syncRemoteData(force: true);
+    expect(api.patches, hasLength(1));
   });
 
   test('un geste part bien, avec la clé seule de ce consentement', () async {
@@ -290,9 +334,10 @@ void main() {
     expect(api.patches.single['promotionsEmailOptIn'], isTrue);
     expect(api.patches.single, isNot(contains('promotionsPushOptIn')));
     expect(server.emailConsentStamps, 1);
-    // Accusé : la synchro suivante ne le renvoie plus.
+    // Accusé : la synchro suivante ne le renvoie plus (ni rien d'autre : sans
+    // geste en attente, elle n'écrit plus le profil).
     await controller.syncRemoteData(force: true);
-    expect(api.patches.last, isNot(contains('promotionsEmailOptIn')));
+    expect(api.patches, hasLength(1));
   });
 
   test('l\'onboarding ne remplace pas les choix qu\'il ne montre pas',
