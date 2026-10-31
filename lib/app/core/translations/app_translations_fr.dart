@@ -2561,8 +2561,9 @@ const Map<String, String> appTranslationsFr = {
   'france_admission_title': 'Admission France — Écoles privées',
   'france_sept_intake': 'Rentrée @intake',
   'programs_available': 'programmes disponibles',
-  'france_public_unis_soon':
-      'Universités publiques — Bientôt disponible · @intake',
+  'france_public_unis_card_title': 'Universités publiques — Études en France',
+  'france_public_unis_card_body':
+      'La procédure officielle, étape par étape, pour les universités publiques.',
   'france_why_private': 'Pourquoi le privé au lancement ?',
   'france_private_intro':
       'Les écoles privées françaises partenaires KPB offrent un parcours d\'admission direct, avec des rentrées flexibles et un accompagnement personnalisé pour les étudiants africains.',

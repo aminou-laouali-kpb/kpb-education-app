@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../etudes_en_france/eef_public_unis_card.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/intake_calendar.dart';
 import '../../core/models/app_models.dart';
@@ -176,6 +177,9 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
       ));
     }
     if (isFrance) {
+      children.add(const EefPublicUnisCard(
+        margin: EdgeInsets.fromLTRB(16, 12, 16, 0),
+      ));
       children.add(_FranceCard(
         onTap: () => Get.to(() => FrancePrivateAdmissionScreen()),
       ));

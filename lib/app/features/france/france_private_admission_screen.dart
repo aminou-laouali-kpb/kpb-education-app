@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../etudes_en_france/eef_public_unis_card.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/intake_calendar.dart';
 import '../../core/models/app_models.dart';
@@ -155,29 +156,10 @@ class FrancePrivateAdmissionScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.kpb.gray100,
-                      borderRadius: KpbRadius.mdBr,
-                      border: Border.all(color: context.kpb.gray200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            size: 18, color: context.kpb.textSecondary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'france_public_unis_soon'.trParams({
-                              'intake': IntakeCalendar.label(capitalized: true)
-                            }),
-                            style: KpbTextStyles.bodySm,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // Plus d'encadré « Bientôt disponible · <date calculée> » :
+                  // l'espace Études en France est la porte des universités
+                  // publiques (audit build 57, T6-18).
+                  const EefPublicUnisCard(),
                   const SizedBox(height: 16),
                   KpbCard(
                     child: Column(

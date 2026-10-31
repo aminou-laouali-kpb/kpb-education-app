@@ -2341,7 +2341,9 @@ const Map<String, String> appTranslationsEn = {
   'france_admission_title': 'France admission — Private schools',
   'france_sept_intake': '@intake intake',
   'programs_available': 'programs available',
-  'france_public_unis_soon': 'Public universities — Coming soon · @intake',
+  'france_public_unis_card_title': 'Public universities — Études en France',
+  'france_public_unis_card_body':
+      'The official procedure, step by step, for public universities.',
   'france_why_private': 'Why private at launch?',
   'france_private_intro':
       'KPB partner French private schools offer a direct admission path, with flexible intakes and personalized support for African students.',
