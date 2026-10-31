@@ -136,6 +136,24 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
     }
   }
 
+  /// Vrai pendant un « tirer pour rafraîchir » : la liste reste affichée (avec
+  /// l'indicateur de tirage) au lieu de céder la place à cinq squelettes. Un
+  /// changement de filtre ou de tri garde les squelettes : la liste change de
+  /// sens (audit build 57, T8-06).
+  bool _pulling = false;
+
+  Future<void> _pullToRefresh() async {
+    _pulling = true;
+    try {
+      await _load();
+    } finally {
+      _pulling = false;
+      if (mounted) setState(() {});
+    }
+  }
+
+  bool get _showSkeleton => _loading && !(_pulling && _items.isNotEmpty);
+
   Future<void> _load() async {
     await Future.wait<void>(<Future<void>>[
       _scholarshipsController.loadInitial(),
@@ -209,7 +227,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
       backgroundColor: KpbColors.canvas,
       body: SafeArea(
         child: KpbRefresh(
-          onRefresh: _load,
+          onRefresh: _pullToRefresh,
           child: CustomScrollView(
             controller: _paginationController,
             slivers: [
@@ -254,6 +272,15 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                       ),
                       onPressed: _openSuccessLab,
                     ),
+                  IconButton(
+                    key: const ValueKey<String>('scholarships-search-entry'),
+                    tooltip: 'search'.tr,
+                    icon: const Icon(
+                      Icons.search_rounded,
+                      color: KpbColors.brandNavy,
+                    ),
+                    onPressed: () => Get.toNamed<void>(AppRoutes.search),
+                  ),
                   IconButton(
                     key: const ValueKey<String>('scholarships-followed-entry'),
                     tooltip: 'followed_title'.tr,
@@ -348,7 +375,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
               // ── Hors ligne : la dernière liste reçue, datée ─────────────────
               // À la place de l'ancien écran plein « Erreur de connexion » :
               // l'élève garde ce qu'il avait, et sait de quand ça date.
-              if (offlineSince != null && !_loading)
+              if (offlineSince != null && !_showSkeleton)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 10),
@@ -362,7 +389,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                 ),
 
               // ── Content ──────────────────────────────────────────────────────
-              if (_loading)
+              if (_showSkeleton)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(

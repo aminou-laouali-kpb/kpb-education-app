@@ -436,10 +436,12 @@ class _PlanRing extends StatelessWidget {
                             height: 1,
                           ),
                         ),
-                        const Text(
-                          '/100',
-                          style: TextStyle(
-                            color: KpbColors.textFaint,
+                        // Légende visible : « /100 » ne disait pas de quoi est
+                        // cette note (audit build 57, T4-29).
+                        Text(
+                          'home_plan_ring_label'.tr,
+                          style: const TextStyle(
+                            color: KpbColors.textOnDarkMuted,
                             fontSize: KpbFontSize.xs,
                             fontWeight: FontWeight.w700,
                           ),

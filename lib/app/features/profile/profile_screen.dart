@@ -26,6 +26,7 @@ import '../parcours/parcours_screen.dart';
 import '../premium/premium_screen.dart';
 import '../referral/ambassador_screen.dart';
 import '../referral/referral_screen.dart';
+import '../legal/legal_links.dart';
 import '../legal/legal_pages.dart';
 import '../onboarding/onboarding_m2_constants.dart';
 import '../orientation/orientation_screen.dart';
@@ -140,7 +141,7 @@ class ProfileScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _HeaderCard(profile: profile, completion: completion),
+                      _HeaderCard(profile: profile),
                       const SizedBox(height: 12),
                       _ProfileCompletionGuide(
                         profile: profile,
@@ -150,10 +151,7 @@ class ProfileScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       _TargetUniversitiesCard(controller: controller),
                       const SizedBox(height: 12),
-                      _PreferencesCard(
-                        controller: controller,
-                        onReplay: () => _replayOnboarding(context, controller),
-                      ),
+                      _PreferencesCard(controller: controller),
                       const SizedBox(height: 12),
                       if (!controller.isParent) ...[
                         _ParentAccessCard(),
@@ -233,34 +231,6 @@ class ProfileScreen extends StatelessWidget {
             },
             style: FilledButton.styleFrom(backgroundColor: KpbColors.error),
             child: Text('logout'.tr),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Replays the getting-started experience. There is no dedicated coach-mark
-  /// tutorial in the app; the real mechanism is re-entering onboarding by
-  /// clearing the completion flag and rebooting (profile data is preserved).
-  void _replayOnboarding(BuildContext context, AppController controller) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('profile_replay_confirm_title'.tr),
-        content: Text('profile_replay_confirm_body'.tr),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('cancel'.tr),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              controller.hasCompletedOnboarding = false;
-              controller.update();
-              Get.offAll(() => const AppBootScreen());
-            },
-            child: Text('profile_replay_confirm_cta'.tr),
           ),
         ],
       ),

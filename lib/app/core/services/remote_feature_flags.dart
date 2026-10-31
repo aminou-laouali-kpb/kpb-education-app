@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
@@ -270,6 +272,7 @@ class RemoteFeatureFlags {
     instance._loaded = false;
     instance._featuresServed = false;
     instance.flagsVersion.value = 0;
+    retryDelays = const <Duration>[Duration(seconds: 5), Duration(seconds: 30)];
   }
 
   Map<String, bool> _features = const <String, bool>{};
@@ -429,6 +432,11 @@ class RemoteFeatureFlags {
   bool get referralOnboardingCodeEnabled =>
       _flag('referralOnboardingCode', false);
 
+  /// Les statistiques d'impact publiques (`GET /impact/stats`). Fermées côté
+  /// serveur par défaut : tant qu'elles le sont, aucune porte ne mène à
+  /// « Tableau d'impact » (audit build 57, T5-15 et T6-09 : impasse permanente).
+  bool get publicImpactStatsEnabled => _flag('publicImpactStats', false);
+
   /// L'écran « Compétition ambassadeurs » (rang, compteurs, compte à rebours).
   bool get referralLeaderboardEnabled => _flag('referralLeaderboard', false);
 
@@ -486,8 +494,35 @@ class RemoteFeatureFlags {
   /// La valeur servie, ou le repli de compilation quand elle est absente.
   bool _flag(String key, bool fallback) => _features[key] ?? fallback;
 
+  /// Attentes avant les nouveaux essais d'un [refresh] qui a échoué. Une API qui
+  /// ne répond pas n'entraîne pas forcément une bascule « hors ligne » : sans
+  /// nouvel essai, un échec au lancement masquait Études en France et la
+  /// Communauté pour toute la session (audit build 57, T2-06 et T7-07).
+  @visibleForTesting
+  static List<Duration> retryDelays = const <Duration>[
+    Duration(seconds: 5),
+    Duration(seconds: 30),
+  ];
+
   /// Lit `/config/app` et mémorise les drapeaux. Ne lève jamais.
-  Future<void> refresh(AppApiClient apiClient) async {
+  ///
+  /// Avec [retryOnFailure], un échec programme deux nouveaux essais (5 s puis
+  /// 30 s) sans retarder l'appelant.
+  Future<void> refresh(AppApiClient apiClient,
+      {bool retryOnFailure = false}) async {
+    final ok = await _attemptRefresh(apiClient);
+    if (!ok && retryOnFailure) unawaited(_retryRefresh(apiClient));
+  }
+
+  Future<void> _retryRefresh(AppApiClient apiClient) async {
+    for (final delay in retryDelays) {
+      await Future<void>.delayed(delay);
+      if (_loaded) return;
+      if (await _attemptRefresh(apiClient)) return;
+    }
+  }
+
+  Future<bool> _attemptRefresh(AppApiClient apiClient) async {
     try {
       final config = await apiClient.getAppConfig();
       _features = _readFeatures(config['features']);
@@ -501,6 +536,7 @@ class RemoteFeatureFlags {
       _loaded = true;
       _featuresServed = true;
       flagsVersion.value++;
+      return true;
     } catch (error) {
       // Fail closed : on garde les replis de compilation. Volontairement pas
       // remonté à Crashlytics — un téléphone hors réseau n'est pas un incident,
@@ -509,6 +545,7 @@ class RemoteFeatureFlags {
         'Remote feature flags unavailable: $error',
         tag: 'RemoteFeatureFlags',
       );
+      return false;
     }
   }
 

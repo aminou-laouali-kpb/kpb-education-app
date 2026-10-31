@@ -236,7 +236,9 @@ class KpbVerifiedAdvisorSheet extends StatelessWidget {
                 // WhatsApp brand green, per the handoff CTA (token marque
                 // externe — allowlist §10.4).
                 backgroundColor: KpbColors.whatsapp,
-                foregroundColor: Colors.white,
+                // Texte bleu nuit : le blanc ne donnait que 1,98:1 sur ce vert
+                // (audit build 57, T7-19) ; 9,0:1 ici.
+                foregroundColor: KpbColors.brandNavy,
               ),
               icon: const Icon(Icons.chat_rounded, size: 18),
               label: Text('continue_to_whatsapp'.tr),

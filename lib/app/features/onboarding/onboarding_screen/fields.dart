@@ -79,6 +79,22 @@ class _DD extends StatelessWidget {
   }
 }
 
+/// Contrôle du numéro, sans l'indicatif (choisi à gauche).
+///
+/// Un « + » tapé dans le numéro donnait « +227 +22790… », illisible pour
+/// WhatsApp ; 7 à 12 chiffres couvrent les plans de numérotation du public
+/// (Comores 7, Nigeria 10 ou 11, Côte d'Ivoire 10) sans accepter « 12 » ni une
+/// ligne de chiffres collés (audit build 57, T1-10). Vide : seulement refusé
+/// quand le champ est obligatoire.
+String? validateOnboardingPhone(String? value, {required bool required}) {
+  final text = value?.trim() ?? '';
+  if (text.isEmpty) return required ? 'field_required'.tr : null;
+  if (text.contains('+')) return 'phone_no_plus'.tr;
+  final digits = text.replaceAll(RegExp(r'\D'), '');
+  if (digits.length < 7 || digits.length > 12) return 'phone_digits_range'.tr;
+  return null;
+}
+
 class _PhoneRow extends StatelessWidget {
   const _PhoneRow({
     required this.controller,
@@ -128,10 +144,7 @@ class _PhoneRow extends StatelessWidget {
           child: TextFormField(
             controller: controller,
             keyboardType: TextInputType.phone,
-            validator: required
-                ? (v) =>
-                    (v == null || v.trim().isEmpty) ? 'field_required'.tr : null
-                : null,
+            validator: (v) => validateOnboardingPhone(v, required: required),
             decoration: InputDecoration(labelText: label),
           ),
         ),

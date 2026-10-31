@@ -585,7 +585,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
       }
     }
 
-    return RichText(text: TextSpan(style: baseStyle, children: spans));
+    // Text.rich et non RichText : RichText ne suit pas la taille du texte du
+    // téléphone, donc les réponses restaient en 13 pt quand l'élève avait
+    // agrandi le texte (audit build 57, T7-08). Le plafond (1,5) est posé par
+    // main.dart.
+    return Text.rich(TextSpan(style: baseStyle, children: spans));
   }
 
   Widget _buildTypingIndicator() {
@@ -705,7 +709,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 // Vert WhatsApp = token marque externe (allowlist §10.4),
                 // même CTA que les autres hand-offs conseiller de l'app.
                 backgroundColor: KpbColors.whatsapp,
-                foregroundColor: Colors.white,
+                foregroundColor: KpbColors.brandNavy,
                 padding: const EdgeInsets.symmetric(vertical: 13),
               ),
               icon: const Icon(Icons.chat_rounded, size: 18),
@@ -762,15 +766,21 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ],
           Expanded(
             child: Container(
-              height: 46,
+              // Hauteur minimale, plus fixe : au texte agrandi le champ rognait
+              // ce que l'élève tapait. Rayon 24 plutôt que 100 : il peut tenir
+              // plusieurs lignes.
+              constraints: const BoxConstraints(minHeight: 46),
               decoration: BoxDecoration(
                 color: KpbColors.surface,
-                borderRadius: BorderRadius.circular(100),
+                borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: KpbColors.border, width: 1.5),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: TextField(
                 controller: _textController,
+                minLines: 1,
+                maxLines: 4,
+                textInputAction: TextInputAction.send,
                 style: const TextStyle(
                   color: KpbColors.brandNavy,
                   fontSize: 13,
@@ -779,8 +789,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 decoration: InputDecoration(
                   hintText: 'coach_input_hint'.tr,
                   hintStyle:
-                      const TextStyle(color: KpbColors.textFaint, fontSize: 13),
+                      const TextStyle(color: KpbColors.textMuted, fontSize: 13),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   isCollapsed: true,
                 ),
                 onSubmitted: _sendMessage,

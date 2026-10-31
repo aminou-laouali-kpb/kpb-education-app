@@ -128,6 +128,7 @@ Future<AppController> _pump(
       locale: translated ? const Locale('fr') : null,
       getPages: [
         GetPage(name: '/saved', page: () => const Text('page-mes-suivis')),
+        GetPage(name: '/search', page: () => const Text('page-recherche')),
         GetPage(name: '/deadlines', page: () => const Text('page-echeances')),
         GetPage(
           name: '/scholarships/:id',
@@ -402,6 +403,26 @@ void main() {
         expect(size.width, greaterThanOrEqualTo(48));
         expect(size.height, greaterThanOrEqualTo(48));
       }
+    });
+
+    // Audit build 57, T6-04 : la recherche globale n'avait aucune porte visible.
+    testWidgets('un champ de recherche en tête de l\'accueil l\'ouvre',
+        (tester) async {
+      await _pump(tester, snapshot: _student());
+      final pill = find.byKey(const ValueKey('home-search-entry'));
+      expect(pill, findsOneWidget);
+      expect(tester.getSize(pill).height, greaterThanOrEqualTo(48));
+      await tester.tap(pill);
+      await tester.pumpAndSettle();
+      expect(find.text('page-recherche'), findsOneWidget);
+    });
+
+    testWidgets('iPhone SE, texte 1,5 : le champ tient sans débordement',
+        (tester) async {
+      await _pump(tester,
+          snapshot: _student(), size: const Size(375, 4000), textScale: 1.5);
+      expect(find.byKey(const ValueKey('home-search-entry')), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 

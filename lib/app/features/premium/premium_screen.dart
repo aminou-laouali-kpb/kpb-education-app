@@ -670,14 +670,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
           onPressed: _contactAdvisor,
           style: FilledButton.styleFrom(
             backgroundColor: KpbColors.whatsapp,
-            foregroundColor: Colors.white,
+            foregroundColor: KpbColors.brandNavy,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
           ),
           icon: const Icon(Icons.chat_rounded, size: 20),
           label: Text(
-            'parent_premium_cta'.tr,
+            'premium_advisor_cta'.tr,
             style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
           ),
         ),
@@ -692,19 +692,31 @@ class _CircleBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(19),
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: KpbColors.border),
+    // Cible tactile de 48 dp et libellé pour le lecteur d'écran ; le disque
+    // reste de 38 (audit build 57, T4-08).
+    return Semantics(
+      button: true,
+      label: 'a11y_back'.tr,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Center(
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: KpbColors.border),
+              ),
+              child: const Icon(Icons.arrow_back_rounded,
+                  size: 19, color: KpbColors.brandNavy),
+            ),
+          ),
         ),
-        child: const Icon(Icons.arrow_back_rounded,
-            size: 19, color: KpbColors.brandNavy),
       ),
     );
   }

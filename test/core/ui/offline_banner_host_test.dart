@@ -80,7 +80,7 @@ void main() {
 
   testWidgets('en ligne : aucun bandeau, padding intact', (tester) async {
     await _pumpApp(tester);
-    expect(find.text('Mode hors-ligne · données enregistrées'), findsNothing);
+    expect(find.text('Mode hors-ligne'), findsNothing);
     expect(_detailTopPadding(tester), 'top=24.0');
   });
 
@@ -93,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(KpbOfflineBanner), findsOneWidget);
-    expect(find.text('Mode hors-ligne · données enregistrées'), findsOneWidget);
+    expect(find.text('Mode hors-ligne'), findsOneWidget);
     // Le bandeau a absorbé l'encoche : la route ne la réapplique pas.
     expect(_detailTopPadding(tester), 'top=0.0');
 
@@ -102,14 +102,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Fiche bourse'), findsOneWidget);
     expect(find.byType(KpbOfflineBanner), findsOneWidget);
-    expect(find.text('Mode hors-ligne · données enregistrées'), findsOneWidget);
+    expect(find.text('Mode hors-ligne'), findsOneWidget);
     expect(_detailTopPadding(tester), 'top=0.0');
 
     // Retour du réseau : le bandeau disparaît, l'encoche revient, la pile de
     // navigation est intacte (l'arbre n'a pas changé de structure).
     ConnectivityService.instance.debugSetOnline(true);
     await tester.pumpAndSettle();
-    expect(find.text('Mode hors-ligne · données enregistrées'), findsNothing);
+    expect(find.text('Mode hors-ligne'), findsNothing);
     expect(find.text('Fiche bourse'), findsOneWidget);
     expect(_detailTopPadding(tester), 'top=24.0');
   });
@@ -146,5 +146,17 @@ void main() {
           reason: 'KpbOfflineBanner monté hors de KpbOfflineBannerHost : '
               '$mounts');
     });
+  });
+
+  // Audit build 57, T7-07 : la coupure du réseau ne pose plus un bandeau
+  // flottant par-dessus le bandeau permanent (deux signaux pour un état).
+  test('la coupure n\'ajoute pas de toast au bandeau permanent', () {
+    final source = File('lib/app/core/services/connectivity_service.dart')
+        .readAsLinesSync()
+        .where((l) => !l.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(source, isNot(contains('offlinePending')));
+    // Le retour du réseau garde le sien.
+    expect(source, contains('online_title'));
   });
 }

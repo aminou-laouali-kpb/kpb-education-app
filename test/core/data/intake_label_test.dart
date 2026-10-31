@@ -120,12 +120,11 @@ void main() {
       );
     });
 
-    test('les quatre clés paramétrées existent dans les deux langues', () {
+    test('les trois clés paramétrées existent dans les deux langues', () {
       final keys = AppTranslations().keys;
       for (final key in const [
         'france_case_context_label',
         'france_sept_intake',
-        'france_public_unis_soon',
         'dedicated_path_intake',
       ]) {
         for (final locale in const ['fr', 'en']) {

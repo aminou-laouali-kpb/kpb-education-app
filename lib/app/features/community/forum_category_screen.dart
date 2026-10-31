@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
@@ -58,6 +59,7 @@ class _ForumCategoryScreenState extends State<ForumCategoryScreen> {
                 backgroundColor: KpbColors.brandNavy,
                 surfaceTintColor: Colors.transparent,
                 foregroundColor: Colors.white,
+                systemOverlayStyle: SystemUiOverlayStyle.light,
                 leading: IconButton(
                   tooltip: 'a11y_back'.tr,
                   icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),

@@ -16,6 +16,7 @@
 // settles, `parcours_complete` when the video reaches its end.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -86,7 +87,10 @@ class _ParcoursFeedScreenState extends State<ParcoursFeedScreen> {
     if (widget.stories.isEmpty) {
       return Scaffold(
         backgroundColor: Colors.black,
-        appBar: AppBar(backgroundColor: Colors.black),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+        ),
         body: Center(
           child: Text(
             'parcours_empty_filter_title'.tr,

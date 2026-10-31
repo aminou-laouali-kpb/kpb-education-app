@@ -49,6 +49,20 @@ void main() {
     });
   });
 
+  group('(T7-21) aucune garantie d\'admission', () {
+    test('le libellé « Garanti » de l\'accompagnement n\'existe plus', () {
+      expect(
+          _fr().containsKey('institution_premium_support_guaranteed'), isFalse);
+      expect(
+          _en().containsKey('institution_premium_support_guaranteed'), isFalse);
+      // Tiroir : le libellé qui reste existe bien.
+      expect(_fr()['institution_premium_support'], isNotNull);
+      expect(_fr()['institution_premium_support'], isNot(contains('Garanti')));
+      expect(
+          _en()['institution_premium_support'], isNot(contains('uaranteed')));
+    });
+  });
+
   group('(4) programme Ambassadeur', () {
     test('programme rémunéré fermé : la candidature ne promet pas de gain', () {
       if (AppConfig.ambassadorCashEnabled) return;

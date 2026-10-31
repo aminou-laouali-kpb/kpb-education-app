@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_tokens.dart';
 import 'kpb_theme_ext.dart';
@@ -285,6 +286,11 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: KpbColors.textPrimary,
+        // Barre d'état à icônes SOMBRES sur fond clair : sans cela, l'heure et la
+        // batterie restaient blanches sur blanc après tout écran à barre de titre
+        // standard (audit build 57, T6-16). Les barres sombres le disent
+        // elles-mêmes (SystemUiOverlayStyle.light).
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,

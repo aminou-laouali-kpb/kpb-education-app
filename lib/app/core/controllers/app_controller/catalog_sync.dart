@@ -63,7 +63,11 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           // Flush any messages typed while offline
           await flushPendingCaseMessages();
 
-          await _pushProfileUpdate();
+          // Le profil n'est réécrit que s'il a changé ici (geste local, hors
+          // ligne ou consentement en attente) : chaque synchro renvoyait toute la
+          // copie du téléphone, puis relisait celle du serveur (8 PATCH en 22
+          // minutes, audit build 57, T8-07). Sans geste, le serveur fait foi.
+          if (_profileNeedsPush) await _pushProfileUpdate();
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);
