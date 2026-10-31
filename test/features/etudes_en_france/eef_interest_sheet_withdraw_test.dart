@@ -364,7 +364,7 @@ void main() {
       // Le message est lu SUR le hub : la feuille est fermée.
       expect(find.text('Tu es retiré de la liste.'), findsOneWidget);
       expect(_sheetLink, findsNothing);
-      expect(find.text('Compléter mon profil'), findsOneWidget);
+      expect(find.text('Être rappelé(e) par un conseiller'), findsOneWidget);
     });
 
     testWidgets('un retrait qui échoue le DIT et garde la déclaration',
@@ -482,7 +482,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Me retirer de la liste'), findsNothing);
 
-      await tester.tap(find.text('Compléter mon profil'));
+      await tester.tap(find.text('Être rappelé(e) par un conseiller'));
       await tester.pumpAndSettle();
       // Avant « Valider » : le consentement promet, il n'y a rien à retirer.
       expect(find.text('eef_consent_notice'.tr), findsOneWidget);

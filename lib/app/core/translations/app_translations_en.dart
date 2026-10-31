@@ -33,11 +33,11 @@ const Map<String, String> appTranslationsEn = {
   'guest_case_gate_title': 'Sign in to create a case',
   'guest_case_gate_body':
       'You need an account so a KPB advisor can process your request and reply to you.',
-  'guest_case_gate_cta': 'Sign in',
+  'guest_case_gate_cta': 'Create my free account',
   'guest_ai_tool_gate_title': 'Sign in to use the AI tools',
   'guest_ai_tool_gate_body':
       'The CV generator, cover letters and interview simulator work from your profile. An account is required to personalise them.',
-  'guest_ai_tool_gate_cta': 'Create my account',
+  'guest_ai_tool_gate_cta': 'Create my free account',
   'profile_sync_pending_title': 'Profile not synced yet',
   'profile_sync_pending_body':
       'Your information has not been retrieved yet. Check your connection and try again in a moment.',
@@ -46,7 +46,7 @@ const Map<String, String> appTranslationsEn = {
       'Create your account to see the scholarships',
   'scholarships_auth_required_body':
       'Scholarships are checked by KPB. You need an account to see and follow them. It is free and takes two minutes.',
-  'scholarships_auth_required_cta': 'Create my account',
+  'scholarships_auth_required_cta': 'Create my free account',
   'guest_cases_title': 'All your cases in one place',
   'guest_cases_body':
       'Sign in to create requests and track their progress with a KPB advisor.',
@@ -301,11 +301,6 @@ const Map<String, String> appTranslationsEn = {
   'profile_universities_empty': 'No saved universities yet.',
   'profile_explore_schools': 'Explore schools',
   'profile_preferences': 'Preferences',
-  'profile_replay_onboarding': 'Replay the getting-started tutorial',
-  'profile_replay_confirm_title': 'Replay the tutorial?',
-  'profile_replay_confirm_body':
-      'You\'ll see the getting-started intro again. Your profile details are kept.',
-  'profile_replay_confirm_cta': 'Replay',
   'profile_parent_access': 'Parent access',
   'profile_parent_access_desc':
       'Link a parent with an invite code to share your progress. You choose what they can see, case by case.',
@@ -904,13 +899,13 @@ const Map<String, String> appTranslationsEn = {
   'community_safety_note':
       'AI moderation + reports. Report any paid private « scholarship offer » — it is a scam.',
   'match_card_eyebrow': 'MY SCHOOL MATCH',
-  'match_card_applying_via': '@name · applying with KPB Education',
+  'match_card_applying_via': '@name · my match with KPB Education',
   'match_card_student_fallback': 'Future student',
   'match_card_domain_tagline': 'find your schools',
-  'match_card_share_whatsapp': 'Share on WhatsApp',
+  'match_card_share_whatsapp': 'WhatsApp',
   'match_card_download': 'Download',
   'match_card_whatsapp_prefill':
-      '@school: @fit for my profile. Find the schools that match you on Karatou: @link',
+      '@school: @fit for my profile. Find the schools that match you on KPB Education: @link',
   'match_card_share_error': 'Could not generate the card. Try again.',
   'forum_no_articles_tagged':
       'No articles tagged yet. Join the WhatsApp group to ask questions.',
@@ -1193,7 +1188,7 @@ const Map<String, String> appTranslationsEn = {
   'live_scholarships_step_duration': 'Estimated duration: @days day(s)',
   'live_scholarships_view_official_application':
       'View the official application site',
-  'live_scholarships_official_form': 'Official application form',
+  'live_scholarships_official_form': 'Open the official page',
   'live_scholarships_no_deadline': 'No fixed deadline',
   'live_scholarships_funding_tile': 'Funding',
   'live_scholarships_alert': 'Notify me',
@@ -1758,8 +1753,8 @@ const Map<String, String> appTranslationsEn = {
   'eef_opens_in_days': 'opens in @days days',
   'eef_opens_tomorrow': 'opens tomorrow',
   'eef_deadline_varies_notice':
-      'Closing dates vary by country and by procedure. We will confirm '
-          'yours inside the space.',
+      'Closing dates vary by country and by procedure. '
+          'Check the deadline on the Campus France site for your country.',
   'eef_official_platform_link': 'Open the official platform',
   'eef_official_suspension_link': 'See the official source',
   'eef_suspended_notice':
@@ -2018,7 +2013,7 @@ const Map<String, String> appTranslationsEn = {
   'eef_profile_empty_body':
       'Tell us your level and your fields: a KPB advisor will be able '
           'to call you back with the right information.',
-  'eef_profile_declare_cta': 'Complete my profile',
+  'eef_profile_declare_cta': 'Be called back by an advisor',
   'eef_profile_level_line': 'Current level: @level',
   'eef_profile_target_line': 'Target level: @level',
   'eef_profile_fields_line': 'Fields: @fields',
@@ -2549,13 +2544,14 @@ const Map<String, String> appTranslationsEn = {
   'auth_intelligence_title': 'KPB Intelligence, your guide to studying abroad',
   'auth_intelligence_body':
       'Build your profile in 3 steps and discover universities ranked by your answers.',
-  'auth_intelligence_benefit_fit': 'Universities ranked for your profile',
+  'auth_intelligence_benefit_fit':
+      'Scholarships verified by KPB, with their dates',
   // Voir le commentaire du bloc `fr` : ne nomme que le coach, la seule
   // surface KPB Intelligence atteignable en build 49.
   'auth_intelligence_benefit_ai':
       'KPB Intelligence answers in French: schools, budget, programs',
   'auth_intelligence_benefit_support': 'Human KPB guidance via WhatsApp',
-  'auth_receive_email_link': 'Receive a link by email',
+  'auth_receive_email_link': 'Receive a code by email',
   'auth_explore_guest': 'Explore without an account',
   'auth_intelligence_note': 'Free · FCFA · designed for French-speaking Africa',
   'auth_continue_google': 'Continue with Google',
@@ -2570,7 +2566,7 @@ const Map<String, String> appTranslationsEn = {
   'auth_magic_send_button': 'Send code',
   'auth_magic_send_error': 'Could not send the code. Try again.',
   'auth_magic_verify_title': 'Verification',
-  'auth_magic_verify_body': 'Enter the code sent to @email (valid 15 min).',
+  'auth_magic_verify_body': 'Enter the code sent to @email.',
   'auth_magic_verify_error': 'Invalid or expired code.',
   'auth_magic_verify_code_label': '6-digit code',
   'auth_magic_verify_button': 'Verify',
@@ -3376,7 +3372,7 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_official_source': 'Official source',
   'scholarship_official_source_a11y':
       'Open the official source of this scholarship (external site)',
-  'scholarship_action_apply': 'Apply',
+  'scholarship_action_apply': 'Official site to apply',
   'scholarship_action_apply_a11y':
       'Apply to @title on the official website (external site)',
   'scholarship_action_support': 'Get support',
@@ -3581,6 +3577,7 @@ const Map<String, String> appTranslationsEn = {
   'home_match_see_all_one': 'See my scholarship',
   // ── Home "Your next step" (chantier K) ──
   'home_next_step_eyebrow': 'YOUR NEXT STEP',
+  'home_plan_ring_label': 'Your plan',
   'home_next_step_plan_a11y': 'Your plan: @value out of 100',
   'home_next_step_label_deadline': 'Closing soon',
   'home_next_step_subtitle_profile_test':

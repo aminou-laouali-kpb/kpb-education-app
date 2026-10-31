@@ -35,13 +35,13 @@ const Map<String, String> appTranslationsFr = {
   'guest_case_gate_title': 'Connecte-toi pour créer un dossier',
   'guest_case_gate_body':
       'Un compte est nécessaire pour qu\'un conseiller KPB puisse traiter ta demande et te répondre.',
-  'guest_case_gate_cta': 'Se connecter',
+  'guest_case_gate_cta': 'Créer mon compte gratuit',
   // Mur invité des outils IA. Sans lui, le clic d'un visiteur sur
   // « Générateur de CV » ne produisait rien du tout.
   'guest_ai_tool_gate_title': 'Connecte-toi pour utiliser les outils IA',
   'guest_ai_tool_gate_body':
       'Le générateur de CV, les lettres de motivation et le simulateur d\'entretien travaillent à partir de ton profil. Un compte est nécessaire pour les personnaliser.',
-  'guest_ai_tool_gate_cta': 'Créer mon compte',
+  'guest_ai_tool_gate_cta': 'Créer mon compte gratuit',
   // Authentifié mais sans profil en cache : synchronisation inaboutie.
   // Ni un invité, ni un refus de consentement.
   'profile_sync_pending_title': 'Profil pas encore synchronisé',
@@ -55,7 +55,7 @@ const Map<String, String> appTranslationsFr = {
   'scholarships_auth_required_title': 'Crée ton compte pour voir les bourses',
   'scholarships_auth_required_body':
       'Les bourses sont vérifiées par KPB. Il faut un compte pour les voir et les suivre. C\'est gratuit et ça prend deux minutes.',
-  'scholarships_auth_required_cta': 'Créer mon compte',
+  'scholarships_auth_required_cta': 'Créer mon compte gratuit',
   'guest_cases_title': 'Tes dossiers en un seul endroit',
   'guest_cases_body':
       'Connecte-toi pour créer tes demandes et suivre leur progression avec un conseiller KPB.',
@@ -316,11 +316,6 @@ const Map<String, String> appTranslationsFr = {
       'Aucune université enregistrée pour l\'instant.',
   'profile_explore_schools': 'Explorer les écoles',
   'profile_preferences': 'Préférences',
-  'profile_replay_onboarding': 'Revoir le tutoriel de démarrage',
-  'profile_replay_confirm_title': 'Revoir le tutoriel ?',
-  'profile_replay_confirm_body':
-      'Tu reverras l\'intro de démarrage. Tes informations de profil sont conservées.',
-  'profile_replay_confirm_cta': 'Revoir',
   'profile_parent_access': 'Accès parent',
   'profile_parent_access_desc':
       'Relie un parent avec un code d\'invitation pour partager ta progression. Tu choisis ce qu\'il peut voir, dossier par dossier.',
@@ -986,13 +981,13 @@ const Map<String, String> appTranslationsFr = {
   'community_safety_note':
       'Modération IA + signalements. Signale toute « offre de bourse » privée payante — c\'est une arnaque.',
   'match_card_eyebrow': 'MON MATCH ÉCOLE',
-  'match_card_applying_via': '@name · candidature avec KPB Education',
+  'match_card_applying_via': '@name · mon match avec KPB Education',
   'match_card_student_fallback': 'Futur·e étudiant·e',
   'match_card_domain_tagline': 'trouve tes écoles',
-  'match_card_share_whatsapp': 'Partager sur WhatsApp',
+  'match_card_share_whatsapp': 'WhatsApp',
   'match_card_download': 'Télécharger',
   'match_card_whatsapp_prefill':
-      '@school : @fit pour mon profil. Trouve les écoles qui te correspondent sur Karatou : @link',
+      '@school : @fit pour mon profil. Trouve les écoles qui te correspondent sur KPB Education : @link',
   'match_card_share_error': 'Impossible de générer la carte. Réessaie.',
   'forum_no_articles_tagged':
       'Aucun article marqué pour l\'instant. Rejoins le groupe WhatsApp pour poser tes questions.',
@@ -1291,7 +1286,7 @@ const Map<String, String> appTranslationsFr = {
   'live_scholarships_step_duration': 'Durée estimée : @days jour(s)',
   'live_scholarships_view_official_application':
       'Voir le site officiel de candidature',
-  'live_scholarships_official_form': 'Formulaire officiel',
+  'live_scholarships_official_form': 'Ouvrir la page officielle',
   'live_scholarships_no_deadline': 'Pas de date limite',
   'live_scholarships_funding_tile': 'Financement',
   'live_scholarships_alert': 'M\'avertir',
@@ -1933,8 +1928,8 @@ const Map<String, String> appTranslationsFr = {
   // Les clôtures divergent par pays et la plupart ne sont pas encore
   // publiées : on dit qu'elles existent sans en inventer aucune.
   'eef_deadline_varies_notice':
-      'Les dates de clôture varient selon ton pays et ta procédure. On '
-          'te les confirmera dans l\'espace.',
+      'Les dates de clôture varient selon ton pays et ta procédure. '
+          'Vérifie la date limite sur le site Campus France de ton pays.',
   // Suspension : elle REMPLACE la date d'ouverture. Le texte ne promet
   // pas de débloquer une situation diplomatique — il dit ce qui est, et
   // propose la seule chose utile, parler à quelqu'un.
@@ -2223,7 +2218,7 @@ const Map<String, String> appTranslationsFr = {
   'eef_profile_empty_body':
       'Dis-nous ton niveau et tes domaines : un conseiller KPB pourra '
           'te rappeler avec les bonnes informations.',
-  'eef_profile_declare_cta': 'Compléter mon profil',
+  'eef_profile_declare_cta': 'Être rappelé(e) par un conseiller',
   'eef_profile_level_line': 'Niveau actuel : @level',
   'eef_profile_target_line': 'Niveau visé : @level',
   'eef_profile_fields_line': 'Domaines : @fields',
@@ -2784,7 +2779,8 @@ const Map<String, String> appTranslationsFr = {
   // écrans (`_totalPages`, garde : honest_labels_guard_test.dart).
   'auth_intelligence_body':
       'Crée ton profil en 3 étapes et découvre des universités classées selon tes réponses.',
-  'auth_intelligence_benefit_fit': 'Universités classées selon ton profil',
+  'auth_intelligence_benefit_fit':
+      'Bourses vérifiées par KPB, avec leurs dates',
   // Ne nomme QUE le coach, seule surface KPB Intelligence en ligne en
   // build 49. La version précédente promettait « lettre, entretien » :
   // le générateur de lettres et le simulateur d'entretien sont masqués
@@ -2795,11 +2791,11 @@ const Map<String, String> appTranslationsFr = {
   'auth_intelligence_benefit_ai':
       'KPB Intelligence répond en français : écoles, budget, filières',
   'auth_intelligence_benefit_support': 'Accompagnement humain KPB via WhatsApp',
-  'auth_receive_email_link': 'Recevoir un lien par email',
+  'auth_receive_email_link': 'Recevoir un code par e-mail',
   'auth_explore_guest': 'Explorer sans compte',
   'auth_intelligence_note': 'Gratuit · FCFA · pensé pour l’Afrique francophone',
   'auth_continue_google': 'Continuer avec Google',
-  'auth_google_error': 'Connexion Google impossible. Réessayez.',
+  'auth_google_error': 'Connexion Google impossible. Réessaie.',
   'auth_continue_email': 'Continuer avec mon email',
   'auth_continue_guest': 'Explorer sans compte',
   'auth_guest_hint':
@@ -2808,9 +2804,9 @@ const Map<String, String> appTranslationsFr = {
   'auth_magic_email_body':
       'Nous t\'enverrons un code à 6 chiffres pour te connecter sans mot de passe.',
   'auth_magic_send_button': 'Envoyer le code',
-  'auth_magic_send_error': 'Impossible d’envoyer le code. Réessayez.',
+  'auth_magic_send_error': 'Impossible d’envoyer le code. Réessaie.',
   'auth_magic_verify_title': 'Vérification',
-  'auth_magic_verify_body': 'Saisissez le code reçu à @email (valide 15 min).',
+  'auth_magic_verify_body': 'Saisis le code reçu à @email.',
   'auth_magic_verify_error': 'Code invalide ou expiré.',
   'auth_magic_verify_code_label': 'Code à 6 chiffres',
   'auth_magic_verify_button': 'Valider',
@@ -3648,7 +3644,7 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_official_source': 'Source officielle',
   'scholarship_official_source_a11y':
       'Ouvrir la source officielle de cette bourse (site externe)',
-  'scholarship_action_apply': 'Postuler',
+  'scholarship_action_apply': 'Site officiel pour postuler',
   'scholarship_action_apply_a11y':
       'Postuler à @title sur le site officiel (site externe)',
   'scholarship_action_support': 'Être accompagné',
@@ -3858,6 +3854,7 @@ const Map<String, String> appTranslationsFr = {
   'home_match_see_all_one': 'Voir ma bourse',
   // ── Accueil « Ta prochaine étape » (chantier K) ──
   'home_next_step_eyebrow': 'TA PROCHAINE ÉTAPE',
+  'home_plan_ring_label': 'Ton plan',
   'home_next_step_plan_a11y': 'Ton plan : @value sur 100',
   'home_next_step_label_deadline': 'Clôture proche',
   'home_next_step_subtitle_profile_test':

@@ -263,7 +263,7 @@ void main() {
 
     // « Postuler » (ouvre le vrai applicationUrl) vit dans la barre fixe du
     // bas de la fiche (chantier I2).
-    final ctaFinder = find.text('Postuler');
+    final ctaFinder = find.text('Site officiel pour postuler');
     await tester.scrollUntilVisible(
       ctaFinder,
       250,

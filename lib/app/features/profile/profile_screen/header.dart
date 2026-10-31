@@ -6,9 +6,8 @@ part of '../profile_screen.dart';
 // Header
 // ─────────────────────────────────────────────────────────────────────────────
 class _HeaderCard extends StatelessWidget {
-  const _HeaderCard({required this.profile, required this.completion});
+  const _HeaderCard({required this.profile});
   final UserProfile profile;
-  final int completion;
 
   @override
   Widget build(BuildContext context) {
@@ -82,43 +81,6 @@ class _HeaderCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _CompletionPill(completion: completion),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompletionPill extends StatelessWidget {
-  const _CompletionPill({required this.completion});
-  final int completion;
-
-  @override
-  Widget build(BuildContext context) {
-    final done = completion >= 100;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: done ? KpbColors.successLight : KpbColors.actionPrimarySoft,
-        borderRadius: BorderRadius.circular(100),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (done) ...[
-            const Icon(Icons.check_circle_rounded,
-                size: 12, color: KpbColors.success),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            '$completion%',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: done ? KpbColors.success : KpbColors.actionPrimary,
             ),
           ),
         ],

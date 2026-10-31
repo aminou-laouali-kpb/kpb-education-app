@@ -376,7 +376,7 @@ void main() {
 
       expect(find.descendant(of: _bar, matching: _apply), findsOneWidget);
       expect(find.descendant(of: _bar, matching: _support), findsOneWidget);
-      expect(find.text('Postuler'), findsOneWidget);
+      expect(find.text('Site officiel pour postuler'), findsOneWidget);
       expect(find.text('Être accompagné'), findsOneWidget);
       expect(find.descendant(of: _bar, matching: _follow), findsNothing);
       expect(_follow, findsOneWidget);

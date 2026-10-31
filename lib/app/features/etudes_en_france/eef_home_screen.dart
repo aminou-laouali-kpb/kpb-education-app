@@ -329,9 +329,9 @@ class _EefHomeScreenState extends State<EefHomeScreen>
                   () => const InterviewSimulatorScreen(fromEefHub: true),
                 ),
               ),
-              // Les pièces du dossier : la section n'existe que si les outils
-              // sont démasqués, le lien d'aide aussi.
-              const EefHelpCard(step: EefHelpStep.documents),
+              // Pas de 3e carte d'aide ici : le hub avait trois appels au même
+              // WhatsApp (audit build 57, T5-08). Restent la procédure (dates)
+              // et la carte du hub.
             ],
             const SizedBox(height: KpbSpacing.lg),
             _ProfileBlock(

@@ -240,7 +240,7 @@ void main() {
       await scrollDown(tester);
 
       expect(find.text('Mon profil Études en France'), findsOneWidget);
-      expect(find.text('Compléter mon profil'), findsOneWidget);
+      expect(find.text('Être rappelé(e) par un conseiller'), findsOneWidget);
       expect(find.text('Me retirer de la liste'), findsNothing);
     });
 
@@ -281,7 +281,7 @@ void main() {
       verify(() => api.withdrawEefInterest()).called(1);
       expect(find.text('Tu es retiré de la liste.'), findsOneWidget);
       // Le bloc revient à « pas déclaré ».
-      expect(find.text('Compléter mon profil'), findsOneWidget);
+      expect(find.text('Être rappelé(e) par un conseiller'), findsOneWidget);
     });
 
     testWidgets('un retrait qui échoue le DIT et garde la déclaration',
@@ -383,7 +383,7 @@ void main() {
       );
       await scrollDown(tester);
 
-      await tester.tap(find.text('Compléter mon profil'));
+      await tester.tap(find.text('Être rappelé(e) par un conseiller'));
       await tester.pumpAndSettle();
 
       // Le consentement est annoncé, avant le bouton qui le donne.
@@ -411,7 +411,7 @@ void main() {
       await scrollDown(tester);
 
       expect(find.text('Créer mon compte'), findsOneWidget);
-      expect(find.text('Compléter mon profil'), findsNothing);
+      expect(find.text('Être rappelé(e) par un conseiller'), findsNothing);
       // Et aucun appel : un invité n'a pas de session, l'appel reviendrait en 401.
       verifyNever(() => api.getEefInterest());
     });
@@ -431,7 +431,7 @@ void main() {
       expect(
           find.textContaining('Impossible de lire ton profil'), findsOneWidget);
       expect(find.text('Réessayer'), findsOneWidget);
-      expect(find.text('Compléter mon profil'), findsNothing);
+      expect(find.text('Être rappelé(e) par un conseiller'), findsNothing);
     });
 
     testWidgets('« Réessayer » relit, et retrouve la déclaration',
@@ -455,9 +455,10 @@ void main() {
   });
 
   // « À chaque étape où c'est un peu flou, on pose une question. » Le hub porte
-  // UNE carte pleine (la principale) et deux lignes (procédure, documents) ; ce
-  // groupe prouve qu'elles sont au bon endroit, pas en double, et qu'un pays
-  // suspendu n'y lit jamais « démarre ton dossier ».
+  // UNE carte pleine (la principale) et une ligne (procédure) : la ligne
+  // « documents » est retirée (audit build 57, T5-08 : trois appels au même
+  // WhatsApp). Ce groupe prouve qu'elles sont au bon endroit, pas en double, et
+  // qu'un pays suspendu n'y lit jamais « démarre ton dossier ».
   group('aide à chaque étape floue', () {
     const hubCta = "Démarrer l'étude de mon dossier sur WhatsApp";
     const hubQuestion = "C'est flou ? Tu veux de l'aide ?";
@@ -481,26 +482,26 @@ void main() {
         .map((t) => t.data ?? '')
         .join(' | ');
 
-    testWidgets('trois emplacements, UNE seule carte pleine', (tester) async {
+    testWidgets('deux emplacements, UNE seule carte pleine', (tester) async {
       stubInterest(null);
       await pump(tester, viewport: _tall);
 
-      expect(find.byType(EefHelpCard), findsNWidgets(3));
+      expect(find.byType(EefHelpCard), findsNWidgets(2));
       // La carte principale : une fois. Sa mention (qui n'existe que sur une
       // carte pleine) aussi : il n'y a pas deux cartes.
       expect(find.text(hubQuestion), findsOneWidget);
       expect(find.text(hubCta), findsOneWidget);
       expect(find.text('eef_help_fineprint'.tr), findsOneWidget);
-      // Les deux lignes, chacune une fois.
+      // La ligne de procédure, une fois ; plus de ligne « documents ».
       expect(find.text(procedureQuestion), findsOneWidget);
-      expect(find.text(documentsQuestion), findsOneWidget);
-      expect(find.text(compactCta), findsNWidgets(2));
+      expect(find.text(documentsQuestion), findsNothing);
+      expect(find.text(compactCta), findsOneWidget);
       expect(rawTranslationKeysOnScreen(tester), isEmpty);
     });
 
     testWidgets(
         'chacune est à sa place : sous le héros, sous « Trouver ma '
-        'formation », sous les outils', (tester) async {
+        'formation »', (tester) async {
       stubInterest(null);
       await pump(tester, viewport: _tall);
 
@@ -513,7 +514,6 @@ void main() {
       final main = top(tester, find.text(hubQuestion));
       final toolsHeading = top(tester, find.text('Préparer mon dossier'));
       final interview = top(tester, find.text('interview_title'.tr));
-      final documents = top(tester, find.text(documentsQuestion));
       final profile = top(tester, find.text('Mon profil Études en France'));
 
       expect(hero, lessThan(procedure));
@@ -521,8 +521,7 @@ void main() {
       expect(formations, lessThan(main));
       expect(main, lessThan(toolsHeading));
       expect(toolsHeading, lessThan(interview));
-      expect(interview, lessThan(documents));
-      expect(documents, lessThan(profile));
+      expect(interview, lessThan(profile));
     });
 
     testWidgets('elle REMPLACE l\'ancienne tuile « Parler à un conseiller »',
@@ -551,19 +550,18 @@ void main() {
       stubInterest(null);
       await pump(tester, viewport: _tall);
 
-      expect(helpAnalytics.shownCalls, hasLength(3));
+      expect(helpAnalytics.shownCalls, hasLength(2));
       expect(
         helpAnalytics.shownCalls.toSet(),
         {
           const RecordedHelpEvent('procedure', 'hub', 'compact'),
           const RecordedHelpEvent('hub', 'hub', 'card'),
-          const RecordedHelpEvent('documents', 'hub', 'compact'),
         },
       );
 
       // Le profil se charge, la liste se reconstruit : pas de seconde « vue ».
       await scrollDown(tester);
-      expect(helpAnalytics.shownCalls, hasLength(3));
+      expect(helpAnalytics.shownCalls, hasLength(2));
     });
 
     testWidgets('le tap sur la carte principale ouvre WhatsApp avec l\'étape',
@@ -592,17 +590,6 @@ void main() {
       expect(launcher.lastText, frHelpPrefill('procédure, dates et dépôt'));
       expect(helpAnalytics.tappedCalls,
           [const RecordedHelpEvent('procedure', 'hub', 'compact')]);
-    });
-
-    testWidgets('le tap sur la ligne « documents » nomme SON étape',
-        (tester) async {
-      stubInterest(null);
-      await pump(tester, viewport: _tall);
-
-      await tester.tap(find.text(compactCta).last);
-      await tester.pumpAndSettle();
-
-      expect(launcher.lastText, frHelpPrefill('documents à fournir'));
     });
 
     testWidgets('un invité n\'a pas de compte, mais a un conseiller',
