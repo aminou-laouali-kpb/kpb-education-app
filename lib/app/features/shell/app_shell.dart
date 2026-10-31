@@ -72,7 +72,10 @@ class _AppShellState extends State<AppShell> {
 
         final pages = <Widget>[
           const HomeScreen(),
-          LiveScholarshipsScreen(apiClient: controller.apiClient),
+          LiveScholarshipsScreen(
+            apiClient: controller.apiClient,
+            embeddedInShell: true,
+          ),
           UniversitiesScreen(
             key: ValueKey(fieldFilter ?? 'all'),
             initialFieldId: fieldFilter,
@@ -120,18 +123,21 @@ class _AppShellState extends State<AppShell> {
               // online, otherwise KpbOfflineBanner already says it (with the
               // same freshness label) and we would stack two near-identical
               // strips.
-              final staleCatalog = online &&
+              // Aucun bandeau avant la fin de la 1re synchro : ni échantillon
+              // ni catalogue daté ne sont encore une conclusion.
+              final settled = controller.catalogFirstSyncSettled;
+              final sampleCatalog = settled && controller.catalogIsSampleData;
+              final staleCatalog = settled &&
+                  online &&
                   controller.catalogDataState == CatalogDataState.offline;
-              final bannerVisible =
-                  controller.catalogIsSampleData || staleCatalog;
+              final bannerVisible = sampleCatalog || staleCatalog;
 
               return Column(
                 children: [
                   // Honest signal when we're still on the bundled sample
                   // catalog (backend unreachable/empty, no cache) rather than
                   // real data.
-                  if (controller.catalogIsSampleData)
-                    const KpbSampleDataBanner(),
+                  if (sampleCatalog) const KpbSampleDataBanner(),
                   if (staleCatalog)
                     KpbStaleCatalogBanner(
                       snapshotAt: controller.catalogSnapshotAt,

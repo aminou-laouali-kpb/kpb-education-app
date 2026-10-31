@@ -47,7 +47,19 @@ class KpbToolsDrawer extends StatelessWidget {
   }
 
   /// Open the drawer from anywhere inside the AppShell tree.
-  static void open(BuildContext _) {
+  ///
+  /// The Scaffold that encloses [context] wins: the ☰ button sits in the
+  /// shell's own body, so it always opens ITS shell. The global key is only a
+  /// fallback for callers below a tab's inner Scaffold. Relying on it alone
+  /// left the ☰ inert for every first-time guest: `enterGuestMode()` then
+  /// `Get.offAll` mount two shells, and the outgoing one's teardown could leave
+  /// the key empty or aimed at the wrong shell (audit build 57, n° 3).
+  static void open(BuildContext context) {
+    final enclosing = Scaffold.maybeOf(context);
+    if (enclosing != null && enclosing.hasDrawer) {
+      enclosing.openDrawer();
+      return;
+    }
     _activeShellKey?.currentState?.openDrawer();
   }
 

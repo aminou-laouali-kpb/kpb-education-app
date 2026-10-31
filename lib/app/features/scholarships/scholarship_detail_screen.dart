@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -12,6 +13,7 @@ import '../../core/repositories/success_lab_repository.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/remote_feature_flags.dart';
+import '../../core/ui/components/kpb_guest_gate.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/ui/skeleton.dart';
 import '../cases/scholarship_support_case.dart';
@@ -63,6 +65,10 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
   bool _successLabEnabled = false;
   String? _error;
 
+  /// Invité face à une fiche réservée aux comptes (401/403) : le mur, pas
+  /// « Erreur de connexion » en boucle (audit build 57, n° 9).
+  bool _guestGated = false;
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +85,7 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     setState(() {
       _loading = _scholarship == null;
       _error = null;
+      _guestGated = false;
     });
     try {
       final language =
@@ -114,8 +121,15 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         // Keep the local follow state if alert reconciliation is offline.
       }
     } catch (exception) {
+      final status =
+          exception is DioException ? exception.response?.statusCode : null;
+      final guestGated = (status == 401 || status == 403) &&
+          Get.find<AppController>().isGuestMode;
       if (mounted && _scholarship == null) {
-        setState(() => _error = exception.toString());
+        setState(() {
+          _error = exception.toString();
+          _guestGated = guestGated;
+        });
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -389,29 +403,37 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
               onApply: () => _openUrl(scholarship.applicationUrl),
               onSupport: _startSupport,
             ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: KpbAsyncView(
-          phase: KpbAsyncView.phaseOf(
-            loading: _loading,
-            hasData: scholarship != null,
-            failed: _error != null,
-          ),
-          refreshable: true,
-          skeleton: const _DetailSkeleton(),
-          empty: KpbEmptyState(
-            icon: Icons.search_off_rounded,
-            title: 'scholarship_detail_not_found'.tr,
-            subtitle: 'scholarship_detail_not_found_body'.tr,
-            action: KpbButton(text: 'retry'.tr, onPressed: _load),
-          ),
-          errorTitle: 'live_scholarships_connection_error_title'.tr,
-          errorMessage: 'live_scholarships_connection_error_subtitle'.tr,
-          onRetry: _load,
-          builder: (context) =>
-              _buildContent(context, scholarship!, urgency!, canApply),
-        ),
-      ),
+      body: _guestGated && scholarship == null
+          ? const KpbGuestGate(
+              source: 'scholarship_detail_gate',
+              icon: Icons.workspace_premium_outlined,
+              titleKey: 'scholarships_auth_required_title',
+              bodyKey: 'scholarships_auth_required_body',
+              ctaKey: 'scholarships_auth_required_cta',
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: KpbAsyncView(
+                phase: KpbAsyncView.phaseOf(
+                  loading: _loading,
+                  hasData: scholarship != null,
+                  failed: _error != null,
+                ),
+                refreshable: true,
+                skeleton: const _DetailSkeleton(),
+                empty: KpbEmptyState(
+                  icon: Icons.search_off_rounded,
+                  title: 'scholarship_detail_not_found'.tr,
+                  subtitle: 'scholarship_detail_not_found_body'.tr,
+                  action: KpbButton(text: 'retry'.tr, onPressed: _load),
+                ),
+                errorTitle: 'live_scholarships_connection_error_title'.tr,
+                errorMessage: 'live_scholarships_connection_error_subtitle'.tr,
+                onRetry: _load,
+                builder: (context) =>
+                    _buildContent(context, scholarship!, urgency!, canApply),
+              ),
+            ),
     );
   }
 

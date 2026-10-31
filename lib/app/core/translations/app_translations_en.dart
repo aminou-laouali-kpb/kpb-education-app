@@ -275,7 +275,7 @@ const Map<String, String> appTranslationsEn = {
   'parent_hello': 'Hello, @name',
   'parent_linked_readonly': 'Parent account — linked to @child (read-only)',
   'parent_advisor_title': 'Talk to the KPB advisor',
-  'parent_advisor_sub': 'WhatsApp · replies in ~2h',
+  'parent_advisor_sub': 'WhatsApp · replies within 24 h',
   'parent_privacy_note':
       'Your child controls what you see, field by field, from their app. Case progress and deadlines always stay visible.',
   'parent_case_title': 'Shared application',
@@ -848,7 +848,6 @@ const Map<String, String> appTranslationsEn = {
   'deadlines_stat_within_30_days': '≤ 30 days',
   'deadlines_badge_tracked': 'Tracked',
   'deadlines_kind_scholarship': 'Scholarship',
-  'deadlines_kind_roadmap': 'Roadmap',
   'deadlines_kind_case': 'Case',
   'deadlines_kind_document': 'Document',
   'deadlines_status_past': 'Past',
@@ -1738,7 +1737,7 @@ const Map<String, String> appTranslationsEn = {
   // ── Contact KPB counselor (Home, App-engagement handoff) ──
   'home_counselor_cta_title': 'Talk to a KPB counselor',
   'home_counselor_cta_subtitle':
-      'On WhatsApp, with your profile already shared. Replies in ~2h.',
+      'On WhatsApp, with a message ready to send. Replies within 24 h.',
   'sample_data_notice':
       'Sample data — couldn’t reach the server. The catalog shown isn’t live yet.',
   'freshness_saved': 'saved data',
@@ -2757,7 +2756,7 @@ const Map<String, String> appTranslationsEn = {
   'amb_appbar': 'Ambassador space',
   'amb_apply_title': 'Ambassador programme',
   'amb_apply_body':
-      'The Ambassador programme (paid referrals) is open by application. Contact a KPB advisor to join, or explore our free referral programme.',
+      'The Ambassador programme is open by application. Contact a KPB advisor to join, or explore our free referral programme.',
   'amb_apply_cta_advisor': 'Contact an advisor',
   'amb_apply_cta_referral': 'Explore referrals',
   'amb_apply_wa_prefill':
@@ -2910,9 +2909,6 @@ const Map<String, String> appTranslationsEn = {
       'Based on your profile, here are the schools that match you best.',
   'aha_empty_body': 'No matches yet — explore the catalog to discover schools.',
   'aha_estimate_note': 'Estimate — complete your profile for more precision.',
-  'aha_zone_green': 'Closely matches your profile',
-  'aha_zone_yellow': 'Partly matches your profile',
-  'aha_zone_blue': 'Less aligned with your current profile',
   'aha_cta': 'Explore my home',
   'aha_see_all_cta': 'See all universities',
   // ── PR2 · Écoles / Destinations / Fiche restyle (App-engagement) ──

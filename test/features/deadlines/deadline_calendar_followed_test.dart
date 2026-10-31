@@ -97,4 +97,98 @@ void main() {
     expect(find.text('detail:eiffel'), findsOneWidget);
     expect(find.text('calendrier encore'), findsNothing);
   });
+
+  // Audit build 57, n° 7 : suivre une bourse qui clôt dans 6 jours créait 5
+  // étapes « Roadmap » génériques, dont 4 déjà « Passée » ; un dossier sans
+  // date recevait un faux « 7 jours » ; sa pièce manquante comptait comme un
+  // 2e dossier.
+  testWidgets(
+      'ni étapes « Roadmap », ni faux délai, et un dossier compte une fois',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final now = DateTime.now();
+    final openCase = StudentCase(
+      id: 'case-1',
+      referenceCode: 'KPB-1',
+      type: CaseType.scholarshipSupport,
+      title: const LocalizedText(fr: 'Dossier Eiffel', en: 'Eiffel case'),
+      description: const LocalizedText(fr: '', en: ''),
+      contextLabel: const LocalizedText(fr: 'France', en: 'France'),
+      status: CaseStatus.submitted,
+      preferredContactMethod: ContactMethod.inApp,
+      createdAt: now,
+      updatedAt: now,
+      nextStepTitle: const LocalizedText(fr: 'Étape du conseiller', en: 'Step'),
+      nextStepDescription: const LocalizedText(fr: '', en: ''),
+      timeline: const <CaseTimelineEvent>[],
+      messages: const [],
+      documentRequests: const [
+        DocumentRequest(
+          id: 'doc-1',
+          title: LocalizedText(fr: 'Relevés de notes', en: 'Transcripts'),
+          isProvided: false,
+        ),
+      ],
+    );
+    final controller = AppController(
+      repository: FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+          savedItems: const [
+            SavedItem(type: SavedItemType.scholarship, itemId: 'eiffel'),
+          ],
+          cases: [openCase],
+        ),
+      ),
+      apiClient: MockApiClient(),
+    );
+    await controller.hydrate();
+    Get.put<AppController>(controller, permanent: true);
+    final closesSoon = ScholarshipModel(
+      id: 'eiffel',
+      name: const LocalizedText(fr: 'Bourse Eiffel', en: 'Eiffel'),
+      countryId: 'fra',
+      levelEligible: const LocalizedText(fr: 'Master', en: 'Master'),
+      typeOfFunding: const LocalizedText(fr: 'Complète', en: 'Full'),
+      deadlineLabel: const LocalizedText(fr: '', en: ''),
+      keyRequirements: const [],
+      relatedFieldIds: const [],
+      baseMatch: 50,
+      deadlineAt: now.add(const Duration(days: 6)),
+    );
+    controller.scholarships
+      ..clear()
+      ..add(closesSoon);
+
+    await tester.pumpWidget(const GetMaterialApp(
+      home: DeadlineCalendarScreen(),
+    ));
+    await tester.pumpAndSettle();
+
+    // Tiroir : la bourse et le dossier sont bien listés.
+    expect(find.text('Bourse Eiffel'), findsOneWidget);
+    expect(find.text('Étape du conseiller'), findsOneWidget);
+    expect(find.text('deadlines_kind_roadmap'), findsNothing);
+    // Dossier et pièce sans date fixée : « Date à confirmer », pas « 7 jours ».
+    expect(find.text('deadlines_date_to_confirm'), findsWidgets);
+    // Compteurs : 1 échéance à venir (la bourse), 1 dossier.
+    final banner = find
+        .byWidgetPredicate((w) => w.runtimeType.toString() == '_StatsBanner');
+    final counts = tester
+        .widgetList<Text>(
+            find.descendant(of: banner, matching: find.byType(Text)))
+        .map((t) => t.data)
+        .whereType<String>()
+        .where((d) => int.tryParse(d) != null)
+        .toList();
+    expect(counts, ['1', '1', '1']);
+  });
 }

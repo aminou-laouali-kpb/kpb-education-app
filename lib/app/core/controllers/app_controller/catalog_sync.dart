@@ -294,6 +294,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
       );
     } finally {
       isSyncing = false;
+      catalogFirstSyncSettled = true;
       if (!syncDone.isCompleted) syncDone.complete();
       update();
     }
@@ -303,6 +304,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
   /// needs with it. No `update()` here: every caller sits inside
   /// [syncRemoteData], whose `finally` already notifies the shell — which is
   /// what makes the banner appear and disappear without a restart.
+  @override
   void _setCatalogDataState(CatalogDataState state) {
     catalogDataState = state;
     if (state != CatalogDataState.sample) {

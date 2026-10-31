@@ -52,7 +52,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/home/home_impact_proof.dart': 1,
   'lib/app/features/housing/housing_estimator_screen.dart': 4,
   'lib/app/features/legal/legal_pages.dart': 6,
-  'lib/app/features/matches/aha_moment_screen.dart': 14,
+  'lib/app/features/matches/aha_moment_screen.dart': 13,
   'lib/app/features/onboarding/intro_slideshow_screen.dart': 4,
   'lib/app/features/onboarding/onboarding_screen/chrome.dart': 4,
   'lib/app/features/onboarding/onboarding_screen/fields.dart': 2,

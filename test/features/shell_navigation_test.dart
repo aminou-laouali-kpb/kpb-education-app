@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/navigation/shell_tabs.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/ui/components/kpb_sample_data_banner.dart';
 import 'package:karatou/app/features/shell/app_shell.dart';
 
 import '../widget_test_helpers.dart';
@@ -99,6 +100,38 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+    });
+
+    // Audit build 57, n° 2 : pas de « connexion au serveur impossible »
+    // pendant que la 1re synchro avance ; seulement si elle a échoué.
+    testWidgets('bandeau « Données d\'exemple » seulement après la 1re synchro',
+        (tester) async {
+      await pumpTestApp(
+        tester,
+        child: const AppShell(),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
+      final controller = Get.find<AppController>()
+        ..catalogDataState = CatalogDataState.sample
+        ..catalogFirstSyncSettled = false;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsNothing);
+
+      controller.catalogFirstSyncSettled = true;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsOneWidget);
+
+      controller.catalogDataState = CatalogDataState.live;
+      controller.update();
+      await tester.pump();
+      expect(find.byType(KpbSampleDataBanner), findsNothing);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('starts on Home tab (index 0)', (tester) async {
@@ -410,6 +443,47 @@ void main() {
         find.byKey(const ValueKey('kpb_shell_nav_bar')),
         findsNWidgets(2),
       );
+    });
+
+    // Audit build 57, n° 3 : le ☰ ne répondait pas pendant la 1re visite d'un
+    // invité. `enterGuestMode()` puis `Get.offAll` montent deux coquilles ; le
+    // démontage de l'une laissait la référence globale vide ou sur l'autre.
+    testWidgets('le ☰ ouvre le tiroir de SA coquille après un double montage',
+        (tester) async {
+      final snapshot = AppSnapshot(
+        localeCode: 'fr',
+        hasCompletedOnboarding: true,
+        profile: createTestProfile(),
+      );
+      await pumpTestApp(
+        tester,
+        child: const Stack(
+          textDirection: TextDirection.ltr,
+          children: [
+            AppShell(key: ValueKey('shell_a')),
+            AppShell(key: ValueKey('shell_b')),
+          ],
+        ),
+        initialSnapshot: snapshot,
+      );
+      // La coquille montée en dernier part : elle vide la référence globale.
+      await tester.pumpWidget(
+        TestAppWrapper(
+          controller: Get.find<AppController>(),
+          child: const Stack(
+            textDirection: TextDirection.ltr,
+            children: [AppShell(key: ValueKey('shell_a'))],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsNothing);
+
+      await tester.tap(find.byTooltip('tools_drawer_title'.tr));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Drawer), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets(

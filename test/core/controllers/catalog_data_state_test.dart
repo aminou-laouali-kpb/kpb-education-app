@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -9,6 +10,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/data/catalog_source.dart';
+import 'package:karatou/app/core/data/mock_catalog.dart';
 import 'package:karatou/app/core/repositories/app_api_client.dart';
 import 'package:karatou/app/core/repositories/app_repository.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
@@ -242,6 +244,98 @@ void main() {
       expect(controller.catalogDataState, CatalogDataState.offline,
           reason: 'real rows are still in memory from the previous sync; '
               'calling them "sample data" would be a lie');
+    });
+  });
+
+  // Audit build 57, n° 2 : « Données d'exemple — connexion au serveur
+  // impossible » s'affichait à chaque lancement, cache réel ou pas, tant que la
+  // 1re synchro n'était pas finie — alors que le serveur répondait.
+  group('lancement : aucun faux bandeau avant la fin de la 1re synchro', () {
+    late _MockApiClient api;
+    late AppController controller;
+    late Completer<CatalogListPayload> pendingCatalog;
+
+    setUp(() async {
+      Get.testMode = true;
+      AppConfig.enableRemoteSyncOverride = true;
+      CatalogCacheService.resetForTests();
+      await Hive.deleteBoxFromDisk(CatalogCacheService.boxName);
+      await CatalogCacheService.init();
+      api = _MockApiClient();
+      when(() => api.hasAuthSession()).thenAnswer((_) async => false);
+      when(() => api.listContent(any())).thenAnswer((_) async => <dynamic>[]);
+      // La synchro reste en cours : c'est la fenêtre des 4 à 58 s mesurées.
+      pendingCatalog = Completer<CatalogListPayload>();
+      when(() => api.listCatalogEnvelope(any()))
+          .thenAnswer((_) => pendingCatalog.future);
+      controller = AppController(repository: _FakeRepository(), apiClient: api);
+    });
+
+    tearDown(() {
+      if (!pendingCatalog.isCompleted) {
+        pendingCatalog.complete(const CatalogListPayload(
+          items: [],
+          source: CatalogDataSource.database,
+        ));
+      }
+      AppConfig.enableRemoteSyncOverride = null;
+      Get.testMode = false;
+    });
+
+    test('élève qui revient : le cache réel n\'est pas « données d\'exemple »',
+        () async {
+      final cache = CatalogCacheService.instance;
+      await cache.write(
+          'fields', MockCatalog.fields.map((e) => e.toJson()).toList());
+      await cache.write(
+          'countries', MockCatalog.countries.map((e) => e.toJson()).toList());
+      await cache.write('institutions',
+          MockCatalog.institutions.map((e) => e.toJson()).toList());
+      await cache.write(
+          'programs', MockCatalog.programs.map((e) => e.toJson()).toList());
+      await cache.write('scholarships',
+          MockCatalog.scholarships.map((e) => e.toJson()).toList());
+
+      await controller.hydrate();
+
+      expect(controller.catalogFirstSyncSettled, isFalse);
+      expect(controller.catalogIsSampleData, isFalse,
+          reason: 'les lignes à l\'écran sont celles du dernier chargement');
+      expect(controller.catalogDataState, CatalogDataState.offline);
+    });
+
+    test('installation neuve : synchro en cours, rien n\'est encore conclu',
+        () async {
+      await controller.hydrate();
+
+      expect(controller.catalogIsSampleData, isTrue);
+      expect(controller.catalogFirstSyncSettled, isFalse,
+          reason: 'la coquille ne montre aucun bandeau tant que c\'est faux');
+    });
+
+    test('installation neuve, serveur qui répond : live, synchro conclue',
+        () async {
+      when(() => api.listCatalogEnvelope(any())).thenAnswer(
+        (_) async => const CatalogListPayload(
+          items: [],
+          source: CatalogDataSource.database,
+        ),
+      );
+      await controller.syncRemoteData(force: true);
+
+      expect(controller.catalogFirstSyncSettled, isTrue);
+      expect(controller.catalogDataState, CatalogDataState.live);
+    });
+
+    test('installation neuve, serveur en panne : échantillon, synchro conclue',
+        () async {
+      when(() => api.listCatalogEnvelope(any()))
+          .thenThrow(StateError('503 CATALOG_UNAVAILABLE'));
+      await controller.syncRemoteData(force: true);
+
+      expect(controller.catalogFirstSyncSettled, isTrue);
+      expect(controller.catalogIsSampleData, isTrue,
+          reason: 'seul cas où « connexion impossible » est vrai');
     });
   });
 }

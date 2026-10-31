@@ -16,6 +16,7 @@ import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
+import 'package:karatou/app/core/ui/components/kpb_guest_gate.dart';
 import 'package:karatou/app/core/ui/components/kpb_toast.dart';
 import 'package:karatou/app/features/scholarships/scholarship_detail_screen.dart';
 
@@ -273,5 +274,61 @@ void main() {
     );
 
     expect(find.textContaining('Ouverte · clôture'), findsOneWidget);
+  });
+
+  // Audit build 57, n° 9 : un invité qui ouvrait une fiche réservée aux
+  // comptes (par « Mes suivis », un lien ou une notification) lisait
+  // « Erreur de connexion » en boucle ; il voit le mur.
+  testWidgets('invité, fiche en 401 : le mur, pas « Erreur de connexion »',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    final mock = MockApiClient();
+    final unauthorized = DioException(
+      requestOptions: RequestOptions(path: '/scholarships/chevening'),
+      response: Response<dynamic>(
+        requestOptions: RequestOptions(path: '/scholarships/chevening'),
+        statusCode: 401,
+      ),
+    );
+    when(() => mock.fetchLiveScholarshipDetailWithFallback(
+          scholarshipId: any(named: 'scholarshipId'),
+          lang: any(named: 'lang'),
+          initial: any(named: 'initial'),
+        )).thenThrow(unauthorized);
+    when(() => mock.getSuccessLabAccess()).thenAnswer(
+      (_) async => <String, dynamic>{'enabled': false, 'reasons': <String>[]},
+    );
+    setupPlatformChannelMocks();
+    final controller = AppController(
+      repository: FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          isGuestMode: true,
+        ),
+      ),
+      apiClient: mock,
+    );
+    await controller.hydrate();
+    AppConfig.enableRemoteSyncOverride = false;
+    Get.put<AppController>(controller, permanent: true);
+
+    await tester.pumpWidget(GetMaterialApp(
+      translations: AppTranslations(),
+      locale: const Locale('fr'),
+      fallbackLocale: const Locale('fr'),
+      home:
+          ScholarshipDetailScreen(scholarshipId: 'chevening', apiClient: mock),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(KpbGuestGate), findsOneWidget);
+    expect(
+        find.text('live_scholarships_connection_error_title'.tr), findsNothing);
   });
 }
