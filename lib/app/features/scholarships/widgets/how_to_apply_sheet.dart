@@ -10,6 +10,9 @@ Future<void> showHowToApplySheet(
   required String scholarshipTitle,
   required List<ScholarshipApplicationStepModel> steps,
   required VoidCallback? onOpenOfficialForm,
+  // Faux hors période : le bouton reste (choix testé, #360) mais dit que les
+  // candidatures ne sont pas encore ouvertes (audit build 57, T3-08).
+  bool applicationsOpen = true,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -59,6 +62,15 @@ Future<void> showHowToApplySheet(
                 icon: const Icon(Icons.open_in_new_rounded),
                 label: Text('live_scholarships_official_form'.tr),
               ),
+              if (!applicationsOpen) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'live_scholarships_not_open_note'.tr,
+                  key: const ValueKey<String>('how-to-apply-not-open-note'),
+                  textAlign: TextAlign.center,
+                  style: KpbTextStyles.caption,
+                ),
+              ],
             ],
           ],
         ),

@@ -427,9 +427,42 @@ void main() {
       await tester.pumpAndSettle();
       final official = find.text('live_scholarships_official_form'.tr);
       expect(official, findsOneWidget);
+      // Hors période : le bouton reste, mais dit que les candidatures ne sont
+      // pas encore ouvertes (audit build 57, T3-08).
+      expect(find.byKey(const ValueKey<String>('how-to-apply-not-open-note')),
+          findsOneWidget);
       await tester.tap(official);
       await tester.pumpAndSettle();
       expect(launcher.launched, ['https://apply.example.org/chevening']);
+    });
+
+    testWidgets('période ouverte : pas de mention « pas encore ouvertes »',
+        (tester) async {
+      UrlLauncherPlatform.instance = _RecordingLauncher();
+      await _pump(tester, _scholarship(cycle: _cycle(closesAt: _inDays(30))));
+
+      final howTo = find.text('live_scholarships_section_application_steps'.tr);
+      await tester.ensureVisible(howTo);
+      await tester.pumpAndSettle();
+      await tester.tap(howTo);
+      await tester.pumpAndSettle();
+
+      expect(find.text('live_scholarships_official_form'.tr), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('how-to-apply-not-open-note')),
+          findsNothing);
+    });
+
+    // Audit build 57, T3-08 : le badge existait mais n'était posé nulle part ;
+    // l'élève ne savait pas s'il y avait quelque chose à faire.
+    testWidgets('la fiche dit s\'il faut une candidature séparée',
+        (tester) async {
+      await _pump(tester, _scholarship(cycle: _cycle(closesAt: _inDays(30))));
+      final badge =
+          find.byKey(const ValueKey<String>('scholarship-requirement-badge'));
+      await tester.ensureVisible(badge);
+      expect(badge, findsOneWidget);
+      expect(find.text('live_scholarships_requirement_separate_application'.tr),
+          findsOneWidget);
     });
 
     testWidgets('clôturée : « Suivre », jamais « Postuler »', (tester) async {

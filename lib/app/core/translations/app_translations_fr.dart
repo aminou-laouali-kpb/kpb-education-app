@@ -1290,6 +1290,7 @@ const Map<String, String> appTranslationsFr = {
   'live_scholarships_step_duration': 'Durée estimée : @days jour(s)',
   'live_scholarships_view_official_application':
       'Voir le site officiel de candidature',
+  'live_scholarships_not_open_note': '(candidatures pas encore ouvertes)',
   'live_scholarships_official_form': 'Ouvrir la page officielle',
   'live_scholarships_no_deadline': 'Pas de date limite',
   'live_scholarships_funding_tile': 'Financement',
