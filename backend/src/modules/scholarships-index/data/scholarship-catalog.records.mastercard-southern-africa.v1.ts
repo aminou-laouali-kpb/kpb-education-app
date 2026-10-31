@@ -164,7 +164,7 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
     levels: ['bachelor', 'master'],
     name: ['University of Pretoria — Mastercard Foundation Scholars Program 2027', 'University of Pretoria — Mastercard Foundation Scholars Program 2027'],
     country: ['zaf', 'Afrique du Sud — University of Pretoria', 'South Africa — University of Pretoria'],
-    levelLabel: ['Licence, Honours et Master à temps plein à UP', 'Full-time Bachelor, Honours and Master at UP'],
+    levelLabel: ['Licence et première année de Master à temps plein à UP', 'Full-time Bachelor and first-year Master at UP'],
     fundingLabel: ['Financement complet avec accompagnement global', 'Comprehensive funding with wraparound support'],
     fundingType: 'fully_funded',
     deadlineLabel: [
@@ -185,11 +185,11 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
     ],
     eligibility: [
       ['Avoir postulé et été admis à un diplôme UP : seuls les étudiants admis en études à temps plein sont considérés', 'Have applied and been accepted to a UP degree: only students admitted to full-time study are considered'],
-      ['Ouvert aux niveaux Licence, Honours et Master', 'Open to Undergraduate, Honours and Master students'],
+      ['Licence, ou première année de Master, à temps plein, pour une première année d’études en 2027, avec une moyenne (GPA) d’au moins 70 %, sans diplôme déjà obtenu au même niveau', 'Undergraduate, or first-year Master, full-time, starting a first year of study in 2027, with a grade point average (GPA) of at least 70% and no qualification already obtained at the same level'],
       ['Être un jeune Africain confronté à des barrières socio-économiques importantes, réfugiés, personnes déplacées internes et personnes en situation de handicap inclus', 'Be a young African facing significant socio-economic barriers, including refugees, internally displaced persons and persons with disabilities'],
       ['Ne pas pouvoir payer les frais complets, ni le candidat ni ses parents, tuteurs ou famille d’accueil', 'Be unable to pay the full fees, whether by the applicant or their parents, guardian or foster parents'],
       ['Démontrer des qualités de leadership et un engagement de service communautaire par des projets, activités scolaires ou organisations religieuses', 'Demonstrate leadership qualities and a commitment to community service through projects, school activities or religious organisations'],
-      ['Postgrade : cursus limité aux facultés Natural and Agricultural Sciences, Economic and Management Sciences, Humanities en Honours ou Master de Political Studies ou International Studies uniquement, et Engineering pour les étudiants déjà en cursus', 'Postgraduate: limited to the Faculties of Natural and Agricultural Sciences, Economic and Management Sciences, Humanities for Honours or Masters in Political Studies or International Studies only, and Engineering for continuing students'],
+      ['Facultés financées d’après les formulaires 2027 : Economic and Management Sciences, Natural and Agricultural Sciences, Engineering Built Environment and IT, Humanities (hors Psychologie en postgrade), Law (Licence : candidats de la SADC seulement) et Education', 'Faculties funded according to the 2027 forms: Economic and Management Sciences, Natural and Agricultural Sciences, Engineering Built Environment and IT, Humanities (excluding Psychology at postgraduate level), Law (undergraduate: SADC applicants only) and Education'],
     ],
     requirements: [
       ['Preuve d’admission à UP, au moins provisoire, et numéro d’étudiant UP', 'Evidence of UP admission, at least provisional, and the UP student number'],
@@ -240,9 +240,12 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
     tags: ['bachelor', 'master', 'south-africa', 'university-of-pretoria', 'mastercard-foundation', 'january-intake', 'fully-funded'],
     relatedFieldIds: ['d02', 'd03', 'd07', 'd08', 'd09'],
     baseMatch: 80,
-    // Relue au navigateur le 29/09/2026 par l'équipe KPB : les quatre pages
-    // up.ac.za renvoient 403 (Cloudflare) à tout fetch automatisé, la relecture
-    // automatique était donc impossible. Contenu confirmé inchangé.
-    checkedAt: '2026-09-29T12:50:00.000Z',
+    // Relue au navigateur le 31/10/2026 (quatre pages up.ac.za et les deux
+    // formulaires 2027, PDF de drupalwebprod-files.up.ac.za). Les pages up.ac.za
+    // renvoient 403 (Cloudflare) à tout fetch automatisé : seule la lecture au
+    // navigateur est possible. Les formulaires 2027 ont corrigé l'éligibilité
+    // (moyenne de 70 %, première année de Master, liste de facultés, Droit
+    // réservé à la SADC) ; voir docs/catalog-verification-2026-10-31.md.
+    checkedAt: '2026-10-31T18:46:00.000Z',
   }),
 ];
