@@ -238,7 +238,9 @@ Future<void> main() async {
     // drapeaux : sa lecture dépend de `features.referralInstallReferrer`, et
     // elle n'a lieu qu'une fois par installation (Android seulement). Rien ne
     // part vers le serveur : le code trouvé ne fait que préremplir un champ.
-    unawaited(RemoteFeatureFlags.instance.refresh(apiClient).then(
+    unawaited(RemoteFeatureFlags.instance
+        .refresh(apiClient, retryOnFailure: true)
+        .then(
           (_) => ReferralAttribution.instance.captureInstallReferrerOnce(
             enabled: RemoteFeatureFlags.instance.referralInstallReferrerEnabled,
           ),
@@ -246,6 +248,12 @@ Future<void> main() async {
 
     ConnectivityService.instance.startMonitoring();
     ConnectivityService.instance.bindReconnectSync(() async {
+      // Un échec de /config/app au lancement ne doit pas masquer Études en
+      // France et la Communauté jusqu'au prochain démarrage : au retour du
+      // réseau on relit les drapeaux s'ils n'ont jamais été lus.
+      if (!RemoteFeatureFlags.instance.loaded) {
+        await RemoteFeatureFlags.instance.refresh(apiClient);
+      }
       await controller.flushPendingCaseMessages();
       await controller.syncRemoteData(silent: true);
     });

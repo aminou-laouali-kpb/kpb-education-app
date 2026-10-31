@@ -40,6 +40,69 @@ void main() {
 
   final flags = RemoteFeatureFlags.instance;
 
+  // Audit build 57, T2-06 et T7-07 : un échec de /config/app au lancement
+  // masquait Études en France et la Communauté pour toute la session.
+  group('nouveaux essais après un échec', () {
+    setUp(() {
+      RemoteFeatureFlags.retryDelays = const <Duration>[
+        Duration.zero,
+        Duration.zero,
+      ];
+    });
+
+    test('un échec puis un succès : les drapeaux arrivent sans relancer l\'app',
+        () async {
+      var calls = 0;
+      when(api.getAppConfig).thenAnswer((_) async {
+        calls++;
+        if (calls == 1) throw StateError('réseau instable');
+        return <String, dynamic>{
+          'features': <String, dynamic>{'community': true},
+        };
+      });
+
+      await flags.refresh(api, retryOnFailure: true);
+      expect(flags.loaded, isFalse, reason: 'le 1er essai a échoué');
+
+      // Laisse tourner les nouveaux essais (attentes nulles).
+      for (var i = 0; i < 5 && !flags.loaded; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(flags.loaded, isTrue);
+      expect(flags.communityEnabled, isTrue);
+      expect(calls, 2);
+    });
+
+    test('au plus deux nouveaux essais, puis on s\'arrête', () async {
+      var calls = 0;
+      when(api.getAppConfig).thenAnswer((_) async {
+        calls++;
+        throw StateError('toujours en panne');
+      });
+
+      await flags.refresh(api, retryOnFailure: true);
+      for (var i = 0; i < 10; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(calls, 3, reason: '1 essai + 2 nouveaux, jamais une boucle');
+      expect(flags.loaded, isFalse);
+    });
+
+    test('sans l\'option, aucun nouvel essai (comportement historique)',
+        () async {
+      var calls = 0;
+      when(api.getAppConfig).thenAnswer((_) async {
+        calls++;
+        throw StateError('boom');
+      });
+      await flags.refresh(api);
+      for (var i = 0; i < 5; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      expect(calls, 1);
+    });
+  });
+
   group('le repli, quand le serveur ne répond pas', () {
     // La propriété qui compte : un backend injoignable ne doit pas OUVRIR un
     // module. Montrer par défaut une vitrine qu'on ne saurait plus éteindre à
