@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 import '../../core/models/app_models.dart';
 import '../../core/ui/app_tokens.dart';
 import 'case_tunnel_flow.dart';
-import '../../core/ui/components/kpb_toast.dart';
 
 class CaseComposerSheet extends StatelessWidget {
   const CaseComposerSheet({
@@ -69,10 +67,9 @@ class CaseComposerSheet extends StatelessWidget {
             scholarshipId: scholarshipId,
           ),
           onClose: () => Navigator.of(context).pop(),
-          onSubmitted: () {
-            Navigator.of(context).pop();
-            KpbToast.success('request_submitted'.tr);
-          },
+          // Un seul bandeau après « Soumettre » : celui de `submitCase`. Le
+          // second, posé ici, doublait le premier (audit build 57, T4-16).
+          onSubmitted: () => Navigator.of(context).pop(),
         ),
       ),
     );

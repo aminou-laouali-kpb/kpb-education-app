@@ -1019,10 +1019,8 @@ void _openCaseTunnel(
         child: CaseTunnelFlow(
           prefill: prefill,
           onClose: () => Navigator.pop(ctx),
-          onSubmitted: () {
-            Navigator.pop(ctx);
-            KpbToast.success('request_submitted'.tr);
-          },
+          // Un seul bandeau : celui de `submitCase` (audit build 57, T4-16).
+          onSubmitted: () => Navigator.pop(ctx),
         ),
       ),
     ),

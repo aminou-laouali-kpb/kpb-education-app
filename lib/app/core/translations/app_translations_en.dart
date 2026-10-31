@@ -2502,7 +2502,6 @@ const Map<String, String> appTranslationsEn = {
   'no_saved_items': 'No saved items yet',
   'partner_cta': 'Become a partner',
   'contact_advisor': 'Contact an advisor',
-  'request_submitted': 'Your request has been submitted.',
   'create_case': 'Create a case',
   'case_type': 'Request type',
   'description': 'Description',
@@ -2592,7 +2591,7 @@ const Map<String, String> appTranslationsEn = {
   'match_general': 'General match',
   // Case snackbar
   'case_created_title': 'Case created ✅',
-  'case_created_body': 'Your case @code has been submitted.',
+  'case_created_body': 'Your request has been saved.',
   // Content of a case created on the device, before the server answers
   // (`submitCase`). Stored in both languages with the case.
   'case_local_next_step_title': 'Your case is under review',

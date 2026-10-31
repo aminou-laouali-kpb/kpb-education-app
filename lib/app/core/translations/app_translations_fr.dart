@@ -2734,7 +2734,6 @@ const Map<String, String> appTranslationsFr = {
   'no_saved_items': 'Aucun élément sauvegardé',
   'partner_cta': 'Devenir partenaire',
   'contact_advisor': 'Contacter un conseiller',
-  'request_submitted': 'Ta demande a été envoyée.',
   'create_case': 'Créer un dossier',
   'case_type': 'Type de demande',
   'description': 'Description',
@@ -2832,7 +2831,7 @@ const Map<String, String> appTranslationsFr = {
   'match_general': 'Correspondance générale',
   // Case snackbar
   'case_created_title': 'Dossier créé ✅',
-  'case_created_body': 'Ton dossier @code a bien été soumis.',
+  'case_created_body': 'Ta demande a bien été enregistrée.',
   // Contenu du dossier créé sur l'appareil, avant la réponse du serveur
   // (`submitCase`). Enregistré dans les deux langues avec le dossier.
   'case_local_next_step_title': 'Ton dossier est en revue',
