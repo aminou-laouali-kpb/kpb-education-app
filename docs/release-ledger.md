@@ -145,7 +145,7 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
 
 ## Courant
 
-- `57` — **`2.3.1 (57)`, EN COURS (archive à faire) : non téléversée, non soumise.**
+- `57` — **`2.3.1 (57)`, téléversée le 25/10/2026, non soumise.**
   Release unique : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifications par
   Firebase Cloud Messaging (#351), correctifs #349 et #350, parrainage côté app (#368),
   et, derrière des drapeaux fermés, la communauté C1 + C2 et les bots « Vérif » et
@@ -155,12 +155,21 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   build. Couplage backend **`requires-new`** : la 57 n'embarque plus le SDK OneSignal ;
   serveur, puis admin, puis app.
 
-  **Commit à archiver : `<RELEASE>` — À RENSEIGNER.** C'est le SHA complet de `main`
-  après la fusion de la PR de préparation de la 57 (version, préflights, ce registre) ;
-  **rien d'autre ne fusionne ensuite**. Tant que l'archive n'existe pas, ce marqueur reste
-  tel quel : un SHA écrit à l'avance serait inventé. Il se relève avec
-  `git rev-parse origin/main` (`docs/mise-a-jour-57-checklist.md`, étape 0.3) et se
-  reporte ici le jour de l'envoi, avec « téléversée le … » (checklist, étape 8).
+  **Commit archivé : `RELEASE` = `ba84fedf01534262a81b8f45ac2817d34ee9b788`** (`main`
+  après #382 ; il porte donc aussi #376 à #382, correctifs de l'audit 57 et outillage
+  serveur). Archive Xcode « Runner 25-10-2026, 16.14 », construite dans une copie propre
+  de ce commit, téléversée sur App Store Connect depuis l'Organizer le 25/10/2026 pour la
+  tester dans TestFlight. Backend de production déjà sur la 57 à ce moment-là
+  (`/api/health` → `push.fcm: true`).
+
+  Préflight de l'archive : version, bundle, iPad (`1,2` + 4 orientations), modes
+  d'arrière-plan, Firebase désactivé au démarrage, manifeste de confidentialité, clé
+  PostHog (48 caractères, une seule `phc_`), aucun framework OneSignal — vert ; seule la
+  signature « Apple Distribution » échoue, comme toujours en signature automatique.
+  **Le préflight de l'IPA exportée (`--app`) n'a pas tourné** : l'envoi est parti
+  directement de l'Organizer. APNs de production et profil App Store restent à constater
+  sur un appareil (une notification FCM reçue depuis TestFlight). Le `Podfile.lock`
+  régénéré pendant l'archive est reporté par la PR #383.
 
   **Papiers** : `docs/mise-a-jour-57-checklist.md` (l'ordre des opérations),
   `docs/release-57-store-pack.md` (notes de version, notes de revue recomptées,
