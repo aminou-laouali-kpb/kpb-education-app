@@ -61,13 +61,13 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       fundingType: 'partially_funded',
       applicationRequirement: 'separate_application',
       deadlineLabelFr:
-        'Pas encore ouvert — ouverture le 1er novembre 2026, clôture le 3 janvier 2027',
+        'Ouvert — candidatures depuis le 25 octobre 2026, clôture le 3 janvier 2027',
       deadlineLabelEn:
-        'Not yet open — opens 1 November 2026, closes 3 January 2027',
+        'Open — applications since 25 October 2026, closes 3 January 2027',
       descriptionFr:
-        'Sélection nationale pour une place dans un établissement UWC et le programme de deux ans du Baccalauréat International. Le financement attribué peut être complet ou partiel après évaluation du besoin financier. Le comité national publie désormais les dates officielles de l’entrée 2027 : dépôt du 1er novembre 2026 au 3 janvier 2027, activités de sélection en février 2027 et décisions finales en mars 2027.',
+        'Sélection nationale pour une place dans un établissement UWC et le programme de deux ans du Baccalauréat International. Le financement attribué peut être complet ou partiel après évaluation du besoin financier. Le comité national publie désormais les dates officielles de l’entrée 2027 : dépôt du 25 octobre 2026 au 3 janvier 2027, activités de sélection en février 2027 et décisions finales en mars 2027.',
       descriptionEn:
-        'National selection for a place at a UWC school and the two-year International Baccalaureate programme. Awarded funding may be full or partial after a financial-needs assessment. The national committee now publishes the official 2027-entry dates: applications from 1 November 2026 to 3 January 2027, selection activities in February 2027 and final decisions in March 2027.',
+        'National selection for a place at a UWC school and the two-year International Baccalaureate programme. Awarded funding may be full or partial after a financial-needs assessment. The national committee now publishes the official 2027-entry dates: applications from 25 October 2026 to 3 January 2027, selection activities in February 2027 and final decisions in March 2027.',
       advantagesFr: [
         'Placement dans un établissement du réseau international UWC',
         'Cursus résidentiel de deux ans préparant au Baccalauréat International',
@@ -122,7 +122,7 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
         'ib',
         'route-burkina-faso',
         'needs-based',
-        'forecast',
+        'open',
       ],
     },
     applicationSteps: [
@@ -151,9 +151,9 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
         titleFr: 'Déposer en ligne',
         titleEn: 'Submit online',
         descriptionFr:
-          'Créer son dossier sur la plateforme UWC dès l’ouverture le 1er novembre 2026 et le soumettre au plus tard le 3 janvier 2027.',
+          'Créer son dossier sur la plateforme UWC, ouverte depuis le 25 octobre 2026, et le soumettre au plus tard le 3 janvier 2027.',
         descriptionEn:
-          'Create the application on the UWC platform once it opens on 1 November 2026 and submit it by 3 January 2027 at the latest.',
+          'Create the application on the UWC platform, open since 25 October 2026, and submit it by 3 January 2027 at the latest.',
         estimatedDurationDays: 1,
       },
       {
@@ -169,13 +169,15 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     ],
     cycle: {
       academicYear: '2027-2028',
-      // Statut « forecast » avec dates confirmées : le comité national publie
-      // les dates exactes de l'entrée 2027, mais la fenêtre n'ouvre que le
-      // 1er novembre 2026 et le site affiche « Applications are currently
-      // closed » au 10 août 2026.
-      status: 'forecast',
+      // Ouvert depuis le 01/11/2026 : la page « How to apply » (source du
+      // cycle) publie désormais « Application Open: October 25th, 2026 » et
+      // « Application Deadline: January 3rd, 2027 ». Le bandeau générique de
+      // l'accueil affiche encore « Applications are currently closed » ; la
+      // page du cycle fait foi. checkedAt inchangé (seule la page du cycle a
+      // été relue pour ce geste).
+      status: 'open',
       dateConfidence: 'confirmed',
-      opensAt: '2026-11-01T00:00:00.000Z',
+      opensAt: '2026-10-25T00:00:00.000Z',
       closesAt: '2027-01-03T23:59:59.000Z',
       sourceUrl: 'https://bf.uwc.org/how-to-apply/',
     },

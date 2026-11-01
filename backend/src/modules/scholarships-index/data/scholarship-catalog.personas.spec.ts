@@ -281,12 +281,14 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
     );
 
     expect(result.items).toEqual([
-      // Gates et CMU-Africa : complètes, campagnes ouvertes aux dates confirmées.
+      // Complètes, campagnes ouvertes aux dates confirmées, par clôture la
+      // plus proche : ETH (ouverte le 01/11, close le 30/11/2026), Gates
+      // Cambridge, CMU-Africa.
+      'eth_zurich_esop_2027 to_verify',
       'gates_cambridge_2027 to_verify',
       'cmu_africa_mastercard_2027 to_verify',
       // Puis les complètes en prévision, sans incertitude propre à l'élève,
-      // par clôture la plus proche : ETH (30/11/2026) …
-      'eth_zurich_esop_2027 to_verify',
+      // par clôture la plus proche …
       // Deux ans d'expérience demandés : la tranche 24-36 mois suffit.
       'daad_epos_2027 to_verify',
       'erasmus_mundus_joint_masters_2027 to_verify',
@@ -339,12 +341,13 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
     );
 
     expect(result.items).toEqual([
+      // ETH ouverte depuis le 01/11 passe devant, comme pour le Sénégalais.
+      'eth_zurich_esop_2027 to_verify',
       'gates_cambridge_2027 to_verify',
       'cmu_africa_mastercard_2027 to_verify',
       // Mêmes déplacements que pour le Sénégalais (complètes en prévision, par
       // clôture), plus JJ/WBG : 36-60 mois couvrent les trois ans demandés,
       // ses huit conditions « autres » ne la relèguent plus.
-      'eth_zurich_esop_2027 to_verify',
       'daad_epos_2027 to_verify',
       'erasmus_mundus_joint_masters_2027 to_verify',
       'si_global_professionals_2027_forecast to_verify',

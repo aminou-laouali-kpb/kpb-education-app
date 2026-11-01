@@ -141,7 +141,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
     levelLabel: ['Master ETH Zurich, hors MAS', 'ETH Zurich Master, excluding MAS'],
     fundingLabel: ['Financement complet des études et de la vie selon le barème ESOP', 'Full study and living funding under the ESOP terms'],
     fundingType: 'fully_funded',
-    deadlineLabel: ['Prochain cycle confirmé — 1er au 30 novembre 2026 à 11 h 59 CET', 'Confirmed next cycle — 1 to 30 November 2026 at 11:59 CET'],
+    deadlineLabel: ['Ouvert — candidature ESOP dans la première fenêtre, du 1er au 30 novembre 2026 à 11 h 59 (heure d’Europe centrale)', 'Open — ESOP application in the first window, 1 to 30 November 2026 at 11:59 CET'],
     description: [
       'Programme d’excellence d’ETH Zurich combinant bourse, mentorat et réseau pour environ 60 nouveaux étudiants de Master en 2027–2028.',
       'ETH Zurich excellence programme combining scholarship, mentorship and network support for approximately 60 new Master students in 2027–2028.',
@@ -177,7 +177,10 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
     ],
     cycle: {
       academicYear: '2027-2028',
-      status: 'forecast',
+      // Passé `open` le 01/11/2026 : la page officielle publie « For an ESOP
+      // Scholarship you must apply within the first application window.
+      // November 1 - 30 (11.59 MEZ) ». checkedAt inchangé.
+      status: 'open',
       dateConfidence: 'confirmed',
       opensAt: '2026-11-01T00:00:00.000Z',
       closesAt: '2026-11-30T10:59:00.000Z',
@@ -190,7 +193,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       application: 'https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html',
       cycle: 'https://ethz.ch/students/en/studies/financial/scholarships/excellencescholarship.html',
     },
-    tags: ['master', 'switzerland', 'eth-zurich', 'future-cycle', 'fully-funded'],
+    tags: ['master', 'switzerland', 'eth-zurich', 'open', 'fully-funded'],
     checkedAt: '2026-10-24T07:11:00.000Z',
   }),
   record({
