@@ -128,8 +128,8 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     fundingType: 'partially_funded',
     deadlineLabel: ['Prévision 2027–2028 — ouverture estimée en novembre-décembre 2026, clôture estimée vers le 15 janvier 2027 à 14 h CET, à reconfirmer', '2027–2028 forecast — opening estimated in November–December 2026, closing estimated around 15 January 2027 at 2 pm CET, to be reconfirmed'],
     description: [
-      'Programme du gouvernement hongrois accessible via les partenaires d’envoi, pour des cursus admissibles en Hongrie. Au 29 septembre 2026, seul le cycle 2026–2027 est publié (clôture le 15 janvier 2026 à 14 h CET) : la fenêtre suivante est estimée depuis ce calendrier.',
-      'Hungarian government programme accessed through sending partners for eligible study programmes in Hungary. As of 29 September 2026 only the 2026–2027 cycle is published (closing 15 January 2026 at 2 pm CET), so the next window is estimated from that schedule.',
+      'Programme du gouvernement hongrois accessible via les partenaires d’envoi, pour des cursus admissibles en Hongrie. Au 31 octobre 2026, seul le cycle 2026–2027 est publié (clôture le 15 janvier 2026 à 14 h CET) : la fenêtre suivante est estimée depuis ce calendrier.',
+      'Hungarian government programme accessed through sending partners for eligible study programmes in Hungary. As of 31 October 2026 only the 2026–2027 cycle is published (closing 15 January 2026 at 2 pm CET), so the next window is estimated from that schedule.',
     ],
     advantages: [
       ['Exonération des frais de scolarité', 'Tuition-free education'],
@@ -174,7 +174,10 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       cycle: 'https://stipendiumhungaricum.hu/apply/',
     },
     tags: ['bachelor', 'master', 'hungary', 'government', 'sending-partner'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    // Relue au navigateur le 31/10/2026 (pages /about/, /apply/, portail de
+    // candidature) et dans l'appel officiel 2026-27 (PDF) : voir
+    // docs/catalog-verification-2026-10-31.md.
+    checkedAt: '2026-10-31T18:44:36.000Z',
   }),
   record({
     id: 'romania_mfa_scholarship_2027_forecast',

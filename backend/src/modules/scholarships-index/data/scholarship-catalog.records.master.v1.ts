@@ -334,7 +334,10 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf',
     },
     tags: ['master', 'germany', 'daad', 'closed', 'governance', 'fully-funded'],
-    checkedAt: '2026-09-29T12:00:00.000Z',
+    // Relue le 31/10/2026 : page de présentation et appel officiel ST42
+    // (édition 05/2026), lus sans blocage (daad.de répond 200 depuis ce jour) ;
+    // voir docs/catalog-verification-2026-10-31.md.
+    checkedAt: '2026-10-31T18:44:50.000Z',
   }),
   record({
     id: 'australia_awards_africa_2028_forecast',
