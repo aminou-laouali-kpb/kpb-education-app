@@ -36,7 +36,7 @@ const NOW = new Date('2026-08-10T12:00:00.000Z');
 // à la vague la plus récente — sous [NOW], elle serait « dans le futur » et le
 // validateur la signalerait. [NOW] reste l'horloge des fixtures synthétiques,
 // qui datent du 10/08.
-const CATALOG_NOW = new Date('2026-10-24T18:00:00.000Z');
+const CATALOG_NOW = new Date('2026-10-31T19:00:00.000Z');
 
 function validRecord(): VerifiedScholarshipCatalogRecord {
   const checkedAt = '2026-07-15T12:00:00.000Z';
@@ -452,7 +452,7 @@ describe('versioned scholarship catalog', () => {
     // futur ».
     const report = validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, {
       includeVolumeTargets: false,
-      now: new Date('2026-11-30T00:00:00.000Z'),
+      now: new Date('2026-12-05T00:00:00.000Z'),
     });
 
     expect(report.valid).toBe(false);
