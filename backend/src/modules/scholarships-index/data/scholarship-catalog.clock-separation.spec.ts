@@ -103,22 +103,24 @@ describe('séparation de l’horloge et de la structure', () => {
 });
 
 describe('l’alerte avant clôture', () => {
-  it('annonce Open Doors dans sa quinzaine, et pas avant', () => {
-    // Open Doors clôt le 01/11/2026 (relu le 29/09/2026). Troisième exemple de
-    // ce test : Schwarzman puis Chevening sont passés `closed` après leur
-    // clôture (09/09, 06/10) — l'alerte ne concerne que des campagnes `open`.
+  it('annonce UWC Kenya dans sa quinzaine, et pas avant', () => {
+    // UWC Kenya clôt le 31/12/2026. Quatrième exemple de ce test :
+    // Schwarzman, Chevening puis Open Doors sont passés `closed` après leur
+    // clôture (09/09, 06/10, 01/11) — l'alerte ne concerne que des campagnes
+    // `open`.
     const ids = (iso: string) => at(iso).closingSoon.map((c) => c.scholarshipId);
 
     // Vingt jours avant : hors horizon, on ne crie pas pour rien.
-    expect(ids('2026-10-12T12:00:00.000Z')).not.toContain('open_doors_russia_2027');
+    expect(ids('2026-12-11T12:00:00.000Z')).not.toContain('uwc_kenya_entry_2027');
     // Dix jours avant : dans l'horizon.
-    expect(ids('2026-10-22T12:00:00.000Z')).toContain('open_doors_russia_2027');
+    expect(ids('2026-12-21T12:00:00.000Z')).toContain('uwc_kenya_entry_2027');
   });
 
   it('rend les jours restants et trie par urgence', () => {
-    // Le 25/10 : Open Doors (01/11) et UofT Pearson (06/11) sont tous deux
-    // dans l'horizon — deux entrées, donc un tri qui prouve quelque chose.
-    const soon = at('2026-10-25T00:00:00.000Z').closingSoon;
+    // Le 25/12 : UWC Kenya (31/12), UWC Burkina Faso (03/01), Eiffel et
+    // Gates Cambridge (06/01) sont dans l'horizon — plusieurs entrées, donc un
+    // tri qui prouve quelque chose.
+    const soon = at('2026-12-25T00:00:00.000Z').closingSoon;
     expect(soon.length).toBeGreaterThan(1);
     for (const entry of soon) {
       expect(entry.daysLeft).toBeGreaterThan(0);

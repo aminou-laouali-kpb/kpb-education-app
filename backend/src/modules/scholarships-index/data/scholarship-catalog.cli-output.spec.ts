@@ -29,11 +29,12 @@ import * as path from 'node:path';
 // __dirname = src/modules/scholarships-index/data → 4 crans = racine backend.
 const BACKEND_ROOT = path.join(__dirname, '..', '..', '..', '..');
 
-// Horloge ré-ancrée à chaque clôture de l'exemple : Schwarzman (09/09) puis
-// Chevening (06/10) sont désormais `closed`. Le principe ne change pas —
-// jouer le CLI un jour où une clôture entre dans l'horizon. Le 22/10/2026 à
-// 06:00 UTC, l'heure du cron, Open Doors (clôture le 01/11) est à dix jours.
-const ACCIDENT_CLOCK = '2026-10-22T06:00:00.000Z';
+// Horloge ré-ancrée à chaque clôture de l'exemple : Schwarzman (09/09),
+// Chevening (06/10) puis Open Doors (01/11) sont désormais `closed`. Le
+// principe ne change pas — jouer le CLI un jour où une clôture entre dans
+// l'horizon. Le 20/11/2026 à 06:00 UTC, l'heure du cron, ETH ESOP (clôture le
+// 30/11) est à dix jours.
+const ACCIDENT_CLOCK = '2026-11-20T06:00:00.000Z';
 
 describe('validate-scholarship-catalog CLI — discipline de sortie', () => {
   let tmpDir: string;
@@ -71,14 +72,14 @@ describe('validate-scholarship-catalog CLI — discipline de sortie', () => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it("le 22/10 a bien quelque chose à annoncer — sinon ce test ne prouve rien", () => {
+  it("le 20/11 a bien quelque chose à annoncer — sinon ce test ne prouve rien", () => {
     const report = JSON.parse(reportRaw) as {
       closingSoon: Array<{ scholarshipId: string }>;
     };
     expect(report.closingSoon.length).toBeGreaterThanOrEqual(1);
     expect(
       report.closingSoon.map((entry) => entry.scholarshipId),
-    ).toContain('open_doors_russia_2027');
+    ).toContain('eth_zurich_esop_2027');
   });
 
   it('le fichier --report est du JSON pur, annotations comprises dans la journée', () => {
@@ -97,6 +98,6 @@ describe('validate-scholarship-catalog CLI — discipline de sortie', () => {
     // Pas seulement « stdout est propre » : l'annotation doit continuer
     // d'EXISTER — la déplacer était le correctif, la perdre serait une
     // régression pire (plus d'alarme du tout).
-    expect(stderr).toContain('::warning::open_doors_russia_2027');
+    expect(stderr).toContain('::warning::eth_zurich_esop_2027');
   });
 });
