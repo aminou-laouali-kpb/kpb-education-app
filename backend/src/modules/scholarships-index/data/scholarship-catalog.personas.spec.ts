@@ -225,7 +225,9 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
       // Mastercard Foundation : complète mais prévision à clôture lointaine ;
       // elle ne tirait sa 1re place que de sa fiche peu détaillée (→ 5e).
       'mastercard_foundation_scholars_2027 to_verify',
-      // Open Doors sort : campagne close le 01/11/2026.
+      // Open Doors sort (campagne close le 01/11/2026) ; York, ouverte depuis
+      // le 01/11, prend sa place.
+      'york_pise_2027_forecast to_verify',
       'auc_excellence_2027 to_verify',
       // Brunei : un score IELTS demandé et non indiqué — incertitude qui tient
       // à l'élève, elle compte toujours (3e → 8e).
@@ -236,8 +238,6 @@ describe('personas — catalogue 1.5.0 au 13/10/2026 (critères tamponnés pour 
       // Six fiches partielles ex æquo : la clôture la plus proche (15/01/2027)
       // passe devant ; ALU (18/06/2027) sort des 10.
       'stipendium_hungaricum_2027_forecast to_verify',
-      // York entre à la place d'Open Doors, close le 01/11/2026.
-      'york_pise_2027_forecast to_verify',
     ]);
     expect(result.beyondTen).toEqual([
       'alu_scholarship_2027',

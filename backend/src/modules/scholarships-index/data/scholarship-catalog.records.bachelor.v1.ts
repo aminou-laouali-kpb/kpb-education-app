@@ -76,12 +76,12 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     fundingLabel: ['180 000 CAD sur quatre ans ; dépenses restantes possibles', 'CAD 180,000 over four years; remaining costs may apply'],
     fundingType: 'partially_funded',
     deadlineLabel: [
-      'À venir — formulaire ouvert à partir du 1er novembre 2026 ; clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est ; nomination le 4 février 2027',
-      'Upcoming — form opens 1 November 2026; student deadline 27 January 2027, 11:59 p.m. ET; nomination 4 February 2027',
+      'Ouvert — formulaire ouvert depuis le 1er novembre 2026 ; clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est ; nomination le 4 février 2027',
+      'Open — form open since 1 November 2026; student deadline 27 January 2027, 11:59 p.m. ET; nomination 4 February 2027',
     ],
     description: [
-      'Grande bourse d’entrée de York University pour lycéens internationaux démontrant excellence scolaire, leadership et engagement bénévole ou parascolaire. York publie désormais son cycle d’entrée d’automne 2027 (relevé le 29/09/2026) : clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est, et nomination par l’école le 4 février 2027. Le formulaire, encore fermé, ouvre le 1er novembre 2026 (relevé le 24/10/2026).',
-      'Major York University entrance award for international high-school students demonstrating academic excellence, leadership and volunteer or extracurricular engagement. York now publishes its Fall 2027 entry cycle (checked 29/09/2026): student deadline 27 January 2027 at 11:59 p.m. Eastern Time, school nomination 4 February 2027. The form, still closed, opens on 1 November 2026 (checked 24/10/2026).',
+      'Grande bourse d’entrée de York University pour lycéens internationaux démontrant excellence scolaire, leadership et engagement bénévole ou parascolaire. York publie désormais son cycle d’entrée d’automne 2027 (relevé le 29/09/2026) : clôture étudiante le 27 janvier 2027 à 23 h 59, heure de l’Est, et nomination par l’école le 4 février 2027. Le formulaire est ouvert depuis le 1er novembre 2026.',
+      'Major York University entrance award for international high-school students demonstrating academic excellence, leadership and volunteer or extracurricular engagement. York now publishes its Fall 2027 entry cycle (checked 29/09/2026): student deadline 27 January 2027 at 11:59 p.m. Eastern Time, school nomination 4 February 2027. The form has been open since 1 November 2026.',
     ],
     advantages: [
       ['45 000 CAD par année sur quatre ans', 'CAD 45,000 per year over four years'],
@@ -117,13 +117,14 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     ],
     cycle: {
       academicYear: '2027-2028',
-      status: 'forecast',
+      status: 'open',
       dateConfidence: 'confirmed',
       // 27/01/2027 à 23 h 59, heure de l'Est (UTC-5) : la page York publie
       // désormais le cycle Fall 2027 en dates fermes. Le 24/10/2026, elle
       // publie aussi l'ouverture : « Application opens November 1, 2026 »
-      // (minuit à Toronto, encore à l'heure d'été UTC-4). `forecast` jusqu'à
-      // cette date, puis `open`.
+      // (minuit à Toronto, encore à l'heure d'été UTC-4). Passé `open` le
+      // 03/11/2026 : « The President's International Scholarship of
+      // Excellence Application is now open! ». checkedAt inchangé.
       opensAt: '2026-11-01T04:00:00.000Z',
       closesAt: '2027-01-28T04:59:00.000Z',
       sourceUrl: 'https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides',
@@ -135,7 +136,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       application: 'https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides',
       cycle: 'https://futurestudents.yorku.ca/presidents-international-scholarship-excellence-application-guides',
     },
-    tags: ['bachelor', 'canada', 'york', 'leadership', 'forecast', 'school-nomination'],
+    tags: ['bachelor', 'canada', 'york', 'leadership', 'open', 'school-nomination'],
     checkedAt: '2026-10-24T07:10:00.000Z',
   }),
   record({
