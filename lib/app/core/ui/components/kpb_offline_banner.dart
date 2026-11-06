@@ -110,7 +110,12 @@ class KpbOfflineBanner extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      '${'offline_mode'.tr} · ${kpbFreshnessLabel(lastSync)}',
+                      // Sans date de dernière synchro, « données enregistrées »
+                      // n'est pas vérifiable : on dit seulement le mode (audit
+                      // build 57, T7-07).
+                      lastSync == null
+                          ? 'offline_mode'.tr
+                          : '${'offline_mode'.tr} · ${kpbFreshnessLabel(lastSync)}',
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

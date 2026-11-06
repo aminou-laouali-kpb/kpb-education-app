@@ -131,9 +131,22 @@ void main() {
       expect(EefCalendar.rangeLabel(), '26 August 2026 → 15 December 2026');
     });
 
-    test('ouverture seule', () {
+    test('ouverture seule, pas encore ouverte', () {
       serve(opensAt: DateTime(2026, 8, 26));
+      freezeAt(DateTime(2026, 8, 1));
       expect(EefCalendar.rangeLabel(), 'À partir du 26 août 2026');
+    });
+
+    // Audit build 57, T5-08 : ouverte depuis un mois, la ligne ne place plus en
+    // tête une date passée et ne laisse pas croire qu'une clôture suit.
+    test('ouverture seule, déjà ouverte : la date limite dépend du pays', () {
+      serve(opensAt: DateTime(2026, 8, 26));
+      freezeAt(DateTime(2026, 10, 31));
+      expect(EefCalendar.rangeLabel(),
+          'Ouverte depuis le 26 août 2026 · la date limite dépend de ton pays');
+      Get.locale = const Locale('en');
+      expect(EefCalendar.rangeLabel(),
+          'Open since 26 August 2026 · the deadline depends on your country');
     });
 
     test('clôture seule', () {
@@ -184,6 +197,7 @@ void main() {
     test('la fenêtre servie s\'écrit correctement de bout en bout', () {
       EefCalendar.windowSource =
           () => EefCampaignWindow(opensAt: DateTime(2026, 10, 1));
+      freezeAt(DateTime(2026, 9, 1));
       expect(EefCalendar.rangeLabel(), 'À partir du 1er octobre 2026');
     });
   });

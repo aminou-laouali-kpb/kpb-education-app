@@ -6,6 +6,7 @@
 // Q&A reader. Discovery is by field-domain theme chips + a search bar.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -839,6 +840,7 @@ class _ParcoursPlayerScreenState extends State<ParcoursPlayerScreen> {
           backgroundColor: context.kpb.pageBg,
           appBar: AppBar(
             backgroundColor: Colors.black,
+            systemOverlayStyle: SystemUiOverlayStyle.light,
             elevation: 0,
             iconTheme: const IconThemeData(color: Colors.white),
             title: Text(

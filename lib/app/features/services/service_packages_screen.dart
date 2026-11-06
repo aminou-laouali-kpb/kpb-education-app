@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/components/anti_fraud_notice.dart';
+import '../../core/ui/components/kpb_empty_state.dart';
+import '../../core/ui/components/kpb_error_state.dart';
 import '../../core/ui/components/verified_advisor_sheet.dart';
 import '../../core/utils/currency_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
@@ -21,17 +23,21 @@ class ServicePackagesScreen extends StatefulWidget {
     super.key,
     this.caseId,
     this.caseReference,
+    this.apiClient,
   });
 
   final String? caseId;
   final String? caseReference;
+
+  /// Pour les tests ; la production utilise [AppApiClient].
+  final AppApiClient? apiClient;
 
   @override
   State<ServicePackagesScreen> createState() => _ServicePackagesScreenState();
 }
 
 class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
-  final AppApiClient _api = AppApiClient();
+  late final AppApiClient _api = widget.apiClient ?? AppApiClient();
   bool _loading = true;
   String? _error;
   List<dynamic> _packages = const [];
@@ -90,6 +96,14 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
     );
   }
 
+  /// Sans pack à proposer, le conseiller reste joignable ; le message reprend la
+  /// référence du dossier quand l'écran est ouvert depuis un dossier.
+  Future<void> _contactAdvisorGeneric() => showVerifiedAdvisorThenWhatsApp(
+        prefill: kpbWhatsAppPrefill(reference: widget.caseReference),
+        source: widget.caseId == null ? 'service_packages' : 'case_detail',
+        contextType: 'service_empty',
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,24 +119,35 @@ class _ServicePackagesScreenState extends State<ServicePackagesScreen> {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    // Une erreur et un catalogue vide donnent chacun une ACTION : « Réessayer »,
+    // ou le conseiller. Avant, un texte nu : l'élève ne pouvait rien en faire
+    // (audit build 57, T4-05).
     if (_error != null) {
       return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(_error!, textAlign: TextAlign.center),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: KpbErrorState(onRetry: _load),
           ),
         ],
       );
     }
     if (_packages.isEmpty) {
       return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              'service_packages_empty'.tr,
-              textAlign: TextAlign.center,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: KpbEmptyState(
+              key: const ValueKey<String>('service-packages-empty'),
+              icon: Icons.inventory_2_outlined,
+              title: 'service_packages_empty'.tr,
+              action: FilledButton.icon(
+                onPressed: _contactAdvisorGeneric,
+                icon: const Icon(Icons.chat_rounded, size: 18),
+                label: Text('premium_advisor_cta'.tr),
+              ),
             ),
           ),
         ],

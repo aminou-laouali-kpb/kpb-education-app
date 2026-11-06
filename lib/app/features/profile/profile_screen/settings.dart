@@ -3,12 +3,11 @@ part of '../profile_screen.dart';
 // Préférences, accès parent et Premium.
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Preferences (replay onboarding + data saver + app lock + language)
+// Preferences (data saver + app lock + language)
 // ─────────────────────────────────────────────────────────────────────────────
 class _PreferencesCard extends StatelessWidget {
-  const _PreferencesCard({required this.controller, required this.onReplay});
+  const _PreferencesCard({required this.controller});
   final AppController controller;
-  final VoidCallback onReplay;
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +22,6 @@ class _PreferencesCard extends StatelessWidget {
               child: _SectionTitle('profile_preferences'.tr),
             ),
           ),
-          _NavRow(
-            icon: Icons.school_outlined,
-            color: KpbColors.actionPrimary,
-            label: 'profile_replay_onboarding'.tr,
-            onTap: onReplay,
-          ),
-          const _RowDivider(),
           _SettingRow(
             icon: Icons.data_saver_on_rounded,
             color: KpbColors.success,

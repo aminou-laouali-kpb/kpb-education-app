@@ -88,8 +88,12 @@ mixin _CasesMixin on _AppControllerBase {
     update();
     KpbHaptics.success();
     AnalyticsService.instance.logCaseCreated(caseType: type.name);
+    // Pas de référence dans le bandeau : celle-ci est calculée sur le téléphone
+    // (nombre de dossiers + 1) et n'est pas celle du serveur (« KPB-2026-001 »
+    // au lieu de 1134, audit build 57, T4-16). Le serveur la rend ensuite, et
+    // l'écran du dossier l'affiche.
     KpbToast.success(
-      'case_created_body'.trParams({'code': created.referenceCode}),
+      'case_created_body'.tr,
       title: 'case_created_title'.tr,
       duration: const Duration(seconds: 4),
       action: KpbToastAction(
@@ -97,6 +101,12 @@ mixin _CasesMixin on _AppControllerBase {
         onPressed: () {
           shellIndex = StudentShellTab.cases;
           update();
+          // L'identifiant local est retiré au retour du serveur : on résout le
+          // dossier au moment du tap (le plus récent), jamais celui capturé ici.
+          if (_cases.isNotEmpty) {
+            unawaited(Get.toNamed<void>(
+                '/cases/${Uri.encodeComponent(_cases.first.id)}'));
+          }
         },
       ),
     );

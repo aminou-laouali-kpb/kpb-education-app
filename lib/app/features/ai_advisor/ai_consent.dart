@@ -64,13 +64,56 @@ Future<void> openAiChatIfConsented(
   // Même parcours que les outils IA : un invité est envoyé vers le mur de
   // création de compte au lieu d'un clic mort (copilote et bannière de
   // l'accueil ne faisaient rien pour lui).
-  await openAiToolIfConsented(context, () => const AiChatScreen());
+  //
+  // Le mur est celui du CHAT, pas celui des outils : il s'intitulait « Outils
+  // KPB » et parlait de CV, de lettres et d'entretien alors que l'élève venait
+  // de toucher « KPB Intelligence », promesse n° 1 de l'écran d'entrée (audit
+  // build 57, T1-03). La source d'entonnoir est distincte aussi.
+  await openAiToolIfConsented(
+    context,
+    () => const AiChatScreen(),
+    guestWall: const AiGuestWall(
+      barTitleKey: 'coach_ai_title',
+      source: 'ai_chat_gate',
+      titleKey: 'ai_chat_gate_title',
+      bodyKey: 'ai_chat_gate_body',
+      ctaKey: 'guest_ai_tool_gate_cta',
+    ),
+  );
+}
+
+/// Le mur montré à un invité qui touche une fonction IA : son titre, son texte,
+/// et la source qui part dans l'entonnoir analytique.
+class AiGuestWall {
+  const AiGuestWall({
+    required this.barTitleKey,
+    required this.source,
+    required this.titleKey,
+    required this.bodyKey,
+    required this.ctaKey,
+  });
+
+  /// Le mur des outils IA (CV, lettres, entretien, relecture).
+  static const tools = AiGuestWall(
+    barTitleKey: 'tools_drawer_title',
+    source: 'ai_tool_gate',
+    titleKey: 'guest_ai_tool_gate_title',
+    bodyKey: 'guest_ai_tool_gate_body',
+    ctaKey: 'guest_ai_tool_gate_cta',
+  );
+
+  final String barTitleKey;
+  final String source;
+  final String titleKey;
+  final String bodyKey;
+  final String ctaKey;
 }
 
 Future<void> openAiToolIfConsented(
   BuildContext context,
-  Widget Function() page,
-) async {
+  Widget Function() page, {
+  AiGuestWall guestWall = AiGuestWall.tools,
+}) async {
   final controller = Get.find<AppController>();
   // ── L'invité n'a pas de profil, et sans ceci son clic ne faisait RIEN ────
   //
@@ -95,13 +138,13 @@ Future<void> openAiToolIfConsented(
   if (controller.isGuestMode) {
     await Get.to<void>(
       () => Scaffold(
-        appBar: AppBar(title: Text('tools_drawer_title'.tr)),
-        body: const SafeArea(
+        appBar: AppBar(title: Text(guestWall.barTitleKey.tr)),
+        body: SafeArea(
           child: KpbGuestGate(
-            source: 'ai_tool_gate',
-            titleKey: 'guest_ai_tool_gate_title',
-            bodyKey: 'guest_ai_tool_gate_body',
-            ctaKey: 'guest_ai_tool_gate_cta',
+            source: guestWall.source,
+            titleKey: guestWall.titleKey,
+            bodyKey: guestWall.bodyKey,
+            ctaKey: guestWall.ctaKey,
             icon: Icons.auto_awesome_outlined,
           ),
         ),

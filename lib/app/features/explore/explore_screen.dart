@@ -548,9 +548,9 @@ class _InstitutionDetailSheet extends StatelessWidget {
                         builder: (_) => CaseComposerSheet(
                           caseType: CaseType.applicationSupport,
                           title: controller.resolve(institution.name),
-                          contextLabel: institution.isPartner
-                              ? 'institution_premium_support_guaranteed'.tr
-                              : 'institution_premium_support'.tr,
+                          // Plus de « Garanti » : KPB ne garantit aucune
+                          // admission (audit build 57, T7-21).
+                          contextLabel: 'institution_premium_support'.tr,
                         ),
                       ),
                     ),

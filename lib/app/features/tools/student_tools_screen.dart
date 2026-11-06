@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../ai_advisor/ai_consent.dart';
 import '../etudes_en_france/eef_entry.dart';
@@ -90,14 +91,16 @@ class StudentToolsScreen extends StatelessWidget {
             subtitle: 'student_tools_scanner_subtitle'.tr,
             onTap: () => Get.to(() => const DocumentScannerScreen()),
           ),
-          const SizedBox(height: KpbSpacing.md),
-          _ToolCard(
-            icon: Icons.insights_rounded,
-            color: KpbColors.navy,
-            title: 'impact_title'.tr,
-            subtitle: 'student_tools_impact_subtitle'.tr,
-            onTap: () => Get.to(() => const ImpactDashboardScreen()),
-          ),
+          if (RemoteFeatureFlags.instance.publicImpactStatsEnabled) ...[
+            const SizedBox(height: KpbSpacing.md),
+            _ToolCard(
+              icon: Icons.insights_rounded,
+              color: KpbColors.navy,
+              title: 'impact_title'.tr,
+              subtitle: 'student_tools_impact_subtitle'.tr,
+              onTap: () => Get.to(() => const ImpactDashboardScreen()),
+            ),
+          ],
         ],
       ),
     );

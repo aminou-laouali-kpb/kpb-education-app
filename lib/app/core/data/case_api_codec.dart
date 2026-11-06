@@ -98,10 +98,12 @@ abstract final class CaseApiCodec {
             json['preferredContactMethod'] as String?,
           ) ??
           ContactMethod.inApp,
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
+      updatedAt:
+          DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
       nextStepTitle: plainLocalized(json['nextStepTitle'] as String? ?? ''),
       nextStepDescription:
           plainLocalized(json['nextStepDescription'] as String? ?? ''),
@@ -113,9 +115,9 @@ abstract final class CaseApiCodec {
               title: plainLocalized(event['title'] as String? ?? ''),
               description:
                   plainLocalized(event['description'] as String? ?? ''),
-              createdAt:
-                  DateTime.tryParse(event['createdAt'] as String? ?? '') ??
-                      DateTime.now(),
+              createdAt: DateTime.tryParse(event['createdAt'] as String? ?? '')
+                      ?.toLocal() ??
+                  DateTime.now(),
               status: decodeCaseStatus(event['status'] as String?) ??
                   CaseStatus.submitted,
             ),
@@ -130,7 +132,8 @@ abstract final class CaseApiCodec {
               senderRole: message['senderRole'] as String? ?? 'system',
               body: plainLocalized(message['body'] as String? ?? ''),
               createdAt:
-                  DateTime.tryParse(message['createdAt'] as String? ?? '') ??
+                  DateTime.tryParse(message['createdAt'] as String? ?? '')
+                          ?.toLocal() ??
                       DateTime.now(),
             ),
           )
@@ -148,7 +151,8 @@ abstract final class CaseApiCodec {
               .toList(),
       assignedAdvisorName: json['assignedAdvisorName'] as String?,
       counsellorId: json['counsellorId'] as String?,
-      scheduledAt: DateTime.tryParse(json['scheduledAt'] as String? ?? ''),
+      scheduledAt:
+          DateTime.tryParse(json['scheduledAt'] as String? ?? '')?.toLocal(),
       parentCanView: json['parentCanView'] as bool? ?? false,
       scholarshipId: _optionalId(json['scholarshipId']),
     );

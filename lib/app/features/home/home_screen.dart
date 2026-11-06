@@ -351,6 +351,11 @@ class HomeScreen extends StatelessWidget {
             KpbSpacing.pagePad, KpbSpacing.sm, KpbSpacing.pagePad, 0),
         child: UpdateRecommendedBanner(),
       ),
+      // La recherche globale n'avait aucune porte visible : une seule, au fond
+      // du Profil et seulement sans université enregistrée (audit build 57,
+      // T6-04). Un champ plutôt qu'un 3e bouton d'en-tête : la salutation tient
+      // son budget de largeur (« Salut, … » à 393 pt, voir home_screen_test).
+      const _HomeSearchPill(),
       for (final block in blocks)
         if (build(block) case final Widget child)
           KeyedSubtree(key: block.key, child: child),
@@ -371,6 +376,54 @@ class HomeScreen extends StatelessWidget {
         ScholarshipMatchEntryVariant.guest =>
           false,
       };
+}
+
+/// Entrée de la recherche globale, en tête de l'accueil.
+class _HomeSearchPill extends StatelessWidget {
+  const _HomeSearchPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          KpbSpacing.pagePad, KpbSpacing.sm, KpbSpacing.pagePad, KpbSpacing.md),
+      child: Semantics(
+        button: true,
+        label: 'search'.tr,
+        child: Material(
+          color: KpbColors.surface,
+          shape: StadiumBorder(side: BorderSide(color: KpbColors.border)),
+          child: InkWell(
+            key: const ValueKey<String>('home-search-entry'),
+            customBorder: const StadiumBorder(),
+            onTap: () => Get.toNamed<void>(AppRoutes.search),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search_rounded,
+                        size: 20, color: KpbColors.textMuted),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'search_hint'.tr,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: KpbTextStyles.caption
+                            .copyWith(fontSize: KpbFontSize.sm),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Un bloc visible de l'accueil : marges de page et espace du bas. Les blocs

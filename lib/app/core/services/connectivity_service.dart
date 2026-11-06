@@ -82,13 +82,10 @@ class ConnectivityService {
     _isOnline = online;
     _controller.add(online);
 
-    if (!online) {
-      KpbToast.offlinePending(
-        'offline_body'.tr,
-        title: 'offline_title'.tr,
-        atTop: true,
-      );
-    } else {
+    // Pas de bandeau flottant à la coupure : le bandeau « Mode hors-ligne » au
+    // sommet de l'app le dit déjà, et deux signaux pour un même état se
+    // doublaient (audit build 57, T7-07). Seul le retour du réseau a son toast.
+    if (online) {
       KpbToast.success(
         'online_body'.tr,
         title: 'online_title'.tr,

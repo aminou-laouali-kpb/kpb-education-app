@@ -292,7 +292,8 @@ void main() {
       expect(find.text('letters_title'), findsNothing);
       expect(find.text('interview_title'), findsNothing);
       expect(find.text('scanner_title'), findsOneWidget);
-      expect(find.text('impact_title'), findsOneWidget);
+      expect(find.text('impact_title'), findsNothing,
+          reason: 'statistiques d\'impact fermées : pas de porte');
     });
 
     testWidgets('le hub de l\'espace « Études en France » ne les offre plus',

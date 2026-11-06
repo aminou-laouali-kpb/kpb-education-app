@@ -291,6 +291,8 @@ class _GuestProfilePrompt extends StatelessWidget {
                     ),
                     child: Text('auth_continue_email'.tr),
                   ),
+                  const SizedBox(height: 12),
+                  const LegalLinksRow(showContact: true),
                 ],
               ),
             ),

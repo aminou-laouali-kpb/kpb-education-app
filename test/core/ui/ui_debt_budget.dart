@@ -69,7 +69,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/profile/profile_screen.dart': 1,
   'lib/app/features/profile/profile_screen/edit_sheet.dart': 5,
   'lib/app/features/profile/profile_screen/guidance.dart': 8,
-  'lib/app/features/profile/profile_screen/header.dart': 11,
+  'lib/app/features/profile/profile_screen/header.dart': 10,
   'lib/app/features/profile/profile_screen/info.dart': 3,
   'lib/app/features/profile/profile_screen/quick_access.dart': 1,
   'lib/app/features/profile/profile_screen/settings.dart': 7,

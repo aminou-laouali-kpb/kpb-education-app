@@ -63,6 +63,21 @@ const _dialCodes = <_DialCode>[
   _DialCode('🇱🇷', '+231', 'Liberia'),
   _DialCode('🇬🇼', '+245', 'Guinée-Bissau'),
   _DialCode('🇨🇻', '+238', 'Cap-Vert'),
+  // Afrique centrale, de l'Est et du Nord : ils manquaient, et le public de
+  // l'app y est (audit build 57, T1-10). Ajoutés APRÈS le Niger : l'indicatif
+  // par défaut (`_dialCodes[0]`) ne change pas.
+  _DialCode('🇨🇩', '+243', 'RD Congo'),
+  _DialCode('🇨🇬', '+242', 'Congo'),
+  _DialCode('🇬🇦', '+241', 'Gabon'),
+  _DialCode('🇹🇩', '+235', 'Tchad'),
+  _DialCode('🇨🇫', '+236', 'Centrafrique'),
+  _DialCode('🇲🇬', '+261', 'Madagascar'),
+  _DialCode('🇷🇼', '+250', 'Rwanda'),
+  _DialCode('🇧🇮', '+257', 'Burundi'),
+  _DialCode('🇩🇯', '+253', 'Djibouti'),
+  _DialCode('🇰🇲', '+269', 'Comores'),
+  _DialCode('🇹🇳', '+216', 'Tunisie'),
+  _DialCode('🇩🇿', '+213', 'Algérie'),
   _DialCode('🇫🇷', '+33', 'France'),
   _DialCode('🇨🇦', '+1', 'Canada'),
   _DialCode('🇬🇧', '+44', 'Royaume-Uni'),
@@ -113,6 +128,16 @@ const _countries = [
   'Liberia',
   'Guinée-Bissau',
   'Cap-Vert',
+  'RD Congo',
+  'Congo',
+  'Gabon',
+  'Tchad',
+  'Centrafrique',
+  'Madagascar',
+  'Rwanda',
+  'Burundi',
+  'Djibouti',
+  'Comores',
   'Maroc',
   'Tunisie',
   'Algérie',
@@ -450,6 +475,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (profile.guardianConsentedAt != null) {
       _guardianConsented = true;
     }
+  }
+
+  /// Choisir le pays règle l'indicatif du téléphone (et du WhatsApp), tant que
+  /// le numéro n'est pas saisi : le pays et l'indicatif étaient indépendants,
+  /// donc un élève du Gabon voyait « +227 » (audit build 57, T1-10). Un numéro
+  /// déjà tapé n'est jamais réinterprété.
+  void _onCountryPicked(String? value) {
+    setState(() {
+      _country = value ?? _country;
+      final match = _dialCodes.where((d) => d.country == value);
+      if (match.isEmpty) return;
+      if (_phoneCtrl.text.trim().isEmpty) _phoneCode = match.first;
+      if (_whatsAppCtrl.text.trim().isEmpty) _waCode = match.first;
+    });
   }
 
   @override
@@ -802,7 +841,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPhoneCode: (v) => setState(() => _phoneCode = v),
                     onWaCode: (v) => setState(() => _waCode = v),
                     onSameWhatsApp: (v) => setState(() => _sameWhatsApp = v),
-                    onCountry: (v) => setState(() => _country = v ?? _country),
+                    onCountry: _onCountryPicked,
                     onConsent: (v) => setState(() => _hasConsented = v),
                     onBirthDate: (v) => setState(() => _birthDate = v),
                     onGuardianConsent: (v) =>

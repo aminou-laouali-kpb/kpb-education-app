@@ -112,6 +112,10 @@ class _CasesScreenState extends State<CasesScreen> {
         }
 
         final items = controller.casesByType(_selectedType);
+        // Les puces ne servent qu'avec au moins deux types de dossiers ; avec
+        // un seul, elles ne filtrent rien (audit build 57, T4-18).
+        final showFilters =
+            controller.cases.map((item) => item.type).toSet().length >= 2;
 
         final Widget body = KpbRefresh(
           onRefresh: controller.pullToRefresh,
@@ -143,8 +147,11 @@ class _CasesScreenState extends State<CasesScreen> {
                             ),
                             const SizedBox(height: 3),
                             Text(
-                              'cases_count'
-                                  .trParams({'count': '${items.length}'}),
+                              // Le total des dossiers, pas celui du filtre :
+                              // « 0 dossier » à côté d'un dossier existant
+                              // laissait croire qu'il avait disparu.
+                              'cases_count'.trParams(
+                                  {'count': '${controller.cases.length}'}),
                               style: const TextStyle(
                                 fontSize: 12.5,
                                 color: KpbColors.textMuted,
@@ -179,37 +186,55 @@ class _CasesScreenState extends State<CasesScreen> {
               ),
 
               // ── Filtres ───────────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 38,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _FilterChip(
-                        label: 'cases_filter_all'.tr,
-                        selected: _selectedType == null,
-                        onTap: () => setState(() => _selectedType = null),
-                      ),
-                      const SizedBox(width: 8),
-                      ...CaseType.values.map((type) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _FilterChip(
-                            label: _typeLabel(type),
-                            selected: _selectedType == type,
-                            onTap: () => setState(() => _selectedType = type),
-                          ),
-                        );
-                      }),
-                    ],
+              if (showFilters)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 38,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children: [
+                        _FilterChip(
+                          label: 'cases_filter_all'.tr,
+                          selected: _selectedType == null,
+                          onTap: () => setState(() => _selectedType = null),
+                        ),
+                        const SizedBox(width: 8),
+                        ...CaseType.values.map((type) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _FilterChip(
+                              label: _typeLabel(type),
+                              selected: _selectedType == type,
+                              onTap: () => setState(() => _selectedType = type),
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+              if (showFilters)
+                const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
               // ── Liste ─────────────────────────────────────────────────
-              if (items.isEmpty)
+              if (items.isEmpty && controller.cases.isNotEmpty)
+                // Un filtre sans résultat n'est pas un compte neuf : pas de
+                // « Crée ton premier dossier ».
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: KpbEmptyState(
+                    key: const ValueKey<String>('cases-filter-empty'),
+                    icon: Icons.filter_alt_off_outlined,
+                    title: 'cases_filter_empty_title'.tr,
+                    subtitle: 'cases_filter_empty_body'.tr,
+                    action: OutlinedButton(
+                      onPressed: () => setState(() => _selectedType = null),
+                      child: Text('cases_filter_show_all'.tr),
+                    ),
+                  ),
+                )
+              else if (items.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
                   child: KpbEmptyState(

@@ -45,6 +45,7 @@ import 'package:karatou/app/features/community/hub/community_post_screen.dart';
 import 'package:karatou/app/features/france/france_private_admission_screen.dart';
 import 'package:karatou/app/features/home/home_screen.dart';
 import 'package:karatou/app/features/housing/housing_estimator_screen.dart';
+import 'package:karatou/app/features/tools/impact_dashboard_screen.dart';
 import 'package:karatou/app/features/matches/aha_moment_screen.dart';
 import 'package:karatou/app/features/onboarding/onboarding_screen.dart';
 import 'package:karatou/app/features/profile/profile_screen.dart';
@@ -242,6 +243,19 @@ Map<String, Future<Widget> Function()> buildScreenSpecs() {
       return tool.builder();
     };
   }
+
+  // Écrans dont la porte du tiroir est masquée (Logement derrière `mvpOnly`,
+  // Tableau d'impact derrière `publicImpactStats`) : l'écran existe toujours et
+  // reste joignable (lien, drapeau serveur) ; sa couverture ne doit pas tomber
+  // avec sa porte (audit build 57, T5-15 et T6-10).
+  specs['tool:tools_housing'] ??= () async {
+    await seedKpbController();
+    return const HousingEstimatorScreen();
+  };
+  specs['tool:tools_impact'] ??= () async {
+    await seedKpbController();
+    return const ImpactDashboardScreen();
+  };
 
   // Les quatre écrans IA sont RETOURNÉS dans la navigation (build 51,
   // `AppConfig.aiToolsEnabled` passé à `true`), donc la boucle `tool:`

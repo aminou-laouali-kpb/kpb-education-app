@@ -72,7 +72,21 @@ void main() {
     expect(find.text('premium_value_advisors'.tr), findsOneWidget);
 
     // Single advisor-routed CTA, in the pinned bottom bar (always visible).
-    expect(find.text('parent_premium_cta'.tr), findsOneWidget);
+    // Audit build 57, T5-14 : pas de bouton « Activer » pour un produit qui
+    // n'existe pas encore ; le seul canal réel est l'échange avec un conseiller.
+    expect(find.text('premium_advisor_cta'.tr), findsOneWidget);
+    // Lu dans la table de traduction : le harnais n'applique pas la locale.
+    final fr = AppTranslations().keys['fr']!;
+    for (final key in const [
+      'premium_advisor_cta',
+      'premium_hero_title',
+      'premium_how_title',
+      'premium_how_body',
+    ]) {
+      expect(fr[key], isNot(contains('ctiv')), reason: key);
+    }
+    expect(fr['premium_hero_title'], 'Passe au Pass Karatou');
+    expect(fr['premium_screen_title'], fr['profile_premium_card_title']);
 
     // Waiting list: a FREE interest registration, not a purchase. Scrolled into
     // view rather than assumed — the 800x600 test viewport is shorter than any

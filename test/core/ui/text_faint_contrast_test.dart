@@ -56,6 +56,11 @@ const kTextFaintBudget = <String, int>{
   // Écran découpé en parties : 1 dans l'écran, 3 dans le fil (timeline navy).
   'lib/app/features/cases/case_detail_screen.dart': 1,
   'lib/app/features/cases/case_detail_screen/thread.dart': 3,
+  // Audit build 57, T7-19 : libellé de tuile et indication du champ passés à
+  // textMuted ; ce qui reste est sur fond navy (6,96:1) ou décoratif.
+  'lib/app/features/scholarships/scholarship_detail_screen.dart': 0,
+  'lib/app/features/ai_advisor/ai_chat_screen.dart': 5,
+  'lib/app/features/home/home_screen/cards.dart': 1,
 };
 
 void main() {
@@ -82,6 +87,42 @@ void main() {
             'sur canvas) : c\'est le token de REMPLACEMENT du correctif '
             'PARC-11 — s\'il faiblit, le correctif ne corrige plus rien.',
       );
+    });
+  });
+
+  // Audit build 57, T7-19 : le blanc sur le vert WhatsApp ne donne que 1,98:1.
+  group('(3) texte sur le vert WhatsApp', () {
+    test('le blanc est illisible, le bleu nuit tient AA', () {
+      expect(contrastRatio(Colors.white, KpbColors.whatsapp), lessThan(3.0));
+      expect(contrastRatio(KpbColors.brandNavy, KpbColors.whatsapp),
+          greaterThanOrEqualTo(4.5));
+    });
+
+    test('aucun bouton plein WhatsApp ne porte de texte blanc', () {
+      const files = [
+        'lib/app/core/ui/components/verified_advisor_sheet.dart',
+        'lib/app/features/ai_advisor/ai_chat_screen.dart',
+        'lib/app/features/premium/premium_screen.dart',
+        'lib/app/features/explore/program_detail_screen.dart',
+      ];
+      final offenders = <String>[];
+      var found = 0;
+      for (final path in files) {
+        final lines = File(path).readAsLinesSync();
+        for (var i = 0; i < lines.length; i++) {
+          final isWhatsAppFill =
+              lines[i].contains('backgroundColor: KpbColors.whatsapp') ||
+                  lines[i].contains('bg: KpbColors.whatsapp');
+          if (!isWhatsAppFill) continue;
+          found++;
+          final next =
+              lines.sublist(i + 1, (i + 4).clamp(0, lines.length)).join('\n');
+          if (next.contains('Colors.white,')) offenders.add('  $path:${i + 1}');
+        }
+      }
+      // Tiroir : on a bien trouvé les quatre boutons.
+      expect(found, 4);
+      expect(offenders, isEmpty, reason: offenders.join('\n'));
     });
   });
 

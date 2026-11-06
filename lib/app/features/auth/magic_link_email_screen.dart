@@ -8,6 +8,14 @@ import '../../core/services/auth_service.dart';
 import '../../core/ui/kpb_components.dart';
 import 'magic_link_verify_screen.dart';
 
+/// Contrôle volontairement permissif : une chose, un « @ », un domaine avec au
+/// moins un point. L'ancienne règle n'acceptait qu'UN point après le « @ » et
+/// refusait « ucad.edu.sn », « um5.ac.ma » ou « yahoo.co.uk », donc les adresses
+/// universitaires de l'Afrique francophone (audit build 57, T1-18). Le serveur
+/// d'authentification valide le reste.
+bool isPlausibleEmail(String value) =>
+    RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
+
 class MagicLinkEmailScreen extends StatefulWidget {
   const MagicLinkEmailScreen({super.key, required this.authService});
 
@@ -102,8 +110,7 @@ class _MagicLinkEmailScreenState extends State<MagicLinkEmailScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'email_required'.tr;
                     }
-                    final emailReg = RegExp(r'^[\w.+-]+@[\w-]+\.\w+$');
-                    if (!emailReg.hasMatch(value.trim())) {
+                    if (!isPlausibleEmail(value)) {
                       return 'email_invalid'.tr;
                     }
                     return null;

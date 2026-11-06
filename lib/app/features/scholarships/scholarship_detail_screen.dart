@@ -20,6 +20,7 @@ import '../cases/scholarship_support_case.dart';
 import '../scholarship_match/widgets/match_assessment_block.dart';
 import 'scholarship_urgency.dart';
 import 'scholarship_video_player_screen.dart';
+import 'widgets/application_requirement_badge.dart';
 import 'widgets/how_to_apply_sheet.dart';
 import 'widgets/follow_scholarship_button.dart';
 import 'widgets/scholarship_status_line.dart';
@@ -478,11 +479,24 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
         // bourse, ou l'invitation à le faire (drapeau ouvert).
         ScholarshipMatchAssessmentBlock(scholarshipId: scholarship.id),
         const SizedBox(height: 10),
+        // Dit d'emblée s'il y a quelque chose à faire (attribution automatique
+        // ou candidature séparée) : le badge existait mais n'était posé nulle
+        // part (audit build 57, T3-08).
+        Align(
+          alignment: Alignment.centerLeft,
+          child: ApplicationRequirementBadge(
+            key: const ValueKey<String>('scholarship-requirement-badge'),
+            isAutomatic: scholarship.applicationRequirement == 'automatic',
+            accent: KpbColors.actionPrimary,
+          ),
+        ),
+        const SizedBox(height: 10),
         OutlinedButton.icon(
           onPressed: () => showHowToApplySheet(
             context,
             scholarshipTitle: scholarship.title,
             steps: scholarship.applicationSteps,
+            applicationsOpen: canApply,
             onOpenOfficialForm: isOpenableWebUrl(scholarship.applicationUrl)
                 ? () => _openUrl(scholarship.applicationUrl)
                 : null,
@@ -996,7 +1010,7 @@ class _MetaTile extends StatelessWidget {
               label.toUpperCase(),
               style: const TextStyle(
                 fontSize: KpbFontSize.xs,
-                color: KpbColors.textFaint,
+                color: KpbColors.textMuted,
                 fontWeight: FontWeight.w800,
               ),
             ),

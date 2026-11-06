@@ -204,6 +204,14 @@ abstract final class EefCalendar {
       return _isEnglish ? '$opens → $closes' : 'du $opens au $closes';
     }
     if (opens != null) {
+      // Ouverture passée, aucune clôture servie : « À partir du » plaçait en
+      // tête une date déjà passée et laissait croire qu'une date limite
+      // suivrait. Les clôtures varient selon le pays (audit build 57, T5-08).
+      if (phase() == EefCampaignPhase.open) {
+        return _isEnglish
+            ? 'Open since $opens · the deadline depends on your country'
+            : 'Ouverte depuis le $opens · la date limite dépend de ton pays';
+      }
       return _isEnglish ? 'From $opens' : 'À partir du $opens';
     }
     if (closes != null) {

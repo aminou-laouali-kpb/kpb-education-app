@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../core/navigation/shell_tabs.dart';
@@ -1222,6 +1223,7 @@ class _ConsultativeView extends StatelessWidget {
           pinned: true,
           floating: false,
           backgroundColor: KpbColors.navy,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(

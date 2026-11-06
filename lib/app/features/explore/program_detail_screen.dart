@@ -1019,10 +1019,8 @@ void _openCaseTunnel(
         child: CaseTunnelFlow(
           prefill: prefill,
           onClose: () => Navigator.pop(ctx),
-          onSubmitted: () {
-            Navigator.pop(ctx);
-            KpbToast.success('request_submitted'.tr);
-          },
+          // Un seul bandeau : celui de `submitCase` (audit build 57, T4-16).
+          onSubmitted: () => Navigator.pop(ctx),
         ),
       ),
     ),
@@ -1160,7 +1158,7 @@ class _ShareMatchCardState extends State<_ShareMatchCard> {
                   child: Builder(
                     builder: (button) => _ActionButton(
                       bg: KpbColors.whatsapp,
-                      fg: Colors.white,
+                      fg: KpbColors.brandNavy,
                       icon: Icons.chat_rounded,
                       label: 'match_card_share_whatsapp'.tr,
                       onTap: _busy ? null : () => _shareWhatsApp(button),

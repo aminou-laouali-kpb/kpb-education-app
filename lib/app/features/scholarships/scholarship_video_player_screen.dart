@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -94,6 +95,7 @@ class _ScholarshipVideoPlayerScreenState
         appBar: AppBar(
           backgroundColor: Colors.black,
           foregroundColor: Colors.white,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           title: Text(
             widget.scholarshipTitle,
             maxLines: 1,

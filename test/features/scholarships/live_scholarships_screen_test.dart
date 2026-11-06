@@ -13,6 +13,7 @@ import 'package:karatou/app/core/models/live_scholarships_query.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/scholarships_offline_cache.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
+import 'package:karatou/app/core/ui/skeleton.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 import 'package:karatou/app/features/scholarships/scholarship_detail_screen.dart';
 
@@ -162,6 +163,9 @@ void main() {
     // « Mes suivis » est joignable depuis l'en-tête de l'onglet Bourses.
     expect(find.byKey(const ValueKey<String>('scholarships-followed-entry')),
         findsOneWidget);
+    // La recherche globale a sa loupe ici aussi (audit build 57, T6-04).
+    expect(find.byKey(const ValueKey<String>('scholarships-search-entry')),
+        findsOneWidget);
 
     expect(tester.takeException(), isNull);
   });
@@ -263,7 +267,7 @@ void main() {
 
     // « Postuler » (ouvre le vrai applicationUrl) vit dans la barre fixe du
     // bas de la fiche (chantier I2).
-    final ctaFinder = find.text('Postuler');
+    final ctaFinder = find.text('Site officiel pour postuler');
     await tester.scrollUntilVisible(
       ctaFinder,
       250,
@@ -838,5 +842,38 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('accueil'), findsOneWidget);
     });
+  });
+
+  // Audit build 57, T8-06 : « tirer pour rafraîchir » remplaçait la liste par
+  // cinq squelettes pendant le chargement ; la liste disparaissait sous les yeux.
+  testWidgets(
+      'tirer pour rafraîchir garde la liste affichée pendant le '
+      'chargement', (tester) async {
+    final mock = MockApiClient();
+    _stubFetch(mock, <dynamic>[_scholarshipJson()]);
+    await _seed(mock);
+
+    await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+    await tester.pumpAndSettle();
+    expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
+
+    // Le second chargement reste en attente : on regarde l'écran PENDANT.
+    final pending = Completer<dynamic>();
+    whenScholarshipsPage(mock).thenAnswer((_) async {
+      await pending.future;
+      return scholarshipsPage(<dynamic>[_scholarshipJson()]);
+    });
+
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 400));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.byType(KpbSkeletonBox), findsNothing,
+        reason: 'la liste ne cède pas la place à des squelettes');
+    expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
+
+    pending.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('MEXT Japan Scholarship'), findsOneWidget);
   });
 }

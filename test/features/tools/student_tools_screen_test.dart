@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/services/remote_feature_flags.dart';
 import 'package:karatou/app/features/tools/student_tools_screen.dart';
 import 'package:karatou/app/features/tools/interview_simulator_screen.dart';
 import 'package:karatou/app/features/tools/document_scanner_screen.dart';
@@ -40,6 +41,25 @@ void main() {
       expect(find.text('letters_title'), findsOneWidget);
       expect(find.text('interview_title'), findsOneWidget);
       expect(find.text('scanner_title'), findsOneWidget);
+      // Statistiques d'impact fermées côté serveur : aucune porte (audit build
+      // 57, T5-15), même règle que le tiroir.
+      expect(find.text('impact_title'), findsNothing);
+    });
+
+    testWidgets('statistiques d\'impact ouvertes : la carte revient',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest(const {'publicImpactStats': true});
+      addTearDown(RemoteFeatureFlags.resetForTest);
+      await pumpTestApp(
+        tester,
+        child: const StudentToolsScreen(),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
       expect(find.text('impact_title'), findsOneWidget);
     });
 

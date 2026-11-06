@@ -28,6 +28,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:karatou/app/features/onboarding/onboarding_screen.dart';
+
 String get _source => File('lib/app/features/onboarding/onboarding_screen.dart')
     .readAsStringSync();
 
@@ -109,5 +111,53 @@ void main() {
       reason: 'Le LIBELLÉ (drapeau + pays) part dans un champ persisté : '
           'c\'est exactement le défaut d\'origine, déplacé d\'un champ.',
     );
+  });
+
+  // Audit build 57, T1-10 : le public est aussi en Afrique centrale, de l'Est et
+  // du Nord, et la liste s'arrêtait au Cameroun.
+  test('(c) les indicatifs d\'Afrique centrale, de l\'Est et du Nord existent',
+      () {
+    final byCountry = {for (final c in readDialCodes()) c.country: c.code};
+    const expected = {
+      'RD Congo': '+243',
+      'Congo': '+242',
+      'Gabon': '+241',
+      'Tchad': '+235',
+      'Centrafrique': '+236',
+      'Madagascar': '+261',
+      'Rwanda': '+250',
+      'Burundi': '+257',
+      'Djibouti': '+253',
+      'Comores': '+269',
+      'Tunisie': '+216',
+      'Algérie': '+213',
+    };
+    expected.forEach((country, code) {
+      expect(byCountry[country], code, reason: country);
+    });
+    // L'indicatif par défaut ne bouge pas : le Niger reste en tête.
+    expect(readDialCodes().first.country, 'Niger');
+  });
+
+  group('validateOnboardingPhone', () {
+    test('refuse un « + » tapé dans le numéro', () {
+      expect(
+          validateOnboardingPhone('+22790123456', required: true), isNotNull);
+    });
+
+    test('7 à 12 chiffres, espaces et tirets tolérés', () {
+      expect(validateOnboardingPhone('90 12 34 56', required: true), isNull);
+      expect(validateOnboardingPhone('1234567', required: true), isNull);
+      expect(validateOnboardingPhone('123456789012', required: true), isNull);
+      expect(validateOnboardingPhone('12', required: true), isNotNull);
+      expect(
+          validateOnboardingPhone('1234567890123', required: true), isNotNull);
+    });
+
+    test('vide : refusé seulement quand le champ est obligatoire', () {
+      expect(validateOnboardingPhone('  ', required: true), isNotNull);
+      expect(validateOnboardingPhone('', required: false), isNull);
+      expect(validateOnboardingPhone(null, required: false), isNull);
+    });
   });
 }
