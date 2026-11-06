@@ -75,7 +75,6 @@ describe('copie des dossiers vue par l’étudiant', () => {
       'Conseiller attribué',
       'Un conseiller vous a été attribué',
       'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
-      'Profil académique',
       'Dossier mis à jour',
       'Nouveau message',
       'Document ajouté',
@@ -86,6 +85,13 @@ describe('copie des dossiers vue par l’étudiant', () => {
 
     it.each(FRANCAIS_ATTENDU)('écrit %p', (phrase) => {
       expect(CASES_SERVICE).toContain(phrase);
+    });
+
+    // Audit build 57, n° 5c : la pièce créée d'office ne pouvait jamais passer
+    // à « fournie » et plafonnait la jauge de l'élève.
+    it('ne crée plus de pièce « Profil académique » à la création', () => {
+      expect(CASES_SERVICE).not.toMatch(/title:\s*'Profil académique'/);
+      expect(CASES_SERVICE).not.toMatch(/title:\s*'Academic profile'/);
     });
 
     it('ne montre aucun détail d’implémentation à l’étudiant', () => {

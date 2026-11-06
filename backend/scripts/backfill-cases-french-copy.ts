@@ -36,6 +36,7 @@ import {
   COLONNES_ETUDIANT,
   REPRISES,
   compterLignes,
+  compterPiecesDOffice,
   reprendre,
   type Executeur,
   type Reprise,
@@ -79,9 +80,11 @@ const executer = async (db: Executeur) => {
   const reecrites = await reprendre(db);
   // On revérifie plutôt que de croire le compte : après coup, plus AUCUNE règle
   // ne doit correspondre.
-  const restant = (
-    await Promise.all(REPRISES.map((r) => compterLignes(db, r)))
-  ).reduce((s, n) => s + n, 0);
+  const restant =
+    (await Promise.all(REPRISES.map((r) => compterLignes(db, r)))).reduce(
+      (s, n) => s + n,
+      0,
+    ) + (await compterPiecesDOffice(db));
   if (restant !== 0) {
     throw new Error(
       `${restant} ligne(s) correspondent encore à une règle après la reprise`,
@@ -101,6 +104,9 @@ async function main() {
 
   console.log(
     `${REPRISES.length} règles — ${aReprendre.length} avec des lignes à reprendre, ${total} ligne(s) au total\n`,
+  );
+  console.log(
+    `${await compterPiecesDOffice(prisma)} pièce(s) « Profil académique » créée(s) d'office, vide(s), à supprimer\n`,
   );
   for (const { r, n } of aReprendre) {
     console.log(`  ${String(n).padStart(6)}  ${cible(r).padEnd(42)} ${r.anglais}`);

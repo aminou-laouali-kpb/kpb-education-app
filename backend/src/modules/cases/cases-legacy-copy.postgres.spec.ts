@@ -27,6 +27,7 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
   const suffixe = randomUUID();
   const userId = `reprise-user-${suffixe}`;
   const caseId = `reprise-case-${suffixe}`;
+  let pieceDemandeeParConseiller = '';
   // Une conseillère : « Awa Traoré a été attribué » était l'accord fautif que
   // la reprise corrige en mettant « Votre dossier » en sujet.
   const conseillere = 'Awa Traoré';
@@ -109,9 +110,26 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
       },
     });
 
+    // Créée d'office dans la même seconde que le dossier : à supprimer.
+    const dossier = await prisma.case.findUniqueOrThrow({ where: { id: caseId } });
     await prisma.caseDocument.create({
-      data: { caseId, title: 'Academic profile', isProvided: false },
+      data: {
+        caseId,
+        title: 'Academic profile',
+        isProvided: false,
+        createdAt: dossier.createdAt,
+      },
     });
+    // Demandée par un conseiller deux jours plus tard : à garder.
+    const demandee = await prisma.caseDocument.create({
+      data: {
+        caseId,
+        title: 'Profil académique',
+        isProvided: false,
+        createdAt: new Date(dossier.createdAt.getTime() + 2 * 86_400_000),
+      },
+    });
+    pieceDemandeeParConseiller = demandee.id;
   });
 
   afterAll(async () => {
@@ -154,8 +172,11 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
     const message = await prisma.caseMessage.findFirstOrThrow({ where: { caseId } });
     expect(message.body).toBe('Merci pour votre demande. Awa Traoré suit votre dossier.');
 
-    const doc = await prisma.caseDocument.findFirstOrThrow({ where: { caseId } });
-    expect(doc.title).toBe('Profil académique');
+    // La pièce créée d'office n'est pas traduite : elle est supprimée (audit
+    // build 57, n° 5c) ; celle qu'un conseiller a demandée plus tard reste.
+    const docs = await prisma.caseDocument.findMany({ where: { caseId } });
+    expect(docs.map((d) => d.title)).toEqual(['Profil académique']);
+    expect(docs[0].id).toBe(pieceDemandeeParConseiller);
   });
 
   it('ne laisse plus aucune ligne correspondre à une règle', async () => {

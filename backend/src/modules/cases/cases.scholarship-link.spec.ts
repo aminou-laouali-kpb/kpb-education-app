@@ -48,6 +48,7 @@ function caseRow(overrides: Record<string, unknown> = {}) {
 function makeCreateService(existingScholarships: string[]) {
   const created: Array<Record<string, unknown>> = [];
   const lookedUp: string[] = [];
+  const documents: Array<Record<string, unknown>> = [];
   const tx = {
     counsellor: { findMany: async () => [] },
     scholarship: {
@@ -66,7 +67,12 @@ function makeCreateService(existingScholarships: string[]) {
     },
     caseTimelineEvent: { create: async () => ({}) },
     caseMessage: { create: async () => ({}) },
-    caseDocument: { create: async () => ({}) },
+    caseDocument: {
+      create: async ({ data }: { data: Record<string, unknown> }) => {
+        documents.push(data);
+        return {};
+      },
+    },
   };
   const prisma = {
     isEnabled: true,
@@ -77,7 +83,7 @@ function makeCreateService(existingScholarships: string[]) {
   const moduleRef = {
     get: () => ({ creditReferrerForFirstCase: async () => undefined }),
   } as unknown as ModuleRef;
-  return { service: new CasesService(prisma, moduleRef, push), created, lookedUp };
+  return { service: new CasesService(prisma, moduleRef, push), created, lookedUp, documents };
 }
 
 const BASE_INPUT = {
@@ -105,6 +111,17 @@ describe('CasesService — dossier lié à une bourse', () => {
     expect(lookedUp).toEqual(['retiree']);
     expect(created[0]).toMatchObject({ scholarshipId: null });
     expect(result.scholarshipId).toBeNull();
+  });
+
+  // Audit build 57, n° 5c : une pièce « Profil académique » était créée d'office
+  // à chaque dossier. L'élève ne pouvait pas la fournir (envoi en app masqué) :
+  // « 0/1 » pour toujours, faux délai de 7 jours, jauge plafonnée.
+  it('ne crée aucune pièce d’office à la création du dossier', async () => {
+    const { service, documents } = makeCreateService(['eiffel']);
+
+    await service.create({ ...BASE_INPUT, scholarshipId: 'eiffel' }, 'user-1');
+
+    expect(documents).toEqual([]);
   });
 
   it('sans scholarshipId : aucune lecture de fiche, lien nul (anciennes builds)', async () => {

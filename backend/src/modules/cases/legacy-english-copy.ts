@@ -215,13 +215,8 @@ export const REPRISES: readonly Reprise[] = [
     francais: 'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
   },
 
-  // ── CaseDocument.title — le document attendu créé à l'ouverture ──────────
-  {
-    table: 'CaseDocument',
-    colonne: 'title',
-    anglais: 'Academic profile',
-    francais: 'Profil académique',
-  },
+  // CaseDocument.title — « Academic profile » n'est plus traduit : la pièce
+  // créée d'office est SUPPRIMÉE, voir `supprimerPiecesDOffice` ci-dessous.
 ];
 
 /**
@@ -298,9 +293,45 @@ export const reecrire = (db: Executeur, regle: Reprise): Promise<number> =>
         regle.francais,
       );
 
+/**
+ * La pièce « Academic profile » / « Profil académique » que le service créait
+ * d'office à l'ouverture de chaque dossier (audit build 57, n° 5c). Aucun
+ * conseiller ne l'avait demandée et l'app ne sait pas la recevoir : elle restait
+ * « 0/1 » pour toujours, donnait un faux délai de 7 jours et plafonnait la jauge
+ * de l'élève.
+ *
+ * Ne supprime QUE la trace exacte de cette création automatique : ce titre,
+ * jamais fournie, sans fichier ni dépôt ni avis de relecture, et créée dans les
+ * 5 secondes de son dossier (même transaction). Une pièce du même nom demandée
+ * plus tard par un conseiller reste intacte.
+ */
+export const CONDITION_PIECES_D_OFFICE = `
+  d."title" IN ('Academic profile', 'Profil académique')
+  AND d."isProvided" = false
+  AND d."fileUrl" IS NULL
+  AND d."uploadedAt" IS NULL
+  AND d."reviewStatus" IS NULL
+  AND abs(extract(epoch FROM (d."createdAt" - c."createdAt"))) < 5`;
+
+export const compterPiecesDOffice = async (db: Executeur): Promise<number> => {
+  const rows = await db.$queryRawUnsafe<{ n: bigint }[]>(
+    `SELECT count(*)::bigint AS n FROM "CaseDocument" d
+       JOIN "Case" c ON c."id" = d."caseId"
+      WHERE ${CONDITION_PIECES_D_OFFICE}`,
+  );
+  return Number(rows[0]?.n ?? 0);
+};
+
+export const supprimerPiecesDOffice = (db: Executeur): Promise<number> =>
+  db.$executeRawUnsafe(
+    `DELETE FROM "CaseDocument" d USING "Case" c
+      WHERE c."id" = d."caseId" AND ${CONDITION_PIECES_D_OFFICE}`,
+  );
+
 /** Applique toute la table. À appeler dans une transaction : tout ou rien. */
 export const reprendre = async (db: Executeur): Promise<number> => {
   let n = 0;
   for (const regle of REPRISES) n += await reecrire(db, regle);
+  n += await supprimerPiecesDOffice(db);
   return n;
 };

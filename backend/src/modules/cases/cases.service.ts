@@ -322,13 +322,12 @@ export class CasesService {
           },
         });
 
-        await tx.caseDocument.create({
-          data: {
-            caseId: c.id,
-            title: 'Profil académique',
-            isProvided: false,
-          },
-        });
+        // Plus de pièce « Profil académique » créée d'office : aucun conseiller
+        // ne l'avait demandée, l'app ne sait plus la recevoir (envoi en app
+        // masqué), elle restait donc « 0/1 » pour toujours, donnait un faux
+        // délai de 7 jours et plafonnait la jauge « Ton plan » (audit build 57,
+        // n° 5c). Les pièces que demande un conseiller arrivent par
+        // l'administration.
 
         return tx.case.findUnique({
           where: { id: c.id },
