@@ -37,12 +37,13 @@ import {
   validateScholarshipCatalog,
   type ScholarshipCatalogValidationReport,
 } from './scholarship-catalog.validator';
+import { catalogAsOf } from './scholarship-catalog.as-of';
 import { SCHOLARSHIP_CATALOG_V1 } from './scholarship-catalog.v1';
 
 /** Le catalogue réel, jugé à une date choisie. Aucune maquette : une maquette
  * pourrait diverger de la structure que le portail juge vraiment. */
 const at = (iso: string): ScholarshipCatalogValidationReport =>
-  validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, {
+  validateScholarshipCatalog(catalogAsOf(SCHOLARSHIP_CATALOG_V1, new Date(iso)), {
     includeVolumeTargets: false,
     now: new Date(iso),
   });
