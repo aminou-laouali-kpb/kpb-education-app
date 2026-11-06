@@ -4,6 +4,7 @@ import type { MatchProfile } from '../../scholarship-match/match-inputs';
 import { matchScholarships } from '../../scholarship-match/rank';
 import { buildScholarshipCreateData } from './scholarship-catalog.create-data';
 import type { VerifiedScholarshipCatalogRecord } from './scholarship-catalog.types';
+import { recordAsOf } from './scholarship-catalog.as-of';
 import { SCHOLARSHIP_CATALOG_V1 } from './scholarship-catalog.v1';
 
 /**
@@ -87,7 +88,7 @@ function isServedAt(candidate: MatchScholarship, now: Date): boolean {
 
 function candidates(stampedAt: Date | null = STAMPED_30_DAYS_AGO): MatchScholarship[] {
   return SCHOLARSHIP_CATALOG_V1.records
-    .map((record) => asCandidate(record, stampedAt))
+    .map((record) => asCandidate(recordAsOf(record, NOW), stampedAt))
     .filter((candidate) => isServedAt(candidate, NOW));
 }
 

@@ -477,7 +477,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     levelLabel: ['Licence et Master', 'Bachelor and Master'],
     fundingLabel: ['Frais de scolarité et allocation mensuelle ; voyage, logement et assurance non couverts', 'Tuition and monthly stipend; travel, accommodation and insurance excluded'],
     fundingType: 'partially_funded',
-    deadlineLabel: ['Ouvert — inscriptions jusqu’au 1er novembre 2026 (ouvertes depuis le 20 août 2026)', 'Open — registration closes 1 November 2026 (opened 20 August 2026)'],
+    deadlineLabel: ['Clôturé — les inscriptions 2027 ont fermé le 1er novembre 2026 (ouvertes depuis le 20 août 2026) ; prochain cycle non publié', 'Closed — 2027 registration closed on 1 November 2026 (opened 20 August 2026); next cycle not published'],
     description: [
       'Olympiade internationale gratuite et en ligne donnant accès, selon le classement, à des études sans frais dans des universités russes participantes.',
       'Free online international competition providing tuition-free access, according to ranking, to programmes at participating Russian universities.',
@@ -511,7 +511,9 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
     ],
     cycle: {
       academicYear: '2027-2028',
-      status: 'open',
+      // Passé `closed` le 06/11/2026 : la clôture publiée (1er novembre) est
+      // échue. Aucune source relue pour ce geste : `checkedAt` ne bouge pas.
+      status: 'closed',
       dateConfidence: 'confirmed',
       opensAt: '2026-08-20T00:00:00.000Z',
       closesAt: '2026-11-01T20:59:59.000Z',
@@ -527,7 +529,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       application: 'https://od.globaluni.ru/',
       cycle: 'https://od.globaluni.ru/',
     },
-    tags: ['bachelor', 'master', 'russia', 'olympiad', 'open', 'tuition'],
+    tags: ['bachelor', 'master', 'russia', 'olympiad', 'closed', 'tuition'],
     checkedAt: '2026-10-24T07:13:00.000Z',
   }),
 ];

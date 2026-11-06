@@ -509,8 +509,8 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       'Open — early deadline 15 December 2026 (competency test fees covered by CMU-Africa), final deadline 15 January 2027; no time published. After 15 December, a valid DET, IELTS or TOEFL score is required',
     ],
     description: [
-      'Carnegie Mellon University Africa, campus de Kigali de l’université américaine, est partenaire du Mastercard Foundation Scholars Program pour ses trois Masters d’ingénierie. Il n’existe ni formulaire ni date limite séparés pour la bourse : on postule d’abord à l’admission (un seul programme), puis on remplit le formulaire d’évaluation de l’aide financière qui apparaît dans le suivi du dossier. Seuls les candidats admis de nationalité africaine sont considérés. La candidature est gratuite.',
-      'Carnegie Mellon University Africa, the Kigali campus of the US university, is a Mastercard Foundation Scholars Program partner for its three engineering Master programmes. There is no separate scholarship form or deadline: you first apply for admission (one programme only), then complete the financial aid assessment form shown on your application status page. Only admitted applicants of African nationality are considered. There is no application fee.',
+      'Carnegie Mellon University Africa, campus de Kigali de l’université américaine, est partenaire du Mastercard Foundation Scholars Program pour ses trois Masters d’ingénierie. Il n’existe pas de date limite séparée pour la bourse : on postule d’abord à l’admission (un seul programme), puis on remplit, après le dépôt, le formulaire séparé d’évaluation de l’aide financière. Seuls les candidats admis de nationalité africaine sont considérés. La candidature est gratuite.',
+      'Carnegie Mellon University Africa, the Kigali campus of the US university, is a Mastercard Foundation Scholars Program partner for its three engineering Master programmes. There is no separate scholarship deadline: you first apply for admission (one programme only), then, after submitting, complete the separate financial aid assessment form. Only admitted applicants of African nationality are considered. There is no application fee.',
     ],
     advantages: [
       ['Frais de scolarité entièrement couverts', 'Full tuition coverage'],
@@ -563,6 +563,9 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       cycle: 'https://www.africa.engineering.cmu.edu/admissions/how-to-apply/index.html',
     },
     tags: ['master', 'africa', 'rwanda', 'mastercard-foundation', 'engineering', 'open', 'fully-funded'],
-    checkedAt: '2026-10-07T11:40:00.000Z',
+    // Relue le 06/11/2026 (trois pages, lues sans erreur TLS ce jour ; le
+    // navigateur intégré n'ouvrait pas le site) : voir
+    // docs/catalog-verification-2026-11-06.md.
+    checkedAt: '2026-11-06T17:29:00.000Z',
   }),
 ];
