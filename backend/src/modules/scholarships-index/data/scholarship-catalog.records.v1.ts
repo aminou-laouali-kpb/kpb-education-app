@@ -176,7 +176,7 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'confirmed',
       opensAt: '2026-11-01T00:00:00.000Z',
-      closesAt: '2027-01-03T23:59:59.000Z',
+      closesAt: '2027-01-03T20:59:59.000Z',
       sourceUrl: 'https://bf.uwc.org/how-to-apply/',
     },
     officialSources: [
@@ -339,7 +339,7 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'open',
       dateConfidence: 'confirmed',
       opensAt: '2026-07-01T00:00:00.000Z',
-      closesAt: '2026-12-31T23:59:59.000Z',
+      closesAt: '2026-12-31T20:59:59.000Z',
       sourceUrl: 'https://ke.uwc.org/how-to-apply/',
     },
     officialSources: [
@@ -516,7 +516,7 @@ export const VERIFIED_SCHOLARSHIP_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2026-12-08T00:00:00.000Z',
-      estimatedCloseAt: '2027-01-16T23:59:59.000Z',
+      estimatedCloseAt: '2027-01-16T20:59:59.000Z',
       sourceUrl: 'https://tz.uwc.org/how-to-apply/',
     },
     officialSources: [

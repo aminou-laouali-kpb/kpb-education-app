@@ -150,7 +150,7 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
         status: 'forecast',
         dateConfidence: 'estimated',
         estimatedOpenAt: '2026-09-01T00:00:00.000Z',
-        estimatedCloseAt: '2027-08-15T00:00:00.000Z',
+        estimatedCloseAt: '2027-08-15T20:59:59.000Z',
         sourceUrl: 'https://ashesi.edu.gh/our-two-intake-cycle/',
       },
       sources: {
@@ -309,7 +309,7 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
         status: 'forecast',
         dateConfidence: 'estimated',
         estimatedOpenAt: '2026-12-01T00:00:00.000Z',
-        estimatedCloseAt: '2027-06-18T00:00:00.000Z',
+        estimatedCloseAt: '2027-06-18T20:59:59.000Z',
         sourceUrl: 'https://www.alueducation.com/apply-now/',
       },
       sources: {
@@ -469,7 +469,7 @@ export const VERIFIED_AFRICA_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogReco
         // Aucune date d'ouverture publiée — omise plutôt qu'inventée.
         status: 'open',
         dateConfidence: 'confirmed',
-        closesAt: '2027-06-01T00:00:00.000Z',
+        closesAt: '2027-06-01T20:59:59.000Z',
         sourceUrl: 'https://www.aucegypt.edu/admissions/undergraduate',
       },
       sources: {

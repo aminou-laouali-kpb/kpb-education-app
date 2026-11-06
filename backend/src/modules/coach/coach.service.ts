@@ -64,6 +64,34 @@ type Conversation = {
   createdAt: string;
 };
 
+
+/**
+ * Le message d'accueil, sous LE nom de l'assistant : « KPB Intelligence ». Il
+ * se présentait « Coach KPB » alors que l'écran d'entrée et l'app disent « KPB
+ * Intelligence » : deux noms pour un même assistant (audit build 57, T5-03).
+ */
+export const COACH_GREETING = {
+  fr: "Salut ! Je suis KPB Intelligence. Pose-moi tes questions sur les bourses, les études à l'étranger, le budget ou les écoles partenaires.",
+  en: "Hi! I'm KPB Intelligence. Ask me about scholarships, studying abroad, your budget or partner schools.",
+} as const;
+
+/** Les accueils déjà enregistrés sous l'ancien nom, réécrits à la lecture. */
+const LEGACY_GREETINGS: Readonly<Record<string, string>> = {
+  "Salut ! Je suis ton Coach KPB. Pose-moi tes questions sur les études à l'étranger, le budget ou les écoles partenaires.":
+    COACH_GREETING.fr,
+  "Hi! I'm your KPB Coach. Ask me anything about studying abroad, your budget, or partner schools.":
+    COACH_GREETING.en,
+};
+
+/**
+ * Les conversations déjà créées gardent l'ancien accueil en base : il est
+ * réécrit à la lecture, pour l'élève comme pour l'historique rejoué au modèle
+ * (qui sinon reprendrait l'ancien nom). Seule la phrase exacte est remplacée.
+ */
+export function currentGreeting(content: string): string {
+  return LEGACY_GREETINGS[content] ?? content;
+}
+
 @Injectable()
 export class CoachService {
   private readonly logger = new Logger(CoachService.name);
@@ -109,10 +137,7 @@ export class CoachService {
     // No name in the greeting: it is persisted and later replayed to the LLM
     // provider as conversation history, so personalizing it here would leak the identity
     // we deliberately keep out of the prompt. The client shows a name locally.
-    const greetingContent =
-      lang === 'en'
-        ? `Hi! I'm your KPB Coach. Ask me anything about studying abroad, your budget, or partner schools.`
-        : `Salut ! Je suis ton Coach KPB. Pose-moi tes questions sur les études à l'étranger, le budget ou les écoles partenaires.`;
+    const greetingContent = COACH_GREETING[lang];
 
     const persisted = await this.prisma.tryExecute((client) =>
       client.coachConversation.create({
@@ -192,7 +217,7 @@ export class CoachService {
           );
           if (!subscriber.closed) {
             subscriber.next({
-              data: { type: 'error', message: 'Coach temporairement indisponible.' },
+              data: { type: 'error', message: 'KPB Intelligence est momentanément indisponible.' },
             } as MessageEvent);
             subscriber.complete();
           }
@@ -346,7 +371,7 @@ export class CoachService {
         `Coach LLM stream failed: ${error instanceof Error ? error.message : String(error)}`,
       );
       subscriber.next({
-        data: { type: 'error', message: 'Coach temporairement indisponible.' },
+        data: { type: 'error', message: 'KPB Intelligence est momentanément indisponible.' },
       } as MessageEvent);
       subscriber.complete();
     }
@@ -451,7 +476,7 @@ export class CoachService {
         createdAt: persisted.createdAt.toISOString(),
         messages: persisted.messages.map((m) => ({
           role: m.role as CoachRole,
-          content: m.content,
+          content: currentGreeting(m.content),
           createdAt: m.createdAt.toISOString(),
         })),
       };

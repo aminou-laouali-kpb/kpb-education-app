@@ -106,11 +106,12 @@ describe('buildCoachSystemPrompt (RAG grounding)', () => {
 
     it('marks a recently-verified fact as verified', () => {
       const recent = new Date('2026-06-01T00:00:00Z');
+      // Le mois et l'année, comme l'élève les lira (audit build 57, T5-03).
       expect(freshnessAnnotation(recent, 'fr', { now })).toBe(
-        'vérifié 2026-06-01',
+        'vérifiée en juin 2026',
       );
       expect(freshnessAnnotation(recent, 'en', { now })).toBe(
-        'verified 2026-06-01',
+        'verified June 2026',
       );
     });
 
@@ -144,5 +145,20 @@ describe('buildCoachSystemPrompt (RAG grounding)', () => {
     const en = buildCoachSuggestions({ language: 'en' });
     expect(en.some((s) => /budget/i.test(s))).toBe(true);
     expect(en.join(' ')).not.toContain('Quelles');
+  });
+
+  // Audit build 57, T5-03 : l'IA se présentait « Coach KPB » (l'app dit « KPB
+  // Intelligence ») et recopiait « [source: …, vérifié 2026-06-26] ».
+  describe('un seul nom, aucune cuisine interne', () => {
+    for (const language of ['fr', 'en'] as const) {
+      it(`invite ${language} : KPB Intelligence, sources en clair`, () => {
+        const prompt = buildCoachSystemPrompt({ language, verifiedContext: 'X' });
+        expect(prompt).toContain('KPB Intelligence');
+        expect(prompt).not.toMatch(/Coach KPB|KPB Coach/);
+        // La consigne n'enseigne plus le format brut entre crochets.
+        expect(prompt).not.toMatch(/cite (la source|the source) (entre crochets|in brackets)/);
+        expect(prompt).toMatch(language === 'fr' ? /vérifiée en juin 2026/ : /verified June 2026/);
+      });
+    }
   });
 });

@@ -18,6 +18,7 @@
     "import:igensia": "ts-node scripts/import-igensia.ts",
     "import:north-america": "ts-node scripts/import-north-america.ts",
     "dedupe:omnes": "ts-node scripts/dedupe-omnes-programs.ts",
+    "reclassify:omnes-fields": "ts-node scripts/reclassify-omnes-fields.ts",
     "roll:omnes-fall-2027": "ts-node scripts/roll-omnes-fall-2027.ts",
     "reconcile:program-ids": "ts-node scripts/reconcile-program-ids.ts",
     "import:universiapolis": "ts-node scripts/import-universiapolis.ts",
@@ -68,7 +69,9 @@
     "test:integration:eef-provenance": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/common/eef-provenance.postgres.spec.ts src/modules/etudes-en-france/catalog/eef-pending-purge.postgres.spec.ts src/modules/etudes-en-france/catalog/eef-catalog.reconcile.postgres.spec.ts src/modules/etudes-en-france/publication/eef-publication.postgres.spec.ts src/modules/etudes-en-france/publication/eef-delegated-publication.postgres.spec.ts src/modules/etudes-en-france/search/eef-search.postgres.spec.ts src/modules/etudes-en-france/shortlist/eef-shortlist.postgres.spec.ts src/modules/etudes-en-france/etudes-en-france.postgres.spec.ts src/modules/notifications/campaign-audience.postgres.spec.ts",
     "test:integration:opening-fanout": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand '(scholarship-opening|scholarship-follow|push-outbox|milestone-reminder)[^/]*\\.postgres\\.spec\\.ts$'",
     "test:integration:migration-upgrade": "ts-node scripts/verify-competition-readiness-populated-upgrade.ts",
-    "test:integration:referral-campaign": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/referrals/campaigns/referral-campaign.postgres.spec.ts src/modules/referrals/campaigns/profile-completion.postgres.spec.ts"
+    "test:integration:referral-campaign": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/referrals/campaigns/referral-campaign.postgres.spec.ts src/modules/referrals/campaigns/profile-completion.postgres.spec.ts",
+    "test:integration:cases-fr": "jest --runInBand src/modules/cases/cases-legacy-copy.postgres.spec.ts",
+    "backfill:cases-fr": "ts-node scripts/backfill-cases-french-copy.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1032.0",

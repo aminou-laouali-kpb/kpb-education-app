@@ -61,20 +61,20 @@ describe('scraper text helpers', () => {
 
     it('stores the end of the stated day, not midnight', () => {
       expect(parseDeadline('Deadline: March 15, 2027', now)?.toISOString()).toBe(
-        '2027-03-15T23:59:59.000Z',
+        '2027-03-15T20:59:59.000Z',
       );
       expect(parseDeadline('Date limite : 15 mars 2027', now)?.toISOString()).toBe(
-        '2027-03-15T23:59:59.000Z',
+        '2027-03-15T20:59:59.000Z',
       );
     });
 
     it('infers the year of a date given without one', () => {
       expect(parseDeadline('Deadline: December 15', now)?.toISOString()).toBe(
-        '2026-12-15T23:59:59.000Z',
+        '2026-12-15T20:59:59.000Z',
       );
       // Long past this year → next occurrence.
       expect(parseDeadline('Deadline: January 31', now)?.toISOString()).toBe(
-        '2027-01-31T23:59:59.000Z',
+        '2027-01-31T20:59:59.000Z',
       );
     });
 

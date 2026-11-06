@@ -258,9 +258,9 @@ export class CasesService {
             preferredContactMethod: input.preferredContactMethod ?? 'in_app',
             scholarshipId: linkedScholarship?.id ?? null,
             source: 'mobile_app',
-            nextStepTitle: 'Your case is under review',
+            nextStepTitle: 'Votre dossier est en revue',
             nextStepDescription:
-              'The KPB team will review your request and assign a counselor.',
+              'L’équipe KPB va examiner votre demande et vous attribuer un conseiller.',
           },
         });
 
@@ -284,8 +284,8 @@ export class CasesService {
                   // the official KPB WhatsApp line (anti-fraud, Item 12).
                   leadTag: 'to_follow_up',
                   lastCommercialInteractionAt: new Date(),
-                  nextStepTitle: 'A counselor has been assigned',
-                  nextStepDescription: `${nextCounsellor.fullName} has been assigned to your case and will contact you shortly.`,
+                  nextStepTitle: 'Un conseiller vous a été attribué',
+                  nextStepDescription: `${nextCounsellor.fullName} suit votre dossier et vous contactera prochainement.`,
                 }
               : {}),
           },
@@ -295,8 +295,8 @@ export class CasesService {
           data: {
             caseId: c.id,
             status: CaseStatus.Submitted,
-            title: 'Case submitted',
-            description: 'The student created a new case from the mobile app.',
+            title: 'Demande envoyée',
+            description: 'Votre demande a été créée depuis l’application.',
           },
         });
 
@@ -305,8 +305,8 @@ export class CasesService {
             data: {
               caseId: c.id,
               status: CaseStatus.CounselorAssigned,
-              title: 'Counselor assigned',
-              description: `${nextCounsellor.fullName} was assigned automatically (round-robin).`,
+              title: 'Conseiller attribué',
+              description: `Votre dossier a été attribué à ${nextCounsellor.fullName}.`,
             },
           });
         }
@@ -317,18 +317,17 @@ export class CasesService {
             senderRole: 'system',
             senderName: 'KPB Operations',
             body: nextCounsellor
-              ? `Thank you. ${nextCounsellor.fullName} has been assigned to your request.`
-              : 'Thank you. Your request has been received by the KPB team.',
+              ? `Merci pour votre demande. ${nextCounsellor.fullName} suit votre dossier.`
+              : 'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
           },
         });
 
-        await tx.caseDocument.create({
-          data: {
-            caseId: c.id,
-            title: 'Academic profile',
-            isProvided: false,
-          },
-        });
+        // Plus de pièce « Profil académique » créée d'office : aucun conseiller
+        // ne l'avait demandée, l'app ne sait plus la recevoir (envoi en app
+        // masqué), elle restait donc « 0/1 » pour toujours, donnait un faux
+        // délai de 7 jours et plafonnait la jauge « Ton plan » (audit build 57,
+        // n° 5c). Les pièces que demande un conseiller arrivent par
+        // l'administration.
 
         return tx.case.findUnique({
           where: { id: c.id },
@@ -413,10 +412,10 @@ export class CasesService {
           data: {
             caseId: id,
             status: input.status ?? c.status,
-            title: 'Case updated',
+            title: 'Dossier mis à jour',
             description:
               input.nextStepDescription ??
-              'The case was updated by an admin or counselor.',
+              'Le dossier a été mis à jour par l’équipe KPB.',
           },
         });
 
@@ -500,8 +499,8 @@ export class CasesService {
             status:
               (await tx.case.findUnique({ where: { id } }))?.status ??
               CaseStatus.Submitted,
-            title: 'New message',
-            description: 'A new service message was added to the case.',
+            title: 'Nouveau message',
+            description: 'Un nouveau message a été ajouté au dossier.',
           },
         });
 
@@ -557,8 +556,8 @@ export class CasesService {
           data: {
             caseId: id,
             status: CaseStatus.UnderReview,
-            title: 'Document uploaded',
-            description: `${input.title} was uploaded to the case.`,
+            title: 'Document ajouté',
+            description: `Le document « ${input.title} » a été ajouté au dossier.`,
           },
         });
 
@@ -679,13 +678,13 @@ export class CasesService {
             nextStepTitle:
               input.nextStepTitle ??
               (input.scheduledAt
-                ? 'Prepare for your scheduled session'
-                : 'A counselor has been assigned'),
+                ? 'Préparez votre rendez-vous'
+                : 'Un conseiller vous a été attribué'),
             nextStepDescription:
               input.nextStepDescription ??
               (input.scheduledAt
-                ? 'Confirm your availability and prepare your supporting documents.'
-                : 'Your counselor will qualify your profile and contact you shortly.'),
+                ? 'Confirmez votre disponibilité et préparez vos pièces justificatives.'
+                : 'Votre conseiller va étudier votre profil et vous contactera prochainement.'),
             ...(input.scheduledAt
               ? { scheduledAt: new Date(input.scheduledAt) }
               : {}),
@@ -696,10 +695,12 @@ export class CasesService {
           data: {
             caseId: id,
             status: newStatus,
-            title: input.scheduledAt ? 'Case scheduled' : 'Counselor assigned',
+            title: input.scheduledAt
+              ? 'Rendez-vous programmé'
+              : 'Conseiller attribué',
             description: input.scheduledAt
-              ? `${input.assignedAdvisorName} scheduled a follow-up on this case.`
-              : `${input.assignedAdvisorName} is now the owner of this case.`,
+              ? `${input.assignedAdvisorName} a programmé un point de suivi sur votre dossier.`
+              : `${input.assignedAdvisorName} suit désormais votre dossier.`,
           },
         });
 
@@ -740,8 +741,8 @@ export class CasesService {
             status:
               (await tx.case.findUnique({ where: { id } }))?.status ??
               CaseStatus.Submitted,
-            title: 'Task created',
-            description: `${input.title} was added to the case workflow.`,
+            title: 'Action ajoutée',
+            description: `L’action « ${input.title} » a été ajoutée à votre dossier.`,
           },
         });
 

@@ -247,7 +247,7 @@ export const VERIFIED_ADDITIONAL_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRe
       // 18/01 → 26/02/2027. L'heure de clôture n'est pas publiée — fin de
       // journée UTC retenue, jamais plus précis que la source.
       opensAt: '2027-01-18T00:00:00.000Z',
-      closesAt: '2027-02-26T23:59:59.000Z',
+      closesAt: '2027-02-26T20:59:59.000Z',
       sourceUrl: 'https://www.worldbank.org/en/programs/scholarships/jj-wbgsp',
     },
     sources: {

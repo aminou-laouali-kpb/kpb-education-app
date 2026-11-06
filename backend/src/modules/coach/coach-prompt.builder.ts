@@ -56,13 +56,24 @@ export function freshnessAnnotation(
   const ageDays = Math.floor(
     (now.getTime() - lastVerifiedAt.getTime()) / 86_400_000,
   );
-  const date = lastVerifiedAt.toISOString().slice(0, 10);
+  // Le mois et l'année, comme l'élève les lira : « 2026-06-26 » passait tel
+  // quel dans les réponses (audit build 57, T5-03).
+  const date = monthYear(lastVerifiedAt, lang);
   if (ageDays > staleDays) {
     return en
       ? `verified ${date} — STALE, re-verify before quoting`
-      : `vérifié ${date} — PÉRIMÉ, à revérifier avant de citer`;
+      : `vérifiée en ${date} — PÉRIMÉ, à revérifier avant de citer`;
   }
-  return en ? `verified ${date}` : `vérifié ${date}`;
+  return en ? `verified ${date}` : `vérifiée en ${date}`;
+}
+
+const MONTHS: Record<CoachLanguage, readonly string[]> = {
+  fr: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+};
+
+function monthYear(date: Date, lang: CoachLanguage): string {
+  return `${MONTHS[lang][date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 /// Output guardrail: returns a localized caveat to append when the reply
@@ -101,7 +112,7 @@ export function buildCoachSystemPrompt(profile: CoachProfileContext): string {
     const cases = (profile.openCases ?? []).join(', ') || 'none';
 
     // PII minimization: the student's name is deliberately NOT sent to the LLM.
-    return `You are KPB Coach, a study-abroad guidance assistant for African students.
+    return `You are KPB Intelligence, a study-abroad guidance assistant for African students.
 Student context (pseudonymized — no name is shared):
 - Level: ${profile.currentLevel ?? 'not specified'}
 - Target countries: ${countries}
@@ -113,8 +124,9 @@ ${hasVerified ? verified : 'No verified data available for this question.'}
 
 Rules:
 - Reply in English, max 4 sentences.
-- For ANY figure or date (fees, amounts, deadlines, eligibility conditions), use ONLY the VERIFIED CONTEXT above and cite the source in brackets (e.g. [source: ...]). NEVER invent a figure, a date or a condition.
-- If the requested information is not in the VERIFIED CONTEXT, say so plainly and invite the student to confirm with a KPB advisor — do not guess.
+- For ANY figure or date (fees, amounts, deadlines, eligibility conditions), use ONLY the VERIFIED CONTEXT above. NEVER invent a figure, a date or a condition.
+- Cite the source in plain words, in parentheses, with its name and the month it was verified (e.g. "(source: Campus France, verified June 2026)"). Never write "verified context", "[source: …]", brackets or a YYYY-MM-DD date: the student must not see how you work.
+- If the requested information is not in the VERIFIED CONTEXT, say plainly that you have no verified information on it and invite the student to confirm with a KPB advisor — do not guess.
 - Recommend only the 9 KPB destinations (France, Canada, USA, UK, Germany, Spain, Morocco, Turkey, UAE).
 - Mention KPB partner schools when relevant.
 - No personalized legal/financial advice.
@@ -134,7 +146,7 @@ Rules:
   const cases = (profile.openCases ?? []).join(', ') || 'aucune';
 
   // Minimisation : le nom de l'étudiant n'est volontairement PAS envoyé au LLM.
-  return `Tu es Coach KPB, assistant d'orientation pour étudiants francophones d'Afrique.
+  return `Tu es KPB Intelligence, assistant d'orientation pour étudiants francophones d'Afrique.
 Contexte étudiant (pseudonymisé — aucun nom n'est transmis):
 - Niveau: ${profile.currentLevel ?? 'non renseigné'}
 - Pays visés: ${countries}
@@ -146,8 +158,9 @@ ${hasVerified ? verified : 'Aucune donnée vérifiée disponible pour cette ques
 
 Règles:
 - Réponds en français, max 4 phrases.
-- Pour TOUT fait chiffré ou daté (frais, montant, date limite, condition d'éligibilité), utilise UNIQUEMENT le CONTEXTE VÉRIFIÉ ci-dessus, et cite la source entre crochets (ex. [source: ...]). N'invente JAMAIS un chiffre, une date ou une condition.
-- Si l'information demandée n'est pas dans le CONTEXTE VÉRIFIÉ, dis-le franchement et invite à confirmer avec un conseiller KPB — ne devine pas.
+- Pour TOUT fait chiffré ou daté (frais, montant, date limite, condition d'éligibilité), utilise UNIQUEMENT le CONTEXTE VÉRIFIÉ ci-dessus. N'invente JAMAIS un chiffre, une date ou une condition.
+- Cite la source en clair, entre parenthèses, avec son nom et le mois de sa vérification (ex. « (source : Campus France, vérifiée en juin 2026) »). N'écris jamais « contexte vérifié », « [source: …] », de crochets ni de date au format AAAA-MM-JJ : l'élève ne doit pas voir ta cuisine interne.
+- Si l'information demandée n'est pas dans le CONTEXTE VÉRIFIÉ, dis simplement que tu n'as pas d'information vérifiée là-dessus et invite à confirmer avec un conseiller KPB — ne devine pas.
 - Recommande uniquement les 9 destinations KPB (France, Canada, USA, UK, Allemagne, Espagne, Maroc, Turquie, EAU).
 - Mentionne les écoles partenaires KPB quand pertinent.
 - Pas de conseil juridique/financier personnalisé.

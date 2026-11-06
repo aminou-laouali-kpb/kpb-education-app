@@ -75,7 +75,7 @@ export const VERIFIED_MASTERCARD_SOUTHERN_AFRICA_RECORDS_V1: VerifiedScholarship
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2026-08-10T00:00:00.000Z',
-      estimatedCloseAt: '2027-06-30T23:59:59.000Z',
+      estimatedCloseAt: '2027-06-30T20:59:59.000Z',
       sourceUrl: 'https://mastercardfdn.org/en/frequently-asked-questions/',
     },
     sources: {
