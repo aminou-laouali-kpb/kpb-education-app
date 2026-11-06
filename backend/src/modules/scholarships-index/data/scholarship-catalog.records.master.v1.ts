@@ -323,7 +323,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       status: 'closed',
       dateConfidence: 'confirmed',
       opensAt: '2026-06-01T00:00:00.000Z',
-      closesAt: '2026-07-31T23:59:59.000Z',
+      closesAt: '2026-07-31T20:59:59.000Z',
       sourceUrl: 'https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_helmut_schmidt_programme_current_announcement.pdf',
     },
     sources: {
@@ -393,7 +393,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2027-02-01T00:00:00.000Z',
-      estimatedCloseAt: '2027-04-30T23:59:59.000Z',
+      estimatedCloseAt: '2027-04-30T20:59:59.000Z',
       sourceUrl: 'https://australiaawardsafrica.org/awards/apply/',
     },
     sources: {
@@ -552,7 +552,7 @@ export const VERIFIED_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = [
       // est omis, l'année de l'ouverture n'étant pas écrite.
       status: 'open',
       dateConfidence: 'confirmed',
-      closesAt: '2027-01-15T23:59:59.000Z',
+      closesAt: '2027-01-15T20:59:59.000Z',
       sourceUrl: 'https://www.africa.engineering.cmu.edu/admissions/how-to-apply/index.html',
     },
     sources: {

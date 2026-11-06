@@ -54,7 +54,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2027-03-01T00:00:00.000Z',
-      estimatedCloseAt: '2027-03-25T23:59:59.000Z',
+      estimatedCloseAt: '2027-03-25T20:59:59.000Z',
       sourceUrl: 'https://www.qu.edu.qa/en-us/students/admission/scholarships/Pages/scholarships-timeline.aspx',
     },
     sources: {
@@ -186,7 +186,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       status: 'open',
       dateConfidence: 'confirmed',
       opensAt: '2026-07-06T00:00:00.000Z',
-      closesAt: '2026-11-06T23:59:59.000Z',
+      closesAt: '2026-11-06T20:59:59.000Z',
       sourceUrl: 'https://future.utoronto.ca/pearson-scholarships',
     },
     sources: {

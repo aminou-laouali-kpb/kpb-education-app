@@ -48,7 +48,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2027-01-10T00:00:00.000Z',
-      estimatedCloseAt: '2027-02-20T23:59:59.000Z',
+      estimatedCloseAt: '2027-02-20T20:59:59.000Z',
       sourceUrl: 'https://www.turkiyeburslari.gov.tr/calendar',
     },
     sources: {
@@ -105,7 +105,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2027-01-10T00:00:00.000Z',
-      estimatedCloseAt: '2027-02-20T23:59:59.000Z',
+      estimatedCloseAt: '2027-02-20T20:59:59.000Z',
       sourceUrl: 'https://www.turkiyeburslari.gov.tr/announcements/ytb-islamic-development-bank-isdb-joint-scholarship-program-2026-applicaiton-period-122',
     },
     sources: {
@@ -223,7 +223,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2027-02-16T00:00:00.000Z',
-      estimatedCloseAt: '2027-03-31T23:59:59.000Z',
+      estimatedCloseAt: '2027-03-31T20:59:59.000Z',
       sourceUrl: 'https://scholarships.studyinromania.gov.ro/scholarship-about',
     },
     sources: {
@@ -281,7 +281,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'estimated',
       estimatedOpenAt: '2026-12-15T00:00:00.000Z',
-      estimatedCloseAt: '2027-02-15T23:59:59.000Z',
+      estimatedCloseAt: '2027-02-15T20:59:59.000Z',
       sourceUrl: 'https://www.mfa.gov.bn/pages/online-bdgs.aspx',
     },
     sources: {
@@ -456,7 +456,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'forecast',
       dateConfidence: 'confirmed',
       opensAt: '2026-12-01T00:00:00.000Z',
-      closesAt: '2027-03-15T23:59:59.000Z',
+      closesAt: '2027-03-15T20:59:59.000Z',
       sourceUrl: 'https://www.icdf.org.tw/wSite/ct?ctNode=31562&mp=2&xItem=12505',
     },
     sources: {
@@ -514,7 +514,7 @@ export const VERIFIED_MULTI_LEVEL_RECORDS_V1: VerifiedScholarshipCatalogRecord[]
       status: 'open',
       dateConfidence: 'confirmed',
       opensAt: '2026-08-20T00:00:00.000Z',
-      closesAt: '2026-11-01T23:59:59.000Z',
+      closesAt: '2026-11-01T20:59:59.000Z',
       sourceUrl: 'https://od.globaluni.ru/',
     },
     sources: {

@@ -99,15 +99,22 @@ chacun) :
    introuvable, page qui ne charge pas : la fiche garde sa date, le test de
    fraîcheur reste rouge pour elle, et une personne la relit dans un navigateur
    ordinaire. On ne contourne pas le blocage.
-4. **Un cycle dont la clôture est passée devient `closed`** (avec sa date de
+4. **Une date limite publiée sans heure s'enregistre à `20:59:59Z`** (fin de
+   journée jusqu'en UTC+3), jamais à `23:59:59Z` ni à `00:00:00Z`. À 23:59:59Z,
+   un téléphone en UTC+1 (Niger, Cameroun, Bénin, Gabon, Congo, RDC, Maroc)
+   affichait le lendemain ; à 00:00Z, la bourse fermait le matin du dernier
+   jour (audit build 57, n° 6). Une heure publiée par la source se garde telle
+   quelle (« 23 h 59 SAST » → `21:59Z`). Le test
+   `scholarship-catalog.deadline-day.spec.ts` le vérifie.
+5. **Un cycle dont la clôture est passée devient `closed`** (avec sa date de
    clôture confirmée) ; il ne reste jamais `open`. Les URL du contenu doivent
    être celles de la source correspondante — le validateur le vérifie.
-5. **Contrôler les preuves.** Chaque citation d'un rapport de relecteur doit se
+6. **Contrôler les preuves.** Chaque citation d'un rapport de relecteur doit se
    retrouver mot pour mot dans la page enregistrée (le 29/09 : 858 sur 858
    retrouvées ; les citations d'une lecture faite par un outil qui résume la
    page, comme `WebFetch`, ne sont pas vérifiables de cette façon et sont
    signalées comme telles dans le journal).
-6. **Déployer, puis réaligner la production** : `publish-catalog` (import →
+7. **Déployer, puis réaligner la production** : `publish-catalog` (import →
    reconcile → switch). Sans `reconcile`, les lignes déjà en base gardent
    l'ancien contenu.
 

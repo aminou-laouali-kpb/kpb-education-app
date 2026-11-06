@@ -167,7 +167,7 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         // d'ouverture n'est publiée — on ne l'invente pas.
         status: 'open',
         dateConfidence: 'confirmed',
-        closesAt: '2027-01-06T23:59:59.000Z',
+        closesAt: '2027-01-06T20:59:59.000Z',
         sourceUrl:
           'https://www.campusfrance.org/en/actu/call-for-france-excellence-eiffel-applications-2027',
       },
@@ -328,7 +328,7 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         status: 'forecast',
         dateConfidence: 'estimated',
         estimatedOpenAt: '2026-05-15T00:00:00.000Z',
-        estimatedCloseAt: '2027-01-31T23:59:59.000Z',
+        estimatedCloseAt: '2027-01-31T20:59:59.000Z',
         sourceUrl:
           'https://static.daad.de/media/daad_de/pdfs_nicht_barrierefrei/in-deutschland-studieren-forschen-lehren/daad_epos_deadlines.pdf',
       },
@@ -494,7 +494,7 @@ export const VERIFIED_EUROPE_MASTER_RECORDS_V1: VerifiedScholarshipCatalogRecord
         status: 'forecast',
         dateConfidence: 'estimated',
         estimatedOpenAt: '2026-10-01T00:00:00.000Z',
-        estimatedCloseAt: '2027-01-31T23:59:59.000Z',
+        estimatedCloseAt: '2027-01-31T20:59:59.000Z',
         sourceUrl:
           'https://www.eacea.ec.europa.eu/scholarships/erasmus-mundus-catalogue_en',
       },

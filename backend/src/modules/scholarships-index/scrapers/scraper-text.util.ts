@@ -181,8 +181,24 @@ const MONTHS: Record<string, number> = {
 };
 
 /**
- * Deadline at the END of the stated day (23:59:59Z, the convention of the
- * verified catalogue). A date without a year takes the next occurrence after
+ * Heure UTC d'une date limite publiée SANS heure : 20:59:59Z, la fin de la
+ * journée annoncée jusqu'en UTC+3. À 23:59:59Z, le téléphone d'un élève en
+ * UTC+1 (Niger, Cameroun, Bénin, Gabon, Congo, RDC, Maroc…) convertissait la
+ * date au lendemain : « 2 nov. » pour une clôture le 1er novembre (audit build
+ * 57, n° 6). De UTC−1 (Cap-Vert) à UTC+3, 20:59:59Z tombe le même jour
+ * calendaire. Une date publiée AVEC une heure garde son heure.
+ */
+export const DATE_ONLY_DEADLINE_UTC = { hour: 20, minute: 59, second: 59 } as const;
+
+/** La fin du jour [day] de [month] (0-11) en [year], pour une date sans heure. */
+export function endOfStatedDayUtc(year: number, month: number, day: number): Date {
+  const { hour, minute, second } = DATE_ONLY_DEADLINE_UTC;
+  return new Date(Date.UTC(year, month, day, hour, minute, second));
+}
+
+/**
+ * Deadline at the END of the stated day ([endOfStatedDayUtc], the convention of
+ * the verified catalogue). A date without a year takes the next occurrence after
  * `now` (a "December 15" read in October is this December; read in January it
  * was last December, i.e. already closed → next year is wrong too, so a date
  * more than 30 days in the past rolls to next year, otherwise stays).
@@ -205,11 +221,11 @@ export function parseDeadline(text: string, now: Date = new Date()): Date | null
   for (const c of candidates) {
     if (c.month === undefined || c.day < 1 || c.day > 31) continue;
     let year = c.year ?? now.getUTCFullYear();
-    let date = new Date(Date.UTC(year, c.month, c.day, 23, 59, 59));
+    let date = endOfStatedDayUtc(year, c.month, c.day);
     if (date.getUTCDate() !== c.day) continue; // 31 février…
     if (c.year === undefined && date.getTime() < now.getTime() - 30 * 86_400_000) {
       year += 1;
-      date = new Date(Date.UTC(year, c.month, c.day, 23, 59, 59));
+      date = endOfStatedDayUtc(year, c.month, c.day);
     }
     return date;
   }
