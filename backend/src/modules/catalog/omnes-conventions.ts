@@ -71,17 +71,52 @@ export function omnesProgramId(school: string, formationName: string): string {
 /// never surfaced under any real field.
 export function inferFieldId(row: Pick<OmnesRow, 'programName' | 'programFamily'>): string {
   const text = `${row.programName} ${row.programFamily}`.toLowerCase();
+  // Informatique : des signaux FORTS seulement. « digital », « data » ou « dev »
+  // seuls rangeaient « Marketing Comm en Digital » et « Communication,
+  // Marketing Digital » en Informatique, et « ia\b » attrapait « Média » : un
+  // élève en Informatique & IA recevait 2 écoles de communication sur 3 dans
+  // « tes écoles compatibles » (audit build 57, n° 8).
   if (
-    /informat|computer|cyber|data|digital|développeur|developpeur|ia\b|intelligence artificielle|dev\b|software/.test(
+    /informat|computer|cyber|software|développeur|developpeur|intelligence artificielle|\bia\b|\bai\b|data scien|data engineer|data analy|big data|machine learning/.test(
       text,
     )
   ) {
     return 'd01'; // Informatique & Intelligence Artificielle
   }
+  if (/communication|\bcomm\b|média|media|journalis|publicit|\bpub\b|design|graphi/.test(text)) {
+    return 'd06'; // Design, Médias & Communication
+  }
   if (/engineer|ingenier|ingénier|aeronaut|aéronaut/.test(text)) {
     return 'd03'; // Ingénierie & Sciences
   }
   return 'd02'; // Commerce & Management
+}
+
+/** Une formation OMNES en base, telle que la reprise de filière la lit. */
+export interface FieldReclassRow {
+  id: string;
+  nameFr: string;
+  levelFr: string;
+  fieldId: string;
+}
+
+/**
+ * Les formations OMNES déjà en base dont la filière change avec la règle
+ * actuelle de [inferFieldId] (audit build 57, n° 8). Les imports ne posent la
+ * filière qu'à la CRÉATION d'une fiche : sans cette reprise, les formations déjà
+ * classées « Informatique » à tort le restaient.
+ */
+export function planFieldReclassification(
+  rows: readonly FieldReclassRow[],
+): { id: string; nameFr: string; from: string; to: string }[] {
+  return rows
+    .map((row) => ({
+      id: row.id,
+      nameFr: row.nameFr,
+      from: row.fieldId,
+      to: inferFieldId({ programName: row.nameFr, programFamily: row.levelFr }),
+    }))
+    .filter((change) => change.to !== change.from);
 }
 
 export function studyLevelsFor(row: Pick<OmnesRow, 'programFamily'>): string[] {
