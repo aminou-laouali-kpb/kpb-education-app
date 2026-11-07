@@ -1037,6 +1037,40 @@ case "$ACTION" in
     fi
     ;;
 
+  backfill-cases-fr)
+    # Reprise des dossiers créés avant la PR #392 (audit de la 57) : titres,
+    # étapes et pièces en anglais passent en français, et la pièce « Profil
+    # académique » créée d'office (jamais fournie, sans fichier ni revue, née
+    # dans les 5 s du dossier) est supprimée. Script :
+    # backend/scripts/backfill-cases-french-copy.ts. Rejouable : « 0 »
+    # une fois appliqué. À passer APRÈS le déploiement de #392.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run backfill:cases-fr
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run backfill:cases-fr -- --apply
+    fi
+    ;;
+
+  reclassify-omnes-fields)
+    # Reclasse le domaine (d01..d12) des formations OMNES déjà en base avec le
+    # classifieur corrigé en PR #392 (`inferFieldId` : d01 exige un signal
+    # fort, la communication va en d06). Script :
+    # backend/scripts/reclassify-omnes-fields.ts. La simulation liste chaque
+    # changement. Rejouable : « 0 » une fois appliqué.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run reclassify:omnes-fields
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run reclassify:omnes-fields -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   fix-mundiapolis-levels)
     # Corrige les 4 niveaux hors référentiel écrits par l'import du 16/09.
     #
