@@ -9,13 +9,22 @@ import type { VersionedScholarshipCatalog, VerifiedScholarshipCatalogRecord } fr
  * fiche est, à raison, close — c'est arrivé avec McCall MacBain le 20/08 et avec
  * Open Doors Russie le 06/11. Ici, un cycle `closed` dont la clôture confirmée
  * est POSTÉRIEURE à `now` est rendu `open` : c'est l'état publié à cette date.
- * Rien d'autre ne change.
+ * Symétriquement, un cycle passé `open` à son ouverture confirmée (ETH ESOP,
+ * York PISE et UWC Burkina Faso, début novembre 2026) est rendu `forecast` si
+ * cette ouverture est POSTÉRIEURE à `now`. Rien d'autre ne change.
  */
 export function recordAsOf(
   record: VerifiedScholarshipCatalogRecord,
   now: Date,
 ): VerifiedScholarshipCatalogRecord {
   const { cycle } = record;
+  if (
+    cycle.status === 'open' &&
+    cycle.opensAt &&
+    new Date(cycle.opensAt).getTime() > now.getTime()
+  ) {
+    return { ...record, cycle: { ...cycle, status: 'forecast' } };
+  }
   if (cycle.status !== 'closed' || !cycle.closesAt) return record;
   if (new Date(cycle.closesAt).getTime() <= now.getTime()) return record;
   return { ...record, cycle: { ...cycle, status: 'open' } };
