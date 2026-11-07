@@ -1424,6 +1424,9 @@ const Map<String, String> appTranslationsEn = {
   'phone_no_plus':
       'Leave out the “+”: the country code is already chosen on the left.',
   'phone_digits_range': 'Between 7 and 12 digits.',
+  'dial_code_other': 'Other code',
+  'dial_code_custom_label': 'Your country code (e.g. +254)',
+  'dial_code_custom_invalid': 'A “+” followed by 1 to 4 digits.',
   'cases_filter_all': 'All',
   'cases_filter_empty_title': 'No case of this type',
   'cases_filter_empty_body': 'Your other cases are under “All”.',
@@ -2411,6 +2414,8 @@ const Map<String, String> appTranslationsEn = {
   'ranked_by_profile': 'Ranked by your profile and academic goals.',
   'profile_compatibility': 'Compatibility with your profile',
   'protect_app_access': 'Protect access to the app',
+  'security_lock_unavailable':
+      'Lock not turned on. Your phone needs a passcode or fingerprint, then confirm it.',
   'logout_redirect_notice':
       'You\'ll be redirected to the home screen. Your local data will be erased.',
   'profile_complete_optimized':

@@ -1071,6 +1071,68 @@ case "$ACTION" in
     fi
     ;;
 
+  cleanup-reassigned-events)
+    # Supprime les « Dossier réattribué » écrits en boucle avant la PR #397
+    # (07/11/2026 : ~81 800 lignes pour 1 241 dossiers, ~66 par dossier, dans
+    # l'historique que voit l'étudiant). Par dossier, seule la plus récente
+    # reste : elle nomme le conseiller actuel et la tâche corrigée la relit.
+    # Script : backend/scripts/cleanup-reassigned-events.ts ; une transaction,
+    # revérifiée avant validation. Rejouable : « 0 » une fois appliqué.
+    # À passer APRÈS le déploiement de #397, sinon la boucle en réécrit.
+    # Suppression définitive : en application, la table CaseTimelineEvent est
+    # d'abord sauvegardée dans backups/ (restauration : pg_restore -t).
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run cleanup:reassigned-events
+    else
+      echo "── SAUVEGARDE de CaseTimelineEvent ──"
+      mkdir -p backups
+      DUMP="backups/pre-cleanup-reassigned-$(date +%Y%m%d-%H%M%S).dump"
+      docker compose exec -T db sh -c \
+        'pg_dump -U "$POSTGRES_USER" -d "${POSTGRES_DB:-kpb}" --format=custom -t "\"CaseTimelineEvent\""' \
+        < /dev/null > "$DUMP"
+      if [ ! -s "$DUMP" ]; then
+        echo "::error::sauvegarde vide ($DUMP) — rien n'est supprimé"
+        exit 1
+      fi
+      ls -l "$DUMP"
+      echo
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run cleanup:reassigned-events -- --apply
+    fi
+    ;;
+
+  backfill-birthdates)
+    # Ramène les dates de naissance au minuit UTC du jour saisi (audit de la
+    # 57, T4-06) : avant le correctif, le serveur (TZ=Africa/Niamey) gardait
+    # 23:00Z la veille et l'app affichait la veille. Script :
+    # backend/scripts/backfill-birthdates.ts. La simulation compte les dates
+    # hors minuit par heure. Rejouable : « 0 » une fois appliqué. À passer
+    # APRÈS le déploiement du correctif, sinon l'app en réécrit.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run backfill:birthdates
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run backfill:birthdates -- --apply
+    fi
+    ;;
+
+  fix-france-copy)
+    # Texte du pays France en base (audit de la 57, T5-10) : « Campus France
+    # — Bientôt disponible · Septembre 2026 » retiré, description qui cite la
+    # procédure Études en France. Ne réécrit QUE les champs encore à l'ancien
+    # texte du seed (une retouche admin est gardée). Script :
+    # backend/scripts/fix-france-country-copy.ts. Rejouable : « 0 ».
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run fix:france-copy
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run fix:france-copy -- --apply
+    fi
+    ;;
+
   fix-mundiapolis-levels)
     # Corrige les 4 niveaux hors référentiel écrits par l'import du 16/09.
     #

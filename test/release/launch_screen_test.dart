@@ -60,8 +60,10 @@ void main() {
         expect(xml, isNot(contains('Theme.Dark')), reason: path);
         for (final name in ['LaunchTheme', 'NormalTheme']) {
           final style = _style(xml, name);
-          expect(style, contains('parent="@android:style/Theme.Light'),
-              reason: '$path : $name doit hériter d\'un thème clair');
+          // Clair, et AppCompat depuis la revue avant la 58 : local_auth
+          // (BiometricPrompt) plante sous Android 8 et avant sans thème AppCompat.
+          expect(style, contains('parent="Theme.AppCompat.Light'),
+              reason: '$path : $name doit hériter d\'un thème AppCompat clair');
         }
         expect(
           _style(xml, 'NormalTheme'),

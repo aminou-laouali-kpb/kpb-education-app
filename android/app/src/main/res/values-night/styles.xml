@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Thèmes AppCompat : exigés par local_auth (BiometricPrompt) pour ne pas
+         planter sous Android 8 et avant. -->
     <!-- Mode sombre de l'OS : MÊMES thèmes clairs qu'en mode jour, à dessein.
          L'app est en thème clair seul (`themeMode: ThemeMode.light`,
          lib/main.dart) : un écran de lancement noir (l'ancien parent
          Theme.Black) suivi d'un premier écran blanc faisait un flash noir →
          blanc au démarrage. Garde : test/release/launch_screen_test.dart. -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="LaunchTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
-    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/kpb_launch_background</item>
     </style>
 </resources>

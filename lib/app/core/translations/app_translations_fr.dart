@@ -1569,6 +1569,9 @@ const Map<String, String> appTranslationsFr = {
   'case_recap_contact': 'Contact',
   'phone_no_plus': 'Sans le « + » : l\'indicatif est déjà choisi à gauche.',
   'phone_digits_range': 'Entre 7 et 12 chiffres.',
+  'dial_code_other': 'Autre indicatif',
+  'dial_code_custom_label': 'Ton indicatif (ex. +254)',
+  'dial_code_custom_invalid': 'Un « + » suivi de 1 à 4 chiffres.',
   'cases_filter_all': 'Tous',
   'cases_filter_empty_title': 'Aucun dossier de ce type',
   'cases_filter_empty_body': 'Tes autres dossiers sont dans « Tous ».',
@@ -2638,6 +2641,8 @@ const Map<String, String> appTranslationsFr = {
       'Classées selon ton profil et tes objectifs académiques.',
   'profile_compatibility': 'Compatibilité avec ton profil',
   'protect_app_access': 'Protéger l\'accès à l\'application',
+  'security_lock_unavailable':
+      'Verrou non activé. Il faut un code ou une empreinte sur ton téléphone, puis le confirmer.',
   'logout_redirect_notice':
       'Tu seras redirigé vers l\'écran d\'accueil. Tes données locales seront effacées.',
   'profile_complete_optimized': 'Profil complet — recommandations optimisées ✨',
