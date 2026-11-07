@@ -86,7 +86,14 @@ class _PreferencesCard extends StatelessWidget {
             trailing: Switch.adaptive(
               value: controller.isAppLockEnabled,
               activeTrackColor: KpbColors.actionPrimary,
-              onChanged: controller.toggleAppLock,
+              onChanged: (enable) async {
+                if (enable &&
+                    !await SecurityService.instance.confirmCanLock()) {
+                  KpbToast.error('security_lock_unavailable'.tr);
+                  return;
+                }
+                controller.toggleAppLock(enable);
+              },
             ),
           ),
           // Communauté : les membres bloqués se gèrent ici (exigence des

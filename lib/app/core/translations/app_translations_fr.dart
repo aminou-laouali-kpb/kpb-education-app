@@ -2641,6 +2641,8 @@ const Map<String, String> appTranslationsFr = {
       'Classées selon ton profil et tes objectifs académiques.',
   'profile_compatibility': 'Compatibilité avec ton profil',
   'protect_app_access': 'Protéger l\'accès à l\'application',
+  'security_lock_unavailable':
+      'Verrou non activé. Il faut un code ou une empreinte sur ton téléphone, puis le confirmer.',
   'logout_redirect_notice':
       'Tu seras redirigé vers l\'écran d\'accueil. Tes données locales seront effacées.',
   'profile_complete_optimized': 'Profil complet — recommandations optimisées ✨',

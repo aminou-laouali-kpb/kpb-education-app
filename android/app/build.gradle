@@ -162,7 +162,10 @@ flutter {
     source '../..'
 }
 
-// dependencies {}
+dependencies {
+    // Thèmes Theme.AppCompat de styles.xml (exigés par local_auth).
+    implementation "androidx.appcompat:appcompat:1.7.1"
+}
 
 // dependencies {
 //    implementation "androidx.multidex:multidex:2.0.1"

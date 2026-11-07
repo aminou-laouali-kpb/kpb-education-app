@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Thèmes AppCompat : exigés par local_auth (BiometricPrompt) pour ne pas
+         planter sous Android 8 et avant. -->
     <!-- Thème de la fenêtre pendant le démarrage du processus : le logo KPB sur
          fond blanc (drawable/launch_background.xml), retiré dès que le moteur
          Flutter dessine sa première image. -->
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="LaunchTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
     </style>
     <!-- Thème appliqué dès que le processus a démarré : couleur de la fenêtre
          pendant l'initialisation de l'interface Flutter, puis DERRIÈRE elle.
          Blanc de marque, comme le premier écran de l'app. -->
-    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <style name="NormalTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/kpb_launch_background</item>
     </style>
 </resources>

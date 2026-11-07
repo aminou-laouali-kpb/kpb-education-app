@@ -11,6 +11,7 @@ import '../../core/navigation/app_boot_screen.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/community_store.dart';
 import '../../core/services/remote_feature_flags.dart';
+import '../../core/services/security_service.dart';
 import '../../core/models/app_models.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/utils/country_utils.dart';

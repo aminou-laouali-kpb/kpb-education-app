@@ -2414,6 +2414,8 @@ const Map<String, String> appTranslationsEn = {
   'ranked_by_profile': 'Ranked by your profile and academic goals.',
   'profile_compatibility': 'Compatibility with your profile',
   'protect_app_access': 'Protect access to the app',
+  'security_lock_unavailable':
+      'Lock not turned on. Your phone needs a passcode or fingerprint, then confirm it.',
   'logout_redirect_notice':
       'You\'ll be redirected to the home screen. Your local data will be erased.',
   'profile_complete_optimized':
