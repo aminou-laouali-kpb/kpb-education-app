@@ -141,9 +141,10 @@ describe('l’alerte avant clôture', () => {
   });
 
   it('l’horizon est réglable, et le défaut vaut bien quatorze jours', () => {
-    const wide = validateScholarshipCatalog(SCHOLARSHIP_CATALOG_V1, {
+    const now = new Date('2026-10-12T12:00:00.000Z');
+    const wide = validateScholarshipCatalog(catalogAsOf(SCHOLARSHIP_CATALOG_V1, now), {
       includeVolumeTargets: false,
-      now: new Date('2026-10-12T12:00:00.000Z'),
+      now,
       closingSoonHorizonDays: 60,
     });
     const byDefault = at('2026-10-12T12:00:00.000Z');
