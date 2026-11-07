@@ -1102,6 +1102,22 @@ case "$ACTION" in
     fi
     ;;
 
+  backfill-birthdates)
+    # Ramène les dates de naissance au minuit UTC du jour saisi (audit de la
+    # 57, T4-06) : avant le correctif, le serveur (TZ=Africa/Niamey) gardait
+    # 23:00Z la veille et l'app affichait la veille. Script :
+    # backend/scripts/backfill-birthdates.ts. La simulation compte les dates
+    # hors minuit par heure. Rejouable : « 0 » une fois appliqué. À passer
+    # APRÈS le déploiement du correctif, sinon l'app en réécrit.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run backfill:birthdates
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run backfill:birthdates -- --apply
+    fi
+    ;;
+
   fix-france-copy)
     # Texte du pays France en base (audit de la 57, T5-10) : « Campus France
     # — Bientôt disponible · Septembre 2026 » retiré, description qui cite la

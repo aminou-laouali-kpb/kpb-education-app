@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { isAtLeastAge } from './profile-age.policy';
+import { birthDateAtUtcMidnight, isAtLeastAge } from './profile-age.policy';
 import { ProfilesService } from './profiles.service';
 
 describe('profile minimum-age policy', () => {
@@ -54,5 +54,40 @@ describe('profile minimum-age policy', () => {
     ).rejects.toMatchObject({
       response: expect.objectContaining({ code: 'minimum_age_not_met' }),
     });
+  });
+});
+
+describe('birthDateAtUtcMidnight (audit 57, T4-06)', () => {
+  // L'app envoie le minuit local, sans fuseau ; le serveur tourne en
+  // Africa/Niamey (UTC+1). Avant le correctif, la base gardait 23:00Z la veille.
+  it.each([
+    ['1990-03-15T00:00:00.000', '1990-03-15T00:00:00.000Z'],
+    ['1990-03-15', '1990-03-15T00:00:00.000Z'],
+    ['1990-03-15T00:00:00.000Z', '1990-03-15T00:00:00.000Z'],
+    // Ancienne valeur renvoyée par une app qui l'a relue du serveur.
+    ['1990-03-14T23:00:00.000Z', '1990-03-15T00:00:00.000Z'],
+    // Minuit local à Nairobi (UTC+3) et à Dakar (UTC+0).
+    ['1990-03-15T00:00:00.000+03:00', '1990-03-15T00:00:00.000Z'],
+    ['1990-03-15T00:00:00+00:00', '1990-03-15T00:00:00.000Z'],
+  ])('%s → %s', (input, expected) => {
+    expect(birthDateAtUtcMidnight(input).toISOString()).toBe(expected);
+  });
+
+  it('ne dépend pas du fuseau du serveur', () => {
+    const before = process.env.TZ;
+    process.env.TZ = 'Africa/Niamey';
+    try {
+      expect(
+        birthDateAtUtcMidnight('2008-11-07T00:00:00.000').toISOString(),
+      ).toBe('2008-11-07T00:00:00.000Z');
+    } finally {
+      process.env.TZ = before;
+    }
+  });
+
+  it('laisse une valeur illisible invalide', () => {
+    expect(Number.isNaN(birthDateAtUtcMidnight('pas une date').getTime())).toBe(
+      true,
+    );
   });
 });
