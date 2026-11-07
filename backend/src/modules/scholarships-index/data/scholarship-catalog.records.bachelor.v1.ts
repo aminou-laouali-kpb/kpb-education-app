@@ -147,8 +147,8 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     fundingLabel: ['Financement complet des coûts universitaires publiés pendant quatre ans', 'Full published university-cost coverage for four years'],
     fundingType: 'fully_funded',
     deadlineLabel: [
-      'Ouvert, pour les élèves déjà nommés uniquement — la nomination du lycée (9 octobre 2026) et la demande d’admission OUAC (16 octobre 2026) sont closes ; dossier Pearson et pièces avant le 6 novembre 2026',
-      'Open to already-nominated students only — school nomination (9 October 2026) and OUAC admission application (16 October 2026) have closed; Pearson application and documents by 6 November 2026',
+      'Clôturé — nomination du lycée (9 octobre 2026), demande OUAC (16 octobre 2026) et dossier Pearson (6 novembre 2026) sont clos ; prochain cycle non publié',
+      'Closed — school nomination (9 October 2026), OUAC application (16 October 2026) and Pearson application (6 November 2026) have closed; next cycle not published',
     ],
     description: [
       'Bourse de l’Université de Toronto pour environ 37 étudiants internationaux exceptionnels. Point décisif : on ne peut pas se présenter soi-même. Seul le lycée fréquenté peut nommer le candidat, via le portail officiel, et il ne peut nommer qu’un seul élève par an. Aucune agence ni aucun « agent » éducatif ne peut déposer de candidature.',
@@ -183,7 +183,9 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
     ],
     cycle: {
       academicYear: '2027-2028',
-      status: 'open',
+      // Passé `closed` le 07/11/2026 : la clôture publiée (6 novembre) est
+      // échue. Aucune source relue pour ce geste : `checkedAt` ne bouge pas.
+      status: 'closed',
       dateConfidence: 'confirmed',
       opensAt: '2026-07-06T00:00:00.000Z',
       closesAt: '2026-11-06T20:59:59.000Z',
@@ -196,7 +198,7 @@ export const VERIFIED_BACHELOR_RECORDS_V1: VerifiedScholarshipCatalogRecord[] = 
       application: 'https://future.utoronto.ca/pearson-scholarships',
       cycle: 'https://future.utoronto.ca/pearson-scholarships',
     },
-    tags: ['bachelor', 'canada', 'toronto', 'open', 'school-nomination', 'fully-funded'],
+    tags: ['bachelor', 'canada', 'toronto', 'closed', 'school-nomination', 'fully-funded'],
     checkedAt: '2026-10-24T07:10:00.000Z',
   }),
 ];

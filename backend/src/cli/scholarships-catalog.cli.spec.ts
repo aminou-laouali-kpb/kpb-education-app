@@ -141,7 +141,7 @@ describe('scholarships-catalog CLI', () => {
     // `verifiedAt`) : aucune clôture entre le 07/10 et le 24/10, les comptes
     // publiables ne bougent pas. 06/11 depuis la relecture de CMU-Africa :
     // Open Doors Russie, confirmée, est close depuis le 1er novembre.
-    const now = new Date('2026-11-06T18:00:00.000Z');
+    const now = new Date('2026-11-07T08:00:00.000Z');
 
     // POURQUOI CES CHIFFRES ONT CHANGÉ LE 20/08/2026 — 31 → 30 et 11 → 10.
     //
@@ -166,14 +166,15 @@ describe('scholarships-catalog CLI', () => {
     // La valeur numérique reste le critère : si quelqu'un annule la correction
     // de la porte de qualité, ce compte tombe à 25. « Les tests passent » ne
     // l'aurait pas montré.
-    // 27 depuis le 06/11 : Open Doors Russie est close (1er novembre).
-    it('publishes exactly the 27 eligible records of catalog 1.3.0', () => {
+    // 27 depuis le 06/11 : Open Doors Russie est close (1er novembre) ;
+    // 26 depuis le 07/11 : UofT Pearson est close (6 novembre).
+    it('publishes exactly the 26 eligible records of catalog 1.3.0', () => {
       const decisions = SCHOLARSHIP_CATALOG_V1.records.map((_, index) =>
         decidePublication(rowFromRecord(index), now, false),
       );
       const published = decisions.filter((item) => item.publish).map((i) => i.id);
 
-      expect(published).toHaveLength(27);
+      expect(published).toHaveLength(26);
       expect(published).not.toContain('mccall_macbain_2027');
       expect(decisions.filter((item) => !item.publish).map((i) => i.id).sort()).toEqual([
         'chevening_2027',
@@ -184,6 +185,7 @@ describe('scholarships-catalog CLI', () => {
         'rhodes_southern_africa_2027',
         'schwarzman_scholars_2027',
         'uct_international_refugee_2027',
+        'uoft_lester_b_pearson_2027',
         'up_mastercard_scholars_2027',
       ]);
     });
@@ -196,13 +198,14 @@ describe('scholarships-catalog CLI', () => {
     // le 07/10 : Eiffel et AUC Excellence publient leurs dates 2027 (open) ;
     // 12 le même jour : Gates Cambridge et CMU-Africa entrent, dates confirmées ;
     // 13 depuis le 24/10 : le Swedish Institute publie ses dates 2027 ;
-    // 12 depuis le 06/11 : Open Doors Russie, confirmée, est close.
-    it('publishes only the 12 confirmed-date records under --confirmed-only', () => {
+    // 12 depuis le 06/11 : Open Doors Russie, confirmée, est close ;
+    // 11 depuis le 07/11 : UofT Pearson, confirmée, est close.
+    it('publishes only the 11 confirmed-date records under --confirmed-only', () => {
       const published = SCHOLARSHIP_CATALOG_V1.records
         .map((_, index) => decidePublication(rowFromRecord(index), now, true))
         .filter((item) => item.publish);
 
-      expect(published).toHaveLength(12);
+      expect(published).toHaveLength(11);
       expect(published.every((item) => item.confidence === 'confirmed')).toBe(true);
       expect(published.map((item) => item.id)).not.toContain('mccall_macbain_2027');
     });
