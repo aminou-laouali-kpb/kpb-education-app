@@ -27,7 +27,15 @@ class _AppLockScreenState extends State<AppLockScreen> {
   Future<void> _authenticate() async {
     if (!mounted) return;
     setState(() => _hasError = false);
-    final success = await SecurityService.instance.authenticate();
+    bool success;
+    try {
+      success = await SecurityService.instance.authenticate();
+    } catch (_) {
+      // Ceinture et bretelles : une erreur inattendue doit afficher
+      // « Authentification échouée » et laisser « Déverrouiller », jamais
+      // sortir de l'écran sans rien dire.
+      success = false;
+    }
     // The screen may have been popped while the auth dialog was open; guard
     // against setState/navigation on a disposed State.
     if (!mounted) return;

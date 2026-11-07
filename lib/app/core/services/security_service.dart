@@ -182,6 +182,20 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
       );
       if (ok) _awaitingUnlock = false;
       return ok;
+    } on LocalAuthException catch (e) {
+      // local_auth 3 lève des LocalAuthException, qui ne sont PAS des
+      // PlatformException : l'annulation de Face ID sortait de cette méthode,
+      // l'écran de verrouillage ne disait rien et Crashlytics comptait un
+      // plantage fatal (revue avant la 58, 07/11/2026).
+      //
+      // Un appareil SANS verrouillage d'écran ni empreinte enregistrée ne peut
+      // pas authentifier : on lève le verrou, comme pour un appareil sans
+      // sécurité (plus haut), sinon l'élève reste enfermé dehors.
+      if (unlockableWithoutAuth(e.code)) {
+        _awaitingUnlock = false;
+        return true;
+      }
+      return false;
     } on PlatformException catch (_) {
       return false;
     } finally {
@@ -191,6 +205,34 @@ class SecurityService extends GetxService with WidgetsBindingObserver {
       _isAuthenticating = false;
     }
   }
+
+  /// Avant d'ACTIVER le verrou : une vraie authentification doit réussir.
+  /// Sans verrouillage d'écran ni empreinte, ou si l'élève annule, le verrou
+  /// reste éteint — sinon l'interrupteur promettait une protection qui
+  /// n'existait pas, ou enfermait l'élève dehors (revue avant la 58).
+  Future<bool> confirmCanLock() async {
+    _isAuthenticating = true;
+    try {
+      if (!await _auth.isDeviceSupported()) return false;
+      return await _auth.authenticate(
+        localizedReason: 'security_biometric_reason'.tr,
+      );
+    } on LocalAuthException catch (_) {
+      return false;
+    } on PlatformException catch (_) {
+      return false;
+    } finally {
+      _isAuthenticating = false;
+    }
+  }
+
+  /// Les codes qui disent « cet appareil ne PEUT pas authentifier », par
+  /// opposition à « l'élève a annulé » ou « trop d'essais ».
+  @visibleForTesting
+  static bool unlockableWithoutAuth(LocalAuthExceptionCode code) =>
+      code == LocalAuthExceptionCode.noCredentialsSet ||
+      code == LocalAuthExceptionCode.noBiometricHardware ||
+      code == LocalAuthExceptionCode.noBiometricsEnrolled;
 
   /// Pose l'état interne depuis un test.
   ///

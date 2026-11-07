@@ -151,6 +151,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.3
+  # Couture officielle de local_auth pour les tests : un faux `LocalAuthPlatform`
+  # lève les LocalAuthException de l'annulation, du verrouillage absent, etc.
+  local_auth_platform_interface: ^1.1.0
 
   # Couture officielle de url_launcher pour les tests : un faux
   # `UrlLauncherPlatform` permet d'affirmer QUELLE URL un bouton ouvre, sans
