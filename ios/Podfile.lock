@@ -47,6 +47,9 @@ PODS:
   - Firebase/Crashlytics (12.12.0):
     - Firebase/CoreOnly
     - FirebaseCrashlytics (~> 12.12.0)
+  - Firebase/Messaging (12.12.0):
+    - Firebase/CoreOnly
+    - FirebaseMessaging (~> 12.12.0)
   - firebase_analytics (12.3.0):
     - firebase_core
     - FirebaseAnalytics (= 12.12.0)
@@ -56,6 +59,10 @@ PODS:
     - Flutter
   - firebase_crashlytics (5.2.0):
     - Firebase/Crashlytics (= 12.12.0)
+    - firebase_core
+    - Flutter
+  - firebase_messaging (16.2.0):
+    - Firebase/Messaging (= 12.12.0)
     - firebase_core
     - Flutter
   - FirebaseAnalytics (12.12.0):
@@ -98,6 +105,15 @@ PODS:
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - PromisesObjC (~> 2.4)
+  - FirebaseMessaging (12.12.0):
+    - FirebaseCore (~> 12.12.0)
+    - FirebaseInstallations (~> 12.12.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Reachability (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
   - FirebaseRemoteConfigInterop (12.12.0)
   - FirebaseSessions (12.12.0):
     - FirebaseCore (~> 12.12.0)
@@ -190,55 +206,6 @@ PODS:
   - nanopb/encode (3.30910.0)
   - nb_utils (0.0.1):
     - Flutter
-  - onesignal_flutter (5.5.6):
-    - Flutter
-    - OneSignalXCFramework (= 5.5.1)
-  - OneSignalXCFramework (5.5.1):
-    - OneSignalXCFramework/OneSignalComplete (= 5.5.1)
-  - OneSignalXCFramework/OneSignal (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalExtension
-    - OneSignalXCFramework/OneSignalLiveActivities
-    - OneSignalXCFramework/OneSignalNotifications
-    - OneSignalXCFramework/OneSignalOSCore
-    - OneSignalXCFramework/OneSignalOutcomes
-    - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalComplete (5.5.1):
-    - OneSignalXCFramework/OneSignal
-    - OneSignalXCFramework/OneSignalInAppMessages
-    - OneSignalXCFramework/OneSignalLocation
-  - OneSignalXCFramework/OneSignalCore (5.5.1)
-  - OneSignalXCFramework/OneSignalExtension (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalOutcomes
-  - OneSignalXCFramework/OneSignalInAppMessages (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalNotifications
-    - OneSignalXCFramework/OneSignalOSCore
-    - OneSignalXCFramework/OneSignalOutcomes
-    - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalLiveActivities (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalOSCore
-    - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalLocation (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalNotifications
-    - OneSignalXCFramework/OneSignalOSCore
-    - OneSignalXCFramework/OneSignalUser
-  - OneSignalXCFramework/OneSignalNotifications (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalExtension
-    - OneSignalXCFramework/OneSignalOutcomes
-  - OneSignalXCFramework/OneSignalOSCore (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-  - OneSignalXCFramework/OneSignalOutcomes (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-  - OneSignalXCFramework/OneSignalUser (5.5.1):
-    - OneSignalXCFramework/OneSignalCore
-    - OneSignalXCFramework/OneSignalNotifications
-    - OneSignalXCFramework/OneSignalOSCore
-    - OneSignalXCFramework/OneSignalOutcomes
   - OrderedSet (6.0.3)
   - package_info_plus (0.4.5):
     - Flutter
@@ -285,6 +252,7 @@ DEPENDENCIES:
   - firebase_analytics (from `.symlinks/plugins/firebase_analytics/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_crashlytics (from `.symlinks/plugins/firebase_crashlytics/ios`)
+  - firebase_messaging (from `.symlinks/plugins/firebase_messaging/ios`)
   - Flutter (from `Flutter`)
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
   - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
@@ -292,7 +260,6 @@ DEPENDENCIES:
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - local_auth_darwin (from `.symlinks/plugins/local_auth_darwin/darwin`)
   - nb_utils (from `.symlinks/plugins/nb_utils/ios`)
-  - onesignal_flutter (from `.symlinks/plugins/onesignal_flutter/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - posthog_flutter (from `.symlinks/plugins/posthog_flutter/darwin`)
@@ -318,6 +285,7 @@ SPEC REPOS:
     - FirebaseCoreInternal
     - FirebaseCrashlytics
     - FirebaseInstallations
+    - FirebaseMessaging
     - FirebaseRemoteConfigInterop
     - FirebaseSessions
     - GoogleAdsOnDeviceConversion
@@ -325,7 +293,6 @@ SPEC REPOS:
     - GoogleDataTransport
     - GoogleUtilities
     - nanopb
-    - OneSignalXCFramework
     - OrderedSet
     - PostHog
     - PromisesObjC
@@ -348,6 +315,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_core/ios"
   firebase_crashlytics:
     :path: ".symlinks/plugins/firebase_crashlytics/ios"
+  firebase_messaging:
+    :path: ".symlinks/plugins/firebase_messaging/ios"
   Flutter:
     :path: Flutter
   flutter_inappwebview_ios:
@@ -362,8 +331,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/local_auth_darwin/darwin"
   nb_utils:
     :path: ".symlinks/plugins/nb_utils/ios"
-  onesignal_flutter:
-    :path: ".symlinks/plugins/onesignal_flutter/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
   permission_handler_apple:
@@ -400,12 +367,14 @@ SPEC CHECKSUMS:
   firebase_analytics: e5f4faccf1f7040d3788e835b7eb7b57dc84a911
   firebase_core: 9156a152117c843440b0b990c785aa0259bc5447
   firebase_crashlytics: e24acd48861c5edf6e0f6c134d6a0b28593c76d7
+  firebase_messaging: 0d962ab44ff24ed36deb8fa2ee043c4671858269
   FirebaseAnalytics: db0dca7e35a503ddf6869e457f4926dc35afe216
   FirebaseCore: 86241206e656f5c80c995e370e6c975913b9b284
   FirebaseCoreExtension: ff6fd42eb5287e71d3e160450de6509733d9ead7
   FirebaseCoreInternal: 7c12fc3011d889085e765e317d7b9fd1cef97af9
   FirebaseCrashlytics: 03f4e20d0c9b7fd6338cb9066f4bfb69d3f42fd0
   FirebaseInstallations: 4e6e162aa4abaaeeeb01dd00179dfc5ad9c2194e
+  FirebaseMessaging: 341004946fa7ffc741344b20f1b667514fc93e31
   FirebaseRemoteConfigInterop: 23996ab7397494722df4fdd1fd398024389d5da8
   FirebaseSessions: 804bd321f2d2f2ddafe74ef7856062aa19f179c2
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
@@ -420,8 +389,6 @@ SPEC CHECKSUMS:
   local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   nb_utils: f4e2d76a9018f7ac0ed7823d8efd6eca639c01a5
-  onesignal_flutter: 4b1dcdcebf7d586e69360a97403c8da1fcc62107
-  OneSignalXCFramework: 2b46c36b38528b65dce33ed9d83375f8c98bf40c
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
