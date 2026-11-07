@@ -1,5 +1,13 @@
 # Build 57 — pack de soumission : ce que la 57 embarque, notes de revue recomptées, déclarations de confidentialité, drapeaux et déploiement par étapes
 
+> **⚠️ REMPLACÉE par la 58 le 07/11/2026 : suivre `docs/mise-a-jour-58-checklist.md`.**
+> La `2.3.1 (57)` a été téléversée sur App Store Connect le 25/10/2026 et n'a jamais été soumise ;
+> l'audit UX du 28/10/2026 a refusé son archive. La build suivante est la `2.3.1 (58)`
+> (`pubspec.yaml`, préflights et registre posés le 07/11/2026), même version marketing.
+> **Ce pack reste la référence pour la 58**, sauf ses §2 (notes de version) et §3 (« Notes for
+> Review »), remplacés par `docs/release-58-store-pack.md`. Le contenu ci-dessous est conservé
+> tel qu'écrit.
+
 > **À quoi sert ce fichier.** La 57 est une **release unique** qui embarque les chantiers B, C,
 > D, F, G, H, I et K (PR #353 à #361), plus la bascule des notifications vers Firebase Cloud
 > Messaging (#351), les correctifs #349 et #350, les PR #362 à #374 (chantier L, catalogue,

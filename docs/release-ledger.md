@@ -143,39 +143,40 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   au SHA de la 56 n'est nécessaire QUE pour allumer la bulle ou les écoles privées, et
   **ne se fait pas avant le préflight de la 56**.
 
+- `57` — **`2.3.1 (57)` : consommé le 25/10/2026 (téléversée sur App Store Connect depuis
+  l'Organizer, pour TestFlight), jamais soumise à l'App Review, remplacée par la 58.** Verdict
+  de l'audit UX externe du 28/10/2026 : ne pas envoyer l'archive de la 57, envoyer une 58
+  corrigée. Le numéro est consommé parce que la build est partie chez Apple ; il ne reprend
+  jamais la place du courant. La 2.3.1 n'ayant jamais été en vente ni soumise, la version
+  marketing `2.3.1` reste libre pour la 58.
+
+  Faits gardés : commit archivé `ba84fedf01534262a81b8f45ac2817d34ee9b788` (`main` après
+  #382) ; archive Xcode « Runner 25-10-2026, 16.14 », construite dans une copie propre de ce
+  commit ; backend de production déjà sur la 57 à l'envoi (`/api/health` → `push.fcm: true`).
+  Préflight de l'archive vert, sauf la signature « Apple Distribution » (signature
+  automatique). **Le préflight de l'IPA exportée (`--app`) n'a pas tourné** : l'envoi est parti
+  de l'Organizer sans export. Aucun AAB de la 57 n'est importé dans Play, et aucun ne doit
+  l'être. Contenu : release unique, chantiers B, C, D, F, G, H, I, K (#353 à #361), FCM
+  (#351), correctifs #349 et #350, communauté C1 + C2 et bots (#365 à #367), parrainage côté
+  app (#368), PR #362 à #382 ; couplage `requires-new` (FCM). Ses papiers (checklist, pack,
+  recette) portent un bandeau « REMPLACÉE par la 58 ». Entrées ci-dessous :
+  `### Chantier L (16/10/2026)`, `### Parrainage côté app (17/10/2026)`,
+  `### Finalisation de la build 57 (18/10/2026)`.
+
 ## Courant
 
-- `57` — **`2.3.1 (57)`, téléversée le 25/10/2026, non soumise.**
-  Release unique : chantiers B, C, D, F, G, H, I, K (#353 à #361), notifications par
-  Firebase Cloud Messaging (#351), correctifs #349 et #350, parrainage côté app (#368),
-  et, derrière des drapeaux fermés, la communauté C1 + C2 et les bots « Vérif » et
-  « Passerelle » (#365 à #367). Version marketing `2.3.1` (décision du propriétaire du
-  16/10/2026) : la 2.3.0 est en vente, App Store Connect refuse une version qui ne lui
-  est pas strictement supérieure (ITMS-90062), et `isVersionBelow` ignore le numéro de
-  build. Couplage backend **`requires-new`** : la 57 n'embarque plus le SDK OneSignal ;
-  serveur, puis admin, puis app.
+- `58` — **`2.3.1 (58)`, EN COURS (archive à faire) : non téléversée, non soumise.**
+  Commit à archiver : `<RELEASE>` — le SHA de `main` après la fusion de la PR de
+  préparation, relevé à l'étape 0.3 de la checklist, jamais écrit d'avance.
+  La 58 est la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389). La version
+  marketing reste `2.3.1` : la 2.3.0 est en vente, la 2.3.1 ne l'a jamais été.
+  Couplage backend **`tolerates-old`** : la 58 n'attend aucun code serveur qui ne soit
+  déjà en production (`### Préparation de la build 58 (07/11/2026)`).
 
-  **Commit archivé : `RELEASE` = `ba84fedf01534262a81b8f45ac2817d34ee9b788`** (`main`
-  après #382 ; il porte donc aussi #376 à #382, correctifs de l'audit 57 et outillage
-  serveur). Archive Xcode « Runner 25-10-2026, 16.14 », construite dans une copie propre
-  de ce commit, téléversée sur App Store Connect depuis l'Organizer le 25/10/2026 pour la
-  tester dans TestFlight. Backend de production déjà sur la 57 à ce moment-là
-  (`/api/health` → `push.fcm: true`).
-
-  Préflight de l'archive : version, bundle, iPad (`1,2` + 4 orientations), modes
-  d'arrière-plan, Firebase désactivé au démarrage, manifeste de confidentialité, clé
-  PostHog (48 caractères, une seule `phc_`), aucun framework OneSignal — vert ; seule la
-  signature « Apple Distribution » échoue, comme toujours en signature automatique.
-  **Le préflight de l'IPA exportée (`--app`) n'a pas tourné** : l'envoi est parti
-  directement de l'Organizer. APNs de production et profil App Store restent à constater
-  sur un appareil (une notification FCM reçue depuis TestFlight). Le `Podfile.lock`
-  régénéré pendant l'archive est reporté par la PR #383.
-
-  **Papiers** : `docs/mise-a-jour-57-checklist.md` (l'ordre des opérations),
-  `docs/release-57-store-pack.md` (notes de version, notes de revue recomptées,
-  déclarations de confidentialité, drapeaux, paliers), `docs/device-qa-build57.md`
-  (recette appareil, jamais jouée). Entrées ci-dessous : `### Chantier L (16/10/2026)`,
-  `### Parrainage côté app (17/10/2026)` et `### Finalisation de la build 57 (18/10/2026)`.
+  **Papiers** : `docs/mise-a-jour-58-checklist.md` (l'ordre des opérations),
+  `docs/release-58-store-pack.md` (ce qui change par rapport au pack 57 : notes de revue
+  recomptées, notes de version), `docs/device-qa-build58.md` (recette appareil, jamais
+  jouée). Le pack 57 reste la référence pour le reste (déclarations, drapeaux, paliers).
 
 ### Ce que 55 embarque
 
@@ -545,6 +546,9 @@ une machine équipée d'un SDK Android (non joué dans ce chantier).
 
 ### Finalisation de la build 57 (18/10/2026) — version posée, décisions du propriétaire reportées
 
+*(Mise à jour du 07/11/2026 : la 57 est consommée, la 58 est courante — voir
+`### Préparation de la build 58 (07/11/2026)`. Le texte ci-dessous est conservé tel qu'écrit.)*
+
 **Numéro posé** (checklist de la 57, §0.2) : `pubspec.yaml` = `version: 2.3.1+57` ;
 `scripts/preflight-ios-archive.sh` (`EXPECTED_BUILD="57"`, `EXPECTED_VERSION="2.3.1"`) et
 `scripts/preflight-android-aab.sh` (`EXPECTED_VERSION_NAME="2.3.1"`, `EXPECTED_VERSION_CODE="57"`) ;
@@ -579,6 +583,63 @@ communauté, compétition ; page de suppression de compte.
 
 **Reste au propriétaire** : relire ces textes avant l'archive ; les trois faits de la 56 ;
 XC-06 ; les points À VALIDER restants listés dans `docs/release-57-store-pack.md` §7 et §8.
+
+### Préparation de la build 58 (07/11/2026) — version posée, couplage `tolerates-old`
+
+**Numéro posé** : `pubspec.yaml` = `version: 2.3.1+58` ; `scripts/preflight-ios-archive.sh`
+(`EXPECTED_BUILD="58"`, `EXPECTED_VERSION="2.3.1"`) et `scripts/preflight-android-aab.sh`
+(`EXPECTED_VERSION_NAME="2.3.1"`, `EXPECTED_VERSION_CODE="58"`) ; la `57` passe sous
+**Consommés** ; la `58` est **courante**, état « avant l'archive ».
+`test/release/mise_a_jour_57_checklist_test.dart` ne lit plus la version du dépôt : il garde le
+document de la 57. `test/release/mise_a_jour_58_checklist_test.dart` prend le relais. Aucune
+build de store lancée, rien de déployé ni de soumis.
+
+**Ce que la 58 porte en plus de la 57** (`git log --first-parent ba84fedf..main`, relevé du
+07/11/2026) :
+- **app** — #387 : les 9 correctifs du top 10 de l'audit (flèche ← fantôme et écran noir
+  après « Suivre », faux bandeau « Données d'exemple », ☰ inerte en 1re visite invité,
+  textes ambassadeur, carte conseiller « sous 24 h », feuille « Être accompagné » opaque,
+  « Mes échéances » sans étapes génériques ni faux « 7 jours », une seule étiquette et frais
+  en FCFA sur les écoles « compatibles », invité renvoyé au mur au lieu de « Erreur de
+  connexion ») ; #389 : les quick wins A, B et C (murs invités, code par e-mail, écran
+  « Pass Karatou », portes mortes retirées, contrastes, dossiers, indicatifs d'Afrique
+  centrale, e-mails universitaires, synchro du profil, mur de KPB Intelligence, écran
+  d'entrée, liens légaux avant l'inscription, recherche sur l'Accueil, barre d'état,
+  « tirer pour rafraîchir », chat au texte agrandi, nouvel essai de `/config/app`) ;
+- **serveur, déjà en production** — #392 (dossiers en français, clôtures sans heure à
+  20:59:59Z, filières OMNES, nom « KPB Intelligence »), #397 (réattribution des dossiers
+  sans boucle) ;
+- **catalogue et exploitation** — #386 (actions VPS ops fermées pour « Mes 10 bourses » et
+  l'onboarding V2), #390, #393, #395 (relectures et clôtures de bourses), #396 (actions
+  `backfill-cases-fr` et `reclassify-omnes-fields`) ;
+- **dépôt** — #383 (`ios/Podfile.lock` aligné sur FCM), #384 (registre de la 57).
+
+**Aucune dépendance ni manifeste ne bouge** entre `ba84fedf` et la préparation :
+`pubspec.lock`, `Info.plist`, `PrivacyInfo.xcprivacy`, `AndroidManifest.xml` et
+`android/app/build.gradle` sont identiques ; `pubspec.yaml` ne change que par sa ligne
+`version:` ; `ios/Podfile.lock` change par #383 (OneSignal sort, Firebase Messaging entre :
+ce que `pod install` produisait déjà à l'archive de la 57). Aucun SDK, aucune permission,
+aucun hôte nouveau dans `lib/`.
+
+**Couplage backend : `tolerates-old`.** Le code app de #387 et #389 n'appelle aucune route ni
+aucune clé `features.*` que la production ne sert pas déjà. La seule clé nouvellement lue,
+`publicImpactStats`, est servie depuis la 57 (fermée par défaut). #392 et #397 changent ce
+que le serveur renvoie (textes, dates, réattribution), pas le contrat. La 58 a besoin du
+backend de la 57 (FCM) : il est en production. La production sert `99d5f11a` (#397,
+déployée le 07/11/2026 : relevé du propriétaire, à remesurer à l'étape 2 de la checklist), et
+`git diff --stat 99d5f11a main -- backend admin docker-compose.yml` est vide au 07/11/2026.
+Le préflight tourne donc en `tolerates-old` : la production doit être un **ancêtre** de
+`RELEASE`, sans écart serveur. `requires-new` exigerait un redéploiement au SHA exact de
+`RELEASE` sans aucun changement de code serveur : un risque sans gain. Si une PR serveur
+(#398, #399, #400…) est fusionnée avant `RELEASE`, l'écart n'est plus vide : la 58 n'en
+dépend pas, mais le déploiement devient dû après l'envoi (checklist, étape 1).
+
+**Reste au propriétaire** — À VALIDER (propriétaire) : les choix faits par défaut pendant les
+correctifs et compilés dans la 58 (nom « Pass Karatou », délai « sous 24 h », champ de
+recherche en tête de l'Accueil, téléphone de 7 à 12 chiffres) ; l'entrée ou non de #401
+(« Autre indicatif », code app) avant `RELEASE` ; la puce de notes de version proposée au
+pack 58 §2 ; une éventuelle fiche de version 2.3.1 déjà créée dans App Store Connect pour
+la 57 (y rattacher la 58 à sa place).
 
 ### Ce que 52 embarque
 
