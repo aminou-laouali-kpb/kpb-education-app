@@ -168,7 +168,8 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
 - `58` — **`2.3.1 (58)`, EN COURS (archive à faire) : non téléversée, non soumise.**
   Commit à archiver : `<RELEASE>` — le SHA de `main` après la fusion de la PR de
   préparation, relevé à l'étape 0.3 de la checklist, jamais écrit d'avance.
-  La 58 est la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389). La version
+  La 58 est la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389), l'indicatif
+  « Autre » (#401) et le verrou biométrique corrigé (#403, revue avant la 58). La version
   marketing reste `2.3.1` : la 2.3.0 est en vente, la 2.3.1 ne l'a jamais été.
   Couplage backend **`tolerates-old`** : la 58 n'attend aucun code serveur qui ne soit
   déjà en production (`### Préparation de la build 58 (07/11/2026)`).
@@ -625,19 +626,19 @@ aucun hôte nouveau dans `lib/`.
 aucune clé `features.*` que la production ne sert pas déjà. La seule clé nouvellement lue,
 `publicImpactStats`, est servie depuis la 57 (fermée par défaut). #392 et #397 changent ce
 que le serveur renvoie (textes, dates, réattribution), pas le contrat. La 58 a besoin du
-backend de la 57 (FCM) : il est en production. La production sert `99d5f11a` (#397,
-déployée le 07/11/2026 : relevé du propriétaire, à remesurer à l'étape 2 de la checklist), et
-`git diff --stat 99d5f11a main -- backend admin docker-compose.yml` est vide au 07/11/2026.
+backend de la 57 (FCM) : il est en production. La production sert `b1f6a329` (#398, #399,
+#400, déployé le 07/11/2026 à 17 h 38 UTC, à remesurer à l'étape 2 de la checklist), et
+`git diff --stat b1f6a329 main -- backend admin docker-compose.yml` est vide au 07/11/2026.
 Le préflight tourne donc en `tolerates-old` : la production doit être un **ancêtre** de
 `RELEASE`, sans écart serveur. `requires-new` exigerait un redéploiement au SHA exact de
 `RELEASE` sans aucun changement de code serveur : un risque sans gain. Si une PR serveur
-(#398, #399, #400…) est fusionnée avant `RELEASE`, l'écart n'est plus vide : la 58 n'en
+est fusionnée après le 07/11/2026 et avant `RELEASE`, l'écart n'est plus vide : la 58 n'en
 dépend pas, mais le déploiement devient dû après l'envoi (checklist, étape 1).
 
 **Reste au propriétaire** — À VALIDER (propriétaire) : les choix faits par défaut pendant les
 correctifs et compilés dans la 58 (nom « Pass Karatou », délai « sous 24 h », champ de
-recherche en tête de l'Accueil, téléphone de 7 à 12 chiffres) ; l'entrée ou non de #401
-(« Autre indicatif », code app) avant `RELEASE` ; la puce de notes de version proposée au
+recherche en tête de l'Accueil, téléphone de 7 à 12 chiffres) ; #401 et #403 sont entrées
+dans la 58 le 07/11/2026 ; la puce de notes de version proposée au
 pack 58 §2 ; une éventuelle fiche de version 2.3.1 déjà créée dans App Store Connect pour
 la 57 (y rattacher la 58 à sa place).
 

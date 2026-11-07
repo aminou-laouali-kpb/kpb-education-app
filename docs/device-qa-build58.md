@@ -17,7 +17,7 @@
 > Un « attendu » qui se révèle faux se corrige ici ; on ne plie pas la recette à la build.
 >
 > **Où et comment tester.**
-> - **Backend** : la production, qui sert déjà le backend de la 58 (`99d5f11a` au 07/11/2026,
+> - **Backend** : la production, qui sert déjà le backend de la 58 (`b1f6a329` au 07/11/2026,
 >   checklist 58, étapes 1 et 2). Aucun déploiement n'est nécessaire pour la recette.
 > - **Test « Mes 10 bourses »** (`features.scholarshipMatch`) : **jamais en production** tant que la
 >   collecte de la nationalité n'est pas ouverte. Le jouer contre une **préproduction** ou un backend
@@ -80,6 +80,7 @@ gestes sur l'artefact.
 | Audit-15 | **« Tirer pour rafraîchir »** sur la liste des bourses en vraie 3G (T8-06) | La liste reste affichée pendant le rafraîchissement, pas de squelettes à la place | ☐ | ☐ |
 | Audit-16 | **Recherche** : champ en tête de l'Accueil, loupe de l'onglet Bourses (T6-04) | Les deux ouvrent la recherche ; le champ ne casse pas la salutation à 360 dp | ☐ | ☐ |
 | Audit-17 | **Démarrage hors ligne, puis réseau** (T2-06, complète HorsLigne-1) | Après le retour du réseau, la carte « Études en France » (et la Communauté si ouverte) revient **sans relancer** l'app (nouvel essai de `/config/app` à 5 s puis 30 s) | ☐ | ☐ |
+| Audit-18 | **Verrou biométrique** (Profil → Biométrie, #403) : Android avec code, Android SANS code de verrouillage, iPhone avec Face ID annulé | Avec code : l'empreinte déverrouille. Sans code : l'interrupteur refuse (« Verrou non activé… »). Face ID annulé : « Authentification échouée », « Déverrouiller » relance ; jamais d'élève enfermé | ☐ | ☐ |
 
 ## Petit appareil, mémoire et réseau lent (360 × 640, 2 Go, vraie 3G)
 

@@ -4,7 +4,7 @@
 // de build ou envoie une build que l'audit a refusée.
 //
 // Contexte (07/11/2026) : la 57 est consommée (téléversée le 25/10/2026, jamais
-// soumise) ; le backend dont la 58 a besoin est déjà en production (`99d5f11a`,
+// soumise) ; le backend dont la 58 a besoin est déjà en production (`b1f6a329`,
 // #392 et #397) ; d'où un couplage `tolerates-old` et aucun déploiement avant
 // l'archive. Le préflight de l'IPA exportée (`--app`), sauté pour la 57, devient
 // obligatoire. La recette suit les conditions de l'audit.
@@ -20,8 +20,8 @@ const _path = 'docs/mise-a-jour-58-checklist.md';
 const _packPath = 'docs/release-58-store-pack.md';
 const _qaPath = 'docs/device-qa-build58.md';
 
-/// Le backend de production au 07/11/2026 (#397).
-const _production = '99d5f11a';
+/// Le backend de production au 07/11/2026 (#398 à #400, déployé à 17 h 38 UTC).
+const _production = 'b1f6a329';
 
 /// L'archive de la 57 (`ba84fedf`, téléversée le 25/10/2026).
 const _archive57 = 'ba84fedf';
@@ -173,7 +173,11 @@ void main() {
           .allMatches(step)
           .map((m) => m.group(1)!)
           .toList();
-      expect(expected, ['-version: 2.3.1+57', '+version: 2.3.1+58']);
+      expect(expected, [
+        '-version: 2.3.1+57',
+        '+version: 2.3.1+58',
+        '+  local_auth_platform_interface: ^1.1.0',
+      ]);
       final pubspecLines = _read('pubspec.yaml').split('\n').toSet();
       expect(pubspecLines, contains('version: ${_pubspec().name}+58'));
       expect(pubspecLines.contains('version: 2.3.1+57'), isFalse);
@@ -182,7 +186,9 @@ void main() {
       for (final pr in ['#386', '#387', '#389', '#392', '#397', '#383']) {
         expect(flatStep, contains(pr));
       }
-      expect(flatStep, contains('attendu : rien (aucune dépendance'));
+      expect(
+          flatStep, contains('aucune autre dépendance, aucun autre manifeste'));
+      expect(flatStep, contains('AndroidManifest.xml : rien'));
     });
 
     test('backend : tolerates-old, production ancêtre, aucun déploiement avant',

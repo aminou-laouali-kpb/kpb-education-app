@@ -12,8 +12,8 @@
 >
 > **État de départ — relevé du 07/11/2026** : **2.3.0 en vente** sur l'App Store (depuis le
 > 07/10/2026) et sur Google Play ; la `2.3.1 (57)` est sur App Store Connect, **non soumise** ;
-> aucune 2.3.1 n'a jamais été en vente. Backend de production `99d5f11a` (#397, déployée le
-> 07/11/2026 ; il porte #392), `push.fcm: true`. Drapeaux `community`, `assistBridge`,
+> aucune 2.3.1 n'a jamais été en vente. Backend de production `b1f6a329` (#398, #399, #400, déployé le
+> 07/11/2026 à 17 h 38 UTC ; il porte #392 et #397), `push.fcm: true`. Drapeaux `community`, `assistBridge`,
 > `referralOnboardingCode` et `referralLeaderboard` **refermés** le 07/11/2026 (lus sur
 > `/api/config/app`). Les autres drapeaux n'ont pas été remesurés : l'étape 2 le fait.
 >
@@ -57,7 +57,7 @@
 |---|---|---|
 | **a** | **Version marketing** : `2.3.1`, inchangée depuis la 57 | Posée par la PR de préparation (§0.2) |
 | **b** | **Choix faits par défaut pendant les correctifs** : nom « Pass Karatou », délai « Réponse sous 24 h » sur la carte conseiller, champ de recherche en tête de l'Accueil, téléphone de 7 à 12 chiffres | Textes **compilés** : après l'archive, ils ne changent qu'avec une 59. À VALIDER (propriétaire) |
-| **c** | **#401** (« Autre indicatif », code app, ouverte le 07/11/2026) : dans la 58 ou après | La fusionner **avant** de relever `RELEASE`, ou la laisser pour la suite. À VALIDER (propriétaire) |
+| **c** | **#401** (« Autre indicatif ») et **#403** (verrou biométrique : un Android pouvait enfermer l'élève dehors) | **Fusionnées le 07/11/2026, dans la 58.** #403 ajoute la seule différence de dépendances et de manifeste Android depuis la 57 (§0.3) |
 | **d** | **Notes de version** : garder le texte du pack 57 §2 ou ajouter la puce « corrections » du pack 58 §2 | Ne bloque pas l'archive (texte de console). À VALIDER (propriétaire) |
 | **e** | **Drapeaux fermés à la revue** : `community`, `assistBridge`, `referralOnboardingCode`, `referralLeaderboard` (refermés le 07/11/2026) | Les notes de revue les disent « OFF at review time » : ils restent fermés jusqu'à l'approbation |
 
@@ -102,15 +102,19 @@ git show "$RELEASE:pubspec.yaml" | grep '^version:'        # version: 2.3.1+58
 git merge-base --is-ancestor ba84fedf "$RELEASE" && echo "archive de la 57 = ancêtre de RELEASE : OK"
 git log --oneline --first-parent ba84fedf.."$RELEASE"
 #   attendu (relevé du 07/11/2026) : #386, #387, #390, #389, #392, #393, #395, #396, #397, #383,
-#   #384, puis la PR de préparation de la 58 — et rien d'autre. Une PR de plus (#398 à #401…) :
-#   la nommer ici et arbitrer avant d'archiver (§0.1 c pour #401).
+#   #384, #398, #401, #399, #400, #403, puis la PR de préparation de la 58 — et rien d'autre.
+#   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat ba84fedf "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle
-#   attendu : rien (aucune dépendance, aucun manifeste ne bouge depuis la 57)
+#   attendu (aucune autre dépendance, aucun autre manifeste ne bouge depuis la 57) : seulement
+#   pubspec.lock (local_auth_platform_interface passe en « direct dev », même version) et
+#   android/app/build.gradle (androidx.appcompat 1.7.1, #403). Info.plist, PrivacyInfo et
+#   AndroidManifest.xml : rien.
 git diff -U0 ba84fedf "$RELEASE" -- pubspec.yaml | grep '^[+-]' | grep -v '^+++\|^---' | grep -v '^[+-][[:space:]]*#'
-#   exactement deux lignes :
+#   exactement trois lignes (la troisième : dépendance de TEST de #403, absente du binaire) :
 #     -version: 2.3.1+57
 #     +version: 2.3.1+58
+#     +  local_auth_platform_interface: ^1.1.0
 git diff --stat ba84fedf "$RELEASE" -- ios/Podfile.lock
 #   attendu : ios/Podfile.lock seul (#383 : OneSignal sort, Firebase Messaging entre)
 git ls-tree -r --name-only "$RELEASE" | grep -c '^pubspec_overrides.yaml$'   # 0 : le fichier ne doit pas être suivi
@@ -122,14 +126,14 @@ Si une commande affiche autre chose que l'attendu, **ne pas archiver** : arbitre
 
 ## 1. Serveur et admin — déjà en production, rien à déployer avant l'archive 🔒
 
-La production sert le backend de la 58 depuis le 07/11/2026 (`99d5f11a`, #397 ; #392 avant lui).
+La production sert le backend de la 58 depuis le 07/11/2026 (`b1f6a329`, #398 à #400 ; #392 et #397 avant).
 Le contrôle : aucun écart serveur entre la production et `RELEASE`.
 
 ```bash
-git merge-base --is-ancestor 99d5f11a "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
-git diff --stat 99d5f11a "$RELEASE" -- backend admin docker-compose.yml
-#   attendu : rien (relevé du 07/11/2026 sur main). Une PR serveur fusionnée depuis (#398, #399,
-#   #400…) apparaît ici : la 58 n'en dépend pas, mais son déploiement devient dû APRÈS l'envoi.
+git merge-base --is-ancestor b1f6a329 "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
+git diff --stat b1f6a329 "$RELEASE" -- backend admin docker-compose.yml
+#   attendu : rien (relevé du 07/11/2026 sur main). Une PR serveur fusionnée depuis apparaît
+#   ici : la 58 n'en dépend pas, mais son déploiement devient dû APRÈS l'envoi.
 ```
 
 - **Ne pas déployer avant le préflight.** `tolerates-old` exige que la production soit un
@@ -138,13 +142,13 @@ git diff --stat 99d5f11a "$RELEASE" -- backend admin docker-compose.yml
 - Si l'écart n'est pas vide, le déploiement se fait **après** l'envoi de la 58 aux testeurs
   (`deploy.yml`, `ref` = `RELEASE`, `scope` = `full`), au feu vert du propriétaire, avec les
   opérations propres à chaque PR (simulation d'abord).
-- Aucune migration n'est attendue : `git diff --stat 99d5f11a "$RELEASE" -- backend/prisma/migrations`
+- Aucune migration n'est attendue : `git diff --stat b1f6a329 "$RELEASE" -- backend/prisma/migrations`
   ne doit rien afficher.
 
 ## 2. Vérifications de départ (5 min)
 
 ```bash
-curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : 99d5f11a85d3 (relevé du 07/11/2026)
+curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : b1f6a329a0b7 (relevé du 07/11/2026)
 PROD=$(curl -fsS https://api.kpbeducation.cloud/api/health/version | jq -r .sha)
 git merge-base --is-ancestor "$PROD" "$RELEASE" && echo "production ($PROD) = ancêtre de RELEASE : OK"
 curl -fsS https://api.kpbeducation.cloud/api/health | jq '.push'   # {configured: true, fcm: true, oneSignal: true}
