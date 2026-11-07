@@ -178,9 +178,9 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
     whyStudyEn:
       'France combines academic excellence, manageable costs and a strong African diaspora.',
     marketingDescriptionFr:
-      "Au lancement, KPB se concentre sur l'admission dans les écoles privées françaises (OMNES, ICN, Schiller, IGENSIA). Campus France pour le public arrive en septembre 2026.",
+      "KPB t'accompagne de deux façons : vers les universités publiques par la procédure Études en France, et vers les écoles privées partenaires (OMNES, ICN, Schiller, IGENSIA).",
     marketingDescriptionEn:
-      'At launch, KPB focuses on private French schools (OMNES, ICN, Schiller, IGENSIA). Public Campus France path opens September 2026.',
+      'KPB supports you two ways: public universities through the Études en France procedure, and partner private schools (OMNES, ICN, Schiller, IGENSIA).',
     whyStudyBulletsFr: [
       'Plus de 250 ans d\'excellence académique',
       'Frais privés accessibles (5 000 à 18 000 € / an)',
@@ -217,10 +217,10 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
       'Bonjour KPB, je souhaite étudier en France (écoles privées). Pouvez-vous m\'accompagner ?',
     whatsAppPrefillEn:
       'Hello KPB, I want to study in France (private schools). Can you support me?',
-    mvpNoteFr:
-      'Campus France (universités publiques) — Bientôt disponible · Septembre 2026',
-    mvpNoteEn:
-      'Campus France (public universities) — Coming soon · September 2026',
+    // Plus de note : la carte « Universités publiques » (Études en France)
+    // s'affiche sous l'en-tête du pays depuis la build 58.
+    mvpNoteFr: '',
+    mvpNoteEn: '',
     tuitionRangeFr: '5 000 – 18 000 € / an',
     tuitionRangeEn: '€5,000 – 18,000 / year',
     livingCostRangeFr: '800 – 1 200 € / mois',

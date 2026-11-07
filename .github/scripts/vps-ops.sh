@@ -1071,6 +1071,21 @@ case "$ACTION" in
     fi
     ;;
 
+  fix-france-copy)
+    # Texte du pays France en base (audit de la 57, T5-10) : « Campus France
+    # — Bientôt disponible · Septembre 2026 » retiré, description qui cite la
+    # procédure Études en France. Ne réécrit QUE les champs encore à l'ancien
+    # texte du seed (une retouche admin est gardée). Script :
+    # backend/scripts/fix-france-country-copy.ts. Rejouable : « 0 ».
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run fix:france-copy
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run fix:france-copy -- --apply
+    fi
+    ;;
+
   fix-mundiapolis-levels)
     # Corrige les 4 niveaux hors référentiel écrits par l'import du 16/09.
     #
