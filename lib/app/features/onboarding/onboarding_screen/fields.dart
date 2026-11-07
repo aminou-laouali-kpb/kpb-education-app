@@ -95,15 +95,38 @@ String? validateOnboardingPhone(String? value, {required bool required}) {
   return null;
 }
 
+/// « Autre indicatif » : hors de la table `_dialCodes` (dont chaque `code`
+/// est un indicatif propre) ; l'élève tape le sien (audit build 57, T1-10).
+const _otherDialCode = _DialCode('🌍', '', 'Autre');
+
+/// L'indicatif réellement enregistré : celui de la liste, ou celui tapé par
+/// l'élève quand il a choisi « Autre indicatif ».
+String _dialCodeOf(_DialCode code, TextEditingController custom) =>
+    identical(code, _otherDialCode)
+        ? '+${custom.text.replaceAll(RegExp(r'\D'), '')}'
+        : code.code;
+
+/// Indicatif tapé à la main : 1 à 4 chiffres, « + » facultatif.
+String? validateCustomDialCode(String? value) {
+  final text = value?.trim() ?? '';
+  if (text.isEmpty) return 'field_required'.tr;
+  if (!RegExp(r'^\+?\d{1,4}$').hasMatch(text)) {
+    return 'dial_code_custom_invalid'.tr;
+  }
+  return null;
+}
+
 class _PhoneRow extends StatelessWidget {
   const _PhoneRow({
     required this.controller,
+    required this.customCodeController,
     required this.dialCode,
     required this.label,
     required this.required,
     required this.onDialCode,
   });
   final TextEditingController controller;
+  final TextEditingController customCodeController;
   final _DialCode dialCode;
   final String label;
   final bool required;
@@ -111,7 +134,7 @@ class _PhoneRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
@@ -126,11 +149,15 @@ class _PhoneRow extends StatelessWidget {
               value: dialCode,
               isDense: true,
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              items: _dialCodes
+              items: [..._dialCodes, _otherDialCode]
                   .map((d) => DropdownMenuItem(
                         value: d,
-                        child:
-                            Text(d.label, style: const TextStyle(fontSize: 14)),
+                        child: Text(
+                          identical(d, _otherDialCode)
+                              ? '${d.flag} ${'dial_code_other'.tr}'
+                              : d.label,
+                          style: const TextStyle(fontSize: 14),
+                        ),
                       ))
                   .toList(),
               onChanged: (v) {
@@ -146,6 +173,24 @@ class _PhoneRow extends StatelessWidget {
             keyboardType: TextInputType.phone,
             validator: (v) => validateOnboardingPhone(v, required: required),
             decoration: InputDecoration(labelText: label),
+          ),
+        ),
+      ],
+    );
+    if (!identical(dialCode, _otherDialCode)) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        const SizedBox(height: 8),
+        TextFormField(
+          key: const ValueKey('onboarding-custom-dial-code'),
+          controller: customCodeController,
+          keyboardType: TextInputType.phone,
+          validator: validateCustomDialCode,
+          decoration: InputDecoration(
+            labelText: 'dial_code_custom_label'.tr,
+            hintText: '+254',
           ),
         ),
       ],
