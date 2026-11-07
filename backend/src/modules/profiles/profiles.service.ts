@@ -43,7 +43,11 @@ import {
   AVATAR_ENDPOINT_PATH,
   AVATAR_STORAGE_LABEL,
 } from './profile-avatar.policy';
-import { isAtLeastAge, MINIMUM_ACCOUNT_AGE } from './profile-age.policy';
+import {
+  birthDateAtUtcMidnight,
+  isAtLeastAge,
+  MINIMUM_ACCOUNT_AGE,
+} from './profile-age.policy';
 import { isProfileComplete } from '../referrals/campaigns/profile-completion';
 import { parseLanguageTests } from '../scholarship-match/match-inputs';
 import {
@@ -349,7 +353,7 @@ export class ProfilesService {
             ? { aiConsentedAt: new Date(input.aiConsentedAt) }
             : {}),
           ...(input.birthDate !== undefined
-            ? { birthDate: new Date(input.birthDate) }
+            ? { birthDate: birthDateAtUtcMidnight(input.birthDate) }
             : {}),
           ...(input.guardianName !== undefined
             ? { guardianName: input.guardianName }
