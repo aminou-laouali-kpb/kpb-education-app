@@ -14,6 +14,8 @@ class _PageIdentity extends StatelessWidget {
     required this.emailCtrl,
     required this.phoneCtrl,
     required this.whatsAppCtrl,
+    required this.phoneCustomCodeCtrl,
+    required this.waCustomCodeCtrl,
     required this.phoneCode,
     required this.waCode,
     required this.sameWhatsApp,
@@ -67,7 +69,9 @@ class _PageIdentity extends StatelessWidget {
       lastNameCtrl,
       emailCtrl,
       phoneCtrl,
-      whatsAppCtrl;
+      whatsAppCtrl,
+      phoneCustomCodeCtrl,
+      waCustomCodeCtrl;
   final _DialCode phoneCode, waCode;
   final bool sameWhatsApp;
   final ValueChanged<AccountType> onAccountType;
@@ -203,6 +207,7 @@ class _PageIdentity extends StatelessWidget {
         // Téléphone
         _PhoneRow(
           controller: phoneCtrl,
+          customCodeController: phoneCustomCodeCtrl,
           dialCode: phoneCode,
           label: 'phone'.tr,
           required: true,
@@ -220,6 +225,7 @@ class _PageIdentity extends StatelessWidget {
         if (!sameWhatsApp) ...[
           _PhoneRow(
             controller: whatsAppCtrl,
+            customCodeController: waCustomCodeCtrl,
             dialCode: waCode,
             label: 'whatsapp'.tr,
             required: false,

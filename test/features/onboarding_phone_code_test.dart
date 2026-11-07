@@ -93,14 +93,16 @@ void main() {
       () {
     final source = _source;
     expect(
-      source.contains(r"'${_phoneCode.code} ${_phoneCtrl.text.trim()}'"),
+      source.contains(
+          r"'${_dialCodeOf(_phoneCode, _phoneCustomCodeCtrl)} ${_phoneCtrl.text.trim()}'"),
       isTrue,
       reason: 'La construction du téléphone ne concatène plus '
           '`_phoneCode.code` : vérifiez que le champ persisté reste '
           'l\'indicatif propre.',
     );
     expect(
-      source.contains(r"'${_waCode.code} ${_whatsAppCtrl.text.trim()}'"),
+      source.contains(
+          r"'${_dialCodeOf(_waCode, _waCustomCodeCtrl)} ${_whatsAppCtrl.text.trim()}'"),
       isTrue,
     );
     expect(
@@ -158,6 +160,31 @@ void main() {
       expect(validateOnboardingPhone('  ', required: true), isNotNull);
       expect(validateOnboardingPhone('', required: false), isNull);
       expect(validateOnboardingPhone(null, required: false), isNull);
+    });
+  });
+
+  // Audit build 57, T1-10 (suite) : un élève dont le pays n'est pas dans la
+  // liste choisit « Autre indicatif » et tape le sien.
+  group('indicatif tapé à la main', () {
+    test('accepte 1 à 4 chiffres, avec ou sans « + »', () {
+      for (final ok in ['+254', '254', '+1', '+1684', ' +7 ']) {
+        expect(validateCustomDialCode(ok), isNull, reason: ok);
+      }
+    });
+    test('refuse le vide, les lettres, plus de 4 chiffres, un numéro collé',
+        () {
+      for (final ko in ['', '+', 'abc', '+12345', '+254 712', '++254']) {
+        expect(validateCustomDialCode(ko), isNotNull, reason: ko);
+      }
+    });
+    test('« Autre » reste hors de la table des indicatifs propres', () {
+      expect(readDialCodes().where((c) => c.code.isEmpty), isEmpty);
+      expect(
+        File('lib/app/features/onboarding/onboarding_screen/fields.dart')
+            .readAsStringSync()
+            .contains("const _otherDialCode = _DialCode('🌍', '', 'Autre');"),
+        isTrue,
+      );
     });
   });
 }

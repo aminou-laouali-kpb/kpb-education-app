@@ -195,6 +195,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _whatsAppCtrl = TextEditingController();
+  final _phoneCustomCodeCtrl = TextEditingController();
+  final _waCustomCodeCtrl = TextEditingController();
 
   /// Onboarding « la valeur d'abord » (`features.onboardingV2`), lu UNE fois
   /// à l'ouverture : un rafraîchissement des drapeaux en cours de saisie ne
@@ -484,7 +486,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _onCountryPicked(String? value) {
     setState(() {
       _country = value ?? _country;
-      final match = _dialCodes.where((d) => d.country == value);
+      final match = value == 'Autre'
+          ? const [_otherDialCode]
+          : _dialCodes.where((d) => d.country == value);
       if (match.isEmpty) return;
       if (_phoneCtrl.text.trim().isEmpty) _phoneCode = match.first;
       if (_whatsAppCtrl.text.trim().isEmpty) _waCode = match.first;
@@ -499,6 +503,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _whatsAppCtrl.dispose();
+    _phoneCustomCodeCtrl.dispose();
+    _waCustomCodeCtrl.dispose();
     _guardianNameCtrl.dispose();
     _guardianContactCtrl.dispose();
     super.dispose();
@@ -514,12 +520,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final isPartner = _accountType == AccountType.partner;
     final phone = _phoneCtrl.text.trim().isEmpty
         ? (existing?.phone ?? '')
-        : '${_phoneCode.code} ${_phoneCtrl.text.trim()}';
+        : '${_dialCodeOf(_phoneCode, _phoneCustomCodeCtrl)} ${_phoneCtrl.text.trim()}';
     final whatsApp = _sameWhatsApp
         ? phone
         : (_whatsAppCtrl.text.trim().isEmpty
             ? (existing?.whatsApp ?? '')
-            : '${_waCode.code} ${_whatsAppCtrl.text.trim()}');
+            : '${_dialCodeOf(_waCode, _waCustomCodeCtrl)} ${_whatsAppCtrl.text.trim()}');
 
     return UserProfile(
       id: existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -817,6 +823,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     emailCtrl: _emailCtrl,
                     phoneCtrl: _phoneCtrl,
                     whatsAppCtrl: _whatsAppCtrl,
+                    phoneCustomCodeCtrl: _phoneCustomCodeCtrl,
+                    waCustomCodeCtrl: _waCustomCodeCtrl,
                     phoneCode: _phoneCode,
                     waCode: _waCode,
                     sameWhatsApp: _sameWhatsApp,
