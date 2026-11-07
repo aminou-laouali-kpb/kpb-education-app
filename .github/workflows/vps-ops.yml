@@ -99,6 +99,7 @@ on:
           - backfill-cases-fr
           - reclassify-omnes-fields
           - cleanup-reassigned-events
+          - backfill-birthdates
           - fix-mundiapolis-levels
           - import-universiapolis
           - reconcile-program-ids
@@ -127,7 +128,7 @@ on:
           - scholarship-match-on
           - scholarship-match-off
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, backfill-birthdates, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true
