@@ -71,7 +71,9 @@
     "test:integration:migration-upgrade": "ts-node scripts/verify-competition-readiness-populated-upgrade.ts",
     "test:integration:referral-campaign": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/referrals/campaigns/referral-campaign.postgres.spec.ts src/modules/referrals/campaigns/profile-completion.postgres.spec.ts",
     "test:integration:cases-fr": "jest --runInBand src/modules/cases/cases-legacy-copy.postgres.spec.ts",
-    "backfill:cases-fr": "ts-node scripts/backfill-cases-french-copy.ts"
+    "backfill:cases-fr": "ts-node scripts/backfill-cases-french-copy.ts",
+    "test:integration:reassigned-cleanup": "jest --runInBand src/modules/cases/reassigned-events-cleanup.postgres.spec.ts",
+    "cleanup:reassigned-events": "ts-node scripts/cleanup-reassigned-events.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1032.0",
