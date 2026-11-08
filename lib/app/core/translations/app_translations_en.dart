@@ -312,6 +312,9 @@ const Map<String, String> appTranslationsEn = {
   'profile_parent_access_cta': 'Link a parent',
   'profile_premium_card_title': 'Pass Karatou',
   'profile_premium_card_sub': 'Coming soon — join the list to be notified',
+  'profile_premium_card_sub_joined': 'You are on the list, we will tell you',
+  'profile_premium_card_sub_other':
+      'Coming soon — support with scholarship applications',
   'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Coming soon',
   'premium_hero_title': 'Get the Pass Karatou',

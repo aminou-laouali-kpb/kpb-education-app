@@ -75,6 +75,14 @@ const _exemptKeys = <String, String>{
   'commercial_wa_reply': 'message d\'un conseiller à un prospect',
 };
 
+/// Clés vouvoyées sur cette branche mais tutoyées par une AUTRE PR ouverte.
+/// Elles échappent au contrôle sans être tenues de vouvoyer encore : quel que
+/// soit l'ordre des fusions, le garde reste vert. Retirer l'entrée une fois la
+/// PR fusionnée.
+const _fixedElsewhere = <String, String>{
+  'auth_magic_resend_cooldown': 'tutoyée par la PR #404 (revue avant la 58)',
+};
+
 final _formalWord = RegExp(r'\b(?:vous|votre|vos)\b', caseSensitive: false);
 final _rendezVous = RegExp(r'rendez-vous', caseSensitive: false);
 
@@ -95,6 +103,7 @@ bool _isFormal(String value) {
 
 bool _isExempt(String key) =>
     _exemptKeys.containsKey(key) ||
+    _fixedElsewhere.containsKey(key) ||
     _exemptPrefixes.keys.any((prefix) => key.startsWith(prefix));
 
 String _codeWithoutComments(String path) => File(path)

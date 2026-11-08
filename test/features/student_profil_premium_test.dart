@@ -247,4 +247,68 @@ void main() {
     expect(find.text('profile_premium_card_title'.tr), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  group('carte Profil du Pass : le texte suit le lecteur (revue avant la 58)',
+      () {
+    test('choix de la clé', () {
+      expect(premiumCardSubKey(isStudent: true, registered: false),
+          'profile_premium_card_sub');
+      expect(premiumCardSubKey(isStudent: true, registered: true),
+          'profile_premium_card_sub_joined');
+      expect(premiumCardSubKey(isStudent: false, registered: false),
+          'profile_premium_card_sub_other');
+      expect(premiumCardSubKey(isStudent: false, registered: true),
+          'profile_premium_card_sub_other');
+    });
+
+    test('textes : le parent ni tutoyé ni invité à s\'inscrire', () {
+      final keys = AppTranslations().keys;
+      final fr = keys['fr']!;
+      final other = fr['profile_premium_card_sub_other']!.toLowerCase();
+      expect(other, isNot(matches(RegExp(r'\b(tu|toi|te|ton|ta|tes)\b'))));
+      expect(other, isNot(matches(RegExp(r'\b(vous|votre|vos)\b'))));
+      expect(other, isNot(contains('inscri')));
+      expect(keys['en']!['profile_premium_card_sub_other']!.toLowerCase(),
+          isNot(contains('join')));
+      expect(fr['profile_premium_card_sub_joined'],
+          contains('Tu es sur la liste'));
+    });
+
+    Future<void> pumpProfile(WidgetTester tester) async {
+      await tester.pumpWidget(_wrap(const ProfileScreen()));
+      await tester.pumpAndSettle();
+      final vScroll = find.byWidgetPredicate(
+        (w) =>
+            w is Scrollable &&
+            (w.axisDirection == AxisDirection.down ||
+                w.axisDirection == AxisDirection.up),
+      );
+      await tester.scrollUntilVisible(
+        find.text('profile_premium_card_title'.tr),
+        300,
+        scrollable: vScroll,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('élève non inscrit : « inscris-toi »', (tester) async {
+      await _seed();
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub_joined'.tr), findsNothing);
+    });
+
+    testWidgets('élève inscrit : « tu es sur la liste »', (tester) async {
+      await _seed(apiClient: _RegisteredApiClient());
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub_joined'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub'.tr), findsNothing);
+    });
+
+    testWidgets('parent : texte neutre', (tester) async {
+      await _seed(accountType: AccountType.parent);
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub_other'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub'.tr), findsNothing);
+    });
+  });
 }

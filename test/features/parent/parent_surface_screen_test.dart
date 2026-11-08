@@ -1,16 +1,26 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/features/parent/parent_surface_screen.dart';
 
+import '../../support/eef_help_fakes.dart';
 import '../../widget_test_helpers.dart';
 
 void main() {
+  late UrlLauncherPlatform previousLauncher;
+  late RecordingUrlLauncher launcher;
+
+  setUp(() {
+    previousLauncher = UrlLauncherPlatform.instance;
+    launcher = RecordingUrlLauncher();
+    UrlLauncherPlatform.instance = launcher;
+  });
+  tearDown(() => UrlLauncherPlatform.instance = previousLauncher);
   setUp(resetGetxSingleton);
   tearDown(resetGetxSingleton);
 
@@ -125,13 +135,22 @@ void main() {
           isNot(contains('régler')));
     }
 
-    // Le bouton du Pass demande une information, il ne passe plus par le
-    // message « je souhaite régler … » des prestations payantes.
-    final source = File('lib/app/features/parent/parent_surface_screen.dart')
-        .readAsLinesSync()
-        .where((line) => !line.trimLeft().startsWith('//'))
-        .join('\n');
-    expect(source, isNot(contains("onPay('parent_premium_item'")));
-    expect(source, contains("'parent_wa_pass'.tr"));
+    // Le bouton du Pass ouvre WhatsApp avec une DEMANDE D'INFORMATION, pas
+    // le message « je souhaite régler … » des prestations payantes.
+    await tester.tap(find.text('parent_premium_cta'));
+    await tester.pumpAndSettle();
+    expect(launcher.launched, hasLength(1));
+    expect(Uri.parse(launcher.launched.single).host, 'wa.me');
+    expect(launcher.lastText, 'parent_wa_pass'.tr);
+
+    // Témoin : une prestation, elle, part bien avec le message de règlement —
+    // les deux chemins sont distincts.
+    launcher.launched.clear();
+    await tester.tap(find.text('parent_pay_cta').first);
+    await tester.pumpAndSettle();
+    expect(launcher.launched, hasLength(1));
+    expect(launcher.lastText, isNot('parent_wa_pass'.tr));
+    expect(launcher.lastText,
+        'parent_wa_pay'.trParams({'item': 'parent_pack_review'.tr}));
   });
 }

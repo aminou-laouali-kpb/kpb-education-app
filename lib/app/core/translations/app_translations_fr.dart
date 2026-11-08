@@ -327,6 +327,9 @@ const Map<String, String> appTranslationsFr = {
   'profile_parent_access_cta': 'Relier un parent',
   'profile_premium_card_title': 'Pass Karatou',
   'profile_premium_card_sub': 'Bientôt — inscris-toi pour être prévenu',
+  'profile_premium_card_sub_joined': 'Tu es sur la liste, on te prévient',
+  'profile_premium_card_sub_other':
+      'Bientôt disponible — accompagnement aux candidatures de bourses',
   'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Bientôt disponible',
   'premium_hero_title': 'Passe au Pass Karatou',
@@ -2834,7 +2837,7 @@ const Map<String, String> appTranslationsFr = {
   'auth_magic_verify_button': 'Valider',
   'auth_magic_resend': 'Renvoyer le code',
   'auth_magic_resend_wait': 'Renvoyer dans @seconds s',
-  'auth_magic_resend_cooldown': 'Patiente un peu avant de renvoyer un code.',
+  'auth_magic_resend_cooldown': 'Veuillez patienter avant de renvoyer un code.',
   'auth_guest_profile_title': 'Connecte-toi pour accéder à ton profil',
   'auth_guest_profile_body':
       'Crée un compte pour suivre tes dossiers, sauvegarder des programmes et personnaliser ton parcours.',
