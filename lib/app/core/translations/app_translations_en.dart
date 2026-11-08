@@ -1218,6 +1218,8 @@ const Map<String, String> appTranslationsEn = {
   'scholarships_sort_verified': 'Recently verified',
   'scholarships_sort_title': 'Name (A–Z)',
   'scholarships_offline_count': '@count scholarship(s) saved on your phone',
+  'scholarships_more_failed': "Couldn't load more. Check your connection.",
+  'scholarships_more_retry': 'Retry',
   'scholarship_detail_title': 'Scholarship details',
   'scholarship_detail_not_found': 'Scholarship not found',
   'scholarship_detail_not_found_body':
