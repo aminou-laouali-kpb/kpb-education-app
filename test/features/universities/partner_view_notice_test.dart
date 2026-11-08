@@ -28,8 +28,9 @@ LocalizedText _t(String value) => LocalizedText(fr: value, en: value);
 
 /// Le texte décidé par le propriétaire le 17/10/2026 : le contact direct avec
 /// l'université, sans chiffre ni garantie.
+/// Seule retouche : la marque sans accent, « KPB Education » (revue avant la 58).
 const _ownerTextFr =
-    'Cette vue montre les universités partenaires de KPB Éducation. KPB est '
+    'Cette vue montre les universités partenaires de KPB Education. KPB est '
     'en contact direct avec elles pour faciliter et accélérer ta procédure. '
     'Attention : cela dépend de ton dossier. Pour voir toutes les universités '
     'et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».';

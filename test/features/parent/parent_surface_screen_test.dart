@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
+import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/features/parent/parent_surface_screen.dart';
 
 import '../../widget_test_helpers.dart';
@@ -88,5 +91,47 @@ void main() {
     await tester.tap(find.text('parent_nav_case'));
     await tester.pumpAndSettle();
     expect(find.text('parent_case_title'), findsOneWidget);
+  });
+  testWidgets(
+      'onglet Paiements : le Pass est « Bientôt disponible », rien ne '
+      's\'« active » (revue avant la 58)', (tester) async {
+    final mock = MockApiClient();
+    when(() => mock.listParentChildren()).thenAnswer((_) async => const [
+          {
+            'child': {'fullName': 'Aïcha Diallo', 'currentLevel': 'Licence 3'}
+          }
+        ]);
+    when(() => mock.listParentVisibleCases()).thenAnswer((_) async => const []);
+
+    await pump(tester, mock);
+    await tester.tap(find.text('parent_nav_pay'));
+    await tester.pumpAndSettle();
+
+    // Le même badge que l'écran élève du Pass.
+    expect(find.text('premium_badge_soon'), findsOneWidget);
+    expect(find.text('parent_premium_cta'), findsOneWidget);
+
+    // Les textes de la carte : ni « illimité », ni « live VIP », ni « Activer ».
+    final keys = AppTranslations().keys;
+    for (final lang in const ['fr', 'en']) {
+      final sub = keys[lang]!['parent_premium_sub']!.toLowerCase();
+      final cta = keys[lang]!['parent_premium_cta']!.toLowerCase();
+      for (final banned in const ['illimit', 'unlimited', 'vip', 'live']) {
+        expect(sub, isNot(contains(banned)), reason: '$lang sub: $banned');
+      }
+      expect(cta, isNot(contains('activ')), reason: '$lang cta');
+      expect(keys[lang]!['parent_wa_pass'], isNotNull);
+      expect(keys[lang]!['parent_wa_pass']!.toLowerCase(),
+          isNot(contains('régler')));
+    }
+
+    // Le bouton du Pass demande une information, il ne passe plus par le
+    // message « je souhaite régler … » des prestations payantes.
+    final source = File('lib/app/features/parent/parent_surface_screen.dart')
+        .readAsLinesSync()
+        .where((line) => !line.trimLeft().startsWith('//'))
+        .join('\n');
+    expect(source, isNot(contains("onPay('parent_premium_item'")));
+    expect(source, contains("'parent_wa_pass'.tr"));
   });
 }

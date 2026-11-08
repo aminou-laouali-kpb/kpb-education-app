@@ -15,6 +15,14 @@
 // « rendez-vous » est un nom commun, pas un vouvoiement : il est retiré avant
 // la recherche.
 //
+// Le vouvoiement passe aussi SANS pronom, par l'impératif : « Veuillez
+// patienter », « Choisissez au moins un pays », « Essayez d'autres dates ».
+// Le premier garde ne cherchait que vous/votre/vos et laissait passer ces
+// textes, dès l'onboarding (revue avant la 58). Tout mot qui finit en « -ez »
+// est donc lu comme une 2e personne du pluriel, sauf les quelques mots
+// français qui finissent ainsi sans être des verbes (« chez », « assez »…),
+// listés dans [_notVerbsInEz].
+//
 // ## Les exceptions sont nommées, une par une
 //
 // Préfixes entiers : l'espace parent (on s'adresse à un adulte), la politique
@@ -70,8 +78,20 @@ const _exemptKeys = <String, String>{
 final _formalWord = RegExp(r'\b(?:vous|votre|vos)\b', caseSensitive: false);
 final _rendezVous = RegExp(r'rendez-vous', caseSensitive: false);
 
-bool _isFormal(String value) =>
-    _formalWord.hasMatch(value.replaceAll(_rendezVous, ''));
+/// Un mot entier (lettres accentuées comprises) qui finit en « -ez ».
+final _wordInEz =
+    RegExp(r'(?<!\p{L})\p{L}+ez(?!\p{L})', unicode: true, caseSensitive: false);
+
+/// Mots en « -ez » qui ne sont pas des verbes conjugués.
+const _notVerbsInEz = <String>{'chez', 'assez', 'nez', 'rez'};
+
+bool _isFormal(String value) {
+  final text = value.replaceAll(_rendezVous, '');
+  if (_formalWord.hasMatch(text)) return true;
+  return _wordInEz
+      .allMatches(text)
+      .any((m) => !_notVerbsInEz.contains(m.group(0)!.toLowerCase()));
+}
 
 bool _isExempt(String key) =>
     _exemptKeys.containsKey(key) ||
@@ -90,7 +110,9 @@ void main() {
       expect(fr.length, greaterThan(1000));
     });
 
-    test('fr : aucun « vous / votre / vos » hors exceptions nommées', () {
+    test(
+        'fr : aucun « vous / votre / vos » ni impératif en « -ez » hors '
+        'exceptions nommées', () {
       final offenders = <String>[];
       fr.forEach((key, value) {
         if (_isExempt(key)) return;
@@ -124,6 +146,19 @@ void main() {
       expect(_isFormal('Prendre rendez-vous'), isFalse);
       expect(_isFormal('Rendez-vous confirmé'), isFalse);
       expect(_isFormal('Vérifie ta connexion.'), isFalse);
+      // Impératifs sans pronom (revue avant la 58).
+      expect(
+          _isFormal('Veuillez patienter avant de renvoyer un code.'), isTrue);
+      expect(_isFormal('Choisissez au moins un pays.'), isTrue);
+      expect(_isFormal('Essayez d\'autres dates.'), isTrue);
+      expect(_isFormal('Réessayez.'), isTrue);
+      expect(_isFormal('Synchronisez l\'app.'), isTrue);
+      expect(_isFormal('Bientôt — activez via un conseiller'), isTrue);
+      expect(_isFormal('ESSAYEZ ENCORE'), isTrue);
+      expect(_isFormal('Choisis au moins un pays.'), isFalse);
+      expect(_isFormal('Essaie d\'autres dates.'), isFalse);
+      expect(_isFormal('Ton dossier est chez ton conseiller.'), isFalse);
+      expect(_isFormal('Assez de documents.'), isFalse);
     });
   });
 

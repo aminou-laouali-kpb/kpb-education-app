@@ -182,9 +182,9 @@ const Map<String, String> appTranslationsFr = {
   'flight_calendar_title': 'Prix par jour ce mois-ci',
   'flight_calendar_predicted': 'estimé',
   'flight_no_results':
-      'Aucun prix trouvé pour cette recherche. Essayez d\'autres dates.',
+      'Aucun prix trouvé pour cette recherche. Essaie d\'autres dates.',
   'flight_prices_unavailable':
-      'La recherche en direct est momentanément indisponible. Ouvrez Kayak pour comparer.',
+      'La recherche en direct est momentanément indisponible. Ouvre Kayak pour comparer.',
   'flight_picker_search_hint': 'Ville, aéroport ou pays',
   'flight_picker_no_match': 'Aucun aéroport ne correspond.',
   'flight_field_return_date': 'Date de retour',
@@ -309,9 +309,11 @@ const Map<String, String> appTranslationsFr = {
   'parent_pay_title': 'Paiements',
   'parent_pay_sub': 'Payez pour votre enfant — via votre conseiller KPB',
   'parent_premium_title': 'Pass Karatou pour @child',
-  'parent_premium_sub': 'Copilote illimité · lettres illimitées · live VIP',
-  'parent_premium_item': 'Pass Karatou',
-  'parent_premium_cta': 'Activer via le conseiller KPB',
+  'parent_premium_sub':
+      'Bientôt : la candidature aux bourses de votre enfant préparée avec KPB Intelligence, puis relue par un conseiller KPB.',
+  'parent_premium_cta': 'En parler au conseiller KPB',
+  'parent_wa_pass':
+      'Bonjour, je souhaite en savoir plus sur le Pass Karatou pour mon enfant.',
   // --- App-engagement: Student Profil + honest Premium ---
   'profile_target_universities': 'Mes universités cibles',
   'profile_universities_see_all': 'Voir tout',
@@ -324,21 +326,21 @@ const Map<String, String> appTranslationsFr = {
       'Relie un parent avec un code d\'invitation pour partager ta progression. Tu choisis ce qu\'il peut voir, dossier par dossier.',
   'profile_parent_access_cta': 'Relier un parent',
   'profile_premium_card_title': 'Pass Karatou',
-  'profile_premium_card_sub': 'Bientôt — activez via un conseiller KPB',
+  'profile_premium_card_sub': 'Bientôt — inscris-toi pour être prévenu',
   'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Bientôt disponible',
   'premium_hero_title': 'Passe au Pass Karatou',
   'premium_hero_sub':
-      'Premium arrive bientôt. En attendant, un conseiller KPB peut t\'accompagner — sans aucun paiement dans l\'application.',
+      'Le Pass arrive bientôt. En attendant, un conseiller KPB peut t\'accompagner — sans aucun paiement dans l\'application.',
   'premium_value_ai_coach':
       'KPB Intelligence illimité — l\'offre gratuite inclut @count messages par semaine.',
   'premium_value_advisors':
       'Accompagnement prioritaire par un conseiller KPB vérifié.',
-  'premium_value_more_soon': 'De nouveaux avantages Premium arrivent bientôt.',
-  'premium_compare_title': 'Gratuit vs Premium',
+  'premium_value_more_soon': 'De nouveaux avantages du Pass arrivent bientôt.',
+  'premium_compare_title': 'Gratuit ou Pass',
   'premium_compare_feature': 'Ce que tu obtiens',
   'premium_compare_free': 'Gratuit',
-  'premium_compare_premium': 'Premium',
+  'premium_compare_premium': 'Pass',
   'premium_row_ai_coach': 'Messages KPB Intelligence',
   'premium_free_ai_coach': '@count / sem.',
   'premium_unlimited_soon': 'Illimité (bientôt)',
@@ -348,7 +350,8 @@ const Map<String, String> appTranslationsFr = {
   'premium_wa_prefill':
       'Bonjour KPB, je souhaite en savoir plus sur le Pass Karatou.',
   'premium_advisor_cta': 'Parler à un conseiller KPB',
-  'premium_no_payment_note': 'Karatou ne propose aucun paiement intégré.',
+  'premium_no_payment_note':
+      'KPB Education ne propose aucun paiement dans l\'application.',
   // ── Ce qu'est le Pass, en une carte ──────────────────────────
   //
   // Décrit un service À VENIR, jamais un produit achetable ici : ni
@@ -385,6 +388,8 @@ const Map<String, String> appTranslationsFr = {
   'premium_waitlist_joined_body':
       'Inscrit le @date. Nous te préviendrons dès l\'ouverture du Pass.',
   'premium_waitlist_leave': 'Me retirer de la liste',
+  'premium_waitlist_leave_confirm_body':
+      'Tu ne seras plus prévenu à l\'ouverture du Pass. Tu pourras te réinscrire à tout moment.',
   'premium_waitlist_error_network':
       'Connexion impossible. Vérifie ton réseau et réessaie.',
   'premium_waitlist_error_unauthorized':
@@ -570,7 +575,7 @@ const Map<String, String> appTranslationsFr = {
   'saved_none_yet': 'Aucun élément sauvegardé',
   'saved_empty_title': 'Rien de sauvegardé',
   'saved_empty_subtitle':
-      'Explorez des filières, pays, universités et programmes, puis sauvegardez-les pour les retrouver ici.',
+      'Explore des filières, pays, universités et programmes, puis sauvegarde-les pour les retrouver ici.',
   'saved_group_fields': 'Filières',
   'saved_group_countries': 'Pays',
   'saved_group_institutions': 'Universités',
@@ -951,7 +956,7 @@ const Map<String, String> appTranslationsFr = {
   'community_forum_section': 'Forum',
   'community_join_whatsapp_group': 'Rejoindre le groupe WhatsApp',
   'whatsapp_open_failed':
-      'Impossible d\'ouvrir WhatsApp. Vérifiez que l\'app est installée.',
+      'Impossible d\'ouvrir WhatsApp. Vérifie que l\'app est installée.',
   // ── Lien externe qui ne s'ouvre pas (PARC-15) ──
   // Le bouton « Formulaire officiel » ne faisait RIEN quand le lien
   // était irrécupérable : ni message, ni repli. Sur l'action même sans
@@ -1229,7 +1234,7 @@ const Map<String, String> appTranslationsFr = {
   'search_suggestion_france': 'France',
   'search_suggestion_school': 'École',
   'search_suggestion_engineering': 'Ingénierie',
-  'search_no_results_subtitle': 'Essayez avec d\'autres mots-clés',
+  'search_no_results_subtitle': 'Essaie avec d\'autres mots-clés',
   'search_section_fields': 'Filières',
   'search_section_countries': 'Pays',
   'search_section_institutions': 'Universités',
@@ -1662,15 +1667,15 @@ const Map<String, String> appTranslationsFr = {
   'explore_tab_support': 'Support',
   'explore_no_fields_title': 'Aucune filière disponible',
   'explore_no_fields_body':
-      'Revenez plus tard pour découvrir nos nouveaux programmes.',
+      'Reviens plus tard pour découvrir nos nouveaux programmes.',
   'explore_no_countries_title': 'Aucun pays disponible',
   'explore_no_countries_body':
       'Nous élargissons actuellement notre catalogue de destinations.',
   'explore_no_programs_title': 'Aucune formation disponible',
   'explore_no_programs_body':
-      'Synchronisez l’app avec le serveur pour charger le catalogue.',
+      'Synchronise l’app avec le serveur pour charger le catalogue.',
   'explore_search_program': 'Rechercher un programme',
-  'explore_share_university': 'Découvrez cette université sur KPB Education.',
+  'explore_share_university': 'Découvre cette université sur KPB Education.',
   'compare_selected_label': 'Sélectionné',
   'field_careers': 'Débouchés',
   'field_key_subjects': 'Matières clés',
@@ -1698,11 +1703,10 @@ const Map<String, String> appTranslationsFr = {
   'account_type_commercial': 'Commercial KPB',
   'onboarding_consent_required_title': 'Consentement requis',
   'onboarding_consent_required_body':
-      'Veuillez accepter la politique de confidentialité et les conditions d\'utilisation.',
+      'Accepte la politique de confidentialité et les conditions d\'utilisation pour continuer.',
   'onboarding_selection_required_title': 'Sélection requise',
-  'onboarding_select_field_body': 'Choisissez au moins une filière d\'intérêt.',
-  'onboarding_select_country_body':
-      'Choisissez au moins un pays de destination.',
+  'onboarding_select_field_body': 'Choisis au moins une filière d\'intérêt.',
+  'onboarding_select_country_body': 'Choisis au moins un pays de destination.',
   // Onboarding V2 : l'erreur s'écrit SOUS le groupe de puces, en tu.
   'onboarding_fields_required_inline':
       'Choisis au moins une filière qui t\'intéresse.',
@@ -1725,7 +1729,7 @@ const Map<String, String> appTranslationsFr = {
   'onboarding_partnership_space': 'Espace partenariat',
   'intro_slide1_title': 'Explore tes destinations',
   'intro_slide1_body':
-      "Découvrez des centaines de programmes au Canada, en France et partout dans le monde.",
+      "Découvre des centaines de programmes au Canada, en France et partout dans le monde.",
   'intro_slide2_title': 'Bourses & accompagnement',
   'intro_slide2_body':
       'Trouve la bourse idéale et obtiens une feuille de route adaptée à ton profil.',
@@ -1819,7 +1823,7 @@ const Map<String, String> appTranslationsFr = {
   'profile_missing_budget_impact':
       'Écarte les programmes hors de portée et cible les bourses utiles',
   'universities_empty_sync_subtitle':
-      'Synchronisez l\'app avec le serveur pour charger le catalogue.',
+      'Synchronise l\'app avec le serveur pour charger le catalogue.',
   // --- KPB-89 home ---
   'home_greeting': 'Bonjour 👋',
   'home_greeting_named': 'Bonjour, @name 👋',
@@ -1843,7 +1847,7 @@ const Map<String, String> appTranslationsFr = {
   'home_hero_title_parent': 'Accompagnez\nvotre enfant',
   'home_hero_title_student': 'Ton parcours\nvers l\'étranger',
   'home_hero_subtitle_student': 'Une étape à la fois — on avance ensemble.',
-  'home_hero_subtitle_other': 'Démarrez dès aujourd\'hui.',
+  'home_hero_subtitle_other': 'C\'est le moment de commencer.',
   'home_hero_cta_consultation': 'Consultation',
   'home_hero_cta_become_partner': 'Devenir partenaire',
   // CTA du héros pour un INVITÉ : mène à l'onglet Bourses. Sans durée ni
@@ -2469,7 +2473,7 @@ const Map<String, String> appTranslationsFr = {
   'catalog_filter_engineering': 'Ingénierie',
   'catalog_program_count': '@count programme(s)',
   'catalog_no_match_title': 'Aucun résultat',
-  'catalog_no_match_body': 'Essayez un autre mot-clé ou filtre.',
+  'catalog_no_match_body': 'Essaie un autre mot-clé ou filtre.',
   'catalog_partner_badge': 'Partenaire KPB',
   'm6_tab_partners': 'Partenaires KPB ⭐',
   'm6_tab_all': 'Toutes les écoles',
@@ -2547,7 +2551,7 @@ const Map<String, String> appTranslationsFr = {
       'Trouve ton école privée en France selon ton budget et tes objectifs. Discute instantanément !',
   'closing_label': 'Clôture',
   'home_apply_world_desc':
-      'Postulez dans les meilleures universités du monde (Canada, USA, UK, Allemagne, Maroc).',
+      'Postule dans les meilleures universités du monde (Canada, USA, UK, Allemagne, Maroc).',
   'discover': 'Découvrir',
   'home_destinations_desc':
       'Découvre les destinations d\'études où KPB Education t\'accompagne de A à Z : orientation, admission et visa.',
@@ -2650,7 +2654,7 @@ const Map<String, String> appTranslationsFr = {
   'academy_unlock_msg':
       'Tu vas débloquer la formation "@title" définitivement sur ton compte.',
   'coach_quota_exhausted':
-      'Quota épuisé — Premium bientôt disponible ou contacte un conseiller KPB.',
+      'Quota épuisé — le Pass arrive bientôt. En attendant, contacte un conseiller KPB.',
   'application_sent_admin':
       'Candidature envoyée. Un admin examinera ton dossier sous 48h.',
   'no_verified_mentor':
@@ -2659,7 +2663,7 @@ const Map<String, String> appTranslationsFr = {
       'Articles, guides et conseils de nos experts pour réussir ton projet d\'études.',
   'community_members': '+2 000 étudiants — Conseils, entraide & actu',
   'published_on': 'Publié le',
-  'choose_second_uni': 'Choisissez une 2ème université',
+  'choose_second_uni': 'Choisis une 2ème université',
   'compare_selected': '@n/2 sélectionnée(s)',
   'register_abroad_title': 'Inscriptions à l\'Étranger',
   'register_abroad_cta': 'S\'inscrire à l\'Étranger',
@@ -2830,7 +2834,7 @@ const Map<String, String> appTranslationsFr = {
   'auth_magic_verify_button': 'Valider',
   'auth_magic_resend': 'Renvoyer le code',
   'auth_magic_resend_wait': 'Renvoyer dans @seconds s',
-  'auth_magic_resend_cooldown': 'Veuillez patienter avant de renvoyer un code.',
+  'auth_magic_resend_cooldown': 'Patiente un peu avant de renvoyer un code.',
   'auth_guest_profile_title': 'Connecte-toi pour accéder à ton profil',
   'auth_guest_profile_body':
       'Crée un compte pour suivre tes dossiers, sauvegarder des programmes et personnaliser ton parcours.',
@@ -2918,7 +2922,7 @@ const Map<String, String> appTranslationsFr = {
   'no_account_prompt': 'Pas encore de compte ? ',
   'create_account_link': 'Créer un compte',
   'create_account_title': 'Créer un compte',
-  'create_account_subtitle': 'Rejoignez +5 000 étudiants sur KPB Education',
+  'create_account_subtitle': 'Rejoins +5 000 étudiants sur KPB Education',
   'create_account_button': 'Créer mon compte',
   'already_have_account': 'Déjà un compte ? ',
   'login_link': 'Se connecter',
@@ -2928,7 +2932,7 @@ const Map<String, String> appTranslationsFr = {
   'email_invalid': 'Adresse email invalide',
   'phone_optional': 'Téléphone (optionnel)',
   'password_required': 'Entre ton mot de passe',
-  'password_choose': 'Choisissez un mot de passe',
+  'password_choose': 'Choisis un mot de passe',
   'password_min_length': 'Le mot de passe doit contenir au moins 8 caractères',
   'password_helper': 'Minimum 8 caractères',
   // Forgot password
@@ -2942,10 +2946,9 @@ const Map<String, String> appTranslationsFr = {
   'email_sent_title': 'Email envoyé !',
   'email_sent_body':
       'Vérifie ta boîte email et suis le lien pour réinitialiser ton mot de passe.',
-  'forgot_password_error':
-      'Une erreur est survenue. Vérifiez l\'adresse email.',
+  'forgot_password_error': 'Une erreur est survenue. Vérifie l\'adresse email.',
   // Register errors
-  'register_error_generic': 'Une erreur est survenue. Réessayez.',
+  'register_error_generic': 'Une erreur est survenue. Réessaie.',
   'register_error_email_exists': 'Un compte avec cet email existe déjà.',
   'register_error_network': 'Problème de connexion. Vérifie ton réseau.',
   // ── Parrainage (KPB-69) ──
@@ -3031,7 +3034,7 @@ const Map<String, String> appTranslationsFr = {
   // @link en fin de message, sur sa propre ligne : sans lien, le
   // destinataire devait chercher l'app lui-même (revue vidéo du 08/08).
   'amb_share_message':
-      'Rejoins KPB Éducation avec mon code @code et lance ton projet d\'études à l\'étranger 🎓\n@link',
+      'Rejoins KPB Education avec mon code @code et lance ton projet d\'études à l\'étranger 🎓\n@link',
   'amb_stat_active': 'Filleuls actifs',
   'amb_stat_placed': 'Placés 🎉',
   'amb_stat_earned': 'FCFA gagnés',
@@ -3992,7 +3995,7 @@ const Map<String, String> appTranslationsFr = {
   // le lien direct avec l'université. Toujours suivi de
   // `uni_partner_notice_caveat`.
   'uni_partner_notice_body':
-      'Cette vue montre les universités partenaires de KPB Éducation. KPB est en contact direct avec elles pour faciliter et accélérer ta procédure.',
+      'Cette vue montre les universités partenaires de KPB Education. KPB est en contact direct avec elles pour faciliter et accélérer ta procédure.',
   'uni_partner_notice_caveat': 'Attention : cela dépend de ton dossier.',
   'uni_partner_notice_switch_hint':
       'Pour voir toutes les universités et choisir n\'importe quelle destination, passe sur l\'onglet « Tous ».',

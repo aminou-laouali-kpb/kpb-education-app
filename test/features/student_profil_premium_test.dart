@@ -21,8 +21,18 @@ import '../widget_test_helpers.dart';
 //     (no streak, no in-app price).
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Élève déjà inscrit sur la liste d'attente : l'écran montre « Me retirer ».
+class _RegisteredApiClient extends MockApiClient {
+  @override
+  Future<Map<String, dynamic>> getPremiumWaitlist() async => <String, dynamic>{
+        'registered': true,
+        'registeredAt': '2026-09-03T10:00:00.000Z',
+      };
+}
+
 Future<AppController> _seed({
   AccountType accountType = AccountType.student,
+  MockApiClient? apiClient,
 }) async {
   AppConfig.enableRemoteSyncOverride = false;
   setupPlatformChannelMocks();
@@ -38,7 +48,7 @@ Future<AppController> _seed({
 
   final controller = AppController(
     repository: FakeRepository(snapshot: snapshot),
-    apiClient: MockApiClient(),
+    apiClient: apiClient ?? MockApiClient(),
   );
   await controller.hydrate();
 
@@ -142,6 +152,71 @@ void main() {
     await tester.pumpAndSettle();
     await assertNoBilling();
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'retrait de la liste : la confirmation parle du retrait, pas de '
+      'l\'inscription (revue avant la 58)', (tester) async {
+    // Avant : la boîte « Me retirer de la liste » affichait le texte de
+    // consentement à l'INSCRIPTION (« En vous inscrivant, vous acceptez… »).
+    await _seed(apiClient: _RegisteredApiClient());
+    await tester.pumpWidget(_wrap(const PremiumScreen()));
+    await tester.pumpAndSettle();
+
+    final leave = find.widgetWithText(TextButton, 'premium_waitlist_leave'.tr);
+    await tester.dragUntilVisible(
+        leave, find.byType(ListView), const Offset(0, -160));
+    await tester.pumpAndSettle();
+    await tester.tap(leave);
+    await tester.pumpAndSettle();
+
+    final dialog = find.byType(AlertDialog);
+    expect(dialog, findsOneWidget);
+    expect(
+        find.descendant(
+            of: dialog,
+            matching: find.text('premium_waitlist_leave_confirm_body'.tr)),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: dialog, matching: find.text('premium_waitlist_notice'.tr)),
+        findsNothing);
+
+    // Le texte dit le retrait, au « tu », sans parler d'inscription.
+    final fr = AppTranslations().keys['fr']!;
+    expect(fr['premium_waitlist_leave_confirm_body'],
+        contains('Tu ne seras plus prévenu'));
+    expect(fr['premium_waitlist_leave_confirm_body'],
+        isNot(contains('inscrivant')));
+  });
+
+  test('écran du Pass : plus de « Premium », et l\'éditeur est KPB Education',
+      () {
+    // Le titre dit « Pass Karatou » ; le sous-titre, le tableau et la note
+    // disaient « Premium » et « Karatou ne propose aucun paiement ».
+    final keys = AppTranslations().keys;
+    const passScreenKeys = [
+      'profile_premium_card_sub',
+      'premium_hero_sub',
+      'premium_value_more_soon',
+      'premium_compare_title',
+      'premium_compare_premium',
+      'premium_no_payment_note',
+      'coach_quota_exhausted',
+    ];
+    for (final lang in const ['fr', 'en']) {
+      for (final key in passScreenKeys) {
+        final value = keys[lang]![key];
+        expect(value, isNotNull, reason: '$lang/$key');
+        expect(value, isNot(contains('Premium')), reason: '$lang/$key');
+      }
+      expect(
+          keys[lang]!['premium_no_payment_note'], startsWith('KPB Education '));
+      // La carte du Profil n'invite plus à « activer » un Pass fermé.
+      expect(keys[lang]!['profile_premium_card_sub']!.toLowerCase(),
+          isNot(contains('activ')));
+    }
+    expect(keys['fr']!['premium_compare_premium'], 'Pass');
   });
 
   testWidgets(

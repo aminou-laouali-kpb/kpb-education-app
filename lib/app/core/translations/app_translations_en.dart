@@ -295,9 +295,11 @@ const Map<String, String> appTranslationsEn = {
   'parent_pay_title': 'Payments',
   'parent_pay_sub': 'Pay for your child — via your KPB advisor',
   'parent_premium_title': 'Pass Karatou for @child',
-  'parent_premium_sub': 'Unlimited copilot · unlimited letters · VIP live',
-  'parent_premium_item': 'Pass Karatou',
-  'parent_premium_cta': 'Activate via the KPB advisor',
+  'parent_premium_sub':
+      'Coming soon: your child\'s scholarship application prepared with KPB Intelligence, then reviewed by a KPB advisor.',
+  'parent_premium_cta': 'Ask the KPB advisor about it',
+  'parent_wa_pass':
+      'Hello, I would like to know more about the Pass Karatou for my child.',
   // --- App-engagement: Student Profil + honest Premium ---
   'profile_target_universities': 'My target universities',
   'profile_universities_see_all': 'See all',
@@ -309,20 +311,20 @@ const Map<String, String> appTranslationsEn = {
       'Link a parent with an invite code to share your progress. You choose what they can see, case by case.',
   'profile_parent_access_cta': 'Link a parent',
   'profile_premium_card_title': 'Pass Karatou',
-  'profile_premium_card_sub': 'Coming soon — activate via a KPB advisor',
+  'profile_premium_card_sub': 'Coming soon — join the list to be notified',
   'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Coming soon',
   'premium_hero_title': 'Get the Pass Karatou',
   'premium_hero_sub':
-      'Premium is coming soon. In the meantime, a KPB advisor can help you — with no in-app payment.',
+      'The Pass is coming soon. In the meantime, a KPB advisor can help you — with no in-app payment.',
   'premium_value_ai_coach':
       'Unlimited KPB Intelligence — the free plan includes @count messages per week.',
   'premium_value_advisors': 'Priority guidance from a verified KPB advisor.',
-  'premium_value_more_soon': 'More Premium benefits are coming soon.',
-  'premium_compare_title': 'Free vs Premium',
+  'premium_value_more_soon': 'More Pass benefits are coming soon.',
+  'premium_compare_title': 'Free or Pass',
   'premium_compare_feature': 'What you get',
   'premium_compare_free': 'Free',
-  'premium_compare_premium': 'Premium',
+  'premium_compare_premium': 'Pass',
   'premium_row_ai_coach': 'KPB Intelligence messages',
   'premium_free_ai_coach': '@count / week',
   'premium_unlimited_soon': 'Unlimited (coming soon)',
@@ -332,7 +334,7 @@ const Map<String, String> appTranslationsEn = {
   'premium_wa_prefill':
       'Hello KPB, I\'d like to learn more about the Pass Karatou.',
   'premium_advisor_cta': 'Talk to a KPB advisor',
-  'premium_no_payment_note': 'Karatou has no in-app payment.',
+  'premium_no_payment_note': 'KPB Education has no in-app payment.',
   'premium_pitch_title': 'Apply from A to Z, with support',
   'premium_pitch_body':
       'The Karatou Pass takes your scholarship application from start to finish: KPB Intelligence to prepare it, KPB advisers to review and approve it.',
@@ -354,6 +356,8 @@ const Map<String, String> appTranslationsEn = {
   'premium_waitlist_joined_body':
       'Joined on @date. We will tell you as soon as the Pass opens.',
   'premium_waitlist_leave': 'Leave the list',
+  'premium_waitlist_leave_confirm_body':
+      'You will no longer be told when the Pass opens. You can join again at any time.',
   'premium_waitlist_error_network':
       'Could not connect. Check your network and try again.',
   'premium_waitlist_error_unauthorized':
@@ -2424,7 +2428,7 @@ const Map<String, String> appTranslationsEn = {
   'academy_unlock_msg':
       'You\'re about to unlock the "@title" course permanently on your account.',
   'coach_quota_exhausted':
-      'Quota reached — Premium coming soon, or contact a KPB advisor.',
+      'Quota reached — the Pass is coming soon. In the meantime, contact a KPB advisor.',
   'application_sent_admin':
       'Application sent. An admin will review your file within 48h.',
   'no_verified_mentor': 'No verified mentor matches this search yet.',

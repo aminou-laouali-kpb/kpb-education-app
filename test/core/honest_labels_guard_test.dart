@@ -56,6 +56,9 @@ final _chanceWord = RegExp(
   caseSensitive: false,
 );
 
+/// La marque mal orthographiée (accent sur le « É »).
+final _brandMisspelled = RegExp(r'KPB\s+Éducation');
+
 String _codeWithoutComments(String path) => File(path)
     .readAsLinesSync()
     .where((line) => !line.trimLeft().startsWith('//'))
@@ -144,6 +147,22 @@ void main() {
       expect(caveat, greaterThan(body));
       expect(caveat - body, lessThan(400),
           reason: 'La mise en garde doit suivre le texte, dans le même bloc.');
+    });
+
+    test('la marque s\'écrit « KPB Education », sans accent', () {
+      // « KPB Éducation » s'affichait dans l'avis de l'onglet Universités et
+      // dans le message de partage ambassadeur (revue avant la 58), alors que
+      // l'app et les stores écrivent « KPB Education ».
+      for (final lang in const ['fr', 'en']) {
+        final offenders = <String>[];
+        keys[lang]!.forEach((key, value) {
+          if (_brandMisspelled.hasMatch(value)) offenders.add('$key: $value');
+        });
+        expect(offenders, isEmpty,
+            reason: '$lang : la marque est « KPB Education », sans accent.');
+      }
+      expect(_brandMisspelled.hasMatch('Rejoins KPB Éducation'), isTrue);
+      expect(_brandMisspelled.hasMatch('Rejoins KPB Education'), isFalse);
     });
 
     test('la règle sait rougir (auto-test du motif)', () {

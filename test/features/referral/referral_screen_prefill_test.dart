@@ -1,6 +1,8 @@
 // Écran Parrainage (build 57) : le code en attente — lien d'invitation, ou
 // saisi à l'onboarding sans réseau — y est prérempli, jamais validé seul.
 
+import 'dart:async';
+
 import 'package:dio/dio.dart' hide Response;
 import 'package:dio/dio.dart' as dio show Response;
 import 'package:flutter/material.dart';
@@ -141,5 +143,50 @@ void main() {
     expect(find.text('referral_err_rate_limited_here'), findsOneWidget);
     expect(store.pending?.code, 'K7PQ2MZA');
     await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+  testWidgets(
+      'chargement en échec : message et « Réessayer », puis le code '
+      '(revue avant la 58)', (tester) async {
+    // Avant : le catch avalait l'erreur ; l'écran montrait « — » et un bouton
+    // d'invitation grisé, sans explication ni moyen de réessayer.
+    var calls = 0;
+    when(() => api.getMyReferral()).thenAnswer((_) async {
+      calls++;
+      if (calls == 1) throw Exception('hors ligne');
+      return {'code': 'K7PQ2MZA', 'signedUpCount': 0, 'caseCreatedCount': 0};
+    });
+
+    await pump(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('error_state_default_title'), findsOneWidget);
+    expect(find.text('retry'), findsOneWidget);
+    expect(find.text('—'), findsNothing);
+
+    await tester.tap(find.text('retry'));
+    await tester.pumpAndSettle();
+
+    expect(calls, 2);
+    expect(find.text('error_state_default_title'), findsNothing);
+    expect(find.text('K7PQ2MZA'), findsOneWidget);
+  });
+
+  testWidgets('tirer pour rafraîchir recharge le code', (tester) async {
+    await pump(tester);
+    await tester.pumpAndSettle();
+    verify(() => api.getMyReferral()).called(1);
+
+    // Le geste lui-même relève du framework ; on vérifie que l'écran est bien
+    // enveloppé et que le rafraîchissement rappelle l'API.
+    expect(find.byType(RefreshIndicator), findsOneWidget);
+    // `show()` ne se termine qu'avec le rafraîchissement : on ne l'attend pas,
+    // on fait avancer les images.
+    unawaited(tester
+        .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
+        .show());
+    await tester.pumpAndSettle();
+
+    verify(() => api.getMyReferral()).called(1);
+    expect(find.text('K7PQ2MZA'), findsOneWidget);
   });
 }
