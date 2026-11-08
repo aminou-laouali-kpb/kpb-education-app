@@ -131,6 +131,7 @@ abstract final class CaseApiCodec {
                   id: message['id'] as String? ?? '',
                   senderName: message['senderName'] as String? ?? 'KPB',
                   senderRole: message['senderRole'] as String? ?? 'system',
+                  clientMessageId: message['clientMessageId'] as String?,
                   body: plainLocalized(message['body'] as String? ?? ''),
                   createdAt:
                       DateTime.tryParse(message['createdAt'] as String? ?? '')

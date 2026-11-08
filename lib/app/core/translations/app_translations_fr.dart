@@ -629,6 +629,8 @@ const Map<String, String> appTranslationsFr = {
   'orientation_consultation_case_title': 'Séance de conseil KPB',
   'case_message_send_failed':
       'Ton message n\'a pas pu être envoyé. Vérifie-le puis réessaie.',
+  'case_message_pending': 'En attente d\'envoi',
+  'case_message_failed': 'Non envoyé',
   'orientation_consultation_case_context': 'Accompagnement orientation',
   'orientation_roadmap_heading': 'Ton parcours de candidature',
   'orientation_roadmap_create_case_button': 'Créer mon dossier',

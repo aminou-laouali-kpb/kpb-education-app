@@ -336,10 +336,10 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
   Widget build(BuildContext context) {
     return GetBuilder<AppController>(
       builder: (_) {
-        // The case can disappear from the list mid-session (e.g. its local id
-        // is swapped for the server id after a remote create), so look it up
-        // null-safely instead of crashing with a StateError.
-        final c = _ctrl.cases.firstWhereOrNull((e) => e.id == widget.caseId);
+        // Its local id is swapped for the server id after a remote create:
+        // resolve through the controller instead of showing « introuvable ».
+        // Still null-safe, a case can genuinely disappear mid-session.
+        final c = _ctrl.caseById(widget.caseId);
         if (c == null) {
           return Scaffold(
             backgroundColor: KpbColors.canvas,

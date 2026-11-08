@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show compute, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show compute, kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -186,9 +187,15 @@ abstract class _AppControllerBase extends GetxController {
   void _applyMvpCountryLock();
   void _clampShippedLocale();
   Future<void> _createRemoteCase(StudentCase localCase);
+  StudentCase _carryUndeliveredBubbles(
+      StudentCase incoming, StudentCase? previous);
   Future<void> _createRemoteSavedItem(SavedItem item);
   Future<void> _deleteRemoteSavedItem(SavedItem item);
   Future<void> _pushProfileUpdate();
+
+  /// Le PATCH de profil en cours, que la synchro rejoint au lieu d'en lancer
+  /// un second en parallèle (fin d'onboarding : deux PATCH simultanés).
+  Future<void>? _profilePushInFlight;
   String _savedItemKey(SavedItemType type, String itemId);
   Map<String, dynamic> _userProfilePayload(UserProfile profile,
       {bool allConsents = false});

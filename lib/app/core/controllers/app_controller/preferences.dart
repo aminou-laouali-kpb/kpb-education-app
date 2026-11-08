@@ -156,7 +156,15 @@ mixin _PreferencesMixin on _AppControllerBase {
   }
 
   @override
-  Future<void> _pushProfileUpdate() async {
+  Future<void> _pushProfileUpdate() {
+    final push = _pushProfileUpdateNow();
+    _profilePushInFlight = push;
+    return push.whenComplete(() {
+      if (identical(_profilePushInFlight, push)) _profilePushInFlight = null;
+    });
+  }
+
+  Future<void> _pushProfileUpdateNow() async {
     if (!AppConfig.enableRemoteSync) {
       _profileNeedsPush = false;
       return;

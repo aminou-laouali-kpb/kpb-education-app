@@ -156,6 +156,9 @@ void main() {
           .whereType<Directory>()
           .map((d) => d.uri.pathSegments.where((p) => p.isNotEmpty).last)
           .where((name) => name.compareTo(_lastProductionMigration) > 0)
+          // La 57 est figée : les migrations venues après elle (58 et
+          // suivantes) relèvent de leur propre checklist.
+          .where((name) => name.compareTo(_auditMigration) <= 0)
           .toSet();
       expect(onDisk, hasLength(greaterThanOrEqualTo(15)),
           reason: 'lecture du dossier des migrations cassée');

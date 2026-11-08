@@ -257,6 +257,9 @@ Future<void> main() async {
       await controller.flushPendingCaseMessages();
       await controller.syncRemoteData(silent: true);
     });
+    // Retour au premier plan : relance la file des messages de dossier, que
+    // rien d'autre ne vidait sans transition de réseau (revue avant la 58).
+    AppLifecycleListener(onResume: controller.onAppResumed);
 
     // ── Quick Actions ────────────────────────────────────────────────────────
     const QuickActions quickActions = QuickActions();

@@ -20,7 +20,10 @@ import { CaseMessagingGateway } from './case-messaging.gateway';
 import { AssignCaseDto } from './dto/assign-case.dto';
 import { CreateCaseDto } from './dto/create-case.dto';
 import { CreateCaseInternalNoteDto } from './dto/create-case-internal-note.dto';
-import { MAX_CASE_MESSAGE_LENGTH } from './dto/create-case-message.dto';
+import {
+  CLIENT_MESSAGE_ID_PATTERN,
+  MAX_CASE_MESSAGE_LENGTH,
+} from './dto/create-case-message.dto';
 import { CreateCaseTaskDto } from './dto/create-case-task.dto';
 import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
@@ -450,18 +453,12 @@ export class CasesService {
         orderBy: { createdAt: 'desc' },
       }),
     );
-    return (messages ?? []).map((m) => ({
-      id: m.id,
-      senderName: m.senderName,
-      senderRole: m.senderRole,
-      body: m.body,
-      createdAt: m.createdAt.toISOString(),
-    }));
+    return (messages ?? []).map((m) => this.toMessagePayload(m));
   }
 
   async createMessage(
     id: string,
-    input: { body: string },
+    input: { body: string; clientMessageId?: string },
     actorOrOwnerUserId: CaseMessagingActor | string,
   ) {
     this.assertDb();
@@ -473,6 +470,14 @@ export class CasesService {
       throw new BadRequestException(
         `Message body must contain between 1 and ${MAX_CASE_MESSAGE_LENGTH} characters.`,
       );
+    }
+    const clientMessageId = input.clientMessageId ?? null;
+    if (
+      clientMessageId !== null &&
+      (typeof clientMessageId !== 'string' ||
+        !CLIENT_MESSAGE_ID_PATTERN.test(clientMessageId))
+    ) {
+      throw new BadRequestException('Invalid clientMessageId.');
     }
 
     const actor =
@@ -487,48 +492,96 @@ export class CasesService {
       actor.fullName ??
       (actor.role === 'student' ? 'Étudiant' : 'KPB Operations');
 
-    const created = await this.prismaService.execute((prisma) =>
-      prisma.$transaction(async (tx) => {
-        const msg = await tx.caseMessage.create({
-          data: {
-            caseId: id,
-            senderName: effectiveName,
-            senderRole: effectiveRole,
-            body,
-          },
-        });
+    // Idempotence : l'app renvoie depuis sa file un message dont le POST a pu
+    // aboutir sans qu'elle reçoive la réponse. Le message déjà créé est rendu
+    // tel quel, sans second message ni second événement de chronologie.
+    const existing = await this.findMessageByClientId(id, clientMessageId);
+    if (existing) return this.toMessagePayload(existing);
 
-        await tx.caseTimelineEvent.create({
-          data: {
-            caseId: id,
-            status:
-              (await tx.case.findUnique({ where: { id } }))?.status ??
-              CaseStatus.Submitted,
-            title: 'Nouveau message',
-            description: 'Un nouveau message a été ajouté au dossier.',
-          },
-        });
+    let created: Awaited<ReturnType<typeof this.findMessageByClientId>>;
+    try {
+      created = await this.prismaService.execute((prisma) =>
+        prisma.$transaction(async (tx) => {
+          const msg = await tx.caseMessage.create({
+            data: {
+              caseId: id,
+              senderName: effectiveName,
+              senderRole: effectiveRole,
+              body,
+              clientMessageId,
+            },
+          });
 
-        await tx.case.update({ where: { id }, data: { updatedAt: new Date() } });
+          await tx.caseTimelineEvent.create({
+            data: {
+              caseId: id,
+              status:
+                (await tx.case.findUnique({ where: { id } }))?.status ??
+                CaseStatus.Submitted,
+              title: 'Nouveau message',
+              description: 'Un nouveau message a été ajouté au dossier.',
+            },
+          });
 
-        return msg;
-      }),
-    );
+          await tx.case.update({
+            where: { id },
+            data: { updatedAt: new Date() },
+          });
+
+          return msg;
+        }),
+      );
+    } catch (error) {
+      // Deux renvois simultanés : le second bute sur l'index unique
+      // (caseId, clientMessageId). Le premier a gagné, on rend son message.
+      if (
+        clientMessageId !== null &&
+        (error as { code?: unknown } | null)?.code === 'P2002'
+      ) {
+        const winner = await this.findMessageByClientId(id, clientMessageId);
+        if (winner) return this.toMessagePayload(winner);
+      }
+      throw error;
+    }
 
     if (!created) {
       throw new ServiceUnavailableException('Failed to persist message.');
     }
-    const payload = {
-      id: created.id,
-      senderName: created.senderName,
-      senderRole: created.senderRole,
-      body: created.body,
-      createdAt: created.createdAt.toISOString(),
-    };
+    const payload = this.toMessagePayload(created);
     if (effectiveRole !== 'student') {
       this.broadcastCaseMessage(id, payload);
     }
     return payload;
+  }
+
+  private async findMessageByClientId(
+    caseId: string,
+    clientMessageId: string | null,
+  ) {
+    if (clientMessageId === null) return null;
+    return this.prismaService.execute((prisma) =>
+      prisma.caseMessage.findUnique({
+        where: { caseId_clientMessageId: { caseId, clientMessageId } },
+      }),
+    );
+  }
+
+  private toMessagePayload(m: {
+    id: string;
+    senderName: string;
+    senderRole: string;
+    body: string;
+    createdAt: Date;
+    clientMessageId?: string | null;
+  }) {
+    return {
+      id: m.id,
+      senderName: m.senderName,
+      senderRole: m.senderRole,
+      body: m.body,
+      createdAt: m.createdAt.toISOString(),
+      clientMessageId: m.clientMessageId ?? null,
+    };
   }
 
   async uploadDocument(
@@ -959,6 +1012,7 @@ export class CasesService {
         senderRole: m.senderRole,
         body: m.body,
         createdAt: m.createdAt.toISOString(),
+        clientMessageId: m.clientMessageId ?? null,
       })),
     };
   }
