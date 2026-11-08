@@ -1,5 +1,12 @@
 # Fiche de QA appareil — build 57 : petit appareil, texte agrandi, lecteurs d'écran, notifications, hors ligne
 
+> **⚠️ REMPLACÉE par la 58 le 07/11/2026 : suivre `docs/mise-a-jour-58-checklist.md`.**
+> La `2.3.1 (57)` a été téléversée sur App Store Connect le 25/10/2026 et n'a jamais été soumise ;
+> l'audit UX du 28/10/2026 a refusé son archive. La build suivante est la `2.3.1 (58)`
+> (`pubspec.yaml`, préflights et registre posés le 07/11/2026), même version marketing.
+> Le contenu ci-dessous est conservé tel qu'écrit ; la recette se joue sur la 58 avec
+> `docs/device-qa-build58.md`, qui reprend cette fiche et y ajoute les correctifs de l'audit.
+
 > **Pour qui.** Le propriétaire (ou un testeur désigné), sur **un iPhone et un Android physiques**,
 > avec la **build soumise** `2.3.1 (57)` installée depuis TestFlight / Play Internal — pas un build
 > de debug : le contrat de soumission exige que la preuve vienne de l'artefact. Cette fiche est la

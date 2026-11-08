@@ -79,9 +79,7 @@ const _exemptKeys = <String, String>{
 /// Elles échappent au contrôle sans être tenues de vouvoyer encore : quel que
 /// soit l'ordre des fusions, le garde reste vert. Retirer l'entrée une fois la
 /// PR fusionnée.
-const _fixedElsewhere = <String, String>{
-  'auth_magic_resend_cooldown': 'tutoyée par la PR #404 (revue avant la 58)',
-};
+const _fixedElsewhere = <String, String>{};
 
 final _formalWord = RegExp(r'\b(?:vous|votre|vos)\b', caseSensitive: false);
 final _rendezVous = RegExp(r'rendez-vous', caseSensitive: false);

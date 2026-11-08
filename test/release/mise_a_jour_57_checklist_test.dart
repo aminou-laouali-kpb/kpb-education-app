@@ -7,9 +7,10 @@
 // le backend de #351, elle ne reçoit aucune notification. D'où un couplage
 // `requires-new` et l'ordre serveur → admin → app.
 //
-// La version est posée depuis le 18/10/2026 (`pubspec.yaml` : `2.3.1+57`, PR de
-// préparation, checklist §0.2) : le test exige la 57 et que la checklist nomme
-// la version réellement posée.
+// La 57 a été téléversée le 25/10/2026, jamais soumise, et remplacée par la 58
+// (préparation du 07/11/2026 : `pubspec.yaml` porte `2.3.1+58`). Ce test ne lit
+// plus la version du dépôt : il garde le document de la 57 tel qu'il doit
+// rester (`mise_a_jour_58_checklist_test.dart` garde désormais la version posée).
 //
 // Ce test lit les documents ; il ne lance aucune commande (elles touchent les
 // boutiques et la production).
@@ -46,6 +47,10 @@ String _section(String doc, String headingStart) {
   return end == -1 ? rest : rest.substring(0, end);
 }
 
+/// La version que la checklist de la 57 décrit. Depuis la préparation de la 58
+/// (07/11/2026), `pubspec.yaml` porte `2.3.1+58`.
+const ({String name, String build}) _documented = (name: '2.3.1', build: '57');
+
 ({String name, String build}) _pubspec() {
   final m = RegExp(
     r'^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$',
@@ -60,16 +65,7 @@ void main() {
     final flat = doc.replaceAll(RegExp(r'\s+'), ' ');
 
     test('porte la version 2.3.1 (57) et plus aucun contrôle sur 56', () {
-      final shipping = _pubspec();
-      expect(
-        shipping.build,
-        '57',
-        reason: 'pubspec.yaml porte +${shipping.build}, pas la 57 préparée '
-            'par cette checklist',
-      );
-      // La PR de préparation est faite : la checklist doit nommer la version
-      // réellement posée (2.3.1, choisie par le propriétaire).
-      expect(shipping.name, '2.3.1');
+      const shipping = _documented;
       expect(doc, contains('${shipping.name} (57)'));
       expect(doc, contains('version: ${shipping.name}+57'));
       expect(doc, contains('FLUTTER_BUILD_NUMBER=57'));
@@ -198,6 +194,9 @@ void main() {
       final pubspecLines = _read('pubspec.yaml').split('\n').toSet();
       for (final line in expected) {
         final content = line.substring(1);
+        // La ligne `version:` est celle de la 57 ; depuis la préparation de la
+        // 58, le dépôt porte `2.3.1+58` : elle se garde par le document.
+        if (content.startsWith('version:')) continue;
         if (line.startsWith('+')) {
           expect(pubspecLines, contains(content),
               reason: 'pubspec.yaml n\'a pas « $content »');
@@ -207,7 +206,8 @@ void main() {
         }
       }
       expect(expected, contains('+  play_install_referrer: ^0.5.0'));
-      expect(expected, contains('+version: ${_pubspec().name}+57'));
+      expect(expected, contains('+version: ${_documented.name}+57'));
+      expect(expected, contains('-version: 2.3.0+56'));
       // Les PR depuis la 56, jusqu'à #374, et la PR de correctifs.
       final flatStep = step.replaceAll(RegExp(r'\s+'), ' ');
       expect(flatStep, contains('#356 à #374'));
@@ -525,12 +525,13 @@ void main() {
     });
   });
 
-  test('le registre consigne le chantier L et la 57 posée en courant', () {
+  test('le registre consigne le chantier L, la 57 consommée, la 58 courante',
+      () {
     final ledger = _read('docs/release-ledger.md');
     expect(ledger, contains('### Chantier L (16/10/2026)'));
     final courant = ledger.split('## Courant').last;
-    // Le premier numéro sous « Courant » suit pubspec : la 57 y est posée par
-    // la préparation du 18/10/2026, la 56 est passée sous « Consommés ».
+    // Le premier numéro sous « Courant » suit pubspec : la 58 y est posée par
+    // la préparation du 07/11/2026 ; la 56, puis la 57, sont sous « Consommés ».
     final first = RegExp(
       r'^-\s+`(\d+)`\s+—',
       multiLine: true,
@@ -544,6 +545,11 @@ void main() {
       consumed.indexOf(RegExp(r'^-\s+`56`\s+—', multiLine: true)),
     );
     expect(line56, contains('À VALIDER (propriétaire)'));
+    final line57 = consumed.substring(
+      consumed.indexOf(RegExp(r'^-\s+`57`\s+—', multiLine: true)),
+    );
+    expect(line57, contains('25/10/2026'));
+    expect(line57, contains('remplacée par la 58'));
     expect(courant, contains('`<RELEASE>`'));
     final entry = ledger.substring(ledger.indexOf('### Chantier L'));
     expect(entry, contains('`requires-new`'));

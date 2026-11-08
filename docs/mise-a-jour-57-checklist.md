@@ -1,5 +1,12 @@
 # Mise à jour 2.3.1 (57) — la checklist du 16/10/2026
 
+> **⚠️ REMPLACÉE par la 58 le 07/11/2026 : suivre `docs/mise-a-jour-58-checklist.md`.**
+> La `2.3.1 (57)` a été téléversée sur App Store Connect le 25/10/2026 et n'a jamais été soumise ;
+> l'audit UX du 28/10/2026 a refusé son archive. La build suivante est la `2.3.1 (58)`
+> (`pubspec.yaml`, préflights et registre posés le 07/11/2026), même version marketing.
+> Le contenu ci-dessous est conservé tel qu'écrit ; pour tout numéro de build à venir, lire 58.
+> Les papiers de la 58 : `docs/release-58-store-pack.md`, `docs/device-qa-build58.md`.
+
 > **Ce que ce fichier est.** L'ordre exact des opérations pour préparer, déployer, archiver,
 > vérifier, soumettre et déployer **par étapes** la 57, avec les commandes. Il **succède** à
 > `docs/mise-a-jour-56-checklist.md`. La 57 est une release unique : chantiers B, C, D, F, G, H, I,
