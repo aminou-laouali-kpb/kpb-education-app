@@ -583,6 +583,8 @@ const Map<String, String> appTranslationsEn = {
   'orientation_consultation_case_title': 'KPB advisory session',
   'case_message_send_failed':
       'Your message could not be sent. Check it and try again.',
+  'case_message_pending': 'Waiting to send',
+  'case_message_failed': 'Not sent',
   'orientation_consultation_case_context': 'Orientation support',
   'orientation_roadmap_heading': 'Your application journey',
   'orientation_roadmap_create_case_button': 'Create my case',

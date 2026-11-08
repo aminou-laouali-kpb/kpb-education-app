@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show compute, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show compute, kIsWeb, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -186,6 +187,8 @@ abstract class _AppControllerBase extends GetxController {
   void _applyMvpCountryLock();
   void _clampShippedLocale();
   Future<void> _createRemoteCase(StudentCase localCase);
+  StudentCase _carryUndeliveredBubbles(
+      StudentCase incoming, StudentCase? previous);
   Future<void> _createRemoteSavedItem(SavedItem item);
   Future<void> _deleteRemoteSavedItem(SavedItem item);
   Future<void> _pushProfileUpdate();

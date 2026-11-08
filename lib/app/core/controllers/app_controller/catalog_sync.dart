@@ -60,7 +60,9 @@ mixin _CatalogSyncMixin on _AppControllerBase {
 
       if (hasAuth) {
         try {
-          // Flush any messages typed while offline
+          // Flush any messages typed while offline. Ceux d'un dossier encore
+          // local attendent : ils partent à la fin de sa création distante
+          // (relancée plus bas), plus jamais vers l'id `case-<ms>`.
           await flushPendingCaseMessages();
 
           // Le profil n'est réécrit que s'il a changé ici (geste local, hors
@@ -95,9 +97,14 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             localWinCount: caseStats.localWinCount,
             keptLocalOnlyCount: caseStats.keptLocalOnlyCount,
           );
+          // Une copie serveur gagnante n'efface pas les bulles encore en
+          // attente d'envoi (revue avant la 58, n° 20).
+          final previousCases = {for (final c in _cases) c.id: c};
           _cases
             ..clear()
-            ..addAll(mergedCases);
+            ..addAll(mergedCases.map(
+              (c) => _carryUndeliveredBubbles(c, previousCases[c.id]),
+            ));
           // Un dossier dont la création distante a échoué gardait son id local
           // (`case-<ms>`) pour toujours, avec le texte « transmise à l'équipe
           // KPB ». On retente à chaque synchro.
