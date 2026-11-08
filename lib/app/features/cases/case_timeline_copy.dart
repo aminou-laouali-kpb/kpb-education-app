@@ -16,6 +16,9 @@
 ///     l'élève voit le titre seul, comme avant, jamais du jargon.
 library;
 
+import '../../core/controllers/app_controller.dart';
+import '../../core/models/app_models.dart';
+
 class _Regle {
   const _Regle(this.motif, this.cible);
 
@@ -165,4 +168,17 @@ String studentNextStepCopy(String raw, {required String localeCode}) {
   final trimmed = raw.trim();
   if (trimmed.isEmpty) return raw;
   return _reecrire(trimmed);
+}
+
+/// LE point d'accès à « Prochaine étape » côté élève (3e relecture #407) :
+/// resolve + réécriture au « tu » (français seulement, repli sur le brut).
+/// Toute surface élève passe par ici — `case_next_step_access_guard_test.dart`
+/// échoue si un écran relit `nextStepTitle` / `nextStepDescription` bruts.
+extension StudentNextStepCopy on AppController {
+  String nextStepTitleFor(StudentCase c) =>
+      studentNextStepCopy(resolve(c.nextStepTitle), localeCode: localeCode);
+
+  String nextStepDescriptionFor(StudentCase c) =>
+      studentNextStepCopy(resolve(c.nextStepDescription),
+          localeCode: localeCode);
 }

@@ -23,6 +23,7 @@ import '../ai_advisor/ai_consent.dart';
 import '../cases/case_appointment.dart';
 import '../cases/case_composer_sheet.dart';
 import '../cases/case_detail_screen.dart';
+import '../cases/case_timeline_copy.dart';
 import '../community/hub/community_entry.dart';
 import '../destinations/destinations_screen.dart';
 import '../etudes_en_france/eef_home_card.dart';

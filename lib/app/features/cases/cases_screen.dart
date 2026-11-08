@@ -10,6 +10,7 @@ import '../../core/ui/shell_chrome.dart';
 import '../../core/ui/skeleton.dart';
 import 'case_composer_sheet.dart';
 import 'case_detail_screen.dart';
+import 'case_timeline_copy.dart';
 import 'case_timeline_definition.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
@@ -374,7 +375,7 @@ class _CaseCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          controller.resolve(item.nextStepTitle),
+                          controller.nextStepTitleFor(item),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

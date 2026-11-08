@@ -432,6 +432,30 @@ void main() {
     });
   });
 
+  group('3e relecture #407 — « Prochaine étape » sur la liste', () {
+    testWidgets('un vieux dossier au « vous » est tutoyé dans la liste',
+        (tester) async {
+      final vieux = _case().copyWith(
+        nextStepTitle: const LocalizedText(
+            fr: 'Préparez votre rendez-vous', en: 'Préparez votre rendez-vous'),
+      );
+      await pumpTestApp(
+        tester,
+        child: const CasesScreen(),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          isGuestMode: false,
+          profile: createTestProfile(),
+          cases: [vieux],
+        ),
+      );
+
+      expect(find.text('Prépare ton rendez-vous'), findsOneWidget);
+      expect(find.textContaining('Préparez votre'), findsNothing);
+    });
+  });
+
   group('constat 37 — ordre du fil', () {
     test('le codec range les messages du plus ancien au plus récent', () {
       final c = CaseApiCodec.studentCaseFromApi(<String, dynamic>{

@@ -279,7 +279,7 @@ class _ActiveCaseCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        controller.resolve(item.nextStepTitle),
+                        controller.nextStepTitleFor(item),
                         style: KpbTextStyles.caption,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
