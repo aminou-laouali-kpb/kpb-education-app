@@ -2593,9 +2593,23 @@ const Map<String, String> appTranslationsEn = {
   'auth_magic_resend': 'Resend code',
   'auth_magic_resend_wait': 'Resend in @seconds s',
   'auth_magic_resend_cooldown': 'Please wait before requesting another code.',
+  'auth_magic_verify_rate_limited':
+      'Too many attempts. Wait a minute, then try again.',
+  'auth_magic_verify_network':
+      'Could not connect — your code may still be valid. Check your network, then tap "Verify".',
+  'auth_magic_verify_network_resend':
+      'Could not connect. Check your network, then try again.',
+  'auth_finishing_session': 'Signed in, setting up your space…',
+  'auth_account_unavailable_title': 'We couldn\'t load your account',
+  'auth_account_unavailable_body':
+      'You are signed in, but your profile could not be loaded. Check your network, then try again: nothing was changed on your account.',
+  'auth_account_unavailable_still': 'Still unavailable. Try again in a moment.',
+  'auth_account_unavailable_retry': 'Try again',
+  'auth_account_unavailable_logout': 'Sign out',
   'auth_guest_profile_title': 'Sign in to access your profile',
   'auth_guest_profile_body':
       'Create an account to track cases, save programs, and personalize your journey.',
+  'auth_guest_profile_have_account': 'I already have an account',
   // Match explanations
   'match_complete_profile': 'Complete your profile for a personalised match',
   'match_field_in_interests': 'In your fields of interest',

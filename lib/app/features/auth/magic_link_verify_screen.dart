@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io' show SocketException;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -41,6 +43,43 @@ class OtpCodeInputFormatter extends TextInputFormatter {
   }
 }
 
+/// Pourquoi la vérification du code a échoué, du point de vue de l'élève.
+enum OtpVerifyFailure {
+  /// Le serveur a refusé le code (faux, expiré, déjà utilisé).
+  invalidCode,
+
+  /// Trop d'essais : le serveur limite (429).
+  rateLimited,
+
+  /// Le serveur n'a pas pu répondre : réseau coupé, délai dépassé, 5xx. Le
+  /// code est peut-être encore valide.
+  network,
+}
+
+/// Classe une erreur de `verifyOTP` / `signInWithOtp`.
+///
+/// Avant la revue de la 58, TOUTE erreur s'affichait « Code invalide ou
+/// expiré » : sur une 3G qui coupe, l'élève qui avait tapé le bon code en
+/// redemandait un, ce qui invalidait le premier.
+OtpVerifyFailure classifyOtpError(Object error) {
+  if (error is AuthRetryableFetchException ||
+      error is TimeoutException ||
+      error is SocketException) {
+    return OtpVerifyFailure.network;
+  }
+  if (error is AuthException) {
+    final status = int.tryParse(error.statusCode ?? '');
+    if (status == 429 || error.message.toLowerCase().contains('rate limit')) {
+      return OtpVerifyFailure.rateLimited;
+    }
+    if (status != null && status >= 500) return OtpVerifyFailure.network;
+    return OtpVerifyFailure.invalidCode;
+  }
+  // Erreur inconnue (client HTTP, plateforme) : rien ne dit que le code est
+  // faux. On ne pousse pas l'élève à en redemander un.
+  return OtpVerifyFailure.network;
+}
+
 class MagicLinkVerifyScreen extends StatefulWidget {
   const MagicLinkVerifyScreen({
     super.key,
@@ -60,7 +99,16 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
   bool _loading = false;
   bool _resending = false;
   String? _error;
-  int _resendCooldown = 0;
+
+  /// Erreur du RENVOI, affichée sous « Renvoyer le code » : écrite dans le
+  /// champ, elle faisait croire que le code saisi était faux.
+  String? _resendError;
+
+  /// Le code vient de partir depuis l'écran précédent : « Renvoyer » attend
+  /// 60 s dès l'arrivée (Supabase refuse un deuxième envoi avant, en 429).
+  static const _cooldownSeconds = 60;
+  int _resendCooldown = _cooldownSeconds;
+  Timer? _cooldownTimer;
 
   /// Le dernier code soumis D'OFFICE (au 6e chiffre). Un même code n'est
   /// soumis d'office qu'une fois : la frappe, le collage et le remplissage
@@ -70,7 +118,14 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
   String? _autoSubmittedCode;
 
   @override
+  void initState() {
+    super.initState();
+    _startCooldownTimer();
+  }
+
+  @override
   void dispose() {
+    _cooldownTimer?.cancel();
     _codeController.dispose();
     super.dispose();
   }
@@ -106,16 +161,35 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
         code: code,
         token: token,
       );
-      // Success logging is centralized in navigateAfterAuth (login vs sign-up
-      // + method), so it is not duplicated here.
-      await navigateAfterAuth(method: 'email');
     } catch (error) {
-      unawaited(AnalyticsService.instance
-          .logAuthFailed(method: 'email', reason: 'verify_error'));
+      final failure = classifyOtpError(error);
+      unawaited(AnalyticsService.instance.logAuthFailed(
+        method: 'email',
+        reason: switch (failure) {
+          OtpVerifyFailure.invalidCode => 'verify_error',
+          OtpVerifyFailure.rateLimited => 'rate_limited',
+          OtpVerifyFailure.network => 'verify_network',
+        },
+      ));
+      // Le même code pourra repartir d'office une fois le réseau revenu.
+      if (failure != OtpVerifyFailure.invalidCode) _autoSubmittedCode = null;
       if (!mounted) return;
       setState(() {
-        _error = 'auth_magic_verify_error'.tr;
+        _loading = false;
+        _error = switch (failure) {
+          OtpVerifyFailure.invalidCode => 'auth_magic_verify_error'.tr,
+          OtpVerifyFailure.rateLimited => 'auth_magic_verify_rate_limited'.tr,
+          OtpVerifyFailure.network => 'auth_magic_verify_network'.tr,
+        };
       });
+      return;
+    }
+    // Le code est accepté (et consommé) : ce qui suit n'est plus une affaire
+    // de code. Hors du `try` ci-dessus, une lecture de compte ratée ne
+    // s'affiche plus « Code invalide » ; navigateAfterAuth mène alors à
+    // l'écran « Réessayer ». Success logging is centralized there too.
+    try {
+      await navigateAfterAuth(method: 'email');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -123,21 +197,27 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
 
   Future<void> _resend() async {
     if (_resendCooldown > 0 || _resending) return;
-    setState(() => _resending = true);
+    setState(() {
+      _resending = true;
+      _resendError = null;
+    });
     try {
       await widget.authService.requestMagicLink(email: widget.email);
       if (!mounted) return;
-      setState(() => _resendCooldown = 60);
+      setState(() => _resendCooldown = _cooldownSeconds);
       _startCooldownTimer();
     } catch (error) {
-      final rate = error is AuthException &&
-          (error.statusCode == '429' ||
-              error.message.toLowerCase().contains('rate'));
+      final failure = classifyOtpError(error);
+      final rate = failure == OtpVerifyFailure.rateLimited;
       unawaited(AnalyticsService.instance.logAuthFailed(
           method: 'email', reason: rate ? 'rate_limited' : 'send_error'));
+      if (!mounted) return;
       setState(() {
-        _error =
-            rate ? 'auth_magic_resend_cooldown'.tr : 'auth_magic_send_error'.tr;
+        _resendError = switch (failure) {
+          OtpVerifyFailure.rateLimited => 'auth_magic_resend_cooldown'.tr,
+          OtpVerifyFailure.network => 'auth_magic_verify_network_resend'.tr,
+          OtpVerifyFailure.invalidCode => 'auth_magic_send_error'.tr,
+        };
       });
     } finally {
       if (mounted) setState(() => _resending = false);
@@ -145,10 +225,13 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
   }
 
   void _startCooldownTimer() {
-    Future<void>.delayed(const Duration(seconds: 1), () {
-      if (!mounted || _resendCooldown <= 0) return;
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _resendCooldown <= 0) {
+        timer.cancel();
+        return;
+      }
       setState(() => _resendCooldown--);
-      _startCooldownTimer();
     });
   }
 
@@ -238,6 +321,15 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
                       : 'auth_magic_resend'.tr,
                 ),
               ),
+              if (_resendError != null)
+                Text(
+                  _resendError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: KpbFontSize.sm,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
             ],
           ),
         ),

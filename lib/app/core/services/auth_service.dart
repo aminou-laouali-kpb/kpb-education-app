@@ -56,12 +56,20 @@ class AuthService {
   /// Sends a 6-digit email OTP (also usable as a magic link). Supabase creates
   /// the user on first verification when `shouldCreateUser` is true.
   Future<void> requestMagicLink({required String email}) async {
-    await _client.auth.signInWithOtp(
-      email: email.trim().toLowerCase(),
-      shouldCreateUser: true,
-      emailRedirectTo: AppConfig.supabaseOAuthRedirect,
-    );
+    await _client.auth
+        .signInWithOtp(
+          email: email.trim().toLowerCase(),
+          shouldCreateUser: true,
+          emailRedirectTo: AppConfig.supabaseOAuthRedirect,
+        )
+        .timeout(otpRequestTimeout);
   }
+
+  /// Borne des appels Supabase du code e-mail. Sans elle, sur Edge, le bouton
+  /// tournait jusqu'au délai TCP du système ; au-delà, l'écran affiche un
+  /// message RÉSEAU (le code est peut-être encore valide), pas « code
+  /// invalide ».
+  static const Duration otpRequestTimeout = Duration(seconds: 20);
 
   /// Verifies the email OTP code and establishes a session.
   Future<AuthResponse> verifyMagicLink({
@@ -71,11 +79,13 @@ class AuthService {
   }) async {
     final otp = (code ?? token ?? '').trim();
     final normalizedEmail = (email ?? '').trim().toLowerCase();
-    return _client.auth.verifyOTP(
-      type: OtpType.email,
-      email: normalizedEmail,
-      token: otp,
-    );
+    return _client.auth
+        .verifyOTP(
+          type: OtpType.email,
+          email: normalizedEmail,
+          token: otp,
+        )
+        .timeout(otpRequestTimeout);
   }
 
   /// Launch mode for the OAuth consent screen. Pinned to the **system browser**

@@ -2830,10 +2830,27 @@ const Map<String, String> appTranslationsFr = {
   'auth_magic_verify_button': 'Valider',
   'auth_magic_resend': 'Renvoyer le code',
   'auth_magic_resend_wait': 'Renvoyer dans @seconds s',
-  'auth_magic_resend_cooldown': 'Veuillez patienter avant de renvoyer un code.',
+  'auth_magic_resend_cooldown': 'Patiente un peu avant de redemander un code.',
+  // Revue avant la 58 : une erreur réseau n'est plus « Code invalide ».
+  'auth_magic_verify_rate_limited':
+      'Trop d\'essais. Attends une minute, puis réessaie.',
+  'auth_magic_verify_network':
+      'Connexion impossible : ton code est peut-être encore valide. Vérifie ton réseau, puis touche « Valider ».',
+  'auth_magic_verify_network_resend':
+      'Connexion impossible. Vérifie ton réseau, puis réessaie.',
+  'auth_finishing_session': 'Connexion réussie, on prépare ton espace…',
+  // Session ouverte mais profil illisible : ni onboarding, ni écriture.
+  'auth_account_unavailable_title': 'Impossible de récupérer ton compte',
+  'auth_account_unavailable_body':
+      'Ta connexion a réussi, mais ton profil n\'a pas pu être chargé. Vérifie ton réseau, puis réessaie : rien n\'a été modifié sur ton compte.',
+  'auth_account_unavailable_still':
+      'Toujours impossible. Réessaie dans un instant.',
+  'auth_account_unavailable_retry': 'Réessayer',
+  'auth_account_unavailable_logout': 'Me déconnecter',
   'auth_guest_profile_title': 'Connecte-toi pour accéder à ton profil',
   'auth_guest_profile_body':
       'Crée un compte pour suivre tes dossiers, sauvegarder des programmes et personnaliser ton parcours.',
+  'auth_guest_profile_have_account': 'J\'ai déjà un compte',
   // Match explanations
   'match_complete_profile': 'Complète ton profil pour un matching personnalisé',
   'match_field_in_interests': 'Filière dans tes intérêts',
