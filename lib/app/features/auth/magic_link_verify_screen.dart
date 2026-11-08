@@ -155,6 +155,15 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
       _error = null;
     });
 
+    // Une session est déjà ouverte (une vérification précédente a fini par
+    // aboutir après une erreur réseau, ou l'écouteur `signedIn` navigue) :
+    // renvoyer le même code, déjà consommé, ferait répondre « Code invalide ».
+    // On termine la connexion à la place.
+    if (widget.authService.isLoggedIn) {
+      await _finishSignIn();
+      return;
+    }
+
     try {
       await widget.authService.verifyMagicLink(
         email: widget.email,
@@ -162,6 +171,12 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
         token: token,
       );
     } catch (error) {
+      // L'erreur est arrivée, mais la session s'est ouverte quand même (le
+      // serveur a consommé le code) : ce n'est pas un échec.
+      if (widget.authService.isLoggedIn) {
+        await _finishSignIn();
+        return;
+      }
       final failure = classifyOtpError(error);
       unawaited(AnalyticsService.instance.logAuthFailed(
         method: 'email',
@@ -188,6 +203,10 @@ class _MagicLinkVerifyScreenState extends State<MagicLinkVerifyScreen> {
     // de code. Hors du `try` ci-dessus, une lecture de compte ratée ne
     // s'affiche plus « Code invalide » ; navigateAfterAuth mène alors à
     // l'écran « Réessayer ». Success logging is centralized there too.
+    await _finishSignIn();
+  }
+
+  Future<void> _finishSignIn() async {
     try {
       await navigateAfterAuth(method: 'email');
     } finally {

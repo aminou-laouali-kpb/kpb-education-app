@@ -36,6 +36,10 @@ import '../../widget_test_helpers.dart';
 
 class _MockAuthService extends Mock implements AuthService {}
 
+class _MockSupabaseClient extends Mock implements SupabaseClient {}
+
+class _MockGoTrueClient extends Mock implements GoTrueClient {}
+
 class _FailingProfileApi extends MockApiClient {
   @override
   Future<bool> hasAuthSession() async => true;
@@ -103,7 +107,13 @@ void main() {
   group('MagicLinkVerifyScreen', () {
     late _MockAuthService auth;
 
-    setUp(() => auth = _MockAuthService());
+    late bool loggedIn;
+
+    setUp(() {
+      auth = _MockAuthService();
+      loggedIn = false;
+      when(() => auth.isLoggedIn).thenAnswer((_) => loggedIn);
+    });
 
     Future<void> pumpVerify(WidgetTester tester) => pumpKpbScreen(
           tester,
@@ -175,8 +185,10 @@ void main() {
             email: any(named: 'email'),
             code: any(named: 'code'),
             token: any(named: 'token'),
-          )).thenAnswer((_) async => AuthResponse());
-      when(() => auth.isLoggedIn).thenReturn(true);
+          )).thenAnswer((_) async {
+        loggedIn = true;
+        return AuthResponse();
+      });
       Get.put<AuthService>(auth, permanent: true);
       setupPlatformChannelMocks();
       final controller = AppController(
@@ -201,6 +213,152 @@ void main() {
       expect(find.byType(OnboardingScreen), findsNothing);
       expect(find.text(_fr['auth_magic_verify_error']!), findsNothing);
       expect(controller.hasCompletedOnboarding, isFalse);
+    });
+  });
+
+  group('relecture #404 — une session ouverte ne renvoie plus le code', () {
+    late _MockAuthService auth;
+    late List<String?> codes;
+
+    Future<AppController> pendingAccount() async {
+      setupPlatformChannelMocks();
+      final controller = AppController(
+        repository: FakeRepository(
+          snapshot:
+              AppSnapshot(localeCode: 'fr', hasCompletedOnboarding: false),
+        ),
+        apiClient: _PendingProfileApi(),
+      );
+      await controller.hydrate();
+      Get.put<AppController>(controller, permanent: true);
+      AppConfig.enableRemoteSyncOverride = true;
+      return controller;
+    }
+
+    setUp(() {
+      auth = _MockAuthService();
+      codes = <String?>[];
+    });
+
+    testWidgets(
+        'erreur réseau mais session ouverte quand même : pas de message '
+        'd\'erreur, la connexion continue', (tester) async {
+      var loggedIn = false;
+      when(() => auth.isLoggedIn).thenAnswer((_) => loggedIn);
+      when(() => auth.verifyMagicLink(
+            email: any(named: 'email'),
+            code: any(named: 'code'),
+            token: any(named: 'token'),
+          )).thenAnswer((invocation) async {
+        codes.add(invocation.namedArguments[#code] as String?);
+        // Le serveur a consommé le code ; la réponse s'est perdue.
+        loggedIn = true;
+        throw AuthRetryableFetchException();
+      });
+      await pendingAccount();
+      await pumpKpbScreen(
+        tester,
+        screen: MagicLinkVerifyScreen(authService: auth, email: 'e@x.com'),
+        viewport: _phone,
+      );
+
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.pump();
+
+      final decorator = tester.widget<InputDecorator>(find.descendant(
+        of: find.byType(TextField),
+        matching: find.byType(InputDecorator),
+      ));
+      expect(decorator.decoration.errorText, isNull);
+      expect(codes, ['123456']);
+      // La fin de connexion tourne : roue, et « Valider » bloqué.
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets(
+        'session déjà ouverte : « Valider » ne renvoie pas le code consommé',
+        (tester) async {
+      when(() => auth.isLoggedIn).thenReturn(true);
+      when(() => auth.verifyMagicLink(
+            email: any(named: 'email'),
+            code: any(named: 'code'),
+            token: any(named: 'token'),
+          )).thenAnswer((invocation) async {
+        codes.add(invocation.namedArguments[#code] as String?);
+        throw const AuthException('Token has expired', statusCode: '403');
+      });
+      await pendingAccount();
+      await pumpKpbScreen(
+        tester,
+        screen: MagicLinkVerifyScreen(authService: auth, email: 'e@x.com'),
+        viewport: _phone,
+      );
+
+      await tester.enterText(find.byType(TextField), '123456');
+      await tester.pump();
+      await tester.pump();
+
+      expect(codes, isEmpty, reason: 'le code consommé ne repart pas');
+      expect(find.text(_fr['auth_magic_verify_error']!), findsNothing);
+    });
+  });
+
+  group('AuthService — pas de délai qui abandonne une requête partie', () {
+    testWidgets(
+        'un envoi de code lent (30 s) aboutit au lieu de lever un délai',
+        (tester) async {
+      {
+        final client = _MockSupabaseClient();
+        final gotrue = _MockGoTrueClient();
+        when(() => client.auth).thenReturn(gotrue);
+        when(() => gotrue.signInWithOtp(
+                  email: any(named: 'email'),
+                  shouldCreateUser: any(named: 'shouldCreateUser'),
+                  emailRedirectTo: any(named: 'emailRedirectTo'),
+                ))
+            .thenAnswer(
+                (_) => Future<void>.delayed(const Duration(seconds: 30)));
+        final service = AuthService.withClient(client, MockApiClient());
+
+        Object? error;
+        var done = false;
+        unawaited(service
+            .requestMagicLink(email: 'e@x.com')
+            .then((_) => done = true, onError: (Object e) => error = e));
+        await tester.pump(const Duration(seconds: 31));
+
+        expect(error, isNull);
+        expect(done, isTrue);
+      }
+    });
+
+    testWidgets(
+        'une vérification lente (30 s) aboutit au lieu de lever un délai',
+        (tester) async {
+      {
+        final client = _MockSupabaseClient();
+        final gotrue = _MockGoTrueClient();
+        when(() => client.auth).thenReturn(gotrue);
+        when(() => gotrue.verifyOTP(
+                  type: OtpType.email,
+                  email: any(named: 'email'),
+                  token: any(named: 'token'),
+                ))
+            .thenAnswer((_) => Future<AuthResponse>.delayed(
+                const Duration(seconds: 30), AuthResponse.new));
+        final service = AuthService.withClient(client, MockApiClient());
+
+        Object? error;
+        var done = false;
+        unawaited(service
+            .verifyMagicLink(email: 'e@x.com', code: '123456')
+            .then((_) => done = true, onError: (Object e) => error = e));
+        await tester.pump(const Duration(seconds: 31));
+
+        expect(error, isNull);
+        expect(done, isTrue);
+      }
     });
   });
 
