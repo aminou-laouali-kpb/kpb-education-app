@@ -73,6 +73,7 @@
     "test:integration:cases-fr": "jest --runInBand src/modules/cases/cases-legacy-copy.postgres.spec.ts",
     "backfill:cases-fr": "ts-node scripts/backfill-cases-french-copy.ts",
     "test:integration:reassigned-cleanup": "jest --runInBand src/modules/cases/reassigned-events-cleanup.postgres.spec.ts",
+    "test:integration:case-message-idempotence": "jest --runInBand src/modules/cases/cases-message-idempotence.postgres.spec.ts",
     "cleanup:reassigned-events": "ts-node scripts/cleanup-reassigned-events.ts",
     "test:integration:birthdates": "jest --runInBand src/modules/profiles/birthdate-backfill.postgres.spec.ts",
     "backfill:birthdates": "ts-node scripts/backfill-birthdates.ts",

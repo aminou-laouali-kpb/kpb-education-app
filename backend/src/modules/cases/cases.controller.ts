@@ -123,7 +123,7 @@ export class CasesController {
     // Force senderRole — students must never choose their own role.
     return this.casesService.createMessage(
       id,
-      { body: input.body },
+      { body: input.body, clientMessageId: input.clientMessageId },
       {
         userId: req.studentUser.id,
         role: 'student',

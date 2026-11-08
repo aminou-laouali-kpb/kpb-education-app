@@ -288,6 +288,8 @@ class LocalAppRepository implements AppRepository {
       'senderRole': message.senderRole,
       'body': _localizedTextToJson(message.body),
       'createdAt': message.createdAt.toIso8601String(),
+      if (message.clientMessageId != null)
+        'clientMessageId': message.clientMessageId,
     };
   }
 
@@ -299,6 +301,7 @@ class LocalAppRepository implements AppRepository {
       body: _localizedTextFromJson(json['body'] as Map<String, dynamic>?),
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
+      clientMessageId: json['clientMessageId'] as String?,
     );
   }
 

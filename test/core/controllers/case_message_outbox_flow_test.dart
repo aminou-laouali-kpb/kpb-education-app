@@ -66,6 +66,10 @@ class _Api extends MockApiClient {
 
   /// Le prochain POST est refusé avec ce statut (4xx).
   int? rejectNextWith;
+
+  /// Le prochain POST est ENREGISTRÉ, puis sa réponse ne revient jamais
+  /// (app tuée, réseau coupé après coup).
+  bool commitNextThenHang = false;
   bool failGetCase = false;
 
   List<String> get delivered => [
@@ -122,14 +126,28 @@ class _Api extends MockApiClient {
       throw _networkError(path);
     }
     if (caseId != _serverId || !serverCaseExists) throw _httpError(path, 404);
+    // Comme le backend : même identifiant client dans le même dossier → le
+    // message existant, sans second.
+    final clientId = payload['clientMessageId'] as String?;
+    final existing = clientId == null
+        ? null
+        : messages[_serverId]!
+            .where((m) => m['clientMessageId'] == clientId)
+            .firstOrNull;
+    if (existing != null) return existing;
     final message = <String, dynamic>{
       'id': 'msg-${messages[_serverId]!.length + 1}',
       'senderRole': 'student',
       'senderName': payload['senderName'],
       'body': body,
       'createdAt': DateTime.now().toUtc().toIso8601String(),
+      'clientMessageId': clientId,
     };
     messages[_serverId]!.add(message);
+    if (commitNextThenHang) {
+      commitNextThenHang = false;
+      await Completer<void>().future;
+    }
     return message;
   }
 
@@ -570,6 +588,87 @@ void main() {
 
       expect(api.delivered, ['Ancien', 'Nouveau']);
       expect(outbox.pendingCount, 0);
+    });
+
+    test(
+        '(f) app tuée APRÈS que le serveur a reçu le POST : au redémarrage, '
+        'un seul message côté serveur et une seule bulle', () async {
+      final repo = FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+          cases: [_case(_serverId)],
+        ),
+      );
+      final (controller, api) =
+          await _device(_case(_serverId), repository: repo);
+      api.serverCaseExists = true;
+      api.commitNextThenHang = true;
+      controller.addCaseMessage(_serverId, 'Voici le relevé');
+      await _settle();
+      expect(api.delivered, ['Voici le relevé']);
+
+      // Redémarrage, même serveur (qui a déjà le message).
+      resetGetxSingleton();
+      final (restarted, _) =
+          await _device(_case(_serverId), repository: repo, server: api);
+      await restarted.flushPendingCaseMessages();
+      await restarted.syncRemoteData(force: true);
+      await _settle();
+
+      expect(api.delivered, ['Voici le relevé'],
+          reason: 'le renvoi de la file rend le message existant');
+      final copies = restarted
+          .caseById(_serverId)!
+          .messages
+          .where((m) => m.body.fr == 'Voici le relevé')
+          .toList();
+      expect(copies, hasLength(1), reason: 'une seule bulle');
+      expect(restarted.caseMessageDelivery(copies.single),
+          CaseMessageDelivery.sent);
+      expect(outbox.pendingCount, 0);
+    });
+
+    test(
+        '(f) au redémarrage, la synchro seule suffit : la copie serveur '
+        'remplace la bulle et l\'entrée de file ne repart pas', () async {
+      final repo = FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+          cases: [_case(_serverId)],
+        ),
+      );
+      final (controller, api) =
+          await _device(_case(_serverId), repository: repo);
+      api.serverCaseExists = true;
+      api.commitNextThenHang = true;
+      controller.addCaseMessage(_serverId, 'Ma réponse');
+      await _settle();
+
+      resetGetxSingleton();
+      final (restarted, _) =
+          await _device(_case(_serverId), repository: repo, server: api);
+      final postsBefore = api.postAttempts.length;
+      // Le serveur ne répond plus aux POST : seul le rapprochement par
+      // identifiant peut éviter le doublon d'affichage.
+      api.failNextPosts = 99;
+      await restarted.syncRemoteData(force: true);
+      await _settle();
+
+      final copies = restarted
+          .caseById(_serverId)!
+          .messages
+          .where((m) => m.body.fr == 'Ma réponse')
+          .toList();
+      expect(copies, hasLength(1));
+      expect(copies.single.id, startsWith('msg-'));
+      expect(outbox.pendingCount, 0);
+      await restarted.flushPendingCaseMessages();
+      expect(api.postAttempts.length, lessThanOrEqualTo(postsBefore + 1));
+      expect(api.delivered, ['Ma réponse']);
     });
 
     test(

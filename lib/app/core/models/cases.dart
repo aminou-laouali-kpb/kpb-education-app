@@ -50,6 +50,7 @@ class CaseMessage {
     required this.senderRole,
     required this.body,
     required this.createdAt,
+    this.clientMessageId,
   });
 
   final String id;
@@ -57,6 +58,11 @@ class CaseMessage {
   final String senderRole;
   final LocalizedText body;
   final DateTime createdAt;
+
+  /// Copie serveur d'un message de l'élève : l'id de la bulle optimiste
+  /// (`user-…`) que l'app a envoyé comme identifiant client. Sert à les
+  /// rapprocher sans se fier au texte. `null` ailleurs.
+  final String? clientMessageId;
 }
 
 class DocumentRequest {

@@ -480,6 +480,7 @@ mixin _CasesMixin on _AppControllerBase {
 
     final body = data['body'] as String? ?? '';
     final senderRole = data['senderRole'] as String? ?? 'counselor';
+    final clientMessageId = data['clientMessageId'] as String?;
     final message = CaseMessage(
       id: messageId.isNotEmpty
           ? messageId
@@ -489,20 +490,30 @@ mixin _CasesMixin on _AppControllerBase {
       body: LocalizedText(fr: body, en: body),
       createdAt: DateTime.tryParse(data['createdAt'] as String? ?? '') ??
           DateTime.now(),
+      clientMessageId: clientMessageId,
     );
 
     // L'écho d'un message de l'élève remplace UNE bulle optimiste de même
     // texte : celle en cours d'envoi, ou déjà envoyée. Jamais une bulle en
     // file ou « Non envoyé » : l'écho d'un second « Merci » effaçait le
     // premier, refusé, et avec lui son « Réessayer » (revue de la #408).
-    final echoed = senderRole == 'student'
-        ? caseItem.messages.firstWhereOrNull((existing) =>
-            existing.id.startsWith('user-') &&
-            existing.body.fr == body &&
-            (_caseMessagesInFlight.contains(existing.id) ||
-                caseMessageDelivery(existing, caseId: caseItem.id) ==
-                    CaseMessageDelivery.sent))
-        : null;
+    //
+    // Quand le serveur renvoie l'identifiant client, c'est LUI qui désigne la
+    // bulle, quel que soit son état : le serveur a le message.
+    final byClientId = clientMessageId == null
+        ? null
+        : caseItem.messages
+            .firstWhereOrNull((existing) => existing.id == clientMessageId);
+    if (byClientId != null) _forgetQueuedCopy(byClientId.id);
+    final echoed = byClientId ??
+        (senderRole == 'student'
+            ? caseItem.messages.firstWhereOrNull((existing) =>
+                existing.id.startsWith('user-') &&
+                existing.body.fr == body &&
+                (_caseMessagesInFlight.contains(existing.id) ||
+                    caseMessageDelivery(existing, caseId: caseItem.id) ==
+                        CaseMessageDelivery.sent))
+            : null);
     final withoutOptimistic = echoed != null
         ? caseItem.messages.where((existing) => existing != echoed).toList()
         : caseItem.messages;
@@ -671,6 +682,9 @@ mixin _CasesMixin on _AppControllerBase {
         'senderName': senderName,
         'senderRole': 'student',
         'body': text,
+        // Identifiant client stable : un renvoi (file, redémarrage) rend le
+        // message déjà créé au lieu d'en créer un second chez le conseiller.
+        'clientMessageId': messageId,
       });
     } catch (e, s) {
       safeRecordError(
@@ -779,6 +793,7 @@ mixin _CasesMixin on _AppControllerBase {
           'senderName': entry.senderName,
           'senderRole': 'student',
           'body': entry.body,
+          if (bubbleId != null) 'clientMessageId': bubbleId,
         });
         await outbox.remove(entry.key);
         touched.add(caseId);
@@ -869,6 +884,15 @@ mixin _CasesMixin on _AppControllerBase {
     }
   }
 
+  /// Le serveur a le message [localMessageId] : son entrée de file ne doit
+  /// plus partir.
+  void _forgetQueuedCopy(String localMessageId) {
+    final outbox = CaseMessageOutbox.maybeInstance;
+    final entry = outbox?.entryForMessage(localMessageId);
+    if (outbox == null || entry == null) return;
+    unawaited(outbox.remove(entry.key));
+  }
+
   /// La copie serveur d'un dossier ne connaît pas les messages encore en
   /// attente ou en échec : la substituer telle quelle effaçait leur bulle,
   /// alors que le message dormait dans la file. On les garde à la fin du fil.
@@ -878,7 +902,21 @@ mixin _CasesMixin on _AppControllerBase {
     StudentCase? previous,
   ) {
     if (previous == null) return incoming;
-    final known = incoming.messages.map((message) => message.id).toSet();
+    // Bulles que le serveur a déjà (il renvoie leur identifiant client) :
+    // jamais gardées en plus de sa copie, et leur entrée de file, devenue
+    // inutile, est retirée — un message reçu sans que l'app ait eu la réponse
+    // (app tuée pendant le POST) n'est ni renvoyé ni affiché deux fois.
+    final onServer = {
+      for (final message in incoming.messages)
+        if (message.clientMessageId != null) message.clientMessageId!,
+    };
+    for (final id in onServer) {
+      _forgetQueuedCopy(id);
+    }
+    final known = {
+      ...incoming.messages.map((message) => message.id),
+      ...onServer,
+    };
     final undelivered = previous.messages
         .where((message) =>
             !known.contains(message.id) &&
