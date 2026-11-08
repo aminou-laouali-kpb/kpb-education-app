@@ -680,16 +680,23 @@ class _CvGeneratorScreenState extends State<CvGeneratorScreen> {
           // ── AI result preview ──────────────────────────────────────────────
           if (_aiSummaryFr.isNotEmpty || _aiSummaryEn.isNotEmpty) ...[
             const SizedBox(height: KpbSpacing.lg),
+            // Le titre prend la place qui reste et passe à la ligne : avec un
+            // `Spacer`, au texte agrandi ou sur 320 pt, la puce « EN » sortait
+            // de l'écran et la version anglaise devenait inaccessible.
             Row(
               children: [
-                Text(
-                  'cv_ai_summary_heading'.tr,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: context.kpb.textPrimary,
+                Expanded(
+                  child: Text(
+                    'cv_ai_summary_heading'.tr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.kpb.textPrimary,
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text('FR'),
                   selected: !_useEnglish,

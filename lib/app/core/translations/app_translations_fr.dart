@@ -1322,6 +1322,9 @@ const Map<String, String> appTranslationsFr = {
   'scholarships_sort_verified': 'Récemment vérifiées',
   'scholarships_sort_title': 'Nom (A-Z)',
   'scholarships_offline_count': '@count bourse(s) gardée(s) sur ton téléphone',
+  'scholarships_more_failed':
+      'Impossible de charger la suite. Vérifie ta connexion.',
+  'scholarships_more_retry': 'Réessayer',
   'scholarship_detail_title': 'Détails de la bourse',
   'scholarship_detail_not_found': 'Bourse introuvable',
   'scholarship_detail_not_found_body':

@@ -183,6 +183,58 @@ void main() {
     });
   });
 
+  // Revue avant la 58 (décision de l'audit 57) : derrière le mur, ni « Filtrer »,
+  // ni « Trier », ni la phrase « Active une alerte… ». Ils relançaient un 401
+  // qui ramenait au même mur, et repoussaient son bouton sous le pli d'un SE.
+  group('401 en mode invité — rien au-dessus du mur', () {
+    testWidgets('ni Filtrer, ni Trier, ni la phrase sur les alertes',
+        (tester) async {
+      final mock = MockApiClient();
+      _stubFailure(mock, _unauthorized());
+      await _seedGuest(mock);
+      // iPhone SE 1re génération.
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-filter-button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-sort-button')),
+        findsNothing,
+      );
+      expect(find.text('scholarships_sorted_hint'.tr), findsNothing);
+
+      // Le bouton du mur tient au-dessus du pli, sans défilement.
+      final cta = find.text('scholarships_auth_required_cta'.tr);
+      expect(cta, findsOneWidget);
+      expect(tester.getBottomLeft(cta).dy, lessThanOrEqualTo(568));
+    });
+
+    testWidgets('une vraie panne garde Filtrer (l\'élève connecté s\'en sert)',
+        (tester) async {
+      final mock = MockApiClient();
+      _stubFailure(mock, _offline());
+      await _seedGuest(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-filter-button')),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('une vraie panne réseau reste une vraie panne réseau', () {
     testWidgets('une DioException SANS statut garde l\'écran de connexion',
         (tester) async {

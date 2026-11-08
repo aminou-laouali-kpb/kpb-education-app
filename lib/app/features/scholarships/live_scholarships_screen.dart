@@ -302,75 +302,85 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
               ),
 
               // ── Sub-header + « Filtrer » / tri ─────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'scholarships_sorted_hint'.tr,
-                        style: const TextStyle(
-                          fontSize: KpbFontSize.xs,
-                          color: KpbColors.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      // Un `Wrap` et non une rangée qui défile : à l'échelle de
-                      // texte 1,3 d'un 360 dp, « Trier : Clôture la plus
-                      // proche » passe à la ligne au lieu d'être coupé.
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _ToolbarButton(
-                            key: const ValueKey<String>(
-                              'scholarships-filter-button',
-                            ),
-                            icon: Icons.tune_rounded,
-                            label: controller.activeFilterCount == 0
-                                ? 'scholarships_filter_button'.tr
-                                : 'scholarships_filter_button_count'.trParams({
-                                    'count': '${controller.activeFilterCount}',
-                                  }),
-                            active: controller.activeFilterCount > 0,
-                            onTap: _openFilters,
+              // Masqués derrière le mur invité (décision pour la 58) : « Filtrer »
+              // relançait GET /scholarships, reprenait un 401 et revenait au même
+              // mur, sous une phrase qui parle d'alertes que l'invité ne peut pas
+              // poser — et ils repoussaient le bouton du mur sous le pli.
+              if (!_authRequired)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'scholarships_sorted_hint'.tr,
+                          style: const TextStyle(
+                            fontSize: KpbFontSize.xs,
+                            color: KpbColors.textSecondary,
+                            height: 1.4,
                           ),
-                          // Backend sans le chantier I (pas d'écho `query`) :
-                          // il ignore `sort`, le bouton ne promet rien.
-                          if (controller.serverAppliesQuery)
+                        ),
+                        const SizedBox(height: 12),
+                        // Un `Wrap` et non une rangée qui défile : à l'échelle de
+                        // texte 1,3 d'un 360 dp, « Trier : Clôture la plus
+                        // proche » passe à la ligne au lieu d'être coupé.
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
                             _ToolbarButton(
                               key: const ValueKey<String>(
-                                'scholarships-sort-button',
+                                'scholarships-filter-button',
                               ),
-                              icon: Icons.sort_rounded,
-                              label: 'scholarships_sort_button'.trParams({
-                                'sort': scholarshipSortLabel(controller.sort),
-                              }),
-                              onTap: _openSort,
+                              icon: Icons.tune_rounded,
+                              label: controller.activeFilterCount == 0
+                                  ? 'scholarships_filter_button'.tr
+                                  : 'scholarships_filter_button_count'
+                                      .trParams({
+                                      'count':
+                                          '${controller.activeFilterCount}',
+                                    }),
+                              active: controller.activeFilterCount > 0,
+                              onTap: _openFilters,
                             ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Le test « Mes 10 bourses » prend la place de la promotion du
-              // guide (drapeau `scholarshipMatch`, élèves seulement) ; carte
-              // cachée, le guide reste ici comme avant.
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                  child: ScholarshipMatchEntryCard(
-                    fallback: _GuidePromoCard(
-                      onTap: () =>
-                          Get.to(() => const ScholarshipGuideInfoScreen()),
+                            // Backend sans le chantier I (pas d'écho `query`) :
+                            // il ignore `sort`, le bouton ne promet rien.
+                            if (controller.serverAppliesQuery)
+                              _ToolbarButton(
+                                key: const ValueKey<String>(
+                                  'scholarships-sort-button',
+                                ),
+                                icon: Icons.sort_rounded,
+                                label: 'scholarships_sort_button'.trParams({
+                                  'sort': scholarshipSortLabel(controller.sort),
+                                }),
+                                onTap: _openSort,
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
+
+              // Le test « Mes 10 bourses » prend la place de la promotion du
+              // guide (drapeau `scholarshipMatch`, élèves seulement) ; carte
+              // cachée, le guide reste ici comme avant. Derrière le mur invité,
+              // rien entre la barre de titre et le mur : sur un iPhone SE, son
+              // bouton doit rester au-dessus du pli.
+              if (!_authRequired)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                    child: ScholarshipMatchEntryCard(
+                      fallback: _GuidePromoCard(
+                        onTap: () =>
+                            Get.to(() => const ScholarshipGuideInfoScreen()),
+                      ),
+                    ),
+                  ),
+                ),
 
               // ── Hors ligne : la dernière liste reçue, datée ─────────────────
               // À la place de l'ancien écran plein « Erreur de connexion » :
@@ -506,6 +516,38 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 18),
                       child: Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+                // Page suivante en échec : la liste ne s'arrête plus en silence
+                // sous un en-tête qui annonce le total du serveur.
+                if (controller.loadMoreFailed && !controller.loadingMore)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      key: const ValueKey<String>('scholarships-more-failed'),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                      child: Column(
+                        children: [
+                          Text(
+                            'scholarships_more_failed'.tr,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: KpbFontSize.sm,
+                              color: KpbColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                          TextButton(
+                            key: const ValueKey<String>(
+                              'scholarships-more-retry',
+                            ),
+                            onPressed: controller.retryLoadMore,
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                            ),
+                            child: Text('scholarships_more_retry'.tr),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
