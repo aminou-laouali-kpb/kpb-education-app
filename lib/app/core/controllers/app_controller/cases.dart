@@ -197,15 +197,20 @@ mixin _CasesMixin on _AppControllerBase {
   }
 
   void addCaseMessage(String caseId, String text) {
-    final index = _cases.indexWhere((item) => item.id == caseId);
+    final resolvedId = resolveCaseId(caseId);
+    final index = _cases.indexWhere((item) => item.id == resolvedId);
     if (index < 0 || text.trim().isEmpty) return;
     final caseItem = _cases[index];
     final now = DateTime.now();
+    // Microsecondes : deux messages envoyés dans la même milliseconde
+    // (dictée) gardaient le même id, donc le même état d'envoi.
+    final messageId = 'user-${now.microsecondsSinceEpoch}';
+    final senderName = profile?.fullName ?? 'Student';
     final updatedMessages = [
       ...caseItem.messages,
       CaseMessage(
-        id: 'user-${now.millisecondsSinceEpoch}',
-        senderName: profile?.fullName ?? 'Student',
+        id: messageId,
+        senderName: senderName,
         senderRole: 'student',
         body: LocalizedText(fr: text, en: text),
         createdAt: now,
@@ -228,22 +233,165 @@ mixin _CasesMixin on _AppControllerBase {
         ),
       ],
     );
+    if (!AppConfig.enableRemoteSync) {
+      _persist();
+      update();
+      return;
+    }
+    // « En cours » dès maintenant : la vidange ne doit pas le prendre pendant
+    // que cet envoi direct l'écrit puis le poste.
+    _caseMessagesInFlight.add(messageId);
     _persist();
     update();
+    unawaited(_sendCaseMessage(
+      caseId: resolvedId,
+      text: text,
+      senderName: senderName,
+      messageId: messageId,
+    ));
+  }
 
-    if (ConnectivityService.instance.isOnline) {
+  /// Envoi d'un message de l'élève. Il est D'ABORD écrit dans la file sur
+  /// disque, son id de bulle ([messageId]) servant d'identifiant client
+  /// stable : app tuée pendant le POST, refus du serveur ou redémarrage, son
+  /// état (« en attente », « non envoyé ») survit et se relit de la file.
+  Future<void> _sendCaseMessage({
+    required String caseId,
+    required String text,
+    required String senderName,
+    required String messageId,
+  }) async {
+    try {
+      final outbox = CaseMessageOutbox.maybeInstance;
+      await outbox?.enqueue(
+        caseId: caseId,
+        body: text,
+        senderName: senderName,
+        localMessageId: messageId,
+      );
+      // L'id serveur a pu arriver pendant l'écriture.
+      final target = resolveCaseId(caseId);
+      if (target != caseId) await outbox?.reassignCase(caseId, target);
+      if (_localCaseId.hasMatch(target)) {
+        // Dossier pas encore connu du serveur : le poster rendait un 404 et
+        // le message était perdu (revue avant la 58, n° 18). Il attend en
+        // file ; la création distante réécrit son id puis vide la file.
+        final localCase = _cases.firstWhereOrNull((c) => c.id == target);
+        if (localCase != null && ConnectivityService.instance.isOnline) {
+          // Sans effet si la création est déjà en cours.
+          unawaited(_createRemoteCase(localCase));
+        }
+        return;
+      }
+      if (!ConnectivityService.instance.isOnline) return;
       // Toujours par REST, même socket ouvert : l'envoi socket n'avait ni
       // accusé de réception ni repli, et un message refusé (limite, longueur)
       // restait affiché comme envoyé. Le serveur diffuse ensuite le message
       // dans la room, donc le temps réel du conseiller est inchangé.
-      unawaited(_createRemoteCaseMessage(caseId, text));
-    } else {
-      unawaited(CaseMessageOutbox.instance.enqueue(
-        caseId: caseId,
-        body: text,
-        senderName: profile?.fullName ?? 'Student',
-      ));
+      await _createRemoteCaseMessage(target, text, messageId);
+    } finally {
+      _caseMessagesInFlight.remove(messageId);
+      update();
     }
+  }
+
+  /// [caseId] et tous les ids locaux qui pointent vers lui.
+  Set<String> _caseIdsFor(String caseId) {
+    final id = resolveCaseId(caseId);
+    return {
+      caseId,
+      id,
+      for (final alias in _caseIdAliases.entries)
+        if (alias.value == id) alias.key,
+    };
+  }
+
+  /// L'entrée de file d'une bulle : par son id client ; pour une entrée
+  /// d'une version antérieure (sans id), par son texte, mais DANS le même
+  /// dossier seulement. Dossier inconnu : pas de repli par texte.
+  OutboxEntry? _outboxEntryFor(CaseMessage message, String? caseId) =>
+      CaseMessageOutbox.maybeInstance?.entryForMessage(
+        message.id,
+        body: caseId == null ? null : message.body.fr,
+        caseIds: caseId == null ? null : _caseIdsFor(caseId),
+      );
+
+  /// L'id sous lequel le dossier [caseId] est connu MAINTENANT : un id local
+  /// `case-<ms>` est remplacé par l'id serveur au retour de la création
+  /// distante, alors que l'écran du dossier, ouvert par le bandeau « Voir »,
+  /// garde l'ancien.
+  String resolveCaseId(String caseId) => _caseIdAliases[caseId] ?? caseId;
+
+  /// Le dossier [caseId], à travers [resolveCaseId]. `null` s'il a disparu.
+  StudentCase? caseById(String caseId) {
+    final id = resolveCaseId(caseId);
+    return _cases.firstWhereOrNull((item) => item.id == id);
+  }
+
+  /// Où en est l'envoi d'un message de l'élève : seules les bulles
+  /// optimistes (`user-…`) peuvent être en attente ou en échec ; tout ce qui
+  /// vient du serveur est envoyé.
+  ///
+  /// [caseId] : le dossier de la bulle, s'il est connu de l'appelant ; sinon
+  /// il est cherché dans les dossiers.
+  CaseMessageDelivery caseMessageDelivery(
+    CaseMessage message, {
+    String? caseId,
+  }) {
+    if (message.senderRole != 'student' || !message.id.startsWith('user-')) {
+      return CaseMessageDelivery.sent;
+    }
+    if (_caseMessagesInFlight.contains(message.id)) {
+      return CaseMessageDelivery.pending;
+    }
+    final owner = caseId ??
+        _cases
+            .firstWhereOrNull((c) => c.messages.any((m) => m.id == message.id))
+            ?.id;
+    final entry = _outboxEntryFor(message, owner);
+    if (entry != null) {
+      return CaseMessageOutbox.instance.isPermanentlyFailed(entry)
+          ? CaseMessageDelivery.failed
+          : CaseMessageDelivery.pending;
+    }
+    // Repli quand la file n'est pas ouverte (jamais en production).
+    if (_rejectedCaseMessageIds.contains(message.id)) {
+      return CaseMessageDelivery.failed;
+    }
+    return CaseMessageDelivery.sent;
+  }
+
+  /// « Réessayer » sur une bulle « Non envoyé ».
+  Future<void> retryCaseMessage(String messageId) async {
+    final caseItem = _cases.firstWhereOrNull(
+        (item) => item.messages.any((message) => message.id == messageId));
+    if (caseItem == null) return;
+    final message =
+        caseItem.messages.firstWhere((message) => message.id == messageId);
+    final outbox = CaseMessageOutbox.maybeInstance;
+    final entry = _outboxEntryFor(message, caseItem.id);
+    if (outbox != null && entry != null) {
+      await outbox.resetRetries(entry);
+      update();
+      await flushPendingCaseMessages();
+      return;
+    }
+    if (!_rejectedCaseMessageIds.remove(messageId)) return;
+    _caseMessagesInFlight.add(messageId);
+    update();
+    await _sendCaseMessage(
+      caseId: caseItem.id,
+      text: message.body.fr,
+      senderName: message.senderName,
+      messageId: messageId,
+    );
+  }
+
+  /// Retour au premier plan : la file ne se vidait qu'au passage hors ligne →
+  /// en ligne, qu'une 3G lente mais « en ligne » ne déclenche jamais.
+  void onAppResumed() {
+    if (!ConnectivityService.instance.isOnline) return;
+    unawaited(flushPendingCaseMessages());
   }
 
   int unreadMessagesForCase(String caseId) {
@@ -263,13 +411,21 @@ mixin _CasesMixin on _AppControllerBase {
       _cases.fold(0, (sum, item) => sum + unreadMessagesForCase(item.id));
 
   void markCaseMessagesRead(String caseId) {
-    _caseLastReadAt[caseId] = DateTime.now();
+    _caseLastReadAt[resolveCaseId(caseId)] = DateTime.now();
     _persist();
     update();
   }
 
   Future<void> connectCaseDetailSocket(String caseId) async {
     if (!AppConfig.enableRemoteSync) return;
+    // Ouvrir un dossier relance aussi la file d'envoi : sans transition de
+    // réseau, rien d'autre ne la vidait avant la prochaine synchro.
+    if (ConnectivityService.instance.isOnline) {
+      unawaited(flushPendingCaseMessages());
+    }
+    caseId = resolveCaseId(caseId);
+    // Un dossier encore local n'a pas de room côté serveur.
+    if (_localCaseId.hasMatch(caseId)) return;
     if (!await _apiClient.hasAuthSession()) return;
 
     await _caseSocket.connect(caseId);
@@ -324,6 +480,7 @@ mixin _CasesMixin on _AppControllerBase {
 
     final body = data['body'] as String? ?? '';
     final senderRole = data['senderRole'] as String? ?? 'counselor';
+    final clientMessageId = data['clientMessageId'] as String?;
     final message = CaseMessage(
       id: messageId.isNotEmpty
           ? messageId
@@ -333,15 +490,32 @@ mixin _CasesMixin on _AppControllerBase {
       body: LocalizedText(fr: body, en: body),
       createdAt: DateTime.tryParse(data['createdAt'] as String? ?? '') ??
           DateTime.now(),
+      clientMessageId: clientMessageId,
     );
 
-    final withoutOptimistic = senderRole == 'student'
-        ? caseItem.messages
-            .where(
-              (existing) => !(existing.id.startsWith('user-') &&
-                  existing.body.fr == body),
-            )
-            .toList()
+    // L'écho d'un message de l'élève remplace UNE bulle optimiste de même
+    // texte : celle en cours d'envoi, ou déjà envoyée. Jamais une bulle en
+    // file ou « Non envoyé » : l'écho d'un second « Merci » effaçait le
+    // premier, refusé, et avec lui son « Réessayer » (revue de la #408).
+    //
+    // Quand le serveur renvoie l'identifiant client, c'est LUI qui désigne la
+    // bulle, quel que soit son état : le serveur a le message.
+    final byClientId = clientMessageId == null
+        ? null
+        : caseItem.messages
+            .firstWhereOrNull((existing) => existing.id == clientMessageId);
+    if (byClientId != null) _forgetQueuedCopy(byClientId.id);
+    final echoed = byClientId ??
+        (senderRole == 'student'
+            ? caseItem.messages.firstWhereOrNull((existing) =>
+                existing.id.startsWith('user-') &&
+                existing.body.fr == body &&
+                (_caseMessagesInFlight.contains(existing.id) ||
+                    caseMessageDelivery(existing, caseId: caseItem.id) ==
+                        CaseMessageDelivery.sent))
+            : null);
+    final withoutOptimistic = echoed != null
+        ? caseItem.messages.where((existing) => existing != echoed).toList()
         : caseItem.messages;
 
     _cases[index] = caseItem.copyWith(
@@ -396,6 +570,36 @@ mixin _CasesMixin on _AppControllerBase {
   /// create the same case twice.
   final Set<String> _caseCreatesInFlight = <String>{};
 
+  /// Id local `case-<ms>` → id serveur, rempli au retour de la création
+  /// distante. En mémoire seulement : la file d'envoi, elle, est réécrite sur
+  /// disque, et aucun écran ne survit à un redémarrage.
+  final Map<String, String> _caseIdAliases = <String, String>{};
+
+  /// Bulles dont l'écriture en file ou le POST est en cours (en mémoire : au
+  /// redémarrage, l'entrée de la file dit « en attente »).
+  final Set<String> _caseMessagesInFlight = <String>{};
+
+  /// Repli sans file ouverte (jamais en production) : bulles refusées (4xx).
+  /// Avec la file, le refus est écrit sur l'entrée, sur disque.
+  final Set<String> _rejectedCaseMessageIds = <String>{};
+
+  Timer? _outboxRetryTimer;
+
+  /// Délai de la relance après un échec réseau, sans attendre une transition
+  /// de connectivité. Réglable en test.
+  @visibleForTesting
+  Duration outboxRetryDelay = const Duration(seconds: 20);
+
+  void _scheduleOutboxRetry() {
+    if (_outboxRetryTimer?.isActive ?? false) return;
+    _outboxRetryTimer = Timer(outboxRetryDelay, () {
+      _outboxRetryTimer = null;
+      if (ConnectivityService.instance.isOnline) {
+        unawaited(flushPendingCaseMessages());
+      }
+    });
+  }
+
   @override
   Future<void> _createRemoteCase(StudentCase localCase) async {
     if (!AppConfig.enableRemoteSync) return;
@@ -413,10 +617,32 @@ mixin _CasesMixin on _AppControllerBase {
         if (localCase.scholarshipId != null)
           'scholarshipId': localCase.scholarshipId,
       });
+      final remote = CaseApiCodec.studentCaseFromApi(response);
+      final outbox = CaseMessageOutbox.maybeInstance;
+      final idChanged = remote.id.isNotEmpty && remote.id != localCase.id;
+      // Échange du dossier ET alias dans le même bloc synchrone : avant,
+      // l'alias était posé avant une attente (réécriture de la file), et
+      // pendant ce temps l'écran ne trouvait plus le dossier et un message
+      // envoyé était ignoré sans bruit (revue de la #408).
+      final previous =
+          _cases.firstWhereOrNull((item) => item.id == localCase.id);
       _cases.removeWhere((item) => item.id == localCase.id);
-      _upsertCase(CaseApiCodec.studentCaseFromApi(response));
+      _upsertCase(_carryUndeliveredBubbles(remote, previous));
+      if (idChanged) {
+        // L'écran ouvert par « Voir » et les messages écrits pendant la
+        // création suivent le dossier sous son nouvel id (revue avant la 58,
+        // n° 18) : avant, l'écran passait à « Dossier introuvable » et la
+        // file gardait un id que le serveur ne connaît pas.
+        _caseIdAliases[localCase.id] = remote.id;
+        final lastRead = _caseLastReadAt.remove(localCase.id);
+        if (lastRead != null) _caseLastReadAt[remote.id] = lastRead;
+      }
       _persist();
       update();
+      if (idChanged) await outbox?.reassignCase(localCase.id, remote.id);
+      if (outbox != null && outbox.hasPendingFor(remote.id)) {
+        unawaited(flushPendingCaseMessages());
+      }
     } catch (e, s) {
       safeRecordError(
         e,
@@ -430,31 +656,69 @@ mixin _CasesMixin on _AppControllerBase {
     }
   }
 
-  Future<void> _createRemoteCaseMessage(String caseId, String text) async {
-    if (!AppConfig.enableRemoteSync) return;
-    final senderName = profile?.fullName ?? 'Student';
+  /// Un refus définitif : le reposter échouerait à chaque fois.
+  static bool _isPermanentRejection(Object e) {
+    final status = e is DioException ? e.response?.statusCode : null;
+    return status != null &&
+        status >= 400 &&
+        status < 500 &&
+        status != 408 &&
+        status != 429;
+  }
 
-    // If we already know we're offline, go straight to the outbox — no need
-    // to burn a DNS lookup and block the UI on a 5-second timeout.
-    if (!ConnectivityService.instance.isOnline) {
-      await CaseMessageOutbox.instance.enqueue(
-        caseId: caseId,
-        body: text,
-        senderName: senderName,
-      );
-      return;
-    }
+  /// Le corps EXACT de `POST /cases/:id/messages`. Le serveur valide en
+  /// liste blanche stricte (`forbidNonWhitelisted`) : `senderName` et
+  /// `senderRole`, envoyés jusqu'ici, faisaient refuser en 400 chaque message
+  /// d'élève depuis juin (le serveur fixe lui-même le rôle et le nom).
+  ///
+  /// [clientMessageId] : identifiant client stable (id de bulle) ; un renvoi
+  /// rend le message déjà créé au lieu d'en créer un second.
+  static Map<String, dynamic> caseMessagePayload(
+    String body, {
+    String? clientMessageId,
+  }) =>
+      <String, dynamic>{
+        'body': body,
+        if (clientMessageId != null) 'clientMessageId': clientMessageId,
+      };
 
+  /// Un serveur pas encore à jour refuse `clientMessageId` en 400 : on
+  /// renvoie alors UNE fois sans lui, et ce refus ne compte pas comme un
+  /// échec définitif.
+  Future<void> _postCaseMessage(
+    String caseId,
+    String body,
+    String? clientMessageId,
+  ) async {
     try {
-      await _apiClient.createCaseMessage(caseId, <String, dynamic>{
-        'senderName': senderName,
-        'senderRole': 'student',
-        'body': text,
-      });
-      final response = await _apiClient.getCase(caseId);
-      _upsertCase(CaseApiCodec.studentCaseFromApi(response));
-      _persist();
-      update();
+      await _apiClient.createCaseMessage(
+        caseId,
+        caseMessagePayload(body, clientMessageId: clientMessageId),
+      );
+    } on DioException catch (e) {
+      if (clientMessageId == null || !_rejectsClientMessageId(e)) rethrow;
+      await _apiClient.createCaseMessage(caseId, caseMessagePayload(body));
+    }
+  }
+
+  /// Un 400 du serveur qui nomme `clientMessageId` (« property
+  /// clientMessageId should not exist ») : serveur antérieur à ce champ.
+  static bool _rejectsClientMessageId(DioException e) =>
+      e.response?.statusCode == 400 &&
+      (e.response?.data?.toString() ?? '').contains('clientMessageId');
+
+  /// POST direct d'un message déjà écrit dans la file (par
+  /// [_sendCaseMessage]) : le résultat est reporté SUR L'ENTRÉE de la file,
+  /// donc survit à un redémarrage.
+  Future<void> _createRemoteCaseMessage(
+    String caseId,
+    String text,
+    String messageId,
+  ) async {
+    final outbox = CaseMessageOutbox.maybeInstance;
+    OutboxEntry? entry() => outbox?.entryForMessage(messageId);
+    try {
+      await _postCaseMessage(caseId, text, messageId);
     } catch (e, s) {
       safeRecordError(
         e,
@@ -463,54 +727,105 @@ mixin _CasesMixin on _AppControllerBase {
         domain: CrashlyticsObsDomain.cases,
         operation: 'create_remote_case_message',
       );
-      final status = e is DioException ? e.response?.statusCode : null;
-      if (status != null &&
-          status >= 400 &&
-          status < 500 &&
-          status != 408 &&
-          status != 429) {
+      final queued = entry();
+      if (_isPermanentRejection(e)) {
         // Refus définitif (message trop long, dossier introuvable…) : le
-        // remettre en file le ferait échouer à chaque reconnexion, en silence.
+        // reposter à chaque reconnexion échouerait en silence. La bulle passe
+        // en « Non envoyé », avec « Réessayer » — état écrit sur disque.
+        if (queued != null) {
+          await outbox!.markPermanentFailure(queued.key, queued);
+        } else {
+          _rejectedCaseMessageIds.add(messageId);
+        }
         KpbToast.error('case_message_send_failed'.tr);
         return;
       }
-      // Network blip — queue it. The connectivity listener will retry.
-      await CaseMessageOutbox.instance.enqueue(
-        caseId: caseId,
-        body: text,
-        senderName: senderName,
+      // Coupure réseau : reste en file, relance dans quelques secondes.
+      if (queued != null) await outbox!.markFailure(queued.key, queued);
+      _scheduleOutboxRetry();
+      return;
+    }
+    // Le message EST parti : il sort de la file AVANT la relecture. Si la
+    // relecture échoue, on ne le remet surtout pas en file : le backend ne
+    // dédoublonne pas, et le conseiller le recevait deux fois (revue avant la
+    // 58, n° 19). La prochaine synchro (ou le socket) rafraîchira le dossier.
+    final queued = entry();
+    if (queued != null) await outbox!.remove(queued.key);
+    // Plus « en cours » AVANT la relecture : sinon la bulle optimiste était
+    // gardée à côté de la copie serveur, et le message s'affichait deux fois.
+    _caseMessagesInFlight.remove(messageId);
+    try {
+      final response = await _apiClient.getCase(caseId);
+      _upsertCase(CaseApiCodec.studentCaseFromApi(response));
+      _persist();
+    } catch (e, s) {
+      safeRecordError(
+        e,
+        s,
+        reason: 'createRemoteCaseMessage.getCase',
+        domain: CrashlyticsObsDomain.cases,
+        operation: 'create_remote_case_message_get_case',
       );
     }
   }
 
   Future<void>? _flushInFlight;
+  bool _flushRequestedAgain = false;
 
-  /// Flush the offline message queue. Called on connectivity-restored events.
-  /// Two callers (reconnect listener, sync) could run it concurrently and send
-  /// the same queued entries twice: a second call joins the running flush.
+  /// Flush the offline message queue. Called on connectivity-restored events,
+  /// sync, case opening, app resume, and after a remote case create.
+  /// Two callers could run it concurrently and send the same queued entries
+  /// twice: a second call joins the running flush — which then runs ONE more
+  /// pass, since it froze its list before the caller's new entries (a case
+  /// just created on the server) existed.
   @override
   Future<void> flushPendingCaseMessages() {
     final running = _flushInFlight;
-    if (running != null) return running;
-    final flush = _flushPendingCaseMessages();
+    if (running != null) {
+      _flushRequestedAgain = true;
+      return running;
+    }
+    Future<void> loop() async {
+      do {
+        _flushRequestedAgain = false;
+        await _flushPendingCaseMessages();
+      } while (_flushRequestedAgain);
+    }
+
+    final flush = loop();
     _flushInFlight = flush;
     return flush.whenComplete(() => _flushInFlight = null);
   }
 
   Future<void> _flushPendingCaseMessages() async {
     if (!AppConfig.enableRemoteSync) return;
+    final outbox = CaseMessageOutbox.maybeInstance;
+    if (outbox == null || outbox.pendingCount == 0) return;
     if (!await _apiClient.hasAuthSession()) return;
-    final outbox = CaseMessageOutbox.instance;
     final touched = <String>{};
+    var changed = false;
+    var networkFailure = false;
     for (final entry in outbox.pending.toList()) {
+      final bubbleId = entry.localMessageId;
+      // Un envoi direct s'en occupe déjà.
+      if (bubbleId != null && _caseMessagesInFlight.contains(bubbleId)) {
+        continue;
+      }
+      var caseId = entry.caseId;
+      final alias = _caseIdAliases[caseId];
+      if (alias != null) {
+        caseId = alias;
+        await outbox.reassignCase(entry.caseId, alias);
+      }
+      // Dossier pas encore créé côté serveur : le poster rendait un 404 qui
+      // brûlait un essai à chaque fois. Il partira après la création.
+      if (_localCaseId.hasMatch(caseId)) continue;
+      if (bubbleId != null) _caseMessagesInFlight.add(bubbleId);
       try {
-        await _apiClient.createCaseMessage(entry.caseId, <String, dynamic>{
-          'senderName': entry.senderName,
-          'senderRole': 'student',
-          'body': entry.body,
-        });
+        await _postCaseMessage(caseId, entry.body, bubbleId);
         await outbox.remove(entry.key);
-        touched.add(entry.caseId);
+        touched.add(caseId);
+        changed = true;
       } catch (e, s) {
         safeRecordError(
           e,
@@ -519,7 +834,18 @@ mixin _CasesMixin on _AppControllerBase {
           domain: CrashlyticsObsDomain.cases,
           operation: 'flush_pending_case_messages',
         );
+        changed = true;
+        if (_isPermanentRejection(e)) {
+          await outbox.markPermanentFailure(entry.key, entry);
+          continue;
+        }
         await outbox.markFailure(entry.key, entry);
+        // Le réseau est tombé : inutile de brûler un essai sur chacun des
+        // suivants, ni de les envoyer dans le désordre.
+        networkFailure = true;
+        break;
+      } finally {
+        if (bubbleId != null) _caseMessagesInFlight.remove(bubbleId);
       }
     }
     for (final caseId in touched) {
@@ -536,17 +862,19 @@ mixin _CasesMixin on _AppControllerBase {
         );
       }
     }
-    if (touched.isNotEmpty) {
+    if (changed) {
       _persist();
       update();
     }
+    if (networkFailure && outbox.pending.isNotEmpty) _scheduleOutboxRetry();
   }
 
   int get pendingOutboundMessageCount =>
-      CaseMessageOutbox.instance.pendingCount;
+      CaseMessageOutbox.maybeInstance?.pendingCount ?? 0;
 
   bool caseHasQueuedMessages(String caseId) =>
-      CaseMessageOutbox.instance.hasPendingFor(caseId);
+      CaseMessageOutbox.maybeInstance?.hasPendingFor(resolveCaseId(caseId)) ??
+      false;
 
   Future<void> _uploadRemoteCaseDocument(
     String caseId,
@@ -578,9 +906,55 @@ mixin _CasesMixin on _AppControllerBase {
   void _upsertCase(StudentCase caseItem) {
     final index = _cases.indexWhere((item) => item.id == caseItem.id);
     if (index >= 0) {
-      _cases[index] = caseItem;
+      _cases[index] = _carryUndeliveredBubbles(caseItem, _cases[index]);
     } else {
       _cases.insert(0, caseItem);
     }
   }
+
+  /// Le serveur a le message [localMessageId] : son entrée de file ne doit
+  /// plus partir.
+  void _forgetQueuedCopy(String localMessageId) {
+    final outbox = CaseMessageOutbox.maybeInstance;
+    final entry = outbox?.entryForMessage(localMessageId);
+    if (outbox == null || entry == null) return;
+    unawaited(outbox.remove(entry.key));
+  }
+
+  /// La copie serveur d'un dossier ne connaît pas les messages encore en
+  /// attente ou en échec : la substituer telle quelle effaçait leur bulle,
+  /// alors que le message dormait dans la file. On les garde à la fin du fil.
+  @override
+  StudentCase _carryUndeliveredBubbles(
+    StudentCase incoming,
+    StudentCase? previous,
+  ) {
+    if (previous == null) return incoming;
+    // Bulles que le serveur a déjà (il renvoie leur identifiant client) :
+    // jamais gardées en plus de sa copie, et leur entrée de file, devenue
+    // inutile, est retirée — un message reçu sans que l'app ait eu la réponse
+    // (app tuée pendant le POST) n'est ni renvoyé ni affiché deux fois.
+    final onServer = {
+      for (final message in incoming.messages)
+        if (message.clientMessageId != null) message.clientMessageId!,
+    };
+    for (final id in onServer) {
+      _forgetQueuedCopy(id);
+    }
+    final known = {
+      ...incoming.messages.map((message) => message.id),
+      ...onServer,
+    };
+    final undelivered = previous.messages
+        .where((message) =>
+            !known.contains(message.id) &&
+            caseMessageDelivery(message, caseId: previous.id) !=
+                CaseMessageDelivery.sent)
+        .toList();
+    if (undelivered.isEmpty) return incoming;
+    return incoming.copyWith(messages: [...incoming.messages, ...undelivered]);
+  }
 }
+
+/// État d'envoi d'un message de l'élève, affiché sous sa bulle.
+enum CaseMessageDelivery { sent, pending, failed }

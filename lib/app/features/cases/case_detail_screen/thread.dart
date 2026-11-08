@@ -69,11 +69,66 @@ class _MessageBubble extends StatelessWidget {
                       color: isStudent ? Colors.white54 : KpbColors.textFaint,
                     ),
                   ),
+                  if (isStudent) _DeliveryStatus(msg: msg, ctrl: ctrl),
                 ],
               ),
             ),
           ),
           if (isStudent) const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// « En attente d'envoi » ou « Non envoyé · Réessayer » sous une bulle de
+/// l'élève : un message en file ou refusé ne s'affiche plus comme envoyé.
+class _DeliveryStatus extends StatelessWidget {
+  const _DeliveryStatus({required this.msg, required this.ctrl});
+  final CaseMessage msg;
+  final AppController ctrl;
+
+  @override
+  Widget build(BuildContext context) {
+    final delivery = ctrl.caseMessageDelivery(msg);
+    if (delivery == CaseMessageDelivery.sent) return const SizedBox.shrink();
+    const style = TextStyle(fontSize: KpbFontSize.xs, color: Colors.white);
+    if (delivery == CaseMessageDelivery.pending) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.schedule_rounded, size: 12, color: Colors.white),
+            const SizedBox(width: 4),
+            Text('case_message_pending'.tr, style: style),
+          ],
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 6,
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 12, color: Colors.white),
+          Text('case_message_failed'.tr, style: style),
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: () => ctrl.retryCaseMessage(msg.id),
+              child: Text(
+                'retry'.tr,
+                style: style.copyWith(
+                  fontWeight: FontWeight.w700,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

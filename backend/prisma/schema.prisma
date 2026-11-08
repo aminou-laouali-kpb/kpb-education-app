@@ -694,8 +694,13 @@ model CaseMessage {
   senderName String
   body       String
   createdAt  DateTime @default(now())
+  /// Identifiant posé par l'app (id de la bulle) : un renvoi depuis la file
+  /// d'envoi rend le message existant au lieu d'en créer un second. NULL pour
+  /// les messages des anciennes apps et du personnel.
+  clientMessageId String?
   case       Case     @relation(fields: [caseId], references: [id])
 
+  @@unique([caseId, clientMessageId])
   @@index([caseId])
   @@index([createdAt])
 }

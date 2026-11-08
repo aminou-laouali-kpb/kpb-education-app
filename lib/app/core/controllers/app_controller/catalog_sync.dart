@@ -60,14 +60,26 @@ mixin _CatalogSyncMixin on _AppControllerBase {
 
       if (hasAuth) {
         try {
-          // Flush any messages typed while offline
+          // Flush any messages typed while offline. Ceux d'un dossier encore
+          // local attendent : ils partent à la fin de sa création distante
+          // (relancée plus bas), plus jamais vers l'id `case-<ms>`.
           await flushPendingCaseMessages();
 
           // Le profil n'est réécrit que s'il a changé ici (geste local, hors
           // ligne ou consentement en attente) : chaque synchro renvoyait toute la
           // copie du téléphone, puis relisait celle du serveur (8 PATCH en 22
           // minutes, audit build 57, T8-07). Sans geste, le serveur fait foi.
-          if (_profileNeedsPush) await _pushProfileUpdate();
+          //
+          // Un PATCH déjà en cours (fin d'onboarding, qui lance aussi cette
+          // synchro) est rejoint, pas doublé. Ce doublon était masqué en test
+          // tant que la file des messages, non ouverte, faisait planter la
+          // synchro avant cette ligne.
+          final pushInFlight = _profilePushInFlight;
+          if (pushInFlight != null) {
+            await pushInFlight;
+          } else if (_profileNeedsPush) {
+            await _pushProfileUpdate();
+          }
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);
@@ -105,9 +117,14 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             localWinCount: caseStats.localWinCount,
             keptLocalOnlyCount: caseStats.keptLocalOnlyCount,
           );
+          // Une copie serveur gagnante n'efface pas les bulles encore en
+          // attente d'envoi (revue avant la 58, n° 20).
+          final previousCases = {for (final c in _cases) c.id: c};
           _cases
             ..clear()
-            ..addAll(mergedCases);
+            ..addAll(mergedCases.map(
+              (c) => _carryUndeliveredBubbles(c, previousCases[c.id]),
+            ));
           // Un dossier dont la création distante a échoué gardait son id local
           // (`case-<ms>`) pour toujours, avec le texte « transmise à l'équipe
           // KPB ». On retente à chaque synchro.
