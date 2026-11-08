@@ -236,6 +236,11 @@ abstract class _AppControllerBase extends GetxController {
   /// The sync currently running, so [finishAuthSession] can wait for it
   /// instead of being silently skipped by the `isSyncing` guard.
   Future<void>? _inFlightSync;
+
+  /// Session ouverte mais profil illisible au dernier `finishAuthSession`
+  /// (réseau, serveur). L'écran de démarrage propose alors « Réessayer »
+  /// au lieu de l'onboarding. En mémoire seulement.
+  bool accountLoadFailed = false;
   DateTime? lastSyncedAt;
   String? syncError;
 

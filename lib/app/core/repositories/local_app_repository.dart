@@ -377,10 +377,14 @@ class LocalAppRepository implements AppRepository {
           .whereType<Map<String, dynamic>>()
           .map(_timelineEventFromJson)
           .toList(),
-      messages: ((json['messages'] as List<dynamic>?) ?? <dynamic>[])
-          .whereType<Map<String, dynamic>>()
-          .map(_caseMessageFromJson)
-          .toList(),
+      // Le cache de la 57 tient les messages du plus récent au plus ancien
+      // (ordre du serveur d'alors) : on retrie à la relecture, hors ligne
+      // compris (relecture de la PR #407).
+      messages: caseMessagesOldestFirst(
+          ((json['messages'] as List<dynamic>?) ?? <dynamic>[])
+              .whereType<Map<String, dynamic>>()
+              .map(_caseMessageFromJson)
+              .toList()),
       documentRequests:
           ((json['documentRequests'] as List<dynamic>?) ?? <dynamic>[])
               .whereType<Map<String, dynamic>>()

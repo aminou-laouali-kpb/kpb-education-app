@@ -21,8 +21,18 @@ import '../widget_test_helpers.dart';
 //     (no streak, no in-app price).
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Élève déjà inscrit sur la liste d'attente : l'écran montre « Me retirer ».
+class _RegisteredApiClient extends MockApiClient {
+  @override
+  Future<Map<String, dynamic>> getPremiumWaitlist() async => <String, dynamic>{
+        'registered': true,
+        'registeredAt': '2026-09-03T10:00:00.000Z',
+      };
+}
+
 Future<AppController> _seed({
   AccountType accountType = AccountType.student,
+  MockApiClient? apiClient,
 }) async {
   AppConfig.enableRemoteSyncOverride = false;
   setupPlatformChannelMocks();
@@ -38,7 +48,7 @@ Future<AppController> _seed({
 
   final controller = AppController(
     repository: FakeRepository(snapshot: snapshot),
-    apiClient: MockApiClient(),
+    apiClient: apiClient ?? MockApiClient(),
   );
   await controller.hydrate();
 
@@ -145,6 +155,71 @@ void main() {
   });
 
   testWidgets(
+      'retrait de la liste : la confirmation parle du retrait, pas de '
+      'l\'inscription (revue avant la 58)', (tester) async {
+    // Avant : la boîte « Me retirer de la liste » affichait le texte de
+    // consentement à l'INSCRIPTION (« En vous inscrivant, vous acceptez… »).
+    await _seed(apiClient: _RegisteredApiClient());
+    await tester.pumpWidget(_wrap(const PremiumScreen()));
+    await tester.pumpAndSettle();
+
+    final leave = find.widgetWithText(TextButton, 'premium_waitlist_leave'.tr);
+    await tester.dragUntilVisible(
+        leave, find.byType(ListView), const Offset(0, -160));
+    await tester.pumpAndSettle();
+    await tester.tap(leave);
+    await tester.pumpAndSettle();
+
+    final dialog = find.byType(AlertDialog);
+    expect(dialog, findsOneWidget);
+    expect(
+        find.descendant(
+            of: dialog,
+            matching: find.text('premium_waitlist_leave_confirm_body'.tr)),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: dialog, matching: find.text('premium_waitlist_notice'.tr)),
+        findsNothing);
+
+    // Le texte dit le retrait, au « tu », sans parler d'inscription.
+    final fr = AppTranslations().keys['fr']!;
+    expect(fr['premium_waitlist_leave_confirm_body'],
+        contains('Tu ne seras plus prévenu'));
+    expect(fr['premium_waitlist_leave_confirm_body'],
+        isNot(contains('inscrivant')));
+  });
+
+  test('écran du Pass : plus de « Premium », et l\'éditeur est KPB Education',
+      () {
+    // Le titre dit « Pass Karatou » ; le sous-titre, le tableau et la note
+    // disaient « Premium » et « Karatou ne propose aucun paiement ».
+    final keys = AppTranslations().keys;
+    const passScreenKeys = [
+      'profile_premium_card_sub',
+      'premium_hero_sub',
+      'premium_value_more_soon',
+      'premium_compare_title',
+      'premium_compare_premium',
+      'premium_no_payment_note',
+      'coach_quota_exhausted',
+    ];
+    for (final lang in const ['fr', 'en']) {
+      for (final key in passScreenKeys) {
+        final value = keys[lang]![key];
+        expect(value, isNotNull, reason: '$lang/$key');
+        expect(value, isNot(contains('Premium')), reason: '$lang/$key');
+      }
+      expect(
+          keys[lang]!['premium_no_payment_note'], startsWith('KPB Education '));
+      // La carte du Profil n'invite plus à « activer » un Pass fermé.
+      expect(keys[lang]!['profile_premium_card_sub']!.toLowerCase(),
+          isNot(contains('activ')));
+    }
+    expect(keys['fr']!['premium_compare_premium'], 'Pass');
+  });
+
+  testWidgets(
       'ProfileScreen: binds real name + honest Premium entry, '
       'omits fabricated streak/price', (tester) async {
     await _seed();
@@ -171,5 +246,69 @@ void main() {
     );
     expect(find.text('profile_premium_card_title'.tr), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+  group('carte Profil du Pass : le texte suit le lecteur (revue avant la 58)',
+      () {
+    test('choix de la clé', () {
+      expect(premiumCardSubKey(isStudent: true, registered: false),
+          'profile_premium_card_sub');
+      expect(premiumCardSubKey(isStudent: true, registered: true),
+          'profile_premium_card_sub_joined');
+      expect(premiumCardSubKey(isStudent: false, registered: false),
+          'profile_premium_card_sub_other');
+      expect(premiumCardSubKey(isStudent: false, registered: true),
+          'profile_premium_card_sub_other');
+    });
+
+    test('textes : le parent ni tutoyé ni invité à s\'inscrire', () {
+      final keys = AppTranslations().keys;
+      final fr = keys['fr']!;
+      final other = fr['profile_premium_card_sub_other']!.toLowerCase();
+      expect(other, isNot(matches(RegExp(r'\b(tu|toi|te|ton|ta|tes)\b'))));
+      expect(other, isNot(matches(RegExp(r'\b(vous|votre|vos)\b'))));
+      expect(other, isNot(contains('inscri')));
+      expect(keys['en']!['profile_premium_card_sub_other']!.toLowerCase(),
+          isNot(contains('join')));
+      expect(fr['profile_premium_card_sub_joined'],
+          contains('Tu es sur la liste'));
+    });
+
+    Future<void> pumpProfile(WidgetTester tester) async {
+      await tester.pumpWidget(_wrap(const ProfileScreen()));
+      await tester.pumpAndSettle();
+      final vScroll = find.byWidgetPredicate(
+        (w) =>
+            w is Scrollable &&
+            (w.axisDirection == AxisDirection.down ||
+                w.axisDirection == AxisDirection.up),
+      );
+      await tester.scrollUntilVisible(
+        find.text('profile_premium_card_title'.tr),
+        300,
+        scrollable: vScroll,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('élève non inscrit : « inscris-toi »', (tester) async {
+      await _seed();
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub_joined'.tr), findsNothing);
+    });
+
+    testWidgets('élève inscrit : « tu es sur la liste »', (tester) async {
+      await _seed(apiClient: _RegisteredApiClient());
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub_joined'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub'.tr), findsNothing);
+    });
+
+    testWidgets('parent : texte neutre', (tester) async {
+      await _seed(accountType: AccountType.parent);
+      await pumpProfile(tester);
+      expect(find.text('profile_premium_card_sub_other'.tr), findsOneWidget);
+      expect(find.text('profile_premium_card_sub'.tr), findsNothing);
+    });
   });
 }

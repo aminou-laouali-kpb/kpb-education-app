@@ -7,6 +7,7 @@ import '../../core/models/app_models.dart';
 import '../../core/services/followed_scholarships_store.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/country_utils.dart';
+import '../cases/case_timeline_copy.dart';
 
 const _frMonths = <String, int>{
   'janvier': 1,
@@ -355,7 +356,7 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
       entries.add(
         _MilestoneEntry(
           id: 'case-next-${item.id}',
-          title: controller.resolve(item.nextStepTitle),
+          title: controller.nextStepTitleFor(item),
           subtitle: '${item.referenceCode} · ${controller.resolve(item.title)}',
           kind: _MilestoneKind.caseStep,
           deadline: item.scheduledAt,

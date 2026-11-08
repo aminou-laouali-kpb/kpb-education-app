@@ -200,6 +200,7 @@ class _ParentSurfaceScreenState extends State<ParentSurfaceScreen> {
         onUploadProof: () => _whatsapp('parent_wa_upload'.tr, 'parent_upload'),
         onPay: (item) => _whatsapp(
             'parent_wa_pay'.trParams({'item': item}), 'parent_payment'),
+        onAskAboutPass: () => _whatsapp('parent_wa_pass'.tr, 'parent_pass'),
       );
     }
 
@@ -420,6 +421,7 @@ class _LinkedSurface extends StatelessWidget {
     required this.onAskAccess,
     required this.onUploadProof,
     required this.onPay,
+    required this.onAskAboutPass,
   });
   final int tab;
   final ValueChanged<int> onTab;
@@ -431,6 +433,7 @@ class _LinkedSurface extends StatelessWidget {
   final VoidCallback onAskAccess;
   final VoidCallback onUploadProof;
   final void Function(String item) onPay;
+  final VoidCallback onAskAboutPass;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +451,10 @@ class _LinkedSurface extends StatelessWidget {
                     sharedCase: sharedCase,
                     onAskAccess: onAskAccess,
                     onUploadProof: onUploadProof),
-                2 => _PaymentsTab(childName: childName, onPay: onPay),
+                2 => _PaymentsTab(
+                    childName: childName,
+                    onPay: onPay,
+                    onAskAboutPass: onAskAboutPass),
                 3 =>
                   _UpdatesTab(sharedCase: sharedCase, onAskAccess: onAskAccess),
                 _ => _OverviewTab(
@@ -861,9 +867,18 @@ class _UpdatesTab extends StatelessWidget {
 }
 
 class _PaymentsTab extends StatelessWidget {
-  const _PaymentsTab({required this.childName, required this.onPay});
+  const _PaymentsTab({
+    required this.childName,
+    required this.onPay,
+    required this.onAskAboutPass,
+  });
   final String childName;
   final void Function(String item) onPay;
+
+  /// Le Pass Karatou n'est pas ouvert (l'élève lit « Bientôt disponible ») :
+  /// la carte ne vend ni n'« active » rien, elle ouvre une simple demande
+  /// d'information au conseiller, sans prix.
+  final VoidCallback onAskAboutPass;
 
   static const _packs = [
     (
@@ -925,6 +940,20 @@ class _PaymentsTab extends StatelessWidget {
                                   color: Colors.white,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                                color:
+                                    KpbColors.decorSky.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(999)),
+                            child: Text('premium_badge_soon'.tr,
+                                style: KpbTextStyles.labelSm.copyWith(
+                                    color: KpbColors.decorSky,
+                                    fontWeight: FontWeight.w700)),
+                          ),
+                          const SizedBox(height: 4),
                           Text('parent_premium_sub'.tr,
                               style: const TextStyle(
                                   color: KpbColors.textFaint, fontSize: 11)),
@@ -935,7 +964,7 @@ class _PaymentsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(
-                  onTap: () => onPay('parent_premium_item'.tr),
+                  onTap: onAskAboutPass,
                   child: Container(
                     height: 46,
                     decoration: BoxDecoration(

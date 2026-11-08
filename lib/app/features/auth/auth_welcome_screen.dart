@@ -12,6 +12,7 @@ import '../../core/ui/app_tokens.dart';
 import '../legal/legal_links.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../shell/app_root_shell.dart';
+import 'account_recovery_screen.dart';
 import 'magic_link_email_screen.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
@@ -27,6 +28,12 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
   late final AuthService _authService = Get.find<AuthService>();
   StreamSubscription<AuthState>? _authSub;
   bool _googleLoading = false;
+
+  /// La session vient de s'ouvrir (retour de Google ou lien e-mail) et le
+  /// compte se prépare. Les trois actions sont remplacées par un état
+  /// d'attente : avant, l'écran restait figé et « Explorer sans compte »
+  /// touché à ce moment-là laissait un compte connecté en mode invité.
+  bool _finishingAuth = false;
   // The auth method the user initiated with, read by the signed-in listener so
   // the success event carries the accurate method (KPB-158).
   String _pendingMethod = 'email';
@@ -38,15 +45,20 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
     // navigation when the session is established.
     _authSub = _authService.onAuthStateChange.listen((state) async {
       if (state.event != AuthChangeEvent.signedIn || !mounted) return;
-      // The redirect lands in the app while the browser that showed the consent
-      // screen may still be presented on top of it. Dismiss it first, otherwise
-      // the user stares at the blank redirect page while the app has already
-      // navigated behind it.
-      await _authService.dismissAuthWebView();
-      if (!mounted) return;
-      // Success logging (login vs sign-up + method) is centralized in
-      // navigateAfterAuth so it stays accurate for both Google and email.
-      await navigateAfterAuth(method: _pendingMethod);
+      setState(() => _finishingAuth = true);
+      try {
+        // The redirect lands in the app while the browser that showed the
+        // consent screen may still be presented on top of it. Dismiss it
+        // first, otherwise the user stares at the blank redirect page while
+        // the app has already navigated behind it.
+        await _authService.dismissAuthWebView();
+        if (!mounted) return;
+        // Success logging (login vs sign-up + method) is centralized in
+        // navigateAfterAuth so it stays accurate for both Google and email.
+        await navigateAfterAuth(method: _pendingMethod);
+      } finally {
+        if (mounted) setState(() => _finishingAuth = false);
+      }
     });
   }
 
@@ -75,6 +87,9 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
   /// KPB-156: explore the app without an account. The boot router already sends
   /// guests to the shell; gated actions (dossiers, coach) prompt sign-up later.
   void _continueAsGuest() {
+    // Une session est ouverte : ce n'est plus un invité (voir
+    // `AppController.enterGuestMode`, qui l'ignore aussi).
+    if (_finishingAuth || _authService.isLoggedIn) return;
     Get.find<AppController>().enterGuestMode();
     AnalyticsService.instance.logGuestModeEntered();
     Get.offAll(() => const AppRootShell());
@@ -175,106 +190,141 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
                     ),
                   ),
                   SizedBox(height: tight ? 12 : 20),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 58),
-                    child: OutlinedButton.icon(
-                      onPressed: _googleLoading ? null : _signInWithGoogle,
-                      icon: _googleLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: KpbColors.actionPrimary,
+                  if (_finishingAuth)
+                    const _FinishingAuthPanel()
+                  else ...[
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 58),
+                      child: OutlinedButton.icon(
+                        onPressed: _googleLoading ? null : _signInWithGoogle,
+                        icon: _googleLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: KpbColors.actionPrimary,
+                                ),
+                              )
+                            : const FaIcon(
+                                FontAwesomeIcons.google,
+                                size: 19,
+                                color: KpbColors.googleBlue,
                               ),
-                            )
-                          : const FaIcon(
-                              FontAwesomeIcons.google,
-                              size: 19,
-                              color: KpbColors.googleBlue,
-                            ),
-                      label: Text('auth_continue_google'.tr),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: KpbColors.brandNavy,
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(
-                          color: KpbColors.border,
-                          width: 1.5,
+                        label: Text('auth_continue_google'.tr),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: KpbColors.brandNavy,
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(
+                            color: KpbColors.border,
+                            width: 1.5,
+                          ),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                          ),
+                          textStyle: const TextStyle(
+                            fontFamily: KpbTextStyles.bodyFamily,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 58),
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          _pendingMethod = 'email';
+                          Get.to(
+                            () =>
+                                MagicLinkEmailScreen(authService: authService),
+                          );
+                        },
+                        icon: const Icon(Icons.mail_outline_rounded, size: 23),
+                        label: Text('auth_receive_email_link'.tr),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: KpbColors.actionPrimary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                          ),
+                          textStyle: const TextStyle(
+                            fontFamily: KpbTextStyles.bodyFamily,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Sans FittedBox : il rétrécissait la note jusqu'à
+                    // l'illisible ; elle passe à la ligne.
+                    Text(
+                      'auth_intelligence_note'.tr,
+                      textAlign: TextAlign.center,
+                      // textMuted, pas textFaint : ce texte est PORTEUR DE
+                      // SENS (il annonce KPB Intelligence) sur fond clair, où
+                      // textFaint rend 2,56:1 — sous le seuil AA de 4,5:1 — et
+                      // le FittedBox le rétrécit encore. Le token s'interdit
+                      // lui-même cet usage ; un test le calcule désormais.
+                      style: const TextStyle(
+                        color: KpbColors.textMuted,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: _continueAsGuest,
+                      style: TextButton.styleFrom(
+                        foregroundColor: KpbColors.textMuted,
+                        minimumSize: const Size(0, 44),
                         textStyle: const TextStyle(
                           fontFamily: KpbTextStyles.bodyFamily,
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                      child: Text('auth_explore_guest'.tr),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 58),
-                    child: FilledButton.icon(
-                      onPressed: () {
-                        _pendingMethod = 'email';
-                        Get.to(
-                          () => MagicLinkEmailScreen(authService: authService),
-                        );
-                      },
-                      icon: const Icon(Icons.mail_outline_rounded, size: 23),
-                      label: Text('auth_receive_email_link'.tr),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: KpbColors.actionPrimary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
-                        ),
-                        textStyle: const TextStyle(
-                          fontFamily: KpbTextStyles.bodyFamily,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Sans FittedBox : il rétrécissait la note jusqu'à
-                  // l'illisible ; elle passe à la ligne.
-                  Text(
-                    'auth_intelligence_note'.tr,
-                    textAlign: TextAlign.center,
-                    // textMuted, pas textFaint : ce texte est PORTEUR DE
-                    // SENS (il annonce KPB Intelligence) sur fond clair, où
-                    // textFaint rend 2,56:1 — sous le seuil AA de 4,5:1 — et
-                    // le FittedBox le rétrécit encore. Le token s'interdit
-                    // lui-même cet usage ; un test le calcule désormais.
-                    style: const TextStyle(
-                      color: KpbColors.textMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: _continueAsGuest,
-                    style: TextButton.styleFrom(
-                      foregroundColor: KpbColors.textMuted,
-                      minimumSize: const Size(0, 44),
-                      textStyle: const TextStyle(
-                        fontFamily: KpbTextStyles.bodyFamily,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    child: Text('auth_explore_guest'.tr),
-                  ),
+                  ],
                 ],
               ),
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// « Connexion réussie, on prépare ton espace… » : remplace les actions
+/// pendant que [navigateAfterAuth] lit le compte.
+class _FinishingAuthPanel extends StatelessWidget {
+  const _FinishingAuthPanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(color: KpbColors.actionPrimary),
+          const SizedBox(height: 16),
+          Text(
+            'auth_finishing_session'.tr,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: KpbColors.brandNavy,
+              fontSize: KpbFontSize.md,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -315,13 +365,15 @@ class _BenefitRow extends StatelessWidget {
   }
 }
 
-/// True while a [navigateAfterAuth] call is still resolving the session.
+/// The [navigateAfterAuth] call still resolving the session, if any.
 ///
 /// Two triggers can race on one sign-in: the `signedIn` listener on this screen
 /// (still mounted under the pushed magic-link screens) and the explicit call
-/// made by `MagicLinkVerifyScreen` once `verifyOTP` returns. Without this guard
-/// the second one replays `Get.offAll` and logs a duplicate login/sign-up event.
-bool _authNavigationInFlight = false;
+/// made by `MagicLinkVerifyScreen` once `verifyOTP` returns. The second one
+/// joins the first instead of replaying `Get.offAll` and logging a duplicate
+/// login/sign-up event — and, unlike before, it WAITS for it, so the code
+/// screen keeps its spinner until the account is ready.
+Future<AuthSessionOutcome>? _authNavigation;
 
 /// Resumes the authenticated session after Google / magic-link sign-in.
 ///
@@ -329,21 +381,50 @@ bool _authNavigationInFlight = false;
 /// and the signup-vs-login distinction: a user with no completed onboarding is
 /// treated as a new sign-up (`sign_up` event carrying the signup method),
 /// otherwise a returning login. Centralized here so callers don't double-log.
-Future<void> navigateAfterAuth({String method = 'email'}) async {
-  if (_authNavigationInFlight) return;
-  _authNavigationInFlight = true;
-  try {
-    final controller = Get.find<AppController>();
-    await controller.finishAuthSession();
-    if (controller.hasCompletedOnboarding) {
-      unawaited(AnalyticsService.instance.logLogin(method: method));
-      unawaited(Get.offAll(() => const AppRootShell()));
-    } else {
-      unawaited(AnalyticsService.instance.logRegister(method: method));
-      unawaited(Get.offAll(() => const OnboardingScreen()));
+/// A null [method] (retry after a cold start) logs nothing.
+///
+/// When the profile could not be READ ([AuthSessionOutcome.accountUnavailable])
+/// the student goes neither to onboarding nor to the shell: they land on
+/// [AccountRecoveryScreen] — or stay on it when [stayOnFailure] is set (its own
+/// « Réessayer »).
+Future<AuthSessionOutcome> navigateAfterAuth({
+  String? method = 'email',
+  bool stayOnFailure = false,
+}) {
+  final inFlight = _authNavigation;
+  if (inFlight != null) return inFlight;
+  final run = _resumeSession(method: method, stayOnFailure: stayOnFailure);
+  _authNavigation = run;
+  // Reset so a later sign-out → sign-in in the same session still navigates.
+  return run.whenComplete(() => _authNavigation = null);
+}
+
+Future<AuthSessionOutcome> _resumeSession({
+  required String? method,
+  required bool stayOnFailure,
+}) async {
+  final controller = Get.find<AppController>();
+  final outcome = await controller.finishAuthSession();
+  if (outcome == AuthSessionOutcome.accountUnavailable) {
+    unawaited(AnalyticsService.instance.logAuthFailed(
+      method: method ?? 'session',
+      reason: 'account_unavailable',
+    ));
+    if (!stayOnFailure) {
+      unawaited(Get.offAll(() => AccountRecoveryScreen(method: method)));
     }
-  } finally {
-    // Reset so a later sign-out → sign-in in the same session still navigates.
-    _authNavigationInFlight = false;
+    return outcome;
   }
+  if (controller.hasCompletedOnboarding) {
+    if (method != null) {
+      unawaited(AnalyticsService.instance.logLogin(method: method));
+    }
+    unawaited(Get.offAll(() => const AppRootShell()));
+  } else {
+    if (method != null) {
+      unawaited(AnalyticsService.instance.logRegister(method: method));
+    }
+    unawaited(Get.offAll(() => const OnboardingScreen()));
+  }
+  return outcome;
 }

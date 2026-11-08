@@ -73,6 +73,100 @@ void main() {
     expect(controller.hasMore, isFalse);
   });
 
+  // Revue avant la 58 : une page suivante en échec posait `hasMore = false`. La
+  // liste s'arrêtait net, sans un mot, sous un en-tête « 180 bourses », et le
+  // garde `!hasMore` de loadMore() empêchait tout nouveau défilement de la
+  // relancer. L'échec doit se dire (loadMoreFailed) et se rattraper.
+  test('une page suivante en échec se dit et se relance, sans couper la liste',
+      () async {
+    final api = MockApiClient();
+    final firstPage = List<dynamic>.generate(20, scholarshipJson);
+    var secondCalls = 0;
+    var failSecond = true;
+
+    Future<LiveScholarshipsPage> answer(int offset) async {
+      if (offset == 0) return _page(firstPage);
+      secondCalls++;
+      if (failSecond) throw Exception('3G instable');
+      return _page(<dynamic>[scholarshipJson(20)]);
+    }
+
+    when(
+      () => api.fetchLiveScholarshipsPage(
+        lang: 'fr',
+        level: null,
+        fieldIds: null,
+        fundingType: null,
+        statuses: null,
+        sort: ScholarshipListSort.relevance,
+        limit: 20,
+        offset: any(named: 'offset'),
+      ),
+    ).thenAnswer(
+      (invocation) => answer(invocation.namedArguments[#offset] as int),
+    );
+    when(() => api.fetchScholarshipAlerts())
+        .thenAnswer((_) async => <String>{});
+
+    final controller = ScholarshipsController(apiClient: api, lang: 'fr');
+    await controller.loadInitial();
+    await controller.loadMore();
+
+    expect(controller.items, hasLength(20));
+    expect(controller.loadMoreFailed, isTrue);
+    expect(
+      controller.hasMore,
+      isTrue,
+      reason: 'Il reste des bourses à lire : l\'échec ne doit pas faire croire '
+          'que la liste est complète.',
+    );
+    expect(controller.error, isNull, reason: 'La liste lue reste à l\'écran.');
+
+    // Le défilement ne martèle pas le serveur tant que l'élève n'a pas relancé.
+    await controller.loadMore();
+    expect(secondCalls, 1);
+
+    failSecond = false;
+    await controller.retryLoadMore();
+
+    expect(secondCalls, 2);
+    expect(controller.loadMoreFailed, isFalse);
+    expect(controller.items, hasLength(21));
+    expect(controller.hasMore, isFalse);
+  });
+
+  test('un rechargement complet efface l\'échec de page suivante', () async {
+    final api = MockApiClient();
+    when(
+      () => api.fetchLiveScholarshipsPage(
+        lang: 'fr',
+        level: null,
+        fieldIds: null,
+        fundingType: null,
+        statuses: null,
+        sort: ScholarshipListSort.relevance,
+        limit: 20,
+        offset: any(named: 'offset'),
+      ),
+    ).thenAnswer((invocation) async {
+      if (invocation.namedArguments[#offset] == 0) {
+        return _page(List<dynamic>.generate(20, scholarshipJson));
+      }
+      throw Exception('3G instable');
+    });
+    when(() => api.fetchScholarshipAlerts())
+        .thenAnswer((_) async => <String>{});
+
+    final controller = ScholarshipsController(apiClient: api, lang: 'fr');
+    await controller.loadInitial();
+    await controller.loadMore();
+    expect(controller.loadMoreFailed, isTrue);
+
+    await controller.loadInitial();
+    expect(controller.loadMoreFailed, isFalse);
+    expect(controller.hasMore, isTrue);
+  });
+
   // A profile with a field of interest used to filter the whole published
   // catalog out server-side (`relatedFieldIds` is empty on every write path
   // until an admin curates it), and the screen reported "no scholarships found".

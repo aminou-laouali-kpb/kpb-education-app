@@ -26,7 +26,10 @@ export type Reprise = {
   /** Table Postgres, telle que Prisma la nomme (guillemets requis en SQL). */
   readonly table: 'Case' | 'CaseTimelineEvent' | 'CaseMessage' | 'CaseDocument';
   readonly colonne: string;
-  /** Valeur anglaise exacte, ou motif ancré `^…$` si `motif` est vrai. */
+  /**
+   * Valeur d'origine exacte (anglais, ou ancienne formule au « vous »), ou
+   * motif ancré `^…$` si `motif` est vrai.
+   */
   readonly anglais: string;
   /** Remplacement français ; `\1` = segment capturé (règles `motif`). */
   readonly francais: string;
@@ -39,19 +42,19 @@ export const REPRISES: readonly Reprise[] = [
     table: 'Case',
     colonne: 'nextStepTitle',
     anglais: 'Your case is under review',
-    francais: 'Votre dossier est en revue',
+    francais: 'Ton dossier est en revue',
   },
   {
     table: 'Case',
     colonne: 'nextStepTitle',
     anglais: 'A counselor has been assigned',
-    francais: 'Un conseiller vous a été attribué',
+    francais: 'Un conseiller t’a été attribué',
   },
   {
     table: 'Case',
     colonne: 'nextStepTitle',
     anglais: 'Prepare for your scheduled session',
-    francais: 'Préparez votre rendez-vous',
+    francais: 'Prépare ton rendez-vous',
   },
 
   // ── Case.nextStepDescription ─────────────────────────────────────────────
@@ -60,28 +63,28 @@ export const REPRISES: readonly Reprise[] = [
     colonne: 'nextStepDescription',
     anglais: 'The KPB team will review your request and assign a counselor.',
     francais:
-      'L’équipe KPB va examiner votre demande et vous attribuer un conseiller.',
+      'L’équipe KPB va examiner ta demande et t’attribuer un conseiller.',
   },
   {
     table: 'Case',
     colonne: 'nextStepDescription',
     motif: true,
     anglais: '^(.+) has been assigned to your case and will contact you shortly\\.$',
-    francais: '\\1 suit votre dossier et vous contactera prochainement.',
+    francais: '\\1 suit ton dossier et te contactera bientôt.',
   },
   {
     table: 'Case',
     colonne: 'nextStepDescription',
     anglais: 'Confirm your availability and prepare your supporting documents.',
     francais:
-      'Confirmez votre disponibilité et préparez vos pièces justificatives.',
+      'Confirme ta disponibilité et prépare tes pièces justificatives.',
   },
   {
     table: 'Case',
     colonne: 'nextStepDescription',
     anglais: 'Your counselor will qualify your profile and contact you shortly.',
     francais:
-      'Votre conseiller va étudier votre profil et vous contactera prochainement.',
+      'Ton conseiller va étudier ton profil et te contactera bientôt.',
   },
 
   // ── CaseTimelineEvent.title — les jalons de la frise ─────────────────────
@@ -139,7 +142,7 @@ export const REPRISES: readonly Reprise[] = [
     table: 'CaseTimelineEvent',
     colonne: 'description',
     anglais: 'The student created a new case from the mobile app.',
-    francais: 'Votre demande a été créée depuis l’application.',
+    francais: 'Ta demande a été créée depuis l’application.',
   },
   {
     // Fuite de vocabulaire interne : « round-robin » décrivait l'algorithme
@@ -148,7 +151,7 @@ export const REPRISES: readonly Reprise[] = [
     colonne: 'description',
     motif: true,
     anglais: '^(.+) was assigned automatically \\(round-robin\\)\\.$',
-    francais: 'Votre dossier a été attribué à \\1.',
+    francais: 'Ton dossier a été attribué à \\1.',
   },
   {
     table: 'CaseTimelineEvent',
@@ -174,21 +177,21 @@ export const REPRISES: readonly Reprise[] = [
     colonne: 'description',
     motif: true,
     anglais: '^(.+) scheduled a follow-up on this case\\.$',
-    francais: '\\1 a programmé un point de suivi sur votre dossier.',
+    francais: '\\1 a programmé un point de suivi sur ton dossier.',
   },
   {
     table: 'CaseTimelineEvent',
     colonne: 'description',
     motif: true,
     anglais: '^(.+) is now the owner of this case\\.$',
-    francais: '\\1 suit désormais votre dossier.',
+    francais: '\\1 suit désormais ton dossier.',
   },
   {
     table: 'CaseTimelineEvent',
     colonne: 'description',
     motif: true,
     anglais: '^(.+) was added to the case workflow\\.$',
-    francais: 'L’action « \\1 » a été ajoutée à votre dossier.',
+    francais: 'L’action « \\1 » a été ajoutée à ton dossier.',
   },
   {
     // Fuite de vocabulaire interne : le seuil de 10 h est une règle
@@ -197,7 +200,7 @@ export const REPRISES: readonly Reprise[] = [
     colonne: 'description',
     motif: true,
     anglais: '^Auto-reassigned after 10h inactivity to (.+)\\.$',
-    francais: 'Votre dossier a été réattribué à \\1.',
+    francais: 'Ton dossier a été réattribué à \\1.',
   },
 
   // ── CaseMessage.body — le message d'accueil du dossier ───────────────────
@@ -206,13 +209,120 @@ export const REPRISES: readonly Reprise[] = [
     colonne: 'body',
     motif: true,
     anglais: '^Thank you\\. (.+) has been assigned to your request\\.$',
-    francais: 'Merci pour votre demande. \\1 suit votre dossier.',
+    francais: 'Merci pour ta demande. \\1 suit ton dossier.',
   },
   {
     table: 'CaseMessage',
     colonne: 'body',
     anglais: 'Thank you. Your request has been received by the KPB team.',
-    francais: 'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
+    francais: 'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
+  },
+
+  // ── Vouvoiement d'avant la revue de la 58 (constat 5) ─────────────────────
+  // Le serveur écrivait ces phrases au « vous » alors que l'app tutoie : la
+  // même carte passait de « Ton dossier est en revue » (création locale) à
+  // « Votre dossier est en revue » au premier rafraîchissement. Même principe
+  // que plus haut — trace EXACTE de ce que le service écrivait, rien d'autre ;
+  // le champ `anglais` porte ici l'ancienne formule française.
+  {
+    table: 'Case',
+    colonne: 'nextStepTitle',
+    anglais: 'Votre dossier est en revue',
+    francais: 'Ton dossier est en revue',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepTitle',
+    anglais: 'Un conseiller vous a été attribué',
+    francais: 'Un conseiller t’a été attribué',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepTitle',
+    anglais: 'Préparez votre rendez-vous',
+    francais: 'Prépare ton rendez-vous',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepDescription',
+    anglais:
+      'L’équipe KPB va examiner votre demande et vous attribuer un conseiller.',
+    francais: 'L’équipe KPB va examiner ta demande et t’attribuer un conseiller.',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepDescription',
+    motif: true,
+    anglais: '^(.+) suit votre dossier et vous contactera prochainement\\.$',
+    francais: '\\1 suit ton dossier et te contactera bientôt.',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepDescription',
+    anglais:
+      'Confirmez votre disponibilité et préparez vos pièces justificatives.',
+    francais: 'Confirme ta disponibilité et prépare tes pièces justificatives.',
+  },
+  {
+    table: 'Case',
+    colonne: 'nextStepDescription',
+    anglais:
+      'Votre conseiller va étudier votre profil et vous contactera prochainement.',
+    francais: 'Ton conseiller va étudier ton profil et te contactera bientôt.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    anglais: 'Votre demande a été créée depuis l’application.',
+    francais: 'Ta demande a été créée depuis l’application.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    motif: true,
+    anglais: '^Votre dossier a été attribué à (.+)\\.$',
+    francais: 'Ton dossier a été attribué à \\1.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    motif: true,
+    anglais: '^(.+) a programmé un point de suivi sur votre dossier\\.$',
+    francais: '\\1 a programmé un point de suivi sur ton dossier.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    motif: true,
+    anglais: '^(.+) suit désormais votre dossier\\.$',
+    francais: '\\1 suit désormais ton dossier.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    motif: true,
+    anglais: '^L’action « (.+) » a été ajoutée à votre dossier\\.$',
+    francais: 'L’action « \\1 » a été ajoutée à ton dossier.',
+  },
+  {
+    table: 'CaseTimelineEvent',
+    colonne: 'description',
+    motif: true,
+    anglais: '^Votre dossier a été réattribué à (.+)\\.$',
+    francais: 'Ton dossier a été réattribué à \\1.',
+  },
+  {
+    table: 'CaseMessage',
+    colonne: 'body',
+    motif: true,
+    anglais: '^Merci pour votre demande\\. (.+) suit votre dossier\\.$',
+    francais: 'Merci pour ta demande. \\1 suit ton dossier.',
+  },
+  {
+    table: 'CaseMessage',
+    colonne: 'body',
+    anglais: 'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
+    francais: 'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
   },
 
   // CaseDocument.title — « Academic profile » n'est plus traduit : la pièce

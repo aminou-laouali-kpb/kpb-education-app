@@ -198,3 +198,17 @@ class StudentCase {
     );
   }
 }
+
+/// Un fil se lit du plus ancien au plus récent, quel que soit l'ordre du
+/// serveur (il servait le plus récent d'abord jusqu'à la revue de la 58,
+/// constat 37) — appliqué au codec réseau ET à la relecture du cache local,
+/// où la 57 a rangé les messages du plus récent au plus ancien. Tri stable :
+/// à date égale, l'ordre reçu est gardé.
+List<CaseMessage> caseMessagesOldestFirst(List<CaseMessage> messages) {
+  final indexed = messages.asMap().entries.toList()
+    ..sort((a, b) {
+      final byDate = a.value.createdAt.compareTo(b.value.createdAt);
+      return byDate != 0 ? byDate : a.key.compareTo(b.key);
+    });
+  return [for (final e in indexed) e.value];
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
@@ -65,5 +66,86 @@ void main() {
     await tester.tap(find.text('ai_consent_decline'.tr));
     await tester.pumpAndSettle();
     expect(controller.profile?.hasAiConsent, isFalse);
+  });
+
+  // Revue avant la 58 : le corps du consentement (~520 caractères) était dans
+  // un AlertDialog NON défilable. Au texte agrandi ou sur 320 pt, il était
+  // rogné en bas — « part tel quel », « Tu peux refuser » — et l'élève
+  // acceptait un transfert de données sans avoir pu le lire. Un paragraphe
+  // rogné ne lève pas d'exception : on mesure donc la hauteur que le texte
+  // DEMANDE contre celle qu'il a reçue, puis on vérifie qu'on atteint la fin.
+  group('le consentement se lit en entier', () {
+    const se1 = KpbViewport(
+      id: 'se1',
+      name: 'iPhone SE 1 320×568',
+      size: Size(320, 568),
+      padding: EdgeInsets.only(top: 20),
+    );
+    final cases = <(KpbViewport, double)>[
+      (se1, 1.0),
+      (se1, 1.5),
+      (compactAndroid, 1.5),
+      (iphone14, 1.5),
+    ];
+    for (final (viewport, scale) in cases) {
+      testWidgets('$viewport ×$scale', (tester) async {
+        await seedKpbController();
+        await pumpKpbScreen(
+          tester,
+          viewport: viewport,
+          textScale: scale,
+          routesShareMediaQuery: true,
+          screen: Scaffold(
+            body: Builder(
+              builder: (context) => Center(
+                child: TextButton(
+                  onPressed: () => askAiConsent(context),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        final body = find.text('ai_consent_body'.tr);
+        final paragraph = tester.renderObject<RenderParagraph>(find.descendant(
+          of: body,
+          matching: find.byType(RichText),
+        ));
+        final needed = paragraph.getMinIntrinsicHeight(paragraph.size.width);
+        expect(
+          paragraph.size.height,
+          moreOrLessEquals(needed, epsilon: 1),
+          reason: 'Le corps est rogné : il demande ${needed.round()} px et '
+              'n\'en reçoit que ${paragraph.size.height.round()}.',
+        );
+
+        // On fait défiler jusqu'au bout : la fin du texte est à l'écran.
+        await tester.drag(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(Scrollable),
+          ),
+          const Offset(0, -3000),
+        );
+        await tester.pumpAndSettle();
+        final screenBottom = viewport.size.height;
+        expect(
+          tester.getBottomLeft(body).dy,
+          lessThanOrEqualTo(screenBottom),
+        );
+        // Les deux boutons restent à l'écran.
+        for (final key in ['ai_consent_decline', 'ai_consent_accept']) {
+          final button = find.text(key.tr);
+          expect(button, findsOneWidget);
+          expect(
+              tester.getBottomLeft(button).dy, lessThanOrEqualTo(screenBottom));
+          expect(tester.getTopLeft(button).dy, greaterThanOrEqualTo(0));
+        }
+      });
+    }
   });
 }

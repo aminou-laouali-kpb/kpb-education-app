@@ -154,57 +154,82 @@ class _TimelineItem extends StatelessWidget {
     final date =
         DateFormat('dd MMM yyyy', ctrl.localeCode).format(event.createdAt);
     final dotColor = _dotColor(event.status);
+    // Jamais la description brute : elle peut être au « vous » ou en anglais
+    // interne tant que la reprise serveur n'a pas tourné (relecture #407).
+    final description = studentTimelineDescription(
+        ctrl.resolve(event.description),
+        localeCode: ctrl.localeCode);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 24,
-          child: Column(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                margin: const EdgeInsets.only(top: 3),
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                        color: dotColor.withValues(alpha: 0.3), blurRadius: 4),
-                  ],
-                ),
-              ),
-              if (!isLast)
-                Container(width: 2, height: 40, color: KpbColors.surfaceMuted),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  ctrl.resolve(event.title),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: KpbColors.brandNavy,
+                Container(
+                  width: 12,
+                  height: 12,
+                  margin: const EdgeInsets.only(top: 3),
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                          color: dotColor.withValues(alpha: 0.3),
+                          blurRadius: 4),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(date,
-                    style: const TextStyle(
-                        fontSize: 11.5, color: KpbColors.textMuted)),
+                if (!isLast)
+                  Expanded(
+                    child: Container(width: 2, color: KpbColors.surfaceMuted),
+                  ),
               ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    ctrl.resolve(event.title),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: KpbColors.brandNavy,
+                    ),
+                  ),
+                  // Le contenu utile est dans la description (« L'action
+                  // « Relevé de notes » a été ajoutée… ») : le titre seul
+                  // (« Action ajoutée ») ne disait rien à l'élève (revue avant la
+                  // 58, constat 36).
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: const TextStyle(
+                        fontSize: KpbFontSize.xs,
+                        height: 1.35,
+                        color: KpbColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 2),
+                  Text(date,
+                      style: const TextStyle(
+                          fontSize: 11.5, color: KpbColors.textMuted)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -274,6 +299,49 @@ class _GreenWhatsAppCta extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// « Écrire à ton conseiller sur WhatsApp » — remplace le champ de saisie tant
+// que la messagerie in-app n'a pas de répondant (revue avant la 58, constat 33)
+// ─────────────────────────────────────────────────────────────────────────────
+class _WriteAdvisorOnWhatsAppButton extends StatelessWidget {
+  const _WriteAdvisorOnWhatsAppButton({
+    required this.label,
+    required this.onTap,
+  });
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        key: const ValueKey('case-write-advisor-whatsapp'),
+        onPressed: onTap,
+        icon:
+            const Icon(Icons.chat_rounded, color: KpbColors.whatsapp, size: 18),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: KpbFontSize.md,
+            fontWeight: FontWeight.w800,
+            // Le vert WhatsApp sur blanc plafonne à ~2:1 : le libellé reste en
+            // marine, le vert ne porte que l'icône et le contour.
+            color: KpbColors.brandNavy,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          side: const BorderSide(color: KpbColors.whatsapp, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),

@@ -101,6 +101,17 @@ class CaseTunnelPrefill {
   final String? scholarshipId;
 }
 
+/// Les canaux de contact proposés à l'étape Message. « Dans l'application »
+/// n'y figure que si la messagerie in-app est ouverte
+/// ([AppConfig.caseInAppMessagingEnabled]) : l'équipe ne peut pas y répondre
+/// aujourd'hui (revue avant la 58, constat 34).
+List<ContactMethod> get kCaseTunnelContactMethods => [
+      for (final method in ContactMethod.values)
+        if (method != ContactMethod.inApp ||
+            AppConfig.caseInAppMessagingEnabled)
+          method,
+    ];
+
 class CaseTunnelFlow extends StatefulWidget {
   const CaseTunnelFlow({
     super.key,
@@ -129,7 +140,11 @@ class _CaseTunnelFlowState extends State<CaseTunnelFlow> {
   var _step = 0;
   late CaseType _type;
   final _messageController = TextEditingController();
-  ContactMethod _contactMethod = ContactMethod.inApp;
+  // WhatsApp par défaut : c'est là que l'équipe répond. « Dans l'application »
+  // n'est plus proposé tant que la messagerie in-app n'a pas de répondant
+  // (revue avant la 58, constats 33-34) ; la valeur reste décodée pour les
+  // anciens dossiers.
+  ContactMethod _contactMethod = ContactMethod.whatsapp;
   final Map<String, String> _attachedDocs = <String, String>{};
   final Map<String, String> _attachedDocSizes = <String, String>{};
 
@@ -1024,7 +1039,7 @@ class _MessageStepState extends State<_MessageStep> {
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
-          children: ContactMethod.values.map((method) {
+          children: kCaseTunnelContactMethods.map((method) {
             return ChoiceChip(
               label: Text(_contactLabel(method)),
               selected: widget.contactMethod == method,

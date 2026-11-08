@@ -41,6 +41,10 @@ Future<bool?> askAiConsent(BuildContext context) {
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
+      // Défilable : au texte agrandi ou sur un écran de 320 pt, le corps (envoi
+      // « hors de ton pays », « Tu peux refuser ») était rogné en bas, et
+      // l'élève acceptait un transfert de données sans avoir pu tout lire.
+      scrollable: true,
       title: Text('ai_consent_title'.tr),
       content: Text('ai_consent_body'.tr),
       actions: [

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:supabase_flutter/supabase_flutter.dart';
 // `LaunchMode` comes from supabase_flutter (it re-exports it); only the
 // dismiss helper needs to be pulled from url_launcher directly.
@@ -27,6 +28,12 @@ class AuthService {
     return AuthService._(Supabase.instance.client, apiClient);
   }
 
+  /// Pour les tests : un client Supabase simulé.
+  @visibleForTesting
+  factory AuthService.withClient(
+          SupabaseClient client, AppApiClient apiClient) =>
+      AuthService._(client, apiClient);
+
   Session? get _session => _client.auth.currentSession;
 
   String? get accessToken => _session?.accessToken;
@@ -55,6 +62,13 @@ class AuthService {
 
   /// Sends a 6-digit email OTP (also usable as a magic link). Supabase creates
   /// the user on first verification when `shouldCreateUser` is true.
+  ///
+  /// PAS de `.timeout(...)` ici, ni sur [verifyMagicLink] (relecture de la PR
+  /// #404) : un délai côté app n'annule pas la requête déjà partie. Le code
+  /// arrivait quand même par e-mail alors que l'écran disait « Impossible
+  /// d'envoyer le code », sans ouvrir l'écran de saisie ; et une vérification
+  /// « expirée » ouvrait la session plus tard, après un message d'erreur. On
+  /// attend la vraie réponse du serveur (ou l'erreur réseau du système).
   Future<void> requestMagicLink({required String email}) async {
     await _client.auth.signInWithOtp(
       email: email.trim().toLowerCase(),
