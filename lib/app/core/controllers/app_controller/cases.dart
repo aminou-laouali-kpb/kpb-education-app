@@ -666,6 +666,47 @@ mixin _CasesMixin on _AppControllerBase {
         status != 429;
   }
 
+  /// Le corps EXACT de `POST /cases/:id/messages`. Le serveur valide en
+  /// liste blanche stricte (`forbidNonWhitelisted`) : `senderName` et
+  /// `senderRole`, envoyés jusqu'ici, faisaient refuser en 400 chaque message
+  /// d'élève depuis juin (le serveur fixe lui-même le rôle et le nom).
+  ///
+  /// [clientMessageId] : identifiant client stable (id de bulle) ; un renvoi
+  /// rend le message déjà créé au lieu d'en créer un second.
+  static Map<String, dynamic> caseMessagePayload(
+    String body, {
+    String? clientMessageId,
+  }) =>
+      <String, dynamic>{
+        'body': body,
+        if (clientMessageId != null) 'clientMessageId': clientMessageId,
+      };
+
+  /// Un serveur pas encore à jour refuse `clientMessageId` en 400 : on
+  /// renvoie alors UNE fois sans lui, et ce refus ne compte pas comme un
+  /// échec définitif.
+  Future<void> _postCaseMessage(
+    String caseId,
+    String body,
+    String? clientMessageId,
+  ) async {
+    try {
+      await _apiClient.createCaseMessage(
+        caseId,
+        caseMessagePayload(body, clientMessageId: clientMessageId),
+      );
+    } on DioException catch (e) {
+      if (clientMessageId == null || !_rejectsClientMessageId(e)) rethrow;
+      await _apiClient.createCaseMessage(caseId, caseMessagePayload(body));
+    }
+  }
+
+  /// Un 400 du serveur qui nomme `clientMessageId` (« property
+  /// clientMessageId should not exist ») : serveur antérieur à ce champ.
+  static bool _rejectsClientMessageId(DioException e) =>
+      e.response?.statusCode == 400 &&
+      (e.response?.data?.toString() ?? '').contains('clientMessageId');
+
   /// POST direct d'un message déjà écrit dans la file (par
   /// [_sendCaseMessage]) : le résultat est reporté SUR L'ENTRÉE de la file,
   /// donc survit à un redémarrage.
@@ -674,18 +715,10 @@ mixin _CasesMixin on _AppControllerBase {
     String text,
     String messageId,
   ) async {
-    final senderName = profile?.fullName ?? 'Student';
     final outbox = CaseMessageOutbox.maybeInstance;
     OutboxEntry? entry() => outbox?.entryForMessage(messageId);
     try {
-      await _apiClient.createCaseMessage(caseId, <String, dynamic>{
-        'senderName': senderName,
-        'senderRole': 'student',
-        'body': text,
-        // Identifiant client stable : un renvoi (file, redémarrage) rend le
-        // message déjà créé au lieu d'en créer un second chez le conseiller.
-        'clientMessageId': messageId,
-      });
+      await _postCaseMessage(caseId, text, messageId);
     } catch (e, s) {
       safeRecordError(
         e,
@@ -789,12 +822,7 @@ mixin _CasesMixin on _AppControllerBase {
       if (_localCaseId.hasMatch(caseId)) continue;
       if (bubbleId != null) _caseMessagesInFlight.add(bubbleId);
       try {
-        await _apiClient.createCaseMessage(caseId, <String, dynamic>{
-          'senderName': entry.senderName,
-          'senderRole': 'student',
-          'body': entry.body,
-          if (bubbleId != null) 'clientMessageId': bubbleId,
-        });
+        await _postCaseMessage(caseId, entry.body, bubbleId);
         await outbox.remove(entry.key);
         touched.add(caseId);
         changed = true;

@@ -38,11 +38,13 @@ DioException _networkError(String path) => DioException(
       type: DioExceptionType.connectionTimeout,
     );
 
-DioException _httpError(String path, int status) => DioException(
+DioException _httpError(String path, int status, [Object? data]) =>
+    DioException(
       requestOptions: RequestOptions(path: path),
       response: Response<dynamic>(
         requestOptions: RequestOptions(path: path),
         statusCode: status,
+        data: data,
       ),
       type: DioExceptionType.badResponse,
     );
@@ -57,6 +59,12 @@ class _Api extends MockApiClient {
 
   /// Tous les POST de message reçus, réussis ou non : (id, texte).
   final List<(String, String)> postAttempts = [];
+
+  /// Les corps exacts reçus.
+  final List<Map<String, dynamic>> payloads = [];
+
+  /// Serveur actuel en production, dont le DTO ignore `clientMessageId`.
+  bool legacyServer = false;
 
   Completer<void>? createGate;
   int failNextPosts = 0;
@@ -110,7 +118,20 @@ class _Api extends MockApiClient {
   ) async {
     final body = payload['body'] as String;
     postAttempts.add((caseId, body));
+    payloads.add(Map<String, dynamic>.of(payload));
     final path = '/cases/$caseId/messages';
+    // Comme `main.ts` : ValidationPipe whitelist + forbidNonWhitelisted. Un
+    // champ hors du DTO fait refuser TOUT le message (avant ce correctif,
+    // `senderName`/`senderRole` : chaque message d'élève en 400 depuis juin).
+    final allowed = legacyServer ? {'body'} : {'body', 'clientMessageId'};
+    final extra = payload.keys.where((k) => !allowed.contains(k)).toList();
+    if (extra.isNotEmpty) {
+      throw _httpError(path, 400, <String, dynamic>{
+        'statusCode': 400,
+        'message': [for (final k in extra) 'property $k should not exist'],
+        'error': 'Bad Request',
+      });
+    }
     final gate = nextPostGate;
     if (gate != null) {
       nextPostGate = null;
@@ -235,9 +256,19 @@ Future<(AppController, _Api)> _device(
 
 /// Laisse filer les envois non attendus (`unawaited`) et la file Hive.
 Future<void> _settle() async {
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 40; i++) {
     await Future<void>.delayed(const Duration(milliseconds: 5));
   }
+}
+
+/// Attend [done] (5 s au plus) : une chaîne longue (création distante,
+/// réécriture de la file, vidange, relecture) sous une machine chargée.
+Future<void> _until(bool Function() done) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 5));
+  while (!done() && DateTime.now().isBefore(deadline)) {
+    await Future<void>.delayed(const Duration(milliseconds: 5));
+  }
+  await _settle();
 }
 
 CaseMessage _studentBubble(AppController controller, String text) => controller
@@ -300,7 +331,7 @@ void main() {
       );
 
       api.createGate!.complete();
-      await _settle();
+      await _until(() => outbox.pendingCount == 0 && api.delivered.isNotEmpty);
 
       expect(api.postAttempts, [(_serverId, 'Bonjour, c\'est urgent')]);
       expect(api.delivered, ['Bonjour, c\'est urgent']);
@@ -669,6 +700,82 @@ void main() {
       await restarted.flushPendingCaseMessages();
       expect(api.postAttempts.length, lessThanOrEqualTo(postsBefore + 1));
       expect(api.delivered, ['Ma réponse']);
+    });
+
+    test(
+        '(g) le corps envoyé n\'a QUE les clés du DTO, en direct comme depuis '
+        'la file', () async {
+      final (controller, api) = await _device(_case(_serverId));
+      api.serverCaseExists = true;
+
+      controller.addCaseMessage(_serverId, 'Direct');
+      await _settle();
+      await outbox.enqueue(
+        caseId: _serverId,
+        body: 'Depuis la file',
+        senderName: 'Test User',
+        localMessageId: 'user-42',
+      );
+      await controller.flushPendingCaseMessages();
+
+      expect(api.payloads.map((p) => p.keys.toSet()), [
+        {'body', 'clientMessageId'},
+        {'body', 'clientMessageId'},
+      ]);
+      expect(api.payloads.last, {
+        'body': 'Depuis la file',
+        'clientMessageId': 'user-42',
+      });
+      expect(api.delivered, ['Direct', 'Depuis la file']);
+    });
+
+    test(
+        '(h) serveur pas encore à jour (refuse clientMessageId) : renvoyé une '
+        'fois sans, livré, jamais « Non envoyé »', () async {
+      final (controller, api) = await _device(_case(_serverId));
+      api.serverCaseExists = true;
+      api.legacyServer = true;
+
+      controller.addCaseMessage(_serverId, 'Bonjour');
+      await _settle();
+      await outbox.enqueue(
+        caseId: _serverId,
+        body: 'Depuis la file',
+        senderName: 'Test User',
+        localMessageId: 'user-43',
+      );
+      await controller.flushPendingCaseMessages();
+
+      expect(api.delivered, ['Bonjour', 'Depuis la file']);
+      expect(api.payloads.map((p) => p.keys.toSet()), [
+        {'body', 'clientMessageId'},
+        {'body'},
+        {'body', 'clientMessageId'},
+        {'body'},
+      ]);
+      expect(outbox.pendingCount, 0);
+      final bubble = controller
+          .caseById(_serverId)!
+          .messages
+          .lastWhere((m) => m.body.fr == 'Bonjour');
+      expect(controller.caseMessageDelivery(bubble), CaseMessageDelivery.sent);
+    });
+
+    test('(h) un autre 400 reste un refus définitif, sans renvoi', () async {
+      final (controller, api) = await _device(_case(_serverId));
+      api.serverCaseExists = true;
+      api.rejectNextWith = 400;
+
+      controller.addCaseMessage(_serverId, 'Trop long');
+      await _settle();
+
+      expect(api.payloads, hasLength(1));
+      final bubble = controller
+          .caseById(_serverId)!
+          .messages
+          .lastWhere((m) => m.body.fr == 'Trop long');
+      expect(
+          controller.caseMessageDelivery(bubble), CaseMessageDelivery.failed);
     });
 
     test(
