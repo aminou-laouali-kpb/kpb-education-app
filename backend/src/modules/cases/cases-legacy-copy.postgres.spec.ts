@@ -29,7 +29,7 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
   const caseId = `reprise-case-${suffixe}`;
   let pieceDemandeeParConseiller = '';
   // Une conseillère : « Awa Traoré a été attribué » était l'accord fautif que
-  // la reprise corrige en mettant « Votre dossier » en sujet.
+  // la reprise corrige en mettant « Ton dossier » en sujet.
   const conseillere = 'Awa Traoré';
 
   /** Ce qu'un conseiller a écrit lui-même : la reprise ne doit pas y toucher. */
@@ -90,6 +90,13 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
           status: CaseStatus.counselor_assigned,
           title: 'Case reassigned',
           description: `Auto-reassigned after 10h inactivity to ${conseillere}.`,
+        },
+        {
+          // Écrit au « vous » entre la traduction et la revue de la 58.
+          caseId,
+          status: CaseStatus.scheduled,
+          title: 'Action ajoutée',
+          description: 'L’action « Relevé de notes » a été ajoutée à votre dossier.',
         },
         {
           // Écrit à la main par un conseiller : hors de portée de la reprise.
@@ -155,22 +162,23 @@ describePostgres('reprise des dossiers existants — intégration PostgreSQL', (
     expect(touchees).toBeGreaterThanOrEqual(8);
 
     const dossier = await prisma.case.findUniqueOrThrow({ where: { id: caseId } });
-    expect(dossier.nextStepTitle).toBe('Un conseiller vous a été attribué');
+    expect(dossier.nextStepTitle).toBe('Un conseiller t’a été attribué');
     expect(dossier.nextStepDescription).toBe(
-      'Awa Traoré suit votre dossier et vous contactera prochainement.',
+      'Awa Traoré suit ton dossier et te contactera bientôt.',
     );
 
     expect(await frise()).toEqual(
       expect.arrayContaining([
-        'Demande envoyée | Votre demande a été créée depuis l’application.',
-        'Conseiller attribué | Votre dossier a été attribué à Awa Traoré.',
+        'Demande envoyée | Ta demande a été créée depuis l’application.',
+        'Conseiller attribué | Ton dossier a été attribué à Awa Traoré.',
         'Document ajouté | Le document « Carte d’identité » a été ajouté au dossier.',
-        'Dossier réattribué | Votre dossier a été réattribué à Awa Traoré.',
+        'Dossier réattribué | Ton dossier a été réattribué à Awa Traoré.',
+        'Action ajoutée | L’action « Relevé de notes » a été ajoutée à ton dossier.',
       ]),
     );
 
     const message = await prisma.caseMessage.findFirstOrThrow({ where: { caseId } });
-    expect(message.body).toBe('Merci pour votre demande. Awa Traoré suit votre dossier.');
+    expect(message.body).toBe('Merci pour ta demande. Awa Traoré suit ton dossier.');
 
     // La pièce créée d'office n'est pas traduite : elle est supprimée (audit
     // build 57, n° 5c) ; celle qu'un conseiller a demandée plus tard reste.

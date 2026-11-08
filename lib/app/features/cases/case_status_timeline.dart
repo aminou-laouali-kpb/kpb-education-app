@@ -106,9 +106,11 @@ class _StepRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     step.subtitle!,
+                    // La date de l'étape est porteuse de sens : textMuted
+                    // (4,76:1), jamais textFaint (revue avant la 58, n° 28).
                     style: const TextStyle(
                       fontSize: 11,
-                      color: KpbColors.textFaint,
+                      color: KpbColors.textMuted,
                     ),
                   ),
                 ],

@@ -10,6 +10,7 @@ import '../../core/ui/shell_chrome.dart';
 import '../../core/ui/skeleton.dart';
 import 'case_composer_sheet.dart';
 import 'case_detail_screen.dart';
+import 'case_timeline_copy.dart';
 import 'case_timeline_definition.dart';
 
 // Couleurs : tokens sémantiques centraux (KpbColors/KpbShadow — architecture §10.2).
@@ -374,7 +375,7 @@ class _CaseCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          controller.resolve(item.nextStepTitle),
+                          controller.nextStepTitleFor(item),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -448,37 +449,40 @@ class _CaseCard extends StatelessWidget {
               const SizedBox(height: 10),
 
               // ── Meta row ──
+              // textMuted (4,76:1), pas textFaint (2,56:1) : la référence est ce
+              // que l'élève lit au conseiller sur WhatsApp (revue avant la 58,
+              // constat 28 — même correctif que l'en-tête de la fiche).
               Row(
                 children: [
                   const Icon(Icons.tag_rounded,
-                      size: 13, color: KpbColors.textFaint),
+                      size: 13, color: KpbColors.textMuted),
                   const SizedBox(width: 3),
                   Text(
                     item.referenceCode,
                     style: const TextStyle(
-                        fontSize: 11, color: KpbColors.textFaint),
+                        fontSize: 11, color: KpbColors.textMuted),
                   ),
                   const SizedBox(width: 10),
                   const Icon(Icons.access_time_rounded,
-                      size: 13, color: KpbColors.textFaint),
+                      size: 13, color: KpbColors.textMuted),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       'updated_on'.trParams({'date': date}),
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                          fontSize: 11, color: KpbColors.textFaint),
+                          fontSize: 11, color: KpbColors.textMuted),
                     ),
                   ),
                   if (item.messages.isNotEmpty) ...[
                     const SizedBox(width: 10),
                     const Icon(Icons.chat_bubble_outline_rounded,
-                        size: 13, color: KpbColors.textFaint),
+                        size: 13, color: KpbColors.textMuted),
                     const SizedBox(width: 4),
                     Text(
                       '${item.messages.length}',
                       style: const TextStyle(
-                          fontSize: 11, color: KpbColors.textFaint),
+                          fontSize: 11, color: KpbColors.textMuted),
                     ),
                   ],
                 ],

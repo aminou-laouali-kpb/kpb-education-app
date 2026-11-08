@@ -132,4 +132,20 @@ void main() {
           'déjà présent.',
     );
   });
+
+  test('le service de reconnaissance vocale est visible (dictée Android)', () {
+    // Revue avant la 58, constat 40 : sans cette intention dans <queries>,
+    // speech_to_text ne voit aucun RecognitionService sur Android 11+ et le
+    // micro du tunnel de dossier répond toujours « dictée indisponible ».
+    // Lu hors commentaires : la phrase qui l'explique ne suffit pas.
+    final queries =
+        RegExp(r'<queries\b.*?</queries>', dotAll: true).firstMatch(body);
+    expect(queries, isNotNull, reason: '<queries> introuvable');
+    expect(
+      RegExp(
+        r'<intent>\s*<action\s+android:name="android\.speech\.RecognitionService"\s*/>\s*</intent>',
+      ).hasMatch(queries!.group(0)!),
+      isTrue,
+    );
+  });
 }

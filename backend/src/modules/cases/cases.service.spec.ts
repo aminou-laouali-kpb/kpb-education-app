@@ -472,3 +472,47 @@ describe('CasesService — counselor scope on admin routes', () => {
     expect(calls).toHaveLength(0);
   });
 });
+
+describe('CasesService — ordre du fil de messages (revue avant la 58)', () => {
+  it('demande et rend les messages du plus ancien au plus récent', async () => {
+    const t0 = new Date('2026-11-01T10:00:00Z');
+    const t1 = new Date('2026-11-01T11:00:00Z');
+    let include: any;
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (p: any) => Promise<any>) =>
+        fn({
+          case: {
+            findUnique: async (args: any) => {
+              include = args.include;
+              return {
+                id: 'case-1',
+                userId: 'user-1',
+                createdAt: t0,
+                updatedAt: t1,
+                timelineEvents: [],
+                documents: [],
+                tasks: [],
+                internalNotes: [],
+                messages: [
+                  { id: 'm1', senderName: 'KPB', senderRole: 'system', body: 'Merci', createdAt: t0 },
+                  { id: 'm2', senderName: 'Awa', senderRole: 'student', body: 'Bonjour', createdAt: t1 },
+                ],
+              };
+            },
+          },
+        }),
+      tryExecute: async () => null,
+    } as unknown as PrismaService;
+    const svc = new CasesService(
+      prisma,
+      { get: () => null } as unknown as ModuleRef,
+      { sendToUser: async () => {} } as unknown as PushSenderService,
+    );
+
+    const result = (await svc.findOne('case-1', 'user-1')) as any;
+
+    expect(include.messages.orderBy).toEqual({ createdAt: 'asc' });
+    expect(result.messages.map((m: any) => m.id)).toEqual(['m1', 'm2']);
+  });
+});
