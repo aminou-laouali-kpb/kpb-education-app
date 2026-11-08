@@ -69,6 +69,7 @@ void main() {
 
     setUp(() {
       auth = _MockAuthService();
+      when(() => auth.isLoggedIn).thenReturn(false);
       codes = <String?>[];
     });
 

@@ -289,7 +289,18 @@ class _GuestProfilePrompt extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: KpbColors.actionPrimary,
                     ),
-                    child: Text('auth_continue_email'.tr),
+                    // Même libellé que les autres murs invités (T6-07) :
+                    // l'écran atteint propose Google d'abord, pas l'e-mail.
+                    child: Text('guest_case_gate_cta'.tr),
+                  ),
+                  // L'invité qui a déjà un compte (nouveau téléphone,
+                  // réinstallation) : même écran, qui sait aussi connecter.
+                  TextButton(
+                    onPressed: () {
+                      controller.leaveGuestForSignup(source: 'profile_login');
+                      Get.offAll(() => const AppBootScreen());
+                    },
+                    child: Text('auth_guest_profile_have_account'.tr),
                   ),
                   const SizedBox(height: 12),
                   const LegalLinksRow(showContact: true),

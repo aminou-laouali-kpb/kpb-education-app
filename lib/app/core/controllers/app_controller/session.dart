@@ -1,5 +1,17 @@
 part of '../app_controller.dart';
 
+/// Ce que [_SessionMixin.finishAuthSession] a pu établir.
+enum AuthSessionOutcome {
+  /// Le compte est prêt : profil rapatrié (complet, vide ou absent côté
+  /// serveur), ou déjà en cache. Le routage onboarding / accueil est sûr.
+  ready,
+
+  /// La session est ouverte, mais le profil n'a pas pu être LU (réseau,
+  /// délai, serveur). On ne sait pas si l'élève a déjà un compte rempli :
+  /// ni onboarding, ni écriture — seulement « Réessayer ».
+  accountUnavailable,
+}
+
 /// Démarrage, session d’authentification, onboarding, déconnexion et suppression du compte.
 mixin _SessionMixin on _AppControllerBase {
   Future<void> hydrate() async {
@@ -197,7 +209,18 @@ mixin _SessionMixin on _AppControllerBase {
   }
 
   void enterGuestMode() {
+    // Revue avant la 58 : un compte CONNECTÉ ne devient jamais invité. Au
+    // retour de Google, « Explorer sans compte » touché pendant la fin de
+    // connexion laissait une session ouverte avec `isGuestMode` vrai ; le
+    // mur suivant ouvrait un onboarding vide qui réécrivait le profil serveur.
+    if (Get.isRegistered<AuthService>() && Get.find<AuthService>().isLoggedIn) {
+      return;
+    }
     isGuestMode = true;
+    // L'invité commence sur l'Accueil, pas sur l'onglet que le compte
+    // précédent avait laissé ouvert (souvent Profil, où sont « Se
+    // déconnecter » et « Supprimer mon compte »).
+    shellIndex = 0;
     hasCompletedOnboarding = true;
     profile = null;
     _profileNeedsPush = false;
@@ -224,17 +247,41 @@ mixin _SessionMixin on _AppControllerBase {
     update();
   }
 
-  Future<void> finishAuthSession() async {
+  /// Termine une connexion (Google, code e-mail) ou un démarrage à froid
+  /// avec session.
+  ///
+  /// N'attend QUE le compte : le profil, s'il n'est pas déjà en cache. Les
+  /// dossiers, les favoris et le catalogue suivent en arrière-plan — avant la
+  /// revue de la 58, l'écran du code restait en chargement pendant le
+  /// téléchargement de toutes les formations (plus d'une minute en 3G).
+  ///
+  /// Une lecture du profil qui ÉCHOUE n'est jamais « pas de profil » : on
+  /// rend [AuthSessionOutcome.accountUnavailable], sans toucher à
+  /// `hasCompletedOnboarding` ni au profil. Avant, l'élève qui avait déjà un
+  /// compte partait à l'onboarding et ses réponses écrasaient son profil
+  /// serveur.
+  Future<AuthSessionOutcome> finishAuthSession() async {
     isGuestMode = false;
+    var outcome = AuthSessionOutcome.ready;
     if (AppConfig.enableRemoteSync) {
-      // Un simple `syncRemoteData` était sauté si une synchro tournait déjà
-      // (catalogue lent au démarrage), datait de moins de 30 s ou était en
-      // backoff : le profil restait null, un compte existant atterrissait sur
-      // l'onboarding et finissait par écraser son profil serveur. On attend la
-      // synchro en cours, puis on force si le profil n'est toujours pas là.
-      final running = _inFlightSync;
-      if (isSyncing && running != null) await running;
-      await syncRemoteData(silent: true, force: profile == null);
+      final hadProfile = profile != null;
+      if (!hadProfile) outcome = await _pullAccountProfile();
+      if (outcome == AuthSessionOutcome.ready) {
+        // Le reste du compte (dossiers, favoris) et le catalogue, sans faire
+        // attendre la navigation. Une synchro déjà en cours (celle de
+        // l'invité, au démarrage) a pu partir SANS session : on la laisse
+        // finir, puis on relance pour ce compte.
+        final running = _inFlightSync;
+        unawaited(() async {
+          if (isSyncing && running != null) await running;
+          await syncRemoteData(silent: true, force: !hadProfile);
+        }());
+      }
+    }
+    accountLoadFailed = outcome == AuthSessionOutcome.accountUnavailable;
+    if (accountLoadFailed) {
+      update();
+      return outcome;
     }
     maybeRestoreOnboardingFromProfile();
     unawaited(syncPushIdentity());
@@ -247,6 +294,39 @@ mixin _SessionMixin on _AppControllerBase {
     }
     _persist();
     update();
+    return outcome;
+  }
+
+  /// Lit le profil du compte qui vient de se connecter.
+  ///
+  /// Le serveur répond toujours, même pour un nouveau compte (profil vide,
+  /// que [maybeRestoreOnboardingFromProfile] laisse partir à l'onboarding).
+  /// Un 404 est lu de la même façon : « pas de profil », donc onboarding.
+  /// Toute autre erreur — réseau, délai, 5xx, 401 — est une lecture ratée.
+  Future<AuthSessionOutcome> _pullAccountProfile() async {
+    try {
+      final profileJson = await retryTransient(_apiClient.getProfile);
+      profile = _withPendingConsents(ProfileApiCodec.userProfileFromApi(
+        profileJson,
+        fallbackLocale: localeCode,
+      ));
+      localeCode = profile?.preferredLanguage ?? localeCode;
+      _clampShippedLocale();
+      return AuthSessionOutcome.ready;
+    } catch (error, stack) {
+      if (error is DioException && error.response?.statusCode == 404) {
+        return AuthSessionOutcome.ready;
+      }
+      syncError = userFacingSyncError(error, localeCode);
+      safeRecordError(
+        error,
+        stack,
+        reason: 'finishAuthSession.profile',
+        domain: CrashlyticsObsDomain.sync,
+        operation: 'finish_auth_session_profile',
+      );
+      return AuthSessionOutcome.accountUnavailable;
+    }
   }
 
   void maybeRestoreOnboardingFromProfile() {
@@ -446,6 +526,9 @@ mixin _SessionMixin on _AppControllerBase {
   /// re-persisted for the next account on a shared phone.
   void _resetUserState() {
     profile = null;
+    accountLoadFailed = false;
+    // Le compte suivant (ou l'invité) repart de l'Accueil.
+    shellIndex = 0;
     _profileNeedsPush = false;
     _pendingConsentKeys.clear();
     hasCompletedOnboarding = false;
