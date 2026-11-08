@@ -27,6 +27,7 @@ import 'package:karatou/app/core/services/auth_service.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/core/ui/app_tokens.dart';
 import 'package:karatou/app/core/ui/components/verified_advisor_sheet.dart';
+import 'package:karatou/app/features/cases/case_appointment.dart';
 import 'package:karatou/app/features/cases/case_detail_screen.dart';
 import 'package:karatou/app/features/cases/case_tunnel_flow.dart';
 import 'package:karatou/app/features/cases/cases_screen.dart';
@@ -41,6 +42,7 @@ StudentCase _case({
   List<CaseMessage> messages = const [],
   List<CaseTimelineEvent> timeline = const [],
   DateTime? scheduledAt,
+  String? advisor = 'Awa Traoré',
 }) =>
     StudentCase(
       id: 'srv-58',
@@ -61,7 +63,7 @@ StudentCase _case({
       timeline: timeline,
       messages: messages,
       documentRequests: const [],
-      assignedAdvisorName: 'Awa Traoré',
+      assignedAdvisorName: advisor,
       scheduledAt: scheduledAt,
     );
 
@@ -158,6 +160,34 @@ void main() {
       expect(sheet.advisorName, 'Awa Traoré');
     });
 
+    testWidgets(
+        'sans conseiller attribué : ligne officielle KPB, avec la référence',
+        (tester) async {
+      await _pumpDetail(tester, _case(advisor: null));
+
+      expect(find.text('Écrire à ton conseiller sur WhatsApp'), findsNothing);
+      expect(find.text(_fr('case_messages_whatsapp_hint')), findsNothing);
+      expect(
+          find.text(_fr('case_messages_whatsapp_hint_team')), findsOneWidget);
+      final button = find.byKey(const ValueKey('case-write-advisor-whatsapp'));
+      expect(
+          find.descendant(
+              of: button, matching: find.text(_fr('case_write_kpb_whatsapp'))),
+          findsOneWidget);
+
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+
+      final sheet = tester.widget<KpbVerifiedAdvisorSheet>(
+          find.byType(KpbVerifiedAdvisorSheet));
+      expect(sheet.advisorName, isNull);
+      // Aucun numéro passé : la fiche et l'ouverture visent la ligne
+      // officielle KPB (AppConfig.whatsappNumber).
+      expect(sheet.expectedNumber, isNull);
+      expect(sheet.prefill, contains('KPB-2026-058'));
+    });
+
     testWidgets('les messages déjà présents restent affichés', (tester) async {
       await _pumpDetail(
         tester,
@@ -227,13 +257,41 @@ void main() {
   group('constat 35 — date du rendez-vous', () {
     testWidgets('la carte « Prochaine étape » affiche la date et l’heure',
         (tester) async {
-      await _pumpDetail(
-        tester,
-        _case(scheduledAt: DateTime(2026, 11, 10, 14)),
-      );
+      final rdv = DateTime.now().add(const Duration(days: 3));
+      await _pumpDetail(tester, _case(scheduledAt: rdv));
 
       expect(
-          find.text('Rendez-vous : mardi 10 nov. à 14 h 00'), findsOneWidget);
+        find.text(caseAppointmentLabel(rdv, 'fr')!),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Rendez-vous :'), findsOneWidget);
+    });
+
+    testWidgets('un rendez-vous passé n’est plus affiché', (tester) async {
+      await _pumpDetail(
+        tester,
+        _case(scheduledAt: DateTime.now().subtract(const Duration(days: 2))),
+      );
+      expect(find.textContaining('Rendez-vous :'), findsNothing);
+    });
+
+    testWidgets('format : date et heure, année seulement si elle diffère',
+        (tester) async {
+      // Traductions chargées par GetMaterialApp : le libellé est le vrai.
+      await tester.pumpWidget(_wrap(const SizedBox()));
+      final now = DateTime(2026, 11, 8, 9);
+      expect(
+        caseAppointmentLabel(DateTime(2026, 11, 10, 14), 'fr', now: now),
+        'Rendez-vous : mardi 10 nov. à 14 h 00',
+      );
+      expect(
+        caseAppointmentLabel(DateTime(2027, 1, 12, 9, 30), 'fr', now: now),
+        'Rendez-vous : mardi 12 janv. 2027 à 09 h 30',
+      );
+      expect(
+        caseAppointmentLabel(DateTime(2026, 11, 2, 14), 'fr', now: now),
+        isNull,
+      );
     });
 
     testWidgets('sans rendez-vous, rien n’est inventé', (tester) async {
@@ -266,6 +324,42 @@ void main() {
         find.text('L’action « Relevé de notes » a été ajoutée à ton dossier.'),
         findsOneWidget,
       );
+    });
+  });
+
+  group('relecture #407 — descriptions déjà en base', () {
+    testWidgets('« vous » réécrit au « tu », anglais interne masqué',
+        (tester) async {
+      CaseTimelineEvent ev(String id, String title, String desc) =>
+          CaseTimelineEvent(
+            id: id,
+            title: LocalizedText(fr: title, en: title),
+            description: LocalizedText(fr: desc, en: desc),
+            createdAt: _now,
+            status: CaseStatus.counselorAssigned,
+          );
+      await _pumpDetail(
+        tester,
+        _case(timeline: [
+          ev('e1', 'Conseiller attribué',
+              'Votre dossier a été attribué à Awa Traoré.'),
+          ev('e2', 'Dossier réattribué',
+              'Auto-reassigned after 10h inactivity to Awa Traoré.'),
+          ev('e3', 'Point de suivi', 'Merci de nous envoyer vos relevés.'),
+          ev('e4', 'Note', 'Internal: lead to follow up.'),
+        ]),
+      );
+
+      expect(find.text('Ton dossier a été attribué à Awa Traoré.'),
+          findsOneWidget);
+      expect(find.text('Ton dossier a été réattribué à Awa Traoré.'),
+          findsOneWidget);
+      expect(find.textContaining('Votre'), findsNothing);
+      expect(find.textContaining('vos relevés'), findsNothing);
+      expect(find.textContaining('Auto-reassigned'), findsNothing);
+      expect(find.textContaining('Internal'), findsNothing);
+      // Le titre reste : rien ne disparaît de l'historique.
+      expect(find.text('Point de suivi'), findsOneWidget);
     });
   });
 

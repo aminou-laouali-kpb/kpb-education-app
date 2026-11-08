@@ -1422,6 +1422,9 @@ const Map<String, String> appTranslationsFr = {
   'case_write_advisor_whatsapp': 'Écrire à ton conseiller sur WhatsApp',
   'case_messages_whatsapp_hint':
       'Pour écrire à ton conseiller, passe par WhatsApp : c\'est là qu\'il te répond.',
+  'case_write_kpb_whatsapp': 'Écrire à l\'équipe KPB sur WhatsApp',
+  'case_messages_whatsapp_hint_team':
+      'Pour écrire à l\'équipe KPB, passe par WhatsApp : c\'est là qu\'on te répond.',
   'case_next_step_appointment': 'Rendez-vous : @date',
   'case_unread_suffix': 'non lu(s)',
   'case_timeline_since_date': 'Depuis le @date',

@@ -99,7 +99,10 @@ class _TimelineItem extends StatelessWidget {
     final date =
         DateFormat('dd MMM yyyy', ctrl.localeCode).format(event.createdAt);
     final dotColor = _dotColor(event.status);
-    final description = ctrl.resolve(event.description).trim();
+    // Jamais la description brute : elle peut être au « vous » ou en anglais
+    // interne tant que la reprise serveur n'a pas tourné (relecture #407).
+    final description =
+        studentTimelineDescription(ctrl.resolve(event.description));
 
     return IntrinsicHeight(
       child: Row(
@@ -150,7 +153,7 @@ class _TimelineItem extends StatelessWidget {
                   // « Relevé de notes » a été ajoutée… ») : le titre seul
                   // (« Action ajoutée ») ne disait rien à l'élève (revue avant la
                   // 58, constat 36).
-                  if (description.isNotEmpty) ...[
+                  if (description != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       description,
@@ -252,7 +255,11 @@ class _GreenWhatsAppCta extends StatelessWidget {
 // que la messagerie in-app n'a pas de répondant (revue avant la 58, constat 33)
 // ─────────────────────────────────────────────────────────────────────────────
 class _WriteAdvisorOnWhatsAppButton extends StatelessWidget {
-  const _WriteAdvisorOnWhatsAppButton({required this.onTap});
+  const _WriteAdvisorOnWhatsAppButton({
+    required this.label,
+    required this.onTap,
+  });
+  final String label;
   final VoidCallback onTap;
 
   @override
@@ -265,7 +272,7 @@ class _WriteAdvisorOnWhatsAppButton extends StatelessWidget {
         icon:
             const Icon(Icons.chat_rounded, color: KpbColors.whatsapp, size: 18),
         label: Text(
-          'case_write_advisor_whatsapp'.tr,
+          label,
           style: const TextStyle(
             fontSize: KpbFontSize.md,
             fontWeight: FontWeight.w800,

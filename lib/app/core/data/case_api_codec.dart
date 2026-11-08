@@ -123,8 +123,8 @@ abstract final class CaseApiCodec {
             ),
           )
           .toList(),
-      messages:
-          _oldestFirst(((json['messages'] as List<dynamic>?) ?? <dynamic>[])
+      messages: caseMessagesOldestFirst(
+          ((json['messages'] as List<dynamic>?) ?? <dynamic>[])
               .whereType<Map<String, dynamic>>()
               .map(
                 (message) => CaseMessage(
@@ -166,16 +166,4 @@ abstract final class CaseApiCodec {
     final trimmed = value.trim();
     return trimmed.isEmpty ? null : trimmed;
   }
-}
-
-/// Un fil se lit du plus ancien au plus récent, quel que soit l'ordre du
-/// serveur (il servait le plus récent d'abord jusqu'à la revue de la 58,
-/// constat 37). Tri stable : à date égale, l'ordre reçu est gardé.
-List<CaseMessage> _oldestFirst(List<CaseMessage> messages) {
-  final indexed = messages.asMap().entries.toList()
-    ..sort((a, b) {
-      final byDate = a.value.createdAt.compareTo(b.value.createdAt);
-      return byDate != 0 ? byDate : a.key.compareTo(b.key);
-    });
-  return [for (final e in indexed) e.value];
 }

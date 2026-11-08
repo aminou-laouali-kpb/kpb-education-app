@@ -19,6 +19,7 @@ import '../services/service_packages_screen.dart';
 import '../tools/interview_simulator_screen.dart';
 import 'case_appointment.dart';
 import 'case_status_timeline.dart';
+import 'case_timeline_copy.dart';
 import 'post_decision_screen.dart';
 import 'case_timeline_definition.dart';
 import 'document_review_screen.dart';
@@ -609,7 +610,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                       title: 'no_messages'.tr,
                       subtitle: AppConfig.caseInAppMessagingEnabled
                           ? 'send_message_hint'.tr
-                          : 'case_messages_whatsapp_hint'.tr,
+                          : c.assignedAdvisorName != null
+                              ? 'case_messages_whatsapp_hint'.tr
+                              : 'case_messages_whatsapp_hint_team'.tr,
                     ),
                   )
                 else
@@ -623,14 +626,26 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 if (AppConfig.caseInAppMessagingEnabled)
                   ..._messageComposer(c)
                 else
+                  // Sans conseiller attribué, on ne promet pas « ton
+                  // conseiller » : la ligne officielle KPB générale, avec la
+                  // référence du dossier (relecture de la PR #407).
                   _WriteAdvisorOnWhatsAppButton(
+                    label: c.assignedAdvisorName != null
+                        ? 'case_write_advisor_whatsapp'.tr
+                        : 'case_write_kpb_whatsapp'.tr,
                     onTap: () => _openWhatsapp(
                       advisorName: c.assignedAdvisorName,
-                      prefill: c.isReferenceProvisional
-                          ? 'case_whatsapp_advisor_prefill_provisional'
-                              .trParams({'title': _ctrl.resolve(c.title)})
-                          : 'case_whatsapp_advisor_prefill'
-                              .trParams({'reference': c.referenceCode}),
+                      prefill: c.assignedAdvisorName != null
+                          ? (c.isReferenceProvisional
+                              ? 'case_whatsapp_advisor_prefill_provisional'
+                                  .trParams({'title': _ctrl.resolve(c.title)})
+                              : 'case_whatsapp_advisor_prefill'
+                                  .trParams({'reference': c.referenceCode}))
+                          : (c.isReferenceProvisional
+                              ? 'case_whatsapp_continue_prefill_provisional'
+                                  .trParams({'title': _ctrl.resolve(c.title)})
+                              : 'case_whatsapp_continue_prefill'
+                                  .trParams({'reference': c.referenceCode})),
                     ),
                   ),
               ],

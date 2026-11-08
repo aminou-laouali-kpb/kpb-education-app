@@ -1300,6 +1300,9 @@ const Map<String, String> appTranslationsEn = {
   'case_write_advisor_whatsapp': 'Message your counselor on WhatsApp',
   'case_messages_whatsapp_hint':
       'To reach your counselor, use WhatsApp: that\'s where they reply.',
+  'case_write_kpb_whatsapp': 'Message the KPB team on WhatsApp',
+  'case_messages_whatsapp_hint_team':
+      'To reach the KPB team, use WhatsApp: that\'s where we reply.',
   'case_next_step_appointment': 'Appointment: @date',
   'case_unread_suffix': 'unread',
   'case_timeline_since_date': 'Since @date',
