@@ -42,6 +42,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
   final _codeCtrl = TextEditingController();
   Map<String, dynamic>? _data;
   bool _loading = true;
+
+  /// Le dernier chargement a échoué. Sans données, l'écran le DIT et propose
+  /// de réessayer : avant, il montrait « — » et un bouton grisé, sans un mot.
+  bool _loadFailed = false;
   bool _redeeming = false;
   bool _redeemingVoucher = false;
   PendingReferralCode? _pending;
@@ -97,13 +101,25 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Future<void> _load() async {
     try {
       final data = await _ctrl.apiClient.getMyReferral();
+      if (mounted) {
+        setState(() {
+          _data = data;
+          _loadFailed = false;
+        });
+      }
       await _ctrl.refreshReviewCredits();
-      if (mounted) setState(() => _data = data);
     } catch (_) {
-      // Stay graceful — the screen shows a retry-able empty state.
+      // Sans code, l'écran affiche un état d'erreur avec « Réessayer » ; avec
+      // un code déjà chargé (tirer pour rafraîchir), il garde ce qu'il a.
+      if (mounted) setState(() => _loadFailed = true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _retry() {
+    setState(() => _loading = true);
+    _load();
   }
 
   /// Spend a credit for a WhatsApp advisor review voucher (KPB-77). No cash:
@@ -240,199 +256,210 @@ class _ReferralScreenState extends State<ReferralScreen> {
       appBar: AppBar(title: Text('referral_title'.tr)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(KpbSpacing.pagePad),
-              children: [
-                Text('referral_intro'.tr,
-                    style: TextStyle(color: context.kpb.textSecondary)),
-                const SizedBox(height: KpbSpacing.lg),
-
-                // ── Compétition ambassadeurs (build 57) ─────────────
-                if (_competition != null) ...[
-                  _CompetitionEntry(standing: _competition!),
-                  const SizedBox(height: KpbSpacing.lg),
-                ],
-
-                // ── My code ─────────────────────────────────────────
-                KpbCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          : _data == null && _loadFailed
+              ? KpbErrorState(onRetry: _retry)
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(KpbSpacing.pagePad),
                     children: [
-                      Text('referral_your_code'.tr,
-                          style: KpbTextStyles.titleMd),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: SelectableText(
-                              _code.isEmpty ? '—' : _code,
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 2,
-                                color: KpbColors.blue,
+                      Text('referral_intro'.tr,
+                          style: TextStyle(color: context.kpb.textSecondary)),
+                      const SizedBox(height: KpbSpacing.lg),
+
+                      // ── Compétition ambassadeurs (build 57) ─────────────
+                      if (_competition != null) ...[
+                        _CompetitionEntry(standing: _competition!),
+                        const SizedBox(height: KpbSpacing.lg),
+                      ],
+
+                      // ── My code ─────────────────────────────────────────
+                      KpbCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('referral_your_code'.tr,
+                                style: KpbTextStyles.titleMd),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: SelectableText(
+                                    _code.isEmpty ? '—' : _code,
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2,
+                                      color: KpbColors.blue,
+                                    ),
+                                  ),
+                                ),
+                                if (_code.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.copy_rounded,
+                                        size: 20),
+                                    tooltip: 'copy'.tr,
+                                    onPressed: () {
+                                      Clipboard.setData(
+                                          ClipboardData(text: _code));
+                                      KpbToast.success(
+                                          'referral_code_copied'.tr);
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: KpbSpacing.md),
+                            SizedBox(
+                              width: double.infinity,
+                              child: Builder(
+                                builder: (button) => FilledButton.icon(
+                                  onPressed: _code.isEmpty
+                                      ? null
+                                      : () => _inviteOnWhatsApp(button),
+                                  icon:
+                                      const Icon(Icons.share_rounded, size: 18),
+                                  label: Text('referral_invite_whatsapp'.tr),
+                                ),
                               ),
                             ),
-                          ),
-                          if (_code.isNotEmpty)
-                            IconButton(
-                              icon: const Icon(Icons.copy_rounded, size: 20),
-                              tooltip: 'copy'.tr,
-                              onPressed: () {
-                                Clipboard.setData(ClipboardData(text: _code));
-                                KpbToast.success('referral_code_copied'.tr);
-                              },
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: KpbSpacing.md),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Builder(
-                          builder: (button) => FilledButton.icon(
-                            onPressed: _code.isEmpty
-                                ? null
-                                : () => _inviteOnWhatsApp(button),
-                            icon: const Icon(Icons.share_rounded, size: 18),
-                            label: Text('referral_invite_whatsapp'.tr),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: KpbSpacing.lg),
+                      const SizedBox(height: KpbSpacing.lg),
 
-                // ── Referral reward credits (KPB-77) ────────────────
-                KpbCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                      // ── Referral reward credits (KPB-77) ────────────────
+                      KpbCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Text('referral_credits_title'.tr,
+                                      style: KpbTextStyles.titleMd),
+                                ),
+                                Text(
+                                  '${_ctrl.reviewCredits}',
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    color: KpbColors.blue,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text('referral_credits_label'.tr,
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: context.kpb.textSecondary)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('referral_credits_intro'.tr,
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: context.kpb.textSecondary)),
+                            const SizedBox(height: KpbSpacing.md),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: (_ctrl.reviewCredits < 1 ||
+                                        _redeemingVoucher)
+                                    ? null
+                                    : _redeemVoucher,
+                                icon: _redeemingVoucher
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : const Icon(Icons.card_giftcard_rounded,
+                                        size: 18),
+                                label: Text('referral_redeem_voucher_cta'.tr),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: KpbSpacing.lg),
+
+                      // ── Stats ───────────────────────────────────────────
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: Text('referral_credits_title'.tr,
-                                style: KpbTextStyles.titleMd),
-                          ),
-                          Text(
-                            '${_ctrl.reviewCredits}',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w900,
-                              color: KpbColors.blue,
+                            child: _StatTile(
+                              value: '${_stat('signedUpCount')}',
+                              label: 'referral_friends_joined'.tr,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          Text('referral_credits_label'.tr,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.kpb.textSecondary)),
+                          const SizedBox(width: KpbSpacing.md),
+                          Expanded(
+                            child: _StatTile(
+                              value: '${_stat('caseCreatedCount')}',
+                              label: 'referral_friends_cases'.tr,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text('referral_credits_intro'.tr,
-                          style: TextStyle(
-                              fontSize: 13, color: context.kpb.textSecondary)),
-                      const SizedBox(height: KpbSpacing.md),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed:
-                              (_ctrl.reviewCredits < 1 || _redeemingVoucher)
-                                  ? null
-                                  : _redeemVoucher,
-                          icon: _redeemingVoucher
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.card_giftcard_rounded,
-                                  size: 18),
-                          label: Text('referral_redeem_voucher_cta'.tr),
+                      const SizedBox(height: KpbSpacing.lg),
+
+                      // ── Redeem a friend's code ──────────────────────────
+                      KpbCard(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('referral_have_code'.tr,
+                                style: KpbTextStyles.titleMd),
+                            const SizedBox(height: 8),
+                            TextField(
+                              key: const ValueKey('referral-code-field'),
+                              controller: _codeCtrl,
+                              textCapitalization: TextCapitalization.characters,
+                              autocorrect: false,
+                              enableSuggestions: false,
+                              // La mention « code repris de ton lien » suit le champ.
+                              onChanged: (_) => setState(() {}),
+                              decoration: InputDecoration(
+                                labelText: 'referral_code_hint'.tr,
+                              ),
+                            ),
+                            if (_pending != null &&
+                                _codeCtrl.text.trim().toUpperCase() ==
+                                    _pending!.code) ...[
+                              const SizedBox(height: KpbSpacing.xs),
+                              Text(
+                                _pending!.origin ==
+                                        PendingReferralOrigin.installReferrer
+                                    ? 'referral_pending_note'.tr
+                                    : 'referral_pending_typed_note'.tr,
+                                key: const ValueKey('referral-pending-note'),
+                                style: KpbTextStyles.caption
+                                    .copyWith(color: context.kpb.textSecondary),
+                              ),
+                            ],
+                            const SizedBox(height: KpbSpacing.sm),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton(
+                                onPressed: _redeeming ? null : _redeem,
+                                child: _redeeming
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      )
+                                    : Text('referral_redeem_cta'.tr),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: KpbSpacing.lg),
-
-                // ── Stats ───────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatTile(
-                        value: '${_stat('signedUpCount')}',
-                        label: 'referral_friends_joined'.tr,
-                      ),
-                    ),
-                    const SizedBox(width: KpbSpacing.md),
-                    Expanded(
-                      child: _StatTile(
-                        value: '${_stat('caseCreatedCount')}',
-                        label: 'referral_friends_cases'.tr,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: KpbSpacing.lg),
-
-                // ── Redeem a friend's code ──────────────────────────
-                KpbCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('referral_have_code'.tr,
-                          style: KpbTextStyles.titleMd),
-                      const SizedBox(height: 8),
-                      TextField(
-                        key: const ValueKey('referral-code-field'),
-                        controller: _codeCtrl,
-                        textCapitalization: TextCapitalization.characters,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                        // La mention « code repris de ton lien » suit le champ.
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          labelText: 'referral_code_hint'.tr,
-                        ),
-                      ),
-                      if (_pending != null &&
-                          _codeCtrl.text.trim().toUpperCase() ==
-                              _pending!.code) ...[
-                        const SizedBox(height: KpbSpacing.xs),
-                        Text(
-                          _pending!.origin ==
-                                  PendingReferralOrigin.installReferrer
-                              ? 'referral_pending_note'.tr
-                              : 'referral_pending_typed_note'.tr,
-                          key: const ValueKey('referral-pending-note'),
-                          style: KpbTextStyles.caption
-                              .copyWith(color: context.kpb.textSecondary),
-                        ),
-                      ],
-                      const SizedBox(height: KpbSpacing.sm),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: _redeeming ? null : _redeem,
-                          child: _redeeming
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : Text('referral_redeem_cta'.tr),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }

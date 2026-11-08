@@ -299,7 +299,7 @@ class _NextStepCardState extends State<_NextStepCard> {
               'home_next_step_title_documents_to_send'.tr,
             _ => 'home_next_step_title_response_expected'.tr,
           },
-          subtitle: controller.resolve(c.nextStepTitle),
+          subtitle: controller.nextStepTitleFor(c),
           cta: 'home_next_step_cta_case'.tr,
           onTap: () => Get.to<void>(() => CaseDetailScreen(caseId: c.id)),
         );

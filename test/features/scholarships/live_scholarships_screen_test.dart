@@ -170,6 +170,74 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  // Revue avant la 58 : la page suivante qui échoue ne coupe plus la liste en
+  // silence. Le pied de liste le dit et offre « Réessayer » ; avant, il n'y
+  // avait que l'indicateur de chargement, puis plus rien.
+  testWidgets(
+      'page suivante en échec : message + « Réessayer » en pied de liste, '
+      'et la reprise ajoute la suite', (tester) async {
+    final mock = MockApiClient();
+    Map<String, dynamic> row(int i) => <String, dynamic>{
+          ..._scholarshipJson(),
+          'id': 'sch-$i',
+          'title': 'Bourse $i'
+        };
+    var failNext = true;
+    whenScholarshipsPage(mock).thenAnswer((invocation) async {
+      final offset = invocation.namedArguments[#offset] as int;
+      if (offset == 0) {
+        return LiveScholarshipsPage(
+          items: List<dynamic>.generate(20, row),
+          total: 21,
+          hasMore: true,
+          serverAppliedQuery: true,
+        );
+      }
+      if (failNext) throw Exception('3G instable');
+      return LiveScholarshipsPage(
+        items: <dynamic>[row(20)],
+        total: 21,
+        hasMore: false,
+        serverAppliedQuery: true,
+      );
+    });
+    when(() => mock.fetchScholarshipAlerts())
+        .thenAnswer((_) async => <String>{});
+    when(() => mock.getSuccessLabAccess())
+        .thenAnswer((_) async => _access(false, reason: 'feature_disabled'));
+    await _seed(mock);
+
+    await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+    await tester.pumpAndSettle();
+
+    final footer =
+        find.byKey(const ValueKey<String>('scholarships-more-failed'));
+    await tester.scrollUntilVisible(
+      footer,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(footer, findsOneWidget);
+    expect(find.text('scholarships_more_failed'.tr), findsOneWidget);
+    final retry = find.byKey(const ValueKey<String>('scholarships-more-retry'));
+    expect(tester.getSize(retry).height, greaterThanOrEqualTo(48));
+
+    failNext = false;
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+
+    expect(footer, findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Bourse 20'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Bourse 20'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   for (final reason in <String>[
     'feature_disabled',
     'rollout_excluded',

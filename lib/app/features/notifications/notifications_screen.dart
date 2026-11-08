@@ -21,6 +21,7 @@ import '../../core/ui/skeleton.dart';
 import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarships/widgets/follow_push_primer.dart';
 import '../cases/case_detail_screen.dart';
+import '../cases/case_timeline_copy.dart';
 import '../cases/case_timeline_definition.dart';
 import '../cases/post_decision_screen.dart';
 import '../../core/ui/app_tokens.dart';
@@ -724,7 +725,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         iconBg = KpbColors.warningLight;
         title = 'notif_action_needed_title'
             .trParams({'step': _actionStep(ctrl, c)});
-        description = ctrl.resolve(c.nextStepDescription);
+        description = ctrl.nextStepDescriptionFor(c);
         onTap = () => Get.to(() => CaseDetailScreen(caseId: c.id));
         break;
     }
@@ -930,7 +931,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   /// nextStepTitle, falling back to its title, then a generic label — never a
   /// fabricated task.
   String _actionStep(AppController ctrl, StudentCase c) {
-    final step = ctrl.resolve(c.nextStepTitle).trim();
+    final step = ctrl.nextStepTitleFor(c).trim();
     if (step.isNotEmpty) return step;
     final title = ctrl.resolve(c.title).trim();
     if (title.isNotEmpty) return title;

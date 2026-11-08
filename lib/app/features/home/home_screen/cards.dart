@@ -239,6 +239,8 @@ class _ActiveCaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final si = _statusInfo(item.status);
+    final appointment =
+        caseAppointmentLabel(item.scheduledAt, controller.localeCode);
 
     // Real document-completion ratio (no fabricated "X/10 steps" — only shown
     // when the case actually has document requests to count).
@@ -277,11 +279,25 @@ class _ActiveCaseCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        controller.resolve(item.nextStepTitle),
+                        controller.nextStepTitleFor(item),
                         style: KpbTextStyles.caption,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      if (appointment != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          appointment,
+                          key: ValueKey<String>(
+                              'home-case-appointment-${item.id}'),
+                          style: KpbTextStyles.caption.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: KpbColors.brandNavy,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ],
                   ),
                 ),

@@ -295,9 +295,11 @@ const Map<String, String> appTranslationsEn = {
   'parent_pay_title': 'Payments',
   'parent_pay_sub': 'Pay for your child — via your KPB advisor',
   'parent_premium_title': 'Pass Karatou for @child',
-  'parent_premium_sub': 'Unlimited copilot · unlimited letters · VIP live',
-  'parent_premium_item': 'Pass Karatou',
-  'parent_premium_cta': 'Activate via the KPB advisor',
+  'parent_premium_sub':
+      'Coming soon: your child\'s scholarship application prepared with KPB Intelligence, then reviewed by a KPB advisor.',
+  'parent_premium_cta': 'Ask the KPB advisor about it',
+  'parent_wa_pass':
+      'Hello, I would like to know more about the Pass Karatou for my child.',
   // --- App-engagement: Student Profil + honest Premium ---
   'profile_target_universities': 'My target universities',
   'profile_universities_see_all': 'See all',
@@ -309,20 +311,23 @@ const Map<String, String> appTranslationsEn = {
       'Link a parent with an invite code to share your progress. You choose what they can see, case by case.',
   'profile_parent_access_cta': 'Link a parent',
   'profile_premium_card_title': 'Pass Karatou',
-  'profile_premium_card_sub': 'Coming soon — activate via a KPB advisor',
+  'profile_premium_card_sub': 'Coming soon — join the list to be notified',
+  'profile_premium_card_sub_joined': 'You are on the list, we will tell you',
+  'profile_premium_card_sub_other':
+      'Coming soon — support with scholarship applications',
   'premium_screen_title': 'Pass Karatou',
   'premium_badge_soon': 'Coming soon',
   'premium_hero_title': 'Get the Pass Karatou',
   'premium_hero_sub':
-      'Premium is coming soon. In the meantime, a KPB advisor can help you — with no in-app payment.',
+      'The Pass is coming soon. In the meantime, a KPB advisor can help you — with no in-app payment.',
   'premium_value_ai_coach':
       'Unlimited KPB Intelligence — the free plan includes @count messages per week.',
   'premium_value_advisors': 'Priority guidance from a verified KPB advisor.',
-  'premium_value_more_soon': 'More Premium benefits are coming soon.',
-  'premium_compare_title': 'Free vs Premium',
+  'premium_value_more_soon': 'More Pass benefits are coming soon.',
+  'premium_compare_title': 'Free or Pass',
   'premium_compare_feature': 'What you get',
   'premium_compare_free': 'Free',
-  'premium_compare_premium': 'Premium',
+  'premium_compare_premium': 'Pass',
   'premium_row_ai_coach': 'KPB Intelligence messages',
   'premium_free_ai_coach': '@count / week',
   'premium_unlimited_soon': 'Unlimited (coming soon)',
@@ -332,7 +337,7 @@ const Map<String, String> appTranslationsEn = {
   'premium_wa_prefill':
       'Hello KPB, I\'d like to learn more about the Pass Karatou.',
   'premium_advisor_cta': 'Talk to a KPB advisor',
-  'premium_no_payment_note': 'Karatou has no in-app payment.',
+  'premium_no_payment_note': 'KPB Education has no in-app payment.',
   'premium_pitch_title': 'Apply from A to Z, with support',
   'premium_pitch_body':
       'The Karatou Pass takes your scholarship application from start to finish: KPB Intelligence to prepare it, KPB advisers to review and approve it.',
@@ -354,6 +359,8 @@ const Map<String, String> appTranslationsEn = {
   'premium_waitlist_joined_body':
       'Joined on @date. We will tell you as soon as the Pass opens.',
   'premium_waitlist_leave': 'Leave the list',
+  'premium_waitlist_leave_confirm_body':
+      'You will no longer be told when the Pass opens. You can join again at any time.',
   'premium_waitlist_error_network':
       'Could not connect. Check your network and try again.',
   'premium_waitlist_error_unauthorized':
@@ -1218,6 +1225,8 @@ const Map<String, String> appTranslationsEn = {
   'scholarships_sort_verified': 'Recently verified',
   'scholarships_sort_title': 'Name (A–Z)',
   'scholarships_offline_count': '@count scholarship(s) saved on your phone',
+  'scholarships_more_failed': "Couldn't load more. Check your connection.",
+  'scholarships_more_retry': 'Retry',
   'scholarship_detail_title': 'Scholarship details',
   'scholarship_detail_not_found': 'Scholarship not found',
   'scholarship_detail_not_found_body':
@@ -1297,6 +1306,13 @@ const Map<String, String> appTranslationsEn = {
   'case_whatsapp_continue_prefill':
       'Hello KPB, I\'d like to continue with case @reference.',
   'case_section_messages': 'Messages',
+  'case_write_advisor_whatsapp': 'Message your counselor on WhatsApp',
+  'case_messages_whatsapp_hint':
+      'To reach your counselor, use WhatsApp: that\'s where they reply.',
+  'case_write_kpb_whatsapp': 'Message the KPB team on WhatsApp',
+  'case_messages_whatsapp_hint_team':
+      'To reach the KPB team, use WhatsApp: that\'s where we reply.',
+  'case_next_step_appointment': 'Appointment: @date',
   'case_unread_suffix': 'unread',
   'case_timeline_since_date': 'Since @date',
   'case_timeline_on_date': 'On @date',
@@ -2424,7 +2440,7 @@ const Map<String, String> appTranslationsEn = {
   'academy_unlock_msg':
       'You\'re about to unlock the "@title" course permanently on your account.',
   'coach_quota_exhausted':
-      'Quota reached — Premium coming soon, or contact a KPB advisor.',
+      'Quota reached — the Pass is coming soon. In the meantime, contact a KPB advisor.',
   'application_sent_admin':
       'Application sent. An admin will review your file within 48h.',
   'no_verified_mentor': 'No verified mentor matches this search yet.',
@@ -2593,9 +2609,23 @@ const Map<String, String> appTranslationsEn = {
   'auth_magic_resend': 'Resend code',
   'auth_magic_resend_wait': 'Resend in @seconds s',
   'auth_magic_resend_cooldown': 'Please wait before requesting another code.',
+  'auth_magic_verify_rate_limited':
+      'Too many attempts. Wait a minute, then try again.',
+  'auth_magic_verify_network':
+      'Could not connect — your code may still be valid. Check your network, then tap "Verify".',
+  'auth_magic_verify_network_resend':
+      'Could not connect. Check your network, then try again.',
+  'auth_finishing_session': 'Signed in, setting up your space…',
+  'auth_account_unavailable_title': 'We couldn\'t load your account',
+  'auth_account_unavailable_body':
+      'You are signed in, but your profile could not be loaded. Check your network, then try again: nothing was changed on your account.',
+  'auth_account_unavailable_still': 'Still unavailable. Try again in a moment.',
+  'auth_account_unavailable_retry': 'Try again',
+  'auth_account_unavailable_logout': 'Sign out',
   'auth_guest_profile_title': 'Sign in to access your profile',
   'auth_guest_profile_body':
       'Create an account to track cases, save programs, and personalize your journey.',
+  'auth_guest_profile_have_account': 'I already have an account',
   // Match explanations
   'match_complete_profile': 'Complete your profile for a personalised match',
   'match_field_in_interests': 'In your fields of interest',

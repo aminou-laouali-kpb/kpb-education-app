@@ -71,14 +71,24 @@ mixin _CatalogSyncMixin on _AppControllerBase {
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);
-            // La valeur du serveur fait foi, consentements compris (F24) :
-            // un désabonnement fait ailleurs remplace la copie locale.
-            profile = _withPendingConsents(ProfileApiCodec.userProfileFromApi(
-              profileJson,
-              fallbackLocale: localeCode,
-            ));
-            localeCode = profile?.preferredLanguage ?? localeCode;
-            _clampShippedLocale();
+            if (_profileNeedsPush) {
+              // Un geste local est arrivé PENDANT la lecture (la synchro
+              // tourne désormais en arrière-plan après la connexion, pendant
+              // l'onboarding) : la copie du serveur, plus ancienne, ne le
+              // remplace pas. Il partira à la prochaine synchro.
+              SyncTelemetry.profileSkippedRemotePull(
+                reason: 'local_edit_during_pull',
+              );
+            } else {
+              // La valeur du serveur fait foi, consentements compris (F24) :
+              // un désabonnement fait ailleurs remplace la copie locale.
+              profile = _withPendingConsents(ProfileApiCodec.userProfileFromApi(
+                profileJson,
+                fallbackLocale: localeCode,
+              ));
+              localeCode = profile?.preferredLanguage ?? localeCode;
+              _clampShippedLocale();
+            }
           } else {
             SyncTelemetry.profileSkippedRemotePull(
               reason: 'pending_local_patch',

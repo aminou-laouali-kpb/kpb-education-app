@@ -123,21 +123,22 @@ abstract final class CaseApiCodec {
             ),
           )
           .toList(),
-      messages: ((json['messages'] as List<dynamic>?) ?? <dynamic>[])
-          .whereType<Map<String, dynamic>>()
-          .map(
-            (message) => CaseMessage(
-              id: message['id'] as String? ?? '',
-              senderName: message['senderName'] as String? ?? 'KPB',
-              senderRole: message['senderRole'] as String? ?? 'system',
-              body: plainLocalized(message['body'] as String? ?? ''),
-              createdAt:
-                  DateTime.tryParse(message['createdAt'] as String? ?? '')
-                          ?.toLocal() ??
-                      DateTime.now(),
-            ),
-          )
-          .toList(),
+      messages: caseMessagesOldestFirst(
+          ((json['messages'] as List<dynamic>?) ?? <dynamic>[])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (message) => CaseMessage(
+                  id: message['id'] as String? ?? '',
+                  senderName: message['senderName'] as String? ?? 'KPB',
+                  senderRole: message['senderRole'] as String? ?? 'system',
+                  body: plainLocalized(message['body'] as String? ?? ''),
+                  createdAt:
+                      DateTime.tryParse(message['createdAt'] as String? ?? '')
+                              ?.toLocal() ??
+                          DateTime.now(),
+                ),
+              )
+              .toList()),
       documentRequests:
           ((json['documentRequests'] as List<dynamic>?) ?? <dynamic>[])
               .whereType<Map<String, dynamic>>()

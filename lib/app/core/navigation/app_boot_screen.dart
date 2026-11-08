@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/app_controller.dart';
 import '../services/auth_service.dart';
+import '../../features/auth/account_recovery_screen.dart';
 import '../../features/auth/auth_welcome_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/shell/app_root_shell.dart';
@@ -25,6 +26,12 @@ class AppBootScreen extends StatelessWidget {
 
         if (!isAuthenticated) {
           return const AuthWelcomeScreen();
+        }
+
+        // Connecté, mais le profil n'a pas pu être lu : on ne sait pas si ce
+        // compte est déjà rempli. L'onboarding réécrirait le profil serveur.
+        if (controller.accountLoadFailed) {
+          return const AccountRecoveryScreen();
         }
 
         return const OnboardingScreen();

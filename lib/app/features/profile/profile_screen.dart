@@ -25,6 +25,7 @@ import '../eligibility/eligibility_simulator_screen.dart';
 import '../explore/program_detail_screen.dart';
 import '../parcours/parcours_screen.dart';
 import '../premium/premium_screen.dart';
+import '../premium/premium_waitlist_controller.dart';
 import '../referral/ambassador_screen.dart';
 import '../referral/referral_screen.dart';
 import '../legal/legal_links.dart';
@@ -158,9 +159,7 @@ class ProfileScreen extends StatelessWidget {
                         _ParentAccessCard(),
                         const SizedBox(height: 12),
                       ],
-                      _PremiumCard(
-                        onTap: () => Get.to(() => const PremiumScreen()),
-                      ),
+                      _PremiumCard(controller: controller),
                       const SizedBox(height: 12),
                       _AcademicInfoCard(profile: profile),
                       const SizedBox(height: 12),

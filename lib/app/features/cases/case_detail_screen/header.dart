@@ -207,11 +207,15 @@ class _NextStepCard extends StatelessWidget {
     required this.label,
     required this.title,
     required this.description,
+    this.appointment,
   });
 
   final String label;
   final String title;
   final String description;
+
+  /// « Rendez-vous : mardi 12 nov. à 14 h 00 », ou `null` sans rendez-vous.
+  final String? appointment;
 
   @override
   Widget build(BuildContext context) {
@@ -268,6 +272,26 @@ class _NextStepCard extends StatelessWidget {
                       height: 1.45,
                       color: KpbColors.gray700,
                     ),
+                  ),
+                ],
+                if (appointment != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.event_rounded,
+                          size: 16, color: KpbColors.actionPrimary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          appointment!,
+                          style: const TextStyle(
+                            fontSize: KpbFontSize.sm,
+                            fontWeight: FontWeight.w700,
+                            color: KpbColors.brandNavy,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],

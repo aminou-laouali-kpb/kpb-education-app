@@ -296,14 +296,74 @@ class _ParentAccessCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Karatou Premium entry (honest — no price, routes to the honest Premium screen)
 // ─────────────────────────────────────────────────────────────────────────────
-class _PremiumCard extends StatelessWidget {
-  const _PremiumCard({required this.onTap});
-  final VoidCallback onTap;
+
+/// La phrase sous « Pass Karatou » dépend de qui lit (revue avant la 58).
+///
+/// La liste d'attente n'accepte que les élèves : à un parent ou un partenaire,
+/// la carte ne promet pas d'inscription et ne tutoie pas. À un élève déjà
+/// inscrit, elle ne redemande pas de s'inscrire — l'écran du Pass dirait
+/// « Inscrit le … » juste après.
+@visibleForTesting
+String premiumCardSubKey({required bool isStudent, required bool registered}) {
+  if (!isStudent) return 'profile_premium_card_sub_other';
+  return registered
+      ? 'profile_premium_card_sub_joined'
+      : 'profile_premium_card_sub';
+}
+
+class _PremiumCard extends StatefulWidget {
+  const _PremiumCard({required this.controller});
+  final AppController controller;
+
+  @override
+  State<_PremiumCard> createState() => _PremiumCardState();
+}
+
+class _PremiumCardState extends State<_PremiumCard> {
+  /// Lu seulement pour un élève connecté : un invité n'a pas de session, et
+  /// le serveur refuse la liste aux parents et partenaires.
+  PremiumWaitlistController? _waitlist;
+
+  bool get _isStudent =>
+      widget.controller.isStudent || widget.controller.isGuestMode;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller.isStudent && !widget.controller.isGuestMode) {
+      _waitlist =
+          PremiumWaitlistController(apiClient: widget.controller.apiClient)
+            ..addListener(_onWaitlist)
+            ..load();
+    }
+  }
+
+  void _onWaitlist() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _waitlist
+      ?..removeListener(_onWaitlist)
+      ..dispose();
+    super.dispose();
+  }
+
+  Future<void> _open() async {
+    await Get.to(() => const PremiumScreen());
+    // L'élève a pu s'inscrire ou se retirer sur l'écran du Pass.
+    await _waitlist?.load();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final subKey = premiumCardSubKey(
+      isStudent: _isStudent,
+      registered: _waitlist?.registered ?? false,
+    );
     return InkWell(
-      onTap: onTap,
+      onTap: _open,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -338,7 +398,7 @@ class _PremiumCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'profile_premium_card_sub'.tr,
+                    subKey.tr,
                     style: const TextStyle(
                         fontSize: 11, color: KpbColors.textFaint),
                   ),

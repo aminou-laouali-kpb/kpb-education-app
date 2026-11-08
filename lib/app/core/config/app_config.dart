@@ -336,6 +336,23 @@ class AppConfig {
   static set scholarshipMatchEnabledOverride(bool? value) =>
       _scholarshipMatchEnabledOverride = value;
 
+  /// Saisie de messages DANS le dossier (revue avant la 58, constat 33).
+  ///
+  /// FERMÉ, et sans variable de compilation : aucun conseiller ne peut lire ni
+  /// répondre à un message écrit dans l'app (pas de route admin, le gateway
+  /// traite toute connexion comme un élève). Tant que la vraie messagerie
+  /// conseiller ↔ élève n'existe pas, l'écran renvoie vers WhatsApp ; le code
+  /// de saisie est gardé pour le jour où elle arrivera. Les messages déjà
+  /// présents dans le dossier restent affichés.
+  static bool get caseInAppMessagingEnabled =>
+      _caseInAppMessagingEnabledOverride ?? false;
+
+  static bool? _caseInAppMessagingEnabledOverride;
+
+  @visibleForTesting
+  static set caseInAppMessagingEnabledOverride(bool? value) =>
+      _caseInAppMessagingEnabledOverride = value;
+
   // ── Supabase Auth ──────────────────────────────────────────────────────
   /// Supabase project URL (auth only — business data stays in Prisma/Postgres).
   static const supabaseUrl = String.fromEnvironment(

@@ -75,6 +75,13 @@ class ScholarshipsController extends ChangeNotifier {
   bool loading = true;
   bool loadingMore = false;
   bool hasMore = true;
+
+  /// La dernière page SUIVANTE a échoué. La liste déjà lue reste à l'écran, et
+  /// [hasMore] reste vrai : il reste bien des bourses à lire. Tant que ce drapeau
+  /// est levé, le défilement ne relance rien (chaque image de défilement ferait
+  /// partir une requête) ; seul [retryLoadMore] — le bouton « Réessayer » du pied
+  /// de liste — ou un rechargement complet le baisse.
+  bool loadMoreFailed = false;
   String? error;
 
   /// La CAUSE de [error], quand il y en a une. Toujours posée en même temps que
@@ -144,6 +151,7 @@ class ScholarshipsController extends ChangeNotifier {
     error = null;
     failure = null;
     hasMore = true;
+    loadMoreFailed = false;
     _offset = 0;
     // Re-attempt the profile criteria on every reload so a pull-to-refresh
     // picks up newly curated scholarships instead of staying unfiltered forever.
@@ -312,8 +320,8 @@ class ScholarshipsController extends ChangeNotifier {
   }
 
   Future<void> loadMore() async {
-    if (loading || loadingMore || !hasMore || error != null) return;
-    if (offlineSince != null) return;
+    if (loading || loadingMore || !hasMore || loadMoreFailed) return;
+    if (error != null || offlineSince != null) return;
     final generation = _requestGeneration;
     loadingMore = true;
     notifyListeners();
@@ -332,15 +340,25 @@ class ScholarshipsController extends ChangeNotifier {
       hasMore = page.items.isNotEmpty &&
           (page.hasMore ?? page.items.length >= pageSize);
     } catch (_) {
-      // A failed incremental page must not replace already useful results with
-      // the full-page connection error. A later scroll/refresh can retry.
-      hasMore = false;
+      // Une page suivante en échec ne remplace pas la liste déjà utile par
+      // l'écran plein « Erreur de connexion ». Elle ne coupe pas non plus la
+      // liste en silence (ancien `hasMore = false`, qui laissait l'élève croire
+      // avoir tout vu sous un en-tête « 180 bourses ») : le pied de liste le dit
+      // et propose « Réessayer ».
+      if (generation == _requestGeneration) loadMoreFailed = true;
     } finally {
       if (generation == _requestGeneration) {
         loadingMore = false;
         notifyListeners();
       }
     }
+  }
+
+  /// Le geste « Réessayer » du pied de liste, après une page suivante en échec.
+  Future<void> retryLoadMore() {
+    if (!loadMoreFailed || loading || loadingMore) return Future<void>.value();
+    loadMoreFailed = false;
+    return loadMore();
   }
 
   Future<void> changeFundingFilter(String value) async {
