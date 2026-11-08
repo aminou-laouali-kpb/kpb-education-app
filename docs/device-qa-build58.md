@@ -81,6 +81,11 @@ gestes sur l'artefact.
 | Audit-16 | **Recherche** : champ en tête de l'Accueil, loupe de l'onglet Bourses (T6-04) | Les deux ouvrent la recherche ; le champ ne casse pas la salutation à 360 dp | ☐ | ☐ |
 | Audit-17 | **Démarrage hors ligne, puis réseau** (T2-06, complète HorsLigne-1) | Après le retour du réseau, la carte « Études en France » (et la Communauté si ouverte) revient **sans relancer** l'app (nouvel essai de `/config/app` à 5 s puis 30 s) | ☐ | ☐ |
 | Audit-18 | **Verrou biométrique** (Profil → Biométrie, #403) : Android avec code, Android SANS code de verrouillage, iPhone avec Face ID annulé | Avec code : l'empreinte déverrouille. Sans code : l'interrupteur refuse (« Verrou non activé… »). Face ID annulé : « Authentification échouée », « Déverrouiller » relance ; jamais d'élève enfermé | ☐ | ☐ |
+| Audit-19 | **Code e-mail en vraie 3G**, réseau coupé juste après « Valider » (#404) | Message réseau (« ton code est peut-être encore valide »), jamais « Code invalide » ; au retour du réseau, « Valider » connecte sans redemander de code | ☐ | ☐ |
+| Audit-20 | **Profil illisible à la connexion** : couper le réseau juste après l'acceptation du code, sur un compte qui a déjà un profil (#404) | Écran « Impossible de récupérer ton compte » avec « Réessayer » ; jamais l'onboarding, profil serveur intact | ☐ | ☐ |
+| Audit-21 | **Dossier : écrire au conseiller** (#407) | Pas de champ de saisie ; « Écrire à ton conseiller sur WhatsApp » (ou « à l'équipe KPB » sans conseiller) ouvre WhatsApp avec la référence du dossier ; historique au « tu », rendez-vous daté s'il est fixé | ☐ | ☐ |
+| Audit-22 | **Dictée vocale** sur un Android physique (#407) | Le micro du message de dossier n'affiche plus « dictée indisponible » (si la saisie est rouverte plus tard) ; à défaut, vérifier qu'aucun plantage au démarrage ne vient du manifeste | ☐ | ☐ |
+| Audit-23 | **Bourses en vraie 3G**, défiler au-delà de 20 fiches, couper le réseau (#405) | « Impossible de charger la suite » + « Réessayer » en bas de liste ; « Réessayer » reprend la suite | ☐ | ☐ |
 
 ## Petit appareil, mémoire et réseau lent (360 × 640, 2 Go, vraie 3G)
 

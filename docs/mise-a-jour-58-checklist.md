@@ -37,9 +37,13 @@
 - **Couplage backend : `tolerates-old`**, plus `requires-new`. La 58 n'appelle aucune route ni
   aucune clé `features.*` que la production ne sert pas déjà (registre, entrée
   « Préparation de la build 58 »). Le backend dont elle a besoin (FCM, #351, puis #392 et #397)
-  est en production. **Aucun déploiement avant l'archive**, aucune migration.
-- **Dépendances et manifestes : rien ne bouge** depuis la 57. `pubspec.yaml` ne change que par sa
-  ligne `version:` ; `ios/Podfile.lock` a été aligné par #383 (étape 0.3).
+  est en production. **Aucun déploiement avant l'archive.** Seule nouveauté de contrat : la 58
+  joint un `clientMessageId` aux messages de dossier (#408) ; face à la production actuelle, qui le
+  refuse, elle renvoie le message une fois sans lui. Le déploiement serveur dû **après** l'envoi
+  (étape 1) porte une migration additive, `20261108120000_case_message_client_id`.
+- **Dépendances et manifestes : presque rien ne bouge** depuis la 57. `pubspec.yaml` ne change que
+  par sa ligne `version:` (et une dépendance de test, #403) ; `ios/Podfile.lock` a été aligné par
+  #383 ; le manifeste Android gagne une entrée `<queries>` pour la dictée vocale (#407) (étape 0.3).
 - **Le préflight de l'IPA exportée (`--app`) est obligatoire.** Il n'a pas tourné pour la 57 :
   l'envoi était parti de l'Organizer sans export. Cette fois, on exporte, on contrôle l'IPA, et
   c'est **cette** IPA qui part (étape 4).
@@ -102,14 +106,15 @@ git show "$RELEASE:pubspec.yaml" | grep '^version:'        # version: 2.3.1+58
 git merge-base --is-ancestor ba84fedf "$RELEASE" && echo "archive de la 57 = ancêtre de RELEASE : OK"
 git log --oneline --first-parent ba84fedf.."$RELEASE"
 #   attendu (relevé du 07/11/2026) : #386, #387, #390, #389, #392, #393, #395, #396, #397, #383,
-#   #384, #398, #401, #399, #400, #403, puis la PR de préparation de la 58 — et rien d'autre.
+#   #384, #398, #401, #399, #400, #403, #404, #405, #406, #407, #408 (revue avant la 58), puis
+#   la PR de préparation de la 58 — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat ba84fedf "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle
 #   attendu (aucune autre dépendance, aucun autre manifeste ne bouge depuis la 57) : seulement
 #   pubspec.lock (local_auth_platform_interface passe en « direct dev », même version) et
-#   android/app/build.gradle (androidx.appcompat 1.7.1, #403). Info.plist, PrivacyInfo et
-#   AndroidManifest.xml : rien.
+#   android/app/build.gradle (androidx.appcompat 1.7.1, #403) et AndroidManifest.xml (une seule
+#   entrée `<queries>` : android.speech.RecognitionService, #407). Info.plist et PrivacyInfo : rien.
 git diff -U0 ba84fedf "$RELEASE" -- pubspec.yaml | grep '^[+-]' | grep -v '^+++\|^---' | grep -v '^[+-][[:space:]]*#'
 #   exactement trois lignes (la troisième : dépendance de TEST de #403, absente du binaire) :
 #     -version: 2.3.1+57
@@ -132,8 +137,10 @@ Le contrôle : aucun écart serveur entre la production et `RELEASE`.
 ```bash
 git merge-base --is-ancestor b1f6a329 "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
 git diff --stat b1f6a329 "$RELEASE" -- backend admin docker-compose.yml
-#   attendu : rien (relevé du 07/11/2026 sur main). Une PR serveur fusionnée depuis apparaît
-#   ici : la 58 n'en dépend pas, mais son déploiement devient dû APRÈS l'envoi.
+#   attendu (relevé du 08/11/2026 sur main) : backend seulement, #407 (textes du dossier au
+#   « tu », messages du plus ancien au plus récent, canal WhatsApp par défaut) et #408
+#   (clientMessageId : DTO, service, migration). La 58 n'en dépend pas (elle tolère l'ancien
+#   serveur) ; leur déploiement devient dû APRÈS l'envoi.
 ```
 
 - **Ne pas déployer avant le préflight.** `tolerates-old` exige que la production soit un
@@ -142,8 +149,11 @@ git diff --stat b1f6a329 "$RELEASE" -- backend admin docker-compose.yml
 - Si l'écart n'est pas vide, le déploiement se fait **après** l'envoi de la 58 aux testeurs
   (`deploy.yml`, `ref` = `RELEASE`, `scope` = `full`), au feu vert du propriétaire, avec les
   opérations propres à chaque PR (simulation d'abord).
-- Aucune migration n'est attendue : `git diff --stat b1f6a329 "$RELEASE" -- backend/prisma/migrations`
-  ne doit rien afficher.
+- Une seule migration est attendue, additive (colonne nullable + index unique) :
+  `git diff --stat b1f6a329 "$RELEASE" -- backend/prisma/migrations` n'affiche que
+  `20261108120000_case_message_client_id`. `deploy.yml` l'applique (`prisma migrate deploy`).
+- Après ce déploiement : `backfill-cases-fr` (vps-ops, **simulation d'abord**) pour réécrire au
+  « tu » les textes de dossier déjà en base (#407), au feu vert du propriétaire.
 
 ## 2. Vérifications de départ (5 min)
 

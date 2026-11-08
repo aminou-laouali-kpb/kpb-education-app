@@ -188,7 +188,11 @@ void main() {
       }
       expect(
           flatStep, contains('aucune autre dépendance, aucun autre manifeste'));
-      expect(flatStep, contains('AndroidManifest.xml : rien'));
+      expect(flatStep, contains('android.speech.RecognitionService, #407'));
+      expect(flatStep, contains('Info.plist et PrivacyInfo : rien'));
+      for (final pr in ['#404', '#405', '#406', '#407', '#408']) {
+        expect(flatStep, contains(pr));
+      }
     });
 
     test('backend : tolerates-old, production ancêtre, aucun déploiement avant',
@@ -202,6 +206,18 @@ void main() {
             'docker-compose.yml'),
       );
       expect(_flat(step1), contains('**Ne pas déployer avant le préflight.**'));
+      // #408 : la seule migration du déploiement dû après l'envoi, vérifiée
+      // sur le disque (une migration de plus ou de moins casse ce test).
+      expect(step1, contains('`20261108120000_case_message_client_id`'));
+      final migrations = Directory('backend/prisma/migrations')
+          .listSync()
+          .whereType<Directory>()
+          .map((d) => d.uri.pathSegments.where((p) => p.isNotEmpty).last)
+          .where((n) =>
+              n.compareTo('20261028120000_profile_completion_without_consent') >
+              0)
+          .toList();
+      expect(migrations, ['20261108120000_case_message_client_id']);
       expect(flat, contains('**Couplage backend : `tolerates-old`**'));
       // Le registre dit le même couplage, avec sa raison.
       final ledger = _read('docs/release-ledger.md');
