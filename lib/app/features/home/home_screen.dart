@@ -20,6 +20,7 @@ import '../../core/ui/skeleton.dart';
 import '../../core/utils/country_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../ai_advisor/ai_consent.dart';
+import '../cases/case_appointment.dart';
 import '../cases/case_composer_sheet.dart';
 import '../cases/case_detail_screen.dart';
 import '../community/hub/community_entry.dart';

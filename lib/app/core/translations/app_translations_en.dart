@@ -1297,6 +1297,10 @@ const Map<String, String> appTranslationsEn = {
   'case_whatsapp_continue_prefill':
       'Hello KPB, I\'d like to continue with case @reference.',
   'case_section_messages': 'Messages',
+  'case_write_advisor_whatsapp': 'Message your counselor on WhatsApp',
+  'case_messages_whatsapp_hint':
+      'To reach your counselor, use WhatsApp: that\'s where they reply.',
+  'case_next_step_appointment': 'Appointment: @date',
   'case_unread_suffix': 'unread',
   'case_timeline_since_date': 'Since @date',
   'case_timeline_on_date': 'On @date',

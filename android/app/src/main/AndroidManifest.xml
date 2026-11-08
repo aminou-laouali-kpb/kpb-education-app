@@ -231,5 +231,16 @@
         -->
         <package android:name="com.whatsapp"/>
         <package android:name="com.whatsapp.w4b"/>
+        <!--
+          Dictée vocale du message de dossier (speech_to_text). Sans cette
+          déclaration, la visibilité des paquets cache le service de
+          reconnaissance vocale : `SpeechRecognizer.isRecognitionAvailable`
+          répond faux et l'élève lit « dictée indisponible » (revue avant la 58,
+          constat 40). Le README du plugin l'exige à partir de targetSdk 30 et
+          son propre manifeste ne la déclare pas.
+        -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
     </queries>
 </manifest>

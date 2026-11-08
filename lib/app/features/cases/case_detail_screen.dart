@@ -17,6 +17,7 @@ import '../../core/services/document_upload_service.dart';
 import '../ai_advisor/ai_consent.dart';
 import '../services/service_packages_screen.dart';
 import '../tools/interview_simulator_screen.dart';
+import 'case_appointment.dart';
 import 'case_status_timeline.dart';
 import 'post_decision_screen.dart';
 import 'case_timeline_definition.dart';
@@ -430,6 +431,8 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   label: 'next_step'.tr,
                   title: _ctrl.resolve(c.nextStepTitle),
                   description: _ctrl.resolve(c.nextStepDescription),
+                  appointment:
+                      caseAppointmentLabel(c.scheduledAt, _ctrl.localeCode),
                 ),
                 const SizedBox(height: 14),
 
@@ -604,7 +607,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                     child: KpbEmptyState(
                       icon: Icons.chat_bubble_outline_rounded,
                       title: 'no_messages'.tr,
-                      subtitle: 'send_message_hint'.tr,
+                      subtitle: AppConfig.caseInAppMessagingEnabled
+                          ? 'send_message_hint'.tr
+                          : 'case_messages_whatsapp_hint'.tr,
                     ),
                   )
                 else
@@ -615,105 +620,124 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   ),
                 const SizedBox(height: 8),
 
-                // ── Typing indicator ─────────────────────────────────────────
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: _ctrl.isCaseAdvisorTyping
-                      ? Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            key: const ValueKey('typing'),
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: KpbColors.surface,
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                                bottomLeft: Radius.circular(4),
-                              ),
-                              border: Border.all(color: KpbColors.border),
-                              boxShadow: _cardShadow,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                _TypingDot(delay: Duration.zero),
-                                SizedBox(width: 4),
-                                _TypingDot(delay: Duration(milliseconds: 200)),
-                                SizedBox(width: 4),
-                                _TypingDot(delay: Duration(milliseconds: 400)),
-                              ],
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink(key: ValueKey('no-typing')),
-                ),
-
-                // ── Message input ────────────────────────────────────────────
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: KpbColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: KpbColors.border),
-                    boxShadow: _cardShadow,
+                if (AppConfig.caseInAppMessagingEnabled)
+                  ..._messageComposer(c)
+                else
+                  _WriteAdvisorOnWhatsAppButton(
+                    onTap: () => _openWhatsapp(
+                      advisorName: c.assignedAdvisorName,
+                      prefill: c.isReferenceProvisional
+                          ? 'case_whatsapp_advisor_prefill_provisional'
+                              .trParams({'title': _ctrl.resolve(c.title)})
+                          : 'case_whatsapp_advisor_prefill'
+                              .trParams({'reference': c.referenceCode}),
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          maxLines: 3,
-                          minLines: 1,
-                          decoration: InputDecoration(
-                            hintText: 'message_input_hint'.tr,
-                            hintStyle:
-                                const TextStyle(color: KpbColors.textFaint),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 8),
-                          ),
-                          onChanged: (value) {
-                            _ctrl.sendCaseTyping(c.id, value.isNotEmpty);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Semantics(
-                        button: true,
-                        label: 'a11y_send_message'.tr,
-                        child: GestureDetector(
-                          onTap: () {
-                            final text = _messageController.text.trim();
-                            if (text.isEmpty) return;
-                            _ctrl.addCaseMessage(c.id, text);
-                            _messageController.clear();
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: KpbColors.actionPrimary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.send_rounded,
-                                color: Colors.white, size: 18),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  /// Indicateur de saisie et champ d'envoi — derrière
+  /// [AppConfig.caseInAppMessagingEnabled], fermé tant qu'aucun conseiller ne
+  /// peut lire ces messages (revue avant la 58, constat 33).
+  List<Widget> _messageComposer(StudentCase c) {
+    return [
+      // ── Typing indicator ─────────────────────────────────────────
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: _ctrl.isCaseAdvisorTyping
+            ? Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  key: const ValueKey('typing'),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: KpbColors.surface,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      topRight: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(4),
+                    ),
+                    border: Border.all(color: KpbColors.border),
+                    boxShadow: _cardShadow,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      _TypingDot(delay: Duration.zero),
+                      SizedBox(width: 4),
+                      _TypingDot(delay: Duration(milliseconds: 200)),
+                      SizedBox(width: 4),
+                      _TypingDot(delay: Duration(milliseconds: 400)),
+                    ],
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(key: ValueKey('no-typing')),
+      ),
+
+      // ── Message input ────────────────────────────────────────────
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: KpbColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: KpbColors.border),
+          boxShadow: _cardShadow,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _messageController,
+                maxLines: 3,
+                minLines: 1,
+                decoration: InputDecoration(
+                  hintText: 'message_input_hint'.tr,
+                  hintStyle: const TextStyle(color: KpbColors.textFaint),
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                ),
+                onChanged: (value) {
+                  _ctrl.sendCaseTyping(c.id, value.isNotEmpty);
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Semantics(
+              button: true,
+              label: 'a11y_send_message'.tr,
+              child: GestureDetector(
+                onTap: () {
+                  final text = _messageController.text.trim();
+                  if (text.isEmpty) return;
+                  _ctrl.addCaseMessage(c.id, text);
+                  _messageController.clear();
+                },
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: KpbColors.actionPrimary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 18),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 }
 
