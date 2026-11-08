@@ -60,6 +60,12 @@ class _Api extends MockApiClient {
 
   Completer<void>? createGate;
   int failNextPosts = 0;
+
+  /// Le prochain POST attend ce verrou (POST lent, ou app tuée pendant).
+  Completer<void>? nextPostGate;
+
+  /// Le prochain POST est refusé avec ce statut (4xx).
+  int? rejectNextWith;
   bool failGetCase = false;
 
   List<String> get delivered => [
@@ -101,6 +107,16 @@ class _Api extends MockApiClient {
     final body = payload['body'] as String;
     postAttempts.add((caseId, body));
     final path = '/cases/$caseId/messages';
+    final gate = nextPostGate;
+    if (gate != null) {
+      nextPostGate = null;
+      await gate.future;
+    }
+    final reject = rejectNextWith;
+    if (reject != null) {
+      rejectNextWith = null;
+      throw _httpError(path, reject);
+    }
     if (failNextPosts > 0) {
       failNextPosts--;
       throw _networkError(path);
@@ -172,18 +188,23 @@ StudentCase _case(String id) {
   );
 }
 
-Future<(AppController, _Api)> _device(StudentCase seeded) async {
+Future<(AppController, _Api)> _device(
+  StudentCase seeded, {
+  FakeRepository? repository,
+  _Api? server,
+}) async {
   AppConfig.enableRemoteSyncOverride = false;
-  final api = _Api();
+  final api = server ?? _Api();
   final controller = AppController(
-    repository: FakeRepository(
-      snapshot: AppSnapshot(
-        localeCode: 'fr',
-        hasCompletedOnboarding: true,
-        profile: createTestProfile(),
-        cases: [seeded],
-      ),
-    ),
+    repository: repository ??
+        FakeRepository(
+          snapshot: AppSnapshot(
+            localeCode: 'fr',
+            hasCompletedOnboarding: true,
+            profile: createTestProfile(),
+            cases: [seeded],
+          ),
+        ),
     apiClient: api,
   );
   await controller.hydrate();
@@ -346,7 +367,7 @@ void main() {
         'la bulle survit à la synchro, et « Réessayer » l\'envoie', () async {
       final (controller, api) = await _device(_case(_serverId));
       api.serverCaseExists = true;
-      api.failNextPosts = 1 + CaseMessageOutbox.maxRetries;
+      api.failNextPosts = CaseMessageOutbox.maxRetries;
 
       controller.addCaseMessage(_serverId, 'La pièce demandée');
       await _settle();
@@ -357,7 +378,7 @@ void main() {
       expect(controller.caseMessageDelivery(bubble()),
           CaseMessageDelivery.pending);
 
-      for (var i = 0; i < CaseMessageOutbox.maxRetries; i++) {
+      for (var i = 0; i < CaseMessageOutbox.maxRetries - 1; i++) {
         await controller.flushPendingCaseMessages();
       }
       expect(
@@ -413,6 +434,163 @@ void main() {
 
       expect(api.delivered, ['Écrit hier soir']);
       expect(outbox.pendingCount, 0);
+    });
+  });
+
+  group('relecture de la #408', () {
+    CaseMessage bubbleIn(AppController c, String caseId, String text) => c
+        .caseById(caseId)!
+        .messages
+        .firstWhere((m) => m.id.startsWith('user-') && m.body.fr == text);
+
+    test(
+        '(a) l\'écho socket d\'un second « Merci » n\'efface pas le premier, '
+        'refusé', () async {
+      final (controller, api) = await _device(_case(_serverId));
+      api.serverCaseExists = true;
+
+      api.rejectNextWith = 400;
+      controller.addCaseMessage(_serverId, 'Merci');
+      await _settle();
+      final refused = bubbleIn(controller, _serverId, 'Merci');
+      expect(
+          controller.caseMessageDelivery(refused), CaseMessageDelivery.failed);
+
+      // Le second part ; la relecture échoue, l'écho arrive par le socket.
+      api.failGetCase = true;
+      controller.addCaseMessage(_serverId, 'Merci');
+      await _settle();
+      controller.ingestRemoteCaseMessage(_serverId, <String, dynamic>{
+        'id': 'msg-echo',
+        'senderRole': 'student',
+        'senderName': 'Test User',
+        'body': 'Merci',
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      final thread = controller.caseById(_serverId)!.messages;
+      final merci = thread.where((m) => m.body.fr == 'Merci').toList();
+      expect(merci.map((m) => m.id), containsAll([refused.id, 'msg-echo']));
+      expect(merci, hasLength(2), reason: 'l\'écho remplace le second seul');
+      expect(
+          controller.caseMessageDelivery(refused), CaseMessageDelivery.failed);
+    });
+
+    test('(b) « Non envoyé » (4xx) survit au redémarrage et à la synchro',
+        () async {
+      final repo = FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+          cases: [_case(_serverId)],
+        ),
+      );
+      final (controller, api) =
+          await _device(_case(_serverId), repository: repo);
+      api.serverCaseExists = true;
+      api.rejectNextWith = 400;
+      controller.addCaseMessage(_serverId, 'Trop long');
+      await _settle();
+      expect(
+          controller.caseMessageDelivery(
+              bubbleIn(controller, _serverId, 'Trop long')),
+          CaseMessageDelivery.failed);
+
+      // Redémarrage : nouveau contrôleur, même disque.
+      resetGetxSingleton();
+      final (restarted, _) =
+          await _device(_case(_serverId), repository: repo, server: api);
+      expect(
+          restarted
+              .caseMessageDelivery(bubbleIn(restarted, _serverId, 'Trop long')),
+          CaseMessageDelivery.failed);
+
+      await restarted.syncRemoteData(force: true);
+      await _settle();
+      expect(
+          restarted
+              .caseMessageDelivery(bubbleIn(restarted, _serverId, 'Trop long')),
+          CaseMessageDelivery.failed,
+          reason: 'la copie serveur ne doit pas effacer la bulle');
+    });
+
+    test(
+        '(b) app tuée pendant le POST : au redémarrage, « en attente », puis '
+        'envoyé par la file', () async {
+      final repo = FakeRepository(
+        snapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+          cases: [_case(_serverId)],
+        ),
+      );
+      final (controller, api) =
+          await _device(_case(_serverId), repository: repo);
+      api.serverCaseExists = true;
+      api.nextPostGate = Completer<void>(); // ne répond jamais
+      controller.addCaseMessage(_serverId, 'Ma disponibilité');
+      await _settle();
+
+      resetGetxSingleton();
+      final server = _Api()..serverCaseExists = true;
+      final (restarted, _) =
+          await _device(_case(_serverId), repository: repo, server: server);
+      expect(
+          restarted.caseMessageDelivery(
+              bubbleIn(restarted, _serverId, 'Ma disponibilité')),
+          CaseMessageDelivery.pending);
+
+      await restarted.flushPendingCaseMessages();
+      expect(server.delivered, ['Ma disponibilité']);
+      expect(outbox.pendingCount, 0);
+    });
+
+    test(
+        '(d) une vidange en cours reprend le message du dossier créé '
+        'pendant qu\'elle tournait', () async {
+      final (controller, api) = await _device(_case(_localId));
+      api.serverCaseExists = true; // srv-1 existe déjà pour l'ancien message
+      await outbox.enqueue(
+        caseId: _serverId,
+        body: 'Ancien',
+        senderName: 'Test User',
+      );
+      final slow = Completer<void>();
+      api.nextPostGate = slow;
+      final running = controller.flushPendingCaseMessages();
+      await _settle();
+
+      controller.addCaseMessage(_localId, 'Nouveau');
+      await _settle();
+      slow.complete();
+      await running;
+      await _settle();
+
+      expect(api.delivered, ['Ancien', 'Nouveau']);
+      expect(outbox.pendingCount, 0);
+    });
+
+    test(
+        '(e) une vieille entrée « Ok » d\'un AUTRE dossier ne rend pas « en '
+        'attente » une bulle « Ok » envoyée', () async {
+      final (controller, api) = await _device(_case(_serverId));
+      api.serverCaseExists = true;
+      api.failGetCase = true;
+      // Entrée d'une version antérieure, sans id de bulle, en échec
+      // définitif, dans un autre dossier.
+      await outbox.enqueue(
+          caseId: 'srv-autre', body: 'Ok', senderName: 'Test User');
+      final legacy = outbox.pending.single;
+      await outbox.markPermanentFailure(legacy.key, legacy);
+
+      controller.addCaseMessage(_serverId, 'Ok');
+      await _settle();
+
+      expect(
+          controller.caseMessageDelivery(bubbleIn(controller, _serverId, 'Ok')),
+          CaseMessageDelivery.sent);
     });
   });
 }

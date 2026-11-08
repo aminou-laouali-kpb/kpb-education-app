@@ -67,13 +67,15 @@ class CaseMessageOutbox {
 
   bool hasPendingFor(String caseId) => pending.any((e) => e.caseId == caseId);
 
-  /// L'entrée qui porte la bulle [localMessageId]. Une entrée écrite par une
-  /// version antérieure n'a pas d'id de bulle : on la retrouve alors par son
-  /// texte (dans le même dossier quand [caseId] est donné).
+  /// L'entrée qui porte la bulle [localMessageId] (identifiant client
+  /// stable). Une entrée écrite par une version antérieure n'a pas d'id de
+  /// bulle : on la retrouve alors par son [body], mais seulement dans un des
+  /// dossiers [caseIds] — sans dossier, pas de repli par texte (une vieille
+  /// entrée « Ok » rendait « en attente » toutes les bulles « Ok »).
   OutboxEntry? entryForMessage(
     String localMessageId, {
     String? body,
-    String? caseId,
+    Set<String>? caseIds,
   }) {
     OutboxEntry? legacy;
     for (final entry in _all) {
@@ -81,8 +83,9 @@ class CaseMessageOutbox {
       if (legacy == null &&
           entry.localMessageId == null &&
           body != null &&
+          caseIds != null &&
           entry.body == body &&
-          (caseId == null || entry.caseId == caseId)) {
+          caseIds.contains(entry.caseId)) {
         legacy = entry;
       }
     }
