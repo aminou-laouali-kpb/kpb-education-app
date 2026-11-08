@@ -69,7 +69,17 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           // ligne ou consentement en attente) : chaque synchro renvoyait toute la
           // copie du téléphone, puis relisait celle du serveur (8 PATCH en 22
           // minutes, audit build 57, T8-07). Sans geste, le serveur fait foi.
-          if (_profileNeedsPush) await _pushProfileUpdate();
+          //
+          // Un PATCH déjà en cours (fin d'onboarding, qui lance aussi cette
+          // synchro) est rejoint, pas doublé. Ce doublon était masqué en test
+          // tant que la file des messages, non ouverte, faisait planter la
+          // synchro avant cette ligne.
+          final pushInFlight = _profilePushInFlight;
+          if (pushInFlight != null) {
+            await pushInFlight;
+          } else if (_profileNeedsPush) {
+            await _pushProfileUpdate();
+          }
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);

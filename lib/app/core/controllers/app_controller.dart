@@ -192,6 +192,10 @@ abstract class _AppControllerBase extends GetxController {
   Future<void> _createRemoteSavedItem(SavedItem item);
   Future<void> _deleteRemoteSavedItem(SavedItem item);
   Future<void> _pushProfileUpdate();
+
+  /// Le PATCH de profil en cours, que la synchro rejoint au lieu d'en lancer
+  /// un second en parallèle (fin d'onboarding : deux PATCH simultanés).
+  Future<void>? _profilePushInFlight;
   String _savedItemKey(SavedItemType type, String itemId);
   Map<String, dynamic> _userProfilePayload(UserProfile profile,
       {bool allConsents = false});
