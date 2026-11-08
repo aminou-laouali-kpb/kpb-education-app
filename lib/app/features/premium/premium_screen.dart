@@ -127,7 +127,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('premium_waitlist_leave'.tr),
-        content: Text('premium_waitlist_notice'.tr),
+        content: Text('premium_waitlist_leave_confirm_body'.tr),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
