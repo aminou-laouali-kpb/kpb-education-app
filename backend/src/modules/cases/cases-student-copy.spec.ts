@@ -68,17 +68,17 @@ describe('copie des dossiers vue par l’étudiant', () => {
     );
 
     const FRANCAIS_ATTENDU = [
-      'Votre dossier est en revue',
-      'L’équipe KPB va examiner votre demande et vous attribuer un conseiller.',
+      'Ton dossier est en revue',
+      'L’équipe KPB va examiner ta demande et t’attribuer un conseiller.',
       'Demande envoyée',
-      'Votre demande a été créée depuis l’application.',
+      'Ta demande a été créée depuis l’application.',
       'Conseiller attribué',
-      'Un conseiller vous a été attribué',
-      'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
+      'Un conseiller t’a été attribué',
+      'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
       'Dossier mis à jour',
       'Nouveau message',
       'Document ajouté',
-      'Préparez votre rendez-vous',
+      'Prépare ton rendez-vous',
       'Rendez-vous programmé',
       'Action ajoutée',
     ];
@@ -100,6 +100,62 @@ describe('copie des dossiers vue par l’étudiant', () => {
       // « admin or counselor » est du vocabulaire interne ; côté étudiant,
       // l'interlocuteur s'appelle « l'équipe KPB ».
       expect(CASES_SERVICE).not.toMatch(/admin or counselor/i);
+    });
+  });
+
+  /**
+   * Revue avant la 58, constat 5 : l'app tutoie (« Ton dossier est en revue »)
+   * et le serveur vouvoyait, si bien que la même carte changeait de ton au
+   * premier rafraîchissement. Le garde Flutter ne lit que les traductions de
+   * l'app : c'est ici qu'on tient les textes du serveur.
+   */
+  describe('tutoiement', () => {
+    // « rendez-vous » n'est pas un vouvoiement : le trait d'union l'exclut.
+    const VOUVOIEMENT = /(^|[^\p{L}-])(votre|vos|vous)(?![\p{L}-])/giu;
+
+    it.each([
+      ['cases.service.ts', CASES_SERVICE],
+      ['case-reassignment-cron.service.ts', REASSIGNMENT_CRON],
+    ])('%s ne vouvoie pas l’élève', (_fichier, texte) => {
+      expect(texte.match(VOUVOIEMENT) ?? []).toEqual([]);
+    });
+
+    it('reprend en base les phrases écrites au « vous »', () => {
+      const reprendreValeur = (table: string, colonne: string, v: string) =>
+        REPRISES.filter((r) => r.table === table && r.colonne === colonne).reduce(
+          (acc, r) => appliquer(r, acc),
+          v,
+        );
+      expect(
+        reprendreValeur('Case', 'nextStepTitle', 'Votre dossier est en revue'),
+      ).toBe('Ton dossier est en revue');
+      expect(
+        reprendreValeur(
+          'Case',
+          'nextStepDescription',
+          'Awa Traoré suit votre dossier et vous contactera prochainement.',
+        ),
+      ).toBe('Awa Traoré suit ton dossier et te contactera bientôt.');
+      expect(
+        reprendreValeur(
+          'CaseTimelineEvent',
+          'description',
+          'Votre dossier a été réattribué à Awa Traoré.',
+        ),
+      ).toBe('Ton dossier a été réattribué à Awa Traoré.');
+      expect(
+        reprendreValeur(
+          'CaseMessage',
+          'body',
+          'Merci pour votre demande. Awa Traoré suit votre dossier.',
+        ),
+      ).toBe('Merci pour ta demande. Awa Traoré suit ton dossier.');
+    });
+
+    it('aucune cible de reprise ne vouvoie', () => {
+      for (const r of REPRISES) {
+        expect(r.francais.match(VOUVOIEMENT) ?? []).toEqual([]);
+      }
     });
   });
 

@@ -43,7 +43,10 @@ const CASE_SCHOLARSHIP_SELECT = {
 const CASE_INCLUDE = {
   user: true,
   scholarship: { select: CASE_SCHOLARSHIP_SELECT },
-  messages: { orderBy: { createdAt: 'desc' as const } },
+  // Un fil de discussion se lit de haut en bas : le plus ancien d'abord, le
+  // message qu'on vient d'envoyer en dernier, sous les yeux de l'élève (revue
+  // avant la 58, constat 37). Le reste de l'historique reste antéchronologique.
+  messages: { orderBy: { createdAt: 'asc' as const } },
   timelineEvents: { orderBy: { createdAt: 'desc' as const } },
   tasks: { orderBy: { createdAt: 'desc' as const } },
   documents: { orderBy: { createdAt: 'desc' as const } },
@@ -255,12 +258,14 @@ export class CasesService {
             title: input.title,
             description: input.description,
             contextLabel: input.contextLabel,
-            preferredContactMethod: input.preferredContactMethod ?? 'in_app',
+            // WhatsApp par défaut : l'équipe ne répond pas dans l'app (revue avant
+            // la 58, constat 34) ; « in_app » reste lisible pour les anciens dossiers.
+            preferredContactMethod: input.preferredContactMethod ?? 'whatsapp',
             scholarshipId: linkedScholarship?.id ?? null,
             source: 'mobile_app',
-            nextStepTitle: 'Votre dossier est en revue',
+            nextStepTitle: 'Ton dossier est en revue',
             nextStepDescription:
-              'L’équipe KPB va examiner votre demande et vous attribuer un conseiller.',
+              'L’équipe KPB va examiner ta demande et t’attribuer un conseiller.',
           },
         });
 
@@ -284,8 +289,8 @@ export class CasesService {
                   // the official KPB WhatsApp line (anti-fraud, Item 12).
                   leadTag: 'to_follow_up',
                   lastCommercialInteractionAt: new Date(),
-                  nextStepTitle: 'Un conseiller vous a été attribué',
-                  nextStepDescription: `${nextCounsellor.fullName} suit votre dossier et vous contactera prochainement.`,
+                  nextStepTitle: 'Un conseiller t’a été attribué',
+                  nextStepDescription: `${nextCounsellor.fullName} suit ton dossier et te contactera bientôt.`,
                 }
               : {}),
           },
@@ -296,7 +301,7 @@ export class CasesService {
             caseId: c.id,
             status: CaseStatus.Submitted,
             title: 'Demande envoyée',
-            description: 'Votre demande a été créée depuis l’application.',
+            description: 'Ta demande a été créée depuis l’application.',
           },
         });
 
@@ -306,7 +311,7 @@ export class CasesService {
               caseId: c.id,
               status: CaseStatus.CounselorAssigned,
               title: 'Conseiller attribué',
-              description: `Votre dossier a été attribué à ${nextCounsellor.fullName}.`,
+              description: `Ton dossier a été attribué à ${nextCounsellor.fullName}.`,
             },
           });
         }
@@ -317,8 +322,8 @@ export class CasesService {
             senderRole: 'system',
             senderName: 'KPB Operations',
             body: nextCounsellor
-              ? `Merci pour votre demande. ${nextCounsellor.fullName} suit votre dossier.`
-              : 'Merci pour votre demande. L’équipe KPB l’a bien reçue.',
+              ? `Merci pour ta demande. ${nextCounsellor.fullName} suit ton dossier.`
+              : 'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
           },
         });
 
@@ -678,13 +683,13 @@ export class CasesService {
             nextStepTitle:
               input.nextStepTitle ??
               (input.scheduledAt
-                ? 'Préparez votre rendez-vous'
-                : 'Un conseiller vous a été attribué'),
+                ? 'Prépare ton rendez-vous'
+                : 'Un conseiller t’a été attribué'),
             nextStepDescription:
               input.nextStepDescription ??
               (input.scheduledAt
-                ? 'Confirmez votre disponibilité et préparez vos pièces justificatives.'
-                : 'Votre conseiller va étudier votre profil et vous contactera prochainement.'),
+                ? 'Confirme ta disponibilité et prépare tes pièces justificatives.'
+                : 'Ton conseiller va étudier ton profil et te contactera bientôt.'),
             ...(input.scheduledAt
               ? { scheduledAt: new Date(input.scheduledAt) }
               : {}),
@@ -699,8 +704,8 @@ export class CasesService {
               ? 'Rendez-vous programmé'
               : 'Conseiller attribué',
             description: input.scheduledAt
-              ? `${input.assignedAdvisorName} a programmé un point de suivi sur votre dossier.`
-              : `${input.assignedAdvisorName} suit désormais votre dossier.`,
+              ? `${input.assignedAdvisorName} a programmé un point de suivi sur ton dossier.`
+              : `${input.assignedAdvisorName} suit désormais ton dossier.`,
           },
         });
 
@@ -742,7 +747,7 @@ export class CasesService {
               (await tx.case.findUnique({ where: { id } }))?.status ??
               CaseStatus.Submitted,
             title: 'Action ajoutée',
-            description: `L’action « ${input.title} » a été ajoutée à votre dossier.`,
+            description: `L’action « ${input.title} » a été ajoutée à ton dossier.`,
           },
         });
 

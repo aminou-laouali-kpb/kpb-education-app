@@ -184,7 +184,7 @@ export class CaseReassignmentCronService {
               caseId: item.id,
               status: CaseStatus.CounselorAssigned,
               title: REASSIGNED_EVENT_TITLE,
-              description: `Votre dossier a été réattribué à ${next.fullName}.`,
+              description: `Ton dossier a été réattribué à ${next.fullName}.`,
               createdAt: now,
             },
           });
