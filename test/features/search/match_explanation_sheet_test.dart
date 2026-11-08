@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/models/app_models.dart';
+import 'package:karatou/app/core/navigation/shell_tabs.dart';
 import 'package:karatou/app/features/search/match_explanation_sheet.dart';
 
 import '../../support/screen_harness.dart';
@@ -92,8 +93,13 @@ void main() {
         lessThanOrEqualTo(viewport.size.height),
         reason: 'Le bouton reste sous le bas de l\'écran.',
       );
-      // Touchable : le hit-test atteint bien le bouton.
-      await tester.tap(cta, warnIfMissed: true);
+      // Touchable : on prouve l'EFFET du tap (un tap manqué n'émet qu'un
+      // avertissement). La feuille se ferme et l'onglet Profil est choisi.
+      expect(controller.shellIndex, isNot(StudentShellTab.profile));
+      await tester.tap(cta);
+      await tester.pumpAndSettle();
+      expect(cta, findsNothing, reason: 'La feuille devait se fermer.');
+      expect(controller.shellIndex, StudentShellTab.profile);
       expect(tester.takeException(), isNull);
     });
   }

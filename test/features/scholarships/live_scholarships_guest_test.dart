@@ -22,6 +22,8 @@
 // dire de créer un compte qu'il a déjà. Le second groupe l'interdit.
 
 // `Response` existe dans dio ET dans get : le préfixe évite l'ambiguïté.
+import 'dart:async';
+
 import 'package:dio/dio.dart' as dio;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,7 +34,9 @@ import 'package:karatou/app/core/config/app_config.dart';
 import 'package:karatou/app/core/controllers/app_controller.dart';
 import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/auth_service.dart';
+import 'package:karatou/app/core/models/live_scholarships_query.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
+import 'package:karatou/app/features/scholarship_match/scholarship_match_entry_card.dart';
 import 'package:karatou/app/features/scholarships/live_scholarships_screen.dart';
 
 import '../../widget_test_helpers.dart';
@@ -219,15 +223,67 @@ void main() {
       expect(tester.getBottomLeft(cta).dy, lessThanOrEqualTo(568));
     });
 
-    testWidgets('une vraie panne garde Filtrer (l\'élève connecté s\'en sert)',
+    testWidgets(
+        'pendant le chargement non plus : rien n\'apparaît puis ne disparaît',
         (tester) async {
       final mock = MockApiClient();
-      _stubFailure(mock, _offline());
+      final pending = Completer<LiveScholarshipsPage>();
+      whenScholarshipsPage(mock).thenAnswer((_) => pending.future);
+      when(() => mock.fetchScholarshipAlerts())
+          .thenAnswer((_) async => <String>{});
+      when(() => mock.getSuccessLabAccess()).thenAnswer(
+        (_) async => <String, dynamic>{'enabled': false, 'reasons': <String>[]},
+      );
+      await _seedGuest(mock);
+
+      await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
+      await tester.pump();
+
+      // La requête est en vol : squelettes, et rien au-dessus.
+      expect(
+        find.byKey(const ValueKey<String>('scholarships-filter-button')),
+        findsNothing,
+      );
+      expect(find.text('scholarships_sorted_hint'.tr), findsNothing);
+      expect(find.byType(ScholarshipMatchEntryCard), findsNothing);
+
+      pending.completeError(_unauthorized());
+      await tester.pumpAndSettle();
+      expect(find.text('scholarships_auth_required_cta'.tr), findsOneWidget);
+    });
+
+    testWidgets('un invité qui reçoit des bourses retrouve « Filtrer »',
+        (tester) async {
+      final mock = MockApiClient();
+      whenScholarshipsPage(mock).thenAnswer(
+        (_) async => scholarshipsPage(<dynamic>[
+          <String, dynamic>{
+            'id': 'sch-1',
+            'title': 'Bourse ouverte',
+            'countryName': 'International',
+            'fundingType': 'fully_funded',
+            'description': '',
+            'advantages': <String>[],
+            'eligibility': <String>[],
+            'level': 'Master',
+            'deadlineLabel': '',
+            'applicationUrl': '',
+            'tags': <String>[],
+            'matchScore': 50,
+          },
+        ]),
+      );
+      when(() => mock.fetchScholarshipAlerts())
+          .thenAnswer((_) async => <String>{});
+      when(() => mock.getSuccessLabAccess()).thenAnswer(
+        (_) async => <String, dynamic>{'enabled': false, 'reasons': <String>[]},
+      );
       await _seedGuest(mock);
 
       await tester.pumpWidget(_wrap(LiveScholarshipsScreen(apiClient: mock)));
       await tester.pumpAndSettle();
 
+      expect(find.text('Bourse ouverte'), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('scholarships-filter-button')),
         findsOneWidget,

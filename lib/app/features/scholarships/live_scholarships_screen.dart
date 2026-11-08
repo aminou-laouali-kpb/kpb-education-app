@@ -102,6 +102,17 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
   bool get _authRequired =>
       _scholarshipsController.failure == ScholarshipsFailure.authRequired;
 
+  /// Ce qui se tient AU-DESSUS de la liste (phrase sur les alertes, « Filtrer »,
+  /// « Trier », carte Guide / « Mes 10 bourses ») est réservé à qui peut s'en
+  /// servir. On le décide EN AMONT pour un invité : attendre le 401 les faisait
+  /// apparaître au-dessus des squelettes, touchables, puis disparaître d'un bloc
+  /// — à chaque ouverture, à chaque ↻, à chaque tirer-pour-rafraîchir. Un invité
+  /// qui reçoit malgré tout des bourses (backend qui ouvrirait l'index) retrouve
+  /// les commandes.
+  bool get _hideListTools =>
+      _authRequired ||
+      (Get.find<AppController>().isGuestMode && _items.isEmpty);
+
   @override
   void initState() {
     super.initState();
@@ -306,7 +317,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
               // relançait GET /scholarships, reprenait un 401 et revenait au même
               // mur, sous une phrase qui parle d'alertes que l'invité ne peut pas
               // poser — et ils repoussaient le bouton du mur sous le pli.
-              if (!_authRequired)
+              if (!_hideListTools)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
@@ -369,7 +380,7 @@ class _LiveScholarshipsScreenState extends State<LiveScholarshipsScreen> {
               // cachée, le guide reste ici comme avant. Derrière le mur invité,
               // rien entre la barre de titre et le mur : sur un iPhone SE, son
               // bouton doit rester au-dessus du pli.
-              if (!_authRequired)
+              if (!_hideListTools)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
