@@ -27,9 +27,18 @@ class _Regle {
 }
 
 /// Trace exacte des écritures d'avant (anglais, puis français au « vous ») des
-/// colonnes `CaseTimelineEvent.description` et `Case.nextStepDescription` —
-/// `update()` recopie la seconde dans la première.
+/// colonnes `CaseTimelineEvent.description`, `Case.nextStepTitle` et
+/// `Case.nextStepDescription` — `update()` recopie la dernière dans la
+/// première.
 const _regles = <_Regle>[
+  // Titres de « Prochaine étape » (`Case.nextStepTitle`).
+  _Regle(r'^Your case is under review$', 'Ton dossier est en revue'),
+  _Regle(r'^A counselor has been assigned$', 'Un conseiller t’a été attribué'),
+  _Regle(r'^Prepare for your scheduled session$', 'Prépare ton rendez-vous'),
+  _Regle(r'^Votre dossier est en revue$', 'Ton dossier est en revue'),
+  _Regle(
+      r'^Un conseiller vous a été attribué$', 'Un conseiller t’a été attribué'),
+  _Regle(r'^Préparez votre rendez-vous$', 'Prépare ton rendez-vous'),
   // Anglais d'avant la traduction.
   _Regle(r'^The student created a new case from the mobile app\.$',
       'Ta demande a été créée depuis l’application.'),
@@ -101,23 +110,59 @@ final _anglaisOuInterne = RegExp(
   unicode: true,
 );
 
-/// La description à afficher sous le titre, ou `null` pour n'afficher que le
-/// titre.
-String? studentTimelineDescription(String raw) {
-  var text = raw.trim();
-  if (text.isEmpty) return null;
+/// Vocabulaire d'exploitation, à ne montrer dans AUCUNE langue : c'est le
+/// seul filtre appliqué quand l'app n'est pas en français.
+final _jargonInterne = RegExp(
+  r'(^|[^\p{L}])(round-robin|inactivity|auto-reassigned|admin|workflow|'
+  r'internal)(?![\p{L}])',
+  caseSensitive: false,
+  unicode: true,
+);
+
+bool _francais(String localeCode) => localeCode.startsWith('fr');
+
+/// Réécrit au « tu » une phrase que nos services ont écrite (anglais d'avant
+/// la traduction, ou français au « vous »). Une phrase qu'aucune règle ne
+/// reconnaît est rendue TELLE QUELLE.
+String _reecrire(String text) {
   for (final regle in _regles) {
-    final re = RegExp(regle.motif, dotAll: true);
-    final m = re.firstMatch(text);
+    final m = RegExp(regle.motif, dotAll: true).firstMatch(text);
     if (m != null) {
-      text = m.groupCount >= 1
+      return m.groupCount >= 1
           ? regle.cible.replaceAll(r'$1', m.group(1)!)
           : regle.cible;
-      break;
     }
   }
+  return text;
+}
+
+/// La description à afficher sous le titre, ou `null` pour n'afficher que le
+/// titre.
+///
+/// En français : réécriture au « tu », puis masquage de tout vouvoiement,
+/// anglais ou jargon restant. Dans une autre langue (2e relecture #407) : ni
+/// réécriture ni filtre anglais — le texte anglais légitime (« Your request
+/// was sent… ») s'affiche tel quel ; seul le jargon interne est masqué.
+String? studentTimelineDescription(String raw, {required String localeCode}) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return null;
+  if (!_francais(localeCode)) {
+    return _jargonInterne.hasMatch(trimmed) ? null : trimmed;
+  }
+  final text = _reecrire(trimmed);
   if (_vouvoiement.hasMatch(text) || _anglaisOuInterne.hasMatch(text)) {
     return null;
   }
   return text;
+}
+
+/// Titre ou description de « Prochaine étape » : en français, réécrit au
+/// « tu » quand une règle le reconnaît (« Préparez votre rendez-vous » →
+/// « Prépare ton rendez-vous »), sinon rendu tel quel. Jamais vide de notre
+/// fait : un titre ne doit pas disparaître (2e relecture #407).
+String studentNextStepCopy(String raw, {required String localeCode}) {
+  if (!_francais(localeCode)) return raw;
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return raw;
+  return _reecrire(trimmed);
 }

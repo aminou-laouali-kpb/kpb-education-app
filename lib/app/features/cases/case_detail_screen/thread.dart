@@ -101,8 +101,9 @@ class _TimelineItem extends StatelessWidget {
     final dotColor = _dotColor(event.status);
     // Jamais la description brute : elle peut être au « vous » ou en anglais
     // interne tant que la reprise serveur n'a pas tourné (relecture #407).
-    final description =
-        studentTimelineDescription(ctrl.resolve(event.description));
+    final description = studentTimelineDescription(
+        ctrl.resolve(event.description),
+        localeCode: ctrl.localeCode);
 
     return IntrinsicHeight(
       child: Row(

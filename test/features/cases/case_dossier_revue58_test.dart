@@ -67,12 +67,12 @@ StudentCase _case({
       scheduledAt: scheduledAt,
     );
 
-Future<void> _seed(StudentCase c) async {
+Future<void> _seed(StudentCase c, {String locale = 'fr'}) async {
   AppConfig.enableRemoteSyncOverride = false;
   final controller = AppController(
     repository: FakeRepository(
       snapshot: AppSnapshot(
-        localeCode: 'fr',
+        localeCode: locale,
         hasCompletedOnboarding: true,
         isGuestMode: false,
         profile: createTestProfile(),
@@ -82,6 +82,9 @@ Future<void> _seed(StudentCase c) async {
     apiClient: MockApiClient(),
   );
   await controller.hydrate();
+  // L'app livrée force le français (`kShippedLocale`) : pour exercer le chemin
+  // anglais, on règle la langue du contrôleur après l'hydratation.
+  controller.localeCode = locale;
   Get.put<AppController>(controller, permanent: true);
 
   final auth = _MockAuthService();
@@ -90,9 +93,9 @@ Future<void> _seed(StudentCase c) async {
   Get.put<AuthService>(auth, permanent: true);
 }
 
-Widget _wrap(Widget home) => GetMaterialApp(
+Widget _wrap(Widget home, {String locale = 'fr'}) => GetMaterialApp(
       translations: AppTranslations(),
-      locale: const Locale('fr'),
+      locale: Locale(locale),
       fallbackLocale: const Locale('fr'),
       home: home,
     );
@@ -106,12 +109,13 @@ void _tallPhone(WidgetTester tester) {
   });
 }
 
-Future<void> _pumpDetail(WidgetTester tester, StudentCase c) async {
+Future<void> _pumpDetail(WidgetTester tester, StudentCase c,
+    {String locale = 'fr'}) async {
   setupPlatformChannelMocks();
-  await _seed(c);
+  await _seed(c, locale: locale);
   _tallPhone(tester);
   await tester.pumpWidget(
-    _wrap(Scaffold(body: CaseDetailScreen(caseId: c.id))),
+    _wrap(Scaffold(body: CaseDetailScreen(caseId: c.id)), locale: locale),
   );
   await tester.pumpAndSettle();
 }
@@ -360,6 +364,71 @@ void main() {
       expect(find.textContaining('Internal'), findsNothing);
       // Le titre reste : rien ne disparaît de l'historique.
       expect(find.text('Point de suivi'), findsOneWidget);
+    });
+  });
+
+  group('2e relecture #407 — langue et « Prochaine étape »', () {
+    CaseTimelineEvent ev(String id, String title, String desc) =>
+        CaseTimelineEvent(
+          id: id,
+          title: LocalizedText(fr: title, en: title),
+          description: LocalizedText(fr: desc, en: desc),
+          createdAt: _now,
+          status: CaseStatus.counselorAssigned,
+        );
+
+    testWidgets('en anglais : descriptions anglaises affichées telles quelles',
+        (tester) async {
+      await _pumpDetail(
+        tester,
+        _case(timeline: [
+          ev('e1', 'Request sent',
+              'Your request is in the “My Cases” tab. The KPB team has received it.'),
+          ev('e2', 'New message',
+              'The case has been updated with a new message.'),
+          ev('e3', 'Case reassigned',
+              'Auto-reassigned after 10h inactivity to Awa Traoré.'),
+        ]),
+        locale: 'en',
+      );
+
+      expect(
+          find.text(
+              'Your request is in the “My Cases” tab. The KPB team has received it.'),
+          findsOneWidget);
+      expect(find.text('The case has been updated with a new message.'),
+          findsOneWidget);
+      // Le jargon interne reste masqué, et rien n'est passé en français.
+      expect(find.textContaining('Auto-reassigned'), findsNothing);
+      expect(find.textContaining('Ton dossier'), findsNothing);
+    });
+
+    testWidgets('« Prochaine étape » d’un vieux dossier réécrite au « tu »',
+        (tester) async {
+      final vieux = _case().copyWith(
+        nextStepTitle: const LocalizedText(
+            fr: 'Préparez votre rendez-vous', en: 'Préparez votre rendez-vous'),
+        nextStepDescription: const LocalizedText(
+            fr: 'Confirmez votre disponibilité et préparez vos pièces justificatives.',
+            en: 'Confirmez votre disponibilité et préparez vos pièces justificatives.'),
+      );
+      await _pumpDetail(tester, vieux);
+
+      expect(find.text('Prépare ton rendez-vous'), findsOneWidget);
+      expect(
+          find.text(
+              'Confirme ta disponibilité et prépare tes pièces justificatives.'),
+          findsOneWidget);
+      expect(find.textContaining('Préparez votre'), findsNothing);
+    });
+
+    testWidgets('« Prochaine étape » inconnue : jamais effacée',
+        (tester) async {
+      final libre = _case().copyWith(
+        nextStepTitle: const LocalizedText(fr: 'Envoyez vos relevés', en: 'x'),
+      );
+      await _pumpDetail(tester, libre);
+      expect(find.text('Envoyez vos relevés'), findsOneWidget);
     });
   });
 

@@ -430,8 +430,13 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 // ── Next step (real: c.nextStep*) ────────────────────────────
                 _NextStepCard(
                   label: 'next_step'.tr,
-                  title: _ctrl.resolve(c.nextStepTitle),
-                  description: _ctrl.resolve(c.nextStepDescription),
+                  // Réécrits au « tu » s'ils datent d'avant la reprise
+                  // serveur, comme l'historique (2e relecture #407).
+                  title: studentNextStepCopy(_ctrl.resolve(c.nextStepTitle),
+                      localeCode: _ctrl.localeCode),
+                  description: studentNextStepCopy(
+                      _ctrl.resolve(c.nextStepDescription),
+                      localeCode: _ctrl.localeCode),
                   appointment:
                       caseAppointmentLabel(c.scheduledAt, _ctrl.localeCode),
                 ),

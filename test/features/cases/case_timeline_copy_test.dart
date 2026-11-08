@@ -27,7 +27,7 @@ List<_RegleTs> _reglesServeur() {
   final src = File('backend/src/modules/cases/legacy-english-copy.ts')
       .readAsStringSync();
   final re = RegExp(
-    r"table: '(?:CaseTimelineEvent|Case)',\s*colonne: '(description|nextStepDescription)',\s*(motif: true,\s*)?anglais:\s*'((?:[^'\\]|\\.)*)',\s*francais:\s*'((?:[^'\\]|\\.)*)'",
+    r"table: '(?:CaseTimelineEvent|Case)',\s*colonne: '(description|nextStepDescription|nextStepTitle)',\s*(motif: true,\s*)?anglais:\s*'((?:[^'\\]|\\.)*)',\s*francais:\s*'((?:[^'\\]|\\.)*)'",
   );
   return [
     for (final m in re.allMatches(src))
@@ -40,8 +40,8 @@ void main() {
   final regles = _reglesServeur();
 
   test('la table serveur est bien lue (garde contre un test vide)', () {
-    // 11 descriptions de jalon + 8 descriptions d'étape à ce jour.
-    expect(regles.length, greaterThanOrEqualTo(19));
+    // 11 descriptions de jalon + 8 descriptions et 6 titres d'étape à ce jour.
+    expect(regles.length, greaterThanOrEqualTo(25));
   });
 
   test('chaque règle serveur donne le même texte côté app', () {
@@ -55,23 +55,96 @@ void main() {
               .replaceAllMapped(RegExp(r'\\(.)'), (m) => m.group(1)!)
           : r.source;
       final attendu = r.cible.replaceAll(r'\1', nom);
-      expect(studentTimelineDescription(entree), attendu,
-          reason: '${r.colonne} : « $entree »');
+      if (r.colonne == 'nextStepTitle') {
+        expect(studentNextStepCopy(entree, localeCode: 'fr'), attendu,
+            reason: '${r.colonne} : « $entree »');
+      } else {
+        expect(studentTimelineDescription(entree, localeCode: 'fr'), attendu,
+            reason: '${r.colonne} : « $entree »');
+        expect(studentNextStepCopy(entree, localeCode: 'fr'), attendu,
+            reason: '${r.colonne} : « $entree »');
+      }
     }
   });
 
   test('une phrase au « tu » écrite par un conseiller passe telle quelle', () {
-    expect(studentTimelineDescription('Pense à signer ta lettre.'),
+    expect(
+        studentTimelineDescription('Pense à signer ta lettre.',
+            localeCode: 'fr'),
         'Pense à signer ta lettre.');
-    expect(studentTimelineDescription('Prépare ton rendez-vous.'),
+    expect(
+        studentTimelineDescription('Prépare ton rendez-vous.',
+            localeCode: 'fr'),
         'Prépare ton rendez-vous.');
   });
 
   test('vouvoiement, anglais et jargon inconnus sont masqués', () {
-    expect(studentTimelineDescription('Merci de nous envoyer vos relevés.'),
+    expect(
+        studentTimelineDescription('Merci de nous envoyer vos relevés.',
+            localeCode: 'fr'),
         isNull);
-    expect(studentTimelineDescription('Lead to follow up by admin.'), isNull);
-    expect(studentTimelineDescription('Reassigned (round-robin).'), isNull);
-    expect(studentTimelineDescription('   '), isNull);
+    expect(
+        studentTimelineDescription('Lead to follow up by admin.',
+            localeCode: 'fr'),
+        isNull);
+    expect(
+        studentTimelineDescription('Reassigned (round-robin).',
+            localeCode: 'fr'),
+        isNull);
+    expect(studentTimelineDescription('   ', localeCode: 'fr'), isNull);
+  });
+
+  group('app en anglais (2e relecture #407)', () {
+    test('le texte anglais légitime s’affiche tel quel, sans réécriture', () {
+      const envoye = 'Your request was sent. A KPB counselor will reply soon.';
+      expect(studentTimelineDescription(envoye, localeCode: 'en'), envoye);
+      expect(
+          studentTimelineDescription(
+              'Awa Traoré is now the owner of this case.',
+              localeCode: 'en'),
+          'Awa Traoré is now the owner of this case.');
+    });
+
+    test('le jargon interne reste masqué dans toutes les langues', () {
+      expect(
+          studentTimelineDescription(
+              'Auto-reassigned after 10h inactivity to Awa.',
+              localeCode: 'en'),
+          isNull);
+      expect(
+          studentTimelineDescription(
+              'Awa was assigned automatically (round-robin).',
+              localeCode: 'en'),
+          isNull);
+      expect(
+          studentTimelineDescription(
+              'The case was updated by an admin or counselor.',
+              localeCode: 'en'),
+          isNull);
+    });
+
+    test('« Prochaine étape » n’est pas réécrite en anglais', () {
+      expect(
+          studentNextStepCopy('Préparez votre rendez-vous', localeCode: 'en'),
+          'Préparez votre rendez-vous');
+    });
+  });
+
+  group('« Prochaine étape » en français', () {
+    test('réécrite au « tu » quand une règle la reconnaît', () {
+      expect(
+          studentNextStepCopy('Préparez votre rendez-vous', localeCode: 'fr'),
+          'Prépare ton rendez-vous');
+      expect(
+          studentNextStepCopy(
+              'Confirmez votre disponibilité et préparez vos pièces justificatives.',
+              localeCode: 'fr'),
+          'Confirme ta disponibilité et prépare tes pièces justificatives.');
+    });
+
+    test('un texte inconnu n’est jamais effacé', () {
+      expect(studentNextStepCopy('Envoyez vos relevés', localeCode: 'fr'),
+          'Envoyez vos relevés');
+    });
   });
 }
