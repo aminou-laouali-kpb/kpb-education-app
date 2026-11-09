@@ -165,9 +165,15 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
 
 ## Courant
 
-- `58` — **`2.3.1 (58)`, EN COURS (archive à faire) : non téléversée, non soumise.**
-  Commit à archiver : `<RELEASE>` — le SHA de `main` après la fusion de la PR de
-  préparation, relevé à l'étape 0.3 de la checklist, jamais écrit d'avance.
+- `58` — **`2.3.1 (58)`, téléversée le 08/11/2026 (App Store Connect, pour TestFlight ; AAB
+  en test interne Play), non soumise à l'App Review.**
+  Commit archivé : `RELEASE` = `5332a128504e21c79ea7247685ba9ad97fbfc672`.
+  iOS : archive Xcode du 08/11/2026, envoyée depuis l'Organizer (lancé avec un PATH assaini)
+  à 20:03 UTC sans erreur ; l'IPA exportée de la même archive a passé
+  `scripts/preflight-ios-archive.sh --app` (Apple Distribution, APNs production, une seule clé
+  PostHog, aucun OneSignal). Android : AAB signé par Flutter CI (run 42491189220), préflight
+  Android OK (certificat Play concordant, AD_ID absent). Préflight de release vert (run
+  42502087027, `tolerates-old`, dérogation 24 h). Backend déployé au même commit après l'envoi.
   La 58 est la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389), l'indicatif
   « Autre » (#401) et le verrou biométrique corrigé (#403, revue avant la 58). La version
   marketing reste `2.3.1` : la 2.3.0 est en vente, la 2.3.1 ne l'a jamais été.

@@ -473,12 +473,14 @@ void main() {
     });
   });
 
+  const release58 = '5332a128504e21c79ea7247685ba9ad97fbfc672';
   group('Le registre', () {
     final ledger = _read('docs/release-ledger.md');
     final consumed = ledger.split('## Courant').first;
     final courant = ledger.split('## Courant').last;
 
-    test('la 58 est courante, avant l\'archive ; la 57 est consommée', () {
+    test('la 58 est courante, téléversée le 08/11/2026 ; la 57 est consommée',
+        () {
       final first = RegExp(r'^-\s+`(\d+)`\s+—', multiLine: true)
           .firstMatch(courant)!
           .group(1);
@@ -486,9 +488,18 @@ void main() {
       expect(first, '58');
       final line58 = _flat(courant.substring(0, courant.indexOf('\n### ')));
       expect(line58, contains('`2.3.1 (58)`'));
-      expect(line58, contains('EN COURS (archive à faire)'));
-      expect(line58, contains('non téléversée'));
-      expect(line58, contains('`<RELEASE>`'));
+      expect(line58, contains('téléversée le 08/11/2026'));
+      expect(line58, contains('non soumise'));
+      expect(line58, contains('`RELEASE` = `$release58`'));
+      for (final before in [
+        'EN COURS (archive à faire)',
+        'non téléversée',
+        '`<RELEASE>`'
+      ]) {
+        expect(line58, isNot(contains(before)),
+            reason:
+                'la ligne « 58 » garde un marqueur « avant » : « $before »');
+      }
       expect(line58, contains('`tolerates-old`'));
       expect(ledger, contains('Version marketing EN VENTE : `2.3.0`'));
 
@@ -506,10 +517,13 @@ void main() {
         expect(line57, contains(needle),
             reason: 'la ligne « 57 » du registre ne dit plus « $needle »');
       }
-      // Aucun SHA posé comme RELEASE tant que la 58 n'est pas archivée.
+      // Un seul SHA posé comme RELEASE : celui de la 58, archivée le 08/11/2026.
       expect(
-        RegExp(r'RELEASE`?\s*(=|:)\s*`?[0-9a-f]{40}').hasMatch(ledger),
-        isFalse,
+        RegExp(r'RELEASE`?\s*(=|:)\s*`?([0-9a-f]{40})')
+            .allMatches(ledger)
+            .map((m) => m.group(2))
+            .toSet(),
+        {release58},
       );
     });
   });
