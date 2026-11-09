@@ -106,6 +106,7 @@ describe('AppConfigController', () => {
       onboardingV2: false,
       community: false,
       assistBridge: false,
+      caseMessaging: false,
       referralInstallReferrer: false,
       referralOnboardingCode: false,
       referralLeaderboard: false,

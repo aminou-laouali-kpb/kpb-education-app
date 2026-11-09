@@ -207,6 +207,7 @@ services:
       # routes /scholarships/match/* (404 `{ disabled: true }` tant qu'il est
       # coupé). FERMÉ par défaut : livré éteint, ouvert à la bascule.
       - KPB_SCHOLARSHIP_MATCH_ENABLED=${KPB_SCHOLARSHIP_MATCH_ENABLED:-false}
+      - KPB_CASE_MESSAGING_ENABLED=${KPB_CASE_MESSAGING_ENABLED:-false}
       # Onboarding « la valeur d'abord » (chantier I3) : `features.onboardingV2`.
       # FERMÉ par défaut : l'ancien parcours reste servi tant qu'il est coupé.
       - KPB_ONBOARDING_V2_ENABLED=${KPB_ONBOARDING_V2_ENABLED:-false}
