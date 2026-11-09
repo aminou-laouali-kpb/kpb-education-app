@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/document_upload_service.dart';
@@ -103,12 +104,11 @@ class CaseTunnelPrefill {
 
 /// Les canaux de contact proposés à l'étape Message. « Dans l'application »
 /// n'y figure que si la messagerie in-app est ouverte
-/// ([AppConfig.caseInAppMessagingEnabled]) : l'équipe ne peut pas y répondre
-/// aujourd'hui (revue avant la 58, constat 34).
+/// (drapeau serveur `caseMessaging`, build 59).
 List<ContactMethod> get kCaseTunnelContactMethods => [
       for (final method in ContactMethod.values)
         if (method != ContactMethod.inApp ||
-            AppConfig.caseInAppMessagingEnabled)
+            RemoteFeatureFlags.instance.caseMessagingEnabled)
           method,
     ];
 

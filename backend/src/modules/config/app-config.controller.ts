@@ -370,6 +370,11 @@ export class AppConfigController {
         // même variable coupe les routes `/scholarships/match/*` (404
         // `{ disabled: true }`) : la carte et l'API s'allument ensemble.
         scholarshipMatch: enabled(process.env.KPB_SCHOLARSHIP_MATCH_ENABLED),
+        // Messagerie DANS le dossier (build 59) : la saisie élève et le fil.
+        // FERMÉE par défaut : on l'ouvre quand l'équipe répond depuis
+        // l'administration (`/admin/cases/:id/messages`). Fermée, l'app
+        // renvoie vers WhatsApp comme la 58.
+        caseMessaging: enabled(process.env.KPB_CASE_MESSAGING_ENABLED),
         // Onboarding « la valeur d'abord » (chantier I3) : aucun champ
         // pré-rempli sans choix de l'élève, « Passer » dès la page 1, erreurs
         // dans le champ. FERMÉ par défaut : l'ancien parcours reste le repli,

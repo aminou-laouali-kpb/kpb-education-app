@@ -211,13 +211,14 @@ void main() {
       expect(find.byType(TextField), findsNothing);
     });
 
-    testWidgets('drapeau ouvert : la saisie revient (code gardé)',
+    testWidgets(
+        'drapeau ouvert : la saisie revient, WhatsApp reste proposé (build 59)',
         (tester) async {
       AppConfig.caseInAppMessagingEnabledOverride = true;
       await _pumpDetail(tester, _case());
 
       expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Écrire à ton conseiller sur WhatsApp'), findsNothing);
+      expect(find.text('Écrire à ton conseiller sur WhatsApp'), findsOneWidget);
     });
   });
 
