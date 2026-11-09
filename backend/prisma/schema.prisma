@@ -703,6 +703,8 @@ model CaseMessage {
   @@unique([caseId, clientMessageId])
   @@index([caseId])
   @@index([createdAt])
+  /// Le fil d'un dossier, page par page, du plus récent au plus ancien.
+  @@index([caseId, createdAt])
 }
 
 model CaseTimelineEvent {

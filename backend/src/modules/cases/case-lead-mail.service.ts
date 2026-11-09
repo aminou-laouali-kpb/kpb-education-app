@@ -80,6 +80,15 @@ export interface CaseLeadRecord {
   user?: CaseLeadUser | null;
 }
 
+export interface CaseMessageAlertRecord {
+  id?: string;
+  referenceCode?: string | null;
+  title?: string | null;
+  assignedAdvisorName?: string | null;
+  user?: { fullName?: string | null; email?: string | null } | null;
+  counsellor?: { email?: string | null; isActive?: boolean | null } | null;
+}
+
 @Injectable()
 export class CaseLeadMailService {
   private readonly logger = new Logger(CaseLeadMailService.name);
@@ -126,6 +135,45 @@ export class CaseLeadMailService {
         `Commercial lead email delivered to ${delivered}/${recipients.length} for case ${record.id ?? 'unknown'}.`,
       );
     }
+  }
+
+  /**
+   * Un élève a écrit dans son dossier. Le conseiller attribué reçoit l'alerte
+   * (adresse de sa fiche, si elle est active) ; sans conseiller, les
+   * commerciaux. Le texte ne reprend PAS le message : on le lit dans l'admin,
+   * pas dans une boîte mail.
+   */
+  async notifyStudentMessage(record: CaseMessageAlertRecord): Promise<void> {
+    if (!this.mail.isEnabled) return;
+    const advisor =
+      record.counsellor?.isActive !== false
+        ? validEmail(record.counsellor?.email)
+        : null;
+    const recipients = advisor ? [advisor] : await this.recipients();
+    if (recipients.length === 0) return;
+    const reference = oneLine(record.referenceCode, 40) || 'dossier';
+    const name = oneLine(record.user?.fullName, 80) || 'Un étudiant';
+    const subject = `Nouveau message — ${reference} — ${name}`;
+    const text = [
+      `${name} a écrit dans son dossier ${reference}.`,
+      `Suivi attribué à : ${oneLine(record.assignedAdvisorName, 120) || 'aucun conseiller'}.`,
+      '',
+      "Ouvrez l'administration KPB, rubrique Dossiers, pour lire le message et répondre.",
+      "La réponse arrive dans l'application de l'étudiant, avec une notification.",
+    ].join('\n');
+    await Promise.all(
+      recipients.map(async (to) => {
+        try {
+          await this.mail.send(to, subject, text, {
+            replyTo: undefined,
+          });
+        } catch {
+          this.logger.warn(
+            `Message alert email failed for case ${record.id ?? 'unknown'}.`,
+          );
+        }
+      }),
+    );
   }
 
   private async recipients(): Promise<string[]> {

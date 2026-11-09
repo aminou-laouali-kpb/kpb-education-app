@@ -56,6 +56,15 @@ const CASE_INCLUDE = {
   internalNotes: { orderBy: { createdAt: 'desc' as const } },
 };
 
+/** Liste staff : le dernier message seulement (réponse attendue ?). */
+const ADMIN_LIST_INCLUDE = {
+  ...CASE_INCLUDE,
+  messages: {
+    orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+    take: 1,
+  },
+};
+
 export interface CaseMessagingActor {
   userId: string;
   role: 'student' | InternalRole;
@@ -63,6 +72,9 @@ export interface CaseMessagingActor {
 }
 
 export type StaffActor = { id: string; role: string; fullName: string };
+
+/** Une seule alerte e-mail à l'équipe par rafale de messages d'un élève. */
+export const STAFF_ALERT_QUIET_MS = 30 * 60 * 1000;
 
 /** Dossiers attribués à un conseiller : profil conseiller lié OU nom d'affectation. */
 function counselorCaseScope(staff: StaffActor) {
@@ -154,20 +166,29 @@ export class CasesService {
   }
 
   async findAllForAdmin(staff?: StaffActor) {
-    if (staff?.role !== InternalRole.Counselor) return this.findAll();
-    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
-    // comprises).
     this.assertDb();
+    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
+    // comprises). La liste ne charge plus les fils de messages (un seul
+    // message, le dernier, pour savoir si une réponse est attendue) : le fil
+    // se lit page par page (`GET /admin/cases/:id/messages`).
     const items = await this.prismaService.execute((prisma) =>
       prisma.case.findMany({
-        where: counselorCaseScope(staff),
-        include: CASE_INCLUDE,
+        where:
+          staff?.role === InternalRole.Counselor
+            ? counselorCaseScope(staff)
+            : undefined,
+        include: ADMIN_LIST_INCLUDE,
         orderBy: { createdAt: 'desc' },
       }),
     );
-    return (items ?? []).map((c) =>
-      this.mapDbCase(c, { includeInternal: true }),
-    );
+    return (items ?? []).map((c) => {
+      const last = c.messages?.[0];
+      return {
+        ...this.mapDbCase({ ...c, messages: [] }, { includeInternal: true }),
+        lastMessageAt: last ? last.createdAt.toISOString() : null,
+        awaitingReply: last?.senderRole === 'student',
+      };
+    });
   }
 
   /**
@@ -206,6 +227,7 @@ export class CasesService {
         select: {
           id: true,
           userId: true,
+          assignedAdvisorName: true,
           counsellor: { select: { adminUserId: true } },
         },
       }),
@@ -217,9 +239,15 @@ export class CasesService {
       actor.role === InternalRole.Admin ||
       actor.role === InternalRole.SuperAdmin ||
       actor.role === InternalRole.Commercial;
+    // Même portée que `counselorCaseScope` : profil conseiller lié OU nom
+    // d'affectation (un conseiller attribué par son nom lisait le dossier dans
+    // l'admin mais n'aurait pas pu y répondre).
     const isAssignedCounselor =
       actor.role === InternalRole.Counselor &&
-      caseRecord?.counsellor?.adminUserId === actor.userId;
+      (caseRecord?.counsellor?.adminUserId === actor.userId ||
+        (!!actor.fullName?.trim() &&
+          caseRecord?.assignedAdvisorName?.trim().toLowerCase() ===
+            actor.fullName.trim().toLowerCase()));
 
     if (!caseRecord || (!isOwner && !isGlobalStaff && !isAssignedCounselor)) {
       throw new NotFoundException(`Case ${id} not found.`);
@@ -512,17 +540,9 @@ export class CasesService {
             },
           });
 
-          await tx.caseTimelineEvent.create({
-            data: {
-              caseId: id,
-              status:
-                (await tx.case.findUnique({ where: { id } }))?.status ??
-                CaseStatus.Submitted,
-              title: 'Nouveau message',
-              description: 'Un nouveau message a été ajouté au dossier.',
-            },
-          });
-
+          // Plus d'événement « Nouveau message » dans la chronologie : il
+          // doublait chaque écriture et noyait les vraies étapes du dossier.
+          // Le fil des messages se lit dans le fil lui-même.
           await tx.case.update({
             where: { id },
             data: { updatedAt: new Date() },
@@ -550,8 +570,133 @@ export class CasesService {
     const payload = this.toMessagePayload(created);
     if (effectiveRole !== 'student') {
       this.broadcastCaseMessage(id, payload);
+      await this.notifyStudentOfReply(id, payload);
+    } else {
+      await this.notifyStaffOfStudentMessage(id, created.createdAt);
     }
     return payload;
+  }
+
+  /**
+   * L'équipe a répondu : l'élève reçoit un push qui ouvre SON dossier. Hors
+   * `NotificationDispatchService` (pas d'heures calmes ni de plafond) : c'est
+   * la réponse à une question qu'il vient de poser. Un échec d'envoi ne
+   * rejette jamais la réponse, déjà enregistrée.
+   */
+  private async notifyStudentOfReply(
+    caseId: string,
+    message: { senderName: string; body: string },
+  ) {
+    try {
+      const owner = await this.prismaService.execute((prisma) =>
+        prisma.case.findUnique({
+          where: { id: caseId },
+          select: { userId: true },
+        }),
+      );
+      if (!owner?.userId) return;
+      const preview =
+        message.body.length > 120
+          ? `${message.body.slice(0, 117).trimEnd()}…`
+          : message.body;
+      await this.pushService.sendToUser(
+        owner.userId,
+        `${message.senderName} t’a répondu`,
+        preview,
+        { type: 'case_message', caseId, route: `/cases/${caseId}` },
+      );
+    } catch {
+      this.logger.warn(`Reply push failed for case ${caseId}.`);
+    }
+  }
+
+  /**
+   * Un élève a écrit : le conseiller attribué (sinon les commerciaux) reçoit
+   * un e-mail. Une rafale de messages ne produit qu'un e-mail : rien si un
+   * autre message de l'élève est arrivé dans ce dossier dans les 30 minutes
+   * qui précèdent.
+   */
+  private async notifyStaffOfStudentMessage(caseId: string, at: Date) {
+    if (!this.leadMail) return;
+    try {
+      const since = new Date(at.getTime() - STAFF_ALERT_QUIET_MS);
+      const recent = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.count({
+          where: {
+            caseId,
+            senderRole: 'student',
+            createdAt: { gte: since, lt: at },
+          },
+        }),
+      );
+      if ((recent ?? 0) > 0) return;
+      const record = await this.prismaService.execute((prisma) =>
+        prisma.case.findUnique({
+          where: { id: caseId },
+          select: {
+            id: true,
+            referenceCode: true,
+            title: true,
+            assignedAdvisorName: true,
+            user: { select: { fullName: true, email: true } },
+            counsellor: { select: { email: true, isActive: true } },
+          },
+        }),
+      );
+      if (!record) return;
+      await this.leadMail.notifyStudentMessage(record);
+    } catch {
+      this.logger.warn(`Staff message alert failed for case ${caseId}.`);
+    }
+  }
+
+  /**
+   * Fil d'un dossier pour l'ÉQUIPE, page par page : les `limit` messages les
+   * plus récents (avant `before` s'il est donné), rendus du plus ancien au
+   * plus récent. `hasMore` dit s'il en reste plus anciens.
+   */
+  async findMessagesForAdmin(
+    id: string,
+    staff: StaffActor,
+    options: { before?: string; limit?: number } = {},
+  ) {
+    this.assertDb();
+    await this.assertCanAccessMessaging(id, {
+      userId: staff.id,
+      role: staff.role as InternalRole,
+      fullName: staff.fullName,
+    });
+    const limit = Math.min(Math.max(Math.trunc(options.limit ?? 50), 1), 100);
+    let beforeDate: Date | undefined;
+    if (options.before) {
+      const anchor = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.findFirst({
+          where: { id: options.before, caseId: id },
+          select: { createdAt: true },
+        }),
+      );
+      if (!anchor) throw new NotFoundException('Message not found.');
+      beforeDate = anchor.createdAt;
+    }
+    const rows = await this.prismaService.execute((prisma) =>
+      prisma.caseMessage.findMany({
+        where: {
+          caseId: id,
+          ...(beforeDate ? { createdAt: { lt: beforeDate } } : {}),
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+      }),
+    );
+    const page = rows ?? [];
+    const hasMore = page.length > limit;
+    return {
+      items: page
+        .slice(0, limit)
+        .reverse()
+        .map((m) => this.toMessagePayload(m)),
+      hasMore,
+    };
   }
 
   private async findMessageByClientId(
