@@ -181,6 +181,14 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
 6. **Export CSV** (classement ou filleuls) pour archive — fichiers à données personnelles, à
    garder hors des canaux publics.
 
+> **Déploiement du backend de la build 59 pendant une campagne.** Le statut
+> « ne compte pas » (`ineligible`, compte créé avant la compétition) n'est
+> posé qu'au recalcul, et le recalcul planifié ne traite que les campagnes
+> `live`. Si le backend 59 arrive alors qu'une campagne est déjà **gelée** (et
+> pas encore close), lancer un recalcul manuel depuis l'admin (action
+> « Recalculer ») juste après le déploiement : sinon ces comptes restent
+> affichés « En attente ».
+
 ## 8. Parrainage côté app — build 57 (2.3.1), derrière trois drapeaux fermés
 
 **Révisé le 17/10/2026 (décision du propriétaire)** : les parties app entrent dans la build 57
