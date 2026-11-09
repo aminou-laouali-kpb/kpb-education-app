@@ -1,5 +1,11 @@
 # Fiche de QA appareil — build 58 : la 57 corrigée, recette TestFlight en release
 
+> **⚠️ REMPLACÉE par la 59 le 09/11/2026 : suivre `docs/mise-a-jour-59-checklist.md`.**
+> La `2.3.1 (58)` a été téléversée le 08/11/2026 (App Store Connect pour TestFlight, AAB en test
+> interne Play ; commit archivé `5332a128`) et n'a jamais été soumise. Décision du propriétaire du
+> 09/11/2026 : la version de lancement doit contenir davantage ; la build suivante est la
+> `2.3.1 (59)`, même version marketing. Le contenu ci-dessous est conservé tel qu'écrit.
+
 > **Pour qui.** Le propriétaire (ou un testeur désigné), sur **un iPhone, dont un iPhone SE**, et
 > **un Android d'entrée de gamme en 360 dp**, physiques, avec la **build soumise** `2.3.1 (58)`
 > installée depuis TestFlight / Play Internal — **en release**, jamais un build de debug : le

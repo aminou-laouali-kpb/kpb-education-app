@@ -163,26 +163,50 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   `### Chantier L (16/10/2026)`, `### Parrainage côté app (17/10/2026)`,
   `### Finalisation de la build 57 (18/10/2026)`.
 
-## Courant
+- `58` — **`2.3.1 (58)` : consommé le 08/11/2026 (téléversée sur App Store Connect pour
+  TestFlight, AAB en test interne Play), jamais soumise à l'App Review, remplacée par la 59.**
+  Décision du propriétaire du 09/11/2026 : « je veux qu'il y ait tout déjà » — la version de
+  lancement doit contenir davantage (espace parent sans prix, « Pass Karatou » partout, accroche
+  invité « Mes bourses », messagerie du dossier dans les deux sens, compétition corrigée). Le
+  numéro est consommé parce que la build est partie chez Apple et chez Google ; il ne reprend
+  jamais la place du courant. La 2.3.1 n'ayant jamais été en vente ni soumise, la version
+  marketing `2.3.1` reste libre pour la 59.
 
-- `58` — **`2.3.1 (58)`, téléversée le 08/11/2026 (App Store Connect, pour TestFlight ; AAB
-  en test interne Play), non soumise à l'App Review.**
-  Commit archivé : `RELEASE` = `5332a128504e21c79ea7247685ba9ad97fbfc672`.
-  iOS : archive Xcode du 08/11/2026, envoyée depuis l'Organizer (lancé avec un PATH assaini)
+  Faits gardés : commit archivé `5332a128504e21c79ea7247685ba9ad97fbfc672` (`main` après
+  #402) ; archive Xcode du 08/11/2026, envoyée depuis l'Organizer (lancé avec un PATH assaini)
   à 20:03 UTC sans erreur ; l'IPA exportée de la même archive a passé
   `scripts/preflight-ios-archive.sh --app` (Apple Distribution, APNs production, une seule clé
   PostHog, aucun OneSignal). Android : AAB signé par Flutter CI (run 42491189220), préflight
-  Android OK (certificat Play concordant, AD_ID absent). Préflight de release vert (run
-  42502087027, `tolerates-old`, dérogation 24 h). Backend déployé au même commit après l'envoi.
-  La 58 est la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389), l'indicatif
-  « Autre » (#401) et le verrou biométrique corrigé (#403, revue avant la 58). La version
-  marketing reste `2.3.1` : la 2.3.0 est en vente, la 2.3.1 ne l'a jamais été.
-  Couplage backend **`tolerates-old`** : la 58 n'attend aucun code serveur qui ne soit
-  déjà en production (`### Préparation de la build 58 (07/11/2026)`).
+  Android OK (certificat Play concordant, AD_ID absent) ; **cet AAB ne passe jamais en
+  production**. Préflight de release vert (run 42502087027, `tolerates-old`, dérogation 24 h).
+  Backend déployé au même commit après l'envoi : la production sert `5332a128` au 09/11/2026.
+  Contenu : la 57 plus les correctifs de l'audit UX du 28/10/2026 (#387, #389), l'indicatif
+  « Autre » (#401), le verrou biométrique corrigé (#403) et la revue avant la 58 (#404 à
+  #408) ; couplage `tolerates-old`. Recette `docs/device-qa-build58.md` jamais signée
+  (À VALIDER (propriétaire) : ce qui en a été joué sur TestFlight). Ses papiers (checklist,
+  pack, recette) portent un bandeau « REMPLACÉE par la 59 ». Entrée ci-dessous :
+  `### Préparation de la build 58 (07/11/2026)`.
 
-  **Papiers** : `docs/mise-a-jour-58-checklist.md` (l'ordre des opérations),
-  `docs/release-58-store-pack.md` (ce qui change par rapport au pack 57 : notes de revue
-  recomptées, notes de version), `docs/device-qa-build58.md` (recette appareil, jamais
+## Courant
+
+- `59` — **`2.3.1 (59)`, EN COURS (archive à faire) : non téléversée, non soumise.**
+  Commit à archiver : `<RELEASE>` — À RENSEIGNER le jour de l'archive (checklist 59, §0.3),
+  jamais un SHA écrit de mémoire.
+  La 59 est la 58 plus ce que le propriétaire a voulu dans la version de lancement (décision
+  du 09/11/2026) : espace parent sans aucun prix (onglet « Accompagnement », « Demander le
+  tarif »), « Premium » renommé « Pass Karatou », carte invité « Découvre les bourses pour
+  lesquelles tu es éligible » (derrière `scholarshipMatch`), « Déjà un compte ? » à l'entrée,
+  messagerie du dossier dans les deux sens (derrière le nouveau drapeau `caseMessaging`, fermé
+  par défaut) et la compétition des ambassadeurs corrigée (statut `ineligible`, refus
+  expliqués, fin annoncée). La version marketing reste `2.3.1` : la 2.3.0 est en vente, la
+  2.3.1 ne l'a jamais été.
+  Couplage backend **`tolerates-old`** : la 59 fonctionne contre la production actuelle
+  (`5332a128`, le serveur de la 58) comme contre le serveur de la 59
+  (`### Préparation de la build 59 (09/11/2026)`).
+
+  **Papiers** : `docs/mise-a-jour-59-checklist.md` (l'ordre des opérations),
+  `docs/release-59-store-pack.md` (ce qui change par rapport aux packs 57 et 58 : notes de
+  revue recomptées, notes de version), `docs/device-qa-build59.md` (recette appareil, jamais
   jouée). Le pack 57 reste la référence pour le reste (déclarations, drapeaux, paliers).
 
 ### Ce que 55 embarque
@@ -647,6 +671,69 @@ recherche en tête de l'Accueil, téléphone de 7 à 12 chiffres) ; #401 et #403
 dans la 58 le 07/11/2026 ; la puce de notes de version proposée au
 pack 58 §2 ; une éventuelle fiche de version 2.3.1 déjà créée dans App Store Connect pour
 la 57 (y rattacher la 58 à sa place).
+
+
+### Préparation de la build 59 (09/11/2026) — version posée, couplage `tolerates-old`
+
+**Décision du propriétaire du 09/11/2026** : la 58 (téléversée le 08/11/2026, jamais soumise)
+ne part pas en revue ; « je veux qu'il y ait tout déjà ». La 59 la remplace, même version
+marketing.
+
+**Numéro posé** : `pubspec.yaml` = `version: 2.3.1+59` ; `scripts/preflight-ios-archive.sh`
+(`EXPECTED_BUILD="59"`, `EXPECTED_VERSION="2.3.1"`) et `scripts/preflight-android-aab.sh`
+(`EXPECTED_VERSION_NAME="2.3.1"`, `EXPECTED_VERSION_CODE="59"`) ; la `58` passe sous
+**Consommés** ; la `59` est **courante**, état « avant l'archive ».
+`test/release/mise_a_jour_58_checklist_test.dart` ne lit plus la version ni l'état courant du
+dépôt : il garde le document de la 58. `test/release/mise_a_jour_59_checklist_test.dart` prend
+le relais. Aucune build de store lancée, rien de déployé ni de soumis.
+
+**Ce que la 59 porte en plus de la 58** (`git log --first-parent 8279d0ea..claude/build-59`,
+relevé du 09/11/2026 ; `8279d0ea` = #409, le report de la 58 au registre) :
+- **app** — 7b6804ad : espace parent sans prix (l'onglet « Paiements » devient
+  « Accompagnement », « Réserver » devient « Demander le tarif », message WhatsApp de demande
+  de tarif, historique de paiements retiré) ; « Premium » → « Pass Karatou » (espace « Études en
+  France », fiche établissement) ; carte invité « Découvre les bourses pour lesquelles tu es
+  éligible » → « Créer mon compte et voir mes bourses » (seulement si `scholarshipMatch` est
+  ouvert) ; « Déjà un compte ? Utilise le même Google ou le même e-mail » sur l'écran d'entrée ;
+  595a1813 : la saisie du dossier pilotée par le drapeau serveur `caseMessaging` (remplace le
+  repli compilé `AppConfig.caseInAppMessagingEnabled`), WhatsApp toujours proposé, dossiers
+  relus dès une notification `case_message` ; 0c19e934 : compétition des ambassadeurs —
+  règlement toujours visible, filleuls « ne comptent pas » (`ineligible`), refus expliqués
+  (autre parrain, dossier déjà ouvert, parrainage croisé), fin de compétition annoncée ;
+- **serveur** — 39fcd758 : `GET` et `POST /admin/cases/:id/messages`, notification à l'élève
+  quand l'équipe répond, alerte e-mail au conseiller (ou aux commerciaux) quand l'élève écrit,
+  clé `features.caseMessaging` (`KPB_CASE_MESSAGING_ENABLED`, fermée par défaut, c263f322),
+  migration additive `20261109120000_case_message_case_created_idx` (un index) ; 0c19e934 :
+  statut `ineligible`, codes d'erreur `referral_*`, `competition.phase` pour un
+  non-participant, `campaign.rulesUrl` ;
+- **admin** — ce0138d7 : le fil du dossier et la réponse depuis l'administration ;
+- **docs** — `docs/reglement-competition-ambassadeurs-TEMPLATE.md`, runbook de la campagne.
+
+**Aucune dépendance ni manifeste ne bouge** entre `5332a128` et `claude/build-59` :
+`pubspec.lock`, `Info.plist`, `PrivacyInfo.xcprivacy`, `AndroidManifest.xml`,
+`android/app/build.gradle` et `ios/Podfile.lock` sont identiques ; `pubspec.yaml` ne change que
+par sa ligne `version:`. Aucun SDK, aucune permission, aucun hôte nouveau dans `lib/`.
+
+**Couplage backend : `tolerates-old`.** La production sert `5332a128` (le serveur de la 58,
+déployé après son envoi). La 59 tolère l'absence de chaque nouveauté serveur : `caseMessaging`
+absente vaut `false` (`RemoteFeatureFlags.caseMessagingEnabled`) et le dossier renvoie vers
+WhatsApp exactement comme la 58 ; la saisie élève, quand le drapeau est ouvert, utilise
+`POST /cases/:id/messages`, déjà servie ; `me.ineligible` absent vaut 0 (la ligne « Ne comptent
+pas » ne s'affiche pas) ; `competition.phase` absent laisse le non-participant comme avant ;
+sans `code` dans un 403, les refus se lisent au message anglais (repli testé) ; sans
+`campaign.rulesUrl`, le lien du règlement vient du classement public, sinon de sa page. La carte
+invité suit `scholarshipMatch`, déjà servie (fermée). À l'inverse, le nouveau serveur ne casse
+ni la 58 ni la 2.3.0 : une clé de plus dans `features`, un index, des routes admin.
+`requires-new` imposerait un déploiement au SHA exact de `RELEASE` avant le préflight, sans
+qu'aucun écran de la 59 n'en dépende à la revue (`caseMessaging` y vaut `false`). Le déploiement
+du serveur de la 59 est donc **dû après l'envoi aux testeurs**, avant la recette de la
+messagerie (checklist 59, étape 1).
+
+**Reste au propriétaire** — À VALIDER (propriétaire) : les textes compilés (« Accompagnement »,
+« Demander le tarif », la carte invité, « Déjà un compte ? »), la date d'ouverture de
+`caseMessaging` et qui répond depuis l'administration, l'ouverture de `scholarshipMatch`
+(sans elle la carte invité n'apparaît pas), la puce de notes de version du pack 59 §2, et ce qui
+a été joué de la recette de la 58.
 
 ### Ce que 52 embarque
 

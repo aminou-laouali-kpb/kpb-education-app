@@ -96,6 +96,11 @@ const _flags = <_Flag>[
       'scholarshipMatch', true, _controller, 'KPB_SCHOLARSHIP_MATCH_ENABLED'),
   _Flag('scholarship-match-off', 'KPB_SCHOLARSHIP_MATCH_ENABLED', 'false',
       'scholarshipMatch', false),
+  // Messagerie du dossier (build 59), même forme que « Mes 10 bourses ».
+  _Flag('case-messaging-on', 'KPB_CASE_MESSAGING_ENABLED', 'true',
+      'caseMessaging', true, _controller, 'KPB_CASE_MESSAGING_ENABLED'),
+  _Flag('case-messaging-off', 'KPB_CASE_MESSAGING_ENABLED', 'false',
+      'caseMessaging', false),
 ];
 
 /// Un `.env` de production plausible : chaque drapeau de la 57 à son défaut, et
@@ -111,6 +116,7 @@ const _baseEnv = 'KPB_EEF_TEASER_ENABLED=true\n'
     'KPB_COMMUNITY_VERIF_BOT_MODE=review\n'
     'KPB_SCHOLARSHIP_MATCH_ENABLED=false\n'
     'KPB_ONBOARDING_V2_ENABLED=false\n'
+    'KPB_CASE_MESSAGING_ENABLED=false\n'
     'POSTGRES_PASSWORD=s3cret\n';
 
 // ── Un faux `docker` ──────────────────────────────────────────────────────────
@@ -355,6 +361,7 @@ Map<String, Object?> _served(Map<String, Object?> over,
           'assistBridge': false,
           'scholarshipMatch': false,
           'onboardingV2': false,
+          'caseMessaging': false,
           ...over,
         }.entries)
           if (!absent.contains(e.key)) e.key: e.value,
@@ -773,6 +780,7 @@ void main() {
           run.output.substring(run.output.indexOf('── .env après écriture ──'));
       expect(shown, contains('KPB_SCHOLARSHIP_MATCH_ENABLED=false'));
       expect(shown, contains('KPB_ONBOARDING_V2_ENABLED=false'));
+      expect(shown, contains('KPB_CASE_MESSAGING_ENABLED=false'));
       expect(shown, isNot(contains('POSTGRES_PASSWORD')));
       // `show-state` passe par la même fonction.
       final showState =

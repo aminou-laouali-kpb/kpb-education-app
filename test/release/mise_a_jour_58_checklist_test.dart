@@ -9,6 +9,13 @@
 // l'archive. Le préflight de l'IPA exportée (`--app`), sauté pour la 57, devient
 // obligatoire. La recette suit les conditions de l'audit.
 //
+// La 58 a été téléversée le 08/11/2026 (commit archivé `5332a128`), jamais
+// soumise, et remplacée par la 59 (décision du propriétaire du 09/11/2026 ;
+// préparation du 09/11/2026 : `pubspec.yaml` porte `2.3.1+59`). Ce test ne lit
+// plus la version du dépôt ni l'état courant du registre : il garde le document
+// de la 58 tel qu'il doit rester, et la ligne de la 58 sous « Consommés »
+// (`mise_a_jour_59_checklist_test.dart` garde désormais la version posée).
+//
 // Ce test lit les documents ; il ne lance aucune commande (elles touchent les
 // boutiques et la production).
 
@@ -52,18 +59,13 @@ String _section(String doc, String headingStart) {
   return end == -1 ? rest : rest.substring(0, end);
 }
 
-({String name, String build}) _pubspec() {
-  final m = RegExp(
-    r'^version:\s*(\d+\.\d+\.\d+)\+(\d+)\s*$',
-    multiLine: true,
-  ).firstMatch(_read('pubspec.yaml'))!;
-  return (name: m.group(1)!, build: m.group(2)!);
-}
+/// La version que la checklist de la 58 décrit. Depuis la préparation de la 59
+/// (09/11/2026), `pubspec.yaml` porte `2.3.1+59`.
+const ({String name, String build}) _documented = (name: '2.3.1', build: '58');
 
-String _expected(String script, String variable) =>
-    RegExp('^$variable="([^"]*)"', multiLine: true)
-        .firstMatch(_read(script))!
-        .group(1)!;
+/// La dernière migration du déploiement de la 58 : celles qui viennent après
+/// (59 et suivantes) ne sont pas de son ressort.
+const _lastMigration58 = '20261108120000_case_message_client_id';
 
 int _utf8Length(String s) => s.runes.fold<int>(0, (n, r) {
       if (r <= 0x7f) return n + 1;
@@ -84,14 +86,7 @@ void main() {
     final flat = _flat(doc);
 
     test('porte la version 2.3.1 (58) et plus aucune commande de la 57', () {
-      final shipping = _pubspec();
-      expect(
-        shipping.build,
-        '58',
-        reason: 'pubspec.yaml porte +${shipping.build}, pas la 58 préparée '
-            'par cette checklist',
-      );
-      expect(shipping.name, '2.3.1');
+      const shipping = _documented;
       expect(doc, contains('${shipping.name} (58)'));
       expect(doc, contains('version: ${shipping.name}+58'));
       expect(doc, contains('FLUTTER_BUILD_NUMBER=58'));
@@ -114,19 +109,8 @@ void main() {
           reason: 'la checklist de la 58 contient encore « $stale »',
         );
       }
-      // Les préflights attendent la build que la checklist décrit.
-      expect(_expected('scripts/preflight-ios-archive.sh', 'EXPECTED_BUILD'),
-          '58');
-      expect(_expected('scripts/preflight-ios-archive.sh', 'EXPECTED_VERSION'),
-          '2.3.1');
-      expect(
-          _expected(
-              'scripts/preflight-android-aab.sh', 'EXPECTED_VERSION_CODE'),
-          '58');
-      expect(
-          _expected(
-              'scripts/preflight-android-aab.sh', 'EXPECTED_VERSION_NAME'),
-          '2.3.1');
+      // Les préflights attendent désormais la 59 : c'est
+      // `mise_a_jour_59_checklist_test.dart` qui les garde.
     });
 
     test('même version marketing : 2.3.0 en vente, 2.3.1 jamais vendue', () {
@@ -178,9 +162,10 @@ void main() {
         '+version: 2.3.1+58',
         '+  local_auth_platform_interface: ^1.1.0',
       ]);
-      final pubspecLines = _read('pubspec.yaml').split('\n').toSet();
-      expect(pubspecLines, contains('version: ${_pubspec().name}+58'));
-      expect(pubspecLines.contains('version: 2.3.1+57'), isFalse);
+      // La ligne `version:` du dépôt est celle de la 59 depuis le 09/11/2026 :
+      // la 58 se garde par son document.
+      expect(_read('pubspec.yaml').split('\n').toSet(),
+          isNot(contains('version: 2.3.1+57')));
       // Les PR depuis l'archive de la 57, nommées.
       final flatStep = _flat(step);
       for (final pr in ['#386', '#387', '#389', '#392', '#397', '#383']) {
@@ -216,6 +201,9 @@ void main() {
           .where((n) =>
               n.compareTo('20261028120000_profile_completion_without_consent') >
               0)
+          // La 58 est figée : les migrations venues après elle (la 59 et
+          // suivantes) relèvent de leur propre checklist.
+          .where((n) => n.compareTo(_lastMigration58) <= 0)
           .toList();
       expect(migrations, ['20261108120000_case_message_client_id']);
       expect(flat, contains('**Couplage backend : `tolerates-old`**'));
@@ -479,28 +467,31 @@ void main() {
     final consumed = ledger.split('## Courant').first;
     final courant = ledger.split('## Courant').last;
 
-    test('la 58 est courante, téléversée le 08/11/2026 ; la 57 est consommée',
-        () {
-      final first = RegExp(r'^-\s+`(\d+)`\s+—', multiLine: true)
-          .firstMatch(courant)!
-          .group(1);
-      expect(first, _pubspec().build);
-      expect(first, '58');
-      final line58 = _flat(courant.substring(0, courant.indexOf('\n### ')));
-      expect(line58, contains('`2.3.1 (58)`'));
-      expect(line58, contains('téléversée le 08/11/2026'));
-      expect(line58, contains('non soumise'));
-      expect(line58, contains('`RELEASE` = `$release58`'));
-      for (final before in [
-        'EN COURS (archive à faire)',
-        'non téléversée',
-        '`<RELEASE>`'
+    test(
+        'la 58 est consommée (téléversée le 08/11/2026, remplacée par la 59), '
+        'la 57 aussi', () {
+      final start58 =
+          consumed.indexOf(RegExp(r'^-\s+`58`\s+—', multiLine: true));
+      expect(start58, isNot(-1), reason: 'la 58 n\'est pas sous Consommés');
+      final line58 = _flat(consumed.substring(start58));
+      for (final needle in [
+        '`2.3.1 (58)`',
+        '08/11/2026',
+        'jamais soumise',
+        'remplacée par la 59',
+        'je veux qu\'il y ait tout déjà',
+        'commit archivé `$release58`',
+        '42491189220',
+        '42502087027',
+        '`tolerates-old`',
+        '--app',
       ]) {
-        expect(line58, isNot(contains(before)),
-            reason:
-                'la ligne « 58 » garde un marqueur « avant » : « $before »');
+        expect(line58, contains(needle),
+            reason: 'la ligne « 58 » du registre ne dit plus « $needle »');
       }
-      expect(line58, contains('`tolerates-old`'));
+      // Plus aucune ligne « 58 » sous Courant.
+      expect(
+          RegExp(r'^-\s+`58`\s+—', multiLine: true).hasMatch(courant), isFalse);
       expect(ledger, contains('Version marketing EN VENTE : `2.3.0`'));
 
       final start57 =
@@ -517,13 +508,11 @@ void main() {
         expect(line57, contains(needle),
             reason: 'la ligne « 57 » du registre ne dit plus « $needle »');
       }
-      // Un seul SHA posé comme RELEASE : celui de la 58, archivée le 08/11/2026.
+      // Le SHA de la 58 n'est plus posé comme RELEASE : la 59, courante, est
+      // avant l'archive (`build_number_test.dart`).
       expect(
-        RegExp(r'RELEASE`?\s*(=|:)\s*`?([0-9a-f]{40})')
-            .allMatches(ledger)
-            .map((m) => m.group(2))
-            .toSet(),
-        {release58},
+        RegExp('RELEASE`?\\s*(=|:)\\s*`?$release58').hasMatch(ledger),
+        isFalse,
       );
     });
   });

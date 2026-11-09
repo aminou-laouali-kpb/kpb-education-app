@@ -1,5 +1,11 @@
 # Mise à jour 2.3.1 (58) — la checklist du 07/11/2026
 
+> **⚠️ REMPLACÉE par la 59 le 09/11/2026 : suivre `docs/mise-a-jour-59-checklist.md`.**
+> La `2.3.1 (58)` a été téléversée le 08/11/2026 (App Store Connect pour TestFlight, AAB en test
+> interne Play ; commit archivé `5332a128`) et n'a jamais été soumise. Décision du propriétaire du
+> 09/11/2026 : la version de lancement doit contenir davantage ; la build suivante est la
+> `2.3.1 (59)`, même version marketing. Le contenu ci-dessous est conservé tel qu'écrit.
+
 > **Ce que ce fichier est.** L'ordre exact des opérations pour vérifier, archiver, recetter,
 > soumettre et déployer **par étapes** la 58, avec les commandes. Il **succède** à
 > `docs/mise-a-jour-57-checklist.md`. La 58 est la 57 corrigée : l'audit UX externe du 28/10/2026

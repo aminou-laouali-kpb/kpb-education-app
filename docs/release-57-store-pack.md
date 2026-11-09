@@ -7,6 +7,8 @@
 > **Ce pack reste la référence pour la 58**, sauf ses §2 (notes de version) et §3 (« Notes for
 > Review »), remplacés par `docs/release-58-store-pack.md`. Le contenu ci-dessous est conservé
 > tel qu'écrit.
+> **Il reste aussi la référence pour la 59** (préparée le 09/11/2026), sauf ses §2 et §3,
+> remplacés par `docs/release-59-store-pack.md` ; son §5 liste la clé `caseMessaging` de la 59.
 
 > **À quoi sert ce fichier.** La 57 est une **release unique** qui embarque les chantiers B, C,
 > D, F, G, H, I et K (PR #353 à #361), plus la bascule des notifications vers Firebase Cloud
@@ -396,6 +398,7 @@ ouvert pour les seconds (`RemoteFeatureFlags`). « Prod. 16/10 » = mesure du 16
 | `homeCounselor` | `KPB_HOME_COUNSELOR_ENABLED` | ouvert | absente | ouvert (`true`) | Interrupteur d'urgence |
 | `onboardingV2` | `KPB_ONBOARDING_V2_ENABLED` | fermé | absente | `false` | **Étape 2** de l'ordre ci-dessous : quand la 57 est à 100 % sur les deux boutiques et stable |
 | `scholarshipMatch` | `KPB_SCHOLARSHIP_MATCH_ENABLED` | fermé | absente | `false` | **Étape 4**, la dernière : nationalité tranchée (consentement explicite, 18/10/2026 ; case dans l'app), puis la porte des 90 % de couverture, la recette en préproduction et la relecture des textes |
+| `caseMessaging` | `KPB_CASE_MESSAGING_ENABLED` | fermé | absente | absente (clé ajoutée par la build 59) | Messagerie DANS le dossier (build 59, `docs/release-59-store-pack.md`) : fermée, l'app renvoie vers WhatsApp comme la 58 ; s'ouvre par `case-messaging-on` seulement quand l'équipe répond depuis l'administration ; À VALIDER (propriétaire) : la date |
 | `community` | `KPB_COMMUNITY_ENABLED` | fermé | absente | `false` | Communauté (C1 + C2) : **dans la 57 et déclarée dès sa soumission** (décision du propriétaire du 20/10/2026 : notes de revue §3, classification d'âge et formulaires, §4.4, `docs/CONSOLE_ANSWERS.md` §3 bis, `docs/STORE_READINESS.md`) ; OFF à la revue (« OFF at review time ») ; son ouverture est une décision d'exploitation du propriétaire, après l'approbation, sans nouvelle soumission ; À VALIDER (propriétaire) : la date |
 | `assistBridge` | `KPB_ASSIST_BRIDGE_MODE` (vrai seulement à `on`) | fermé | absente | `false` (mode `shadow`) | Bot « Passerelle » (C3 bis), déclaré aux notes de revue de la 57 ; la clé n'affiche que l'interrupteur « Suggestions de l'équipe KPB ». Passage à `on` après au moins 2 semaines de `shadow` et moins de 10 % de faux positifs (critères validés le 18/10/2026, `docs/runbook-bot-passerelle.md`) ; source coach fermée ; ne pas toucher avant l'ouverture de la communauté |
 | `referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | fermé | absente | `false` | Parrainage : après la Data safety Play reportée (§4.1) et la politique à jour ; dernière des trois (`docs/runbook-campagne-ambassadeurs.md` §8) |
@@ -433,7 +436,7 @@ Les interrupteurs `eefHelpBubble` et `eefPrivateSchools` suivent leur propre cal
 conseillé dans `docs/runbook-campagne-ambassadeurs.md` §8, à valider par le propriétaire).
 
 Le port 22 du VPS n'étant pas joignable depuis un poste de travail, les drapeaux du parrainage, de
-la communauté, des deux bots, de « Mes 10 bourses » et de l'onboarding V2 s'ouvrent et se referment par des **actions fermées du workflow
+la communauté, des deux bots, de « Mes 10 bourses », de l'onboarding V2 et de la messagerie du dossier (build 59) s'ouvrent et se referment par des **actions fermées du workflow
 « VPS ops »** (`vps-ops.yml`), jamais en éditant le `.env` en SSH. Chacune n'écrit qu'**une** clé, à
 une valeur écrite dans `.github/scripts/vps-ops.sh`, sauvegarde le `.env`, recrée `api` à
 l'identique, vérifie la valeur lue par le conteneur puis la clé `features.*` servie par
@@ -450,6 +453,7 @@ tout de suite. La trace est l'exécution du workflow (qui, quand, journal).
 | `verif-bot-auto` / `-review` / `-off` | `KPB_COMMUNITY_VERIF_BOT_MODE=auto` / `review` / `off` | aucune clé servie : la preuve est la valeur lue par le conteneur |
 | `onboarding-v2-on` / `onboarding-v2-off` | `KPB_ONBOARDING_V2_ENABLED=true` / `false` | `onboardingV2` |
 | `scholarship-match-on` / `scholarship-match-off` | `KPB_SCHOLARSHIP_MATCH_ENABLED=true` / `false` | `scholarshipMatch` (la même clé ouvre ou coupe `/scholarships/match/*`) |
+| `case-messaging-on` / `case-messaging-off` | `KPB_CASE_MESSAGING_ENABLED=true` / `false` | `caseMessaging` (build 59 : la saisie élève et le fil du dossier ; fermée = WhatsApp) |
 
 Aucune action `vps-ops` n'écrit en revanche les autres clés des chantiers G et K : elles se posent
 dans le `.env` de production, puis le conteneur `api` est recréé. À VALIDER (propriétaire) : qui
