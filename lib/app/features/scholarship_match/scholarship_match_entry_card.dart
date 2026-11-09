@@ -114,14 +114,14 @@ class _EntryCardBody extends StatelessWidget {
     final List<Widget> actions;
     switch (variant) {
       case ScholarshipMatchEntryVariant.guest:
-        title = 'scholarship_match_entry_title'.tr;
+        title = 'scholarship_match_entry_guest_title'.tr;
         body = 'scholarship_match_entry_guest_body'.tr;
         actions = [
           FilledButton(
             key: const ValueKey<String>('scholarship-match-entry-guest-cta'),
             style: FilledButton.styleFrom(minimumSize: const Size(48, 48)),
             onPressed: () => unawaited(startScholarshipMatchAsGuest()),
-            child: Text('scholarship_match_entry_cta'.tr),
+            child: Text('scholarship_match_entry_guest_cta'.tr),
           ),
         ];
       case ScholarshipMatchEntryVariant.noRun:

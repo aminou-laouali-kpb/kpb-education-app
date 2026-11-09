@@ -9,7 +9,9 @@ part of '../home_screen.dart';
 ///   3 cartes tirées du run (compatibles d'abord), chacune ouvre SA fiche ; le
 ///   lien « Voir mes N bourses » ouvre les résultats ;
 /// - élève SANS run (drapeau ouvert) : la carte « Fais le test » ;
-/// - drapeau fermé, invité, parent (ou serveur qui a coupé le test) : la liste
+/// - INVITÉ (drapeau ouvert) : la carte « Découvre tes bourses », qui mène à
+///   la création de compte, puis la liste neutre ;
+/// - drapeau fermé, parent (ou serveur qui a coupé le test) : la liste
 ///   neutre [neutral] (clôture la plus proche d'abord), SANS aucun niveau de
 ///   compatibilité — exactement l'accueil d'avant le test.
 ///
@@ -70,8 +72,15 @@ class _HomeScholarshipsSectionState extends State<_HomeScholarshipsSection> {
         final store = ScholarshipMatchStore.instance;
         switch (variant) {
           case ScholarshipMatchEntryVariant.hidden:
-          case ScholarshipMatchEntryVariant.guest:
             return _neutralSection();
+          case ScholarshipMatchEntryVariant.guest:
+            // L'invité voit la promesse du test (« les bourses pour
+            // lesquelles tu es éligible ») : la découvrir demande un compte
+            // (décision du propriétaire, 09/11/2026). La liste neutre suit.
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [_entryCard(), _neutralSection()],
+            );
           case ScholarshipMatchEntryVariant.noRun:
             // Le dernier run de ce compte n'est pas encore relu du cache :
             // rien plutôt qu'un « Fais le test » démenti une frame plus tard.

@@ -295,7 +295,7 @@ export class CoachService {
         data: {
           type: 'error',
           message:
-            'Quota hebdomadaire atteint (5 messages). Premium bientôt disponible.',
+            'Quota hebdomadaire atteint (5 messages). Le Pass Karatou arrive bientôt.',
         },
       } as MessageEvent);
       subscriber.complete();

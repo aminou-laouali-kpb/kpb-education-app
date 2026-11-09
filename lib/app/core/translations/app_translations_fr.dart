@@ -306,8 +306,9 @@ const Map<String, String> appTranslationsFr = {
   'parent_msg_locked_title': 'Messages non partagés',
   'parent_msg_locked_body':
       'Les messages privés entre votre enfant et son conseiller ne sont pas partagés.',
-  'parent_pay_title': 'Paiements',
-  'parent_pay_sub': 'Payez pour votre enfant — via votre conseiller KPB',
+  'parent_pay_title': 'Accompagnement',
+  'parent_pay_sub':
+      'Les tarifs se demandent à votre conseiller KPB, sur WhatsApp',
   'parent_premium_title': 'Pass Karatou pour @child',
   'parent_premium_sub':
       'Bientôt : la candidature aux bourses de votre enfant préparée avec KPB Intelligence, puis relue par un conseiller KPB.',
@@ -412,16 +413,14 @@ const Map<String, String> appTranslationsFr = {
   'parent_pack_full': 'Accompagnement complet',
   'parent_pack_full_desc':
       '3 sessions conseiller + suivi Campus France jusqu\'au dépôt',
-  'parent_pay_cta': 'Réserver',
-  'parent_pay_history_label': 'Historique',
-  'parent_pay_history_empty': 'Vos reçus apparaîtront ici',
+  'parent_pay_cta': 'Demander le tarif',
   'parent_pay_note':
-      'Paiement organisé avec votre conseiller KPB sur WhatsApp — reçu par message. Aucun paiement à des « agents » hors du circuit KPB.',
+      'Tarif et paiement se règlent uniquement avec votre conseiller KPB sur WhatsApp, reçu par message. Ne payez jamais un « agent » hors du circuit KPB.',
   'parent_ask_access': 'Demander l\'accès',
   'parent_nav_overview': 'Vue d\'ensemble',
   'parent_nav_case': 'Dossier',
   'parent_nav_updates': 'Actualités',
-  'parent_nav_pay': 'Paiements',
+  'parent_nav_pay': 'Accompagnement',
   'parent_onboarding_title': 'Suivez le parcours de votre enfant',
   'parent_onboarding_sub':
       'Générez un code d\'invitation et partagez-le avec votre enfant. Il l\'entre dans son app pour lier vos comptes.',
@@ -438,7 +437,7 @@ const Map<String, String> appTranslationsFr = {
   'parent_wa_upload':
       'Bonjour, je voudrais envoyer une preuve de financement pour le dossier de mon enfant.',
   'parent_wa_pay':
-      'Bonjour, je souhaite régler « @item » pour mon enfant via KPB.',
+      'Bonjour, je souhaite connaître le tarif de « @item » pour mon enfant.',
   'parent_invite_create_error': 'Impossible de créer l\'invitation.',
   'parent_invite_code_title': 'Code d\'invitation',
   'parent_code_copied': 'Code copié.',
@@ -1701,7 +1700,7 @@ const Map<String, String> appTranslationsFr = {
   'institution_kpb_expert': 'Expert KPB',
   'institution_enroll_via_kpb': 'S\'inscrire via KPB',
   'learn_more': 'En savoir plus',
-  'institution_premium_support': 'Accompagnement Premium',
+  'institution_premium_support': 'Accompagnement KPB',
   'institution_kpb_benefits': 'Avantages KPB Education',
   'institution_priority_admission': 'Admission Prioritaire',
   'institution_priority_admission_desc':
@@ -2360,9 +2359,9 @@ const Map<String, String> appTranslationsFr = {
   'eef_pillar_endtoend_body':
       'Les échéances, les pièces à fournir, l\'avancement de ton '
           'dossier, et un conseiller KPB quand tu bloques.',
-  'eef_plans_heading': 'Gratuit et Premium',
+  'eef_plans_heading': 'Gratuit et Pass Karatou',
   'eef_plan_free_label': 'Gratuit',
-  'eef_plan_premium_label': 'Avec KPB Premium',
+  'eef_plan_premium_label': 'Avec le Pass Karatou',
   'eef_free_catalog': 'Le catalogue et les filtres de base',
   'eef_free_shortlist_preview': 'Un aperçu de ta sélection',
   'eef_free_letter_preview': 'Un modèle de lettre en aperçu',
@@ -2394,7 +2393,7 @@ const Map<String, String> appTranslationsFr = {
           'que nous devons préparer.',
   'eef_field_current_level': 'Ton niveau actuel',
   'eef_field_target_level': 'Le niveau que tu veux préparer',
-  'eef_field_wants_premium': 'La version Premium m\'intéresserait aussi',
+  'eef_field_wants_premium': 'Le Pass Karatou m\'intéresserait aussi',
   'eef_consent_notice':
       'En validant, tu acceptes qu\'un conseiller KPB te contacte au '
           'sujet de cet espace, et que ta réponse serve à préparer '
@@ -2832,6 +2831,8 @@ const Map<String, String> appTranslationsFr = {
   'auth_explore_guest': 'Explorer sans compte',
   'auth_intelligence_note': 'Gratuit · FCFA · pensé pour l’Afrique francophone',
   'auth_continue_google': 'Continuer avec Google',
+  'auth_have_account_hint':
+      'Déjà un compte ? Utilise le même Google ou le même e-mail : tu retrouves ton espace.',
   'auth_google_error': 'Connexion Google impossible. Réessaie.',
   'auth_continue_email': 'Continuer avec mon email',
   'auth_continue_guest': 'Explorer sans compte',
@@ -2869,7 +2870,7 @@ const Map<String, String> appTranslationsFr = {
   'auth_guest_profile_title': 'Connecte-toi pour accéder à ton profil',
   'auth_guest_profile_body':
       'Crée un compte pour suivre tes dossiers, sauvegarder des programmes et personnaliser ton parcours.',
-  'auth_guest_profile_have_account': 'J\'ai déjà un compte',
+  'auth_guest_profile_have_account': 'J\'ai déjà un compte : me connecter',
   // Match explanations
   'match_complete_profile': 'Complète ton profil pour un matching personnalisé',
   'match_field_in_interests': 'Filière dans tes intérêts',
@@ -3706,8 +3707,11 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_match_entry_title': 'Test : quelles bourses pour moi ?',
   'scholarship_match_entry_body':
       '2 min · jusqu\'à 10 bourses · on t\'explique pourquoi',
+  'scholarship_match_entry_guest_title':
+      'Découvre les bourses pour lesquelles tu es éligible',
   'scholarship_match_entry_guest_body':
-      'Avec un compte, fais le test : jusqu\'à 10 bourses pour ton profil.',
+      'Crée ton compte gratuit, réponds à quelques questions : on te montre jusqu\'à 10 bourses qui correspondent à ton profil.',
+  'scholarship_match_entry_guest_cta': 'Créer mon compte et voir mes bourses',
   'scholarship_match_entry_cta': 'Faire le test',
   'scholarship_match_entry_run_title': 'Tes bourses : @counts',
   'scholarship_match_entry_run_body': 'Mis à jour le @date',

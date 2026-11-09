@@ -292,8 +292,8 @@ const Map<String, String> appTranslationsEn = {
   'parent_msg_locked_title': 'Messages not shared',
   'parent_msg_locked_body':
       'Private messages between your child and their advisor aren\'t shared.',
-  'parent_pay_title': 'Payments',
-  'parent_pay_sub': 'Pay for your child — via your KPB advisor',
+  'parent_pay_title': 'Support',
+  'parent_pay_sub': 'Ask your KPB advisor for prices, on WhatsApp',
   'parent_premium_title': 'Pass Karatou for @child',
   'parent_premium_sub':
       'Coming soon: your child\'s scholarship application prepared with KPB Intelligence, then reviewed by a KPB advisor.',
@@ -379,16 +379,14 @@ const Map<String, String> appTranslationsEn = {
   'parent_pack_full': 'Full support',
   'parent_pack_full_desc':
       '3 advisor sessions + Campus France follow-up to submission',
-  'parent_pay_cta': 'Book',
-  'parent_pay_history_label': 'History',
-  'parent_pay_history_empty': 'Your receipts will appear here',
+  'parent_pay_cta': 'Ask for the price',
   'parent_pay_note':
       'Payment arranged with your KPB advisor on WhatsApp — receipt by message. Never pay “agents” outside the KPB channel.',
   'parent_ask_access': 'Request access',
   'parent_nav_overview': 'Overview',
   'parent_nav_case': 'Application',
   'parent_nav_updates': 'Updates',
-  'parent_nav_pay': 'Payments',
+  'parent_nav_pay': 'Support',
   'parent_onboarding_title': 'Follow your child\'s journey',
   'parent_onboarding_sub':
       'Generate an invite code and share it with your child. They enter it in their app to link your accounts.',
@@ -403,7 +401,8 @@ const Map<String, String> appTranslationsEn = {
       'Hello, I\'d like to request access to some information in my child\'s application.',
   'parent_wa_upload':
       'Hello, I\'d like to send a proof of funds for my child\'s application.',
-  'parent_wa_pay': 'Hello, I\'d like to pay for “@item” for my child via KPB.',
+  'parent_wa_pay':
+      'Hello, I\'d like to know the price of “@item” for my child.',
   'parent_invite_create_error': 'Could not create the invitation.',
   'parent_invite_code_title': 'Invite code',
   'parent_code_copied': 'Code copied.',
@@ -1552,7 +1551,7 @@ const Map<String, String> appTranslationsEn = {
   'institution_kpb_expert': 'KPB Expert',
   'institution_enroll_via_kpb': 'Enroll via KPB',
   'learn_more': 'Learn more',
-  'institution_premium_support': 'Premium Support',
+  'institution_premium_support': 'KPB support',
   'institution_kpb_benefits': 'KPB Education benefits',
   'institution_priority_admission': 'Priority Admission',
   'institution_priority_admission_desc':
@@ -2147,9 +2146,9 @@ const Map<String, String> appTranslationsEn = {
   'eef_pillar_endtoend_body':
       'Deadlines, required documents, your file\'s progress, and a KPB '
           'counsellor when you get stuck.',
-  'eef_plans_heading': 'Free and Premium',
+  'eef_plans_heading': 'Free and Pass Karatou',
   'eef_plan_free_label': 'Free',
-  'eef_plan_premium_label': 'With KPB Premium',
+  'eef_plan_premium_label': 'With the Pass Karatou',
   'eef_free_catalog': 'The catalogue and basic filters',
   'eef_free_shortlist_preview': 'A preview of your shortlist',
   'eef_free_letter_preview': 'One letter template preview',
@@ -2179,7 +2178,7 @@ const Map<String, String> appTranslationsEn = {
           'what we need to prepare.',
   'eef_field_current_level': 'Your current level',
   'eef_field_target_level': 'The level you want to prepare',
-  'eef_field_wants_premium': 'I would also be interested in Premium',
+  'eef_field_wants_premium': 'I would also be interested in the Pass Karatou',
   'eef_consent_notice':
       'By confirming, you agree that a KPB counsellor may contact you '
           'about this space, and that your answer helps us prepare our '
@@ -2593,6 +2592,8 @@ const Map<String, String> appTranslationsEn = {
   'auth_explore_guest': 'Explore without an account',
   'auth_intelligence_note': 'Free · FCFA · designed for French-speaking Africa',
   'auth_continue_google': 'Continue with Google',
+  'auth_have_account_hint':
+      'Already have an account? Use the same Google account or email to get back to your space.',
   'auth_google_error': 'Google sign-in failed. Try again.',
   'auth_continue_email': 'Continue with email',
   'auth_continue_guest': 'Browse without account',
@@ -3433,8 +3434,12 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_entry_title': 'Test: which scholarships fit me?',
   'scholarship_match_entry_body':
       '2 min · up to 10 scholarships · we explain why',
+  'scholarship_match_entry_guest_title':
+      'Find the scholarships you are eligible for',
   'scholarship_match_entry_guest_body':
-      'With an account, take the test: up to 10 scholarships for your profile.',
+      'Create your free account, answer a few questions: we show you up to 10 scholarships that match your profile.',
+  'scholarship_match_entry_guest_cta':
+      'Create my account and see my scholarships',
   'scholarship_match_entry_cta': 'Take the test',
   'scholarship_match_entry_run_title': 'Your scholarships: @counts',
   'scholarship_match_entry_run_body': 'Updated on @date',

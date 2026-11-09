@@ -63,7 +63,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/parcours/parcours_story_screen.dart': 3,
   'lib/app/features/parent/parent_case_view_screen.dart': 2,
   'lib/app/features/parent/parent_dashboard_screen.dart': 3,
-  'lib/app/features/parent/parent_surface_screen.dart': 49,
+  'lib/app/features/parent/parent_surface_screen.dart': 47,
   'lib/app/features/premium/premium_screen.dart': 17,
   'lib/app/features/profile/profile_avatar.dart': 1,
   'lib/app/features/profile/profile_screen.dart': 1,
