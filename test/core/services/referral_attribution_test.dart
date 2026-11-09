@@ -8,6 +8,8 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:karatou/app/core/repositories/app_api_client.dart';
 import 'package:karatou/app/core/services/referral_attribution.dart';
+import 'package:karatou/app/core/translations/app_translations.dart';
+import 'package:karatou/app/features/referral/referral_outcome_messages.dart';
 
 class _MockApi extends Mock implements AppApiClient {}
 
@@ -305,14 +307,53 @@ void main() {
       expect(store.pending, isNull);
     });
 
-    test('déjà parrainé : succès silencieux, code oublié', () async {
+    test('déjà rattaché à CE parrain : succès, code oublié', () async {
       store.pending = const PendingReferralCode(
           code: 'K7PQ2MZA', origin: PendingReferralOrigin.installReferrer);
-      answer(() async => {'attributed': false, 'alreadyReferred': true});
+      answer(() async => {
+            'attributed': true,
+            'alreadyReferred': true,
+            'referredByOther': false,
+          });
       final outcome = await attribution.redeem(api, 'K7PQ2MZA');
       expect(outcome, ReferralRedeemOutcome.alreadyReferred);
       expect(outcome.isSuccess, isTrue);
       expect(store.pending, isNull);
+    });
+
+    test('déjà rattaché à un AUTRE parrain : dit, pas un faux succès',
+        () async {
+      store.pending = const PendingReferralCode(
+          code: 'KTOU-AB-1A2B3C',
+          origin: PendingReferralOrigin.installReferrer);
+      answer(() async => {
+            'attributed': false,
+            'alreadyReferred': true,
+            'referredByOther': true,
+          });
+      // Un code saisi différent du code en attente : le code en attente n'a
+      // plus d'usage, il est oublié aussi.
+      final outcome = await attribution.redeem(api, 'K7PQ2MZA');
+      expect(outcome, ReferralRedeemOutcome.referredByOther);
+      expect(outcome.isSuccess, isFalse);
+      expect(outcome.isRetryable, isFalse);
+      expect(outcome.isFinal, isTrue);
+      expect(store.pending, isNull);
+    });
+
+    test(
+        'serveur ancien (sans referredByOther) : attributed false = autre parrain',
+        () {
+      expect(
+        ReferralRedeemOutcome.fromResponse(
+            {'attributed': false, 'alreadyReferred': true}),
+        ReferralRedeemOutcome.referredByOther,
+      );
+      expect(
+        ReferralRedeemOutcome.fromResponse(
+            {'attributed': true, 'alreadyReferred': true}),
+        ReferralRedeemOutcome.alreadyReferred,
+      );
     });
 
     final cases = <String, (DioException, ReferralRedeemOutcome)>{
@@ -325,15 +366,37 @@ void main() {
         }),
         ReferralRedeemOutcome.selfReferral,
       ),
-      '403 parrainage croisé': (
+      // Serveurs anciens : le message anglais, sans code machine.
+      '403 parrainage croisé (message)': (
         _status(403, data: {'message': 'Mutual referrals are not allowed.'}),
-        ReferralRedeemOutcome.notAllowed,
+        ReferralRedeemOutcome.crossReferral,
       ),
-      '403 dossier déjà déposé': (
+      '403 dossier déjà déposé (message)': (
         _status(403, data: {
           'message': 'A referral code must be used before your first request.',
         }),
+        ReferralRedeemOutcome.hasCase,
+      ),
+      '403 refus inconnu': (
+        _status(403, data: {'message': 'Forbidden'}),
         ReferralRedeemOutcome.notAllowed,
+      ),
+      // Serveur build 59+ : le code machine prime sur le message.
+      '403 referral_self': (
+        _status(403, data: {'code': 'referral_self', 'message': 'x'}),
+        ReferralRedeemOutcome.selfReferral,
+      ),
+      '403 referral_has_case': (
+        _status(403, data: {'code': 'referral_has_case', 'message': 'x'}),
+        ReferralRedeemOutcome.hasCase,
+      ),
+      '403 referral_cross': (
+        _status(403, data: {'code': 'referral_cross', 'message': 'x'}),
+        ReferralRedeemOutcome.crossReferral,
+      ),
+      '404 referral_unknown_code': (
+        _status(404, data: {'code': 'referral_unknown_code'}),
+        ReferralRedeemOutcome.unknownCode,
       ),
       '429 limite horaire': (
         _status(429, data: {'code': 'referral_code_rate_limited'}),
@@ -401,6 +464,21 @@ void main() {
       expect(await attribution.redeem(api, 'K7PQ2MZA'),
           ReferralRedeemOutcome.attributed);
       verify(() => api.redeemReferral('K7PQ2MZA', deviceId: null)).called(1);
+    });
+
+    test('chaque issue a son message, en français ET en anglais', () {
+      final keys = AppTranslations().keys;
+      for (final o in ReferralRedeemOutcome.values) {
+        for (final here in [false, true]) {
+          final key = referralOutcomeMessageKey(o, onReferralScreen: here);
+          expect(keys['fr']![key], isNotNull, reason: 'fr $key');
+          expect(keys['en']![key], isNotNull, reason: 'en $key');
+        }
+      }
+      expect(keys['fr']!['referral_err_has_case'],
+          'Ce code ne peut plus être ajouté : tu as déjà ouvert un dossier.');
+      expect(keys['fr']!['referral_err_other_referrer'],
+          'Tu es déjà rattaché à un autre parrain.');
     });
 
     test('les valeurs de mesure sont fermées et en snake_case', () {

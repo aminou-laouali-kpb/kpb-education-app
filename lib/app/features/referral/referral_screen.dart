@@ -59,9 +59,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     super.initState();
     _load();
     unawaited(_loadPending());
-    if (RemoteFeatureFlags.instance.referralLeaderboardEnabled) {
-      unawaited(_loadCompetition());
-    }
+    unawaited(_loadCompetition());
   }
 
   /// Le code en attente de confirmation, prérempli — jamais validé sans l'élève.
@@ -78,19 +76,22 @@ class _ReferralScreenState extends State<ReferralScreen> {
     ));
   }
 
-  /// L'entrée « Compétition ambassadeurs » : seulement pour un participant, et
-  /// sans bruit en cas d'échec (l'écran Parrainage ne dépend pas de la
-  /// compétition).
+  /// La compétition des ambassadeurs : l'entrée du classement (participant),
+  /// et la mention « terminée » (tout le monde) — sans bruit en cas d'échec
+  /// (l'écran Parrainage ne dépend pas de la compétition). Une panne garde ce
+  /// qui était déjà affiché.
   Future<void> _loadCompetition() async {
+    if (!RemoteFeatureFlags.instance.referralLeaderboardEnabled) return;
     try {
       final standing = ReferralCampaignStanding.fromJson(
         await _ctrl.apiClient.getCurrentReferralCampaign(),
       );
-      if (mounted && standing.participating) {
-        setState(() => _competition = standing);
-      }
+      if (mounted) setState(() => _competition = standing);
     } catch (_) {}
   }
+
+  /// Tirer pour rafraîchir recharge AUSSI la carte de la compétition.
+  Future<void> _refresh() => Future.wait([_load(), _loadCompetition()]);
 
   @override
   void dispose() {
@@ -230,7 +231,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     if (!mounted) return;
     setState(() {
       _redeeming = false;
-      if (outcome.isSuccess) {
+      if (outcome.isFinal) {
         _pending = null;
         _codeCtrl.clear();
       } else if (!outcome.isRetryable && _pending?.code == code) {
@@ -242,6 +243,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
         ReferralRedeemOutcome.attributed => KpbToastKind.success,
         ReferralRedeemOutcome.unknownCode ||
         ReferralRedeemOutcome.selfReferral ||
+        ReferralRedeemOutcome.hasCase ||
+        ReferralRedeemOutcome.crossReferral ||
         ReferralRedeemOutcome.notAllowed =>
           KpbToastKind.error,
         _ => KpbToastKind.info,
@@ -259,7 +262,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
           : _data == null && _loadFailed
               ? KpbErrorState(onRetry: _retry)
               : RefreshIndicator(
-                  onRefresh: _load,
+                  onRefresh: _refresh,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(KpbSpacing.pagePad),
@@ -268,8 +271,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           style: TextStyle(color: context.kpb.textSecondary)),
                       const SizedBox(height: KpbSpacing.lg),
 
-                      // ── Compétition ambassadeurs (build 57) ─────────────
-                      if (_competition != null) ...[
+                      // ── Compétition des ambassadeurs (build 57) ─────────
+                      if (_competition?.participating == true) ...[
                         _CompetitionEntry(standing: _competition!),
                         const SizedBox(height: KpbSpacing.lg),
                       ],
@@ -412,6 +415,17 @@ class _ReferralScreenState extends State<ReferralScreen> {
                           children: [
                             Text('referral_have_code'.tr,
                                 style: KpbTextStyles.titleMd),
+                            if (_competition
+                                    ?.competitionEndedAt(DateTime.now()) ==
+                                true) ...[
+                              const SizedBox(height: KpbSpacing.xs),
+                              Text(
+                                'comp_over_note'.tr,
+                                key: const ValueKey('referral-comp-over'),
+                                style: KpbTextStyles.caption
+                                    .copyWith(color: context.kpb.textSecondary),
+                              ),
+                            ],
                             const SizedBox(height: 8),
                             TextField(
                               key: const ValueKey('referral-code-field'),
@@ -464,7 +478,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
   }
 }
 
-/// L'entrée vers l'écran « Compétition ambassadeurs », pour un participant.
+/// L'entrée vers l'écran « Compétition des ambassadeurs », pour un participant.
 class _CompetitionEntry extends StatelessWidget {
   const _CompetitionEntry({required this.standing});
 

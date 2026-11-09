@@ -355,3 +355,141 @@ describe('ReferralCampaignService — lancement', () => {
     await expect(svc.transition('c1', 'launch', actor, 'rq')).rejects.toThrow('Définis au moins un prix');
   });
 });
+
+/**
+ * `GET /referrals/campaigns/current` : ce que l'app montre à l'élève (écran
+ * Compétition, écran Parrainage, onboarding).
+ */
+describe('ReferralCampaignService — myStanding', () => {
+  const NOW = new Date('2026-11-05T12:00:00Z');
+  const campaign = {
+    id: 'c1',
+    slug: 'ambassadeurs-test',
+    nameFr: 'Compétition des ambassadeurs',
+    nameEn: 'Ambassador competition',
+    status: 'live',
+    startsAt: new Date('2026-10-31T23:00:00Z'),
+    endsAt: new Date('2026-11-10T23:00:00Z'),
+    rulesUrl: 'https://kpbeducation.cloud/reglement.html',
+  };
+  const participantRow = (over: Record<string, unknown> = {}) => ({
+    id: 'part1',
+    publicName: 'Aïcha K.',
+    city: 'Niamey',
+    status: 'active',
+    minorStatus: 'adult',
+    parentalAuthStatus: 'not_required',
+    rank: 2,
+    qualifiedCount: 3,
+    flaggedCount: 1,
+    pendingCount: 4,
+    campaign,
+    ambassador: { approvedAt: new Date('2026-10-20'), code: 'KTOU-AK-1a2b3c' },
+    ...over,
+  });
+
+  function service(opts: {
+    participant?: Record<string, unknown> | null;
+    personalCode?: string | null;
+    ineligible?: number;
+    latest?: Record<string, unknown> | null;
+  }) {
+    const countWheres: unknown[] = [];
+    const client = {
+      referralCampaignParticipant: {
+        findMany: async () => (opts.participant ? [opts.participant] : []),
+      },
+      referralCampaignReferral: {
+        count: async ({ where }: { where: unknown }) => {
+          countWheres.push(where);
+          return opts.ineligible ?? 0;
+        },
+      },
+      userProfile: {
+        findUnique: async () =>
+          opts.personalCode === undefined ? null : { referralCode: opts.personalCode },
+      },
+      referralCampaign: { findFirst: async () => opts.latest ?? null },
+    };
+    const prisma = {
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    return { svc: new ReferralCampaignService(prisma), countWheres };
+  }
+
+  it('montre le code PERSONNEL (le même que l’écran Parrainage), et le KTOU à part', async () => {
+    const { svc } = service({ participant: participantRow(), personalCode: 'K7PQ2MZA' });
+    const out = await svc.myStanding('p-amb', NOW);
+    if (!out.participating) throw new Error('participant attendu');
+    expect(out.me.code).toBe('K7PQ2MZA');
+    expect(out.me.ambassadorCode).toBe('KTOU-AK-1a2b3c');
+  });
+
+  it('repli sur le code KTOU sans code personnel', async () => {
+    const { svc } = service({ participant: participantRow(), personalCode: null });
+    const out = await svc.myStanding('p-amb', NOW);
+    if (!out.participating) throw new Error('participant attendu');
+    expect(out.me.code).toBe('KTOU-AK-1a2b3c');
+  });
+
+  it('compte à part les filleuls inéligibles (compte antérieur), sert le règlement https', async () => {
+    const { svc, countWheres } = service({ participant: participantRow(), ineligible: 2 });
+    const out = await svc.myStanding('p-amb', NOW);
+    if (!out.participating) throw new Error('participant attendu');
+    expect(out.me).toMatchObject({ pending: 4, ineligible: 2, toReview: 1, qualified: 3 });
+    expect(countWheres).toEqual([{ participantId: 'part1', status: 'ineligible' }]);
+    expect(out.campaign.rulesUrl).toBe('https://kpbeducation.cloud/reglement.html');
+    expect(out.campaign.phase).toBe('running');
+  });
+
+  it('ne sert pas un règlement non https', async () => {
+    const { svc } = service({
+      participant: participantRow({ campaign: { ...campaign, rulesUrl: 'http://x.example' } }),
+    });
+    const out = await svc.myStanding('p-amb', NOW);
+    if (!out.participating) throw new Error('participant attendu');
+    expect(out.campaign.rulesUrl).toBeNull();
+  });
+
+  it('une campagne gelée est terminée, même avant sa date de fin', async () => {
+    const { svc } = service({
+      participant: participantRow({ campaign: { ...campaign, status: 'frozen' } }),
+    });
+    const out = await svc.myStanding('p-amb', NOW);
+    if (!out.participating) throw new Error('participant attendu');
+    expect(out.campaign.phase).toBe('ended');
+  });
+
+  describe('non-participant : la phase de la dernière campagne, rien de personnel', () => {
+    it('aucune campagne publique → competition null', async () => {
+      const { svc } = service({ latest: null });
+      expect(await svc.myStanding('u1', NOW)).toEqual({
+        participating: false,
+        competition: null,
+      });
+    });
+
+    it('en cours', async () => {
+      const { svc } = service({ latest: { ...campaign } });
+      expect(await svc.myStanding('u1', NOW)).toEqual({
+        participating: false,
+        competition: { phase: 'running', endsAt: '2026-11-10T23:00:00.000Z' },
+      });
+    });
+
+    it('terminée récemment (gelée)', async () => {
+      const { svc } = service({ latest: { ...campaign, status: 'frozen' } });
+      const out = await svc.myStanding('u1', new Date('2026-11-12T00:00:00Z'));
+      expect(out).toEqual({
+        participating: false,
+        competition: { phase: 'ended', endsAt: '2026-11-10T23:00:00.000Z' },
+      });
+    });
+
+    it('terminée depuis plus de 30 jours → plus rappelée', async () => {
+      const { svc } = service({ latest: { ...campaign, status: 'closed' } });
+      const out = await svc.myStanding('u1', new Date('2026-12-15T00:00:00Z'));
+      expect(out).toEqual({ participating: false, competition: null });
+    });
+  });
+});

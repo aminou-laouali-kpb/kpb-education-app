@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/controllers/app_controller.dart';
+import '../../core/models/referral_campaign.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/referral_attribution.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../referral/referral_outcome_messages.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// « Tu as un code de parrain ? » — la dernière étape, FACULTATIVE, de
+// « Tu as un code de parrainage ? » — la dernière étape, FACULTATIVE, de
 // l'onboarding élève (drapeau `features.referralOnboardingCode`, build 57).
 //
 // Montrée APRÈS la synchronisation du profil (`completeOnboardingSynced`) : le
@@ -19,11 +21,16 @@ import '../referral/referral_outcome_messages.dart';
 // serveur. Elle ne bloque JAMAIS l'entrée dans l'app :
 //
 //   · « Passer » (et le retour système) mène toujours plus loin ;
-//   · code accepté, ou déjà parrainé (succès silencieux) → plus loin ;
+//   · code accepté, ou déjà rattaché à ce parrain (succès silencieux) → plus
+//     loin ; déjà rattaché à un AUTRE parrain → un message le dit, plus loin ;
 //   · hors ligne, limite horaire, panne → le code est GARDÉ (l'écran
 //     Parrainage le proposera), un message le dit, et on va plus loin ;
 //   · code inconnu, auto-parrainage, refus → le message est dans le champ,
 //     l'élève corrige ou passe.
+//
+// Compétition des ambassadeurs terminée (drapeau `features.referralLeaderboard`
+// ouvert) : l'étape le dit — un code saisi maintenant ne compte plus pour elle,
+// mais rattache toujours au parrain.
 //
 // Prérempli par le Play Install Referrer quand il a trouvé un code : jamais de
 // rattachement silencieux, l'élève CONFIRME en appuyant sur « Valider ».
@@ -59,6 +66,7 @@ class _OnboardingReferralStepState extends State<OnboardingReferralStep> {
   bool _busy = false;
   bool _finished = false;
   String? _errorKey;
+  bool _competitionOver = false;
 
   ReferralAttribution get _attribution =>
       widget.attribution ?? ReferralAttribution.instance;
@@ -70,6 +78,20 @@ class _OnboardingReferralStepState extends State<OnboardingReferralStep> {
     super.initState();
     _codeCtrl.addListener(_onTyped);
     unawaited(_loadPrefill());
+    unawaited(_loadCompetition());
+  }
+
+  /// Au mieux, sans bruit : une panne n'affiche simplement rien.
+  Future<void> _loadCompetition() async {
+    if (!RemoteFeatureFlags.instance.referralLeaderboardEnabled) return;
+    try {
+      final api = widget.apiClient ?? Get.find<AppController>().apiClient;
+      final standing = ReferralCampaignStanding.fromJson(
+        await api.getCurrentReferralCampaign(),
+      );
+      final over = standing.competitionEndedAt(DateTime.now());
+      if (mounted && over) setState(() => _competitionOver = true);
+    } catch (_) {}
   }
 
   @override
@@ -135,10 +157,16 @@ class _OnboardingReferralStepState extends State<OnboardingReferralStep> {
         KpbToast.success(referralOutcomeMessageKey(outcome).tr);
         _finish();
       case ReferralRedeemOutcome.alreadyReferred:
-        // Succès silencieux : l'élève a déjà un parrain, rien à lui reprocher.
+        // Succès silencieux : l'élève est déjà rattaché à CE parrain.
+        _finish();
+      case ReferralRedeemOutcome.referredByOther:
+        // Rien à corriger : il a déjà un autre parrain. On le dit, on avance.
+        KpbToast.info(referralOutcomeMessageKey(outcome).tr);
         _finish();
       case ReferralRedeemOutcome.unknownCode:
       case ReferralRedeemOutcome.selfReferral:
+      case ReferralRedeemOutcome.hasCase:
+      case ReferralRedeemOutcome.crossReferral:
       case ReferralRedeemOutcome.notAllowed:
         unawaited(KpbHaptics.error());
         setState(() => _errorKey = referralOutcomeMessageKey(outcome));
@@ -201,6 +229,15 @@ class _OnboardingReferralStepState extends State<OnboardingReferralStep> {
                         style: KpbTextStyles.bodySm
                             .copyWith(color: KpbColors.textMuted),
                       ),
+                      if (_competitionOver) ...[
+                        const SizedBox(height: KpbSpacing.sm),
+                        Text(
+                          'comp_over_note'.tr,
+                          key: const ValueKey('onb-ref-comp-over'),
+                          style: KpbTextStyles.caption
+                              .copyWith(color: c.textSecondary),
+                        ),
+                      ],
                       const SizedBox(height: KpbSpacing.lg),
                       TextField(
                         key: const ValueKey('onb-ref-code'),

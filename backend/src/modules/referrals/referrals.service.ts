@@ -76,30 +76,42 @@ export class ReferralsService {
   /// filleul est rattaché au PROFIL du parrain par une ligne `Referral` — la
   /// seule source du comptage — et, si ce parrain est ambassadeur, une ligne
   /// `AmbassadorReferral` est créée pour son espace.
+  ///
+  /// Chaque refus porte un `code` machine dans le corps de l'erreur (le filtre
+  /// global le recopie), à côté du message humain — voir
+  /// [ReferralRedeemErrorCode]. L'app 2.3.1 et antérieures lisaient le
+  /// message : il ne change pas.
   async redeem(
     userId: string,
     rawCode: string,
     context: RedeemContext = {},
-  ): Promise<{ attributed: boolean; alreadyReferred: boolean }> {
+  ): Promise<RedeemResult> {
     const code = normalizeReferralCode(rawCode);
-    if (code.length < 4) throw new NotFoundException('Invalid referral code.');
+    if (code.length < 4) throw unknownCodeError();
     const now = context.now ?? new Date();
     const out = await this.prisma.execute(async (db) => {
       const referrer = await this.resolveReferrer(db, code, rawCode);
-      if (!referrer) throw new NotFoundException('Invalid referral code.');
+      if (!referrer) throw unknownCodeError();
       if (referrer.profileId === userId) {
-        throw new ForbiddenException('You cannot use your own referral code.');
+        throw new ForbiddenException({
+          code: 'referral_self' satisfies ReferralRedeemErrorCode,
+          message: 'You cannot use your own referral code.',
+        });
       }
 
       const existing = await db.referral.findUnique({
         where: { refereeProfileId: userId },
       });
       if (existing) {
-        // Already attributed (to anyone) — do not reassign.
+        // Already attributed (to anyone) — do not reassign. Rattaché à UN AUTRE
+        // parrain : la réponse le dit (`referredByOther`), pour que l'app
+        // l'annonce au lieu d'un faux succès silencieux.
+        const sameReferrer = existing.referrerId === referrer.profileId;
         return {
           result: {
-            attributed: existing.referrerId === referrer.profileId,
+            attributed: sameReferrer,
             alreadyReferred: true,
+            referredByOther: !sameReferrer,
           },
           created: null,
         };
@@ -112,16 +124,20 @@ export class ReferralsService {
         select: { id: true },
       });
       if (reverse) {
-        throw new ForbiddenException('Mutual referrals are not allowed.');
+        throw new ForbiddenException({
+          code: 'referral_cross' satisfies ReferralRedeemErrorCode,
+          message: 'Mutual referrals are not allowed.',
+        });
       }
 
       // Un code saisi après coup ne doit pas rémunérer un dossier déjà déposé :
       // le parrainage s'applique avant la première demande.
       const existingCases = await db.case.count({ where: { userId } });
       if (existingCases > 0) {
-        throw new ForbiddenException(
-          'A referral code must be used before your first request.',
-        );
+        throw new ForbiddenException({
+          code: 'referral_has_case' satisfies ReferralRedeemErrorCode,
+          message: 'A referral code must be used before your first request.',
+        });
       }
 
       // Plafond de rattachements par code et par heure (anti-ferme). Au-delà,
@@ -136,7 +152,7 @@ export class ReferralsService {
         throw new HttpException(
           {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
-            code: 'referral_code_rate_limited',
+            code: 'referral_code_rate_limited' satisfies ReferralRedeemErrorCode,
             message: 'This code has reached its hourly limit. Try again later.',
           },
           HttpStatus.TOO_MANY_REQUESTS,
@@ -150,7 +166,7 @@ export class ReferralsService {
         await this.attachToAmbassador(db, referrer.ambassadorId, userId);
       }
       return {
-        result: { attributed: true, alreadyReferred: false },
+        result: { attributed: true, alreadyReferred: false, referredByOther: false },
         created: referrer,
       };
     });
@@ -158,7 +174,7 @@ export class ReferralsService {
     if (out?.created) {
       await this.recordSignal(userId, out.created, context);
     }
-    return out?.result ?? { attributed: false, alreadyReferred: false };
+    return out?.result ?? { attributed: false, alreadyReferred: false, referredByOther: false };
   }
 
   /** Code normalisé → profil du parrain (+ sa ligne ambassadeur s'il en a une). */
@@ -261,6 +277,33 @@ export class ReferralsService {
       this.logger.warn('Referral signal not recorded (non-blocking).');
     }
   }
+}
+
+/** Réponse de `POST /referrals/redeem` (200). */
+export interface RedeemResult {
+  attributed: boolean;
+  alreadyReferred: boolean;
+  /** Déjà rattaché à un AUTRE parrain : le code saisi n'a rien changé. */
+  referredByOther: boolean;
+}
+
+/**
+ * Codes machine des refus de `POST /referrals/redeem` (champ `code` du corps
+ * d'erreur). L'app les traduit ; le `message` anglais reste pour les anciennes
+ * versions et les journaux.
+ */
+export type ReferralRedeemErrorCode =
+  | 'referral_unknown_code' // 404
+  | 'referral_self' // 403 : son propre code
+  | 'referral_cross' // 403 : parrainage croisé (A→B puis B→A)
+  | 'referral_has_case' // 403 : un dossier est déjà ouvert
+  | 'referral_code_rate_limited'; // 429
+
+function unknownCodeError(): NotFoundException {
+  return new NotFoundException({
+    code: 'referral_unknown_code' satisfies ReferralRedeemErrorCode,
+    message: 'Invalid referral code.',
+  });
 }
 
 export interface RedeemContext {
