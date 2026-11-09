@@ -25,7 +25,7 @@
     "eef": "Études en France",
     "catalogue": "Catalogue",
     "eefPublication": "Publication EEF",
-    "referralCampaigns": "Compétition ambassadeurs"
+    "referralCampaigns": "Compétition des ambassadeurs"
   },
   "login": {
     "eyebrow": "KPB Opérations",
@@ -547,7 +547,26 @@
     "noteSuccess": "Note interne ajoutée au dossier.",
     "noteError": "Impossible de créer la note.",
     "linkedScholarshipLabel": "Bourse liée :",
-    "linkedScholarshipNameMissing": "nom indisponible"
+    "linkedScholarshipNameMissing": "nom indisponible",
+    "awaitingReplyBadge": "Réponse attendue",
+    "awaitingFirstToggle": "Réponses attendues en premier",
+    "messages": {
+      "title": "Messages avec l'étudiant",
+      "hint": "L'étudiant lit ces messages dans l'app. Pour une remarque réservée à l'équipe, utilisez les notes internes.",
+      "loading": "Chargement des messages…",
+      "loadError": "Impossible de charger les messages.",
+      "loadOlder": "Charger les messages précédents",
+      "loadingOlder": "Chargement…",
+      "empty": "Aucun message pour ce dossier.",
+      "roleStudent": "Étudiant",
+      "roleSystem": "Message automatique",
+      "replyLabel": "Répondre à l'étudiant",
+      "replyPlaceholder": "Votre message, visible par l'étudiant",
+      "shortcutHint": "Ctrl + Entrée (⌘ + Entrée sur Mac) pour envoyer",
+      "sendCta": "Envoyer",
+      "sending": "Envoi…",
+      "sendError": "Message non envoyé, le texte est conservé : réessayez."
+    }
   },
   "users": {
     "title": "Utilisateurs et rôles",
@@ -1489,7 +1508,7 @@
     "genericSources": "{n} des formations à publier renvoient à une source générique, pas à la fiche de la formation (portail Mon Master : {portal}, jeu de données du ministère : {dataset}). L'étudiant qui touche « Voir la source officielle » arrivera sur cette page."
   },
   "parrainage": {
-    "title": "Compétition ambassadeurs",
+    "title": "Compétition des ambassadeurs",
     "subtitle": "Campagnes de parrainage : ambassadeurs activés, classement en direct, filleuls, podium et versements.",
     "loadError": "Impossible de charger la compétition.",
     "saveError": "L'enregistrement a échoué.",
@@ -1629,7 +1648,8 @@
       "pending": "En attente",
       "qualified": "Qualifié",
       "flagged": "À vérifier",
-      "excluded": "Exclu"
+      "excluded": "Exclu",
+      "ineligible": "Inéligible (compte antérieur)"
     },
     "flag": {
       "disposable_email": "E-mail jetable",

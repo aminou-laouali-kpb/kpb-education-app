@@ -193,7 +193,38 @@ describe('computeQualification — fenêtre UTC+1', () => {
         },
       ]),
     );
-    expect(out.referrals[0].status).toBe('pending');
+    // « inéligible », pas « en attente » : compléter le profil n'y changera
+    // rien, et l'app le dit au lieu d'un « en attente » éternel.
+    expect(out.referrals[0].status).toBe('ineligible');
+    expect(out.participants.find((p) => p.id === 'P1')).toMatchObject({
+      pendingCount: 0,
+      qualifiedCount: 0,
+    });
+  });
+
+  it('un compte ancien au profil incomplet est inéligible, pas en attente', () => {
+    const out = computeQualification(
+      withReferees([
+        {
+          r: referee('old', { createdAt: T('2026-09-01T00:00:00Z'), profileCompletedAt: null, phone: null }),
+          to: 'amb1',
+          at: '2026-11-02T11:00:00Z',
+        },
+      ]),
+    );
+    expect(out.referrals[0]).toMatchObject({ status: 'ineligible', qualifiedAt: null });
+  });
+
+  it('une exclusion par l’équipe l’emporte sur l’inéligibilité', () => {
+    const input = withReferees([
+      {
+        r: referee('old', { createdAt: T('2026-09-01T00:00:00Z') }),
+        to: 'amb1',
+        at: '2026-11-02T11:00:00Z',
+      },
+    ]);
+    input.decisions = new Map([['old', 'excluded' as const]]);
+    expect(computeQualification(input).referrals[0].status).toBe('excluded');
   });
 
   it('… sauf si la règle de la campagne l’autorise', () => {

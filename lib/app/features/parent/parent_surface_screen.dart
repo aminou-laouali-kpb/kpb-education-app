@@ -880,16 +880,17 @@ class _PaymentsTab extends StatelessWidget {
   /// d'information au conseiller, sans prix.
   final VoidCallback onAskAboutPass;
 
+  /// Aucun prix affiché : les tarifs se donnent par un conseiller KPB
+  /// (décision du propriétaire, 09/11/2026). Le bouton ouvre WhatsApp avec
+  /// une demande de tarif, jamais un paiement.
   static const _packs = [
     (
       nameKey: 'parent_pack_review',
       descKey: 'parent_pack_review_desc',
-      price: '25 000 FCFA'
     ),
     (
       nameKey: 'parent_pack_full',
       descKey: 'parent_pack_full_desc',
-      price: '75 000 FCFA'
     ),
   ];
 
@@ -1006,12 +1007,6 @@ class _PaymentsTab extends StatelessWidget {
                                   fontSize: 11,
                                   height: 1.45,
                                   color: KpbColors.textMuted)),
-                          const SizedBox(height: 3),
-                          Text(p.price,
-                              style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: KpbColors.actionPrimary)),
                         ],
                       ),
                     ),
@@ -1038,34 +1033,6 @@ class _PaymentsTab extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 6),
-          // HISTORIQUE — no payment history is exposed by the backend yet, so we
-          // show an honest empty state rather than fabricated receipts.
-          _sectionLabel('parent_pay_history_label'.tr),
-          const SizedBox(height: 8),
-          _cardBox(children: [
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                      color: KpbColors.canvas,
-                      borderRadius: BorderRadius.circular(11)),
-                  child: const Icon(Icons.receipt_long_outlined,
-                      size: 17, color: KpbColors.textFaint),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('parent_pay_history_empty'.tr,
-                      style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.4,
-                          color: KpbColors.textMuted)),
-                ),
-              ],
-            ),
-          ]),
-          const SizedBox(height: 5),
           const _PrivacyNote(
               textKey: 'parent_pay_note', icon: Icons.verified_user),
         ],
@@ -1241,7 +1208,7 @@ class _BottomNav extends StatelessWidget {
   static const _items = [
     (icon: Icons.space_dashboard, key: 'parent_nav_overview'),
     (icon: Icons.folder_shared, key: 'parent_nav_case'),
-    (icon: Icons.account_balance_wallet, key: 'parent_nav_pay'),
+    (icon: Icons.support_agent, key: 'parent_nav_pay'),
     (icon: Icons.campaign, key: 'parent_nav_updates'),
   ];
 

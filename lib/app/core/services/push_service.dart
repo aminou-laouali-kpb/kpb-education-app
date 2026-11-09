@@ -219,6 +219,7 @@ class PushService {
   }
 
   void _onForegroundMessage(RemoteMessage message) {
+    _refreshIfCaseReply(message.data);
     final notification = message.notification;
     if (notification == null) return;
     try {
@@ -234,7 +235,25 @@ class PushService {
     }
   }
 
+  /// L'équipe a répondu dans un dossier (`type: case_message`, build 59) : on
+  /// relit les dossiers tout de suite, pour que la réponse soit déjà dans le
+  /// fil quand l'élève l'ouvre (sinon jusqu'à 30 s d'attente).
+  /// Branché au démarrage (`main.dart`) sur la synchro des dossiers.
+  static Future<void> Function()? onCaseReply;
+
+  void _refreshIfCaseReply(Map<String, dynamic> data) {
+    if (data['type'] != 'case_message') return;
+    final refresh = onCaseReply;
+    if (refresh == null) return;
+    try {
+      unawaited(refresh());
+    } catch (error) {
+      debugPrint('[Push] case refresh skipped: $error');
+    }
+  }
+
   void _onMessageOpened(RemoteMessage message) {
+    _refreshIfCaseReply(message.data);
     final opened = pushOpenedPayload(message.data);
     if (opened.isNotEmpty) {
       unawaited(_reportOpened(opened));

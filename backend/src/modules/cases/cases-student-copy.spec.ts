@@ -76,7 +76,6 @@ describe('copie des dossiers vue par l’étudiant', () => {
       'Un conseiller t’a été attribué',
       'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
       'Dossier mis à jour',
-      'Nouveau message',
       'Document ajouté',
       'Prépare ton rendez-vous',
       'Rendez-vous programmé',
@@ -189,7 +188,28 @@ describe('table de reprise des dossiers existants', () => {
       .split('\\1')
       .reduce((a, b) => (b.length > a.length ? b : a), '');
 
-  it.each(REPRISES.map((r) => [`${r.table}.${r.colonne}`, r] as const))(
+  /**
+   * Phrases que le service n'écrit PLUS du tout (build 59 : un message ne crée
+   * plus d'événement « Nouveau message » dans la chronologie). La reprise les
+   * garde pour les anciennes lignes anglaises encore en base.
+   */
+  const RETIREES = new Set([
+    'Nouveau message',
+    'Un nouveau message a été ajouté au dossier.',
+  ]);
+
+  it.each(RETIREES.size ? [...RETIREES] : [])(
+    'le service n’écrit plus %p (événement retiré)',
+    (phrase) => {
+      expect(CASES_SERVICE).not.toContain(`'${phrase}'`);
+    },
+  );
+
+  it.each(
+    REPRISES.filter((r) => !RETIREES.has(r.francais)).map(
+      (r) => [`${r.table}.${r.colonne}`, r] as const,
+    ),
+  )(
     'la cible française de %s est encore celle du service : %p',
     (_cible, regle) => {
       expect(SERVICES).toContain(fragmentFixe(regle.francais));

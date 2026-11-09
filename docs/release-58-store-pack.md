@@ -1,5 +1,11 @@
 # Build 58 — pack de soumission : ce qui change par rapport au pack 57
 
+> **⚠️ REMPLACÉE par la 59 le 09/11/2026 : suivre `docs/mise-a-jour-59-checklist.md`.**
+> La `2.3.1 (58)` a été téléversée le 08/11/2026 (App Store Connect pour TestFlight, AAB en test
+> interne Play ; commit archivé `5332a128`) et n'a jamais été soumise. Décision du propriétaire du
+> 09/11/2026 : la version de lancement doit contenir davantage ; la build suivante est la
+> `2.3.1 (59)`, même version marketing. Le contenu ci-dessous est conservé tel qu'écrit.
+
 > **À quoi sert ce fichier.** La 58 est la 57 corrigée (audit UX externe du 28/10/2026) : même
 > version marketing `2.3.1`, mêmes fonctions, mêmes drapeaux, mêmes déclarations. Le pack
 > `docs/release-57-store-pack.md` **reste la référence** pour tout ce que ce fichier ne remplace

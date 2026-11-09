@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -20,6 +21,7 @@ import { CasesService } from './cases.service';
 import { StorageService } from '../storage/storage.service';
 import { AssignCaseDto } from './dto/assign-case.dto';
 import { CreateCaseInternalNoteDto } from './dto/create-case-internal-note.dto';
+import { CreateCaseMessageDto } from './dto/create-case-message.dto';
 import { CreateCaseTaskDto } from './dto/create-case-task.dto';
 import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
@@ -41,6 +43,41 @@ export class AdminCasesController {
   @Get()
   findAll(@Req() req: any) {
     return this.casesService.findAllForAdmin(req.adminUser);
+  }
+
+  /**
+   * Le fil d'un dossier, page par page (50 messages, `before` = id du plus
+   * ancien déjà affiché). Un conseiller ne lit que ses dossiers.
+   */
+  @Get(':id/messages')
+  findMessages(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Query('before') before?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const parsed = limit === undefined ? undefined : Number(limit);
+    return this.casesService.findMessagesForAdmin(id, req.adminUser, {
+      before: before || undefined,
+      limit: Number.isFinite(parsed) ? parsed : undefined,
+    });
+  }
+
+  /**
+   * Réponse de l'équipe : enregistrée au nom de l'agent connecté (rôle et nom
+   * tirés de la session, jamais du corps), poussée à l'élève.
+   */
+  @Post(':id/messages')
+  createMessage(
+    @Param('id') id: string,
+    @Body() input: CreateCaseMessageDto,
+    @Req() req: any,
+  ) {
+    return this.casesService.createMessage(id, input, {
+      userId: req.adminUser.id,
+      role: req.adminUser.role,
+      fullName: req.adminUser.fullName,
+    });
   }
 
   @Get(':id/documents/:documentId/file')

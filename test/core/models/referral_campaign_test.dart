@@ -141,8 +141,73 @@ void main() {
     });
   });
 
+  group('build 59 : inéligibles, règlement, fin de compétition', () {
+    test('ineligible lu (0 sur un serveur ancien)', () {
+      expect(ReferralCampaignStanding.fromJson(standingJson()).ineligible, 0);
+      final json = standingJson();
+      (json['me'] as Map)['ineligible'] = 5;
+      expect(ReferralCampaignStanding.fromJson(json).ineligible, 5);
+    });
+
+    test('le lien du règlement est TOUJOURS là : campagne › classement › page',
+        () {
+      final plain = ReferralCampaignStanding.fromJson(standingJson());
+      expect(plain.rulesUrl, isNull);
+      expect(
+        plain.rulesLink(),
+        'https://kpbeducation.cloud/classement/?c=ambassadeurs-novembre-2026',
+      );
+      expect(plain.rulesLink(fromLeaderboard: 'https://x.test/r'),
+          'https://x.test/r');
+      final json = standingJson();
+      (json['campaign'] as Map)['rulesUrl'] = 'https://x.test/campagne';
+      final served = ReferralCampaignStanding.fromJson(json);
+      expect(served.rulesLink(fromLeaderboard: 'https://x.test/r'),
+          'https://x.test/campagne');
+      (json['campaign'] as Map)['rulesUrl'] = 'http://x.test/campagne';
+      expect(ReferralCampaignStanding.fromJson(json).rulesUrl, isNull);
+    });
+
+    test('non-participant : la phase de la dernière compétition', () {
+      final now = DateTime.utc(2026, 11, 20);
+      final ended = ReferralCampaignStanding.fromJson({
+        'participating': false,
+        'competition': {'phase': 'ended'},
+      });
+      expect(ended.participating, isFalse);
+      expect(ended.competitionEndedAt(now), isTrue);
+      for (final raw in <Object?>[
+        {'participating': false},
+        {
+          'participating': false,
+          'competition': {'phase': 'running'},
+        },
+        {'participating': false, 'competition': null},
+        {
+          'participating': false,
+          'competition': {'phase': 'bof'},
+        },
+      ]) {
+        expect(ReferralCampaignStanding.fromJson(raw).competitionEndedAt(now),
+            isFalse,
+            reason: '$raw');
+      }
+    });
+
+    test('participant : terminée selon la phase (close, ou fin dépassée)', () {
+      final running = ReferralCampaignStanding.fromJson(standingJson(),
+          receivedAt: DateTime.utc(2026, 11, 5, 12));
+      expect(
+          running.competitionEndedAt(DateTime.utc(2026, 11, 5, 12)), isFalse);
+      expect(running.competitionEndedAt(DateTime.utc(2026, 11, 11)), isTrue);
+      final closed = ReferralCampaignStanding.fromJson(
+          standingJson(phase: 'ended', status: 'closed'));
+      expect(closed.competitionEndedAt(DateTime.utc(2026, 11, 5)), isTrue);
+    });
+  });
+
   group('règlement (classement public)', () {
-    test('https seulement, sinon pas de bouton', () {
+    test('https seulement, sinon null (repli sur la page publique)', () {
       Map<String, dynamic> board(Object? url) => {
             'campaign': {'rulesUrl': url},
           };

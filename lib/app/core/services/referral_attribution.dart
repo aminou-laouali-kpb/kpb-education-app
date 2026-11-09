@@ -200,16 +200,26 @@ enum ReferralRedeemOutcome {
   /// Rattachement créé.
   attributed,
 
-  /// Déjà parrainé (idempotent) : un SUCCÈS silencieux pour l'élève.
+  /// Déjà rattaché à CE parrain (idempotent) : un succès.
   alreadyReferred,
+
+  /// Déjà rattaché à un AUTRE parrain (`referredByOther`) : le code saisi n'a
+  /// rien changé, et l'élève doit le savoir.
+  referredByOther,
 
   /// 404 (ou 400 de forme) : code inconnu.
   unknownCode,
 
-  /// 403 : c'est le code de l'élève lui-même.
+  /// 403 `referral_self` : c'est le code de l'élève lui-même.
   selfReferral,
 
-  /// 403 : parrainage croisé, ou dossier déjà déposé.
+  /// 403 `referral_has_case` : un dossier est déjà ouvert.
+  hasCase,
+
+  /// 403 `referral_cross` : parrainage croisé.
+  crossReferral,
+
+  /// 403 sans code reconnu : refus générique.
   notAllowed,
 
   /// 429 `referral_code_rate_limited` : réessayer plus tard.
@@ -224,8 +234,11 @@ enum ReferralRedeemOutcome {
   String get wireName => switch (this) {
         ReferralRedeemOutcome.attributed => 'attributed',
         ReferralRedeemOutcome.alreadyReferred => 'already_referred',
+        ReferralRedeemOutcome.referredByOther => 'referred_by_other',
         ReferralRedeemOutcome.unknownCode => 'unknown_code',
         ReferralRedeemOutcome.selfReferral => 'self_referral',
+        ReferralRedeemOutcome.hasCase => 'has_case',
+        ReferralRedeemOutcome.crossReferral => 'cross_referral',
         ReferralRedeemOutcome.notAllowed => 'not_allowed',
         ReferralRedeemOutcome.rateLimited => 'rate_limited',
         ReferralRedeemOutcome.offline => 'offline',
@@ -237,6 +250,11 @@ enum ReferralRedeemOutcome {
       this == ReferralRedeemOutcome.attributed ||
       this == ReferralRedeemOutcome.alreadyReferred;
 
+  /// Un refus que l'élève ne peut pas corriger en changeant de code : il a
+  /// déjà un parrain. Le code en attente n'a plus d'usage.
+  bool get isFinal =>
+      isSuccess || this == ReferralRedeemOutcome.referredByOther;
+
   /// Un nouvel essai plus tard peut réussir avec le MÊME code.
   bool get isRetryable =>
       this == ReferralRedeemOutcome.rateLimited ||
@@ -246,7 +264,13 @@ enum ReferralRedeemOutcome {
   /// Lit une réponse ou une erreur de `POST /referrals/redeem`.
   static ReferralRedeemOutcome fromResponse(Map<String, dynamic> body) {
     if (body['alreadyReferred'] == true) {
-      return ReferralRedeemOutcome.alreadyReferred;
+      // `referredByOther` (serveur build 59+) ; avant, `attributed: false`
+      // avec `alreadyReferred: true` voulait déjà dire « un autre parrain ».
+      final other = body['referredByOther'] == true ||
+          (body['referredByOther'] == null && body['attributed'] == false);
+      return other
+          ? ReferralRedeemOutcome.referredByOther
+          : ReferralRedeemOutcome.alreadyReferred;
     }
     if (body['attributed'] == true) return ReferralRedeemOutcome.attributed;
     return ReferralRedeemOutcome.error;
@@ -265,18 +289,38 @@ enum ReferralRedeemOutcome {
         _ => ReferralRedeemOutcome.error,
       };
     }
+    final data = error.response?.data;
+    // Le code machine du serveur (build 59+) ; sinon, le message anglais des
+    // serveurs plus anciens.
+    switch (data is Map ? data['code'] : null) {
+      case 'referral_unknown_code':
+        return ReferralRedeemOutcome.unknownCode;
+      case 'referral_self':
+        return ReferralRedeemOutcome.selfReferral;
+      case 'referral_has_case':
+        return ReferralRedeemOutcome.hasCase;
+      case 'referral_cross':
+        return ReferralRedeemOutcome.crossReferral;
+      case 'referral_code_rate_limited':
+        return ReferralRedeemOutcome.rateLimited;
+    }
     switch (status) {
       case 404:
       case 400:
         return ReferralRedeemOutcome.unknownCode;
       case 403:
-        // Le serveur ne sert pas de code machine pour ses 403 : seul le message
-        // de l'auto-parrainage est reconnu, tout autre refus reste générique.
-        final data = error.response?.data;
-        final message = data is Map ? '${data['message']}' : '$data';
-        return message.toLowerCase().contains('own referral code')
-            ? ReferralRedeemOutcome.selfReferral
-            : ReferralRedeemOutcome.notAllowed;
+        final message =
+            (data is Map ? '${data['message']}' : '$data').toLowerCase();
+        if (message.contains('own referral code')) {
+          return ReferralRedeemOutcome.selfReferral;
+        }
+        if (message.contains('first request')) {
+          return ReferralRedeemOutcome.hasCase;
+        }
+        if (message.contains('mutual')) {
+          return ReferralRedeemOutcome.crossReferral;
+        }
+        return ReferralRedeemOutcome.notAllowed;
       case 429:
         return ReferralRedeemOutcome.rateLimited;
       default:
@@ -406,7 +450,8 @@ class ReferralAttribution {
 
   /// `POST /referrals/redeem` pour [rawCode], confirmé par l'élève.
   ///
-  /// Succès (créé ou déjà parrainé) : le code en attente est oublié. Refus
+  /// Succès (créé ou déjà parrainé), ou déjà rattaché à un autre parrain : le
+  /// code en attente est oublié. Refus
   /// définitif (code inconnu, auto-parrainage, refus) : oublié s'il s'agit du
   /// code en attente. Panne passagère
   /// (hors ligne, limite horaire, erreur) : le code est GARDÉ, pour que l'écran
@@ -429,7 +474,7 @@ class ReferralAttribution {
     final pending = await pendingCode();
     if (outcome.isRetryable) {
       if (pending?.code != code) await rememberTypedCode(code);
-    } else if (outcome.isSuccess || pending?.code == code) {
+    } else if (outcome.isFinal || pending?.code == code) {
       // Un refus définitif n'efface que CE code : une faute de frappe ne fait
       // pas perdre le code du lien d'invitation encore en attente.
       await clearPendingCode();

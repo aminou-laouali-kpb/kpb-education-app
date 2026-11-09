@@ -8,6 +8,11 @@ import { useLocale } from '../../components/locale-provider';
 import { AdminCapability, hasAdminCapability } from '../../lib/admin-capabilities';
 import { apiFetch } from '../../lib/api-client';
 import {
+  applyReplyOverride,
+  sortAwaitingReplyFirst,
+  type CaseReplyFields,
+} from '../../lib/case-messages';
+import {
   linkedScholarshipView,
   type CaseScholarshipFields,
   type LinkedScholarshipView,
@@ -16,6 +21,7 @@ import {
   AdminTable,
   AdminTableRow,
   Alert,
+  Badge,
   Button,
   CellText,
   EmptyState,
@@ -25,6 +31,7 @@ import {
   StatusBadge,
   Textarea,
 } from '../../components/ui';
+import { CaseMessagesThread } from './case-messages-thread';
 
 interface CaseTaskItem {
   id: string;
@@ -50,7 +57,7 @@ interface CaseTimelineItem {
   createdAt: string;
 }
 
-interface AdminCaseItem extends CaseScholarshipFields {
+interface AdminCaseItem extends CaseScholarshipFields, CaseReplyFields {
   id: string;
   referenceCode: string;
   studentName: string;
@@ -125,6 +132,13 @@ export default function CasesPage() {
   const [statusForm, setStatusForm] = useState({
     status: '',
   });
+  const [awaitingFirst, setAwaitingFirst] = useState(false);
+  // Ce que le fil ouvert a vu (réponse attendue, dernier message), sans
+  // toucher à `cases` : le modifier recréerait le dossier sélectionné et
+  // remettrait à zéro les formulaires en cours de saisie à chaque relève.
+  const [replyOverrides, setReplyOverrides] = useState<
+    Record<string, CaseReplyFields>
+  >({});
 
   async function loadCases() {
     setErrorMessage(null);
@@ -181,6 +195,32 @@ export default function CasesPage() {
     void loadCases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
+
+  const visibleCases = useMemo(() => {
+    const merged = cases.map((item) =>
+      applyReplyOverride(item, replyOverrides[item.id]),
+    );
+    return awaitingFirst ? sortAwaitingReplyFirst(merged) : merged;
+  }, [cases, replyOverrides, awaitingFirst]);
+
+  const awaitingCount = useMemo(
+    () => visibleCases.filter((item) => item.awaitingReply === true).length,
+    [visibleCases],
+  );
+
+  function handleReplyFieldsChange(caseId: string, fields: CaseReplyFields) {
+    setReplyOverrides((current) => {
+      const previous = current[caseId];
+      if (
+        previous &&
+        previous.awaitingReply === fields.awaitingReply &&
+        previous.lastMessageAt === fields.lastMessageAt
+      ) {
+        return current;
+      }
+      return { ...current, [caseId]: fields };
+    });
+  }
 
   const selectedCase = useMemo(
     () => cases.find((item) => item.id === selectedCaseId) ?? null,
@@ -325,6 +365,25 @@ export default function CasesPage() {
         {statusMessage ? <Alert variant="success">{statusMessage}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Button
+            variant={awaitingFirst ? 'primary' : 'secondary'}
+            size="sm"
+            aria-pressed={awaitingFirst}
+            onClick={() => setAwaitingFirst((current) => !current)}
+          >
+            {t('cases.awaitingFirstToggle')} ({awaitingCount})
+          </Button>
+        </div>
+
         <AdminTable
           aria-label={t('cases.title')}
           columns={[
@@ -338,10 +397,10 @@ export default function CasesPage() {
           cols="0.9fr 1.3fr 1fr 1fr 1fr 1.4fr"
           footnote={t('cases.tableNote')}
         >
-          {cases.length === 0 ? (
+          {visibleCases.length === 0 ? (
             <EmptyState title={t('cases.empty')} />
           ) : (
-            cases.map((item) => (
+            visibleCases.map((item) => (
               <AdminTableRow
                 key={item.id}
                 selected={selectedCaseId === item.id}
@@ -357,8 +416,11 @@ export default function CasesPage() {
                   sub={linkedScholarship(item)?.label ?? item.contextLabel}
                   muted
                 />
-                <div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                   <StatusBadge status={item.status} />
+                  {item.awaitingReply ? (
+                    <Badge variant="warning">{t('cases.awaitingReplyBadge')}</Badge>
+                  ) : null}
                 </div>
                 <CellText
                   primary={item.assignedAdvisorName ?? t('cases.unassigned')}
@@ -386,6 +448,13 @@ export default function CasesPage() {
                 </div>
                 {renderLinkedScholarship(linkedScholarship(selectedCase))}
               </div>
+              <CaseMessagesThread
+                key={selectedCase.id}
+                caseId={selectedCase.id}
+                locale={locale}
+                t={t}
+                onReplyFieldsChange={handleReplyFieldsChange}
+              />
               <div>
                 <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>
                   {t('cases.nextStepHeading')}

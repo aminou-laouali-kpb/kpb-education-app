@@ -38,7 +38,7 @@ void main() {
       expect(
         looksLikeCoachQuotaError(
           'Quota hebdomadaire atteint (5 messages). '
-          'Premium bientôt disponible.',
+          'Le Pass Karatou arrive bientôt.',
         ),
         isTrue,
       );

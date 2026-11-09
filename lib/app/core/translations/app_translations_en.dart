@@ -292,8 +292,8 @@ const Map<String, String> appTranslationsEn = {
   'parent_msg_locked_title': 'Messages not shared',
   'parent_msg_locked_body':
       'Private messages between your child and their advisor aren\'t shared.',
-  'parent_pay_title': 'Payments',
-  'parent_pay_sub': 'Pay for your child — via your KPB advisor',
+  'parent_pay_title': 'Support',
+  'parent_pay_sub': 'Ask your KPB advisor for prices, on WhatsApp',
   'parent_premium_title': 'Pass Karatou for @child',
   'parent_premium_sub':
       'Coming soon: your child\'s scholarship application prepared with KPB Intelligence, then reviewed by a KPB advisor.',
@@ -379,16 +379,14 @@ const Map<String, String> appTranslationsEn = {
   'parent_pack_full': 'Full support',
   'parent_pack_full_desc':
       '3 advisor sessions + Campus France follow-up to submission',
-  'parent_pay_cta': 'Book',
-  'parent_pay_history_label': 'History',
-  'parent_pay_history_empty': 'Your receipts will appear here',
+  'parent_pay_cta': 'Ask for the price',
   'parent_pay_note':
       'Payment arranged with your KPB advisor on WhatsApp — receipt by message. Never pay “agents” outside the KPB channel.',
   'parent_ask_access': 'Request access',
   'parent_nav_overview': 'Overview',
   'parent_nav_case': 'Application',
   'parent_nav_updates': 'Updates',
-  'parent_nav_pay': 'Payments',
+  'parent_nav_pay': 'Support',
   'parent_onboarding_title': 'Follow your child\'s journey',
   'parent_onboarding_sub':
       'Generate an invite code and share it with your child. They enter it in their app to link your accounts.',
@@ -403,7 +401,8 @@ const Map<String, String> appTranslationsEn = {
       'Hello, I\'d like to request access to some information in my child\'s application.',
   'parent_wa_upload':
       'Hello, I\'d like to send a proof of funds for my child\'s application.',
-  'parent_wa_pay': 'Hello, I\'d like to pay for “@item” for my child via KPB.',
+  'parent_wa_pay':
+      'Hello, I\'d like to know the price of “@item” for my child.',
   'parent_invite_create_error': 'Could not create the invitation.',
   'parent_invite_code_title': 'Invite code',
   'parent_code_copied': 'Code copied.',
@@ -1552,7 +1551,7 @@ const Map<String, String> appTranslationsEn = {
   'institution_kpb_expert': 'KPB Expert',
   'institution_enroll_via_kpb': 'Enroll via KPB',
   'learn_more': 'Learn more',
-  'institution_premium_support': 'Premium Support',
+  'institution_premium_support': 'KPB support',
   'institution_kpb_benefits': 'KPB Education benefits',
   'institution_priority_admission': 'Priority Admission',
   'institution_priority_admission_desc':
@@ -2147,9 +2146,9 @@ const Map<String, String> appTranslationsEn = {
   'eef_pillar_endtoend_body':
       'Deadlines, required documents, your file\'s progress, and a KPB '
           'counsellor when you get stuck.',
-  'eef_plans_heading': 'Free and Premium',
+  'eef_plans_heading': 'Free and Pass Karatou',
   'eef_plan_free_label': 'Free',
-  'eef_plan_premium_label': 'With KPB Premium',
+  'eef_plan_premium_label': 'With the Pass Karatou',
   'eef_free_catalog': 'The catalogue and basic filters',
   'eef_free_shortlist_preview': 'A preview of your shortlist',
   'eef_free_letter_preview': 'One letter template preview',
@@ -2179,7 +2178,7 @@ const Map<String, String> appTranslationsEn = {
           'what we need to prepare.',
   'eef_field_current_level': 'Your current level',
   'eef_field_target_level': 'The level you want to prepare',
-  'eef_field_wants_premium': 'I would also be interested in Premium',
+  'eef_field_wants_premium': 'I would also be interested in the Pass Karatou',
   'eef_consent_notice':
       'By confirming, you agree that a KPB counsellor may contact you '
           'about this space, and that your answer helps us prepare our '
@@ -2593,6 +2592,8 @@ const Map<String, String> appTranslationsEn = {
   'auth_explore_guest': 'Explore without an account',
   'auth_intelligence_note': 'Free · FCFA · designed for French-speaking Africa',
   'auth_continue_google': 'Continue with Google',
+  'auth_have_account_hint':
+      'Already have an account? Use the same Google account or email to get back to your space.',
   'auth_google_error': 'Google sign-in failed. Try again.',
   'auth_continue_email': 'Continue with email',
   'auth_continue_guest': 'Browse without account',
@@ -2854,7 +2855,7 @@ const Map<String, String> appTranslationsEn = {
   'amb_referrals_empty': 'No referrals yet. Share your code to get started!',
   'amb_history_empty': 'No activity yet.',
   'referral_intro':
-      'Invite your friends to KPB. When they sign up and start a case with your code, we track your impact.',
+      'Invite your friends to KPB: they enter your referral code when they sign up. Each friend who starts a case earns you a credit. If you take part in the ambassador competition, a friend counts there when they create a new account and complete their profile during the competition.',
   'referral_your_code': 'Your referral code',
   'referral_invite_whatsapp': 'Invite on WhatsApp',
   'referral_invite_message':
@@ -2865,8 +2866,10 @@ const Map<String, String> appTranslationsEn = {
   'referral_code_hint': 'Enter the code',
   'referral_redeem_cta': 'Apply code',
   'referral_code_copied': 'Code copied',
-  'referral_redeemed_ok': 'Code applied — thanks! Your referrer is credited.',
-  'referral_redeemed_already': 'You have already used a referral code.',
+  'referral_redeemed_ok':
+      'Code applied — thanks! You’re now linked to your referrer.',
+  'referral_redeemed_already':
+      'This code is already saved: you’re linked to this referrer.',
   'referral_redeem_error': 'Invalid code. Check it and try again.',
   // ── No-cash referral rewards (KPB-77) ──
   'referral_credits_title': 'My referral credits',
@@ -3433,8 +3436,12 @@ const Map<String, String> appTranslationsEn = {
   'scholarship_match_entry_title': 'Test: which scholarships fit me?',
   'scholarship_match_entry_body':
       '2 min · up to 10 scholarships · we explain why',
+  'scholarship_match_entry_guest_title':
+      'Find the scholarships you are eligible for',
   'scholarship_match_entry_guest_body':
-      'With an account, take the test: up to 10 scholarships for your profile.',
+      'Create your free account, answer a few questions: we show you up to 10 scholarships that match your profile.',
+  'scholarship_match_entry_guest_cta':
+      'Create my account and see my scholarships',
   'scholarship_match_entry_cta': 'Take the test',
   'scholarship_match_entry_run_title': 'Your scholarships: @counts',
   'scholarship_match_entry_run_body': 'Updated on @date',
@@ -4091,7 +4098,7 @@ const Map<String, String> appTranslationsEn = {
   // ── Referrals in the app (build 57 / 2.3.1) ──────────────────────────────
   'onb_ref_title': 'Got a referral code?',
   'onb_ref_subtitle':
-      'If a friend invited you, enter their code so they get the credit. It’s optional.',
+      'If a friend invited you, enter their referral code so you’re linked to them. It’s optional.',
   'onb_ref_prefilled_note':
       'Code taken from your invite link. Check it before confirming.',
   'onb_ref_later_note':
@@ -4104,6 +4111,13 @@ const Map<String, String> appTranslationsEn = {
   'referral_err_self':
       'That’s your own code: it’s for inviting your friends, not for you.',
   'referral_err_not_allowed': 'This code can’t be used with your account.',
+  'referral_err_other_referrer': 'You’re already linked to another referrer.',
+  'referral_err_has_case':
+      'This code can no longer be added: you’ve already opened a case.',
+  'referral_err_cross':
+      'This code can’t be used: this person already entered your code, and two friends can’t refer each other.',
+  'comp_over_note':
+      'The ambassador competition is over: a code entered now no longer counts for it. It still links you to your referrer.',
   'referral_err_rate_limited':
       'This code has been used a lot in the last hour. It’s saved: try again later from Profile → Refer a friend.',
   'referral_err_offline':
@@ -4133,10 +4147,13 @@ const Map<String, String> appTranslationsEn = {
   'comp_to_review': 'To review',
   'comp_to_review_hint': 'Checked by the team before they count',
   'comp_pending': 'Pending',
-  'comp_pending_hint': 'Signed up, profile not complete yet',
+  'comp_pending_hint': 'New accounts, profile not complete yet',
+  'comp_ineligible': 'Don’t count',
+  'comp_ineligible_hint':
+      'These accounts existed before the competition: they don’t count.',
   'comp_rule_explainer':
-      'A referral counts once their profile is complete. Only ambassadors are ranked: your referrals don’t win anything.',
-  'comp_your_code': 'Your ambassador code',
+      'A referral counts only if they create a NEW account during the competition, enter your code and complete their profile during the competition. An account created before doesn’t count. Only ambassadors are ranked: your referrals don’t win anything.',
+  'comp_your_code': 'Your referral code',
   'comp_share_cta': 'Share my link',
   'comp_share_message':
       'Join me on KPB Education! Sign up with my code @code: @link',

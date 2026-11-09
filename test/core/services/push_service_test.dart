@@ -136,6 +136,30 @@ void main() {
     verify(() => messaging.deleteToken()).called(1);
   });
 
+  // Build 59 : une réponse de l'équipe dans un dossier relit les dossiers
+  // aussitôt, pour que le fil soit à jour quand l'élève l'ouvre.
+  test('un tap sur « X t’a répondu » relit les dossiers', () async {
+    var refreshes = 0;
+    PushService.onCaseReply = () async => refreshes++;
+    addTearDown(() => PushService.onCaseReply = null);
+    opened.add(const RemoteMessage(data: {
+      'type': 'case_message',
+      'caseId': 'case-1',
+      'route': '/cases/case-1',
+    }));
+    await Future<void>.delayed(Duration.zero);
+    expect(refreshes, 1);
+  });
+
+  test('les autres notifications ne relisent pas les dossiers', () async {
+    var refreshes = 0;
+    PushService.onCaseReply = () async => refreshes++;
+    addTearDown(() => PushService.onCaseReply = null);
+    opened.add(const RemoteMessage(data: {'type': 'campaign'}));
+    await Future<void>.delayed(Duration.zero);
+    expect(refreshes, 0);
+  });
+
   test('un tap renvoie l\'ouverture au backend', () async {
     opened.add(const RemoteMessage(data: {
       'campaignId': 'camp-1',

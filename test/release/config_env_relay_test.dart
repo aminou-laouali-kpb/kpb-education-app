@@ -132,6 +132,22 @@ void main() {
     );
   });
 
+  // Messagerie du dossier (build 59) : livrée fermée, ouverte côté serveur le
+  // jour où l'équipe répond depuis l'administration.
+  test('le drapeau de la messagerie du dossier est lu, relayé et fermé', () {
+    const variable = 'KPB_CASE_MESSAGING_ENABLED';
+    expect(read, contains(variable),
+        reason: '$controllerPath ne lit plus $variable.');
+    expect(relayed, contains(variable),
+        reason: '$variable n\'est pas relayée dans docker-compose.yml.');
+    expect(documented, contains(variable),
+        reason: '$variable n\'est pas documentée dans .env.example.');
+    expect(
+      File('docker-compose.yml').readAsStringSync(),
+      contains('- $variable=\${$variable:-false}'),
+    );
+  });
+
   // Onboarding « la valeur d'abord » (chantier I3) : `features.onboardingV2`,
   // FERMÉ par défaut. Un défaut `true` dans compose basculerait tout le parc
   // installé sur le nouveau parcours au premier redéploiement.

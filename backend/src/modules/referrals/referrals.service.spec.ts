@@ -144,6 +144,7 @@ describe('ReferralsService', () => {
     expect(await service.redeem('u2', 'code1234')).toEqual({
       attributed: true,
       alreadyReferred: false,
+      referredByOther: false,
     });
     expect(calls.created).toBe(1);
   });
@@ -172,6 +173,91 @@ describe('ReferralsService', () => {
     expect(calls.created).toBe(0);
   });
 
+  it('says when the student is already attached to ANOTHER referrer (no silent success)', async () => {
+    const { service, calls } = makeService({
+      referrerByCode: { id: 'r1' },
+      existingReferral: { referrerId: 'someone-else' },
+    });
+    expect(await service.redeem('u2', 'code1234')).toEqual({
+      attributed: false,
+      alreadyReferred: true,
+      referredByOther: true,
+    });
+    expect(calls.created).toBe(0);
+  });
+
+  it('re-entering the SAME referrer’s code stays a plain success', async () => {
+    const { service } = makeService({
+      referrerByCode: { id: 'r1' },
+      existingReferral: { referrerId: 'r1' },
+    });
+    expect(await service.redeem('u2', 'code1234')).toEqual({
+      attributed: true,
+      alreadyReferred: true,
+      referredByOther: false,
+    });
+  });
+
+  describe('machine-readable error codes (human message kept)', () => {
+    async function errorBody(promise: Promise<unknown>) {
+      const err = await promise.catch((e: unknown) => e);
+      expect(err).toBeInstanceOf(HttpException);
+      return {
+        status: (err as HttpException).getStatus(),
+        body: (err as HttpException).getResponse() as Record<string, unknown>,
+      };
+    }
+
+    it('referral_unknown_code (404)', async () => {
+      const { service } = makeService({ referrerByCode: null });
+      expect(await errorBody(service.redeem('u2', 'nope1234'))).toEqual({
+        status: 404,
+        body: { code: 'referral_unknown_code', message: 'Invalid referral code.' },
+      });
+      // Trop court après normalisation : même code.
+      expect((await errorBody(service.redeem('u2', '- -'))).body.code).toBe(
+        'referral_unknown_code',
+      );
+    });
+
+    it('referral_self (403)', async () => {
+      const { service } = makeService({ referrerByCode: { id: 'u1' } });
+      expect(await errorBody(service.redeem('u1', 'mycode12'))).toEqual({
+        status: 403,
+        body: { code: 'referral_self', message: 'You cannot use your own referral code.' },
+      });
+    });
+
+    it('referral_cross (403)', async () => {
+      const { service } = makeService({
+        referrerByCode: { id: 'u2' },
+        reverseReferral: { id: 'r-1' },
+      });
+      expect(await errorBody(service.redeem('u1', 'abc12345'))).toEqual({
+        status: 403,
+        body: { code: 'referral_cross', message: 'Mutual referrals are not allowed.' },
+      });
+    });
+
+    it('referral_has_case (403)', async () => {
+      const { service } = makeService({ referrerByCode: { id: 'u2' }, existingCases: 2 });
+      expect(await errorBody(service.redeem('u1', 'abc12345'))).toEqual({
+        status: 403,
+        body: {
+          code: 'referral_has_case',
+          message: 'A referral code must be used before your first request.',
+        },
+      });
+    });
+
+    it('referral_code_rate_limited (429)', async () => {
+      const { service } = makeService({ referrerByCode: { id: 'r1' }, lastHourCount: 99 });
+      const { status, body } = await errorBody(service.redeem('u2', 'abc12345'));
+      expect(status).toBe(429);
+      expect(body.code).toBe('referral_code_rate_limited');
+    });
+  });
+
   it('refuses a mutual referral (A refers B, then B refers A)', async () => {
     const { service, calls } = makeService({
       referrerByCode: { id: 'u2' },
@@ -196,7 +282,7 @@ describe('ReferralsService', () => {
     it('accepte un code ambassadeur mis en majuscules par l’app, et rattache au PROFIL', async () => {
       const { service, calls } = makeService({ ambassadors: [amb] });
       const out = await service.redeem('u2', 'KTOU-AK-1A2B3C');
-      expect(out).toEqual({ attributed: true, alreadyReferred: false });
+      expect(out).toEqual({ attributed: true, alreadyReferred: false, referredByOther: false });
       expect(calls.createdReferral).toEqual([
         { referrerId: 'p-amb', refereeProfileId: 'u2' },
       ]);

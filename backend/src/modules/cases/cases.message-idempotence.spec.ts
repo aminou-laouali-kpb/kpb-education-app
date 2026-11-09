@@ -118,7 +118,8 @@ describe('CasesService.createMessage — clientMessageId (idempotence)', () => {
     expect(created).toEqual([
       expect.objectContaining({ caseId: 'case-1', clientMessageId: 'user-42' }),
     ]);
-    expect(timeline).toHaveLength(1);
+    // Build 59 : un message n'ajoute plus d'événement à la chronologie.
+    expect(timeline).toHaveLength(0);
     expect(result).toMatchObject({ id: 'msg-new', clientMessageId: 'user-42' });
   });
 

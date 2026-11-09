@@ -1139,8 +1139,8 @@ drapeau. Un backend plus ancien ne les sert pas : l'app lit une clé absente com
 | Clé | Variable d'environnement | Sens |
 |---|---|---|
 | `features.referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | Android seulement : lecture **une fois par installation** du Play Install Referrer (paquet `play_install_referrer`), extraction stricte de `ref` (code personnel ou ambassadeur), gardé en local pour **préremplir** le champ « code de ton parrain ». Aucun rattachement sans confirmation de l'élève ; rien n'est transmis tant qu'il n'a pas validé. Fermé : aucune lecture. |
-| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrain ? » à la fin de l'onboarding élève, APRÈS la synchro du profil (`POST /referrals/redeem`), bouton « Passer », ne bloque jamais l'entrée dans l'app. |
-| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition ambassadeurs » (`GET /referrals/campaigns/current`, et `GET /public/campaigns/:slug/leaderboard` pour le seul `rulesUrl`) : phase, compte à rebours, rang, compteurs, code et partage. Point d'entrée : écran Parrainage (participant) et espace ambassadeur sans programme rémunéré. |
+| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrainage ? » à la fin de l'onboarding élève, APRÈS la synchro du profil (`POST /referrals/redeem`), bouton « Passer », ne bloque jamais l'entrée dans l'app. |
+| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition ambassadeurs » (`GET /referrals/campaigns/current`, et `GET /public/campaigns/:slug/leaderboard` pour le seul `rulesUrl`) : phase, compte à rebours, rang, compteurs, code et partage. Point d'entrée réel : écran Parrainage (participant). L'espace ambassadeur n'est joignable que dans une build compilée avec `KPB_AMBASSADOR_CASH_ENABLED=true` (jamais en boutique). |
 
 Purement côté app : les routes `/referrals/*` restent servies quel que soit leur état. L'en-tête
 `X-KPB-Device-Id` (identifiant d'installation, UUID v4 aléatoire stocké sur l'appareil) part sur
@@ -2141,7 +2141,10 @@ Code : `backend/src/modules/referrals/` (`referrals.service.ts`, `campaigns/`). 
 
 ### `POST /referrals/redeem` (existante, étendue — compatible avec l'app 2.3.0)
 
-Corps inchangé `{ code }` (4 à 16 caractères), réponse inchangée `{attributed, alreadyReferred}`.
+Corps inchangé `{ code }` (4 à 16 caractères), réponse `{attributed, alreadyReferred,
+referredByOther}` (`referredByOther` ajouté en build 59 : `true` quand l'élève est déjà rattaché
+à un AUTRE parrain — le code saisi n'a rien changé ; avant, seul `attributed: false` avec
+`alreadyReferred: true` le laissait deviner).
 
 - **Codes unifiés** : `code` peut être le code personnel (`UserProfile.referralCode`) OU le code
   ambassadeur (`Ambassador.code`, « KTOU-AB-1a2b3c »). Recherche sur la forme normalisée
@@ -2151,8 +2154,11 @@ Corps inchangé `{ code }` (4 à 16 caractères), réponse inchangée `{attribut
 - Le filleul est rattaché au **profil** du parrain (`Referral`, seule source du comptage) ; si ce
   parrain a une ligne `Ambassador`, une `AmbassadorReferral` est créée (`refereeName` =
   « Prénom I. ») et `totalReferrals` incrémenté.
-- Inchangé : 404 code inconnu, 403 auto-parrainage, 403 parrainage croisé, 403 si un dossier
-  existe, idempotent (`alreadyReferred`).
+- 404 code inconnu, 403 auto-parrainage, 403 parrainage croisé, 403 si un dossier existe,
+  idempotent (`alreadyReferred`). **Build 59** : chaque refus porte un `code` machine à côté du
+  `message` anglais inchangé — `referral_unknown_code` (404), `referral_self`, `referral_cross`,
+  `referral_has_case` (403), `referral_code_rate_limited` (429). L'app lit le `code`, et retombe
+  sur le message avec un serveur plus ancien.
 - **Nouveau** : **429** `{code: "referral_code_rate_limited"}` au-delà de
   `REFERRAL_CODE_HOURLY_LIMIT` (30) rattachements au même parrain dans l'heure ; rien n'est créé.
 - **Nouveau** : empreintes anti-fraude relevées au mieux (jamais bloquantes) dans
@@ -2176,9 +2182,21 @@ non activé : l'app affiche l'écran de candidature, jamais des commissions prom
 
 ### `GET /referrals/campaigns/current` (élève, lue par la build 57 derrière `features.referralLeaderboard`)
 
-`{participating: false}` ou `{participating: true, campaign: {slug, nameFr, nameEn, status,
-phase, startsAt, endsAt, provisional}, me: {publicName, city, code, rank, qualified, toReview,
-pending, rankable}, serverTime}`. `Cache-Control: private, no-store`.
+`{participating: false, competition}` ou `{participating: true, campaign: {slug, nameFr, nameEn,
+status, phase, startsAt, endsAt, provisional, rulesUrl}, me: {publicName, city, code,
+ambassadorCode, rank, qualified, toReview, pending, ineligible, rankable}, serverTime}`.
+`Cache-Control: private, no-store`.
+
+Ajouts de la build 59 (tous facultatifs pour l'app) :
+- `competition` (non-participant) : `{phase: "upcoming"|"running"|"ended", endsAt}` de la
+  dernière campagne `live`/`frozen`/`closed`, ou `null` (aucune, ou terminée depuis plus de 30
+  jours). Rien de personnel, pas de slug.
+- `campaign.phase` vaut `ended` dès que la campagne est `frozen` ou `closed`.
+- `campaign.rulesUrl` : le règlement (https seulement, sinon `null`).
+- `me.code` : le code de parrainage PERSONNEL (celui de `GET /referrals/me`) quand il existe,
+  sinon le code « KTOU-… » ; `me.ambassadorCode` : le code « KTOU-… ». Les deux comptent.
+- `me.ineligible` : filleuls au statut `ineligible` — compte créé avant la fenêtre, qui ne
+  comptera jamais (avant, ils restaient « en attente »).
 
 ### `GET /public/campaigns/:slug/leaderboard` — sans authentification
 

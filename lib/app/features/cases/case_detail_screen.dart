@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
@@ -610,7 +611,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                     child: KpbEmptyState(
                       icon: Icons.chat_bubble_outline_rounded,
                       title: 'no_messages'.tr,
-                      subtitle: AppConfig.caseInAppMessagingEnabled
+                      subtitle: RemoteFeatureFlags.instance.caseMessagingEnabled
                           ? 'send_message_hint'.tr
                           : c.assignedAdvisorName != null
                               ? 'case_messages_whatsapp_hint'.tr
@@ -625,31 +626,34 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                   ),
                 const SizedBox(height: 8),
 
-                if (AppConfig.caseInAppMessagingEnabled)
-                  ..._messageComposer(c)
-                else
-                  // Sans conseiller attribué, on ne promet pas « ton
-                  // conseiller » : la ligne officielle KPB générale, avec la
-                  // référence du dossier (relecture de la PR #407).
-                  _WriteAdvisorOnWhatsAppButton(
-                    label: c.assignedAdvisorName != null
-                        ? 'case_write_advisor_whatsapp'.tr
-                        : 'case_write_kpb_whatsapp'.tr,
-                    onTap: () => _openWhatsapp(
-                      advisorName: c.assignedAdvisorName,
-                      prefill: c.assignedAdvisorName != null
-                          ? (c.isReferenceProvisional
-                              ? 'case_whatsapp_advisor_prefill_provisional'
-                                  .trParams({'title': _ctrl.resolve(c.title)})
-                              : 'case_whatsapp_advisor_prefill'
-                                  .trParams({'reference': c.referenceCode}))
-                          : (c.isReferenceProvisional
-                              ? 'case_whatsapp_continue_prefill_provisional'
-                                  .trParams({'title': _ctrl.resolve(c.title)})
-                              : 'case_whatsapp_continue_prefill'
-                                  .trParams({'reference': c.referenceCode})),
-                    ),
+                if (RemoteFeatureFlags.instance.caseMessagingEnabled) ...[
+                  ..._messageComposer(c),
+                  const SizedBox(height: 8),
+                ],
+                // WhatsApp reste proposé, messagerie ouverte ou non : c'est le
+                // canal que l'élève connaît, et le seul quand elle est fermée.
+                // Sans conseiller attribué, on ne promet pas « ton
+                // conseiller » : la ligne officielle KPB générale, avec la
+                // référence du dossier (relecture de la PR #407).
+                _WriteAdvisorOnWhatsAppButton(
+                  label: c.assignedAdvisorName != null
+                      ? 'case_write_advisor_whatsapp'.tr
+                      : 'case_write_kpb_whatsapp'.tr,
+                  onTap: () => _openWhatsapp(
+                    advisorName: c.assignedAdvisorName,
+                    prefill: c.assignedAdvisorName != null
+                        ? (c.isReferenceProvisional
+                            ? 'case_whatsapp_advisor_prefill_provisional'
+                                .trParams({'title': _ctrl.resolve(c.title)})
+                            : 'case_whatsapp_advisor_prefill'
+                                .trParams({'reference': c.referenceCode}))
+                        : (c.isReferenceProvisional
+                            ? 'case_whatsapp_continue_prefill_provisional'
+                                .trParams({'title': _ctrl.resolve(c.title)})
+                            : 'case_whatsapp_continue_prefill'
+                                .trParams({'reference': c.referenceCode})),
                   ),
+                ),
               ],
             ),
           ),
@@ -659,8 +663,8 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
   }
 
   /// Indicateur de saisie et champ d'envoi — derrière
-  /// [AppConfig.caseInAppMessagingEnabled], fermé tant qu'aucun conseiller ne
-  /// peut lire ces messages (revue avant la 58, constat 33).
+  /// le drapeau serveur `caseMessaging` (build 59), fermé tant que l'équipe ne
+  /// répond pas depuis l'administration.
   List<Widget> _messageComposer(StudentCase c) {
     return [
       // ── Typing indicator ─────────────────────────────────────────

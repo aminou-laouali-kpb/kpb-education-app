@@ -22,7 +22,7 @@ est serveur, la gestion est dans la console admin, le classement est une page we
 | Ambassadeur (web) | `kpbeducation.cloud/invite.html?ref=<CODE>` | Lien à partager : code en grand, « Copier le code », boutiques, consigne. |
 | Filleul (app 2.3.0) | Profil → « Parrainer un ami » → « Tu as un code de parrainage ? » | Saisit le code (personnel OU « KTOU-… », casse et tirets ignorés). |
 | Tout le monde | `kpbeducation.cloud/classement/?c=ambassadeurs-novembre-2026` | Podium, liste, recherche, compte à rebours, « classement provisoire ». |
-| Équipe | Console admin → « Compétition ambassadeurs » (`/parrainage`) | Campagnes, ambassadeurs, classement, filleuls, décisions, podium, versements, export. |
+| Équipe | Console admin → « Compétition des ambassadeurs » (`/parrainage`) | Campagnes, ambassadeurs, classement, filleuls, décisions, podium, versements, export. |
 
 ## 1. Mise en production (avant le 31/10)
 
@@ -181,6 +181,14 @@ Avec deux téléphones (ou un téléphone et des comptes de test) et l'app 2.3.0
 6. **Export CSV** (classement ou filleuls) pour archive — fichiers à données personnelles, à
    garder hors des canaux publics.
 
+> **Déploiement du backend de la build 59 pendant une campagne.** Le statut
+> « ne compte pas » (`ineligible`, compte créé avant la compétition) n'est
+> posé qu'au recalcul, et le recalcul planifié ne traite que les campagnes
+> `live`. Si le backend 59 arrive alors qu'une campagne est déjà **gelée** (et
+> pas encore close), lancer un recalcul manuel depuis l'admin (action
+> « Recalculer ») juste après le déploiement : sinon ces comptes restent
+> affichés « En attente ».
+
 ## 8. Parrainage côté app — build 57 (2.3.1), derrière trois drapeaux fermés
 
 **Révisé le 17/10/2026 (décision du propriétaire)** : les parties app entrent dans la build 57
@@ -190,8 +198,8 @@ sans build, indépendamment des deux autres, et se referme de même.
 | Drapeau (`/config/app`) | Variable | Ce qu'il ouvre dans la 57 |
 |---|---|---|
 | `features.referralInstallReferrer` | `KPB_REFERRAL_INSTALL_REFERRER_ENABLED` | Android : lecture **une fois par installation** du Play Install Referrer (paquet `play_install_referrer` 0.5.0) ; `ref` extrait avec le format strict des codes réels, gardé **en local** pour préremplir le champ. Rien n'est transmis avant la confirmation de l'élève. iOS, échec, absence : rien, saisie manuelle |
-| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrain ? » à la fin de l'onboarding élève, **après** la synchro du profil, préremplie par le referrer, bouton « Passer » ; ne bloque jamais l'entrée dans l'app |
-| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition ambassadeurs » : phase et compte à rebours (heure du serveur), rang, qualifiés / à vérifier / en attente, « un filleul compte quand son profil est complété », code + lien d'invitation à partager, page publique `kpbeducation.cloud/classement/?c=<slug>`, règlement (`rulesUrl` du classement public), mention « provisoire » tant que la campagne n'est pas close |
+| `features.referralOnboardingCode` | `KPB_REFERRAL_ONBOARDING_CODE_ENABLED` | Étape facultative « Tu as un code de parrainage ? » à la fin de l'onboarding élève, **après** la synchro du profil, préremplie par le referrer, bouton « Passer » ; ne bloque jamais l'entrée dans l'app |
+| `features.referralLeaderboard` | `KPB_REFERRAL_LEADERBOARD_ENABLED` | Écran « Compétition des ambassadeurs » : phase et compte à rebours (heure du serveur), rang, qualifiés / à vérifier / en attente / « ne comptent pas » (compte antérieur à la compétition, build 59), la règle « nouveau compte + profil complété pendant la compétition », code de parrainage + lien d'invitation à partager, page publique `kpbeducation.cloud/classement/?c=<slug>`, règlement **toujours affiché** (build 59 : `rulesUrl` de la campagne, sinon du classement public, sinon la page publique du classement), mention « provisoire » tant que la campagne n'est pas close. Build 59 : sur l'écran Parrainage et l'étape d'onboarding, mention « la compétition est terminée : un code saisi maintenant ne compte plus pour elle » pendant 30 jours après la fin |
 
 Ce que fait la 57, drapeaux ou non :
 
@@ -200,17 +208,35 @@ Ce que fait la 57, drapeaux ou non :
   seulement** ; un nouveau à chaque réinstallation. Le serveur n'en garde que l'empreinte HMAC
   (signal `device_duplicate`, jamais bloquant).
 - **Messages clairs** à chaque issue du rattachement (étape d'onboarding et écran Parrainage) :
-  code inconnu (404), propre code (403), refus (403 croisé ou dossier existant), déjà parrainé
-  (succès silencieux), limite horaire (429 `referral_code_rate_limited`), hors ligne. Sur une
-  panne passagère, le code est **gardé** et l'écran Parrainage le repropose.
+  code inconnu (404 `referral_unknown_code`), propre code (403 `referral_self`), parrainage
+  croisé (403 `referral_cross`), dossier déjà ouvert (403 `referral_has_case` : « Ce code ne
+  peut plus être ajouté : tu as déjà ouvert un dossier. »), déjà rattaché à ce parrain (succès
+  silencieux), déjà rattaché à **un autre** parrain (200 `referredByOther: true` : « Tu es déjà
+  rattaché à un autre parrain. »), limite horaire (429 `referral_code_rate_limited`), hors
+  ligne. Les codes machine sont servis depuis la build 59 ; l'app retombe sur le message anglais
+  avec un serveur plus ancien. Sur une panne passagère, le code est **gardé** et l'écran
+  Parrainage le repropose.
 - L'écran **Parrainage** préremplit le code en attente (lien d'invitation, ou saisi à
   l'onboarding sans réseau), toujours à confirmer.
 
-Points d'entrée de l'écran « Compétition » : l'écran Parrainage (une carte, pour un participant
-seulement) et l'**espace ambassadeur** (accès rapide du profil) — pour un ambassadeur **sans
-espace « cash »**, le classement **remplace** l'écran de candidature quand il participe ; un
-non-participant garde la candidature, sans rien de promis (l'API ne lui donne pas le slug, l'app
-ne le code pas en dur : pas de lien vers un classement public). Aucun montant n'est affiché dans
+Point d'entrée **réel** de l'écran « Compétition » (builds 57 et suivantes) : **Profil →
+« Parrainer un ami »** (écran Parrainage) → la carte « Compétition des ambassadeurs », affichée
+**seulement à un participant** et seulement drapeau `features.referralLeaderboard` ouvert. Rien
+d'autre ne mène à cet écran.
+
+> **L'« espace ambassadeur » n'est PAS joignable.** Sa tuile du profil (« Espace ambassadeur »,
+> `quick_access.dart`) n'existe que dans une build compilée avec
+> `--dart-define=KPB_AMBASSADOR_CASH_ENABLED=true` (`AppConfig.ambassadorCashEnabled`, constante
+> de compilation, fausse dans les builds des boutiques — programme rémunéré coupé, KPB-160). Ne pas
+> l'indiquer aux ambassadeurs, ne pas l'ouvrir pour la compétition : le code qui y fait
+> remplacer la candidature par le classement reste en place, mais aucun élève n'y accède.
+
+Un non-participant ne voit ni carte ni lien vers un classement public (l'API ne lui donne pas le
+slug, l'app ne le code pas en dur) ; depuis la build 59 il reçoit seulement la phase de la
+dernière compétition (`competition.phase`) pour la mention « terminée ». Le code affiché sur
+l'écran Compétition est, depuis le serveur de la build 59, le **code de parrainage personnel**
+(le même que l'écran Parrainage) ; le code « KTOU-… » compte de la même façon (même profil),
+mais l'app n'en montre qu'un. Aucun montant n'est affiché dans
 l'app (ni prix, ni commission) ; la mention « Organisateur : KPB Global L.L.C-FZ. Apple et Google
 ne sont ni organisateurs ni partenaires de cette compétition. » figure en pied d'écran (texte
 retenu le 18/10/2026, gardé par `test/features/referral/ambassador_competition_screen_test.dart`).

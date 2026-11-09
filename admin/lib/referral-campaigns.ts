@@ -10,7 +10,8 @@ import { apiFetch, apiFetchText } from './api-client';
 
 export type CampaignStatus = 'draft' | 'live' | 'frozen' | 'closed';
 export type CampaignAction = 'launch' | 'freeze' | 'unfreeze' | 'validate_podium' | 'close';
-export type ReferralStatus = 'pending' | 'qualified' | 'flagged' | 'excluded';
+/** `ineligible` : compte du filleul créé avant la fenêtre — ne comptera jamais. */
+export type ReferralStatus = 'pending' | 'qualified' | 'flagged' | 'excluded' | 'ineligible';
 
 export interface CampaignPrize {
   rank: number;
@@ -229,6 +230,7 @@ export const REFERRAL_VARIANT: Record<ReferralStatus, 'neutral' | 'success' | 'w
   qualified: 'success',
   flagged: 'warning',
   excluded: 'danger',
+  ineligible: 'neutral',
 };
 
 export const REFERRAL_FLAGS = [
@@ -320,8 +322,8 @@ export const NOVEMBER_2026_RULES_URL = 'https://kpbeducation.cloud/reglement-amb
 /** Valeurs par défaut du formulaire : la compétition de novembre 2026. */
 export const NOVEMBER_2026_DEFAULTS: CampaignFormInput = {
   slug: 'ambassadeurs-novembre-2026',
-  nameFr: 'Compétition ambassadeurs — novembre 2026',
-  nameEn: 'Ambassador challenge — November 2026',
+  nameFr: 'Compétition des ambassadeurs — novembre 2026',
+  nameEn: 'Ambassador competition — November 2026',
   startDate: '2026-11-01',
   endDate: '2026-11-10',
   timeZone: 'Africa/Lagos',

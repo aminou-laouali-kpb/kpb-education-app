@@ -5,29 +5,29 @@ import {
   NotFoundException,
   Optional,
   ServiceUnavailableException,
-} from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
-import type { Prisma } from '@prisma/client';
-import { randomUUID } from 'node:crypto';
+} from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
+import type { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
-import { CaseStatus } from '../../common/enums/case-status.enum';
-import { InternalRole } from '../../common/enums/internal-role.enum';
-import { PushSenderService } from '../notifications/push-sender.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { ReferralCreditsService } from '../referrals/referral-credits.service';
-import { CaseLeadMailService } from './case-lead-mail.service';
-import { CaseMessagingGateway } from './case-messaging.gateway';
-import { AssignCaseDto } from './dto/assign-case.dto';
-import { CreateCaseDto } from './dto/create-case.dto';
-import { CreateCaseInternalNoteDto } from './dto/create-case-internal-note.dto';
+import { CaseStatus } from "../../common/enums/case-status.enum";
+import { InternalRole } from "../../common/enums/internal-role.enum";
+import { PushSenderService } from "../notifications/push-sender.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { ReferralCreditsService } from "../referrals/referral-credits.service";
+import { CaseLeadMailService } from "./case-lead-mail.service";
+import { CaseMessagingGateway } from "./case-messaging.gateway";
+import { AssignCaseDto } from "./dto/assign-case.dto";
+import { CreateCaseDto } from "./dto/create-case.dto";
+import { CreateCaseInternalNoteDto } from "./dto/create-case-internal-note.dto";
 import {
   CLIENT_MESSAGE_ID_PATTERN,
   MAX_CASE_MESSAGE_LENGTH,
-} from './dto/create-case-message.dto';
-import { CreateCaseTaskDto } from './dto/create-case-task.dto';
-import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto';
-import { UpdateCaseDto } from './dto/update-case.dto';
-import { UploadCaseDocumentDto } from './dto/upload-case-document.dto';
+} from "./dto/create-case-message.dto";
+import { CreateCaseTaskDto } from "./dto/create-case-task.dto";
+import { CreateCaseTimelineEventDto } from "./dto/create-case-timeline-event.dto";
+import { UpdateCaseDto } from "./dto/update-case.dto";
+import { UploadCaseDocumentDto } from "./dto/upload-case-document.dto";
 
 /**
  * Le résumé de la bourse accompagnée (« Mes 10 bourses » → « Être
@@ -49,20 +49,29 @@ const CASE_INCLUDE = {
   // Un fil de discussion se lit de haut en bas : le plus ancien d'abord, le
   // message qu'on vient d'envoyer en dernier, sous les yeux de l'élève (revue
   // avant la 58, constat 37). Le reste de l'historique reste antéchronologique.
-  messages: { orderBy: { createdAt: 'asc' as const } },
-  timelineEvents: { orderBy: { createdAt: 'desc' as const } },
-  tasks: { orderBy: { createdAt: 'desc' as const } },
-  documents: { orderBy: { createdAt: 'desc' as const } },
-  internalNotes: { orderBy: { createdAt: 'desc' as const } },
+  messages: { orderBy: { createdAt: "asc" as const } },
+  timelineEvents: { orderBy: { createdAt: "desc" as const } },
+  tasks: { orderBy: { createdAt: "desc" as const } },
+  documents: { orderBy: { createdAt: "desc" as const } },
+  internalNotes: { orderBy: { createdAt: "desc" as const } },
 };
+
+/** Liste staff : le dernier message seulement (réponse attendue ?). */
+const ADMIN_LIST_INCLUDE = { ...CASE_INCLUDE, messages: false as const };
 
 export interface CaseMessagingActor {
   userId: string;
-  role: 'student' | InternalRole;
+  role: "student" | InternalRole;
   fullName?: string;
 }
 
 export type StaffActor = { id: string; role: string; fullName: string };
+
+/** Une seule alerte e-mail à l'équipe par rafale de messages d'un élève. */
+export const STAFF_ALERT_QUIET_MS = 30 * 60 * 1000;
+
+/** Une seule notification à l'élève par rafale de réponses de l'équipe. */
+export const REPLY_PUSH_QUIET_MS = 2 * 60 * 1000;
 
 /** Dossiers attribués à un conseiller : profil conseiller lié OU nom d'affectation. */
 function counselorCaseScope(staff: StaffActor) {
@@ -72,7 +81,7 @@ function counselorCaseScope(staff: StaffActor) {
       {
         assignedAdvisorName: {
           equals: staff.fullName.trim(),
-          mode: 'insensitive' as const,
+          mode: "insensitive" as const,
         },
       },
     ],
@@ -83,6 +92,9 @@ function counselorCaseScope(staff: StaffActor) {
 export class CasesService {
   private readonly logger = new Logger(CasesService.name);
 
+  /** La dernière alerte lancée (e-mail ou push), pour les tests. */
+  pendingAlert: Promise<void> = Promise.resolve();
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly moduleRef: ModuleRef,
@@ -90,18 +102,28 @@ export class CasesService {
     @Optional() private readonly leadMail?: CaseLeadMailService,
   ) {}
 
-  private broadcastCaseUpdate(caseId: string, payload: Record<string, unknown>) {
+  private broadcastCaseUpdate(
+    caseId: string,
+    payload: Record<string, unknown>,
+  ) {
     try {
-      const gateway = this.moduleRef.get(CaseMessagingGateway, { strict: false });
+      const gateway = this.moduleRef.get(CaseMessagingGateway, {
+        strict: false,
+      });
       gateway.emitCaseUpdated(caseId, payload);
     } catch {
       // Gateway may be unavailable in isolated tests.
     }
   }
 
-  private broadcastCaseMessage(caseId: string, message: Record<string, unknown>) {
+  private broadcastCaseMessage(
+    caseId: string,
+    message: Record<string, unknown>,
+  ) {
     try {
-      const gateway = this.moduleRef.get(CaseMessagingGateway, { strict: false });
+      const gateway = this.moduleRef.get(CaseMessagingGateway, {
+        strict: false,
+      });
       gateway.emitCaseMessage(caseId, message);
     } catch {
       // Gateway may be unavailable in isolated tests.
@@ -111,7 +133,7 @@ export class CasesService {
   private assertDb() {
     if (!this.prismaService.isEnabled) {
       throw new ServiceUnavailableException(
-        'Database is not configured. Set DATABASE_URL.',
+        "Database is not configured. Set DATABASE_URL.",
       );
     }
   }
@@ -138,13 +160,15 @@ export class CasesService {
     this.assertDb();
     const where: Prisma.CaseWhereInput = {
       ...(userId ? { userId } : {}),
-      ...(filters.scholarshipId ? { scholarshipId: filters.scholarshipId } : {}),
+      ...(filters.scholarshipId
+        ? { scholarshipId: filters.scholarshipId }
+        : {}),
     };
     const items = await this.prismaService.execute((prisma) =>
       prisma.case.findMany({
         where: Object.keys(where).length > 0 ? where : undefined,
         include: CASE_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
     );
     // Lecture étudiante (userId fourni) : jamais de données internes.
@@ -154,20 +178,55 @@ export class CasesService {
   }
 
   async findAllForAdmin(staff?: StaffActor) {
-    if (staff?.role !== InternalRole.Counselor) return this.findAll();
-    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
-    // comprises).
     this.assertDb();
+    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
+    // comprises). La liste ne charge plus les fils de messages (un seul
+    // message, le dernier, pour savoir si une réponse est attendue) : le fil
+    // se lit page par page (`GET /admin/cases/:id/messages`).
     const items = await this.prismaService.execute((prisma) =>
       prisma.case.findMany({
-        where: counselorCaseScope(staff),
-        include: CASE_INCLUDE,
-        orderBy: { createdAt: 'desc' },
+        where:
+          staff?.role === InternalRole.Counselor
+            ? counselorCaseScope(staff)
+            : undefined,
+        include: ADMIN_LIST_INCLUDE,
+        orderBy: { createdAt: "desc" },
       }),
     );
-    return (items ?? []).map((c) =>
-      this.mapDbCase(c, { includeInternal: true }),
+    const list = items ?? [];
+    const lastByCase = await this.lastMessages(list.map((c) => c.id));
+    return list.map((c) => {
+      const last = lastByCase.get(c.id);
+      return {
+        ...this.mapDbCase({ ...c, messages: [] }, { includeInternal: true }),
+        lastMessageAt: last ? last.createdAt.toISOString() : null,
+        awaitingReply: last?.senderRole === "student",
+      };
+    });
+  }
+
+  /**
+   * Le dernier message de chaque dossier, en UNE requête qui ne lit qu'une
+   * ligne par dossier (index `(caseId, createdAt)`). Un `take: 1` imbriqué
+   * dans `findMany` lisait tous les messages de tous les dossiers.
+   */
+  private async lastMessages(caseIds: string[]) {
+    const out = new Map<string, { senderRole: string; createdAt: Date }>();
+    if (caseIds.length === 0) return out;
+    // Repli : sans cette lecture (base de test, panne), la liste se charge
+    // quand même, sans badge « réponse attendue ».
+    const rows = await this.prismaService.execute(async (prisma) =>
+      typeof prisma.$queryRaw !== "function"
+        ? []
+        : prisma.$queryRaw<
+            Array<{ caseId: string; senderRole: string; createdAt: Date }>
+          >`SELECT DISTINCT ON ("caseId") "caseId", "senderRole", "createdAt"
+          FROM "CaseMessage"
+          WHERE "caseId" = ANY(${caseIds}::text[])
+          ORDER BY "caseId", "createdAt" DESC, "id" DESC`,
     );
+    for (const r of rows ?? []) out.set(r.caseId, r);
+    return out;
   }
 
   /**
@@ -206,20 +265,27 @@ export class CasesService {
         select: {
           id: true,
           userId: true,
+          assignedAdvisorName: true,
           counsellor: { select: { adminUserId: true } },
         },
       }),
     );
 
     const isOwner =
-      actor.role === 'student' && caseRecord?.userId === actor.userId;
+      actor.role === "student" && caseRecord?.userId === actor.userId;
     const isGlobalStaff =
       actor.role === InternalRole.Admin ||
       actor.role === InternalRole.SuperAdmin ||
       actor.role === InternalRole.Commercial;
+    // Même portée que `counselorCaseScope` : profil conseiller lié OU nom
+    // d'affectation (un conseiller attribué par son nom lisait le dossier dans
+    // l'admin mais n'aurait pas pu y répondre).
     const isAssignedCounselor =
       actor.role === InternalRole.Counselor &&
-      caseRecord?.counsellor?.adminUserId === actor.userId;
+      (caseRecord?.counsellor?.adminUserId === actor.userId ||
+        (!!actor.fullName?.trim() &&
+          caseRecord?.assignedAdvisorName?.trim().toLowerCase() ===
+            actor.fullName.trim().toLowerCase()));
 
     if (!caseRecord || (!isOwner && !isGlobalStaff && !isAssignedCounselor)) {
       throw new NotFoundException(`Case ${id} not found.`);
@@ -235,7 +301,7 @@ export class CasesService {
       prisma.$transaction(async (tx) => {
         const activeCounsellors = await tx.counsellor.findMany({
           where: { isActive: true },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: "asc" },
         });
 
         // Le lien vers la bourse n'est gardé que si la fiche existe : un
@@ -255,7 +321,7 @@ export class CasesService {
         const c = await tx.case.create({
           data: {
             referenceCode: `PENDING-${randomUUID()}`,
-            userId: userId ?? 'demo-user',
+            userId: userId ?? "demo-user",
             type: input.type,
             status: CaseStatus.Submitted,
             title: input.title,
@@ -263,12 +329,12 @@ export class CasesService {
             contextLabel: input.contextLabel,
             // WhatsApp par défaut : l'équipe ne répond pas dans l'app (revue avant
             // la 58, constat 34) ; « in_app » reste lisible pour les anciens dossiers.
-            preferredContactMethod: input.preferredContactMethod ?? 'whatsapp',
+            preferredContactMethod: input.preferredContactMethod ?? "whatsapp",
             scholarshipId: linkedScholarship?.id ?? null,
-            source: 'mobile_app',
-            nextStepTitle: 'Ton dossier est en revue',
+            source: "mobile_app",
+            nextStepTitle: "Ton dossier est en revue",
             nextStepDescription:
-              'L’équipe KPB va examiner ta demande et t’attribuer un conseiller.',
+              "L’équipe KPB va examiner ta demande et t’attribuer un conseiller.",
           },
         });
 
@@ -277,7 +343,7 @@ export class CasesService {
             ? activeCounsellors[(c.seq - 1) % activeCounsellors.length]
             : null;
 
-        const refCode = `KPB-${c.createdAt.getFullYear()}-${String(c.seq).padStart(3, '0')}`;
+        const refCode = `KPB-${c.createdAt.getFullYear()}-${String(c.seq).padStart(3, "0")}`;
         await tx.case.update({
           where: { id: c.id },
           data: {
@@ -290,9 +356,9 @@ export class CasesService {
                   // Personal counsellor numbers are deliberately NOT copied
                   // onto the case: every student/parent contact goes through
                   // the official KPB WhatsApp line (anti-fraud, Item 12).
-                  leadTag: 'to_follow_up',
+                  leadTag: "to_follow_up",
                   lastCommercialInteractionAt: new Date(),
-                  nextStepTitle: 'Un conseiller t’a été attribué',
+                  nextStepTitle: "Un conseiller t’a été attribué",
                   nextStepDescription: `${nextCounsellor.fullName} suit ton dossier et te contactera bientôt.`,
                 }
               : {}),
@@ -303,8 +369,8 @@ export class CasesService {
           data: {
             caseId: c.id,
             status: CaseStatus.Submitted,
-            title: 'Demande envoyée',
-            description: 'Ta demande a été créée depuis l’application.',
+            title: "Demande envoyée",
+            description: "Ta demande a été créée depuis l’application.",
           },
         });
 
@@ -313,7 +379,7 @@ export class CasesService {
             data: {
               caseId: c.id,
               status: CaseStatus.CounselorAssigned,
-              title: 'Conseiller attribué',
+              title: "Conseiller attribué",
               description: `Ton dossier a été attribué à ${nextCounsellor.fullName}.`,
             },
           });
@@ -322,11 +388,11 @@ export class CasesService {
         await tx.caseMessage.create({
           data: {
             caseId: c.id,
-            senderRole: 'system',
-            senderName: 'KPB Operations',
+            senderRole: "system",
+            senderName: "KPB Operations",
             body: nextCounsellor
               ? `Merci pour ta demande. ${nextCounsellor.fullName} suit ton dossier.`
-              : 'Merci pour ta demande. L’équipe KPB l’a bien reçue.',
+              : "Merci pour ta demande. L’équipe KPB l’a bien reçue.",
           },
         });
 
@@ -345,7 +411,7 @@ export class CasesService {
     );
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to create case.');
+      throw new ServiceUnavailableException("Failed to create case.");
     }
     const mapped = this.mapDbCase(created, { includeInternal: !userId });
     if (userId) {
@@ -356,9 +422,9 @@ export class CasesService {
       void this.moduleRef
         .get(ReferralCreditsService, { strict: false })
         .creditReferrerForFirstCase(userId)
-        .catch(() => this.logger.warn('Referral credit failed.'));
+        .catch(() => this.logger.warn("Referral credit failed."));
 
-      const advisorName = mapped.assignedAdvisorName ?? 'KPB';
+      const advisorName = mapped.assignedAdvisorName ?? "KPB";
       // KPB-173: deliberately NOT routed through NotificationDispatchService.
       // This is transactional — the immediate receipt for an action the student
       // just took. Holding it for quiet hours, or dropping it under the daily
@@ -366,12 +432,12 @@ export class CasesService {
       // must feel reliable.
       await this.pushService.sendToUser(
         userId,
-        'Demande reçue ✅',
+        "Demande reçue ✅",
         mapped.assignedAdvisorName
           ? `Ta demande est reçue, ${advisorName} va te contacter sous peu.`
-          : 'Ta demande est reçue. L\'équipe KPB revient vers toi rapidement.',
+          : "Ta demande est reçue. L'équipe KPB revient vers toi rapidement.",
         {
-          type: 'case_created',
+          type: "case_created",
           caseId: created.id,
           route: `/cases/${created.id}`,
         },
@@ -403,7 +469,9 @@ export class CasesService {
           where: { id },
           data: {
             ...(input.status ? { status: input.status } : {}),
-            ...(input.nextStepTitle ? { nextStepTitle: input.nextStepTitle } : {}),
+            ...(input.nextStepTitle
+              ? { nextStepTitle: input.nextStepTitle }
+              : {}),
             ...(input.nextStepDescription
               ? { nextStepDescription: input.nextStepDescription }
               : {}),
@@ -420,10 +488,10 @@ export class CasesService {
           data: {
             caseId: id,
             status: input.status ?? c.status,
-            title: 'Dossier mis à jour',
+            title: "Dossier mis à jour",
             description:
               input.nextStepDescription ??
-              'Le dossier a été mis à jour par l’équipe KPB.',
+              "Le dossier a été mis à jour par l’équipe KPB.",
           },
         });
 
@@ -435,10 +503,13 @@ export class CasesService {
     );
 
     if (!updated) {
-      throw new ServiceUnavailableException('Failed to update case.');
+      throw new ServiceUnavailableException("Failed to update case.");
     }
     const mapped = this.mapDbCase(updated, { includeInternal: true });
-    this.broadcastCaseUpdate(id, this.mapDbCase(updated) as Record<string, unknown>);
+    this.broadcastCaseUpdate(
+      id,
+      this.mapDbCase(updated) as Record<string, unknown>,
+    );
     return mapped;
   }
 
@@ -450,7 +521,7 @@ export class CasesService {
     const messages = await this.prismaService.execute((prisma) =>
       prisma.caseMessage.findMany({
         where: { caseId: id },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
     );
     return (messages ?? []).map((m) => this.toMessagePayload(m));
@@ -463,7 +534,7 @@ export class CasesService {
   ) {
     this.assertDb();
     if (
-      typeof input.body !== 'string' ||
+      typeof input.body !== "string" ||
       input.body.length > MAX_CASE_MESSAGE_LENGTH ||
       input.body.trim().length === 0
     ) {
@@ -474,15 +545,15 @@ export class CasesService {
     const clientMessageId = input.clientMessageId ?? null;
     if (
       clientMessageId !== null &&
-      (typeof clientMessageId !== 'string' ||
+      (typeof clientMessageId !== "string" ||
         !CLIENT_MESSAGE_ID_PATTERN.test(clientMessageId))
     ) {
-      throw new BadRequestException('Invalid clientMessageId.');
+      throw new BadRequestException("Invalid clientMessageId.");
     }
 
     const actor =
-      typeof actorOrOwnerUserId === 'string'
-        ? { userId: actorOrOwnerUserId, role: 'student' as const }
+      typeof actorOrOwnerUserId === "string"
+        ? { userId: actorOrOwnerUserId, role: "student" as const }
         : actorOrOwnerUserId;
     await this.assertCanAccessMessaging(id, actor);
 
@@ -490,7 +561,7 @@ export class CasesService {
     const effectiveRole = actor.role;
     const effectiveName =
       actor.fullName ??
-      (actor.role === 'student' ? 'Étudiant' : 'KPB Operations');
+      (actor.role === "student" ? "Étudiant" : "KPB Operations");
 
     // Idempotence : l'app renvoie depuis sa file un message dont le POST a pu
     // aboutir sans qu'elle reçoive la réponse. Le message déjà créé est rendu
@@ -512,17 +583,9 @@ export class CasesService {
             },
           });
 
-          await tx.caseTimelineEvent.create({
-            data: {
-              caseId: id,
-              status:
-                (await tx.case.findUnique({ where: { id } }))?.status ??
-                CaseStatus.Submitted,
-              title: 'Nouveau message',
-              description: 'Un nouveau message a été ajouté au dossier.',
-            },
-          });
-
+          // Plus d'événement « Nouveau message » dans la chronologie : il
+          // doublait chaque écriture et noyait les vraies étapes du dossier.
+          // Le fil des messages se lit dans le fil lui-même.
           await tx.case.update({
             where: { id },
             data: { updatedAt: new Date() },
@@ -536,7 +599,7 @@ export class CasesService {
       // (caseId, clientMessageId). Le premier a gagné, on rend son message.
       if (
         clientMessageId !== null &&
-        (error as { code?: unknown } | null)?.code === 'P2002'
+        (error as { code?: unknown } | null)?.code === "P2002"
       ) {
         const winner = await this.findMessageByClientId(id, clientMessageId);
         if (winner) return this.toMessagePayload(winner);
@@ -545,13 +608,184 @@ export class CasesService {
     }
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to persist message.');
+      throw new ServiceUnavailableException("Failed to persist message.");
     }
     const payload = this.toMessagePayload(created);
-    if (effectiveRole !== 'student') {
+    // Alertes lancées sans être attendues : un fournisseur d'e-mail ou de push
+    // lent ne doit jamais retenir l'envoi du message (ni l'accusé du socket).
+    // Chacune attrape ses propres erreurs.
+    if (effectiveRole !== "student") {
       this.broadcastCaseMessage(id, payload);
+      this.pendingAlert = this.notifyStudentOfReply(id, created);
+    } else {
+      this.pendingAlert = this.notifyStaffOfStudentMessage(
+        id,
+        created.createdAt,
+      );
     }
     return payload;
+  }
+
+  /**
+   * L'équipe a répondu : l'élève reçoit un push qui ouvre SON dossier. Hors
+   * `NotificationDispatchService` (pas d'heures calmes ni de plafond) : c'est
+   * la réponse à une question qu'il vient de poser. Un échec d'envoi ne
+   * rejette jamais la réponse, déjà enregistrée.
+   */
+  private async notifyStudentOfReply(
+    caseId: string,
+    message: { id: string; senderName: string; body: string; createdAt: Date },
+  ) {
+    try {
+      // Plusieurs messages de l'équipe à la suite : une seule notification
+      // (aucune si un autre message de l'équipe est parti dans ce dossier
+      // dans les 2 minutes qui précèdent).
+      const burst = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.count({
+          where: {
+            caseId,
+            id: { not: message.id },
+            senderRole: { notIn: ["student", "system"] },
+            createdAt: {
+              gte: new Date(message.createdAt.getTime() - REPLY_PUSH_QUIET_MS),
+              lte: message.createdAt,
+            },
+          },
+        }),
+      );
+      if ((burst ?? 0) > 0) return;
+      const owner = await this.prismaService.execute((prisma) =>
+        prisma.case.findUnique({
+          where: { id: caseId },
+          select: {
+            userId: true,
+            user: { select: { preferredLanguage: true } },
+          },
+        }),
+      );
+      if (!owner?.userId) return;
+      const english = (owner.user?.preferredLanguage ?? "")
+        .toLowerCase()
+        .startsWith("en");
+      const preview =
+        message.body.length > 120
+          ? `${message.body.slice(0, 117).trimEnd()}…`
+          : message.body;
+      await this.pushService.sendToUser(
+        owner.userId,
+        english
+          ? `${message.senderName} replied to you`
+          : `${message.senderName} t’a répondu`,
+        preview,
+        { type: "case_message", caseId, route: `/cases/${caseId}` },
+      );
+    } catch {
+      this.logger.warn(`Reply push failed for case ${caseId}.`);
+    }
+  }
+
+  /**
+   * Un élève a écrit : le conseiller attribué (sinon les commerciaux) reçoit
+   * un e-mail. Une rafale de messages ne produit qu'un e-mail : rien si un
+   * autre message de l'élève est arrivé dans ce dossier dans les 30 minutes
+   * qui précèdent ET après la dernière réponse de l'équipe (l'élève qui
+   * répond à l'équipe déclenche toujours une alerte).
+   */
+  private async notifyStaffOfStudentMessage(caseId: string, at: Date) {
+    if (!this.leadMail) return;
+    try {
+      const lastStaff = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.findFirst({
+          where: {
+            caseId,
+            senderRole: { notIn: ["student", "system"] },
+            createdAt: { lt: at },
+          },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+        }),
+      );
+      let since = new Date(at.getTime() - STAFF_ALERT_QUIET_MS);
+      if (lastStaff?.createdAt && lastStaff.createdAt > since) {
+        since = lastStaff.createdAt;
+      }
+      const recent = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.count({
+          where: {
+            caseId,
+            senderRole: "student",
+            createdAt: { gt: since, lt: at },
+          },
+        }),
+      );
+      if ((recent ?? 0) > 0) return;
+      const record = await this.prismaService.execute((prisma) =>
+        prisma.case.findUnique({
+          where: { id: caseId },
+          select: {
+            id: true,
+            referenceCode: true,
+            title: true,
+            assignedAdvisorName: true,
+            user: { select: { fullName: true, email: true } },
+            counsellor: { select: { email: true, isActive: true } },
+          },
+        }),
+      );
+      if (!record) return;
+      await this.leadMail.notifyStudentMessage(record);
+    } catch {
+      this.logger.warn(`Staff message alert failed for case ${caseId}.`);
+    }
+  }
+
+  /**
+   * Fil d'un dossier pour l'ÉQUIPE, page par page : les `limit` messages les
+   * plus récents (avant `before` s'il est donné), rendus du plus ancien au
+   * plus récent. `hasMore` dit s'il en reste plus anciens.
+   */
+  async findMessagesForAdmin(
+    id: string,
+    staff: StaffActor,
+    options: { before?: string; limit?: number } = {},
+  ) {
+    this.assertDb();
+    await this.assertCanAccessMessaging(id, {
+      userId: staff.id,
+      role: staff.role as InternalRole,
+      fullName: staff.fullName,
+    });
+    const limit = Math.min(Math.max(Math.trunc(options.limit ?? 50), 1), 100);
+    let beforeDate: Date | undefined;
+    if (options.before) {
+      const anchor = await this.prismaService.execute((prisma) =>
+        prisma.caseMessage.findFirst({
+          where: { id: options.before, caseId: id },
+          select: { createdAt: true },
+        }),
+      );
+      if (!anchor) throw new NotFoundException("Message not found.");
+      beforeDate = anchor.createdAt;
+    }
+    const rows = await this.prismaService.execute((prisma) =>
+      prisma.caseMessage.findMany({
+        where: {
+          caseId: id,
+          ...(beforeDate ? { createdAt: { lt: beforeDate } } : {}),
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: limit + 1,
+      }),
+    );
+    const page = rows ?? [];
+    const hasMore = page.length > limit;
+    return {
+      items: page
+        .slice(0, limit)
+        .reverse()
+        .map((m) => this.toMessagePayload(m)),
+      hasMore,
+    };
   }
 
   private async findMessageByClientId(
@@ -614,7 +848,7 @@ export class CasesService {
           data: {
             caseId: id,
             status: CaseStatus.UnderReview,
-            title: 'Document ajouté',
+            title: "Document ajouté",
             description: `Le document « ${input.title} » a été ajouté au dossier.`,
           },
         });
@@ -624,7 +858,7 @@ export class CasesService {
     );
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to persist document.');
+      throw new ServiceUnavailableException("Failed to persist document.");
     }
     return {
       id: created.id,
@@ -659,7 +893,7 @@ export class CasesService {
       }),
     );
     if (!document || !document.fileUrl) {
-      throw new NotFoundException('Document not found.');
+      throw new NotFoundException("Document not found.");
     }
     return document;
   }
@@ -691,12 +925,13 @@ export class CasesService {
       }),
     );
     if (!document || !document.fileUrl) {
-      throw new NotFoundException('Document not found.');
+      throw new NotFoundException("Document not found.");
     }
 
-    const isAdministrator = [InternalRole.Admin, InternalRole.SuperAdmin].includes(
-      internalUser.role as InternalRole,
-    );
+    const isAdministrator = [
+      InternalRole.Admin,
+      InternalRole.SuperAdmin,
+    ].includes(internalUser.role as InternalRole);
     const isAssignedCounsellor =
       internalUser.role === InternalRole.Counselor &&
       ((!!internalUser.id &&
@@ -707,7 +942,7 @@ export class CasesService {
     if (!isAdministrator && !isAssignedCounsellor) {
       // Return 404 rather than 403 so an internal user cannot enumerate
       // sensitive documents outside their assignment.
-      throw new NotFoundException('Document not found.');
+      throw new NotFoundException("Document not found.");
     }
     return document;
   }
@@ -731,18 +966,18 @@ export class CasesService {
             // legacy personal number instead of writing a new one.
             assignedAdvisorPhone: null,
             assignedAdvisorWhatsapp: null,
-            leadTag: 'to_follow_up',
+            leadTag: "to_follow_up",
             lastCommercialInteractionAt: new Date(),
             nextStepTitle:
               input.nextStepTitle ??
               (input.scheduledAt
-                ? 'Prépare ton rendez-vous'
-                : 'Un conseiller t’a été attribué'),
+                ? "Prépare ton rendez-vous"
+                : "Un conseiller t’a été attribué"),
             nextStepDescription:
               input.nextStepDescription ??
               (input.scheduledAt
-                ? 'Confirme ta disponibilité et prépare tes pièces justificatives.'
-                : 'Ton conseiller va étudier ton profil et te contactera bientôt.'),
+                ? "Confirme ta disponibilité et prépare tes pièces justificatives."
+                : "Ton conseiller va étudier ton profil et te contactera bientôt."),
             ...(input.scheduledAt
               ? { scheduledAt: new Date(input.scheduledAt) }
               : {}),
@@ -754,8 +989,8 @@ export class CasesService {
             caseId: id,
             status: newStatus,
             title: input.scheduledAt
-              ? 'Rendez-vous programmé'
-              : 'Conseiller attribué',
+              ? "Rendez-vous programmé"
+              : "Conseiller attribué",
             description: input.scheduledAt
               ? `${input.assignedAdvisorName} a programmé un point de suivi sur ton dossier.`
               : `${input.assignedAdvisorName} suit désormais ton dossier.`,
@@ -770,10 +1005,13 @@ export class CasesService {
     );
 
     if (!assigned) {
-      throw new ServiceUnavailableException('Failed to assign case.');
+      throw new ServiceUnavailableException("Failed to assign case.");
     }
     const mapped = this.mapDbCase(assigned, { includeInternal: true });
-    this.broadcastCaseUpdate(id, this.mapDbCase(assigned) as Record<string, unknown>);
+    this.broadcastCaseUpdate(
+      id,
+      this.mapDbCase(assigned) as Record<string, unknown>,
+    );
     return mapped;
   }
 
@@ -788,7 +1026,7 @@ export class CasesService {
             caseId: id,
             title: input.title,
             assigneeName: input.assigneeName ?? null,
-            status: input.status ?? 'open',
+            status: input.status ?? "open",
             ...(input.dueAt ? { dueAt: new Date(input.dueAt) } : {}),
           },
         });
@@ -799,19 +1037,22 @@ export class CasesService {
             status:
               (await tx.case.findUnique({ where: { id } }))?.status ??
               CaseStatus.Submitted,
-            title: 'Action ajoutée',
+            title: "Action ajoutée",
             description: `L’action « ${input.title} » a été ajoutée à ton dossier.`,
           },
         });
 
-        await tx.case.update({ where: { id }, data: { updatedAt: new Date() } });
+        await tx.case.update({
+          where: { id },
+          data: { updatedAt: new Date() },
+        });
 
         return task;
       }),
     );
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to create task.');
+      throw new ServiceUnavailableException("Failed to create task.");
     }
     return {
       id: created.id,
@@ -839,14 +1080,17 @@ export class CasesService {
           },
         });
 
-        await tx.case.update({ where: { id }, data: { updatedAt: new Date() } });
+        await tx.case.update({
+          where: { id },
+          data: { updatedAt: new Date() },
+        });
 
         return note;
       }),
     );
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to create note.');
+      throw new ServiceUnavailableException("Failed to create note.");
     }
     return {
       id: created.id,
@@ -872,20 +1116,26 @@ export class CasesService {
           },
         });
 
-        await tx.case.update({ where: { id }, data: { updatedAt: new Date() } });
+        await tx.case.update({
+          where: { id },
+          data: { updatedAt: new Date() },
+        });
 
         return event;
       }),
     );
 
     if (!created) {
-      throw new ServiceUnavailableException('Failed to create timeline event.');
+      throw new ServiceUnavailableException("Failed to create timeline event.");
     }
     const refreshed = await this.prismaService.execute((prisma) =>
       prisma.case.findUnique({ where: { id }, include: CASE_INCLUDE }),
     );
     if (refreshed) {
-      this.broadcastCaseUpdate(id, this.mapDbCase(refreshed) as Record<string, unknown>);
+      this.broadcastCaseUpdate(
+        id,
+        this.mapDbCase(refreshed) as Record<string, unknown>,
+      );
     }
     return {
       id: created.id,
@@ -917,10 +1167,10 @@ export class CasesService {
       id: c.id,
       userId: c.userId,
       referenceCode: c.referenceCode,
-      studentName: c.user?.fullName ?? 'Unknown',
-      studentEmail: c.user?.email ?? '',
-      preferredLanguage: c.user?.preferredLanguage ?? 'fr',
-      source: c.source ?? 'mobile_app',
+      studentName: c.user?.fullName ?? "Unknown",
+      studentEmail: c.user?.email ?? "",
+      preferredLanguage: c.user?.preferredLanguage ?? "fr",
+      source: c.source ?? "mobile_app",
       requestedCountryId: c.requestedCountryId ?? null,
       // « Mes 10 bourses » : la bourse accompagnée (lecture seule, élève,
       // conseiller et admin).
@@ -961,7 +1211,7 @@ export class CasesService {
       updatedAt: c.updatedAt.toISOString(),
       description: c.description,
       contextLabel: c.contextLabel,
-      preferredContactMethod: c.preferredContactMethod ?? 'in_app',
+      preferredContactMethod: c.preferredContactMethod ?? "in_app",
       scheduledAt: c.scheduledAt?.toISOString() ?? null,
       // Whether the student has opted into sharing this case with a linked
       // parent. Surfaced so the app can render (and toggle) the share switch.

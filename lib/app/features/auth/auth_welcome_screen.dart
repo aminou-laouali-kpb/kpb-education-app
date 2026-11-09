@@ -259,6 +259,18 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    // Un élève qui a déjà un compte (nouveau téléphone,
+                    // réinstallation) ne doit pas croire qu'il en crée un
+                    // second : les deux boutons le reconnectent.
+                    Text(
+                      'auth_have_account_hint'.tr,
+                      textAlign: TextAlign.center,
+                      style: KpbTextStyles.caption.copyWith(
+                        color: KpbColors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
                     // Sans FittedBox : il rétrécissait la note jusqu'à
                     // l'illisible ; elle passe à la ligne.
                     Text(

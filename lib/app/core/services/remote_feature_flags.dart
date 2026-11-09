@@ -385,6 +385,16 @@ class RemoteFeatureFlags {
   bool get scholarshipMatchEnabled =>
       _flag('scholarshipMatch', AppConfig.scholarshipMatchEnabled);
 
+  /// La messagerie DANS le dossier (saisie élève, réponses de l'équipe) est-elle
+  /// ouverte ?
+  ///
+  /// Clé `caseMessaging`, FERMÉE par défaut : absente (backend plus ancien),
+  /// illisible ou serveur injoignable, elle vaut `false` et le dossier renvoie
+  /// vers WhatsApp. Elle s'ouvre côté serveur, sans nouvelle build, le jour où
+  /// l'équipe répond depuis l'administration.
+  bool get caseMessagingEnabled =>
+      _flag('caseMessaging', AppConfig.caseInAppMessagingEnabled);
+
   /// L'onboarding « la valeur d'abord » (chantier I3) est-il ouvert ?
   ///
   /// Clé `onboardingV2`, FERMÉE par défaut : absente (backend plus ancien),

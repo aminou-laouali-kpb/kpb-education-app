@@ -47,10 +47,9 @@ void main() {
     await pumpMatchApp(t, child: _host(), api: api, snapshot: guestSnapshot());
     expect(find.byKey(const ValueKey<String>('scholarship-match-entry-guest')),
         findsOneWidget);
-    expect(
-        find.text('Avec un compte, fais le test : jusqu\'à 10 bourses pour '
-            'ton profil.'),
+    expect(find.text('Découvre les bourses pour lesquelles tu es éligible'),
         findsOneWidget);
+    expect(find.text('Créer mon compte et voir mes bourses'), findsOneWidget);
     expect(api.stateCalls, 0);
   });
 

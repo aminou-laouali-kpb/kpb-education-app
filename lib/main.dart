@@ -213,6 +213,9 @@ Future<void> main() async {
     NotificationRouter.instance.attach(apiClient);
     // Bot « Passerelle » : un tap `assist_bridge` ouvre sa feuille.
     NotificationRouter.instance.assistBridgeOpener = showAssistBridgeSheet;
+    // Une réponse de l'équipe dans un dossier : on relit les dossiers aussitôt.
+    PushService.onCaseReply =
+        () => controller.syncRemoteData(silent: true, force: true);
     if (firebaseInitialized) {
       await PushService.instance.initialize(backend: apiClient);
     }
