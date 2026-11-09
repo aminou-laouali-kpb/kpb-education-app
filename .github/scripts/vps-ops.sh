@@ -583,13 +583,13 @@ eef_flag_off() {
 #
 # Valeurs permises, relues dans le code qui les lit :
 #   KPB_REFERRAL_*_ENABLED, KPB_COMMUNITY_ENABLED, KPB_SCHOLARSHIP_MATCH_ENABLED,
-#   KPB_ONBOARDING_V2_ENABLED : seule `true` ouvre (app-config.controller.ts,
-#     `enabled`) ;
+#   KPB_ONBOARDING_V2_ENABLED, KPB_CASE_MESSAGING_ENABLED : seule `true` ouvre
+#     (app-config.controller.ts, `enabled`) ;
 #   KPB_ASSIST_BRIDGE_MODE : shadow (défaut) | on | off — `features.assistBridge`
 #     n'est vrai qu'à `on` (assist-bridge.config.ts) ;
 #   KPB_COMMUNITY_VERIF_BOT_MODE : review (défaut) | auto | off
 #     (community-verif-bot.config.ts).
-FLAGS57_ENV_RE='^KPB_(REFERRAL_(INSTALL_REFERRER|ONBOARDING_CODE|LEADERBOARD)_ENABLED|COMMUNITY_ENABLED|ASSIST_BRIDGE_MODE|COMMUNITY_VERIF_BOT_MODE|SCHOLARSHIP_MATCH_ENABLED|ONBOARDING_V2_ENABLED)='
+FLAGS57_ENV_RE='^KPB_(REFERRAL_(INSTALL_REFERRER|ONBOARDING_CODE|LEADERBOARD)_ENABLED|COMMUNITY_ENABLED|ASSIST_BRIDGE_MODE|COMMUNITY_VERIF_BOT_MODE|SCHOLARSHIP_MATCH_ENABLED|ONBOARDING_V2_ENABLED|CASE_MESSAGING_ENABLED)='
 
 # Les drapeaux de la 57 dans le `.env` : des drapeaux publics, jamais un secret.
 show_flags57() {
@@ -656,7 +656,7 @@ show_state() {
   echo "── Portes de version dans le .env (jamais de valeur libre ici) ──"
   grep -E '^KPB_(MIN|RECOMMENDED)_APP_VERSION=' .env || echo "(aucune : minVersion 0.0.0, aucun bandeau)"
   echo
-  echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots, « Mes 10 bourses », onboarding V2) ──"
+  echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots, « Mes 10 bourses », onboarding V2, messagerie du dossier) ──"
   show_flags57
   echo
   show_push_state
@@ -1497,6 +1497,21 @@ case "$ACTION" in
 
   scholarship-match-off)
     flag57_set KPB_SCHOLARSHIP_MATCH_ENABLED false scholarship-match-off close
+    ;;
+
+  case-messaging-on)
+    # Messagerie DANS le dossier (`features.caseMessaging`, build 59) : la saisie
+    # élève et le fil. Fermée, l'app renvoie vers WhatsApp comme la 58. On
+    # n'ouvre que quand l'équipe répond depuis l'administration
+    # (/admin/cases/:id/messages) : un message laissé sans réponse vaut pire que
+    # le renvoi vers WhatsApp (docs/mise-a-jour-59-checklist.md §9).
+    echo "Rappel : ouvrir seulement quand l'équipe est prête à répondre depuis l'administration (fil du dossier, /admin/cases/:id/messages) ; WhatsApp reste affiché, le retour arrière est case-messaging-off."
+    flag57_set KPB_CASE_MESSAGING_ENABLED true case-messaging-on open \
+      dist/modules/config/app-config.controller.js KPB_CASE_MESSAGING_ENABLED
+    ;;
+
+  case-messaging-off)
+    flag57_set KPB_CASE_MESSAGING_ENABLED false case-messaging-off close
     ;;
 
   *)
