@@ -547,7 +547,26 @@
     "noteSuccess": "Note interne ajoutée au dossier.",
     "noteError": "Impossible de créer la note.",
     "linkedScholarshipLabel": "Bourse liée :",
-    "linkedScholarshipNameMissing": "nom indisponible"
+    "linkedScholarshipNameMissing": "nom indisponible",
+    "awaitingReplyBadge": "Réponse attendue",
+    "awaitingFirstToggle": "Réponses attendues en premier",
+    "messages": {
+      "title": "Messages avec l'étudiant",
+      "hint": "L'étudiant lit ces messages dans l'app. Pour une remarque réservée à l'équipe, utilisez les notes internes.",
+      "loading": "Chargement des messages…",
+      "loadError": "Impossible de charger les messages.",
+      "loadOlder": "Charger les messages précédents",
+      "loadingOlder": "Chargement…",
+      "empty": "Aucun message pour ce dossier.",
+      "roleStudent": "Étudiant",
+      "roleSystem": "Message automatique",
+      "replyLabel": "Répondre à l'étudiant",
+      "replyPlaceholder": "Votre message, visible par l'étudiant",
+      "shortcutHint": "Ctrl + Entrée (⌘ + Entrée sur Mac) pour envoyer",
+      "sendCta": "Envoyer",
+      "sending": "Envoi…",
+      "sendError": "Message non envoyé, le texte est conservé : réessayez."
+    }
   },
   "users": {
     "title": "Utilisateurs et rôles",
