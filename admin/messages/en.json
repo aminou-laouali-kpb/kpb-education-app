@@ -547,7 +547,26 @@
     "noteSuccess": "Internal note added to the case.",
     "noteError": "Unable to create note.",
     "linkedScholarshipLabel": "Linked scholarship:",
-    "linkedScholarshipNameMissing": "name unavailable"
+    "linkedScholarshipNameMissing": "name unavailable",
+    "awaitingReplyBadge": "Reply needed",
+    "awaitingFirstToggle": "Replies needed first",
+    "messages": {
+      "title": "Messages with the student",
+      "hint": "The student reads these messages in the app. For team-only remarks, use internal notes.",
+      "loading": "Loading messages…",
+      "loadError": "Unable to load messages.",
+      "loadOlder": "Load earlier messages",
+      "loadingOlder": "Loading…",
+      "empty": "No messages on this case yet.",
+      "roleStudent": "Student",
+      "roleSystem": "Automatic message",
+      "replyLabel": "Reply to the student",
+      "replyPlaceholder": "Your message, visible to the student",
+      "shortcutHint": "Ctrl + Enter (⌘ + Enter on Mac) to send",
+      "sendCta": "Send",
+      "sending": "Sending…",
+      "sendError": "Message not sent, your text is kept: try again."
+    }
   },
   "users": {
     "title": "Users and roles",
