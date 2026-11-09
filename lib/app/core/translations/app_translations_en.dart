@@ -2855,7 +2855,7 @@ const Map<String, String> appTranslationsEn = {
   'amb_referrals_empty': 'No referrals yet. Share your code to get started!',
   'amb_history_empty': 'No activity yet.',
   'referral_intro':
-      'Invite your friends to KPB. When they sign up and start a case with your code, we track your impact.',
+      'Invite your friends to KPB: they enter your referral code when they sign up. Each friend who starts a case earns you a credit. If you take part in the ambassador competition, a friend counts there when they create a new account and complete their profile during the competition.',
   'referral_your_code': 'Your referral code',
   'referral_invite_whatsapp': 'Invite on WhatsApp',
   'referral_invite_message':
@@ -2866,8 +2866,10 @@ const Map<String, String> appTranslationsEn = {
   'referral_code_hint': 'Enter the code',
   'referral_redeem_cta': 'Apply code',
   'referral_code_copied': 'Code copied',
-  'referral_redeemed_ok': 'Code applied — thanks! Your referrer is credited.',
-  'referral_redeemed_already': 'You have already used a referral code.',
+  'referral_redeemed_ok':
+      'Code applied — thanks! You’re now linked to your referrer.',
+  'referral_redeemed_already':
+      'This code is already saved: you’re linked to this referrer.',
   'referral_redeem_error': 'Invalid code. Check it and try again.',
   // ── No-cash referral rewards (KPB-77) ──
   'referral_credits_title': 'My referral credits',
@@ -4096,7 +4098,7 @@ const Map<String, String> appTranslationsEn = {
   // ── Referrals in the app (build 57 / 2.3.1) ──────────────────────────────
   'onb_ref_title': 'Got a referral code?',
   'onb_ref_subtitle':
-      'If a friend invited you, enter their code so they get the credit. It’s optional.',
+      'If a friend invited you, enter their referral code so you’re linked to them. It’s optional.',
   'onb_ref_prefilled_note':
       'Code taken from your invite link. Check it before confirming.',
   'onb_ref_later_note':
@@ -4109,6 +4111,13 @@ const Map<String, String> appTranslationsEn = {
   'referral_err_self':
       'That’s your own code: it’s for inviting your friends, not for you.',
   'referral_err_not_allowed': 'This code can’t be used with your account.',
+  'referral_err_other_referrer': 'You’re already linked to another referrer.',
+  'referral_err_has_case':
+      'This code can no longer be added: you’ve already opened a case.',
+  'referral_err_cross':
+      'This code can’t be used: this person already entered your code, and two friends can’t refer each other.',
+  'comp_over_note':
+      'The ambassador competition is over: a code entered now no longer counts for it. It still links you to your referrer.',
   'referral_err_rate_limited':
       'This code has been used a lot in the last hour. It’s saved: try again later from Profile → Refer a friend.',
   'referral_err_offline':
@@ -4138,10 +4147,13 @@ const Map<String, String> appTranslationsEn = {
   'comp_to_review': 'To review',
   'comp_to_review_hint': 'Checked by the team before they count',
   'comp_pending': 'Pending',
-  'comp_pending_hint': 'Signed up, profile not complete yet',
+  'comp_pending_hint': 'New accounts, profile not complete yet',
+  'comp_ineligible': 'Don’t count',
+  'comp_ineligible_hint':
+      'These accounts existed before the competition: they don’t count.',
   'comp_rule_explainer':
-      'A referral counts once their profile is complete. Only ambassadors are ranked: your referrals don’t win anything.',
-  'comp_your_code': 'Your ambassador code',
+      'A referral counts only if they create a NEW account during the competition, enter your code and complete their profile during the competition. An account created before doesn’t count. Only ambassadors are ranked: your referrals don’t win anything.',
+  'comp_your_code': 'Your referral code',
   'comp_share_cta': 'Share my link',
   'comp_share_message':
       'Join me on KPB Education! Sign up with my code @code: @link',

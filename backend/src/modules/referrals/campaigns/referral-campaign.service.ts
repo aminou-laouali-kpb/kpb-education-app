@@ -1439,8 +1439,18 @@ export class ReferralCampaignService {
   }
 
   /**
-   * Position de l'élève connecté (préparé pour la build 57 : écran classement
-   * in-app). Rien pour un compte qui n'est pas participant.
+   * Position de l'élève connecté (écran « Compétition des ambassadeurs » de la
+   * build 57+). Pour un compte qui n'est pas participant : `participating:
+   * false`, plus `competition` — la phase de la dernière campagne publique
+   * (en cours, à venir, ou terminée depuis moins de
+   * {@link RECENTLY_ENDED_DAYS} jours), sans rien de personnel — pour que
+   * l'écran Parrainage et l'onboarding disent « la compétition est terminée :
+   * un code saisi maintenant ne compte plus pour elle ».
+   *
+   * `me.code` est le code de parrainage PERSONNEL de l'ambassadeur (celui de
+   * l'écran Parrainage) quand il existe, sinon son code « KTOU-… » : les deux
+   * comptent de la même façon (ils rattachent au même profil, voir
+   * `ReferralsService.redeem`), mais l'app ne doit en montrer qu'UN.
    */
   async myStanding(profileId: string, now: Date = new Date()) {
     const rows = await this.db((db) =>
@@ -1458,7 +1468,23 @@ export class ReferralCampaignService {
       }),
     );
     const p = rows[0];
-    if (!p) return { participating: false as const };
+    if (!p) {
+      return {
+        participating: false as const,
+        competition: await this.latestCompetitionPhase(now),
+      };
+    }
+    const [ineligible, profile] = await this.db((db) =>
+      Promise.all([
+        db.referralCampaignReferral.count({
+          where: { participantId: p.id, status: 'ineligible' },
+        }),
+        db.userProfile.findUnique({
+          where: { id: profileId },
+          select: { referralCode: true },
+        }),
+      ]),
+    );
     return {
       participating: true as const,
       campaign: {
@@ -1466,19 +1492,22 @@ export class ReferralCampaignService {
         nameFr: p.campaign.nameFr,
         nameEn: p.campaign.nameEn,
         status: p.campaign.status,
-        phase: campaignPhase(p.campaign, now),
+        phase: competitionPhase(p.campaign, now),
         startsAt: p.campaign.startsAt.toISOString(),
         endsAt: p.campaign.endsAt.toISOString(),
         provisional: p.campaign.status !== 'closed',
+        rulesUrl: isHttpsRulesUrl(p.campaign.rulesUrl) ? p.campaign.rulesUrl : null,
       },
       me: {
         publicName: p.publicName,
         city: p.city,
-        code: p.ambassador.code,
+        code: profile?.referralCode || p.ambassador.code,
+        ambassadorCode: p.ambassador.code,
         rank: p.rank,
         qualified: p.qualifiedCount,
         toReview: p.flaggedCount,
         pending: p.pendingCount,
+        ineligible,
         rankable:
           unrankableReason({
             status: p.status,
@@ -1489,6 +1518,32 @@ export class ReferralCampaignService {
       },
       serverTime: now.toISOString(),
     };
+  }
+
+  /**
+   * La phase de la dernière campagne publique (lancée, gelée ou close), ou
+   * `null` : aucune, ou terminée depuis plus de {@link RECENTLY_ENDED_DAYS}
+   * jours (on ne rappelle pas indéfiniment une compétition ancienne).
+   */
+  private async latestCompetitionPhase(
+    now: Date,
+  ): Promise<{ phase: 'upcoming' | 'running' | 'ended'; endsAt: string } | null> {
+    const c = await this.db((db) =>
+      db.referralCampaign.findFirst({
+        where: { status: { in: ['live', 'frozen', 'closed'] } },
+        orderBy: { startsAt: 'desc' },
+        select: { status: true, startsAt: true, endsAt: true },
+      }),
+    );
+    if (!c) return null;
+    const phase = competitionPhase(c, now);
+    if (
+      phase === 'ended' &&
+      now.getTime() - c.endsAt.getTime() > RECENTLY_ENDED_DAYS * 24 * 60 * 60 * 1000
+    ) {
+      return null;
+    }
+    return { phase, endsAt: c.endsAt.toISOString() };
   }
 
   // ── Aides ─────────────────────────────────────────────────────────────────
@@ -1650,4 +1705,16 @@ function jsonSafe(value: unknown): Prisma.InputJsonValue {
 export function signalRetentionDays(): number {
   const n = Number(process.env.REFERRAL_SIGNAL_RETENTION_DAYS ?? 180);
   return Number.isInteger(n) && n >= 30 ? n : 180;
+}
+
+/** Au-delà, la fin d'une compétition n'est plus rappelée aux élèves. */
+export const RECENTLY_ENDED_DAYS = 30;
+
+/** La phase vue par l'élève : une campagne gelée ou close est TERMINÉE, quelle que soit l'heure. */
+function competitionPhase(
+  c: { status: string; startsAt: Date; endsAt: Date },
+  now: Date,
+): 'upcoming' | 'running' | 'ended' {
+  if (c.status === 'frozen' || c.status === 'closed') return 'ended';
+  return campaignPhase(c, now);
 }

@@ -12,8 +12,11 @@ String referralOutcomeMessageKey(
     switch (outcome) {
       ReferralRedeemOutcome.attributed => 'referral_redeemed_ok',
       ReferralRedeemOutcome.alreadyReferred => 'referral_redeemed_already',
+      ReferralRedeemOutcome.referredByOther => 'referral_err_other_referrer',
       ReferralRedeemOutcome.unknownCode => 'referral_err_unknown',
       ReferralRedeemOutcome.selfReferral => 'referral_err_self',
+      ReferralRedeemOutcome.hasCase => 'referral_err_has_case',
+      ReferralRedeemOutcome.crossReferral => 'referral_err_cross',
       ReferralRedeemOutcome.notAllowed => 'referral_err_not_allowed',
       ReferralRedeemOutcome.rateLimited => onReferralScreen
           ? 'referral_err_rate_limited_here'

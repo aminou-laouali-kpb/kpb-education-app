@@ -1,4 +1,4 @@
-// L'étape « Tu as un code de parrain ? » (build 57) : facultative, préremplie
+// L'étape « Tu as un code de parrainage ? » (build 57) : facultative, préremplie
 // par le lien d'invitation, et elle ne bloque JAMAIS la fin de l'onboarding.
 
 import 'package:dio/dio.dart' hide Response;
@@ -164,13 +164,34 @@ void main() {
     await tester.pumpAndSettle(const Duration(seconds: 5));
   });
 
-  testWidgets('déjà parrainé : succès silencieux', (tester) async {
-    answer(() async => {'attributed': false, 'alreadyReferred': true});
+  testWidgets('déjà rattaché à ce parrain : succès silencieux', (tester) async {
+    answer(() async => {
+          'attributed': true,
+          'alreadyReferred': true,
+          'referredByOther': false,
+        });
     await pump(tester);
     await tester.enterText(
         find.byKey(const ValueKey('onb-ref-code')), 'K7PQ2MZA');
     await validate(tester);
     expect(finished, 1);
+    expect(find.text('referral_err_other_referrer'), findsNothing);
+  });
+
+  testWidgets('déjà rattaché à un AUTRE parrain : dit, puis continue',
+      (tester) async {
+    answer(() async => {
+          'attributed': false,
+          'alreadyReferred': true,
+          'referredByOther': true,
+        });
+    await pump(tester);
+    await tester.enterText(
+        find.byKey(const ValueKey('onb-ref-code')), 'K7PQ2MZA');
+    await validate(tester);
+    expect(finished, 1);
+    expect(find.text('referral_err_other_referrer'), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(seconds: 5));
   });
 
   for (final (name, error, key) in [
@@ -181,8 +202,19 @@ void main() {
       'referral_err_self'
     ),
     (
-      'parrainage refusé',
+      'parrainage croisé (serveur ancien, message)',
       _status(403, data: {'message': 'Mutual referrals are not allowed.'}),
+      'referral_err_cross'
+    ),
+    (
+      'dossier déjà ouvert (code machine)',
+      _status(403,
+          data: {'code': 'referral_has_case', 'message': 'A referral code…'}),
+      'referral_err_has_case'
+    ),
+    (
+      'refus sans code reconnu',
+      _status(403, data: {'message': 'Forbidden'}),
       'referral_err_not_allowed'
     ),
   ]) {
@@ -231,6 +263,39 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 5));
     });
   }
+
+  group('compétition terminée', () {
+    tearDown(RemoteFeatureFlags.resetForTest);
+
+    testWidgets('drapeau ouvert, compétition terminée : l\'étape le dit',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async => {
+            'participating': false,
+            'competition': {'phase': 'ended'},
+          });
+      await pump(tester);
+      expect(find.byKey(const ValueKey('onb-ref-comp-over')), findsOneWidget);
+    });
+
+    testWidgets('compétition en cours : pas de mention', (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async => {
+            'participating': false,
+            'competition': {'phase': 'running'},
+          });
+      await pump(tester);
+      expect(find.byKey(const ValueKey('onb-ref-comp-over')), findsNothing);
+    });
+
+    testWidgets('drapeau fermé : aucun appel, pas de mention', (tester) async {
+      await pump(tester);
+      verifyNever(() => api.getCurrentReferralCampaign());
+      expect(find.byKey(const ValueKey('onb-ref-comp-over')), findsNothing);
+    });
+  });
 
   group('dans l\'onboarding', () {
     Future<void> seedOnLastPage(MockApiClient api) async {

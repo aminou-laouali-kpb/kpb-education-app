@@ -27,7 +27,14 @@ import {
  * validée. Une exclusion par l'équipe l'emporte sur tout.
  */
 
-export type ReferralStatus = 'pending' | 'qualified' | 'flagged' | 'excluded';
+/**
+ * `ineligible` : le compte du filleul existait AVANT la fenêtre (règle par
+ * défaut `requireAccountCreatedInWindow`). Rien ne pourra le qualifier : ce
+ * n'est donc pas « en attente » — l'app le dit (« ce compte existait avant la
+ * compétition : il ne compte pas ») au lieu de laisser croire qu'il suffit de
+ * compléter le profil.
+ */
+export type ReferralStatus = 'pending' | 'qualified' | 'flagged' | 'excluded' | 'ineligible';
 
 export type ReferralFlag =
   | 'disposable_email'
@@ -89,6 +96,8 @@ export interface ComputedReferral {
   qualifiedAt: Date | null;
   status: ReferralStatus;
   flags: ReferralFlag[];
+  /** Compte créé avant la fenêtre alors que la règle l'exige : jamais qualifiable. */
+  preexistingAccount: boolean;
 }
 
 export interface ComputedParticipant {
@@ -261,6 +270,7 @@ export function computeQualification(input: QualificationInput): QualificationOu
       qualifiedAt,
       status: 'pending',
       flags: [],
+      preexistingAccount: !accountOk,
     });
   }
 
@@ -300,6 +310,7 @@ export function computeQualification(input: QualificationInput): QualificationOu
     row.flags = [...flags.get(row.refereeProfileId)!].sort();
     const decision = input.decisions.get(row.refereeProfileId);
     if (decision === 'excluded') row.status = 'excluded';
+    else if (row.preexistingAccount) row.status = 'ineligible';
     else if (!row.qualifiedAt) row.status = 'pending';
     else if (row.flags.length > 0 && decision !== 'validated') row.status = 'flagged';
     else row.status = 'qualified';

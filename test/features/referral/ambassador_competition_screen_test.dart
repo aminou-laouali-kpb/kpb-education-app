@@ -1,6 +1,8 @@
-// L'écran « Compétition ambassadeurs » (build 57, `features.referralLeaderboard`)
+// L'écran « Compétition des ambassadeurs » (build 57, `features.referralLeaderboard`)
 // et ses deux points d'entrée : l'espace ambassadeur sans programme rémunéré, et
 // l'écran Parrainage.
+
+import 'dart:async';
 
 import 'package:dio/dio.dart' hide Response;
 import 'package:dio/dio.dart' as dio show Response;
@@ -28,6 +30,9 @@ Map<String, dynamic> standing({
   Object? rank = 2,
   bool rankable = true,
   String serverTime = '2026-11-05T12:00:00.000Z',
+  String? rulesUrl,
+  int? ineligible,
+  String code = 'KTOU-AK-1a2b3c',
 }) =>
     {
       'participating': true,
@@ -40,15 +45,17 @@ Map<String, dynamic> standing({
         'startsAt': '2026-10-31T23:00:00.000Z',
         'endsAt': '2026-11-10T23:00:00.000Z',
         'provisional': provisional,
+        if (rulesUrl != null) 'rulesUrl': rulesUrl,
       },
       'me': {
         'publicName': 'Aïcha K.',
         'city': 'Niamey',
-        'code': 'KTOU-AK-1a2b3c',
+        'code': code,
         'rank': rank,
         'qualified': 12,
         'toReview': 2,
         'pending': 4,
+        if (ineligible != null) 'ineligible': ineligible,
         'rankable': rankable,
       },
       'serverTime': serverTime,
@@ -202,7 +209,10 @@ void main() {
       await unmount(tester);
     });
 
-    testWidgets('règlement non https : pas de bouton', (tester) async {
+    // Le règlement est TOUJOURS accessible : avant la build 59, le bouton
+    // disparaissait dès que le classement public ne répondait pas.
+    testWidgets('règlement non https au classement public : le bouton reste',
+        (tester) async {
       when(() => api.getCurrentReferralCampaign())
           .thenAnswer((_) async => standing());
       when(() => api.getPublicCampaignLeaderboard(any()))
@@ -210,8 +220,60 @@ void main() {
                 'campaign': {'rulesUrl': 'http://exemple.test'},
               });
       await pumpScreen(tester);
-      expect(find.byKey(const ValueKey('comp-rules-link')), findsNothing);
+      expect(find.byKey(const ValueKey('comp-rules-link')), findsOneWidget);
       expect(find.byKey(const ValueKey('comp-public-link')), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('classement public en panne : le bouton du règlement reste',
+        (tester) async {
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing());
+      when(() => api.getPublicCampaignLeaderboard(any()))
+          .thenThrow(_status(404));
+      await pumpScreen(tester);
+      expect(find.byKey(const ValueKey('comp-rules-link')), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('règlement servi avec la campagne : pas d\'appel au classement',
+        (tester) async {
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async =>
+          standing(rulesUrl: 'https://kpbeducation.cloud/reglement.html'));
+      await pumpScreen(tester);
+      expect(find.byKey(const ValueKey('comp-rules-link')), findsOneWidget);
+      verifyNever(() => api.getPublicCampaignLeaderboard(any()));
+      await unmount(tester);
+    });
+
+    testWidgets(
+        'filleuls au compte antérieur : une ligne « ne comptent pas », '
+        'pas « en attente »', (tester) async {
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing(ineligible: 3));
+      await pumpScreen(tester);
+      expect(find.byKey(const ValueKey('comp-ineligible')), findsOneWidget);
+      expect(find.text('comp_ineligible_hint'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('aucun filleul inéligible (ou serveur ancien) : pas de ligne',
+        (tester) async {
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing());
+      await pumpScreen(tester);
+      expect(find.byKey(const ValueKey('comp-ineligible')), findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('le code montré est celui servi (code de parrainage)',
+        (tester) async {
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing(code: 'K7PQ2MZA'));
+      await pumpScreen(tester);
+      expect(find.text('K7PQ2MZA'), findsOneWidget);
+      expect(find.text('comp_your_code'), findsOneWidget);
       await unmount(tester);
     });
 
@@ -404,6 +466,82 @@ void main() {
       when(() => api.getCurrentReferralCampaign())
           .thenAnswer((_) async => standing());
       await pumpReferral(tester);
+      expect(find.byKey(const ValueKey('referral-competition-entry')),
+          findsOneWidget);
+    });
+
+    testWidgets('écran Parrainage : même code que l\'écran Compétition',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing(code: 'K7PQ2MZA'));
+      await pumpReferral(tester);
+      // `GET /referrals/me` sert K7PQ2MZA ; le serveur 59 sert le même code
+      // dans `me.code` de la compétition.
+      expect(find.text('K7PQ2MZA'), findsOneWidget);
+    });
+
+    testWidgets(
+        'écran Parrainage : tirer pour rafraîchir recharge la compétition',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      var calls = 0;
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async {
+        calls++;
+        return calls == 1 ? {'participating': false} : standing();
+      });
+      await pumpReferral(tester);
+      expect(find.byKey(const ValueKey('referral-competition-entry')),
+          findsNothing);
+      // Le geste « tirer pour rafraîchir » lui-même (onRefresh de l'écran).
+      unawaited(tester
+          .state<RefreshIndicatorState>(find.byType(RefreshIndicator))
+          .show());
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+      expect(calls, 2);
+      expect(find.byKey(const ValueKey('referral-competition-entry')),
+          findsOneWidget);
+    });
+
+    testWidgets(
+        'écran Parrainage, compétition terminée (non-participant) : '
+        'le code ne compte plus pour elle', (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async => {
+            'participating': false,
+            'competition': {'phase': 'ended'},
+          });
+      await pumpReferral(tester);
+      expect(find.byKey(const ValueKey('referral-comp-over')), findsOneWidget);
+      expect(find.byKey(const ValueKey('referral-competition-entry')),
+          findsNothing);
+    });
+
+    testWidgets('écran Parrainage, compétition en cours : pas de mention',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign()).thenAnswer((_) async => {
+            'participating': false,
+            'competition': {'phase': 'running'},
+          });
+      await pumpReferral(tester);
+      expect(find.byKey(const ValueKey('referral-comp-over')), findsNothing);
+    });
+
+    testWidgets('écran Parrainage, participant, campagne close : la mention',
+        (tester) async {
+      RemoteFeatureFlags.instance
+          .debugSetFeaturesForTest({'referralLeaderboard': true});
+      when(() => api.getCurrentReferralCampaign())
+          .thenAnswer((_) async => standing(phase: 'ended', status: 'closed'));
+      await pumpReferral(tester);
+      expect(find.byKey(const ValueKey('referral-comp-over')), findsOneWidget);
       expect(find.byKey(const ValueKey('referral-competition-entry')),
           findsOneWidget);
     });

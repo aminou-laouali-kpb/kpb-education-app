@@ -25,7 +25,7 @@
     "eef": "Études en France",
     "catalogue": "Catalogue",
     "eefPublication": "Publication EEF",
-    "referralCampaigns": "Compétition ambassadeurs"
+    "referralCampaigns": "Compétition des ambassadeurs"
   },
   "login": {
     "eyebrow": "KPB Opérations",
@@ -1489,7 +1489,7 @@
     "genericSources": "{n} des formations à publier renvoient à une source générique, pas à la fiche de la formation (portail Mon Master : {portal}, jeu de données du ministère : {dataset}). L'étudiant qui touche « Voir la source officielle » arrivera sur cette page."
   },
   "parrainage": {
-    "title": "Compétition ambassadeurs",
+    "title": "Compétition des ambassadeurs",
     "subtitle": "Campagnes de parrainage : ambassadeurs activés, classement en direct, filleuls, podium et versements.",
     "loadError": "Impossible de charger la compétition.",
     "saveError": "L'enregistrement a échoué.",
@@ -1629,7 +1629,8 @@
       "pending": "En attente",
       "qualified": "Qualifié",
       "flagged": "À vérifier",
-      "excluded": "Exclu"
+      "excluded": "Exclu",
+      "ineligible": "Inéligible (compte antérieur)"
     },
     "flag": {
       "disposable_email": "E-mail jetable",

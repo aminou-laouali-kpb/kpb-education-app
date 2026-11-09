@@ -805,7 +805,7 @@ const Map<String, String> appTranslationsFr = {
   'privacy_referral_title': 'Parrainage et compétition des ambassadeurs',
   'privacy_referral_body': '• Code de parrain : le code que vous saisissez n\'est envoyé à nos serveurs que lorsque vous appuyez sur « Valider le code », pour vous rattacher à ce parrain (une seule fois)\n'
       '• Lien d\'invitation (Android, fonction ouverte progressivement) : si vous avez installé l\'app depuis un lien d\'invitation Google Play, l\'app lit une fois, sur votre téléphone, l\'information de provenance que Google Play lui fournit (lien d\'origine, dates du clic et de l\'installation) et n\'en garde que le code du parrain, pour préremplir le champ. Rien n\'est transmis tant que vous ne confirmez pas ce code\n'
-      '• Identifiant d\'installation : au premier rattachement demandé, l\'app crée un identifiant aléatoire propre à cette installation (ni l\'IMEI, ni l\'identifiant publicitaire). Il est envoyé uniquement avec un code de parrain, pour la prévention de la fraude ; nos serveurs n\'en gardent qu\'une empreinte chiffrée. Il change à chaque réinstallation\n'
+      '• Identifiant d\'installation : au premier rattachement demandé, l\'app crée un identifiant aléatoire propre à cette installation (ni l\'IMEI, ni l\'identifiant publicitaire). Il est envoyé uniquement avec un code de parrainage, pour la prévention de la fraude ; nos serveurs n\'en gardent qu\'une empreinte chiffrée. Il change à chaque réinstallation\n'
       '• Empreintes anti-fraude : lors d\'un rattachement, nos serveurs calculent des empreintes chiffrées (HMAC) de votre adresse IP, de sa plage, de vos jetons de notifications et de l\'identifiant d\'installation — jamais conservés en clair — pour repérer les comptes multiples et les inscriptions en rafale. Elles sont conservées 180 jours, puis effacées\n'
       '• Compétition des ambassadeurs : organisée par KPB Global L.L.C-FZ, réservée aux ambassadeurs inscrits par l\'équipe KPB, selon un règlement publié. Le classement public affiche, pour les ambassadeurs classés, un nom sous la forme « Prénom I. — Ville » et le nombre de filleuls qualifiés, jamais l\'e-mail, le téléphone ni le nom des filleuls. Un ambassadeur de 16 ou 17 ans n\'est classé, et ne reçoit de prix, qu\'avec une autorisation parentale signée et vérifiée par l\'équipe : sans cette autorisation vérifiée, son nom public n\'apparaît pas au classement public ; son prix est versé à son représentant légal. L\'équipe voit l\'identité et l\'e-mail des ambassadeurs et de leurs filleuls, le statut de chaque filleul et les versements\n'
       '• Suppression de votre compte : votre participation, vos rattachements et vos empreintes sont supprimés ; seule la trace d\'un prix déjà versé (rang, nom public, montant, versement) est gardée pour la comptabilité, sans lien avec votre compte\n'
@@ -3105,7 +3105,7 @@ const Map<String, String> appTranslationsFr = {
       'Aucun filleul pour l\'instant. Partage ton code pour commencer !',
   'amb_history_empty': 'Aucun mouvement pour l\'instant.',
   'referral_intro':
-      'Invite tes amis sur KPB. Quand ils s\'inscrivent et lancent un dossier avec ton code, on suit ton impact.',
+      'Invite tes amis sur KPB : ils saisissent ton code de parrainage en s\'inscrivant. Chaque ami qui crée un dossier te rapporte un crédit. Si tu participes à la compétition des ambassadeurs, un ami y compte quand il crée un nouveau compte et complète son profil pendant la compétition.',
   'referral_your_code': 'Ton code de parrainage',
   'referral_invite_whatsapp': 'Inviter sur WhatsApp',
   'referral_invite_message':
@@ -3116,8 +3116,10 @@ const Map<String, String> appTranslationsFr = {
   'referral_code_hint': 'Saisis le code',
   'referral_redeem_cta': 'Valider le code',
   'referral_code_copied': 'Code copié',
-  'referral_redeemed_ok': 'Code validé — merci ! Ton parrain est crédité.',
-  'referral_redeemed_already': 'Tu as déjà utilisé un code de parrainage.',
+  'referral_redeemed_ok':
+      'Code validé — merci ! Ton parrain est bien rattaché.',
+  'referral_redeemed_already':
+      'Ce code est déjà enregistré : tu es bien rattaché à ce parrain.',
   'referral_redeem_error': 'Code invalide. Vérifie et réessaie.',
   // ── Récompenses parrainage no-cash (KPB-77) ──
   'referral_credits_title': 'Mes crédits parrainage',
@@ -4386,9 +4388,9 @@ const Map<String, String> appTranslationsFr = {
   'scholarship_match_erase_nationality_error':
       'L\'effacement n\'a pas abouti. Vérifie ta connexion et réessaie.',
   // ── Parrainage côté app (build 57 / 2.3.1) ───────────────────────────────
-  'onb_ref_title': 'Tu as un code de parrain ?',
+  'onb_ref_title': 'Tu as un code de parrainage ?',
   'onb_ref_subtitle':
-      'Si un ami t’a invité, saisis son code pour qu’il soit crédité. C’est facultatif.',
+      'Si un ami t’a invité, saisis son code de parrainage pour qu’il soit rattaché à toi. C’est facultatif.',
   'onb_ref_prefilled_note':
       'Code repris de ton lien d’invitation. Vérifie-le avant de le valider.',
   'onb_ref_later_note':
@@ -4402,13 +4404,20 @@ const Map<String, String> appTranslationsFr = {
       'C’est ton propre code : il sert à inviter tes amis, pas à toi.',
   'referral_err_not_allowed':
       'Ce code ne peut pas être utilisé avec ton compte.',
+  'referral_err_other_referrer': 'Tu es déjà rattaché à un autre parrain.',
+  'referral_err_has_case':
+      'Ce code ne peut plus être ajouté : tu as déjà ouvert un dossier.',
+  'referral_err_cross':
+      'Ce code ne peut pas être utilisé : cette personne a déjà saisi ton code, et deux amis ne peuvent pas se parrainer l’un l’autre.',
+  'comp_over_note':
+      'La compétition des ambassadeurs est terminée : un code saisi maintenant ne compte plus pour elle. Il te rattache quand même à ton parrain.',
   'referral_err_rate_limited':
       'Ce code a beaucoup servi dans l’heure. Il est gardé : réessaie plus tard depuis Profil → Parrainer un ami.',
   'referral_err_offline':
       'Pas de connexion. Ton code est gardé : valide-le plus tard depuis Profil → Parrainer un ami.',
   'referral_err_generic':
       'Le code n’a pas pu être vérifié. Il est gardé : réessaie plus tard depuis Profil → Parrainer un ami.',
-  'comp_title': 'Compétition ambassadeurs',
+  'comp_title': 'Compétition des ambassadeurs',
   'comp_phase_upcoming': 'À venir',
   'comp_phase_running': 'En cours',
   'comp_phase_ended': 'Terminée',
@@ -4431,10 +4440,13 @@ const Map<String, String> appTranslationsFr = {
   'comp_to_review': 'À vérifier',
   'comp_to_review_hint': 'Vérifiés par l’équipe avant de compter',
   'comp_pending': 'En attente',
-  'comp_pending_hint': 'Inscrits, profil pas encore complété',
+  'comp_pending_hint': 'Nouveaux comptes, profil pas encore complété',
+  'comp_ineligible': 'Ne comptent pas',
+  'comp_ineligible_hint':
+      'Ces comptes existaient avant la compétition : ils ne comptent pas.',
   'comp_rule_explainer':
-      'Un filleul compte quand son profil est complété. Seuls les ambassadeurs sont classés : tes filleuls, eux, ne gagnent rien.',
-  'comp_your_code': 'Ton code ambassadeur',
+      'Un filleul compte seulement s’il crée un NOUVEAU compte pendant la compétition, saisit ton code et complète son profil pendant la compétition. Un compte créé avant ne compte pas. Seuls les ambassadeurs sont classés : tes filleuls, eux, ne gagnent rien.',
+  'comp_your_code': 'Ton code de parrainage',
   'comp_share_cta': 'Partager mon lien',
   'comp_share_message':
       'Rejoins-moi sur KPB Education ! Inscris-toi avec mon code @code : @link',

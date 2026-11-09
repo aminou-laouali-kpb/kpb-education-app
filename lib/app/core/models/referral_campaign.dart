@@ -1,4 +1,4 @@
-// La compétition ambassadeurs vue par l'élève (`GET /referrals/campaigns/current`).
+// La compétition des ambassadeurs vue par l'élève (`GET /referrals/campaigns/current`).
 //
 // Le compte à rebours suit l'horloge du SERVEUR, pas celle du téléphone : un
 // téléphone réglé à la main (fréquent) afficherait sinon « commencée » ou
@@ -57,8 +57,11 @@ class ReferralCampaignStanding {
     this.qualified = 0,
     this.toReview = 0,
     this.pending = 0,
+    this.ineligible = 0,
     this.rankable = false,
     this.clockOffset = Duration.zero,
+    this.rulesUrl,
+    this.otherCompetitionPhase,
   });
 
   static const notParticipating =
@@ -86,12 +89,30 @@ class ReferralCampaignStanding {
   final int toReview;
   final int pending;
 
+  /// Filleuls dont le compte existait avant la compétition : ils ne compteront
+  /// jamais (statut serveur `ineligible`, build 59+ ; 0 sur un serveur ancien).
+  final int ineligible;
+
   /// Faux : l'élève n'apparaît pas encore dans le classement public (âge,
   /// autorisation parentale, statut — décision de l'équipe).
   final bool rankable;
 
   /// `serverTime − heure de réception`.
   final Duration clockOffset;
+
+  /// Le règlement servi avec la campagne (`campaign.rulesUrl`, https), ou
+  /// `null` (serveur ancien, lien absent).
+  final String? rulesUrl;
+
+  /// Pour un NON-participant : la phase de la dernière compétition publique
+  /// (`competition.phase`, build 59+), ou `null` (aucune, ou trop ancienne).
+  final ReferralCampaignPhase? otherCompetitionPhase;
+
+  /// La compétition est terminée : un code saisi maintenant ne compte plus
+  /// pour elle (écran Parrainage, onboarding).
+  bool competitionEndedAt(DateTime deviceNow) => participating
+      ? phaseAt(deviceNow) == ReferralCampaignPhase.ended
+      : otherCompetitionPhase == ReferralCampaignPhase.ended;
 
   /// Lit la charge. [receivedAt] : l'heure locale de réception (tests).
   ///
@@ -101,7 +122,17 @@ class ReferralCampaignStanding {
     Object? raw, {
     DateTime? receivedAt,
   }) {
-    if (raw is! Map || raw['participating'] != true) return notParticipating;
+    if (raw is! Map) return notParticipating;
+    if (raw['participating'] != true) {
+      final competition = raw['competition'];
+      final phase = competition is Map ? _phase(competition['phase']) : null;
+      return phase == null
+          ? notParticipating
+          : ReferralCampaignStanding(
+              participating: false,
+              otherCompetitionPhase: phase,
+            );
+    }
     final campaign = raw['campaign'];
     final me = raw['me'];
     if (campaign is! Map || me is! Map) return notParticipating;
@@ -115,11 +146,7 @@ class ReferralCampaignStanding {
       nameFr: _string(campaign['nameFr']),
       nameEn: _string(campaign['nameEn']),
       status: _string(campaign['status']),
-      serverPhase: switch (campaign['phase']) {
-        'running' => ReferralCampaignPhase.running,
-        'ended' => ReferralCampaignPhase.ended,
-        _ => ReferralCampaignPhase.upcoming,
-      },
+      serverPhase: _phase(campaign['phase']) ?? ReferralCampaignPhase.upcoming,
       startsAt: _date(campaign['startsAt']),
       endsAt: _date(campaign['endsAt']),
       provisional: campaign['provisional'] != false,
@@ -130,6 +157,8 @@ class ReferralCampaignStanding {
       qualified: _count(me['qualified']),
       toReview: _count(me['toReview']),
       pending: _count(me['pending']),
+      ineligible: _count(me['ineligible']),
+      rulesUrl: _httpsUrl(campaign['rulesUrl']),
       rankable: me['rankable'] == true,
       clockOffset:
           serverTime == null ? Duration.zero : serverTime.difference(now),
@@ -179,12 +208,32 @@ class ReferralCampaignStanding {
     };
   }
 
+  /// Le lien « Lire le règlement », TOUJOURS disponible : celui servi avec la
+  /// campagne, sinon celui du classement public ([fromLeaderboard]), sinon la
+  /// page publique du classement de cette campagne (qui affiche le règlement).
+  String rulesLink({String? fromLeaderboard}) =>
+      rulesUrl ?? fromLeaderboard ?? publicLeaderboardUrl;
+
   /// La page publique du classement de CETTE campagne.
   String get publicLeaderboardUrl =>
       'https://${AppConfig.brandDomain}/classement/'
       '?c=${Uri.encodeQueryComponent(slug)}';
 
   static String _string(Object? value) => value is String ? value.trim() : '';
+
+  static ReferralCampaignPhase? _phase(Object? value) => switch (value) {
+        'upcoming' => ReferralCampaignPhase.upcoming,
+        'running' => ReferralCampaignPhase.running,
+        'ended' => ReferralCampaignPhase.ended,
+        _ => null,
+      };
+
+  static String? _httpsUrl(Object? value) {
+    if (value is! String) return null;
+    final url = value.trim();
+    if (!isOpenableWebUrl(url)) return null;
+    return Uri.parse(url).scheme.toLowerCase() == 'https' ? url : null;
+  }
 
   static DateTime? _date(Object? value) =>
       value is String ? DateTime.tryParse(value)?.toUtc() : null;
@@ -197,14 +246,11 @@ class ReferralCampaignStanding {
 }
 
 /// Le lien du règlement servi par `GET /public/campaigns/:slug/leaderboard`
-/// (`campaign.rulesUrl`) : https seulement, sinon `null` (pas de bouton).
+/// (`campaign.rulesUrl`) : https seulement, sinon `null` (le bouton se replie
+/// alors sur la page publique du classement, voir [ReferralCampaignStanding.rulesLink]).
 String? referralRulesUrlFrom(Object? publicLeaderboard) {
   if (publicLeaderboard is! Map) return null;
   final campaign = publicLeaderboard['campaign'];
   if (campaign is! Map) return null;
-  final raw = campaign['rulesUrl'];
-  if (raw is! String) return null;
-  final url = raw.trim();
-  if (!isOpenableWebUrl(url)) return null;
-  return Uri.parse(url).scheme.toLowerCase() == 'https' ? url : null;
+  return ReferralCampaignStanding._httpsUrl(campaign['rulesUrl']);
 }

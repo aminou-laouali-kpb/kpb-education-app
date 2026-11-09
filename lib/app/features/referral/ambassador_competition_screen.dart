@@ -1,13 +1,16 @@
-// « Compétition ambassadeurs » — l'écran in-app du classement (build 57 / 2.3.1),
+// « Compétition des ambassadeurs » — l'écran in-app du classement (build 57 / 2.3.1),
 // derrière le drapeau distant `features.referralLeaderboard`.
 //
 // Ce qu'il montre à un PARTICIPANT (`GET /referrals/campaigns/current`) : la
 // phase (à venir / en cours / terminée) et son compte à rebours à l'heure du
-// SERVEUR, son rang, ses filleuls qualifiés / à vérifier / en attente, la règle
-// dite honnêtement (« un filleul compte quand son profil est complété »), son
-// code avec un lien d'invitation à partager, la page publique du classement et
-// le règlement (`rulesUrl` du classement public, quand il est servi), et la
-// mention « provisoire » tant que la campagne n'est pas close.
+// SERVEUR, son rang, ses filleuls qualifiés / à vérifier / en attente / qui ne
+// comptent pas (compte antérieur à la compétition, build 59), la règle dite
+// honnêtement (nouveau compte + profil complété pendant la compétition), son
+// code de parrainage (le même que l'écran Parrainage) avec un lien d'invitation
+// à partager, la page publique du classement et TOUJOURS le règlement
+// (`rulesUrl` de la campagne, sinon du classement public, sinon la page
+// publique du classement qui l'affiche), et la mention « provisoire » tant que
+// la campagne n'est pas close.
 //
 // Ce qu'il ne montre JAMAIS : un montant (ni prix, ni commission), un autre
 // participant, une donnée de filleul.
@@ -139,10 +142,14 @@ class _AmbassadorCompetitionViewState extends State<AmbassadorCompetitionView> {
         phase: current.participating ? current.phaseAt(_now).name : 'none',
       ));
     }
-    if (current.participating) unawaited(_loadRules(current.slug));
+    if (current.participating && current.rulesUrl == null) {
+      unawaited(_loadRules(current.slug));
+    }
   }
 
-  /// Le règlement n'est lu QUE pour son lien : une panne ne gêne rien.
+  /// Serveur sans `rulesUrl` dans la campagne : le classement public est lu
+  /// QUE pour ce lien. Une panne ne gêne rien — le bouton reste, replié sur la
+  /// page publique du classement.
   Future<void> _loadRules(String slug) async {
     try {
       final url =
@@ -270,6 +277,16 @@ class _StandingBody extends StatelessWidget {
                   value: s.pending,
                   color: c.textSecondary,
                 ),
+                if (s.ineligible > 0) ...[
+                  const Divider(height: KpbSpacing.lg),
+                  _CounterRow(
+                    key: const ValueKey('comp-ineligible'),
+                    label: 'comp_ineligible'.tr,
+                    hint: 'comp_ineligible_hint'.tr,
+                    value: s.ineligible,
+                    color: c.textSecondary,
+                  ),
+                ],
               ],
             ),
           ),
@@ -289,13 +306,13 @@ class _StandingBody extends StatelessWidget {
             icon: const Icon(Icons.leaderboard_outlined, size: 18),
             label: Text('comp_public_cta'.tr),
           ),
-          if (rulesUrl != null)
-            TextButton.icon(
-              key: const ValueKey('comp-rules-link'),
-              onPressed: () => kpbOpenExternalUrlString(rulesUrl),
-              icon: const Icon(Icons.gavel_outlined, size: 18),
-              label: Text('comp_rules_cta'.tr),
-            ),
+          TextButton.icon(
+            key: const ValueKey('comp-rules-link'),
+            onPressed: () => kpbOpenExternalUrlString(
+                s.rulesLink(fromLeaderboard: rulesUrl)),
+            icon: const Icon(Icons.gavel_outlined, size: 18),
+            label: Text('comp_rules_cta'.tr),
+          ),
           const SizedBox(height: KpbSpacing.md),
           Text(
             'comp_organizer_note'.tr,
@@ -460,6 +477,7 @@ class _RankCard extends StatelessWidget {
 
 class _CounterRow extends StatelessWidget {
   const _CounterRow({
+    super.key,
     required this.label,
     required this.hint,
     required this.value,
