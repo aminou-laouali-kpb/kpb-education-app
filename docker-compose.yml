@@ -249,6 +249,13 @@ services:
       # (bandeau NON bloquant). Vide = aucun bandeau. À ne pas confondre avec
       # KPB_MIN_APP_VERSION, qui bloque l'app derrière un écran qu'on ne ferme pas.
       - KPB_RECOMMENDED_APP_VERSION=${KPB_RECOMMENDED_APP_VERSION:-}
+      # Build 59 : deux leviers servis par /config/app, VIDES par défaut.
+      # Ligne WhatsApp officielle (vide = l'app garde son numéro compilé) ;
+      # avis affiché en haut de l'accueil (vide = aucun avis).
+      - KPB_APP_WHATSAPP_NUMBER=${KPB_APP_WHATSAPP_NUMBER:-}
+      - KPB_APP_NOTICE_FR=${KPB_APP_NOTICE_FR:-}
+      - KPB_APP_NOTICE_EN=${KPB_APP_NOTICE_EN:-}
+      - KPB_APP_NOTICE_URL=${KPB_APP_NOTICE_URL:-}
       # Visas étudiants américains suspendus par nationalité (avis des fiches
       # États-Unis). VIDES par défaut : le serveur sert alors la liste vérifiée
       # le 17/10/2026 et la page du Département d'État. `none` retire l'avis.

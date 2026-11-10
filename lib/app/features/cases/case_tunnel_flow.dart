@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../core/config/app_config.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/data/case_api_codec.dart';
 import '../../core/models/app_models.dart';
 import '../../core/services/document_upload_service.dart';
 import '../../core/services/speech_input_service.dart';
@@ -200,7 +201,13 @@ class _CaseTunnelFlowState extends State<CaseTunnelFlow> {
   }
 
   void _submit() {
-    final message = _messageController.text.trim();
+    // Coupé comme le serveur compte (unités UTF-16) : la limite du champ
+    // compte des caractères visibles, et un récit chargé d'émojis pouvait
+    // dépasser ce que le serveur d'avant la 59 accepte.
+    final message = CaseApiCodec.clampText(
+      _messageController.text.trim(),
+      CaseApiCodec.messageInputMaxLength,
+    );
     final defaultTitle = widget.prefill.title;
     final descriptionParts = <String>[
       if (message.isNotEmpty)
@@ -984,7 +991,12 @@ class _MessageStepState extends State<_MessageStep> {
       onResult: (text, isFinal) {
         if (!mounted || text.trim().isEmpty) return;
         final prefix = _dictationBase.isEmpty ? '' : '$_dictationBase ';
-        widget.controller.text = '$prefix$text'.trim();
+        // `maxLength` ne borne que la frappe : un texte posé par la dictée
+        // passe outre. On le coupe ici à la même limite.
+        widget.controller.text = CaseApiCodec.clampText(
+          '$prefix$text'.trim(),
+          CaseApiCodec.messageInputMaxLength,
+        );
         widget.controller.selection = TextSelection.collapsed(
           offset: widget.controller.text.length,
         );
@@ -1003,6 +1015,7 @@ class _MessageStepState extends State<_MessageStep> {
           controller: widget.controller,
           minLines: 4,
           maxLines: 8,
+          maxLength: CaseApiCodec.messageInputMaxLength,
           decoration: InputDecoration(
             labelText: 'description'.tr,
             hintText: 'case_description_hint'.tr,

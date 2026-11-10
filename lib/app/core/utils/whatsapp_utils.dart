@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../config/app_config.dart';
+import '../config/support_contact.dart';
 import '../services/analytics_service.dart';
 import 'external_link.dart';
 import '../ui/components/kpb_toast.dart';
@@ -66,7 +67,7 @@ Uri buildWhatsAppUri({String? phone, String? prefill, bool group = false}) {
 
   final rawTarget = (phone != null && phone.trim().isNotEmpty)
       ? phone.trim()
-      : AppConfig.whatsappNumber.trim();
+      : SupportContact.whatsappNumber.trim();
 
   if (rawTarget.isNotEmpty) {
     final cleaned = rawTarget.replaceAll(RegExp(r'[^\d+]'), '');

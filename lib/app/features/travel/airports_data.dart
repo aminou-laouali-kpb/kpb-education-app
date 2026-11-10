@@ -10,6 +10,8 @@
 /// deliberately errs on the side of omission over guessing.
 library;
 
+import '../../core/utils/search_text.dart';
+
 /// A single airport/city option in the picker.
 ///
 /// [city] and [country] are proper nouns and stay as plain strings (they are
@@ -33,11 +35,11 @@ class Airport {
   /// Lower-cased haystack used for case-insensitive search on code, city and
   /// country.
   bool matches(String query) {
-    final q = query.trim().toLowerCase();
+    final q = foldForSearch(query);
     if (q.isEmpty) return true;
     return code.toLowerCase().contains(q) ||
-        city.toLowerCase().contains(q) ||
-        country.toLowerCase().contains(q);
+        foldForSearch(city).contains(q) ||
+        foldForSearch(country).contains(q);
   }
 }
 

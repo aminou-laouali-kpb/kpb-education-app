@@ -1,5 +1,6 @@
 import '../controllers/app_controller.dart';
 import '../models/app_models.dart';
+import '../utils/search_text.dart';
 import '../utils/study_level.dart';
 import '../utils/tuition_reading.dart';
 
@@ -118,7 +119,7 @@ abstract final class ProgramFilterService {
     ProgramFilterState filters,
     AppController controller,
   ) {
-    final query = filters.query.trim().toLowerCase();
+    final query = foldForSearch(filters.query);
 
     final filtered = programs.where((program) {
       final institution =
@@ -173,8 +174,8 @@ abstract final class ProgramFilterService {
         institution != null ? controller.resolve(institution.name) : '',
         program.fieldId,
         program.countryId,
-      ].join(' ').toLowerCase();
-      return haystack.contains(query);
+      ].join(' ');
+      return foldForSearch(haystack).contains(query);
     }).toList();
 
     filtered.sort((a, b) {

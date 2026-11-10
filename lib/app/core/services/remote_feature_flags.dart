@@ -3,9 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../config/app_config.dart';
+import '../config/support_contact.dart';
+import '../models/app_notice.dart';
 import '../models/eef_catalog_attribution.dart';
 import '../models/us_visa_suspension.dart';
 import '../repositories/app_api_client.dart';
+import 'remote_config_cache.dart';
 import '../utils/external_link.dart';
 import '../utils/app_logger.dart';
 
@@ -241,12 +244,25 @@ class EefCampaignWindow {
 ///
 /// ## Comment il échoue
 ///
-/// **Fermé, toujours.** Réseau injoignable, charge malformée, backend plus
-/// ancien qui ne connaît pas la clé : on retombe sur les constantes de
-/// compilation d'[AppConfig], qui valent `false` par défaut. Le raisonnement
-/// n'est pas symétrique dans les deux sens : montrer par défaut une vitrine
-/// qu'on ne saurait plus éteindre à distance est un mauvais échec, ne rien
-/// montrer est un échec réparable.
+/// **Fermé, toujours.** Charge malformée, backend plus ancien qui ne connaît
+/// pas la clé, téléphone qui n'a JAMAIS joint le serveur : on retombe sur les
+/// constantes de compilation d'[AppConfig], qui valent `false` par défaut. Le
+/// raisonnement n'est pas symétrique dans les deux sens : montrer par défaut
+/// une vitrine qu'on ne saurait plus éteindre à distance est un mauvais échec,
+/// ne rien montrer est un échec réparable.
+///
+/// **Depuis la 59, il se souvient.** La dernière réponse du serveur est gardée
+/// sur le téléphone ([RemoteConfigCache]) et relue au démarrage
+/// ([restoreFromCache]) : sur un réseau lent, l'app démarre sur ce que le
+/// serveur a dit la dernière fois au lieu de tout refermer, puis se corrige
+/// dès qu'il répond. Une réponse de plus de [cacheMaxAge] est ignorée. Un
+/// interrupteur refermé côté serveur reste donc ouvert, au pire, le temps que
+/// le téléphone rejoigne le serveur — et sans le serveur, ce qu'il ouvre ne
+/// marche pas non plus.
+///
+/// **Et il se relit.** [refreshIfStale] est appelé à chaque retour au premier
+/// plan : ouvrir ou couper une fonction agit sur les apps restées ouvertes,
+/// sans attendre que l'élève tue l'app (audit avant la 59).
 ///
 /// ## Ce qu'il ne fait pas
 ///
@@ -271,8 +287,14 @@ class RemoteFeatureFlags {
     instance._usVisaSuspension = UsVisaSuspension.fallback;
     instance._loaded = false;
     instance._featuresServed = false;
+    instance._notice = null;
+    instance._lastAttemptAt = null;
+    instance.onFreshConfig = null;
     instance.flagsVersion.value = 0;
     retryDelays = const <Duration>[Duration(seconds: 5), Duration(seconds: 30)];
+    cache = const SharedPreferencesRemoteConfigCache();
+    clock = DateTime.now;
+    SupportContact.setServed(null);
   }
 
   Map<String, bool> _features = const <String, bool>{};
@@ -284,6 +306,34 @@ class RemoteFeatureFlags {
   UsVisaSuspension _usVisaSuspension = UsVisaSuspension.fallback;
   bool _loaded = false;
   bool _featuresServed = false;
+  AppNotice? _notice;
+  DateTime? _lastAttemptAt;
+
+  /// Où la dernière réponse est gardée d'un lancement à l'autre.
+  @visibleForTesting
+  static RemoteConfigCache cache = const SharedPreferencesRemoteConfigCache();
+
+  /// L'horloge, injectable pour les tests.
+  @visibleForTesting
+  static DateTime Function() clock = DateTime.now;
+
+  /// Au-delà, une réponse gardée n'est plus relue : un téléphone resté une
+  /// semaine sans joindre le serveur repart des replis de compilation.
+  static const Duration cacheMaxAge = Duration(days: 7);
+
+  /// Écart minimal entre deux lectures déclenchées par un retour au premier
+  /// plan. `/config/app` est limitée en débit par adresse IP, partagée entre
+  /// les abonnés d'un même opérateur : pas de relecture à chaque bascule.
+  static const Duration resumeRefreshInterval = Duration(minutes: 5);
+
+  /// Appelé avec chaque réponse FRAÎCHE du serveur — jamais avec la réponse
+  /// gardée. C'est ce qui permet à la garde de version de se rejouer sans
+  /// second appel réseau, et de ne jamais bloquer l'app sur une vieille
+  /// consigne.
+  void Function(Map<String, dynamic> config)? onFreshConfig;
+
+  /// L'avis à afficher en haut de l'accueil, ou `null`.
+  AppNotice? get notice => _notice;
 
   /// Incrémenté à chaque rafraîchissement réussi. Les écrans qui dépendent d'un
   /// drapeau écoutent ce compteur pour se reconstruire une fois la réponse
@@ -532,30 +582,112 @@ class RemoteFeatureFlags {
     }
   }
 
+  /// Relit `/config/app` si la dernière tentative date de plus de
+  /// [minInterval]. Appelé au retour au premier plan. Ne lève jamais.
+  ///
+  /// Un échec ne referme rien : les valeurs déjà en mémoire restent.
+  Future<void> refreshIfStale(
+    AppApiClient apiClient, {
+    Duration minInterval = resumeRefreshInterval,
+  }) async {
+    final last = _lastAttemptAt;
+    if (last != null && clock().difference(last) < minInterval) return;
+    await _attemptRefresh(apiClient);
+  }
+
+  /// Relit la dernière réponse gardée sur le téléphone, avant que le réseau
+  /// réponde. Sans effet si le serveur a déjà répondu, si rien n'est gardé, ou
+  /// si la réponse a plus de [cacheMaxAge]. Ne lève jamais : appelé au
+  /// démarrage, un stockage illisible ne doit pas empêcher l'app de s'ouvrir.
+  Future<void> restoreFromCache() async {
+    if (_loaded) return;
+    try {
+      final snapshot = await cache.read();
+      if (snapshot == null) return;
+      if (clock().difference(snapshot.savedAt) > cacheMaxAge) return;
+      // Le serveur a pu répondre pendant la lecture du stockage : sa réponse
+      // est plus fraîche que celle qu'on vient de relire.
+      if (_loaded) return;
+      _apply(snapshot.config);
+      _featuresServed = true;
+      flagsVersion.value++;
+    } catch (error) {
+      AppLogger.warning(
+        'Remote config cache unreadable: $error',
+        tag: 'RemoteFeatureFlags',
+      );
+    }
+  }
+
   Future<bool> _attemptRefresh(AppApiClient apiClient) async {
+    _lastAttemptAt = clock();
     try {
       final config = await apiClient.getAppConfig();
-      _features = _readFeatures(config['features']);
-      _campaign = EefCampaignWindow.fromJson(config['eefCampaign']);
-      _recommendedVersion = _readVersion(config['recommendedVersion']);
-      _iosStoreUrl = _readWebUrl(config['iosStoreUrl']);
-      _androidStoreUrl = _readWebUrl(config['androidStoreUrl']);
-      _catalogAttribution =
-          EefCatalogAttribution.fromJson(config['eefCatalog']);
-      _usVisaSuspension = UsVisaSuspension.fromJson(config['usVisaSuspension']);
+      _apply(config);
       _loaded = true;
       _featuresServed = true;
       flagsVersion.value++;
+      unawaited(_persist(config));
+      _notifyFresh(config);
       return true;
     } catch (error) {
-      // Fail closed : on garde les replis de compilation. Volontairement pas
-      // remonté à Crashlytics — un téléphone hors réseau n'est pas un incident,
-      // et cette route est appelée à chaque démarrage.
+      // Fail closed : on garde les replis de compilation (ou la dernière
+      // réponse relue). Volontairement pas remonté à Crashlytics — un
+      // téléphone hors réseau n'est pas un incident, et cette route est
+      // appelée à chaque démarrage.
       AppLogger.warning(
         'Remote feature flags unavailable: $error',
         tag: 'RemoteFeatureFlags',
       );
       return false;
+    }
+  }
+
+  /// Pose en mémoire tout ce qu'une charge `/config/app` contient. Lève si la
+  /// charge est illisible : l'appelant décide alors de ne rien changer.
+  void _apply(Map<String, dynamic> config) {
+    final features = _readFeatures(config['features']);
+    final campaign = EefCampaignWindow.fromJson(config['eefCampaign']);
+    final recommended = _readVersion(config['recommendedVersion']);
+    final iosStoreUrl = _readWebUrl(config['iosStoreUrl']);
+    final androidStoreUrl = _readWebUrl(config['androidStoreUrl']);
+    final attribution = EefCatalogAttribution.fromJson(config['eefCatalog']);
+    final usVisa = UsVisaSuspension.fromJson(config['usVisaSuspension']);
+    final notice = AppNotice.fromJson(config['notice']);
+    final support = config['support'];
+
+    // Tout est lu AVANT d'être posé : une charge qui lève en cours de lecture
+    // ne laisse pas la moitié des réglages de la précédente.
+    _features = features;
+    _campaign = campaign;
+    _recommendedVersion = recommended;
+    _iosStoreUrl = iosStoreUrl;
+    _androidStoreUrl = androidStoreUrl;
+    _catalogAttribution = attribution;
+    _usVisaSuspension = usVisa;
+    _notice = notice;
+    SupportContact.setServed(support is Map ? support['whatsappNumber'] : null);
+  }
+
+  Future<void> _persist(Map<String, dynamic> config) async {
+    try {
+      await cache.write(RemoteConfigSnapshot(savedAt: clock(), config: config));
+    } catch (error) {
+      AppLogger.warning(
+        'Remote config cache not written: $error',
+        tag: 'RemoteFeatureFlags',
+      );
+    }
+  }
+
+  void _notifyFresh(Map<String, dynamic> config) {
+    try {
+      onFreshConfig?.call(config);
+    } catch (error) {
+      AppLogger.warning(
+        'Fresh config listener failed: $error',
+        tag: 'RemoteFeatureFlags',
+      );
     }
   }
 

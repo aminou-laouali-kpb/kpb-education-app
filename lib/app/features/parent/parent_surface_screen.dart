@@ -18,7 +18,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/ui/app_tokens.dart';
@@ -129,7 +129,7 @@ class _ParentSurfaceScreenState extends State<ParentSurfaceScreen> {
 
   void _whatsapp(String prefill, String contextType) {
     openWhatsAppOrToast(
-      phone: AppConfig.whatsappNumber,
+      phone: SupportContact.whatsappNumber,
       prefill: prefill,
       source: 'parent_surface',
       contextType: contextType,

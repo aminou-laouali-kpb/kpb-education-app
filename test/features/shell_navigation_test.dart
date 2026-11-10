@@ -605,4 +605,55 @@ void main() {
       expect(find.byKey(toolsButton), findsOneWidget);
     });
   });
+
+  // Audit avant la 59 : sur Android, le bouton Retour du téléphone fermait
+  // l'app depuis n'importe quel onglet. Il ramène maintenant à l'Accueil.
+  group('Retour du téléphone', () {
+    setUp(resetGetxSingleton);
+    tearDown(resetGetxSingleton);
+
+    Future<AppController> pumpShell(WidgetTester tester) async {
+      await pumpTestApp(
+        tester,
+        child: const AppShell(),
+        initialSnapshot: AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
+      return Get.find<AppController>();
+    }
+
+    testWidgets('depuis un autre onglet, il ramène à l\'Accueil',
+        (tester) async {
+      final controller = await pumpShell(tester);
+      controller.goToTab(StudentShellTab.cases);
+      await tester.pumpAndSettle();
+      expect(controller.shellIndex, StudentShellTab.cases);
+
+      final handled = await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(handled, isTrue);
+      expect(controller.shellIndex, StudentShellTab.home);
+      expect(find.byType(AppShell), findsOneWidget);
+    });
+
+    testWidgets('depuis l\'Accueil, il n\'est pas retenu', (tester) async {
+      final controller = await pumpShell(tester);
+      await tester.pumpAndSettle();
+      expect(controller.shellIndex, StudentShellTab.home);
+
+      final scope = tester.widget(
+        find
+            .ancestor(
+              of: find.byKey(const ValueKey('kpb_shell_nav_bar')),
+              matching: find.byWidgetPredicate((w) => w is PopScope),
+            )
+            .first,
+      ) as PopScope;
+      expect(scope.canPop, isTrue);
+    });
+  });
 }

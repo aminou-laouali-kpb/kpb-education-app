@@ -1162,6 +1162,27 @@ comme une valeur de repli :
 | `eefCampaign.suspendedSources` | `[{country, url}]` | `KPB_EEF_SUSPENDED_SOURCES` (`Pays\|https://…;Autre\|https://…`) | La page officielle qui justifie la suspension d'un pays. **Un élément par pays de `suspendedCountries` seulement** : la source d'une suspension ne voyage pas sans suspension. Connue sans configuration : le Niger (`ne.diplomatie.gouv.fr/informations-visas`). |
 | `eefCatalog` | `{producer, producerUrl, licence, licenceUrl, sources[], updatedAt, catalogVersion}` | — (constante) | La mention de paternité de la Licence Ouverte 2.0, posée en pied de l'écran catalogue. `updatedAt` est un **jour nu** `AAAA-MM-JJ`. |
 
+### Les leviers de la build 59 : `support`, `notice`
+
+Route publique, sans authentification. Deux ajouts lus par la **59 et les
+suivantes** ; une build plus ancienne ignore ces clés, et une 59 devant un
+serveur plus ancien (clés absentes) se comporte comme avant.
+
+| Clé | Forme | Variable d'environnement | Sens |
+|---|---|---|---|
+| `support.whatsappNumber` | `"+33768674292"` ou `null` | `KPB_APP_WHATSAPP_NUMBER` | La ligne WhatsApp officielle. `null` : l'app garde le numéro compilé dans sa build. Un numéro qui n'est pas au format international (`+` puis 8 à 15 chiffres) vaut `null`. Action d'exploitation : `app-whatsapp-set`. |
+| `notice` | `{fr, en, url}` ou `null` | `KPB_APP_NOTICE_FR`, `KPB_APP_NOTICE_EN`, `KPB_APP_NOTICE_URL` | Un avis court (240 caractères) affiché en haut de l'accueil, **qu'on ferme**. Sans texte français, `null`. `en` et `url` sont facultatifs ; un lien qui n'est pas en https vaut `null`. Un avis fermé ne revient pas pour le même texte. |
+
+Depuis la 59, l'app **garde la dernière réponse** de cette route sur le
+téléphone (sept jours) et la relit au démarrage avant que le réseau réponde.
+Elle **relit la route** à chaque retour au premier plan, au plus toutes les
+cinq minutes. La garde de version (`minVersion`) est évaluée sur
+chaque réponse fraîche, jamais sur la réponse gardée.
+
+Gardé par `backend/src/modules/config/app-config.controller.spec.ts`,
+`test/core/services/remote_config_persistence_test.dart` et
+`test/core/services/app_version_gate_test.dart`.
+
 ### Suspension des visas étudiants américains : `usVisaSuspension` (17/10/2026)
 
 Toujours présente. Sert l'avis des fiches établissement, formation et pays des

@@ -496,6 +496,21 @@ EEF_CAMPAIGN_SUSPENDED="Niger,NE"
 # qui n'a encore rien. Vide = aucun bandeau (et l'action RETIRE la clé du .env).
 RECOMMENDED_APP_VERSION=""
 
+# La ligne WhatsApp officielle SERVIE à l'app (`/config/app` →
+# `support.whatsappNumber`, build 59 et suivantes), posée par
+# `app-whatsapp-set`.
+#
+# **VIDE par défaut, et c'est voulu.** Vide, l'action écrit la clé SANS valeur
+# dans le .env : le serveur sert alors `null`, et l'app garde le numéro compilé
+# dans sa build. À remplir — par PR — le jour où
+# la ligne est restreinte par WhatsApp ou change : toutes les apps 59 et
+# suivantes basculent alors sur ce numéro au prochain lancement ou au prochain
+# retour dans l'app, sans nouvelle build. Les builds d'avant la 59 ne lisent pas
+# cette clé : elles gardent leur numéro compilé.
+#
+# Format international, sans espace : `+` puis 8 à 15 chiffres (+33768674292).
+APP_WHATSAPP_NUMBER=""
+
 # Nombre de formations de l'import que la recherche SERVIRAIT : active, sous un
 # établissement actif, du périmètre de l'import (même définition que
 # `eefProgramWhere` côté serveur). Zéro = un espace qui s'ouvrirait VIDE.
@@ -807,6 +822,34 @@ case "$ACTION" in
     cp -p .env ".env.bak.$(date -u +%Y%m%dT%H%M%SZ)"
     set_env_key KPB_RECOMMENDED_APP_VERSION "$RECOMMENDED_APP_VERSION"
     echo "── .env après écriture ──"; grep -E '^KPB_RECOMMENDED_APP_VERSION' .env
+    recreate_api_same_image
+    ;;
+
+  app-whatsapp-set)
+    # Pose (ou, si la constante est vide, VIDE) le numéro WhatsApp servi à
+    # l'app. Ne touche à aucun interrupteur. Le serveur ignore un numéro mal
+    # formé (l'app garderait alors son numéro compilé) : on le refuse ici pour
+    # que l'échec se voie. Le FORMAT seul est contrôlé : un numéro bien écrit
+    # mais faux enverrait tous les élèves vers une ligne morte.
+    require_relay KPB_APP_WHATSAPP_NUMBER
+    if [ -n "$APP_WHATSAPP_NUMBER" ] && ! printf '%s' "$APP_WHATSAPP_NUMBER" | grep -qE '^\+[1-9][0-9]{7,14}$'; then
+      echo "::error::APP_WHATSAPP_NUMBER doit être au format international « +33768674292 » (reçu « ${APP_WHATSAPP_NUMBER} ») — le serveur l'ignorerait."
+      exit 1
+    fi
+    echo "── Numéro WhatsApp à servir (relu en PR) ──"
+    echo "KPB_APP_WHATSAPP_NUMBER=${APP_WHATSAPP_NUMBER}"
+    if [ -n "$APP_WHATSAPP_NUMBER" ]; then
+      echo "AVANT D'APPLIQUER : écrire à ce numéro sur WhatsApp et obtenir une réponse. Seul son format est vérifié ici."
+    else
+      echo "(vide : les apps gardent le numéro compilé dans leur build)"
+    fi
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION : rien n'est écrit. Décocher « dry_run » pour appliquer. ──"
+      exit 0
+    fi
+    cp -p .env ".env.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+    set_env_key KPB_APP_WHATSAPP_NUMBER "$APP_WHATSAPP_NUMBER"
+    echo "── .env après écriture ──"; grep -E '^KPB_APP_WHATSAPP_NUMBER' .env
     recreate_api_same_image
     ;;
 

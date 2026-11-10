@@ -24,20 +24,48 @@ const _frMonths = <String, int>{
   'décembre': 12,
 };
 
-const _monthNames = <int, String>{
-  1: 'Janvier',
-  2: 'Février',
-  3: 'Mars',
-  4: 'Avril',
-  5: 'Mai',
-  6: 'Juin',
-  7: 'Juillet',
-  8: 'Août',
-  9: 'Septembre',
-  10: 'Octobre',
-  11: 'Novembre',
-  12: 'Décembre',
-};
+const _monthNamesFr = <String>[
+  'Janvier',
+  'Février',
+  'Mars',
+  'Avril',
+  'Mai',
+  'Juin',
+  'Juillet',
+  'Août',
+  'Septembre',
+  'Octobre',
+  'Novembre',
+  'Décembre',
+];
+
+const _monthNamesEn = <String>[
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+/// « Novembre 2026 » ou « November 2026 », selon la langue de l'app. La table
+/// d'avant était écrite en français seulement : en anglais, le reste de
+/// l'écran était traduit et les mois ne l'étaient pas (audit avant la 59).
+///
+/// Deux tables plutôt que `DateFormat` : ses données de langue ne sont
+/// chargées que si quelqu'un les a initialisées, et un titre de groupe ne doit
+/// pas pouvoir lever.
+String _monthLabel(DateTime day) {
+  final names =
+      Get.locale?.languageCode == 'en' ? _monthNamesEn : _monthNamesFr;
+  return '${names[day.month - 1]} ${day.year}';
+}
 
 DateTime? _parseDeadline(String text) {
   final lower = text.toLowerCase();
@@ -140,7 +168,7 @@ class _DeadlineCalendarScreenState extends State<DeadlineCalendarScreen> {
           final grouped = <String, List<_MilestoneEntry>>{};
           for (final entry in filtered) {
             final key = entry.deadline != null
-                ? '${_monthNames[entry.deadline!.month]} ${entry.deadline!.year}'
+                ? _monthLabel(entry.deadline!)
                 : 'deadlines_date_to_confirm'.tr;
             grouped.putIfAbsent(key, () => []).add(entry);
           }

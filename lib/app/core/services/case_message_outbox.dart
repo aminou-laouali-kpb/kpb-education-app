@@ -29,8 +29,23 @@ class CaseMessageOutbox {
 
   static Future<CaseMessageOutbox> init() async {
     if (_instance != null) return _instance!;
-    final box = await Hive.openBox<String>(_boxName);
+    final box = await _openOrReset();
     return _instance = CaseMessageOutbox._(box);
+  }
+
+  /// Ouvre la file ; si elle est illisible, l'efface et la rouvre vide.
+  ///
+  /// Une file abîmée faisait échouer le démarrage entier, à chaque lancement
+  /// (audit avant la 59). Les messages en attente qu'elle contenait sont
+  /// perdus — c'est le prix d'une app qui s'ouvre : sans elle, ils n'auraient
+  /// pas pu partir non plus.
+  static Future<Box<String>> _openOrReset() async {
+    try {
+      return await Hive.openBox<String>(_boxName);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(_boxName);
+      return Hive.openBox<String>(_boxName);
+    }
   }
 
   /// [localMessageId] : l'id de la bulle optimiste (`user-…`) affichée dans

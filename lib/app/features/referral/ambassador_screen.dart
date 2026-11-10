@@ -383,13 +383,16 @@ class _DashboardTab extends StatelessWidget {
                             borderRadius: BorderRadius.circular(100),
                           ),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            // Bleu nuit sur vert WhatsApp : 9:1 (le blanc
+                            // était à 1,98:1), comme les autres boutons
+                            // WhatsApp de l'app.
                             const Icon(Icons.chat,
-                                size: 15, color: Colors.white),
+                                size: 15, color: KpbColors.brandNavy),
                             const SizedBox(width: 6),
                             Text('amb_share'.tr,
                                 style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11.5,
+                                    color: KpbColors.brandNavy,
+                                    fontSize: KpbFontSize.xs,
                                     fontWeight: FontWeight.w800)),
                           ]),
                         ),

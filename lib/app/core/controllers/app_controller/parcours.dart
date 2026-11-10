@@ -6,6 +6,23 @@ mixin _ParcoursMixin on _AppControllerBase {
 
   static const _parcoursCacheKey = 'parcours_stories';
 
+  /// Date de la dernière lecture réussie du serveur, gardée à côté de la
+  /// liste. Absente d'un cache écrit avant la 59 : il compte alors comme vieux.
+  static const _parcoursFetchedAtKey = 'parcours_stories__fetched_at';
+
+  /// Au-delà, une liste relue du cache est redemandée au serveur.
+  static const Duration parcoursCacheMaxAge = Duration(hours: 24);
+
+  /// Le cache des parcours a-t-il plus d'un jour (ou pas de date du tout) ?
+  bool _parcoursCacheIsOld() {
+    if (!CatalogCacheService.isInitialized) return true;
+    final stamp = CatalogCacheService.instance.read(_parcoursFetchedAtKey);
+    final raw = stamp.isEmpty ? null : stamp.first;
+    final at = raw is String ? DateTime.tryParse(raw) : null;
+    if (at == null) return true;
+    return DateTime.now().difference(at) > parcoursCacheMaxAge;
+  }
+
   /// Distinct field domains (d01..d12) present in the loaded stories, in the
   /// catalog field order — used to render the theme filter chips. Only
   /// non-empty domains appear, so the filter never shows a dead chip.
@@ -20,13 +37,13 @@ mixin _ParcoursMixin on _AppControllerBase {
 
   /// The stories after applying the current theme filter + search query.
   List<ParcoursStory> get filteredParcoursStories {
-    final q = parcoursQuery.trim().toLowerCase();
+    final q = foldForSearch(parcoursQuery);
     return _parcoursStories.where((s) {
       if (parcoursFieldFilter != null && s.fieldId != parcoursFieldFilter) {
         return false;
       }
       if (q.isEmpty) return true;
-      bool has(String v) => v.toLowerCase().contains(q);
+      bool has(String v) => foldForSearch(v).contains(q);
       return has(s.title.fr) ||
           has(s.title.en) ||
           has(s.personName) ||
@@ -73,10 +90,16 @@ mixin _ParcoursMixin on _AppControllerBase {
     if (!AppConfig.enableRemoteSync) return false;
     if (isLoadingParcours) return false;
     if (!force && _parcoursStories.isNotEmpty) {
-      // Already populated this session; skip redundant network call.
-      return false;
+      // Liste déjà en mémoire. Avant la 59, on s'arrêtait là dès que le cache
+      // avait rendu quelque chose : une fois la liste gardée sur le téléphone,
+      // elle n'était PLUS JAMAIS redemandée (sauf en tirant l'écran), et une
+      // histoire retirée ou corrigée n'arrivait jamais (audit avant la 59).
+      // On la redemande donc une fois par session, si le cache a plus d'un
+      // jour. Un échec compte aussi : on ne relance pas à chaque écran.
+      if (_parcoursRefreshAttempted || !_parcoursCacheIsOld()) return false;
     }
 
+    _parcoursRefreshAttempted = true;
     isLoadingParcours = true;
     parcoursError = null;
     update();
@@ -91,6 +114,10 @@ mixin _ParcoursMixin on _AppControllerBase {
           await CatalogCacheService.instance.write(
             _parcoursCacheKey,
             items.map((s) => s.toJson()).toList(),
+          );
+          await CatalogCacheService.instance.write(
+            _parcoursFetchedAtKey,
+            <dynamic>[DateTime.now().toIso8601String()],
           );
         }
       }

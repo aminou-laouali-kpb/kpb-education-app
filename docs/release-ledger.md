@@ -735,6 +735,52 @@ messagerie (checklist 59, étape 1).
 (sans elle la carte invité n'apparaît pas), la puce de notes de version du pack 59 §2, et ce qui
 a été joué de la recette de la 58.
 
+### Durcissement de la build 59 (10/11/2026) — audit avant l'archive
+
+**Décision du propriétaire du 10/11/2026** : avant d'archiver, faire vérifier chaque
+compartiment, puis corriger dans la 59 ce qui exigerait sinon une nouvelle build (« Oui, corrige
+d'abord »). Dix agents ont lu le code en lecture seule (90 constats) ; les constats repris ici
+ont été relus dans le code avant d'être corrigés, et le lot relu par deux relecteurs
+indépendants. Aucune build de store lancée, rien de déployé ni de soumis.
+
+**Ce que le durcissement ajoute à la 59** (branche `claude/build-59-durcissement`) :
+- **app** — un dossier trop long n'est plus refusé (texte coupé aux limites du serveur, saisie
+  bornée, dictée comprise) ; le numéro WhatsApp peut être servi par `/config/app`
+  (`support.whatsappNumber`, repli sur le numéro compilé) ; la dernière réponse de `/config/app`
+  est gardée sur le téléphone (sept jours) et relue au démarrage, puis la route est relue à
+  chaque retour au premier plan (au plus toutes les cinq minutes) ; la garde de mise à jour
+  forcée est évaluée sur chaque réponse fraîche (un seul appel au lieu de deux) ; un avis servi
+  (`notice`) s'affiche en haut de l'accueil et se ferme ; la recherche et les filtres ignorent
+  les accents ; la sonde « hors ligne » vise l'hôte de l'API et attend deux échecs ; les liens
+  `kpb://` et les raccourcis de l'icône respectent l'écran d'entrée ; les parcours sont
+  redemandés une fois par jour ; les stockages du démarrage se réparent seuls et l'écran d'erreur
+  propose d'effacer les données locales ; bouton Retour d'Android (onglets, onboarding) ; aucun
+  prix sur l'écran Services ; contrastes, mois du calendrier en anglais, image des fiches pays en
+  cache ;
+- **serveur** — `POST /cases` coupe un titre, une description ou un contexte trop longs au lieu
+  de répondre 400 ; `GET /config/app` sert `support.whatsappNumber` (`KPB_APP_WHATSAPP_NUMBER`)
+  et `notice` (`KPB_APP_NOTICE_FR`, `_EN`, `_URL`) ; limite de débit de production à 300 lectures
+  et 60 écritures par minute, par IP et par route (les prix des vols gardent 60) ; le coach IA
+  ne décompte plus un message quand le modèle n'a rien rendu ;
+- **exploitation** — action `app-whatsapp-set` (constante `APP_WHATSAPP_NUMBER`).
+
+**Aucune dépendance ni manifeste ne bouge** : mêmes paquets (`shared_preferences`, `hive`),
+`pubspec.yaml` inchangé hors sa ligne `version:`. Aucun SDK, aucune permission, aucun hôte
+nouveau dans `lib/`.
+
+**Couplage backend : toujours `tolerates-old`.** Devant le serveur de la 58, `support` et
+`notice` sont absentes : l'app garde son numéro compilé et n'affiche aucun avis. La saisie du
+tunnel est bornée à 1 900 caractères, sous les 2 000 que ce serveur accepte. À l'inverse, le
+nouveau serveur ne casse ni la 58 ni la 2.3.0 : deux clés de plus dans `/config/app`, un texte
+coupé au lieu d'un refus, un plafond de lecture plus haut. **Aucune migration.**
+
+**Pas fait, et pourquoi** : `KPB_APP_NOTICE_*` n'a pas d'action d'exploitation (un texte libre
+dans une commande demande une validation à part) ; les questions au coach IA voyagent toujours
+dans l'adresse de la requête (la route `POST` existante ne diffuse pas la réponse) ; la
+connexion par SMS et les dates limites par pays sont des décisions produit ; la liste des
+dossiers de l'administration, le second facteur admin et l'infrastructure (sauvegardes hors du
+serveur, alerte de panne, e-mail des codes) restent à traiter, sans build.
+
 ### Ce que 52 embarque
 
 - **Liste d'attente Karatou Premium (PR #258).** Point 8 de la revue du build

@@ -289,7 +289,9 @@ export class CoachService {
       return;
     }
 
-    const quota = await this.quotaService.consume(params.userId);
+    // L'instant du décompte, repris par un éventuel remboursement.
+    const consumedAt = new Date();
+    const quota = await this.quotaService.consume(params.userId, consumedAt);
     if (!quota.allowed) {
       subscriber.next({
         data: {
@@ -344,6 +346,8 @@ export class CoachService {
         system,
         messages: history,
         lang,
+        // Une panne du fournisseur doit lever, pas se déguiser en réponse.
+        throwOnUnavailable: true,
       })) {
         full += chunk;
         subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
@@ -370,6 +374,23 @@ export class CoachService {
       this.logger.error(
         `Coach LLM stream failed: ${error instanceof Error ? error.message : String(error)}`,
       );
+      // Le modèle n'a RIEN rendu : l'élève ne perd pas un de ses 5 messages de
+      // la semaine. Avant la 59, la phrase de panne était enregistrée comme une
+      // réponse (et renvoyée au modèle aux tours suivants) ; elle ne l'est
+      // plus. La question de l'élève, elle, reste dans l'historique.
+      //
+      // Pas de remboursement dès qu'un jeton est parti : une réponse coupée en
+      // route, ou un échec d'écriture après une réponse complète, a été LUE.
+      // Rembourser là offrirait des réponses gratuites tant que la panne dure.
+      if (full === '') {
+        try {
+          await this.quotaService.refund(params.userId, consumedAt);
+        } catch (refundError) {
+          this.logger.warn(
+            `Coach quota refund failed: ${refundError instanceof Error ? refundError.message : String(refundError)}`,
+          );
+        }
+      }
       subscriber.next({
         data: { type: 'error', message: 'KPB Intelligence est momentanément indisponible.' },
       } as MessageEvent);

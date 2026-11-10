@@ -40,13 +40,26 @@ export class CoachQuotaService {
     };
   }
 
-  async consume(userId: string): Promise<{ allowed: boolean; remaining: number }> {
+  async consume(
+    userId: string,
+    now?: Date,
+  ): Promise<{ allowed: boolean; remaining: number }> {
     const decision = await this.quota.consume({
       userId,
       feature: FEATURE,
       limit: COACH_WEEKLY_LIMIT,
       period: 'week',
+      now,
     });
     return { allowed: decision.allowed, remaining: decision.remaining };
+  }
+
+  /**
+   * Rend le message décompté quand le modèle n'a pas répondu. [now] est
+   * l'instant du décompte : la même semaine est visée, même si le
+   * remboursement tombe après minuit dimanche.
+   */
+  async refund(userId: string, now?: Date): Promise<void> {
+    await this.quota.refund({ userId, feature: FEATURE, period: 'week', now });
   }
 }

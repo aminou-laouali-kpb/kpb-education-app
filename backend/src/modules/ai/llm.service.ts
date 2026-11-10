@@ -66,6 +66,14 @@ const DEFAULT_OPENROUTER_MODEL = 'deepseek/deepseek-v4-flash';
 const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
 const DEFAULT_TIMEOUT_MS = 18000;
 
+/** Le fournisseur du modèle n'a pas répondu (panne, délai, refus). */
+export class LlmUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LlmUnavailableError';
+  }
+}
+
 @Injectable()
 export class LlmService {
   private readonly logger = new Logger(LlmService.name);
@@ -456,11 +464,18 @@ export class LlmService {
     };
   }
 
+  /**
+   * [throwOnUnavailable] : quand le fournisseur ne répond pas, lève
+   * [LlmUnavailableError] au lieu de rendre la phrase de repli comme si
+   * c'était une réponse. Le coach s'en sert pour ne pas décompter un message
+   * ni garder cette phrase dans l'historique (audit avant la 59).
+   */
   async *streamText(params: {
     system: string;
     messages: LlmMessage[];
     maxTokens?: number;
     lang?: Lang;
+    throwOnUnavailable?: boolean;
   }): AsyncGenerator<string> {
     const lang: Lang = params.lang === 'en' ? 'en' : 'fr';
 
@@ -519,6 +534,9 @@ export class LlmService {
     }
 
     if (!response || !response.ok || !response.body) {
+      if (params.throwOnUnavailable) {
+        throw new LlmUnavailableError(`${config.name} did not answer.`);
+      }
       yield this.unavailableFallback(lang);
       return;
     }

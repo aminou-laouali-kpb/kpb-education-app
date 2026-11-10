@@ -6,6 +6,33 @@ import '../models/app_models.dart';
 ///
 /// Keeps API string conventions in one place (Phase 2 boundary).
 abstract final class CaseApiCodec {
+  /// Limites de `POST /cases` (`CreateCaseDto` côté serveur). Un texte plus
+  /// long y recevait un 400 : l'app avait déjà dit « transmise à l'équipe »,
+  /// réessayait à chaque synchronisation, et la demande n'arrivait jamais
+  /// (audit avant la 59). L'app coupe donc elle-même avant d'envoyer.
+  static const int titleMaxLength = 120;
+  static const int contextLabelMaxLength = 160;
+  static const int descriptionMaxLength = 8000;
+
+  /// Saisie de l'élève dans le tunnel. Sous les 2 000 caractères que le
+  /// serveur d'avant la 59 acceptait : une demande écrite avec cette build
+  /// passe aussi tant que le nouveau serveur n'est pas déployé.
+  static const int messageInputMaxLength = 1900;
+
+  /// Limite d'un message de dossier (`CreateCaseMessageDto` côté serveur).
+  static const int messageMaxLength = 3000;
+
+  /// Coupe [value] à [max] caractères sans laisser un émoji coupé en deux.
+  static String clampText(String value, int max) {
+    if (value.length <= max) return value;
+    var cut = value.substring(0, max);
+    final last = cut.codeUnitAt(cut.length - 1);
+    if (last >= 0xD800 && last <= 0xDBFF) {
+      cut = cut.substring(0, cut.length - 1);
+    }
+    return cut;
+  }
+
   static LocalizedText plainLocalized(String value) =>
       LocalizedText(fr: value, en: value);
 

@@ -4,10 +4,25 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import '../config/app_config.dart';
 import '../ui/components/kpb_toast.dart';
 
 /// Lightweight connectivity checker — no extra package needed.
 /// Tries to resolve a DNS lookup to determine online/offline status.
+///
+/// ## Ce qui a changé à la 59 (audit avant l'archive)
+///
+/// La sonde résolvait `dns.google`, une seule fois, avec 5 s de délai : un
+/// échec et l'app se déclarait « hors ligne ». Sur une 2G/3G lente, ou un
+/// réseau qui filtre les domaines Google, elle affichait donc « Mode
+/// hors-ligne » alors que l'API de KPB répondait — et mettait en file des
+/// mises à jour de profil qui pouvaient partir.
+///
+/// - Elle sonde d'abord **l'hôte de l'API de KPB**, celui qui compte, puis
+///   `dns.google` en second avis. Un seul qui répond suffit.
+/// - Il faut **deux échecs de suite** pour passer hors ligne. Le second essai
+///   suit de quelques secondes, pour ne pas retarder une vraie coupure.
+/// - Le retour en ligne, lui, reste immédiat.
 class ConnectivityService {
   ConnectivityService._();
   static final instance = ConnectivityService._();
@@ -60,21 +75,82 @@ class ConnectivityService {
 
   void dispose() {
     _timer?.cancel();
+    _recheck?.cancel();
     _reconnectDebounce?.cancel();
     _reconnectSubscription?.cancel();
     _controller.close();
   }
 
-  Future<void> _check() async {
+  /// Échecs de suite avant de se déclarer hors ligne.
+  static const int offlineAfterFailures = 2;
+
+  /// Attente avant le second essai, après un premier échec.
+  static const Duration recheckDelay = Duration(seconds: 5);
+
+  static const Duration _probeTimeout = Duration(seconds: 5);
+
+  int _consecutiveFailures = 0;
+  Timer? _recheck;
+
+  /// Les hôtes sondés, dans l'ordre : l'API de KPB, puis un second avis.
+  @visibleForTesting
+  static List<String> probeHosts() => <String>{
+        Uri.tryParse(AppConfig.apiBaseUrl)?.host ?? '',
+        'dns.google',
+      }.where((host) => host.isNotEmpty).toList();
+
+  /// La résolution d'un hôte, injectable pour les tests.
+  @visibleForTesting
+  Future<bool> Function(String host) resolver = _resolve;
+
+  static Future<bool> _resolve(String host) async {
     try {
-      final result = await InternetAddress.lookup('dns.google')
-          .timeout(const Duration(seconds: 5));
-      _setOnline(result.isNotEmpty && result[0].rawAddress.isNotEmpty);
+      final result = await InternetAddress.lookup(host).timeout(_probeTimeout);
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException {
-      _setOnline(false);
+      return false;
     } on TimeoutException {
-      _setOnline(false);
+      return false;
     }
+  }
+
+  /// Remet le service dans son état de départ, entre deux tests.
+  @visibleForTesting
+  void debugReset() {
+    _recheck?.cancel();
+    _recheck = null;
+    _consecutiveFailures = 0;
+    _isOnline = true;
+    resolver = _resolve;
+  }
+
+  /// Lance une sonde tout de suite — pour les tests.
+  @visibleForTesting
+  Future<void> debugCheckNow() => _check();
+
+  Future<void> _check() async {
+    var reachable = false;
+    for (final host in probeHosts()) {
+      if (await resolver(host)) {
+        reachable = true;
+        break;
+      }
+    }
+    if (reachable) {
+      _consecutiveFailures = 0;
+      _recheck?.cancel();
+      _setOnline(true);
+      return;
+    }
+    _consecutiveFailures++;
+    if (_consecutiveFailures >= offlineAfterFailures) {
+      _setOnline(false);
+      return;
+    }
+    // Premier échec : on ne conclut pas, mais on n'attend pas non plus les
+    // 30 s du prochain passage pour confirmer une vraie coupure.
+    _recheck?.cancel();
+    _recheck = Timer(recheckDelay, _check);
   }
 
   void _setOnline(bool online) {

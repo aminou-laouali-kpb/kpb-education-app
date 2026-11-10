@@ -143,6 +143,153 @@ describe('CoachService — AI consent gate', () => {
     expect(events.some((e) => e.code === 'ai_consent_required')).toBe(false);
   });
 
+  // ── Panne du fournisseur (audit avant la 59) ──────────────────────────────
+  //
+  // Le quota est décompté AVANT l'appel au modèle. Quand le fournisseur ne
+  // répondait pas, le service IA rendait sa phrase de panne comme une réponse :
+  // l'élève perdait un de ses 5 messages de la semaine, et la phrase était
+  // gardée dans l'historique puis renvoyée au modèle aux tours suivants.
+  it('une panne du fournisseur rend le message décompté et ne garde pas de fausse réponse', async () => {
+    const refunds: string[] = [];
+    const appended: string[] = [];
+    let asked: Record<string, unknown> | undefined;
+    const llm = {
+      async *streamText(params: Record<string, unknown>) {
+        asked = params;
+        throw new Error('provider did not answer');
+      },
+    } as unknown as LlmService;
+    let consumedAt: Date | undefined;
+    let refundedAt: Date | undefined;
+    const quota = {
+      getQuota: () => ({ remaining: 5, limit: 5, allowed: true }),
+      consume: (_userId: string, now?: Date) => {
+        consumedAt = now;
+        return { allowed: true, remaining: 4, limit: 5 };
+      },
+      refund: async (userId: string, now?: Date) => {
+        refunds.push(userId);
+        refundedAt = now;
+      },
+    } as unknown as CoachQuotaService;
+    const fakeClient = {
+      coachConversation: {
+        findUnique: async () => null,
+        create: async () => null,
+        update: async () => null,
+      },
+      coachMessage: { create: async () => null },
+      country: { findMany: async () => null },
+      scholarship: { findMany: async () => null },
+      userProfile: {
+        findUnique: async () => ({
+          aiConsentedAt: new Date(),
+          birthDate: new Date('2000-01-01T00:00:00.000Z'),
+          guardianConsentedAt: null,
+        }),
+      },
+    };
+    const prisma = {
+      tryExecute: async (fn: (c: typeof fakeClient) => unknown) => fn(fakeClient),
+    } as unknown as PrismaService;
+    const service = new CoachService(llm, quota, prisma);
+    const created = await service.createConversation('user-a', {});
+
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+    for (const message of await service.getMessages(created.conversationId, 'user-a')) {
+      appended.push((message as { role: string }).role);
+    }
+
+    // Le coach demande au service IA de LEVER plutôt que de rendre sa phrase.
+    expect(asked?.throwOnUnavailable).toBe(true);
+    expect(events.map((e) => e.type)).toEqual(['error']);
+    expect(refunds).toEqual(['user-a']);
+    // Le remboursement vise la période du décompte, pas « maintenant » : un
+    // remboursement tombé après minuit dimanche viserait la semaine suivante.
+    expect(consumedAt).toBeInstanceOf(Date);
+    expect(refundedAt).toBe(consumedAt);
+    // Aucune « réponse » de panne dans l'historique : seulement le message
+    // d'accueil, puis la question de l'élève.
+    expect(appended).toEqual(['assistant', 'user']);
+  });
+
+  // Une réponse coupée en route a été LUE : la rembourser offrirait des
+  // réponses gratuites tant que la panne dure.
+  it('une réponse coupée après des jetons n’est pas remboursée', async () => {
+    const refund = jest.fn();
+    const llm = {
+      async *streamText() {
+        yield 'Voici le début ';
+        throw new Error('flux coupé');
+      },
+    } as unknown as LlmService;
+    const quota = {
+      getQuota: () => ({ remaining: 5, limit: 5, allowed: true }),
+      consume: () => ({ allowed: true, remaining: 4, limit: 5 }),
+      refund,
+    } as unknown as CoachQuotaService;
+    const fakeClient = {
+      coachConversation: {
+        findUnique: async () => null,
+        create: async () => null,
+        update: async () => null,
+      },
+      coachMessage: { create: async () => null },
+      country: { findMany: async () => null },
+      scholarship: { findMany: async () => null },
+      userProfile: {
+        findUnique: async () => ({
+          aiConsentedAt: new Date(),
+          birthDate: new Date('2000-01-01T00:00:00.000Z'),
+          guardianConsentedAt: null,
+        }),
+      },
+    };
+    const prisma = {
+      tryExecute: async (fn: (c: typeof fakeClient) => unknown) => fn(fakeClient),
+    } as unknown as PrismaService;
+    const service = new CoachService(llm, quota, prisma);
+    const created = await service.createConversation('user-a', {});
+
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+
+    expect(events.map((e) => e.type)).toEqual(['token', 'error']);
+    expect(refund).not.toHaveBeenCalled();
+  });
+
+  it('une réponse réussie n’est pas remboursée', async () => {
+    const service = makeService(new Date());
+    const refund = jest.fn();
+    (service as unknown as { quotaService: { refund: jest.Mock } }).quotaService.refund =
+      refund;
+    const created = await service.createConversation('user-a', {});
+
+    await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+
+    expect(refund).not.toHaveBeenCalled();
+  });
+
   // ── Bodies malformés : ne doivent jamais faire tomber le process ──────────
 
   it('streams normally when targetCountryIds is a string instead of an array', async () => {

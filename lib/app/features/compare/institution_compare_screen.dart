@@ -11,6 +11,7 @@ import '../../core/utils/share_origin.dart';
 import '../cases/case_composer_sheet.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
+import '../../core/utils/search_text.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Couleurs : tokens sémantiques centraux (KpbColors — architecture §6/§10.2).
@@ -659,12 +660,12 @@ class _UniversityPickerSheetState extends State<_UniversityPickerSheet> {
   }
 
   List<InstitutionModel> get _results {
-    final q = _query.trim().toLowerCase();
+    final q = foldForSearch(_query);
     return widget.controller.institutions.where((inst) {
       if (inst.id == widget.excludeId) return false;
       if (q.isEmpty) return true;
-      final name = widget.controller.resolve(inst.name).toLowerCase();
-      final city = widget.controller.resolve(inst.location).toLowerCase();
+      final name = foldForSearch(widget.controller.resolve(inst.name));
+      final city = foldForSearch(widget.controller.resolve(inst.location));
       return name.contains(q) || city.contains(q);
     }).toList();
   }

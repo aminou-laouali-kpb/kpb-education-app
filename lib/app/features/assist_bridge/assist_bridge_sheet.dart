@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/ui/kpb_components.dart';
@@ -115,7 +116,7 @@ bool assistBridgeFeatureAvailable(AssistBridgePayload payload) {
 /// Le bouton WhatsApp est-il proposé ? Seulement si la charge le demande ET
 /// que la build a une ligne KPB configurée.
 bool assistBridgeWhatsAppAvailable(AssistBridgePayload payload) =>
-    payload.whatsapp && AppConfig.whatsappNumber.trim().isNotEmpty;
+    payload.whatsapp && SupportContact.whatsappNumber.trim().isNotEmpty;
 
 String _needKey(String prefix, AssistBridgePayload payload) =>
     payload.knownNeed ? '${prefix}_${payload.needId}' : '${prefix}_generic';

@@ -1,6 +1,10 @@
 import { Logger } from '@nestjs/common';
 
-import { LlmService, StructuredCompletionRequest } from './llm.service';
+import {
+  LlmService,
+  LlmUnavailableError,
+  StructuredCompletionRequest,
+} from './llm.service';
 
 type Diagnostic = {
   strength: string;
@@ -436,5 +440,55 @@ describe('LlmService.completeJson', () => {
       data: { fr: 'Lettre', en: 'Letter' },
       model: 'deepseek/deepseek-v4-flash',
     });
+  });
+});
+
+// Audit avant la 59 : quand le fournisseur ne répondait pas, le flux rendait sa
+// phrase de panne comme une réponse. Le coach la gardait dans l'historique et
+// décomptait un message. Il demande maintenant au service de LEVER.
+describe('LlmService.streamText — fournisseur en panne', () => {
+  const previousEnv = Object.fromEntries(
+    PROVIDER_ENV_VARS.map((name) => [name, process.env[name]]),
+  );
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    for (const name of PROVIDER_ENV_VARS) delete process.env[name];
+    process.env.GROQ_API_KEY = 'test-key';
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 400, text: async () => '' });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    for (const name of PROVIDER_ENV_VARS) {
+      const value = previousEnv[name];
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+
+  const collect = async (throwOnUnavailable?: boolean) => {
+    const chunks: string[] = [];
+    for await (const chunk of new LlmService().streamText({
+      system: 'sys',
+      messages: [{ role: 'user', content: 'Bonjour' }],
+      lang: 'fr',
+      throwOnUnavailable,
+    })) {
+      chunks.push(chunk);
+    }
+    return chunks;
+  };
+
+  it('par défaut, rend la phrase de repli (appelants historiques)', async () => {
+    const chunks = await collect();
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0].length).toBeGreaterThan(10);
+  });
+
+  it('avec throwOnUnavailable, lève LlmUnavailableError sans rien rendre', async () => {
+    await expect(collect(true)).rejects.toBeInstanceOf(LlmUnavailableError);
   });
 });

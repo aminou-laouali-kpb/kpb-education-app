@@ -11,6 +11,7 @@ import 'package:karatou/app/core/translations/app_translations.dart';
 import 'package:karatou/app/core/ui/components/kpb_error_state.dart';
 import 'package:karatou/app/features/services/service_packages_screen.dart';
 
+import '../support/screen_harness.dart';
 import '../widget_test_helpers.dart';
 
 void main() {
@@ -39,6 +40,32 @@ void main() {
     expect(find.text(fr['service_packages_empty']!), findsOneWidget);
     expect(find.text(fr['premium_advisor_cta']!), findsOneWidget);
     expect(find.byType(FilledButton), findsOneWidget);
+  });
+
+  // Règle posée pour la 59 : aucun prix dans l'app, il se demande au
+  // conseiller. L'écran affichait le montant de chaque offre servie.
+  testWidgets('une offre servie avec un prix ne l\'affiche pas',
+      (tester) async {
+    // La carte d'une offre lit la langue de l'élève dans le contrôleur.
+    await tester.runAsync(seedKpbController);
+    final api = MockApiClient();
+    when(() => api.listServicePackages()).thenAnswer((_) async => <dynamic>[
+          <String, dynamic>{
+            'id': 'dossier-pret',
+            'category': 'dossier',
+            'nameFr': 'Dossier prêt',
+            'summaryFr': 'Relecture du CV et de la lettre.',
+            'priceXOF': 25000,
+            'deliverablesFr': <String>['CV relu'],
+          },
+        ]);
+    await pumpScreen(tester, api);
+
+    final fr = AppTranslations().keys['fr']!;
+    expect(find.text('Dossier prêt'), findsOneWidget);
+    expect(find.text(fr['service_price_on_request']!), findsOneWidget);
+    expect(find.textContaining('FCFA'), findsNothing);
+    expect(find.textContaining('25'), findsNothing);
   });
 
   testWidgets('erreur : « Réessayer », qui relance vraiment', (tester) async {

@@ -55,7 +55,7 @@ class CatalogCacheService {
 
   static Future<CatalogCacheService> init() async {
     if (_instance != null) return _instance!;
-    final box = await Hive.openBox<String>(_boxName);
+    final box = await _openOrReset();
     final stored = box.get(_formatVersionKey);
     final version = stored == null ? null : int.tryParse(stored) ?? 0;
     if (version != _currentFormatVersion) {
@@ -65,6 +65,22 @@ class CatalogCacheService {
       await box.put(_formatVersionKey, '$_currentFormatVersion');
     }
     return _instance = CatalogCacheService._(box);
+  }
+
+  /// Ouvre la boîte ; si elle est illisible, l'efface et la rouvre vide.
+  ///
+  /// Ce cache n'est qu'un confort : tout ce qu'il contient se retélécharge.
+  /// Une boîte abîmée faisait pourtant échouer le démarrage ENTIER, à chaque
+  /// lancement, sans autre issue qu'effacer les données de l'app (audit avant
+  /// la 59). Si la boîte neuve ne s'ouvre pas non plus, l'erreur remonte :
+  /// c'est le disque, plus le cache.
+  static Future<Box<String>> _openOrReset() async {
+    try {
+      return await Hive.openBox<String>(_boxName);
+    } catch (_) {
+      await Hive.deleteBoxFromDisk(_boxName);
+      return Hive.openBox<String>(_boxName);
+    }
   }
 
   /// Hive box name; exposed so tests can seed a legacy-format cache.

@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:get/get.dart';
 
 import '../models/app_models.dart';
+import '../utils/search_text.dart';
 import '../utils/study_level.dart';
 
 /// Snapshot of catalog + profile state needed for search and match scoring.
@@ -51,7 +52,9 @@ class AppSearchService {
       _ctx.programs.firstWhereOrNull((item) => item.id == id);
 
   List<SearchResult> run(String query) {
-    final q = query.trim().toLowerCase();
+    // Requête et textes pliés de la même façon : « senegal » trouve
+    // « Sénégal », « cote d'ivoire » trouve « Côte d’Ivoire ».
+    final q = foldForSearch(query);
     if (q.isEmpty) return const [];
     final results = <SearchResult>[];
 
@@ -109,7 +112,7 @@ class AppSearchService {
   }
 
   bool _matchesLocalized(LocalizedText text, String q) =>
-      text.fr.toLowerCase().contains(q) || text.en.toLowerCase().contains(q);
+      foldForSearch(text.fr).contains(q) || foldForSearch(text.en).contains(q);
 
   bool _matchesField(FieldModel f, String q) {
     if (_matchesLocalized(f.name, q)) return true;

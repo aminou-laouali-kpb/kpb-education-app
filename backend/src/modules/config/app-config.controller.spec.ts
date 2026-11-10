@@ -45,6 +45,10 @@ describe('AppConfigController', () => {
       process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
     KPB_US_VISA_SUSPENSION_SOURCE_URL:
       process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL,
+    KPB_APP_WHATSAPP_NUMBER: process.env.KPB_APP_WHATSAPP_NUMBER,
+    KPB_APP_NOTICE_FR: process.env.KPB_APP_NOTICE_FR,
+    KPB_APP_NOTICE_EN: process.env.KPB_APP_NOTICE_EN,
+    KPB_APP_NOTICE_URL: process.env.KPB_APP_NOTICE_URL,
   };
 
   beforeEach(() => {
@@ -501,6 +505,78 @@ describe('AppConfigController', () => {
         ).toBeNull();
       },
     );
+  });
+
+  // ── Build 59 : les leviers des deux mois sans nouvelle build ──────────────
+  describe('support.whatsappNumber', () => {
+    it("est null par défaut : l'app garde son numéro compilé", () => {
+      expect(
+        new AppConfigController().getAppConfig().support.whatsappNumber,
+      ).toBeNull();
+    });
+
+    it('sert le numéro posé, sans espaces ni ponctuation', () => {
+      process.env.KPB_APP_WHATSAPP_NUMBER = ' +33 7 68 67 42 92 ';
+      expect(
+        new AppConfigController().getAppConfig().support.whatsappNumber,
+      ).toBe('+33768674292');
+    });
+
+    // Un numéro illisible enverrait tous les élèves vers une ligne morte.
+    it.each(['0768674292', '33768674292', '+33', 'whatsapp', '+0123456789', ''])(
+      '« %s » est ignoré',
+      (written) => {
+        process.env.KPB_APP_WHATSAPP_NUMBER = written;
+        expect(
+          new AppConfigController().getAppConfig().support.whatsappNumber,
+        ).toBeNull();
+      },
+    );
+  });
+
+  describe('notice', () => {
+    it("est null tant que l'exploitation ne pose pas de texte français", () => {
+      expect(new AppConfigController().getAppConfig().notice).toBeNull();
+      process.env.KPB_APP_NOTICE_EN = 'English only';
+      expect(new AppConfigController().getAppConfig().notice).toBeNull();
+    });
+
+    it('sert le texte, sa traduction et son lien', () => {
+      process.env.KPB_APP_NOTICE_FR =
+        '  Maroc : la campagne ferme le\n15 novembre.  ';
+      process.env.KPB_APP_NOTICE_EN = 'Morocco: the campaign closes on 15 Nov.';
+      process.env.KPB_APP_NOTICE_URL = 'https://www.campusfrance.org/fr';
+      expect(new AppConfigController().getAppConfig().notice).toEqual({
+        fr: 'Maroc : la campagne ferme le 15 novembre.',
+        en: 'Morocco: the campaign closes on 15 Nov.',
+        url: 'https://www.campusfrance.org/fr',
+      });
+    });
+
+    it('sans traduction ni lien, sert le français seul', () => {
+      process.env.KPB_APP_NOTICE_FR = 'Maintenance ce soir.';
+      expect(new AppConfigController().getAppConfig().notice).toEqual({
+        fr: 'Maintenance ce soir.',
+        en: null,
+        url: null,
+      });
+    });
+
+    it('écarte un lien qui n’est pas en https et borne la longueur', () => {
+      process.env.KPB_APP_NOTICE_FR = 'x'.repeat(500);
+      process.env.KPB_APP_NOTICE_URL = 'javascript:alert(1)';
+      const notice = new AppConfigController().getAppConfig().notice;
+      expect(notice?.fr).toHaveLength(240);
+      expect(notice?.url).toBeNull();
+    });
+
+    it('ne laisse pas un émoji coupé en deux en fin de texte', () => {
+      // 239 lettres puis un émoji (2 unités) : la coupe à 240 tombe au milieu.
+      process.env.KPB_APP_NOTICE_FR = `${'x'.repeat(239)}😀 suite`;
+      expect(new AppConfigController().getAppConfig().notice?.fr).toBe(
+        'x'.repeat(239),
+      );
+    });
   });
 
   // ── XC-05 — les sources officielles de ce que l'app affirme ──

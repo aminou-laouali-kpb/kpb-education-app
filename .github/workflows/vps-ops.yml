@@ -30,6 +30,11 @@ name: VPS ops (feature flag / catalogue)
 # deux fois la même clé prend la dernière, ce qui rend le fichier illisible pour
 # la personne qui le relit ensuite.
 #
+# `app-whatsapp-set` (build 59) écrit une seule clé, `KPB_APP_WHATSAPP_NUMBER` : la
+# ligne WhatsApp que `/config/app` sert aux apps 59 et suivantes, à la valeur de la
+# constante `APP_WHATSAPP_NUMBER` du script (vide = la clé est écrite sans valeur, les apps
+# gardent leur numéro compilé). Elle ne touche à aucun interrupteur.
+#
 # Les drapeaux distants de la build 57 suivent la même règle (branches `referral-*`,
 # `community-*`, `assist-bridge-*`, `verif-bot-*`, `scholarship-match-*`,
 # `onboarding-v2-*`, `case-messaging-*`) : elles n'écrivent que
@@ -88,6 +93,7 @@ on:
           - eef-private-schools-off
           - eef-campaign-set
           - recommended-version-set
+          - app-whatsapp-set
           - publish-catalog
           - recreate-clamav
           - import-partners
@@ -132,7 +138,7 @@ on:
           - case-messaging-on
           - case-messaging-off
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, backfill-birthdates, fix-france-copy, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on, case-messaging-on). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, app-whatsapp-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, backfill-birthdates, fix-france-copy, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on, case-messaging-on). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true

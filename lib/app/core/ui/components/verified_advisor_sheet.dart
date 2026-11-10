@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../config/app_config.dart';
+import '../../config/support_contact.dart';
 import '../../utils/whatsapp_utils.dart';
 import '../kpb_components.dart';
 
@@ -65,7 +65,7 @@ class KpbVerifiedAdvisorSheet extends StatelessWidget {
   String get _number {
     final n = (expectedNumber?.trim().isNotEmpty ?? false)
         ? expectedNumber!.trim()
-        : AppConfig.whatsappNumber;
+        : SupportContact.whatsappNumber;
     return n.trim();
   }
 

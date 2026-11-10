@@ -87,6 +87,37 @@ export class AiQuotaService {
     };
   }
 
+  /**
+   * Rend une unité consommée, quand ce pour quoi elle a été comptée n'a pas eu
+   * lieu (le modèle n'a pas répondu). Sans effet si le compteur est déjà à
+   * zéro. Passer le MÊME [now] qu'au décompte : sinon un remboursement qui
+   * tombe après minuit viserait le compteur de la période suivante.
+   */
+  async refund(input: {
+    userId: string;
+    feature: string;
+    period?: AiQuotaPeriod;
+    now?: Date;
+  }): Promise<void> {
+    const now = input.now ?? new Date();
+    const { periodKey } = periodBounds(now, input.period ?? 'day');
+    const key = { userId: input.userId, feature: input.feature, periodKey };
+
+    const refunded = await this.prisma.tryExecute((client) =>
+      client.aiQuotaBucket.updateMany({
+        where: { ...key, used: { gt: 0 } },
+        data: { used: { decrement: 1 }, version: { increment: 1 } },
+      }),
+    );
+    if (refunded && refunded.count > 0) return;
+
+    // Repli mémoire : pas de base, base en échec, ou décompte passé par la
+    // mémoire parce que la base était en panne à ce moment-là.
+    const memoryKey = `${input.userId}|${input.feature}|${periodKey}`;
+    const count = this.memory.get(memoryKey) ?? 0;
+    if (count > 0) this.memory.set(memoryKey, count - 1);
+  }
+
   /** Lecture sans consommation (affichage du quota restant). */
   async peek(input: {
     userId: string;

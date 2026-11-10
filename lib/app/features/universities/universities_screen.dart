@@ -672,10 +672,13 @@ class _DestinationCard extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 sub,
+                // 12 px au lieu de 9,5 (audit avant la 59). La couleur ne
+                // change pas : sur ce fond bleu nuit, ce gris clair est à
+                // 7:1 — un gris plus foncé y serait MOINS lisible.
                 style: const TextStyle(
-                  fontSize: 9.5,
+                  fontSize: KpbFontSize.xs,
                   fontWeight: FontWeight.w700,
-                  height: 1.4,
+                  height: 1.2,
                   color: KpbColors.textFaint,
                 ),
                 maxLines: 1,
