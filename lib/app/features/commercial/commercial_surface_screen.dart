@@ -16,7 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/models/app_models.dart';
 import '../../core/utils/whatsapp_utils.dart';
@@ -473,7 +473,7 @@ class _CommercialLeadDetailScreenState
 
   void _replyWhatsApp() {
     openWhatsAppOrToast(
-      phone: AppConfig.whatsappNumber,
+      phone: SupportContact.whatsappNumber,
       prefill:
           'commercial_wa_reply'.trParams({'name': widget.lead.studentName}),
       source: 'commercial_surface',

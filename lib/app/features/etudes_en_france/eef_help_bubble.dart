@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/whatsapp_utils.dart';
@@ -480,7 +480,7 @@ class _BubbleSheetState extends State<_BubbleSheet> {
   @override
   Widget build(BuildContext context) {
     final c = context.kpb;
-    final number = AppConfig.whatsappNumber.trim();
+    final number = SupportContact.whatsappNumber.trim();
 
     return ValueListenableBuilder<int>(
       valueListenable: RemoteFeatureFlags.instance.flagsVersion,

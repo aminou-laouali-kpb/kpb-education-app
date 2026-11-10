@@ -8,10 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:posthog_flutter/posthog_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/core/config/app_config.dart';
+import 'app/core/config/kpb_secure_storage.dart';
 import 'app/core/config/kpb_supabase_local_storage.dart';
 import 'app/core/controllers/app_controller.dart';
 import 'app/core/config/app_routes.dart';
@@ -27,6 +29,7 @@ import 'app/core/ui/app_theme.dart';
 import 'app/core/ui/components/kpb_offline_banner.dart';
 import 'app/core/ui/portrait_lock.dart';
 import 'app/core/navigation/app_boot_screen.dart';
+import 'app/core/navigation/entry_wall.dart';
 import 'app/core/services/auth_service.dart';
 import 'app/core/navigation/shell_tabs.dart';
 import 'app/core/services/remote_feature_flags.dart';
@@ -227,9 +230,17 @@ Future<void> main() async {
       unawaited(controller.syncPushIdentity());
     }
 
-    // Force-update gate: async so an unreachable backend never delays boot;
-    // replaces the stack with the update screen once the app has mounted.
-    unawaited(AppVersionGate.check(apiClient));
+    // Garde de mise à jour forcée : évaluée sur chaque réponse FRAÎCHE de
+    // `/config/app` (démarrage, nouveaux essais, retour au premier plan), sans
+    // second appel réseau. Elle remplace la pile par l'écran de mise à jour
+    // une fois l'app montée, et échoue ouverte.
+    RemoteFeatureFlags.instance.onFreshConfig =
+        (config) => unawaited(AppVersionGate.evaluate(config));
+
+    // La dernière réponse du serveur, gardée sur le téléphone : l'app démarre
+    // sur elle au lieu de tout refermer en attendant le réseau (audit avant la
+    // 59). Ne lève jamais et ne touche pas au réseau.
+    await RemoteFeatureFlags.instance.restoreFromCache();
 
     // Drapeaux de fonctionnalité pilotés serveur. Sans attente, comme la garde
     // de version : un backend injoignable ne doit pas retarder le démarrage, et
@@ -261,12 +272,21 @@ Future<void> main() async {
       await controller.syncRemoteData(silent: true);
     });
     // Retour au premier plan : relance la file des messages de dossier, que
-    // rien d'autre ne vidait sans transition de réseau (revue avant la 58).
-    AppLifecycleListener(onResume: controller.onAppResumed);
+    // rien d'autre ne vidait sans transition de réseau (revue avant la 58), et
+    // relit `/config/app` (au plus toutes les cinq minutes) : un interrupteur
+    // ouvert ou refermé, une mise à jour devenue obligatoire, un numéro de
+    // contact changé doivent atteindre l'app restée ouverte.
+    AppLifecycleListener(onResume: () {
+      controller.onAppResumed();
+      unawaited(RemoteFeatureFlags.instance.refreshIfStale(apiClient));
+    });
 
     // ── Quick Actions ────────────────────────────────────────────────────────
     const QuickActions quickActions = QuickActions();
     unawaited(quickActions.initialize((String shortcutType) {
+      // Un raccourci de l'icône ne contourne pas l'écran d'entrée : sans
+      // compte ni mode invité, on reste où le démarrage a mis l'élève.
+      if (!hasPassedEntryWall()) return;
       if (shortcutType == 'action_cases') {
         // Reset stack to shell + Dossiers tab (named `/cases` was never registered).
         Get.offAllNamed(AppRoutes.home);
@@ -278,15 +298,20 @@ Future<void> main() async {
       }
     }));
 
+    // Les traductions de GetX ne sont chargées qu'au montage de l'app : on
+    // choisit ici sur la langue gardée par le contrôleur. Les libellés
+    // suivent donc la langue de l'app au lancement suivant.
+    final shortcutsInEnglish = controller.localeCode == 'en';
     unawaited(quickActions.setShortcutItems(<ShortcutItem>[
-      const ShortcutItem(
+      ShortcutItem(
         type: 'action_cases',
-        localizedTitle: 'Mes Dossiers',
+        localizedTitle: shortcutsInEnglish ? 'My cases' : 'Mes dossiers',
         icon: 'icon_cases',
       ),
-      const ShortcutItem(
+      ShortcutItem(
         type: 'action_search',
-        localizedTitle: 'Nouvelle Recherche',
+        localizedTitle:
+            shortcutsInEnglish ? 'New search' : 'Nouvelle recherche',
         icon: 'icon_search',
       ),
     ]));
@@ -318,40 +343,180 @@ Future<void> main() async {
   }
 }
 
-class BootstrapErrorApp extends StatelessWidget {
+/// L'écran de dernier recours : l'app n'a pas pu démarrer.
+///
+/// ## Ce qui a changé à la 59 (audit avant l'archive)
+///
+/// Il n'avait qu'un texte brut et aucun bouton. Quand la cause était un
+/// stockage local abîmé, il revenait à CHAQUE lancement, et la seule issue
+/// était d'effacer les données de l'app depuis les réglages du téléphone — un
+/// geste que peu d'élèves connaissent. Il propose maintenant de le faire
+/// lui-même : effacer les données locales, puis rouvrir.
+///
+/// Les deux stockages qui pouvaient le provoquer se réparent désormais seuls
+/// (cache du catalogue, file des messages, session illisible) ; cet écran est
+/// la bretelle pour ce qui resterait.
+///
+/// Aucune traduction n'est chargée à ce stade (`GetMaterialApp` n'a jamais été
+/// monté) : les deux langues sont écrites ici, choisies sur celle du téléphone.
+class BootstrapErrorApp extends StatefulWidget {
   final dynamic error;
-  const BootstrapErrorApp({super.key, required this.error});
+
+  /// L'effacement des données locales, injectable pour les tests.
+  final Future<void> Function()? onReset;
+
+  const BootstrapErrorApp({super.key, required this.error, this.onReset});
+
+  @override
+  State<BootstrapErrorApp> createState() => _BootstrapErrorAppState();
+}
+
+enum _BootResetStep { idle, confirming, working, done }
+
+class _BootstrapErrorAppState extends State<BootstrapErrorApp> {
+  _BootResetStep _step = _BootResetStep.idle;
+
+  bool get _english =>
+      WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'en';
+
+  String _t(String fr, String en) => _english ? en : fr;
+
+  Future<void> _reset() async {
+    setState(() => _step = _BootResetStep.working);
+    try {
+      await (widget.onReset ?? resetLocalAppData)();
+    } catch (_) {
+      // Chaque effacement est déjà isolé ; rien ne doit empêcher d'afficher la
+      // suite, qui dit quoi faire.
+    }
+    if (!mounted) return;
+    setState(() => _step = _BootResetStep.done);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'Une erreur critique est survenue au démarrage.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Builder(builder: _content),
             ),
           ),
         ),
       ),
     );
   }
+
+  Widget _content(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final done = _step == _BootResetStep.done;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          done ? Icons.check_circle_outline : Icons.error_outline,
+          color: done ? Colors.green : Colors.red,
+          size: 64,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          done
+              ? _t('C\'est fait.', 'Done.')
+              : _t(
+                  'L\'application n\'a pas pu démarrer.',
+                  'The app could not start.',
+                ),
+          textAlign: TextAlign.center,
+          style: text.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          done
+              ? _t(
+                  'Ferme l\'application, puis rouvre-la. Tu devras te '
+                      'reconnecter : ton compte et tes dossiers sont gardés '
+                      'sur nos serveurs.',
+                  'Close the app, then open it again. You will need to sign '
+                      'in: your account and your cases are kept on our '
+                      'servers.',
+                )
+              : _t(
+                  'Ferme-la complètement, puis rouvre-la. Si ce message '
+                      'revient, efface les données gardées sur ce téléphone.',
+                  'Close it completely, then open it again. If this message '
+                      'comes back, clear the data kept on this phone.',
+                ),
+          textAlign: TextAlign.center,
+          style: text.bodyLarge,
+        ),
+        const SizedBox(height: 24),
+        if (_step == _BootResetStep.idle)
+          OutlinedButton(
+            onPressed: () => setState(() => _step = _BootResetStep.confirming),
+            child: Text(_t(
+              'Effacer les données de ce téléphone',
+              'Clear the data on this phone',
+            )),
+          ),
+        if (_step == _BootResetStep.confirming) ...[
+          Text(
+            _t(
+              'Tu seras déconnecté. Les messages et les saisies pas encore '
+                  'envoyés seront perdus. Ton compte n\'est pas supprimé.',
+              'You will be signed out. Messages and entries not sent yet will '
+                  'be lost. Your account is not deleted.',
+            ),
+            textAlign: TextAlign.center,
+            style: text.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed: _reset,
+            child: Text(_t('Oui, effacer', 'Yes, clear')),
+          ),
+          TextButton(
+            onPressed: () => setState(() => _step = _BootResetStep.idle),
+            child: Text(_t('Annuler', 'Cancel')),
+          ),
+        ],
+        if (_step == _BootResetStep.working) const CircularProgressIndicator(),
+        if (!done) ...[
+          const SizedBox(height: 24),
+          // Le détail technique, pour la personne de l'équipe à qui l'élève
+          // enverra une capture. Aucune traduction ni journal distant n'est
+          // garanti à ce stade : c'est la seule information qui existe.
+          Text(
+            error.toString(),
+            textAlign: TextAlign.center,
+            maxLines: 6,
+            overflow: TextOverflow.ellipsis,
+            style: text.bodySmall?.copyWith(color: Colors.grey),
+          ),
+        ],
+      ],
+    );
+  }
+
+  dynamic get error => widget.error;
+}
+
+/// Efface tout ce que l'app garde sur le téléphone : boîtes Hive, préférences,
+/// magasin sécurisé (session). Chaque étape est isolée — l'une peut être la
+/// cause de la panne, elle ne doit pas empêcher les autres.
+Future<void> resetLocalAppData() async {
+  try {
+    await Hive.initFlutter();
+    await Hive.deleteFromDisk();
+  } catch (_) {}
+  try {
+    await (await SharedPreferences.getInstance()).clear();
+  } catch (_) {}
+  try {
+    await kpbFlutterSecureStorage.deleteAll();
+  } catch (_) {}
 }
 
 class KpbEducationApp extends StatelessWidget {

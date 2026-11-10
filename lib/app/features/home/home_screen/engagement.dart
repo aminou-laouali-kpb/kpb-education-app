@@ -251,7 +251,7 @@ class _CounselorWhatsAppCard extends StatelessWidget {
 
   void _open() {
     openWhatsAppOrToast(
-      phone: AppConfig.whatsappNumber,
+      phone: SupportContact.whatsappNumber,
       prefill: kpbWhatsAppPrefill(),
       source: 'home',
       contextType: 'home_counselor_card',

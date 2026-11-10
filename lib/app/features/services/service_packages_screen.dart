@@ -7,13 +7,13 @@ import '../../core/ui/components/anti_fraud_notice.dart';
 import '../../core/ui/components/kpb_empty_state.dart';
 import '../../core/ui/components/kpb_error_state.dart';
 import '../../core/ui/components/verified_advisor_sheet.dart';
-import '../../core/utils/currency_utils.dart';
 import '../../core/utils/whatsapp_utils.dart';
 
 /// "Dossier prêt" + scholarship / visa prep kits catalog (Phase 3).
 ///
-/// Fixed-price bundles (10k–25k FCFA) where KPB reviews CV, motivation and
-/// recommendation letters in FR + EN before submission.
+/// Bundles where KPB reviews CV, motivation and recommendation letters in
+/// FR + EN before submission. No price is shown in the app: it is asked from
+/// the advisor (rule set for build 59).
 ///
 /// The screen splits the catalog by category. There is no in-app checkout —
 /// our (largely African) audience arranges payment directly with an advisor,
@@ -186,7 +186,6 @@ class _PackageCard extends StatelessWidget {
     final summary = ((en ? pkg['summaryEn'] : pkg['summaryFr']) as String?) ??
         (pkg['summaryFr'] as String?) ??
         '';
-    final price = (pkg['priceXOF'] as num?)?.toInt() ?? 0;
     final turnaround =
         ((en ? pkg['turnaroundEn'] : pkg['turnaroundFr']) as String?) ??
             (pkg['turnaroundFr'] as String?) ??
@@ -219,12 +218,11 @@ class _PackageCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(summary, style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 12),
+            // Aucun prix dans l'app : il se demande au conseiller. L'écran
+            // affichait le montant de chaque offre, contre la règle posée pour
+            // la 59 (aucun prix côté parents, Pass Karatou sans tarif).
             Text(
-              CurrencyUtils.formatXof(
-                price,
-                Get.find<AppController>().profile?.preferredCurrency,
-                approximate: true,
-              ),
+              'service_price_on_request'.tr,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),

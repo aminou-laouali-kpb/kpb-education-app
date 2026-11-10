@@ -45,6 +45,9 @@ export class CoachController {
     return this.coachService.getMessages(id, req.studentUser.id);
   }
 
+  // Pas de plafond propre : la route est authentifiée et déjà bornée à cinq
+  // messages par semaine et par élève. Un plafond par IP y referait punir les
+  // élèves d'un même opérateur mobile les uns par les autres.
   @Sse('conversations/:id/messages/stream')
   streamMessage(
     @Param('id') id: string,

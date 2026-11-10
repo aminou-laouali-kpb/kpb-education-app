@@ -59,6 +59,17 @@ void main() {
       expect(results.single.title, 'Médecine');
     });
 
+    // Audit avant la 59 : un clavier sans accents ne trouvait rien. « medecine »
+    // n'est contenu ni dans « Médecine » ni dans « Medicine » tels quels : seul
+    // le pliage des accents le fait trouver.
+    test('une requête sans accents trouve un texte accentué', () {
+      expect(service.run('medecine').single.id, 'f1');
+    });
+
+    test('une requête en majuscules accentuées trouve aussi', () {
+      expect(service.run('MÉDECINE').single.id, 'f1');
+    });
+
     test('fieldMatch uses baseline score when profile is null', () {
       expect(service.fieldMatch(ctx.fields.single), 40);
     });

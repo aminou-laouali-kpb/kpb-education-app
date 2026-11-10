@@ -219,6 +219,53 @@ function recommendedVersion(value: string | undefined): string | null {
 }
 
 /**
+ * La ligne WhatsApp officielle, au format international (`+` puis 8 à 15
+ * chiffres), ou `null`.
+ *
+ * Jusqu'à la 58, ce numéro n'existait que dans le binaire. Tout le passage au
+ * conseiller (dossier, services, parents, bulle Études en France) dépend de
+ * cette seule ligne : restreinte par WhatsApp ou changée par l'équipe, elle
+ * restait cassée jusqu'à la build suivante (audit avant la 59). L'app garde
+ * son numéro compilé comme repli ; `null` veut dire « garde le tien ».
+ */
+function whatsappNumber(value: string | undefined): string | null {
+  const raw = value?.replace(/[\s().-]/g, '') ?? '';
+  return /^\+[1-9]\d{7,14}$/.test(raw) ? raw : null;
+}
+
+const APP_NOTICE_MAX_LENGTH = 240;
+
+function noticeText(value: string | undefined): string | null {
+  const raw = value?.replace(/\s+/g, ' ').trim();
+  if (!raw) return null;
+  if (raw.length <= APP_NOTICE_MAX_LENGTH) return raw;
+  let cut = raw.slice(0, APP_NOTICE_MAX_LENGTH);
+  // Pas d'émoji coupé en deux en fin de texte.
+  const last = cut.charCodeAt(cut.length - 1);
+  if (last >= 0xd800 && last <= 0xdbff) cut = cut.slice(0, -1);
+  return cut;
+}
+
+/**
+ * Un message court affiché en haut de l'accueil, qu'on ferme. `null` tant que
+ * le texte français n'est pas posé : le français est la langue de base de
+ * l'app, et un avis sans lui s'afficherait vide à la majorité des élèves.
+ *
+ * C'est le seul moyen de parler à tous les téléphones installés sans build ni
+ * notification : une date limite qui approche, un incident, un changement de
+ * contact. Le lien est validé comme toute URL servie à un bouton « ouvrir ».
+ */
+function appNotice(env: {
+  fr: string | undefined;
+  en: string | undefined;
+  url: string | undefined;
+}): { fr: string; en: string | null; url: string | null } | null {
+  const fr = noticeText(env.fr);
+  if (!fr) return null;
+  return { fr, en: noticeText(env.en), url: httpsUrl(env.url) };
+}
+
+/**
  * The listings actually published. These serve whenever the env vars are unset,
  * which makes them a fallback and not merely a default: the force-update screen
  * cannot be dismissed and its only button is disabled without a usable URL, so a
@@ -459,6 +506,17 @@ export class AppConfigController {
         countries: process.env.KPB_US_VISA_SUSPENDED_COUNTRIES,
         verifiedAt: process.env.KPB_US_VISA_SUSPENSION_VERIFIED_AT,
         sourceUrl: process.env.KPB_US_VISA_SUSPENSION_SOURCE_URL,
+      }),
+      // Le contact servi à l'app (build 59) : voir [whatsappNumber].
+      support: {
+        whatsappNumber: whatsappNumber(process.env.KPB_APP_WHATSAPP_NUMBER),
+      },
+      // L'avis affiché en haut de l'accueil (build 59), ou null : voir
+      // [appNotice].
+      notice: appNotice({
+        fr: process.env.KPB_APP_NOTICE_FR,
+        en: process.env.KPB_APP_NOTICE_EN,
+        url: process.env.KPB_APP_NOTICE_URL,
       }),
       // La mention de paternité du catalogue (Licence Ouverte 2.0). Une
       // constante vérifiée contre le manifeste par son spec — voir

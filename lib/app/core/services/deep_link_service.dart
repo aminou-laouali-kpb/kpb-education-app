@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../config/app_routes.dart';
 import '../navigation/app_navigation.dart';
+import '../navigation/entry_wall.dart';
 
 /// Bridges inbound `kpb://` deep links to in-app navigation.
 ///
@@ -74,6 +75,12 @@ class DeepLinkService {
     // A bare `kpb://` (or `kpb:///`) resolves to home. The shell is already on
     // screen, so pushing the home route would only stack a second shell — skip.
     if (route == AppRoutes.home) return;
+    // Un élève qui n'a ni compte ni mode invité reste sur l'écran d'entrée :
+    // pousser une fiche par-dessus l'emmènerait sur un écran vide ou un 401.
+    if (!hasPassedEntryWall()) {
+      dev.log('Deep link ignored (entry wall not passed): $uri');
+      return;
+    }
     AppNavigation.toExternalRoute(route);
   }
 

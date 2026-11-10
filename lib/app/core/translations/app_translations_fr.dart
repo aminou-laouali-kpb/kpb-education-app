@@ -959,6 +959,7 @@ const Map<String, String> appTranslationsFr = {
   'community_see_all_articles': 'Voir tous les articles',
   'community_forum_section': 'Forum',
   'community_join_whatsapp_group': 'Rejoindre le groupe WhatsApp',
+  'service_price_on_request': 'Tarif sur demande, auprès de ton conseiller KPB',
   'whatsapp_open_failed':
       'Impossible d\'ouvrir WhatsApp. Vérifie que l\'app est installée.',
   // ── Lien externe qui ne s'ouvre pas (PARC-15) ──

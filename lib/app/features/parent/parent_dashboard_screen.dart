@@ -2,13 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/controllers/app_controller.dart';
 import '../../core/repositories/app_api_client.dart';
 import '../../core/ui/app_tokens.dart';
 import 'parent_case_view_screen.dart';
 import '../../core/ui/components/kpb_toast.dart';
+import '../../core/utils/external_link.dart';
 
 /// Entry point for parent accounts (Track C1 — Phase 1).
 ///
@@ -155,17 +155,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     label: Text('whatsapp'.tr),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: KpbColors.whatsapp,
-                      foregroundColor: Colors.white,
+                      // Bleu nuit sur vert WhatsApp : 9:1 (le blanc était à
+                      // 1,98:1), comme les autres boutons WhatsApp de l'app.
+                      foregroundColor: KpbColors.brandNavy,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       final text = Uri.encodeComponent(
                         'parent_invite_whatsapp_message'
                             .trParams({'code': code}),
                       );
-                      launchUrl(
+                      // Un bouton qui n'ouvre rien doit le dire : sans
+                      // WhatsApp sur le téléphone, il restait muet.
+                      final opened = await kpbOpenExternalUrl(
                         Uri.parse('https://wa.me/?text=$text'),
-                        mode: LaunchMode.externalApplication,
                       );
+                      if (!opened) {
+                        KpbToast.error('whatsapp_open_failed'.tr);
+                      }
                     },
                   ),
                 ),

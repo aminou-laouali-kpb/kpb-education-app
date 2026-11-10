@@ -95,123 +95,140 @@ class _AppShellState extends State<AppShell> {
           const ProfileScreen(),
         ];
 
-        return Scaffold(
-          // Attach this shell's own drawer key so any descendant (including tab
-          // screens with their own inner Scaffolds) can call
-          // `KpbToolsDrawer.open(context)`.
-          key: _shellKey,
-          drawer: const KpbToolsDrawer(),
-          // Le glissé depuis le bord gauche suit le bouton : ouvrable sur
-          // l'accueil, inerte ailleurs. Sans cela, retirer le bouton des
-          // autres onglets n'aurait fait que RENDRE le tiroir invisible, pas
-          // inatteignable — et un tiroir qu'on ne peut ouvrir que par accident
-          // est pire que pas de tiroir du tout.
-          //
-          // Le `drawer:` lui-même reste posé sur tous les onglets, à dessein :
-          // c'est lui qui donne à `_shellKey.currentState` un tiroir à ouvrir,
-          // donc le lien profond qui vise la boîte à outils continue de
-          // fonctionner quel que soit l'onglet courant.
-          drawerEnableOpenDragGesture: index == StudentShellTab.home,
-          // The banners live ABOVE the overlay Stack so they push everything
-          // (tab content AND the floating hamburger) down instead of colliding
-          // with the top-left drawer button. Both banners collapse to zero
-          // height when inactive, so this has no effect in the normal case.
-          //
-          // Le bandeau HORS LIGNE n'est plus ici : il est monté une seule fois
-          // pour toute l'app, au-dessus du Navigator (`KpbOfflineBannerHost`
-          // dans le `builder:` de lib/main.dart). Quand il est visible, il a
-          // déjà retiré le haut du padding pour tout ce qui est en dessous.
-          body: StreamBuilder<bool>(
-            stream: ConnectivityService.instance.onConnectivityChanged,
-            initialData: ConnectivityService.instance.isOnline,
-            builder: (context, snapshot) {
-              final online = snapshot.data ?? true;
-              // When a banner is visible it already absorbs the status-bar
-              // inset (each banner wraps its content in SafeArea), so the
-              // subtree below must not re-apply the top padding — otherwise
-              // the hamburger would float a full status-bar height too low.
-              // Real-but-dated rows: only worth a banner when the device is
-              // online, otherwise KpbOfflineBanner already says it (with the
-              // same freshness label) and we would stack two near-identical
-              // strips.
-              // Aucun bandeau avant la fin de la 1re synchro : ni échantillon
-              // ni catalogue daté ne sont encore une conclusion.
-              final settled = controller.catalogFirstSyncSettled;
-              final sampleCatalog = settled && controller.catalogIsSampleData;
-              final staleCatalog = settled &&
-                  online &&
-                  controller.catalogDataState == CatalogDataState.offline;
-              final bannerVisible = sampleCatalog || staleCatalog;
+        // Retour du téléphone (Android) : depuis Bourses, Formations,
+        // Dossiers ou Profil, il ramène à l'Accueil au lieu de fermer l'app
+        // (audit avant la 59). Depuis l'Accueil, il garde son comportement
+        // normal : fermer le tiroir s'il est ouvert, sinon quitter.
+        return PopScope(
+          canPop: index == StudentShellTab.home,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            final shell = _shellKey.currentState;
+            if (shell != null && shell.isDrawerOpen) {
+              shell.closeDrawer();
+              return;
+            }
+            controller.goToTab(StudentShellTab.home);
+          },
+          child: Scaffold(
+            // Attach this shell's own drawer key so any descendant (including tab
+            // screens with their own inner Scaffolds) can call
+            // `KpbToolsDrawer.open(context)`.
+            key: _shellKey,
+            drawer: const KpbToolsDrawer(),
+            // Le glissé depuis le bord gauche suit le bouton : ouvrable sur
+            // l'accueil, inerte ailleurs. Sans cela, retirer le bouton des
+            // autres onglets n'aurait fait que RENDRE le tiroir invisible, pas
+            // inatteignable — et un tiroir qu'on ne peut ouvrir que par accident
+            // est pire que pas de tiroir du tout.
+            //
+            // Le `drawer:` lui-même reste posé sur tous les onglets, à dessein :
+            // c'est lui qui donne à `_shellKey.currentState` un tiroir à ouvrir,
+            // donc le lien profond qui vise la boîte à outils continue de
+            // fonctionner quel que soit l'onglet courant.
+            drawerEnableOpenDragGesture: index == StudentShellTab.home,
+            // The banners live ABOVE the overlay Stack so they push everything
+            // (tab content AND the floating hamburger) down instead of colliding
+            // with the top-left drawer button. Both banners collapse to zero
+            // height when inactive, so this has no effect in the normal case.
+            //
+            // Le bandeau HORS LIGNE n'est plus ici : il est monté une seule fois
+            // pour toute l'app, au-dessus du Navigator (`KpbOfflineBannerHost`
+            // dans le `builder:` de lib/main.dart). Quand il est visible, il a
+            // déjà retiré le haut du padding pour tout ce qui est en dessous.
+            body: StreamBuilder<bool>(
+              stream: ConnectivityService.instance.onConnectivityChanged,
+              initialData: ConnectivityService.instance.isOnline,
+              builder: (context, snapshot) {
+                final online = snapshot.data ?? true;
+                // When a banner is visible it already absorbs the status-bar
+                // inset (each banner wraps its content in SafeArea), so the
+                // subtree below must not re-apply the top padding — otherwise
+                // the hamburger would float a full status-bar height too low.
+                // Real-but-dated rows: only worth a banner when the device is
+                // online, otherwise KpbOfflineBanner already says it (with the
+                // same freshness label) and we would stack two near-identical
+                // strips.
+                // Aucun bandeau avant la fin de la 1re synchro : ni échantillon
+                // ni catalogue daté ne sont encore une conclusion.
+                final settled = controller.catalogFirstSyncSettled;
+                final sampleCatalog = settled && controller.catalogIsSampleData;
+                final staleCatalog = settled &&
+                    online &&
+                    controller.catalogDataState == CatalogDataState.offline;
+                final bannerVisible = sampleCatalog || staleCatalog;
 
-              return Column(
-                children: [
-                  // Honest signal when we're still on the bundled sample
-                  // catalog (backend unreachable/empty, no cache) rather than
-                  // real data.
-                  if (sampleCatalog) const KpbSampleDataBanner(),
-                  if (staleCatalog)
-                    KpbStaleCatalogBanner(
-                      snapshotAt: controller.catalogSnapshotAt,
-                    ),
-                  Expanded(
-                    child: MediaQuery.removePadding(
-                      context: context,
-                      removeTop: bannerVisible,
-                      child: Stack(
-                        children: [
-                          IndexedStack(index: index, children: pages),
-                          // Top-left hamburger overlay — ACCUEIL SEULEMENT.
-                          // La boîte à outils (estimateur de coûts, etc.) est
-                          // une extension de l'accueil, pas une commande
-                          // globale : sur les autres onglets elle recouvrait un
-                          // contenu déjà dense et proposait une sortie
-                          // latérale au milieu d'une tâche. Le `CoachFab`
-                          // juste en dessous applique déjà la règle inverse
-                          // avec le même test.
-                          //
-                          // Masquer le bouton ne suffit PAS : sans
-                          // `drawerEnableOpenDragGesture` (posé sur le
-                          // Scaffold, plus haut), le tiroir resterait ouvrable
-                          // au glissé depuis le bord gauche sur tous les
-                          // onglets — donc masqué mais toujours atteignable.
-                          //
-                          // Sits clear of the dynamic-island / notch via
-                          // SafeArea (a no-op below a visible banner).
-                          if (index == StudentShellTab.home)
-                            Positioned(
-                              key: const ValueKey('kpb_shell_tools_button'),
-                              top: 0,
-                              left: 0,
-                              child: SafeArea(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: KpbSpacing.xs, top: KpbSpacing.xs),
-                                  child: _KpbDrawerButton(),
+                return Column(
+                  children: [
+                    // Honest signal when we're still on the bundled sample
+                    // catalog (backend unreachable/empty, no cache) rather than
+                    // real data.
+                    if (sampleCatalog) const KpbSampleDataBanner(),
+                    if (staleCatalog)
+                      KpbStaleCatalogBanner(
+                        snapshotAt: controller.catalogSnapshotAt,
+                      ),
+                    Expanded(
+                      child: MediaQuery.removePadding(
+                        context: context,
+                        removeTop: bannerVisible,
+                        child: Stack(
+                          children: [
+                            IndexedStack(index: index, children: pages),
+                            // Top-left hamburger overlay — ACCUEIL SEULEMENT.
+                            // La boîte à outils (estimateur de coûts, etc.) est
+                            // une extension de l'accueil, pas une commande
+                            // globale : sur les autres onglets elle recouvrait un
+                            // contenu déjà dense et proposait une sortie
+                            // latérale au milieu d'une tâche. Le `CoachFab`
+                            // juste en dessous applique déjà la règle inverse
+                            // avec le même test.
+                            //
+                            // Masquer le bouton ne suffit PAS : sans
+                            // `drawerEnableOpenDragGesture` (posé sur le
+                            // Scaffold, plus haut), le tiroir resterait ouvrable
+                            // au glissé depuis le bord gauche sur tous les
+                            // onglets — donc masqué mais toujours atteignable.
+                            //
+                            // Sits clear of the dynamic-island / notch via
+                            // SafeArea (a no-op below a visible banner).
+                            if (index == StudentShellTab.home)
+                              Positioned(
+                                key: const ValueKey('kpb_shell_tools_button'),
+                                top: 0,
+                                left: 0,
+                                child: SafeArea(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: KpbSpacing.xs,
+                                        top: KpbSpacing.xs),
+                                    child: _KpbDrawerButton(),
+                                  ),
                                 ),
                               ),
+                            // "KPB Intelligence" pill. It floats over the tab
+                            // content, so every scrollable in a tab must keep
+                            // `KpbShellChrome.bottomReserve(context)` free at its
+                            // bottom edge (KpbShellBottomSpacer) — otherwise the
+                            // pill and the nav bar hide the last row.
+                            if (index != StudentShellTab.home) const CoachFab(),
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              child: _KpbFloatingNavBar(
+                                currentIndex: index,
+                                onTap: controller.goToTab,
+                              ),
                             ),
-                          // "KPB Intelligence" pill. It floats over the tab
-                          // content, so every scrollable in a tab must keep
-                          // `KpbShellChrome.bottomReserve(context)` free at its
-                          // bottom edge (KpbShellBottomSpacer) — otherwise the
-                          // pill and the nav bar hide the last row.
-                          if (index != StudentShellTab.home) const CoachFab(),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: _KpbFloatingNavBar(
-                              currentIndex: index,
-                              onTap: controller.goToTab,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                );
+              },
+            ),
           ),
         );
       },

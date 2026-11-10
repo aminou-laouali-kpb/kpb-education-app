@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:karatou/app/core/config/app_routes.dart';
+import 'package:karatou/app/core/repositories/app_snapshot.dart';
 import 'package:karatou/app/core/services/deep_link_service.dart';
+
+import '../../support/screen_harness.dart';
+import '../../widget_test_helpers.dart';
 
 /// Minimal screen that stamps a findable key so tests can assert which route is
 /// on top without pulling in the real (controller-heavy) screens.
@@ -220,6 +224,70 @@ void main() {
       // Exactly one home route — a stacked duplicate would surface a second
       // probe_home in the (retained) route below.
       expect(find.byKey(const ValueKey('probe_home')), findsOneWidget);
+    });
+  });
+
+  // Audit avant la 59 : un lien `kpb://` (comme un raccourci de l'icône)
+  // poussait son écran même pour quelqu'un qui n'avait ni compte ni mode
+  // invité — un écran vide ou en erreur, sans chemin vers la connexion. Le
+  // routeur des notifications avait déjà cette garde.
+  group('DeepLinkService.handleUri — le mur d\'entrée', () {
+    setUp(() {
+      Get.testMode = true;
+    });
+
+    tearDown(() {
+      resetGetxSingleton();
+      Get.testMode = false;
+    });
+
+    Future<void> seed(WidgetTester tester, AppSnapshot snapshot) async {
+      await tester.runAsync(() => seedKpbController(snapshot: snapshot));
+      await _pumpRoutingHarness(tester);
+    }
+
+    testWidgets('sans compte ni mode invité, le lien est ignoré',
+        (tester) async {
+      await seed(tester,
+          const AppSnapshot(localeCode: 'fr', hasCompletedOnboarding: false));
+
+      DeepLinkService.instance.handleUri(Uri.parse('kpb://orientation'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('probe_home')), findsOneWidget);
+      expect(find.byKey(const ValueKey('probe_orientation')), findsNothing);
+    });
+
+    testWidgets('en mode invité, le lien ouvre son écran', (tester) async {
+      await seed(
+        tester,
+        const AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: false,
+          isGuestMode: true,
+        ),
+      );
+
+      DeepLinkService.instance.handleUri(Uri.parse('kpb://orientation'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('probe_orientation')), findsOneWidget);
+    });
+
+    testWidgets('avec un compte, le lien ouvre son écran', (tester) async {
+      await seed(
+        tester,
+        AppSnapshot(
+          localeCode: 'fr',
+          hasCompletedOnboarding: true,
+          profile: createTestProfile(),
+        ),
+      );
+
+      DeepLinkService.instance.handleUri(Uri.parse('kpb://orientation'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('probe_orientation')), findsOneWidget);
     });
   });
 }

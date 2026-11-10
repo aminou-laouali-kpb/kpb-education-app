@@ -196,7 +196,14 @@ mixin _CasesMixin on _AppControllerBase {
     }
   }
 
-  void addCaseMessage(String caseId, String text) {
+  void addCaseMessage(String caseId, String rawText) {
+    // Coupé à la limite du serveur, comptée comme lui en unités UTF-16 : le
+    // champ de saisie compte des caractères visibles, et un message chargé
+    // d'émojis pouvait la dépasser — refusé pour de bon, « Réessayer » compris.
+    final text = CaseApiCodec.clampText(
+      rawText,
+      CaseApiCodec.messageMaxLength,
+    );
     final resolvedId = resolveCaseId(caseId);
     final index = _cases.indexWhere((item) => item.id == resolvedId);
     if (index < 0 || text.trim().isEmpty) return;
@@ -461,10 +468,31 @@ mixin _CasesMixin on _AppControllerBase {
     update();
   }
 
+  String? _lastTypingCaseId;
+  bool _lastTypingState = false;
+  DateTime? _lastTypingSentAt;
+
+  /// Écart minimal entre deux signaux « en train d'écrire » identiques.
+  static const Duration typingSignalInterval = Duration(seconds: 2);
+
+  /// Signale la frappe au conseiller — au changement d'état, puis au plus une
+  /// fois toutes les deux secondes. Avant, chaque touche envoyait un
+  /// événement : du trafic inutile sur une donnée mobile payante, et de quoi
+  /// atteindre la limite du serveur (30 par 10 s) en écrivant vite.
   void sendCaseTyping(String caseId, bool isTyping) {
-    if (_caseSocket.isConnected) {
-      _caseSocket.sendTyping(caseId, isTyping);
+    if (!_caseSocket.isConnected) return;
+    final now = DateTime.now();
+    final last = _lastTypingSentAt;
+    if (caseId == _lastTypingCaseId &&
+        isTyping == _lastTypingState &&
+        last != null &&
+        now.difference(last) < typingSignalInterval) {
+      return;
     }
+    _lastTypingCaseId = caseId;
+    _lastTypingState = isTyping;
+    _lastTypingSentAt = now;
+    _caseSocket.sendTyping(caseId, isTyping);
   }
 
   void ingestRemoteCaseMessage(String caseId, Map<String, dynamic> data) {
@@ -607,9 +635,20 @@ mixin _CasesMixin on _AppControllerBase {
     try {
       final response = await _apiClient.createCase(<String, dynamic>{
         'type': CaseApiCodec.encodeCaseType(localCase.type),
-        'title': resolve(localCase.title),
-        'description': resolve(localCase.description),
-        'contextLabel': resolve(localCase.contextLabel),
+        // Coupés aux limites du serveur : un intitulé de formation trop long
+        // ou un récit dicté ne doit plus valoir un refus définitif.
+        'title': CaseApiCodec.clampText(
+          resolve(localCase.title),
+          CaseApiCodec.titleMaxLength,
+        ),
+        'description': CaseApiCodec.clampText(
+          resolve(localCase.description),
+          CaseApiCodec.descriptionMaxLength,
+        ),
+        'contextLabel': CaseApiCodec.clampText(
+          resolve(localCase.contextLabel),
+          CaseApiCodec.contextLabelMaxLength,
+        ),
         'preferredContactMethod': CaseApiCodec.encodeContactMethod(
           localCase.preferredContactMethod,
         ),

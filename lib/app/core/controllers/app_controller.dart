@@ -33,6 +33,7 @@ import '../repositories/app_repository.dart';
 import '../repositories/app_snapshot.dart';
 import '../utils/country_utils.dart';
 import '../utils/user_facing_sync_error.dart';
+import '../utils/search_text.dart';
 import '../data/case_api_codec.dart';
 import '../data/profile_api_codec.dart';
 import '../i18n/app_locale.dart';
@@ -343,6 +344,10 @@ abstract class _AppControllerBase extends GetxController {
   // ── Parcours & Témoignages (Chantier C) ───────────────────────────────────
   final List<ParcoursStory> _parcoursStories = <ParcoursStory>[];
   bool isLoadingParcours = false;
+
+  /// Le serveur a-t-il déjà été interrogé pour les parcours pendant cette
+  /// session (succès ou échec) ? Voir `fetchParcoursStories`.
+  bool _parcoursRefreshAttempted = false;
   String? parcoursError;
   // Discovery state (theme + search) — see _ParcoursMixin.
   String? parcoursFieldFilter; // null = "All"

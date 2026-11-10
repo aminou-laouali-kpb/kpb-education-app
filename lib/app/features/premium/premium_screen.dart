@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/services/coach_service.dart';
 import '../../core/ui/components/kpb_guest_gate.dart';
@@ -175,7 +175,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   void _contactAdvisor() {
     openWhatsAppOrToast(
-      phone: AppConfig.whatsappNumber,
+      phone: SupportContact.whatsappNumber,
       prefill: 'premium_wa_prefill'.tr,
       source: 'student_premium',
       contextType: 'premium',

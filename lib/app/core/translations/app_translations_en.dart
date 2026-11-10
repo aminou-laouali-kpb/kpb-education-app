@@ -882,6 +882,7 @@ const Map<String, String> appTranslationsEn = {
   'community_see_all_articles': 'See all articles',
   'community_forum_section': 'Forum',
   'community_join_whatsapp_group': 'Join the WhatsApp group',
+  'service_price_on_request': 'Price on request, from your KPB advisor',
   'whatsapp_open_failed':
       'Could not open WhatsApp. Make sure the app is installed.',
   // ── External link that will not open (PARC-15) ──

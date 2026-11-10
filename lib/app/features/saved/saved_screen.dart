@@ -680,7 +680,12 @@ class _SavedTile extends StatelessWidget {
                       ),
                       if (badge != null) ...[
                         const SizedBox(width: 6),
-                        KpbBadge(label: badge!, color: KpbColors.gold),
+                        // Bleu nuit sur or : 8,3:1 (le blanc était à 2,15:1).
+                        KpbBadge(
+                          label: badge!,
+                          color: KpbColors.gold,
+                          textColor: KpbColors.brandNavy,
+                        ),
                       ],
                     ],
                   ),

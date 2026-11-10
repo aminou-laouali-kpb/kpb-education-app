@@ -9,6 +9,7 @@ import '../../core/config/app_config.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/data/case_api_codec.dart';
 import '../../core/models/app_models.dart';
 import '../../core/observability/crashlytics_observability.dart';
 import '../../core/services/connectivity_service.dart';
@@ -720,6 +721,17 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 controller: _messageController,
                 maxLines: 3,
                 minLines: 1,
+                // La limite du serveur : au-delà, le message était refusé pour
+                // de bon et « Réessayer » échouait à chaque fois. Sans
+                // compteur : une conversation n'est pas un formulaire.
+                maxLength: CaseApiCodec.messageMaxLength,
+                buildCounter: (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  required maxLength,
+                }) =>
+                    null,
                 decoration: InputDecoration(
                   hintText: 'message_input_hint'.tr,
                   hintStyle: const TextStyle(color: KpbColors.textFaint),

@@ -1,3 +1,4 @@
+import type { ExecutionContext } from '@nestjs/common';
 import type { ThrottlerOptions } from '@nestjs/throttler';
 
 /**
@@ -23,7 +24,49 @@ import type { ThrottlerOptions } from '@nestjs/throttler';
  */
 export const GLOBAL_THROTTLER = 'global';
 
-/** 60 req/min/IP/route en production, 600 ailleurs (dev, tests, CI). */
+/** Lectures (GET, HEAD) en production : par minute, par IP et par route. */
+export const PRODUCTION_READ_LIMIT = 300;
+
+/** Écritures (tout le reste) en production : par minute, par IP et par route. */
+export const PRODUCTION_WRITE_LIMIT = 60;
+
+/**
+ * La limite de production, selon que la requête lit ou écrit.
+ *
+ * ## Pourquoi les lectures ont un plafond plus haut (audit avant la 59)
+ *
+ * Le compteur est par adresse IP. Or les opérateurs mobiles d'Afrique de
+ * l'Ouest font sortir des milliers d'abonnés par la même adresse publique
+ * (CGNAT) : pour le serveur, tous les élèves d'un opérateur sont UN client.
+ * Chaque ouverture de l'app lit `/config/app` et plusieurs pages du catalogue.
+ * À 60 par minute, quelques dizaines d'ouvertures dans la même minute — après
+ * une vidéo ou une notification — suffisaient à faire refuser les suivantes en
+ * 429 : l'app retombait sur ses replis et l'espace Études en France
+ * disparaissait.
+ *
+ * Les lectures ne coûtent qu'une requête en base et ne changent rien : on
+ * leur donne 300. Les écritures (créer un dossier, envoyer un message,
+ * s'inscrire) restent à 60 : c'est elles qu'une boucle ou un abus peut rendre
+ * coûteuses. Les lectures publiques qui appellent un service payant gardent
+ * 60 par un `@Throttle` explicite ([COSTLY_READ_THROTTLE]).
+ *
+ * Une référence de fonction STABLE (et non une fermeture créée à chaque
+ * appel) : `throttler-options.spec.ts` compare la configuration d'`AppModule`
+ * à celle-ci par égalité.
+ */
+export function productionLimit(context: ExecutionContext): number {
+  const method = (
+    context.switchToHttp().getRequest<{ method?: string }>()?.method ?? ''
+  ).toUpperCase();
+  return method === 'GET' || method === 'HEAD'
+    ? PRODUCTION_READ_LIMIT
+    : PRODUCTION_WRITE_LIMIT;
+}
+
+/**
+ * En production : 300 lectures et 60 écritures par minute, par IP et par
+ * route. Ailleurs (dev, tests, CI) : 600 pour tout.
+ */
 export function buildThrottlerOptions(
   nodeEnv: string | undefined = process.env.NODE_ENV,
 ): ThrottlerOptions[] {
@@ -31,10 +74,24 @@ export function buildThrottlerOptions(
     {
       name: GLOBAL_THROTTLER,
       ttl: 60_000,
-      limit: nodeEnv === 'production' ? 60 : 600,
+      limit: nodeEnv === 'production' ? productionLimit : 600,
     },
   ];
 }
+
+/**
+ * Lectures PUBLIQUES qui appellent un service payant ou limité (prix des
+ * vols) : elles gardent le plafond des écritures, 60 par minute et par IP, au
+ * lieu des 300 des lectures ordinaires. Comme les autres plafonds de ce
+ * fichier, il vaut dans tous les environnements.
+ *
+ * Le flux du coach IA n'en fait pas partie : il est authentifié et borné par
+ * élève (cinq messages par semaine), ce qu'un plafond par IP ne ferait que
+ * dégrader pour les élèves d'un même opérateur.
+ */
+export const COSTLY_READ_THROTTLE = {
+  [GLOBAL_THROTTLER]: { limit: PRODUCTION_WRITE_LIMIT, ttl: 60_000 },
+};
 
 /**
  * Connexion admin : 10 tentatives par minute et par IP, quel que soit

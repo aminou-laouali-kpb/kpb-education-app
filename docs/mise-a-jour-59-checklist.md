@@ -53,6 +53,16 @@
   `caseMessaging`, compétition) et une migration additive,
   `20261109120000_case_message_case_created_idx`. La 59 n'en dépend pas à la revue
   (`caseMessaging` y vaut `false`) ; la recette de la messagerie, si.
+- **Durcissement du 10/11/2026 (audit avant l'archive).** Dix
+  corrections entrent dans la 59 parce qu'elles exigeaient une build : un dossier trop long
+  n'est plus refusé ; le numéro WhatsApp peut être servi par le serveur
+  (`support.whatsappNumber`) ; la dernière réponse de `/config/app` est gardée sur le téléphone
+  et relue au retour au premier plan ; la garde de mise à jour se rejoue à chaque réponse fraîche
+  du serveur ; un avis peut être affiché en haut de l'accueil (`notice`) ; la recherche
+  ignore les accents ; la sonde « hors ligne » vise l'API de KPB ; les liens `kpb://` et les
+  raccourcis de l'icône respectent l'écran d'entrée ; les parcours se rafraîchissent ; l'écran
+  d'erreur de démarrage a une issue. Toutes gardent le couplage `tolerates-old` : les deux clés
+  nouvelles, absentes du serveur de la 58, valent « rien à faire ».
 - **Dépendances et manifestes : rien ne bouge** depuis la 58. `pubspec.yaml` ne change que par sa
   ligne `version:` (étape 0.3).
 - **Le préflight de l'IPA exportée (`--app`) reste obligatoire**, comme pour la 58.
@@ -123,7 +133,8 @@ git merge-base --is-ancestor 5332a128 "$RELEASE" && echo "archive de la 58 = anc
 git log --oneline --first-parent 5332a128.."$RELEASE"
 #   attendu (relevé du 09/11/2026) : #409 (registre de la 58), puis la ou les PR de la 59
 #   (branche claude/build-59 : 7b6804ad, 39fcd758, ce0138d7, 595a1813, c263f322, 0c19e934) et la
-#   PR de préparation de la 59 — et rien d'autre.
+#   PR de préparation de la 59, puis la PR de durcissement du 10/11/2026 (branche
+#   claude/build-59-durcissement, audit avant l'archive) — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
@@ -154,6 +165,12 @@ git diff --stat 5332a128 "$RELEASE" -- backend admin docker-compose.yml
 #   caseMessaging), backend/src/modules/referrals (statut ineligible, codes d'erreur, phase de la
 #   compétition), backend/prisma (un index), admin/app/cases et admin/lib (fil du dossier),
 #   docker-compose.yml (relais de KPB_CASE_MESSAGING_ENABLED). La 59 n'en dépend pas à la revue.
+#   Durcissement du 10/11/2026 : backend/src/modules/config (support.whatsappNumber, notice),
+#   backend/src/modules/cases/dto (un texte trop long est coupé, plus refusé),
+#   backend/src/common/throttler-options.ts (300 lectures et 60 écritures par minute et par IP),
+#   backend/src/modules/coach et ai (un message n'est plus décompté quand le modèle ne répond
+#   pas), backend/src/modules/kayak (plafond gardé à 60), docker-compose.yml (relais de
+#   KPB_APP_WHATSAPP_NUMBER, KPB_APP_NOTICE_FR, _EN, _URL).
 git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 #   attendu : une seule migration, 20261109120000_case_message_case_created_idx.
 ```
@@ -174,6 +191,12 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 - Contrôle après le déploiement :
   `curl -fsS https://api.kpbeducation.cloud/api/config/app | jq '.features.caseMessaging'` →
   `false` (et non plus `null`).
+- Les deux leviers du durcissement sont servis à leur valeur neutre après le déploiement :
+  `jq '.support.whatsappNumber, .notice'` → `null`, `null`. Le numéro WhatsApp servi se pose par
+  l'action **VPS ops** `app-whatsapp-set` (constante `APP_WHATSAPP_NUMBER` de
+  `.github/scripts/vps-ops.sh`, relue en PR). `KPB_APP_NOTICE_*` n'a **pas encore** d'action
+  d'exploitation : en poser une demande une PR (comme `KPB_MIN_APP_VERSION`, jamais écrite par
+  une action).
 
 ## 2. Vérifications de départ (5 min)
 

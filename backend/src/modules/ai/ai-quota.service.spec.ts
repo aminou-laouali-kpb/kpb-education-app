@@ -16,9 +16,16 @@ function makeDbPrisma() {
         if (!rows.has(key)) rows.set(key, { used: 0, quotaLimit: create.quotaLimit });
         return rows.get(key);
       },
-      updateMany: async ({ where }: any) => {
+      updateMany: async ({ where, data }: any) => {
         const row = rows.get(k(where));
-        if (!row || row.used >= where.used.lt) return { count: 0 };
+        if (!row) return { count: 0 };
+        // Remboursement : décrément conditionnel `used > 0`.
+        if (data?.used?.decrement) {
+          if (row.used <= where.used.gt) return { count: 0 };
+          row.used -= data.used.decrement;
+          return { count: 1 };
+        }
+        if (row.used >= where.used.lt) return { count: 0 };
         row.used += 1;
         return { count: 1 };
       },
@@ -71,6 +78,49 @@ describe('AiQuotaService', () => {
     const a = await service.consume({ userId: 'u1', feature: 'tools', limit: 1, now });
     const b = await service.consume({ userId: 'u1', feature: 'tools', limit: 1, now });
     expect([a.allowed, b.allowed]).toEqual([true, false]);
+  });
+
+  // Audit avant la 59 : une panne du fournisseur coûtait à l'élève un de ses
+  // 5 messages de la semaine. Le coach rend maintenant l'unité décomptée.
+  it('refund rend une unité consommée, en base', async () => {
+    const { prisma } = makeDbPrisma();
+    const service = new AiQuotaService(prisma);
+    await service.consume({ userId: 'u1', feature: 'coach', limit: 2, now });
+    await service.consume({ userId: 'u1', feature: 'coach', limit: 2, now });
+    expect(
+      (await service.peek({ userId: 'u1', feature: 'coach', limit: 2, now })).remaining,
+    ).toBe(0);
+
+    await service.refund({ userId: 'u1', feature: 'coach', now });
+
+    const after = await service.peek({ userId: 'u1', feature: 'coach', limit: 2, now });
+    expect(after.remaining).toBe(1);
+    expect(after.allowed).toBe(true);
+  });
+
+  it('refund ne descend jamais sous zéro et ne touche pas les autres compteurs', async () => {
+    const { prisma, rows } = makeDbPrisma();
+    const service = new AiQuotaService(prisma);
+    await service.consume({ userId: 'u2', feature: 'coach', limit: 5, now });
+
+    await service.refund({ userId: 'u1', feature: 'coach', now });
+    await service.consume({ userId: 'u1', feature: 'coach', limit: 5, now });
+    await service.refund({ userId: 'u1', feature: 'coach', now });
+    await service.refund({ userId: 'u1', feature: 'coach', now });
+
+    expect([...rows.values()].map((r) => r.used).sort()).toEqual([0, 1]);
+  });
+
+  it('refund marche aussi sur le repli mémoire', async () => {
+    const prisma = { tryExecute: async () => null } as unknown as PrismaService;
+    const service = new AiQuotaService(prisma);
+    await service.consume({ userId: 'u1', feature: 'coach', limit: 1, now });
+
+    await service.refund({ userId: 'u1', feature: 'coach', now });
+
+    expect(
+      (await service.consume({ userId: 'u1', feature: 'coach', limit: 1, now })).allowed,
+    ).toBe(true);
   });
 
   it('computes UTC day and Monday-based week periods', () => {

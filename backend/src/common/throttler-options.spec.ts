@@ -15,8 +15,16 @@ import { AuthService } from '../modules/auth/auth.service';
 import { AppConfigController } from '../modules/config/app-config.controller';
 import { EefSearchController } from '../modules/etudes-en-france/search/eef-search.controller';
 import { EefSearchService } from '../modules/etudes-en-france/search/eef-search.service';
+import { KayakController } from '../modules/kayak/kayak.controller';
+import { KayakService } from '../modules/kayak/kayak.service';
 import { AdminAuthGuard } from './guards/admin-auth.guard';
-import { buildThrottlerOptions, GLOBAL_THROTTLER } from './throttler-options';
+import {
+  buildThrottlerOptions,
+  GLOBAL_THROTTLER,
+  PRODUCTION_READ_LIMIT,
+  PRODUCTION_WRITE_LIMIT,
+  productionLimit,
+} from './throttler-options';
 
 /**
  * Le défaut mesuré le 02/10/2026 : un second limiteur nommé `auth` (10/min),
@@ -34,6 +42,7 @@ import { buildThrottlerOptions, GLOBAL_THROTTLER } from './throttler-options';
 
 const authService = { login: jest.fn(), refresh: jest.fn() };
 const eefSearchService = { search: jest.fn() };
+const kayakService = { getRoutes: jest.fn(), getCalendar: jest.fn() };
 
 async function boot(options: {
   nodeEnv: string;
@@ -41,11 +50,17 @@ async function boot(options: {
 }): Promise<{ app: INestApplication; base: string }> {
   const moduleRef = await Test.createTestingModule({
     imports: [ThrottlerModule.forRoot(buildThrottlerOptions(options.nodeEnv))],
-    controllers: [AppConfigController, EefSearchController, AuthController],
+    controllers: [
+      AppConfigController,
+      EefSearchController,
+      AuthController,
+      KayakController,
+    ],
     providers: [
       { provide: APP_GUARD, useClass: ThrottlerGuard },
       { provide: AuthService, useValue: authService },
       { provide: EefSearchService, useValue: eefSearchService },
+      { provide: KayakService, useValue: kayakService },
     ],
   })
     // `session` exige une session admin ; la limitation n'a rien à y voir.
@@ -88,6 +103,8 @@ beforeEach(() => {
     user: { id: 'admin-1' },
   });
   eefSearchService.search.mockResolvedValue({ items: [] });
+  kayakService.getRoutes.mockResolvedValue({ routes: [] });
+  kayakService.getCalendar.mockResolvedValue({ days: [] });
 });
 
 describe('configuration des limiteurs', () => {
@@ -103,10 +120,30 @@ describe('configuration des limiteurs', () => {
     ]);
   });
 
-  it('limite globale : 60 par minute en production, 600 ailleurs', () => {
-    expect(buildThrottlerOptions('production')[0]).toMatchObject({ limit: 60, ttl: 60_000 });
+  it('limite globale : 300 lectures et 60 écritures par minute en production, 600 ailleurs', () => {
+    expect(buildThrottlerOptions('production')[0]).toMatchObject({
+      limit: productionLimit,
+      ttl: 60_000,
+    });
     expect(buildThrottlerOptions('development')[0]).toMatchObject({ limit: 600, ttl: 60_000 });
     expect(buildThrottlerOptions(undefined)[0]).toMatchObject({ limit: 600 });
+  });
+
+  it('une lecture a le plafond haut, une écriture le plafond bas', () => {
+    const context = (method?: string) =>
+      ({
+        switchToHttp: () => ({ getRequest: () => ({ method }) }),
+      }) as unknown as Parameters<typeof productionLimit>[0];
+
+    expect(PRODUCTION_READ_LIMIT).toBe(300);
+    expect(PRODUCTION_WRITE_LIMIT).toBe(60);
+    expect(productionLimit(context('GET'))).toBe(300);
+    expect(productionLimit(context('head'))).toBe(300);
+    for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect(productionLimit(context(method))).toBe(60);
+    }
+    // Méthode inconnue ou absente : le plafond prudent.
+    expect(productionLimit(context(undefined))).toBe(60);
   });
 });
 
@@ -175,12 +212,35 @@ describe('limite globale — production', () => {
   });
   afterEach(() => app.close());
 
-  it('reste voulue : 60 requêtes par minute et par IP passent sur la recherche, la 61e est refusée', async () => {
+  // Audit avant la 59 : les opérateurs mobiles partagent une adresse IP entre
+  // des milliers d'abonnés. À 60 lectures par minute, une minute d'affluence
+  // faisait refuser `/config/app` : l'app retombait sur ses replis.
+  it('une lecture tient 300 requêtes par minute et par IP, la 301e est refusée', async () => {
+    const results = await statuses(301, () => fetch(`${base}/config/app`));
+
+    expect(results.slice(0, 300).filter((s) => s !== 200)).toEqual([]);
+    expect(results[300]).toBe(429);
+  });
+
+  // Une lecture publique qui peut appeler un service payant ne profite PAS du
+  // plafond des lectures : sans le `@Throttle` de KayakController, ce test
+  // rougit à la 61e requête acceptée.
+  it('les prix des vols restent à 60 par minute et par IP, la 61e est refusée', async () => {
     const results = await statuses(61, () =>
-      fetch(`${base}/etudes-en-france/search?q=droit`),
+      fetch(`${base}/flights/routes?origin=NIM&destination=CDG`),
     );
 
     expect(results.slice(0, 60).filter((s) => s !== 200)).toEqual([]);
+    expect(results[60]).toBe(429);
+    expect(kayakService.getRoutes).toHaveBeenCalledTimes(60);
+  });
+
+  it('une écriture reste à 60 par minute et par IP, la 61e est refusée', async () => {
+    const results = await statuses(61, () =>
+      fetch(`${base}/auth/admin/logout`, { method: 'POST' }),
+    );
+
+    expect(results.slice(0, 60).filter((s) => s !== 201)).toEqual([]);
     expect(results[60]).toBe(429);
   });
 });

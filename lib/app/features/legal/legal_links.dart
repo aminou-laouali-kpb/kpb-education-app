@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import 'legal_pages.dart';
@@ -50,7 +50,7 @@ class LegalLinksRow extends StatelessWidget {
             key: const ValueKey<String>('legal-link-contact'),
             style: style,
             onPressed: () => openWhatsAppOrToast(
-              phone: AppConfig.whatsappNumber,
+              phone: SupportContact.whatsappNumber,
               prefill: kpbWhatsAppPrefill(),
               source: 'legal_links',
               contextType: 'contact',

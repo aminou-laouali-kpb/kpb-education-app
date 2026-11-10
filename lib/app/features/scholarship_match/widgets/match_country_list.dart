@@ -3,20 +3,11 @@ import 'package:get/get.dart';
 
 import '../../../core/models/scholarship_match.dart';
 import '../../../core/ui/app_tokens.dart';
+import '../../../core/utils/search_text.dart';
 import 'match_choice.dart';
 
 /// Minuscules, sans accents : « cote » trouve « Côte d'Ivoire ».
-String matchFoldForSearch(String raw) {
-  const accents = 'àáâäãåèéêëìíîïòóôöõùúûüçñ';
-  const plain = 'aaaaaaeeeeiiiiooooouuuucn';
-  final buffer = StringBuffer();
-  for (final rune in raw.toLowerCase().runes) {
-    final char = String.fromCharCode(rune);
-    final i = accents.indexOf(char);
-    buffer.write(i == -1 ? char : plain[i]);
-  }
-  return buffer.toString().replaceAll('’', "'").trim();
-}
+String matchFoldForSearch(String raw) => foldForSearch(raw);
 
 /// Les pays servis par le serveur, filtrés par la recherche (les prioritaires
 /// d'abord, déjà triés par le modèle).

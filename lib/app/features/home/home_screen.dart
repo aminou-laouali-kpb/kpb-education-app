@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/config/app_config.dart';
+import '../../core/config/support_contact.dart';
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
 import '../../core/data/my_plan_engine.dart';
@@ -14,6 +14,7 @@ import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/services/scholarship_match_store.dart';
+import '../../core/ui/components/server_notice_banner.dart';
 import '../../core/ui/components/update_recommended_banner.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/ui/skeleton.dart';
@@ -352,6 +353,12 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(
             KpbSpacing.pagePad, KpbSpacing.sm, KpbSpacing.pagePad, 0),
         child: UpdateRecommendedBanner(),
+      ),
+      // L'avis servi par le serveur (date limite qui approche, incident,
+      // changement de contact) : rien tant qu'aucun texte n'est posé.
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: KpbSpacing.pagePad),
+        child: ServerNoticeBanner(),
       ),
       // La recherche globale n'avait aucune porte visible : une seule, au fond
       // du Profil et seulement sans université enregistrée (audit build 57,

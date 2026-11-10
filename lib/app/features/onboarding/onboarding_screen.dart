@@ -785,171 +785,180 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: KpbColors.canvas,
-      body: Column(
-        children: [
-          // ── Progress bar ─────────────────────────────────────────
-          _ProgressHeader(
-            page: _page,
-            total: _totalPages,
-            onBack: _page > 0 ? _prev : null,
-            // V2 : « Passer » dès la page 1. Ancien parcours : à partir de
-            // la page 2, comme avant.
-            onSkip: (_v2 || _page > 0) ? _skip : null,
-          ),
-
-          // ── Pages ────────────────────────────────────────────────
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              onPageChanged: (p) {
-                setState(() => _page = p);
-                _logStepViewed(p);
-              },
-              children: [
-                // Page 0 — Identité & compte
-                _Page(
-                  formKey: _key0,
-                  autovalidate: _attemptedPages.contains(0),
-                  title: 'onboarding_welcome_title'.tr,
-                  subtitle: 'onboarding_welcome_subtitle'.tr,
-                  child: _PageIdentity(
-                    accountType: _accountType,
-                    language: _language,
-                    firstNameCtrl: _firstNameCtrl,
-                    lastNameCtrl: _lastNameCtrl,
-                    emailCtrl: _emailCtrl,
-                    phoneCtrl: _phoneCtrl,
-                    whatsAppCtrl: _whatsAppCtrl,
-                    phoneCustomCodeCtrl: _phoneCustomCodeCtrl,
-                    waCustomCodeCtrl: _waCustomCodeCtrl,
-                    phoneCode: _phoneCode,
-                    waCode: _waCode,
-                    sameWhatsApp: _sameWhatsApp,
-                    country: _country,
-                    hasConsented: _hasConsented,
-                    birthDate: _birthDate,
-                    isMinor: _isMinor,
-                    guardianNameCtrl: _guardianNameCtrl,
-                    guardianContactCtrl: _guardianContactCtrl,
-                    guardianConsented: _guardianConsented,
-                    showErrors: _attemptedPages.contains(0),
-                    requireCountry: _v2,
-                    showAgeErrorEagerly: _v2,
-                    isUnderMinimumAge: _isUnderMinimumAge,
-                    guardianIncomplete: _guardianIncomplete,
-                    birthDateKey: _birthDateKey,
-                    guardianKey: _guardianKey,
-                    consentKey: _consentKey,
-                    onGuardianChanged: () => setState(() {}),
-                    onAccountType: (v) => setState(() => _accountType = v),
-                    onLanguage: (v) => setState(() => _language = v),
-                    onPhoneCode: (v) => setState(() => _phoneCode = v),
-                    onWaCode: (v) => setState(() => _waCode = v),
-                    onSameWhatsApp: (v) => setState(() => _sameWhatsApp = v),
-                    onCountry: _onCountryPicked,
-                    onConsent: (v) => setState(() => _hasConsented = v),
-                    onBirthDate: (v) => setState(() => _birthDate = v),
-                    onGuardianConsent: (v) =>
-                        setState(() => _guardianConsented = v),
-                  ),
-                ),
-
-                // Page 1 — Niveau académique
-                if (_accountType != AccountType.partner)
-                  _Page(
-                    formKey: _key1,
-                    autovalidate: _attemptedPages.contains(1),
-                    title: 'onboarding_academic_title'.tr,
-                    subtitle: 'onboarding_academic_subtitle'.tr,
-                    child: _PageAcademic(
-                      currentLevel: _currentLevel,
-                      targetLevel: _targetLevel,
-                      languageLevel: _languageLevel,
-                      gradeRange: _gradeRange,
-                      annualTuitionBudgetEur: _annualTuitionBudgetEur,
-                      preferredCurrency: _preferredCurrency,
-                      wantsScholarship: _wantsScholarship,
-                      wantsNewsletter: _wantsNewsletter,
-                      requireLevels: _v2,
-                      onCurrentLevel: (v) =>
-                          setState(() => _currentLevel = v ?? _currentLevel),
-                      onTargetLevel: (v) =>
-                          setState(() => _targetLevel = v ?? _targetLevel),
-                      onLanguageLevel: (v) =>
-                          setState(() => _languageLevel = v ?? _languageLevel),
-                      onGradeRange: (v) =>
-                          setState(() => _gradeRange = v ?? _gradeRange),
-                      onAnnualTuitionBudget: (v) =>
-                          setState(() => _annualTuitionBudgetEur = v),
-                      onPreferredCurrency: (v) => setState(
-                        () => _preferredCurrency = v ?? _preferredCurrency,
-                      ),
-                      onWantsScholarship: (v) =>
-                          setState(() => _wantsScholarship = v),
-                      onWantsNewsletter: (v) =>
-                          setState(() => _wantsNewsletter = v),
-                    ),
-                  )
-                else
-                  _Page(
-                    formKey: _key1,
-                    title: 'onboarding_partner_title'.tr,
-                    subtitle: 'onboarding_partner_subtitle'.tr,
-                    child: _PagePartner(),
-                  ),
-
-                // Page 2 — Filières, pays, documents
-                if (_accountType != AccountType.partner)
-                  _Page(
-                    formKey: _key2,
-                    title: 'onboarding_interests_title'.tr,
-                    subtitle: 'onboarding_interests_subtitle'.tr,
-                    child: _PageInterests(
-                      controller: _ctrl,
-                      fieldIds: _fieldIds,
-                      countryIds: _countryIds,
-                      docs: _docs,
-                      showErrors: _v2 && _attemptedPages.contains(2),
-                      fieldsKey: _fieldsKey,
-                      countriesKey: _countriesKey,
-                      onToggleField: (id) => setState(() {
-                        if (_fieldIds.contains(id)) {
-                          _fieldIds.remove(id);
-                        } else {
-                          _fieldIds.add(id);
-                        }
-                      }),
-                      onToggleCountry: (id) => setState(() {
-                        if (_countryIds.contains(id)) {
-                          _countryIds.remove(id);
-                        } else {
-                          _countryIds.add(id);
-                        }
-                      }),
-                      onToggleDoc: (key) => setState(() {
-                        if (_docs.contains(key)) {
-                          _docs.remove(key);
-                        } else {
-                          _docs.add(key);
-                        }
-                      }),
-                    ),
-                  ),
-              ],
+    // Retour du téléphone (Android) : il revient à l'étape précédente, comme
+    // la flèche de l'écran. Avant, il fermait l'app dès l'étape 2 (audit avant
+    // la 59). À la première étape, il garde son comportement normal.
+    return PopScope(
+      canPop: _page == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _prev();
+      },
+      child: Scaffold(
+        backgroundColor: KpbColors.canvas,
+        body: Column(
+          children: [
+            // ── Progress bar ─────────────────────────────────────────
+            _ProgressHeader(
+              page: _page,
+              total: _totalPages,
+              onBack: _page > 0 ? _prev : null,
+              // V2 : « Passer » dès la page 1. Ancien parcours : à partir de
+              // la page 2, comme avant.
+              onSkip: (_v2 || _page > 0) ? _skip : null,
             ),
-          ),
 
-          // ── Bottom CTA ───────────────────────────────────────────
-          _BottomBar(
-            page: _page,
-            total: _totalPages,
-            onNext: _next,
-            busy: _submitting,
-          ),
-        ],
+            // ── Pages ────────────────────────────────────────────────
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (p) {
+                  setState(() => _page = p);
+                  _logStepViewed(p);
+                },
+                children: [
+                  // Page 0 — Identité & compte
+                  _Page(
+                    formKey: _key0,
+                    autovalidate: _attemptedPages.contains(0),
+                    title: 'onboarding_welcome_title'.tr,
+                    subtitle: 'onboarding_welcome_subtitle'.tr,
+                    child: _PageIdentity(
+                      accountType: _accountType,
+                      language: _language,
+                      firstNameCtrl: _firstNameCtrl,
+                      lastNameCtrl: _lastNameCtrl,
+                      emailCtrl: _emailCtrl,
+                      phoneCtrl: _phoneCtrl,
+                      whatsAppCtrl: _whatsAppCtrl,
+                      phoneCustomCodeCtrl: _phoneCustomCodeCtrl,
+                      waCustomCodeCtrl: _waCustomCodeCtrl,
+                      phoneCode: _phoneCode,
+                      waCode: _waCode,
+                      sameWhatsApp: _sameWhatsApp,
+                      country: _country,
+                      hasConsented: _hasConsented,
+                      birthDate: _birthDate,
+                      isMinor: _isMinor,
+                      guardianNameCtrl: _guardianNameCtrl,
+                      guardianContactCtrl: _guardianContactCtrl,
+                      guardianConsented: _guardianConsented,
+                      showErrors: _attemptedPages.contains(0),
+                      requireCountry: _v2,
+                      showAgeErrorEagerly: _v2,
+                      isUnderMinimumAge: _isUnderMinimumAge,
+                      guardianIncomplete: _guardianIncomplete,
+                      birthDateKey: _birthDateKey,
+                      guardianKey: _guardianKey,
+                      consentKey: _consentKey,
+                      onGuardianChanged: () => setState(() {}),
+                      onAccountType: (v) => setState(() => _accountType = v),
+                      onLanguage: (v) => setState(() => _language = v),
+                      onPhoneCode: (v) => setState(() => _phoneCode = v),
+                      onWaCode: (v) => setState(() => _waCode = v),
+                      onSameWhatsApp: (v) => setState(() => _sameWhatsApp = v),
+                      onCountry: _onCountryPicked,
+                      onConsent: (v) => setState(() => _hasConsented = v),
+                      onBirthDate: (v) => setState(() => _birthDate = v),
+                      onGuardianConsent: (v) =>
+                          setState(() => _guardianConsented = v),
+                    ),
+                  ),
+
+                  // Page 1 — Niveau académique
+                  if (_accountType != AccountType.partner)
+                    _Page(
+                      formKey: _key1,
+                      autovalidate: _attemptedPages.contains(1),
+                      title: 'onboarding_academic_title'.tr,
+                      subtitle: 'onboarding_academic_subtitle'.tr,
+                      child: _PageAcademic(
+                        currentLevel: _currentLevel,
+                        targetLevel: _targetLevel,
+                        languageLevel: _languageLevel,
+                        gradeRange: _gradeRange,
+                        annualTuitionBudgetEur: _annualTuitionBudgetEur,
+                        preferredCurrency: _preferredCurrency,
+                        wantsScholarship: _wantsScholarship,
+                        wantsNewsletter: _wantsNewsletter,
+                        requireLevels: _v2,
+                        onCurrentLevel: (v) =>
+                            setState(() => _currentLevel = v ?? _currentLevel),
+                        onTargetLevel: (v) =>
+                            setState(() => _targetLevel = v ?? _targetLevel),
+                        onLanguageLevel: (v) => setState(
+                            () => _languageLevel = v ?? _languageLevel),
+                        onGradeRange: (v) =>
+                            setState(() => _gradeRange = v ?? _gradeRange),
+                        onAnnualTuitionBudget: (v) =>
+                            setState(() => _annualTuitionBudgetEur = v),
+                        onPreferredCurrency: (v) => setState(
+                          () => _preferredCurrency = v ?? _preferredCurrency,
+                        ),
+                        onWantsScholarship: (v) =>
+                            setState(() => _wantsScholarship = v),
+                        onWantsNewsletter: (v) =>
+                            setState(() => _wantsNewsletter = v),
+                      ),
+                    )
+                  else
+                    _Page(
+                      formKey: _key1,
+                      title: 'onboarding_partner_title'.tr,
+                      subtitle: 'onboarding_partner_subtitle'.tr,
+                      child: _PagePartner(),
+                    ),
+
+                  // Page 2 — Filières, pays, documents
+                  if (_accountType != AccountType.partner)
+                    _Page(
+                      formKey: _key2,
+                      title: 'onboarding_interests_title'.tr,
+                      subtitle: 'onboarding_interests_subtitle'.tr,
+                      child: _PageInterests(
+                        controller: _ctrl,
+                        fieldIds: _fieldIds,
+                        countryIds: _countryIds,
+                        docs: _docs,
+                        showErrors: _v2 && _attemptedPages.contains(2),
+                        fieldsKey: _fieldsKey,
+                        countriesKey: _countriesKey,
+                        onToggleField: (id) => setState(() {
+                          if (_fieldIds.contains(id)) {
+                            _fieldIds.remove(id);
+                          } else {
+                            _fieldIds.add(id);
+                          }
+                        }),
+                        onToggleCountry: (id) => setState(() {
+                          if (_countryIds.contains(id)) {
+                            _countryIds.remove(id);
+                          } else {
+                            _countryIds.add(id);
+                          }
+                        }),
+                        onToggleDoc: (key) => setState(() {
+                          if (_docs.contains(key)) {
+                            _docs.remove(key);
+                          } else {
+                            _docs.add(key);
+                          }
+                        }),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Bottom CTA ───────────────────────────────────────────
+            _BottomBar(
+              page: _page,
+              total: _totalPages,
+              onNext: _next,
+              busy: _submitting,
+            ),
+          ],
+        ),
       ),
     );
   }

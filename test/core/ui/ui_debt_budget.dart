@@ -74,7 +74,7 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/profile/profile_screen/quick_access.dart': 1,
   'lib/app/features/profile/profile_screen/settings.dart': 7,
   'lib/app/features/profile/profile_screen/widgets.dart': 1,
-  'lib/app/features/referral/ambassador_screen.dart': 39,
+  'lib/app/features/referral/ambassador_screen.dart': 38,
   'lib/app/features/referral/referral_screen.dart': 7,
   'lib/app/features/scholarships/scholarship_guide_info_screen.dart': 4,
   'lib/app/features/scholarships/widgets/application_requirement_badge.dart': 2,
@@ -91,9 +91,8 @@ const fontSizeBudget = <String, int>{
   'lib/app/features/tools/motivation_letters_screen.dart': 13,
   'lib/app/features/tools/student_tools_screen.dart': 3,
   'lib/app/features/travel/flight_estimator_screen.dart': 5,
-  'lib/app/features/universities/universities_screen.dart': 15,
+  'lib/app/features/universities/universities_screen.dart': 14,
   'lib/app/features/universities/widgets/program_catalog_card.dart': 2,
-  'lib/main.dart': 2,
 };
 
 /// `Duration(` dans lib/app/features et lib/app/core/ui (hors app_tokens.dart).

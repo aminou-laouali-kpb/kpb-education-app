@@ -9,6 +9,7 @@ import '../../core/data/intake_calendar.dart';
 import '../../core/models/app_models.dart';
 import '../../core/models/community.dart';
 import '../../core/services/analytics_service.dart';
+import '../../core/ui/components/kpb_network_image.dart';
 import '../../core/ui/components/profile_fit_badge.dart';
 import '../../core/ui/components/source_link.dart';
 import '../../core/ui/components/verified_badge.dart';
@@ -509,11 +510,17 @@ class _Hero extends StatelessWidget {
           ),
           if (hasImage) ...[
             Positioned.fill(
-              child: Image.network(
-                url,
+              // Cache disque et décodage borné à la largeur de l'écran :
+              // l'image se retéléchargeait en pleine taille à chaque visite
+              // (audit avant la 59). Fond transparent et aucune icône : en
+              // attente comme en erreur, le dégradé du dessous reste visible.
+              child: KpbNetworkImage(
+                imageUrl: url,
                 fit: BoxFit.cover,
-                // On load error the gradient base layer shows through.
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                targetWidth: MediaQuery.sizeOf(context).width,
+                decorative: false,
+                errorIcon: null,
+                fallbackColor: Colors.transparent,
               ),
             ),
             // Scrim: keeps flag/badge readable on any photo brightness.

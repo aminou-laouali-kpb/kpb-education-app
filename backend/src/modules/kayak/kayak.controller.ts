@@ -1,5 +1,8 @@
 import { Controller, Get, Query, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
+
+import { COSTLY_READ_THROTTLE } from '../../common/throttler-options';
 
 import { FlightCalendarQueryDto } from './dto/flight-calendar.query.dto';
 import { FlightRoutesQueryDto } from './dto/flight-routes.query.dto';
@@ -9,7 +12,11 @@ import { FlightCalendarResponse, FlightRoutesResponse } from './kayak.types';
 /// Public endpoints — the flight-price estimator is usable pre-login.
 /// No auth guard; the global throttler applies. The Kayak secret and affiliate
 /// tracking stay server-side (see kayak.service.ts).
+///
+/// Chaque lecture peut appeler l'API de Kayak : ces routes gardent 60 par
+/// minute et par IP, et non les 300 des lectures ordinaires.
 @Controller('flights')
+@Throttle(COSTLY_READ_THROTTLE)
 export class KayakController {
   constructor(private readonly kayakService: KayakService) {}
 
