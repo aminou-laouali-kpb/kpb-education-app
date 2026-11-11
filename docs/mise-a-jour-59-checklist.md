@@ -194,9 +194,11 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 - Les deux leviers du durcissement sont servis à leur valeur neutre après le déploiement :
   `jq '.support.whatsappNumber, .notice'` → `null`, `null`. Le numéro WhatsApp servi se pose par
   l'action **VPS ops** `app-whatsapp-set` (constante `APP_WHATSAPP_NUMBER` de
-  `.github/scripts/vps-ops.sh`, relue en PR). `KPB_APP_NOTICE_*` n'a **pas encore** d'action
-  d'exploitation : en poser une demande une PR (comme `KPB_MIN_APP_VERSION`, jamais écrite par
-  une action).
+  `.github/scripts/vps-ops.sh`, relue en PR). L'avis (`KPB_APP_NOTICE_*`) se pose par l'action
+  **VPS ops** `app-notice-set` : le texte s'écrit dans les constantes `APP_NOTICE_FR`,
+  `APP_NOTICE_EN` et `APP_NOTICE_URL` du même script, par PR ; l'action simule par défaut, refuse
+  un texte que Docker Compose abîmerait (`$`, `#`, guillemet en tête, plus de 240 caractères),
+  et compare ce que le conteneur lit à ce qui est écrit. Constantes vides = l'avis est retiré.
 
 ## 2. Vérifications de départ (5 min)
 

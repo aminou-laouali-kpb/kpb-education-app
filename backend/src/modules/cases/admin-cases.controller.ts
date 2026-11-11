@@ -24,6 +24,7 @@ import { CreateCaseInternalNoteDto } from './dto/create-case-internal-note.dto';
 import { CreateCaseMessageDto } from './dto/create-case-message.dto';
 import { CreateCaseTaskDto } from './dto/create-case-task.dto';
 import { CreateCaseTimelineEventDto } from './dto/create-case-timeline-event.dto';
+import { ListAdminCasesQueryDto } from './dto/list-admin-cases.query.dto';
 import { UpdateCaseDto } from './dto/update-case.dto';
 
 @Controller('admin/cases')
@@ -40,9 +41,39 @@ export class AdminCasesController {
     private readonly storageService: StorageService,
   ) {}
 
+  /**
+   * Une page de dossiers (50 par défaut) : `{ items, nextCursor }`. Filtres
+   * `status`, `advisor`, `unassigned`, `awaiting` et recherche `q` appliqués
+   * par le serveur ; `cursor` = le `nextCursor` de la page précédente. Les
+   * éléments ne portent ni tâches, ni historique, ni pièces, ni notes : voir
+   * `GET :id`. Un conseiller ne voit que ses dossiers.
+   */
   @Get()
-  findAll(@Req() req: any) {
-    return this.casesService.findAllForAdmin(req.adminUser);
+  findAll(@Req() req: any, @Query() query: ListAdminCasesQueryDto) {
+    return this.casesService.findAllForAdmin(req.adminUser, {
+      cursor: query.cursor,
+      limit: query.limit,
+      status: query.status,
+      advisor: query.advisor,
+      unassigned: query.unassigned === 'true',
+      q: query.q,
+      awaiting: query.awaiting === 'true',
+    });
+  }
+
+  /**
+   * Le compteur « réponses attendues » et les conseillers du filtre, sur
+   * tous les dossiers de la portée. Déclarée AVANT `:id`.
+   */
+  @Get('summary')
+  summary(@Req() req: any) {
+    return this.casesService.adminCaseListSummary(req.adminUser);
+  }
+
+  /** Le dossier ouvert, avec ses tâches, pièces, notes et son historique. */
+  @Get(':id')
+  findOne(@Param('id') id: string, @Req() req: any) {
+    return this.casesService.findOneForAdmin(id, req.adminUser);
   }
 
   /**

@@ -35,6 +35,14 @@ name: VPS ops (feature flag / catalogue)
 # constante `APP_WHATSAPP_NUMBER` du script (vide = la clé est écrite sans valeur, les apps
 # gardent leur numéro compilé). Elle ne touche à aucun interrupteur.
 #
+# `app-notice-set` (build 59) écrit trois clés, `KPB_APP_NOTICE_FR`, `KPB_APP_NOTICE_EN` et
+# `KPB_APP_NOTICE_URL` : l'avis que `/config/app` sert en haut de l'accueil des apps 59 et
+# suivantes, aux valeurs des constantes `APP_NOTICE_FR`, `APP_NOTICE_EN` et `APP_NOTICE_URL`
+# du script (vides = aucun avis, et c'est ainsi qu'on en retire un). Le texte se change par
+# PR, jamais au déclenchement. Le script refuse AVANT d'écrire tout caractère que Docker
+# Compose réinterpréterait en relisant le `.env` (`$`, ` #`, un guillemet en tête), puis
+# compare ce que le conteneur recréé lit à ce qui est écrit dans le script.
+#
 # Les drapeaux distants de la build 57 suivent la même règle (branches `referral-*`,
 # `community-*`, `assist-bridge-*`, `verif-bot-*`, `scholarship-match-*`,
 # `onboarding-v2-*`, `case-messaging-*`) : elles n'écrivent que
@@ -94,6 +102,7 @@ on:
           - eef-campaign-set
           - recommended-version-set
           - app-whatsapp-set
+          - app-notice-set
           - publish-catalog
           - recreate-clamav
           - import-partners
@@ -138,7 +147,7 @@ on:
           - case-messaging-on
           - case-messaging-off
       dry_run:
-        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, app-whatsapp-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, backfill-birthdates, fix-france-copy, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on, case-messaging-on). Décocher pour appliquer.'
+        description: 'Simuler seulement (eef-space-on, eef-bubble-on, eef-private-schools-on, eef-campaign-set, recommended-version-set, app-whatsapp-set, app-notice-set, publish-catalog, import-partners, dedupe-omnes, import-omnes-spring, roll-omnes-fall-2027, import-igensia, import-north-america, backfill-tuition-eur, backfill-cases-fr, reclassify-omnes-fields, cleanup-reassigned-events, backfill-birthdates, fix-france-copy, fix-mundiapolis-levels, import-universiapolis, reconcile-program-ids, backfill-seed-institutions, eef-import, eef-purge-pending, eef-publish, eef-reconcile, reviews-purge-orphans, referral-leaderboard-on, referral-onboarding-code-on, referral-install-referrer-on, community-on, assist-bridge-on, verif-bot-auto, onboarding-v2-on, scholarship-match-on, case-messaging-on). Décocher pour appliquer.'
         type: boolean
         required: false
         default: true

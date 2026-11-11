@@ -26,6 +26,10 @@ import {
 } from "./dto/create-case-message.dto";
 import { CreateCaseTaskDto } from "./dto/create-case-task.dto";
 import { CreateCaseTimelineEventDto } from "./dto/create-case-timeline-event.dto";
+import {
+  ADMIN_CASES_MAX_PAGE_SIZE,
+  ADMIN_CASES_PAGE_SIZE,
+} from "./dto/list-admin-cases.query.dto";
 import { UpdateCaseDto } from "./dto/update-case.dto";
 import { UploadCaseDocumentDto } from "./dto/upload-case-document.dto";
 
@@ -56,8 +60,94 @@ const CASE_INCLUDE = {
   internalNotes: { orderBy: { createdAt: "desc" as const } },
 };
 
-/** Liste staff : le dernier message seulement (réponse attendue ?). */
-const ADMIN_LIST_INCLUDE = { ...CASE_INCLUDE, messages: false as const };
+/** Ce que l'administration lit de l'élève : trois champs, pas tout le profil. */
+const ADMIN_CASE_USER_SELECT = {
+  fullName: true,
+  email: true,
+  preferredLanguage: true,
+} as const;
+
+/**
+ * Liste de l'administration : AUCUNE relation en liste (tâches, événements,
+ * pièces, notes, messages). Avant, chaque ouverture de la page chargeait
+ * celles de tous les dossiers — plus de 80 000 événements en production pour
+ * environ 1 250 dossiers (audit avant la 59). Elles se lisent pour le seul
+ * dossier ouvert (`findOneForAdmin`).
+ */
+const ADMIN_LIST_INCLUDE = {
+  user: { select: ADMIN_CASE_USER_SELECT },
+  scholarship: { select: CASE_SCHOLARSHIP_SELECT },
+} as const;
+
+/** Événements d'historique rendus pour le dossier ouvert (les plus récents). */
+export const ADMIN_DETAIL_TIMELINE_LIMIT = 200;
+
+/** Le dossier ouvert : ses relations, sans le fil (paginé à part). */
+const ADMIN_DETAIL_INCLUDE = {
+  ...ADMIN_LIST_INCLUDE,
+  timelineEvents: {
+    orderBy: [{ createdAt: "desc" as const }, { id: "desc" as const }],
+    // Un de plus que la limite : c'est lui qui dit s'il en reste.
+    take: ADMIN_DETAIL_TIMELINE_LIMIT + 1,
+  },
+  tasks: { orderBy: { createdAt: "desc" as const } },
+  documents: { orderBy: { createdAt: "desc" as const } },
+  internalNotes: { orderBy: { createdAt: "desc" as const } },
+};
+
+/** Filtres de `GET /admin/cases` (voir `ListAdminCasesQueryDto`). */
+export interface AdminCaseListFilters {
+  cursor?: string;
+  limit?: number;
+  status?: CaseStatus;
+  advisor?: string;
+  unassigned?: boolean;
+  q?: string;
+  awaiting?: boolean;
+}
+
+/**
+ * Curseur de la liste : la date de création et l'identifiant du dernier
+ * dossier rendu. Les deux, parce que deux dossiers peuvent porter la même
+ * date et qu'une page ne doit ni en sauter un ni le rendre deux fois. Il ne
+ * dépend pas de l'existence du dossier : supprimé entre deux pages, la suite
+ * se lit quand même.
+ */
+export function encodeCaseCursor(row: { createdAt: Date; id: string }): string {
+  return Buffer.from(
+    `${row.createdAt.toISOString()}|${row.id}`,
+    "utf8",
+  ).toString("base64url");
+}
+
+export function decodeCaseCursor(cursor: string): {
+  createdAt: Date;
+  id: string;
+} {
+  const raw = Buffer.from(cursor, "base64url").toString("utf8");
+  const at = raw.indexOf("|");
+  const createdAt = new Date(at > 0 ? raw.slice(0, at) : "");
+  const id = at > 0 ? raw.slice(at + 1) : "";
+  if (Number.isNaN(createdAt.getTime()) || !/^[A-Za-z0-9_-]{1,64}$/.test(id)) {
+    throw new BadRequestException("Invalid cursor.");
+  }
+  return { createdAt, id };
+}
+
+/**
+ * Une demande identique du même élève dans cette fenêtre est un RENVOI, pas
+ * une seconde demande (voir `create`). 24 h et non quelques minutes : l'app
+ * ne renvoie un dossier resté local qu'à sa synchronisation suivante, qui est
+ * souvent sa prochaine ouverture — le lendemain.
+ */
+export const DUPLICATE_CASE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Un dossier clos ne retient pas une nouvelle demande, même identique. */
+const CLOSED_CASE_STATUSES = [
+  CaseStatus.Completed,
+  CaseStatus.Rejected,
+  CaseStatus.Cancelled,
+];
 
 export interface CaseMessagingActor {
   userId: string;
@@ -177,32 +267,199 @@ export class CasesService {
     );
   }
 
-  async findAllForAdmin(staff?: StaffActor) {
+  /**
+   * Une page de la liste de l'administration (50 dossiers par défaut), du plus
+   * récent au plus ancien. Filtres, recherche et portée par rôle sont
+   * appliqués PAR LE SERVEUR : un conseiller ne voit que SES dossiers, quel
+   * que soit le filtre. `nextCursor` vaut `null` à la dernière page.
+   */
+  async findAllForAdmin(
+    staff?: StaffActor,
+    filters: AdminCaseListFilters = {},
+  ) {
     this.assertDb();
-    // Un conseiller ne voit que SES dossiers (avant : tous, notes internes
-    // comprises). La liste ne charge plus les fils de messages (un seul
-    // message, le dernier, pour savoir si une réponse est attendue) : le fil
-    // se lit page par page (`GET /admin/cases/:id/messages`).
-    const items = await this.prismaService.execute((prisma) =>
-      prisma.case.findMany({
-        where:
-          staff?.role === InternalRole.Counselor
+    const limit = Math.min(
+      Math.max(Math.trunc(filters.limit ?? ADMIN_CASES_PAGE_SIZE), 1),
+      ADMIN_CASES_MAX_PAGE_SIZE,
+    );
+    const and: Prisma.CaseWhereInput[] = [];
+    if (staff?.role === InternalRole.Counselor) {
+      and.push(counselorCaseScope(staff));
+    }
+    if (filters.status) and.push({ status: filters.status });
+    const advisor = filters.advisor?.trim();
+    if (advisor) {
+      and.push({
+        assignedAdvisorName: { equals: advisor, mode: "insensitive" },
+      });
+    }
+    if (filters.unassigned) {
+      and.push({
+        OR: [{ assignedAdvisorName: null }, { assignedAdvisorName: "" }],
+      });
+    }
+    const q = filters.q?.replace(/\s+/g, " ").trim();
+    if (q) {
+      const contains = { contains: q, mode: "insensitive" as const };
+      and.push({
+        OR: [
+          { referenceCode: contains },
+          { title: contains },
+          { user: { fullName: contains } },
+          { user: { email: contains } },
+        ],
+      });
+    }
+    if (filters.awaiting) {
+      and.push({ id: { in: await this.awaitingReplyCaseIds() } });
+    }
+    if (filters.cursor) {
+      const after = decodeCaseCursor(filters.cursor);
+      and.push({
+        OR: [
+          { createdAt: { lt: after.createdAt } },
+          { createdAt: after.createdAt, id: { lt: after.id } },
+        ],
+      });
+    }
+
+    const rows =
+      (await this.prismaService.execute((prisma) =>
+        prisma.case.findMany({
+          where: and.length > 0 ? { AND: and } : undefined,
+          include: ADMIN_LIST_INCLUDE,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          // Un de plus que la page : c'est lui qui dit s'il y a une suite.
+          take: limit + 1,
+        }),
+      )) ?? [];
+    const page = rows.slice(0, limit);
+    const lastByCase = await this.lastMessages(page.map((c) => c.id));
+    return {
+      items: page.map((c) => {
+        // Les relations ne sont PAS chargées : les rendre vides ferait dire à
+        // la liste qu'un dossier n'a ni tâche ni note.
+        const {
+          documentRequests: _documents,
+          tasks: _tasks,
+          internalNotes: _notes,
+          timeline: _timeline,
+          messages: _messages,
+          ...summary
+        } = this.mapDbCase(c, { includeInternal: true });
+        return { ...summary, ...this.replyFields(lastByCase.get(c.id)) };
+      }),
+      nextCursor:
+        rows.length > limit ? encodeCaseCursor(page[page.length - 1]) : null,
+    };
+  }
+
+  /**
+   * Le dossier ouvert dans l'administration, avec ses tâches, pièces, notes
+   * et son historique (les `ADMIN_DETAIL_TIMELINE_LIMIT` événements les plus
+   * récents). Sans le fil : il se lit page par page. Un conseiller n'ouvre
+   * que SES dossiers ; pour lui, celui d'un autre n'existe pas (404).
+   */
+  async findOneForAdmin(id: string, staff: StaffActor) {
+    this.assertDb();
+    const row = await this.prismaService.execute((prisma) =>
+      prisma.case.findFirst({
+        where: {
+          id,
+          ...(staff.role === InternalRole.Counselor
             ? counselorCaseScope(staff)
-            : undefined,
-        include: ADMIN_LIST_INCLUDE,
-        orderBy: { createdAt: "desc" },
+            : {}),
+        },
+        include: ADMIN_DETAIL_INCLUDE,
       }),
     );
-    const list = items ?? [];
-    const lastByCase = await this.lastMessages(list.map((c) => c.id));
-    return list.map((c) => {
-      const last = lastByCase.get(c.id);
-      return {
-        ...this.mapDbCase({ ...c, messages: [] }, { includeInternal: true }),
-        lastMessageAt: last ? last.createdAt.toISOString() : null,
-        awaitingReply: last?.senderRole === "student",
-      };
-    });
+    if (!row) throw new NotFoundException(`Case ${id} not found.`);
+    const events = row.timelineEvents ?? [];
+    const { messages: _messages, ...detail } = this.mapDbCase(
+      {
+        ...row,
+        timelineEvents: events.slice(0, ADMIN_DETAIL_TIMELINE_LIMIT),
+      },
+      { includeInternal: true },
+    );
+    const last = (await this.lastMessages([id])).get(id);
+    return {
+      ...detail,
+      timelineTruncated: events.length > ADMIN_DETAIL_TIMELINE_LIMIT,
+      ...this.replyFields(last),
+    };
+  }
+
+  /**
+   * Ce que la liste affiche en tête, sur TOUS les dossiers de la portée et
+   * non sur la page chargée : combien d'élèves attendent une réponse, et les
+   * conseillers proposés dans le filtre.
+   */
+  async adminCaseListSummary(staff?: StaffActor) {
+    this.assertDb();
+    const scope: Prisma.CaseWhereInput =
+      staff?.role === InternalRole.Counselor ? counselorCaseScope(staff) : {};
+    const awaitingIds = await this.awaitingReplyCaseIds();
+    const [awaitingCount, advisorRows] = await Promise.all([
+      awaitingIds.length === 0
+        ? 0
+        : this.prismaService.execute((prisma) =>
+            prisma.case.count({
+              where: { AND: [scope, { id: { in: awaitingIds } }] },
+            }),
+          ),
+      this.prismaService.execute((prisma) =>
+        prisma.case.findMany({
+          where: { AND: [scope, { assignedAdvisorName: { not: null } }] },
+          select: { assignedAdvisorName: true },
+          distinct: ["assignedAdvisorName"],
+        }),
+      ),
+    ]);
+    // « Awa KPB » et « awa kpb » sont le même conseiller pour le filtre
+    // (comparaison sans casse) : une seule entrée.
+    const advisors = new Map<string, string>();
+    for (const row of advisorRows ?? []) {
+      const name = row.assignedAdvisorName?.trim();
+      if (name && !advisors.has(name.toLowerCase())) {
+        advisors.set(name.toLowerCase(), name);
+      }
+    }
+    return {
+      awaitingCount: awaitingCount ?? 0,
+      advisors: [...advisors.values()].sort((a, b) => a.localeCompare(b, "fr")),
+    };
+  }
+
+  private replyFields(last?: { senderRole: string; createdAt: Date }) {
+    return {
+      lastMessageAt: last ? last.createdAt.toISOString() : null,
+      awaitingReply: last?.senderRole === "student",
+    };
+  }
+
+  /**
+   * Les dossiers dont le DERNIER message vient de l'élève. Une lecture
+   * d'index par dossier (`(caseId, createdAt)`), comme `lastMessages` — mais
+   * sur tous les dossiers, puisque le filtre et le compteur portent sur toute
+   * la liste et non sur la page chargée. Sans portée : l'appelant recoupe
+   * avec la sienne.
+   */
+  private async awaitingReplyCaseIds(): Promise<string[]> {
+    const rows = await this.prismaService.execute(async (prisma) =>
+      typeof prisma.$queryRaw !== "function"
+        ? []
+        : prisma.$queryRaw<Array<{ id: string }>>`SELECT c."id"
+          FROM "Case" c
+          JOIN LATERAL (
+            SELECT m."senderRole" FROM "CaseMessage" m
+            WHERE m."caseId" = c."id"
+            ORDER BY m."createdAt" DESC, m."id" DESC
+            LIMIT 1
+          ) last ON TRUE
+          WHERE last."senderRole" = 'student'`,
+    );
+    return (rows ?? []).map((r) => r.id);
   }
 
   /**
@@ -294,16 +551,26 @@ export class CasesService {
     return { id: caseRecord.id, userId: caseRecord.userId };
   }
 
+  /**
+   * Crée le dossier — ou rend celui qui existe déjà si la même demande vient
+   * d'être faite.
+   *
+   * Sur un réseau instable, la création arrive au serveur mais la réponse se
+   * perd : l'app garde le dossier sous un identifiant local et le renvoie à sa
+   * synchronisation suivante. Sans garde, l'élève se retrouvait avec deux
+   * dossiers et deux conseillers (audit avant la 59). Les apps installées
+   * n'envoient aucun identifiant de demande, et la validation refuse tout
+   * champ inconnu : la demande est donc reconnue à son CONTENU — même élève,
+   * même type, mêmes titre, description, contexte et bourse — dans les
+   * `DUPLICATE_CASE_WINDOW_MS`, tant que le premier dossier n'est pas clos.
+   * Le renvoi rend le dossier existant, sans seconde notification ni second
+   * e-mail à l'équipe.
+   */
   async create(input: CreateCaseDto, userId?: string) {
     this.assertDb();
 
-    const created = await this.prismaService.execute((prisma) =>
+    const outcome = await this.prismaService.execute((prisma) =>
       prisma.$transaction(async (tx) => {
-        const activeCounsellors = await tx.counsellor.findMany({
-          where: { isActive: true },
-          orderBy: { createdAt: "asc" },
-        });
-
         // Le lien vers la bourse n'est gardé que si la fiche existe : un
         // identifiant inconnu (fiche retirée, app plus récente) crée le dossier
         // sans lien plutôt que d'échouer sur la clé étrangère.
@@ -313,6 +580,41 @@ export class CasesService {
               select: { id: true },
             })
           : null;
+
+        if (userId) {
+          // Deux envois SIMULTANÉS de la même demande ne se voient pas l'un
+          // l'autre : le second attend ici que le premier ait fini, puis
+          // trouve son dossier. Le verrou tombe avec la transaction.
+          // `$executeRaw`, pas `$queryRaw` : la fonction rend `void`, que
+          // Prisma ne sait pas relire (« Failed to deserialize column of type
+          // 'void' ») — avec `$queryRaw`, CHAQUE création échouait sur un
+          // vrai Postgres alors que les tests unitaires passaient.
+          if (typeof tx.$executeRaw === "function") {
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`case-create:${userId}`}))`;
+          }
+          const existing = await tx.case.findFirst({
+            where: {
+              userId,
+              type: input.type,
+              title: input.title,
+              description: input.description,
+              contextLabel: input.contextLabel,
+              scholarshipId: linkedScholarship?.id ?? null,
+              status: { notIn: CLOSED_CASE_STATUSES },
+              createdAt: {
+                gte: new Date(Date.now() - DUPLICATE_CASE_WINDOW_MS),
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            include: CASE_INCLUDE,
+          });
+          if (existing) return { record: existing, duplicate: true };
+        }
+
+        const activeCounsellors = await tx.counsellor.findMany({
+          where: { isActive: true },
+          orderBy: { createdAt: "asc" },
+        });
 
         // Insert with a temporary unique placeholder, then derive the real
         // referenceCode from the DB-assigned `seq`. This is collision-free by
@@ -403,17 +705,29 @@ export class CasesService {
         // n° 5c). Les pièces que demande un conseiller arrivent par
         // l'administration.
 
-        return tx.case.findUnique({
-          where: { id: c.id },
-          include: CASE_INCLUDE,
-        });
+        return {
+          record: await tx.case.findUnique({
+            where: { id: c.id },
+            include: CASE_INCLUDE,
+          }),
+          duplicate: false,
+        };
       }),
     );
 
+    const created = outcome?.record;
     if (!created) {
       throw new ServiceUnavailableException("Failed to create case.");
     }
     const mapped = this.mapDbCase(created, { includeInternal: !userId });
+    if (outcome.duplicate) {
+      // Tout a déjà été fait à la première création : ni notification « Demande
+      // reçue », ni crédit de parrainage, ni e-mail à l'équipe une seconde fois.
+      this.logger.log(
+        `Duplicate case creation ignored: returned existing case ${created.id}.`,
+      );
+      return mapped;
+    }
     if (userId) {
       // No-cash referral reward (KPB-77): if this student was referred, credit
       // their referrer on the FIRST case. Fire-and-forget and OUTSIDE the

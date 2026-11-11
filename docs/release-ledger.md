@@ -781,6 +781,34 @@ connexion par SMS et les dates limites par pays sont des décisions produit ; la
 dossiers de l'administration, le second facteur admin et l'infrastructure (sauvegardes hors du
 serveur, alerte de panne, e-mail des codes) restent à traiter, sans build.
 
+### Correctifs sans build après l'audit (11/11/2026) — serveur, administration, exploitation
+
+Quatre constats de l'audit du 10/11 qui se corrigent **sans nouvelle build de l'app** (branche
+`claude/jovial-agnesi-296eca`). La 59 archivée (`c778ff29`) n'est pas touchée : aucun fichier de
+`lib/` ne change. **Rien n'est déployé par la fusion** : ces correctifs n'atteignent la production
+qu'au prochain « Deploy backend (VPS) » (`scope=full`, API et admin ensemble).
+
+- **administration, liste des dossiers** — `GET /admin/cases` rend une page de 50 dossiers
+  (`{ items, nextCursor }`) au lieu de tous les dossiers avec leurs tâches, événements, pièces
+  et notes (environ 1 250 dossiers et plus de 80 000 événements en production). Statut,
+  conseiller, « sans conseiller », « réponse attendue » et recherche sont appliqués par le
+  serveur ; les relations ne sont lues que pour le dossier ouvert (`GET /admin/cases/:id`) ; le
+  compteur des réponses attendues porte sur tous les dossiers (`GET /admin/cases/summary`). Un
+  conseiller ne voit toujours que ses dossiers. Le bouton « Réponses attendues en premier »
+  devient un filtre « Réponses attendues ». **Aucune migration.**
+- **dossiers en double** — `POST /cases` rend le dossier existant quand le même élève renvoie
+  la même demande (type, titre, description, contexte, bourse) dans les 24 heures et que le
+  premier dossier n'est pas clos : une réponse perdue sur un réseau instable ne donne plus deux
+  dossiers et deux conseillers. Aucun champ ajouté à la requête : les apps installées en
+  profitent telles quelles.
+- **exploitation** — action `app-notice-set` (constantes `APP_NOTICE_FR`, `APP_NOTICE_EN`,
+  `APP_NOTICE_URL`, vides par défaut) ; `set_env_key` n'écrit plus par `sed`.
+- **infrastructure** — rotation des journaux Docker (`json-file`, 10 Mo × 5 par service) dans
+  `docker-compose.yml` ; elle ne s'applique à un conteneur qu'à sa prochaine recréation.
+
+**À savoir au déploiement** : un onglet de l'administration resté ouvert doit être rechargé
+(l'ancienne page attend l'ancienne forme de la liste).
+
 ### Ce que 52 embarque
 
 - **Liste d'attente Karatou Premium (PR #258).** Point 8 de la revue du build

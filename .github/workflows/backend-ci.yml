@@ -165,6 +165,14 @@ jobs:
           KPB_RUN_POSTGRES_INTEGRATION: 'true'
         run: npm run test:integration:referral-campaign
 
+      # Liste des dossiers de l'administration (curseur, filtres, recherche,
+      # « l'élève attend une réponse », portée du conseiller) et dossiers créés
+      # en double : tout vit dans des `where` et du SQL. Sur un vrai Postgres,
+      # le verrou par élève écrit avec `$queryRaw` faisait échouer CHAQUE
+      # création de dossier alors que les tests unitaires passaient.
+      - name: PostgreSQL admin case list + duplicate case integration
+        run: npm run test:integration:cases-admin
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5

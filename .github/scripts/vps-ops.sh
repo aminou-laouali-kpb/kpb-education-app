@@ -33,10 +33,34 @@ require_relay() {
 # Pose ou REMPLACE une clé dans .env. Remplacer plutôt qu'ajouter : un .env
 # avec deux fois la même clé garde la dernière, et devient illisible pour la
 # personne qui le relit.
+#
+# La valeur est écrite TELLE QUELLE, octet pour octet. Avant, elle passait par
+# `sed "s|^clé=.*|clé=valeur|"` : un `|` dans la valeur coupait la commande, un
+# `&` y recopiait l'ancienne ligne, un `\` s'y perdait. Sans conséquence tant
+# que les valeurs étaient `true`, une date ou un numéro ; l'avis de l'app
+# (`app-notice-set`) est la première valeur en texte libre (audit avant la 59).
+# Seul un retour à la ligne est refusé : il ferait de la valeur deux lignes du
+# fichier, dont la seconde serait lue comme une autre clé.
 set_env_key() {
-  local key="$1" value="$2"
+  local key="$1" value="$2" line tmp
+  case "$value" in
+    *$'\n'*|*$'\r'*)
+      echo "::error::${key} : une valeur du .env tient sur UNE ligne — retour à la ligne refusé, rien n'est écrit."
+      exit 1
+      ;;
+  esac
   if grep -qE "^${key}=" .env; then
-    sed -i.bak "s|^${key}=.*|${key}=${value}|" .env
+    # Copie d'abord (elle prend les droits du .env, qui porte des secrets),
+    # contenu ensuite, renommage enfin : le .env n'est jamais vu à moitié écrit.
+    tmp=".env.tmp.$$"
+    cp -p .env "$tmp"
+    while IFS= read -r line || [ -n "$line" ]; do
+      case "$line" in
+        "${key}="*) printf '%s=%s\n' "$key" "$value" ;;
+        *) printf '%s\n' "$line" ;;
+      esac
+    done < .env > "$tmp"
+    mv -f "$tmp" .env
   else
     # Un .env dont la dernière ligne n'est pas terminée : sans ce saut de ligne,
     # la clé se collerait au bout de cette ligne (souvent un secret) et le
@@ -511,6 +535,116 @@ RECOMMENDED_APP_VERSION=""
 # Format international, sans espace : `+` puis 8 à 15 chiffres (+33768674292).
 APP_WHATSAPP_NUMBER=""
 
+# ── L'avis de l'app ─────────────────────────────────────────────────────────
+#
+# Le message court affiché en haut de l'accueil, qu'on ferme (`/config/app` →
+# `notice`, build 59 et suivantes), posé par `app-notice-set`. C'est le seul
+# moyen de parler à tous les téléphones installés sans nouvelle build ni
+# notification : une date limite qui approche, un incident, un changement de
+# contact.
+#
+# **VIDES par défaut, et c'est voulu.** Vides, l'action écrit les trois clés
+# sans valeur : le serveur sert `notice: null`, l'app n'affiche rien — c'est
+# aussi comme cela qu'on RETIRE un avis. Les textes s'écrivent ici, par PR,
+# relus comme tout ce qui s'affiche à des élèves ; l'action n'accepte aucune
+# valeur libre.
+#
+#   • FR  : obligatoire dès qu'il y a un avis (langue de base de l'app). 240
+#           caractères au plus : au-delà, le serveur couperait la phrase.
+#   • EN  : facultatif ; vide, les téléphones en anglais lisent le français.
+#   • URL : facultatif, `https://…` — le bouton « ouvrir » de l'avis.
+#
+# Entre apostrophes droites, pour que le shell n'y touche pas. Une apostrophe
+# du texte s'écrit donc `'\''` (« l'\''app »), ou mieux : l'apostrophe
+# typographique « ’ », qui ne demande rien.
+#
+# Ce qu'un texte ne peut pas contenir — l'action le refuse, voir
+# `check_app_notice` : `$`, `\`, `#`, un guillemet ou une apostrophe droite EN
+# TÊTE, un retour à la ligne, des espaces en trop.
+APP_NOTICE_FR=''
+APP_NOTICE_EN=''
+APP_NOTICE_URL=''
+
+# Longueur d'un texte comme le serveur la compte (`String.length` : un par
+# caractère, deux pour un émoji). Comptée sur les octets, donc la même quelle
+# que soit la langue du shell du VPS — `${#texte}` y compte des octets en
+# locale C et des caractères en UTF-8.
+utf16_length() {
+  local points astral
+  points=$(printf '%s' "$1" | LC_ALL=C tr -d '\200-\277' | wc -c)
+  astral=$(printf '%s' "$1" | LC_ALL=C tr -cd '\360-\367' | wc -c)
+  echo $((points + astral))
+}
+
+APP_NOTICE_MAX_LENGTH=240
+
+# Pourquoi un texte d'avis est refusé (rien si le texte convient).
+#
+# Chaque règle vient d'un endroit précis de la chaîne `.env` → Docker Compose →
+# conteneur → `/config/app`, relevé avec le vrai `docker compose config` :
+#   • `$`  : Compose remplace `$NOM` et `${NOM}` par une variable du serveur
+#            (« Voir $HOME » devient « Voir /root ») ;
+#   • ` #` : Compose coupe la valeur au premier dièse précédé d'une espace ;
+#   • `"` ou `'` en tête : Compose lit une valeur entre guillemets, puis ÉCHOUE
+#            sur la suite — le `.env` entier devient illisible et l'API ne
+#            repart pas ;
+#   • `\`  : aucun usage dans un avis, et un `\$` désarmerait la règle du `$` ;
+#   • au-delà de 240 caractères, ou avec des espaces en trop, le serveur
+#     servirait autre chose que ce qui est écrit ici.
+# `|` et `&` sont PERMIS (« Bourses & visas ») : `set_env_key` écrit la valeur
+# sans la faire passer par `sed`.
+notice_text_refusal() { # valeur
+  local value="$1" length
+  local LC_ALL=C
+  [ -n "$value" ] || return 0
+  if [[ "$value" == *[[:cntrl:]]* ]]; then
+    echo "contient un retour à la ligne, une tabulation ou un caractère de contrôle (le texte tient sur une ligne)"; return 0
+  fi
+  case "$value" in
+    *'$'*) echo "contient « \$ » (Docker Compose le remplacerait par une variable du serveur)"; return 0 ;;
+    *'\'*) echo "contient une barre oblique inverse « \\ »"; return 0 ;;
+    *'#'*) echo "contient « # » (Docker Compose couperait le texte à cet endroit)"; return 0 ;;
+    '"'*|"'"*) echo "commence par un guillemet ou une apostrophe droite (Docker Compose ne pourrait plus lire le .env) — utiliser « » ou ’"; return 0 ;;
+    ' '*|*' '|*'  '*) echo "commence ou finit par une espace, ou contient deux espaces de suite (le serveur les retirerait)"; return 0 ;;
+  esac
+  length=$(utf16_length "$value")
+  if [ "$length" -gt "$APP_NOTICE_MAX_LENGTH" ]; then
+    echo "fait ${length} caractères, ${APP_NOTICE_MAX_LENGTH} au plus (le serveur couperait la phrase)"; return 0
+  fi
+}
+
+# Pourquoi le lien d'un avis est refusé (rien s'il convient). Le serveur
+# n'accepte qu'une adresse `https://` sans identifiant ; une adresse refusée
+# par lui donnerait un avis SANS bouton, en silence.
+notice_url_refusal() { # valeur
+  local value="$1" shape='^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[!-~]*)?$'
+  local LC_ALL=C
+  [ -n "$value" ] || return 0
+  if [ "${#value}" -gt 500 ] || ! [[ "$value" =~ $shape ]]; then
+    echo "n'est pas une adresse « https://… » sans espace ni caractère accentué"; return 0
+  fi
+  case "$value" in
+    *'$'*|*'\'*|*'"'*|*"'"*|*'`'*) echo "contient « \$ », « \\ », un guillemet, une apostrophe ou un accent grave"; return 0 ;;
+  esac
+}
+
+# Contrôle les trois constantes de l'avis. Tout refus est dit, puis l'action
+# s'arrête : un avis s'affiche à tous les élèves, on ne l'écrit pas à moitié.
+check_app_notice() {
+  local refused=0 reason
+  reason=$(notice_text_refusal "$APP_NOTICE_FR")
+  [ -z "$reason" ] || { echo "::error::APP_NOTICE_FR ${reason}."; refused=1; }
+  reason=$(notice_text_refusal "$APP_NOTICE_EN")
+  [ -z "$reason" ] || { echo "::error::APP_NOTICE_EN ${reason}."; refused=1; }
+  reason=$(notice_url_refusal "$APP_NOTICE_URL")
+  [ -z "$reason" ] || { echo "::error::APP_NOTICE_URL ${reason}."; refused=1; }
+  if [ -z "$APP_NOTICE_FR" ] && { [ -n "$APP_NOTICE_EN" ] || [ -n "$APP_NOTICE_URL" ]; }; then
+    echo "::error::APP_NOTICE_FR est vide alors que APP_NOTICE_EN ou APP_NOTICE_URL ne l'est pas : sans texte français, le serveur ne sert AUCUN avis. Remplir le français, ou vider les trois."
+    refused=1
+  fi
+  [ "$refused" -eq 0 ] || exit 1
+}
+
 # Nombre de formations de l'import que la recherche SERVIRAIT : active, sous un
 # établissement actif, du périmètre de l'import (même définition que
 # `eefProgramWhere` côté serveur). Zéro = un espace qui s'ouvrirait VIDE.
@@ -670,6 +804,9 @@ show_state() {
   echo
   echo "── Portes de version dans le .env (jamais de valeur libre ici) ──"
   grep -E '^KPB_(MIN|RECOMMENDED)_APP_VERSION=' .env || echo "(aucune : minVersion 0.0.0, aucun bandeau)"
+  echo
+  echo "── Ligne WhatsApp et avis servis à l'app (build 59 ; publics, affichés aux élèves) ──"
+  grep -E '^KPB_APP_(WHATSAPP_NUMBER|NOTICE_(FR|EN|URL))=' .env || echo "(aucun : numéro compilé dans l'app, aucun avis)"
   echo
   echo "── Drapeaux de la 57 dans le .env (parrainage, communauté, bots, « Mes 10 bourses », onboarding V2, messagerie du dossier) ──"
   show_flags57
@@ -851,6 +988,51 @@ case "$ACTION" in
     set_env_key KPB_APP_WHATSAPP_NUMBER "$APP_WHATSAPP_NUMBER"
     echo "── .env après écriture ──"; grep -E '^KPB_APP_WHATSAPP_NUMBER' .env
     recreate_api_same_image
+    ;;
+
+  app-notice-set)
+    # Pose (ou, si les trois constantes sont vides, RETIRE) l'avis affiché en
+    # haut de l'accueil des apps 59 et suivantes. Ne touche à aucun
+    # interrupteur ni au numéro WhatsApp. Les textes sont contrôlés AVANT
+    # toute écriture : un caractère que Docker Compose réinterprète servirait
+    # un autre texte que celui relu en PR, ou rendrait le .env illisible.
+    require_relay KPB_APP_NOTICE_FR KPB_APP_NOTICE_EN KPB_APP_NOTICE_URL
+    check_app_notice
+    echo "── Avis à servir (relu en PR) ──"
+    printf 'KPB_APP_NOTICE_FR=%s\n' "$APP_NOTICE_FR"
+    printf 'KPB_APP_NOTICE_EN=%s\n' "$APP_NOTICE_EN"
+    printf 'KPB_APP_NOTICE_URL=%s\n' "$APP_NOTICE_URL"
+    if [ -n "$APP_NOTICE_FR" ]; then
+      # Le backend déployé doit SERVIR l'avis : sinon l'action « réussit » et
+      # aucun téléphone n'affiche rien. Retirer un avis, lui, ne dépend pas du
+      # code déployé — on doit toujours pouvoir revenir en arrière.
+      if ! docker compose exec -T api grep -q KPB_APP_NOTICE_FR dist/modules/config/app-config.controller.js; then
+        echo "::error::Le backend déployé ne sert pas l'avis (dist/modules/config/app-config.controller.js ne lit pas KPB_APP_NOTICE_FR) : app-notice-set n'aurait aucun effet visible. Déployer d'abord le backend de la build 59 (deploy.yml, scope=full)."
+        exit 1
+      fi
+      echo "Longueur : $(utf16_length "$APP_NOTICE_FR") caractère(s) en français, $(utf16_length "$APP_NOTICE_EN") en anglais (${APP_NOTICE_MAX_LENGTH} au plus)."
+      echo "AVANT D'APPLIQUER : relire le texte tel qu'il est affiché ci-dessus, et ouvrir le lien. Tous les élèves en 59 et suivantes le verront à leur prochain lancement ou retour dans l'app."
+    else
+      echo "(vide : aucun avis — s'il y en a un d'affiché, il est retiré)"
+    fi
+    # N'écrit que sur un « false » EXPLICITE : toute autre valeur de DRY_RUN
+    # (vide, faute de frappe) simule. Un texte montré à tous les élèves ne
+    # part pas sur une coquille.
+    if [ "$DRY_RUN" != "false" ]; then
+      echo "── SIMULATION : les contrôles passent, rien n'est écrit. Décocher « dry_run » pour appliquer. ──"
+      exit 0
+    fi
+    cp -p .env ".env.bak.$(date -u +%Y%m%dT%H%M%SZ)"
+    set_env_key KPB_APP_NOTICE_FR "$APP_NOTICE_FR"
+    set_env_key KPB_APP_NOTICE_EN "$APP_NOTICE_EN"
+    set_env_key KPB_APP_NOTICE_URL "$APP_NOTICE_URL"
+    echo "── .env après écriture ──"; grep -E '^KPB_APP_NOTICE_(FR|EN|URL)=' .env
+    recreate_api_same_image
+    # Ce que le PROCESSUS lit, comparé à ce qui est écrit ici : c'est la preuve
+    # que Docker Compose n'a rien changé au texte en relisant le .env.
+    prove_container_env KPB_APP_NOTICE_FR "$APP_NOTICE_FR"
+    prove_container_env KPB_APP_NOTICE_EN "$APP_NOTICE_EN"
+    prove_container_env KPB_APP_NOTICE_URL "$APP_NOTICE_URL"
     ;;
 
   eef-teaser-off)

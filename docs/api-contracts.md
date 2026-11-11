@@ -1171,7 +1171,7 @@ serveur plus ancien (clés absentes) se comporte comme avant.
 | Clé | Forme | Variable d'environnement | Sens |
 |---|---|---|---|
 | `support.whatsappNumber` | `"+33768674292"` ou `null` | `KPB_APP_WHATSAPP_NUMBER` | La ligne WhatsApp officielle. `null` : l'app garde le numéro compilé dans sa build. Un numéro qui n'est pas au format international (`+` puis 8 à 15 chiffres) vaut `null`. Action d'exploitation : `app-whatsapp-set`. |
-| `notice` | `{fr, en, url}` ou `null` | `KPB_APP_NOTICE_FR`, `KPB_APP_NOTICE_EN`, `KPB_APP_NOTICE_URL` | Un avis court (240 caractères) affiché en haut de l'accueil, **qu'on ferme**. Sans texte français, `null`. `en` et `url` sont facultatifs ; un lien qui n'est pas en https vaut `null`. Un avis fermé ne revient pas pour le même texte. |
+| `notice` | `{fr, en, url}` ou `null` | `KPB_APP_NOTICE_FR`, `KPB_APP_NOTICE_EN`, `KPB_APP_NOTICE_URL` | Un avis court (240 caractères) affiché en haut de l'accueil, **qu'on ferme**. Sans texte français, `null`. `en` et `url` sont facultatifs ; un lien qui n'est pas en https vaut `null`. Un avis fermé ne revient pas pour le même texte. Action d'exploitation : `app-notice-set` (constantes `APP_NOTICE_FR`, `APP_NOTICE_EN`, `APP_NOTICE_URL` de `.github/scripts/vps-ops.sh`, relues en PR ; vides, l'avis est retiré). |
 
 Depuis la 59, l'app **garde la dernière réponse** de cette route sur le
 téléphone (sept jours) et la relit au démarrage avant que le réseau réponde.
