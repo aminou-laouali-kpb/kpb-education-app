@@ -319,6 +319,7 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
           durationFr: c?.fillDuration ? '' : r.durationFr,
           requirementsFr: c?.previousRequirementsFr ?? r.requirementsFr,
           applicationFeeEur: c ? null : r.applicationFeeEur,
+          isActive: true,
         };
       }),
     );
@@ -348,6 +349,7 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
       applicationFeeEur: r.applicationFeeEur,
       durationFr: r.durationFr,
       requirementsFr: r.requirementsFr,
+      isActive: r.isActive,
     }));
     const plan = planNaCorrections(doc, progRows, instRows);
     const priced = plan.programs.filter((c) => c.data.tuitionFr);
@@ -367,12 +369,24 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
     expect(plan.programs.filter((x) => x.data.requirementsFr)).toHaveLength(21);
     expect(plan.institutions.map((c) => c.id).sort()).toEqual(['na-ca-uqac', 'na-ca-uqam']);
     expect(plan.skipped).toEqual([]);
+    // Admissions suspendues par l'UQAM : la fiche publiée passe hors ligne.
+    expect(plan.programs.filter((c) => c.data.isActive === false).map((c) => c.id)).toEqual([
+      'na-ca-uqam--baccalaureat-informatique-gestion',
+    ]);
 
     // Une retouche faite dans l'admin n'est jamais écrasée.
     const edited = progRows.map((r) => (r.id === priced[0].id ? { ...r, tuitionFr: 'Retouché dans l’admin' } : r));
     const again = planNaCorrections(doc, edited, instRows.map((r) => (r.id === 'na-ca-uqam' ? { ...r, tuitionLabelFr: 'Retouché' } : r)));
     expect(again.programs.find((c) => c.id === priced[0].id)?.data.tuitionFr).toBeUndefined();
     expect(again.skipped.map((s) => s.id)).toEqual(expect.arrayContaining([priced[0].id, 'na-ca-uqam']));
+  });
+
+  it('une formation aux admissions suspendues est créée hors ligne', () => {
+    const doc = load();
+    const uqam = doc.institutions.find((i) => i.id === 'na-ca-uqam')!;
+    const p = uqam.programs.find((x) => x.slug === 'baccalaureat-informatique-gestion')!;
+    expect(naProgramCreateData(p, uqam, doc).isActive).toBe(false);
+    expect(doc.institutions.flatMap((i) => i.programs).filter((x) => x.isActive === false)).toHaveLength(1);
   });
 
   it('rejouée après application : plus aucune correction', () => {
@@ -386,6 +400,7 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
         applicationFeeEur: r.applicationFeeEur,
         durationFr: r.durationFr,
         requirementsFr: r.requirementsFr,
+        isActive: r.isActive,
       })),
       doc.institutions.map((i) => ({ id: i.id, tuitionLabelFr: i.tuitionLabelFr })),
     );

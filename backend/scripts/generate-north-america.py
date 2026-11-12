@@ -1270,6 +1270,13 @@ if os.path.exists(AJOUTS):
             pid = f"{x['id']}--{p['slug']}"
             if pid in before:
                 correction(pid)["fillApplicationFee"] = True
+    for fx in aj.get("deactivations", []):
+        x = by_id[fx["institutionId"]]
+        p = next(p for p in x["programs"] if p["slug"] == fx["slug"])
+        p["isActive"], p["inactiveReason"] = False, fx["reason"]
+        pid = f"{x['id']}--{fx['slug']}"
+        if pid in before:
+            correction(pid)["deactivate"] = True
     for fx in aj.get("durationFixes", []):
         x = by_id[fx["institutionId"]]
         p = next(p for p in x["programs"] if p["slug"] == fx["slug"])

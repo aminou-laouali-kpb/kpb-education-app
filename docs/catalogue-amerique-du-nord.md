@@ -337,9 +337,14 @@ APS exigé seulement pour la Chine, le Vietnam et l'Inde.
   2026-2027) et pour l'hiver 2028 au Québec : les fiches le disent.
 - Rentrées de **janvier 2027 closes** pour les 3 universités américaines :
   les fiches annoncent août 2027.
+- **UQAM, Baccalauréat en informatique de gestion** : admissions suspendues
+  par l'UQAM ; mise hors ligne validée par le propriétaire le 12/11/2026
+  (`deactivations` de la source : créée hors ligne, ou désactivée par
+  l'import si elle est déjà publiée).
 - **MBA UQTR / UQO** : 3 ans d'expérience exigés. **Masters en santé publique
   UCLouvain / ULiège** : diplôme de 5 ans et expérience exigés — peu adaptés à
-  un élève qui sort du bachelier, gardés pour les profils expérimentés.
+  un élève qui sort du bachelier, gardés pour les profils expérimentés
+  (décision du propriétaire, 12/11/2026).
 - **Montants dérivés** (non publiés tels quels) : La Cité, deux programmes
   (2 × l'étape 1, marqué « ≈ ») ; UQAM maîtrise en informatique (moyenne sur
   2 ans).

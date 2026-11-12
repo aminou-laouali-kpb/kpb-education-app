@@ -96,6 +96,10 @@ export type NaProgramSource = {
   /// Formation ajoutée après l'établissement (troisième passe, 12/11/2026) :
   /// sa propre date de relevé.
   consultedAt?: string;
+  /// Admissions suspendues par l'établissement : la formation est créée HORS
+  /// LIGNE (et mise hors ligne si elle est déjà publiée, via `corrections`).
+  isActive?: boolean;
+  inactiveReason?: string;
 };
 
 /// Programme de langue en amont (anglais ou français) publié par
@@ -156,6 +160,8 @@ export type NaProgramCorrection = {
   previousRequirementsFr?: string[];
   /// Frais de candidature trouvés : écrits seulement si la ligne n'en a pas.
   fillApplicationFee?: boolean;
+  /// Admissions suspendues : la ligne publiée est mise hors ligne.
+  deactivate?: boolean;
   consultedAt: string;
 };
 export type NaInstitutionCorrection = {
@@ -344,7 +350,7 @@ export function validateNaSource(doc: NaSource): string[] {
   );
   for (const c of doc.corrections?.programs ?? []) {
     if (!programIds.has(c.programId)) errors.push(`correction ${c.programId} : formation absente de la source`);
-    if (!c.previousTuitionFr && !c.fillDuration && !c.previousRequirementsFr && !c.fillApplicationFee) {
+    if (!c.previousTuitionFr && !c.fillDuration && !c.previousRequirementsFr && !c.fillApplicationFee && !c.deactivate) {
       errors.push(`correction ${c.programId} : rien à corriger`);
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(c.consultedAt ?? '')) errors.push(`correction ${c.programId} : consultedAt illisible`);
@@ -436,7 +442,7 @@ export function naProgramCreateData(p: NaProgramSource, inst: NaInstitutionSourc
     searchText: programSearchText(p.nameFr, city),
     sourceUrl: p.sourceUrl,
     lastVerifiedAt: naVerifiedAt(doc, inst, p),
-    isActive: true,
+    isActive: p.isActive !== false,
   };
 }
 
@@ -533,6 +539,7 @@ export type NaCorrectionRowProgram = {
   applicationFeeEur: number | null;
   durationFr: string;
   requirementsFr?: string[];
+  isActive?: boolean;
 };
 export type NaCorrectionRowInstitution = { id: string; tuitionLabelFr: string };
 
@@ -551,6 +558,7 @@ export type NaCorrectionPlan = {
       durationEn?: string;
       requirementsFr?: string[];
       requirementsEn?: string[];
+      isActive?: boolean;
       sourceUrl?: string;
       lastVerifiedAt: Date;
     };
@@ -615,6 +623,7 @@ export function planNaCorrections(
     if (c.fillApplicationFee && row.applicationFeeEur == null && next.applicationFeeEur != null) {
       data.applicationFeeEur = next.applicationFeeEur;
     }
+    if (c.deactivate && row.isActive !== false) data.isActive = false;
     if (Object.keys(data).length > 1) plan.programs.push({ id: c.programId, whereTuitionFr, whereRequirementsFr, data });
   }
   for (const c of doc.corrections?.institutions ?? []) {

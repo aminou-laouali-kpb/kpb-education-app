@@ -3441,5 +3441,12 @@
         "Fall and winter entry. You apply through Bishop's application system; no deadline specific to this master's is shown on the page (check with the department)."
       ]
     }
+  ],
+  "deactivations": [
+    {
+      "institutionId": "na-ca-uqam",
+      "slug": "baccalaureat-informatique-gestion",
+      "reason": "Admissions suspendues par l'UQAM (« Les admissions sont suspendues pour ce programme », etudier.uqam.ca/programme?code=7116, relevé du 12/11/2026) ; mise hors ligne validée par le propriétaire le 12/11/2026."
+    }
   ]
 }

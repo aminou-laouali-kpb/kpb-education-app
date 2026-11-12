@@ -95,7 +95,7 @@ async function main() {
     doc,
     await prisma.program.findMany({
       where: { id: { in: (doc.corrections?.programs ?? []).map((c) => c.programId) } },
-      select: { id: true, tuitionFr: true, applicationFeeEur: true, durationFr: true, requirementsFr: true },
+      select: { id: true, tuitionFr: true, applicationFeeEur: true, durationFr: true, requirementsFr: true, isActive: true },
     }),
     await prisma.institution.findMany({
       where: { id: { in: (doc.corrections?.institutions ?? []).map((c) => c.institutionId) } },
@@ -149,6 +149,7 @@ async function main() {
         c.data.durationFr && `durée → ${c.data.durationFr}`,
         c.data.requirementsFr && `conditions → ${c.data.requirementsFr.length} ligne(s)`,
         c.data.applicationFeeEur != null && `frais de candidature → ${c.data.applicationFeeEur} €`,
+        c.data.isActive === false && 'HORS LIGNE (admissions suspendues)',
       ];
       console.log(`   ~ ${c.id} : ${what.filter(Boolean).join(' ; ')}`);
     }

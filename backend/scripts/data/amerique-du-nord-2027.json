@@ -3696,7 +3696,9 @@
             "Limited-enrolment program: in the fall, at most 15 places for applicants from outside Québec; no admission from outside Québec in winter. Selection is based on the quality of your academic record. French shown by a test (exempt with a degree from a French-language university).",
             "International deadline: March 1 (full-time only). You apply online on UQAM's website; CAD 155 fee."
           ],
-          "sourceUrl": "https://services-medias.uqam.ca/media/uploads/sites/30/2026/06/15123825/2026-2027_EI_C1.pdf"
+          "sourceUrl": "https://services-medias.uqam.ca/media/uploads/sites/30/2026/06/15123825/2026-2027_EI_C1.pdf",
+          "isActive": false,
+          "inactiveReason": "Admissions suspendues par l'UQAM (« Les admissions sont suspendues pour ce programme », etudier.uqam.ca/programme?code=7116, relevé du 12/11/2026) ; mise hors ligne validée par le propriétaire le 12/11/2026."
         },
         {
           "slug": "maitrise-informatique",
@@ -9147,7 +9149,8 @@
         "consultedAt": "2026-11-12",
         "previousRequirementsFr": [
           "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
-        ]
+        ],
+        "deactivate": true
       },
       {
         "programId": "na-ca-uqam--maitrise-informatique",
