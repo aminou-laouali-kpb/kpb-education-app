@@ -4470,4 +4470,62 @@ const Map<String, String> appTranslationsFr = {
       'Pas de connexion. Réessaie quand tu seras en ligne.',
   'referral_err_generic_here':
       'Le code n’a pas pu être vérifié. Réessaie plus tard.',
+  // ── Visite guidée de l'application (build 59) ────────────────────────────
+  'app_tour_title': 'Visite de l\'application',
+  'app_tour_step_counter': 'Étape @current sur @total',
+  'app_tour_skip': 'Passer',
+  'app_tour_back': 'Retour',
+  'app_tour_next': 'Suivant',
+  'app_tour_start': 'Commencer la visite',
+  'app_tour_finish': 'J\'ai compris',
+  'app_tour_skipped_hint':
+      'Tu pourras revoir la visite quand tu veux : Profil → « Revoir la visite ».',
+  'app_tour_welcome_title': 'Bienvenue sur KPB Education !',
+  'app_tour_welcome_title_named': 'Bienvenue, @name !',
+  'app_tour_welcome_body':
+      'On te montre en 1 minute où se trouve chaque chose dans l\'application : les bourses, les écoles, tes outils et ton conseiller KPB.\n\nÀ chaque étape, regarde la partie éclairée de l\'écran, puis appuie sur le bouton bleu.',
+  'app_tour_home_title': 'L\'Accueil',
+  'app_tour_home_body':
+      'C\'est ta page de départ. Tu y trouves ta prochaine étape, les bourses qui te correspondent et les dates limites à ne pas rater.\n\nSi tu es perdu, appuie ici : tu reviens toujours à l\'Accueil.',
+  'app_tour_tools_title': 'Le menu ☰ : tes outils',
+  'app_tour_tools_body':
+      'Ce bouton, en haut à gauche de l\'Accueil, ouvre tes outils pour préparer ta candidature :',
+  'app_tour_universities_title': 'Universités',
+  'app_tour_universities_body':
+      'Cherche une école ou une formation. Choisis un pays, un niveau (licence, master…) et un domaine (santé, informatique, commerce…).\n\nAppuie sur une formation pour voir sa fiche, ou sur « Comparer » pour en mettre plusieurs côte à côte.',
+  'app_tour_scholarships_title': 'Bourses',
+  'app_tour_scholarships_body':
+      'Toutes les bourses ouvertes, avec leur date limite. Appuie sur une bourse pour lire les conditions.\n\nAppuie sur « Suivre » pour la garder : tu la retrouves dans Profil → « Mes suivis ».',
+  'app_tour_coach_title': 'KPB Intelligence',
+  'app_tour_coach_body':
+      'Tu as une question ? Appuie sur ce bouton et écris-la, comme à un ami. Notre assistant te répond tout de suite, de jour comme de nuit.\n\nExemple : « Quelles bourses pour un master en France ? »',
+  'app_tour_cases_title': 'Dossiers : ton conseiller KPB',
+  'app_tour_cases_body':
+      'Ici, tu demandes l\'aide d\'un vrai conseiller KPB. Appuie sur « Nouvelle demande », choisis ce dont tu as besoin et explique ta situation : un conseiller te répond.\n\nTu suis ensuite tous tes échanges ici. Un chiffre rouge sur cet onglet = un nouveau message pour toi.',
+  'app_tour_profile_title': 'Profil',
+  'app_tour_profile_body':
+      'Tes informations, la langue de l\'application (français ou anglais), tes bourses suivies et tes réglages.\n\nComplète bien ton profil : plus il est complet, mieux l\'application te propose les bonnes bourses et les bonnes écoles.',
+  'app_tour_done_title': 'C\'est tout, tu es prêt !',
+  'app_tour_done_body':
+      'Tu sais maintenant où trouver chaque chose. Si tu oublies, pas de souci : tu peux revoir cette visite quand tu veux dans Profil → « Revoir la visite ».',
+  'app_tour_profile_card_title': 'Comment utiliser l\'application ?',
+  'app_tour_profile_card_body':
+      'Revois la visite guidée : en 1 minute, on te montre où se trouve chaque chose.',
+  'app_tour_replay': 'Revoir la visite',
+  'app_tour_tool_eef_title':
+      'tout pour candidater dans une université française (procédure Campus France).',
+  'app_tour_tool_tools_cv': 'crée ton CV en quelques minutes.',
+  'app_tour_tool_tools_motivation_letter':
+      'écris ta lettre de motivation avec de l\'aide.',
+  'app_tour_tool_tools_interview':
+      'entraîne-toi à l\'entretien, avec des questions comme le jour J.',
+  'app_tour_tool_tools_doc_scanner':
+      'photographie tes papiers et transforme-les en un fichier PDF propre.',
+  'app_tour_tool_tools_doc_review':
+      'fais relire un document avant de l\'envoyer.',
+  'app_tour_tool_tools_budget':
+      'calcule combien coûtera ta vie d\'étudiant à l\'étranger.',
+  'app_tour_tool_tools_flight': 'estime le prix de ton billet d\'avion.',
+  'app_tour_tool_tools_housing': 'estime le prix d\'un logement.',
+  'app_tour_tool_tools_impact': 'les résultats obtenus par les élèves KPB.',
 };

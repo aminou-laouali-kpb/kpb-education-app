@@ -7,12 +7,20 @@ import '../../core/ui/shell_chrome.dart';
 import 'ai_consent.dart';
 
 class CoachFab extends StatelessWidget {
-  const CoachFab({super.key});
+  const CoachFab({super.key, this.tourTarget});
+
+  /// La clé que la visite guidée éclaire (posée par le shell).
+  final GlobalKey? tourTarget;
+
+  /// Le bouton est-il affiché pour cet utilisateur ? (élève connecté). La
+  /// visite guidée le lit : elle ne parle pas d'un bouton absent.
+  static bool isVisibleFor(AppController controller) =>
+      controller.isStudent && !controller.isGuestMode;
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<AppController>();
-    if (!controller.isStudent || controller.isGuestMode) {
+    if (!isVisibleFor(controller)) {
       return const SizedBox.shrink();
     }
 
@@ -27,13 +35,16 @@ class CoachFab extends StatelessWidget {
     return Positioned(
       right: KpbSpacing.pagePad,
       bottom: KpbShellChrome.coachPillBottom + bottomInset,
-      child: FloatingActionButton.extended(
-        heroTag: 'kpb_coach_fab',
-        backgroundColor: KpbColors.navy,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.psychology_rounded),
-        label: Text('coach_ai'.tr),
-        onPressed: () => openAiChatIfConsented(context, controller),
+      child: KeyedSubtree(
+        key: tourTarget,
+        child: FloatingActionButton.extended(
+          heroTag: 'kpb_coach_fab',
+          backgroundColor: KpbColors.navy,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.psychology_rounded),
+          label: Text('coach_ai'.tr),
+          onPressed: () => openAiChatIfConsented(context, controller),
+        ),
       ),
     );
   }

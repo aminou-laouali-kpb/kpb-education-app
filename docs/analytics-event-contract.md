@@ -165,6 +165,8 @@ pour l'onboarding. Réutilisés : `guest_to_signup` (`source` = `scholarship_mat
 | `eef_private_info_opened` | `entry` (`bubble`/`catalog_empty`) | La feuille d'information « Service KPB » des écoles privées a été ouverte (build 56). Ce n'est PAS un envoi : voir « Les écoles privées de la build 56 » |
 | `eef_tour_shown` | `tour_trigger` (`first_open`/`replay`) | La visite guidée du hub s'est affichée (build 56) : voir « La visite guidée de la build 56 » |
 | `eef_tour_completed` | `tour_exit` (`finished`/`skipped`), `tour_cards_seen` (entier) | La visite guidée s'est fermée (build 56) : voir « La visite guidée de la build 56 » |
+| `app_tour_shown` | `tour_trigger` (`first_open`/`replay`) | La visite guidée de l'application s'est ouverte (build 59) : à la première arrivée sur l'accueil, ou par Profil → « Revoir la visite » |
+| `app_tour_completed` | `tour_exit` (`finished`/`skipped`), `tour_cards_seen` (entier), `tour_steps_total` (entier) | La visite guidée de l'application s'est fermée (build 59). Drapeau local `kpb_relaunch_v1.app_tour_v1`, écrit à la fermeture. Abandon = `tour_cards_seen` des `skipped` |
 
 ### Lire la carte d'aide sans se tromper (build 54)
 
