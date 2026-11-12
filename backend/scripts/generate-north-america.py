@@ -1191,12 +1191,60 @@ for x in I:
     x["overviewFr"] = "\n\n".join(fr)
     x["overviewEn"] = "\n\n".join(en)
 
+# ─── Troisième passe (12/11/2026) : ajouts et prix complétés ───
+# Données relevées sur les sites officiels puis contre-vérifiées (provenance :
+# section « Troisième passe » de amerique-du-nord-2027.sources.md). Les
+# établissements nouveaux sont repris tels quels (présentation déjà
+# assemblée) ; les formations ajoutées à un établissement existant portent
+# leur propre `consultedAt` ; un prix complété sur une ligne déjà publiée est
+# inscrit dans `corrections` avec la valeur PRÉCÉDENTE, pour que l'import ne
+# réécrive que les lignes qui la portent encore (jamais une retouche admin).
+corrections = {"programs": [], "institutions": []}
+AJOUTS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "amerique-du-nord-2027.ajouts-2026-11.json")
+if os.path.exists(AJOUTS):
+    with open(AJOUTS, encoding="utf-8") as f:
+        aj = json.load(f)
+    C3 = aj["consultedAt"]
+    by_id = {x["id"]: x for x in I}
+    # Valeurs avant correction (l'app affiche le libellé de l'école quand la
+    # formation n'a pas de prix : c'est ce qui est en base).
+    def shown_tuition(x, slug):
+        p = next(p for p in x["programs"] if p["slug"] == slug)
+        return p["tuitionFr"] or x["tuitionLabelFr"]
+    for fx in aj.get("tuitionFixes", []):
+        x = by_id[fx["institutionId"]]
+        prev = shown_tuition(x, fx["slug"])
+        p = next(p for p in x["programs"] if p["slug"] == fx["slug"])
+        for k in ("tuitionFr", "tuitionEn", "tuitionAnnual", "sourceUrl"):
+            if fx.get(k) is not None:
+                p[k] = fx[k]
+        corrections["programs"].append({"programId": f"{x['id']}--{fx['slug']}", "previousTuitionFr": prev, "consultedAt": C3})
+    for fx in aj.get("institutionLabelFixes", []):
+        x = by_id[fx["institutionId"]]
+        corrections["institutions"].append({"institutionId": x["id"], "previousTuitionLabelFr": x["tuitionLabelFr"], "consultedAt": C3})
+        x["tuitionLabelFr"], x["tuitionLabelEn"] = fx["tuitionLabelFr"], fx["tuitionLabelEn"]
+    for fx in aj.get("institutionExtraFixes", []):
+        x = by_id[fx["institutionId"]]
+        x["applicationFee"] = fx["applicationFee"]
+        x["applicationFeeFr"], x["applicationFeeEn"] = fx["applicationFeeFr"], fx["applicationFeeEn"]
+    for add in aj["institutions"]:
+        if add["id"] in by_id:
+            for p in add["programs"]:
+                p["consultedAt"] = C3
+                by_id[add["id"]]["programs"].append(p)
+        else:
+            add.setdefault("consultedAt", C3)
+            I.append(add)
+            by_id[add["id"]] = add
+
 doc = {
-    "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 (seconde passe Canada : 17/10/2026) — voir amerique-du-nord-2027.sources.md",
+    "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 (seconde passe Canada : 17/10/2026 ; troisième passe : 12/11/2026) — voir amerique-du-nord-2027.sources.md",
     "consultedAt": "2026-10-16",
     "exchangeRates": {"date": "2026-10-16", "source": "BCE, taux de référence (eurofxref-daily.xml)", "perEur": {"USD": 1.1253, "CAD": 1.5935}},
     "institutions": I,
 }
+if corrections["programs"] or corrections["institutions"]:
+    doc["corrections"] = corrections
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "amerique-du-nord-2027.json")
 with open(out, "w", encoding="utf-8") as f:
     json.dump(doc, f, ensure_ascii=False, indent=2)

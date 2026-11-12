@@ -26,11 +26,18 @@ import { detectCurrencies } from './tuition-eur';
 
 export const NA_ID_PREFIX = 'na-';
 export const NA_SEED_NAME = 'import:north-america';
+/// Universités non partenaires d'Europe (Belgique, Allemagne — 12/11/2026) :
+/// même format, même validateur, source et préfixe à part
+/// (scripts/data/europe-2027.json, `import:europe`).
+export const EU_ID_PREFIX = 'eu-';
+export const EU_SEED_NAME = 'import:europe';
 
 /// Pays → (préfixe d'id, `countryId` canonique M5). Table FERMÉE.
 export const NA_COUNTRIES: Record<string, { prefix: string; countryId: string }> = {
   can: { prefix: 'na-ca-', countryId: 'can' },
   usa: { prefix: 'na-us-', countryId: 'usa' },
+  bel: { prefix: 'eu-be-', countryId: 'bel' },
+  deu: { prefix: 'eu-de-', countryId: 'deu' },
 };
 
 /// Niveaux admis, déjà à la convention `normalizeDegreeLevel` (mêmes libellés
@@ -60,7 +67,7 @@ export const NA_LANGUAGES: Record<string, { fr: string; en: string; codes: strin
   bi: { fr: 'Français et anglais', en: 'French and English', codes: ['fr', 'en'] },
 };
 
-const ID_RE = /^na-(ca|us)-[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const ID_RE = /^(?:na-(?:ca|us)|eu-(?:be|de))-[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 /// « 01/2027 » (mois connu) ou « FALL 2027 » / « SPRING 2027 » (mois non
 /// publié par la source) — les deux formats que l'app sait dater.
@@ -86,6 +93,9 @@ export type NaProgramSource = {
   requirementsEn: string[];
   sourceUrl: string;
   offerings?: NaOffering[];
+  /// Formation ajoutée après l'établissement (troisième passe, 12/11/2026) :
+  /// sa propre date de relevé.
+  consultedAt?: string;
 };
 
 /// Programme de langue en amont (anglais ou français) publié par
@@ -129,11 +139,29 @@ export type NaInstitutionSource = {
   programs: NaProgramSource[];
 };
 
+/**
+ * Correction d'une ligne DÉJÀ publiée (prix complété après relevé). L'import
+ * étant création seule, une correction n'est appliquée en base que si la
+ * ligne porte ENCORE la valeur `previous…` écrite par un passage antérieur :
+ * une fiche retouchée dans l'admin n'est jamais écrasée.
+ */
+export type NaProgramCorrection = {
+  programId: string;
+  previousTuitionFr: string;
+  consultedAt: string;
+};
+export type NaInstitutionCorrection = {
+  institutionId: string;
+  previousTuitionLabelFr: string;
+  consultedAt: string;
+};
+
 export type NaSource = {
   source: string;
   consultedAt: string;
   exchangeRates: { date: string; source: string; perEur: Record<string, number> };
   institutions: NaInstitutionSource[];
+  corrections?: { programs: NaProgramCorrection[]; institutions: NaInstitutionCorrection[] };
 };
 
 /**
@@ -144,8 +172,9 @@ export type NaSource = {
 export function naVerifiedAt(
   doc: Pick<NaSource, 'consultedAt'>,
   inst?: Pick<NaInstitutionSource, 'consultedAt'>,
+  program?: Pick<NaProgramSource, 'consultedAt'>,
 ): Date {
-  return new Date(`${inst?.consultedAt || doc.consultedAt}T00:00:00.000Z`);
+  return new Date(`${program?.consultedAt || inst?.consultedAt || doc.consultedAt}T00:00:00.000Z`);
 }
 
 export function naProgramId(institutionId: string, slug: string): string {
@@ -249,7 +278,7 @@ export function validateNaSource(doc: NaSource): string[] {
     if (!/\bKPB n'est pas partenaire\b/.test(inst.overviewFr) || !/\bKPB is not a partner\b/.test(inst.overviewEn)) {
       errors.push(`${where} : la présentation doit dire que KPB n'est pas partenaire`);
     }
-    if (inst.applicationFee && !rates[inst.applicationFee.currency]) {
+    if (inst.applicationFee && inst.applicationFee.currency !== 'EUR' && !rates[inst.applicationFee.currency]) {
       errors.push(`${where} : pas de taux pour ${inst.applicationFee.currency}`);
     }
     if (inst.applicationFee && !inst.applicationFeeFr) errors.push(`${where} : applicationFeeFr vide`);
@@ -282,7 +311,7 @@ export function validateNaSource(doc: NaSource): string[] {
         errors.push(`${pw} : conditions FR/EN de longueurs différentes`);
       }
       if (p.tuitionAnnual) {
-        if (!rates[p.tuitionAnnual.currency]) errors.push(`${pw} : pas de taux pour ${p.tuitionAnnual.currency}`);
+        if (p.tuitionAnnual.currency !== 'EUR' && !rates[p.tuitionAnnual.currency]) errors.push(`${pw} : pas de taux pour ${p.tuitionAnnual.currency}`);
         if (!(p.tuitionAnnual.amount > 0)) errors.push(`${pw} : montant annuel invalide`);
         if (!p.tuitionFr || !p.tuitionEn) errors.push(`${pw} : libellé de frais vide malgré un montant`);
       }
@@ -295,11 +324,25 @@ export function validateNaSource(doc: NaSource): string[] {
         if (!o.campus?.trim()) errors.push(`${pw} : campus vide`);
       }
       if ((p.offerings ?? []).length === 1) errors.push(`${pw} : une seule rentrée — pas de campusOfferings`);
+      if (p.consultedAt !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(p.consultedAt)) errors.push(`${pw} : consultedAt illisible`);
     }
     const dups = findProgramDuplicates(
       (inst.programs ?? []).map((p) => ({ school: inst.id, id: naProgramId(inst.id, p.slug), name: p.nameFr, level: p.level })),
     );
     for (const d of dups) errors.push(`${where} : formations homonymes ${d.ids.join(', ')}`);
+  }
+  const programIds = new Set(
+    (doc.institutions ?? []).flatMap((i) => (i.programs ?? []).map((p) => naProgramId(i.id, p.slug))),
+  );
+  for (const c of doc.corrections?.programs ?? []) {
+    if (!programIds.has(c.programId)) errors.push(`correction ${c.programId} : formation absente de la source`);
+    if (!c.previousTuitionFr) errors.push(`correction ${c.programId} : previousTuitionFr vide`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(c.consultedAt ?? '')) errors.push(`correction ${c.programId} : consultedAt illisible`);
+  }
+  for (const c of doc.corrections?.institutions ?? []) {
+    if (!ids.has(c.institutionId)) errors.push(`correction ${c.institutionId} : établissement absent de la source`);
+    if (!c.previousTuitionLabelFr) errors.push(`correction ${c.institutionId} : previousTuitionLabelFr vide`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(c.consultedAt ?? '')) errors.push(`correction ${c.institutionId} : consultedAt illisible`);
   }
   return errors;
 }
@@ -382,7 +425,7 @@ export function naProgramCreateData(p: NaProgramSource, inst: NaInstitutionSourc
     campusCity: city,
     searchText: programSearchText(p.nameFr, city),
     sourceUrl: p.sourceUrl,
-    lastVerifiedAt: naVerifiedAt(doc, inst),
+    lastVerifiedAt: naVerifiedAt(doc, inst, p),
     isActive: true,
   };
 }
@@ -472,4 +515,80 @@ export function planNorthAmerica(
 
 export function naPlanWriteCount(plan: NaPlan): number {
   return plan.newInstitutions.length + plan.programAdditions.length;
+}
+
+export type NaCorrectionRowProgram = { id: string; tuitionFr: string; applicationFeeEur: number | null };
+export type NaCorrectionRowInstitution = { id: string; tuitionLabelFr: string };
+
+export type NaCorrectionPlan = {
+  programs: {
+    id: string;
+    data: {
+      tuitionFr: string;
+      tuitionEn: string;
+      tuitionMinEur: number | null;
+      applicationFeeEur?: number | null;
+      sourceUrl: string;
+      lastVerifiedAt: Date;
+    };
+  }[];
+  institutions: { id: string; data: { tuitionLabelFr: string; tuitionLabelEn: string; lastVerifiedAt: Date } }[];
+  /// Ligne retouchée depuis (admin) ou absente : laissée telle quelle.
+  skipped: { id: string; reason: string }[];
+};
+
+/**
+ * Corrections de lignes déjà publiées (prix complétés). Une ligne n'est
+ * réécrite que si elle porte encore la valeur du passage précédent ; une
+ * ligne déjà corrigée (même valeur que la source) ne compte pas.
+ */
+export function planNaCorrections(
+  doc: NaSource,
+  programs: readonly NaCorrectionRowProgram[],
+  institutions: readonly NaCorrectionRowInstitution[],
+): NaCorrectionPlan {
+  const plan: NaCorrectionPlan = { programs: [], institutions: [], skipped: [] };
+  const rowsP = new Map(programs.map((p) => [p.id, p]));
+  const rowsI = new Map(institutions.map((i) => [i.id, i]));
+  for (const c of doc.corrections?.programs ?? []) {
+    const inst = doc.institutions.find((i) => c.programId.startsWith(`${i.id}--`));
+    const p = inst?.programs.find((x) => naProgramId(inst.id, x.slug) === c.programId);
+    const row = rowsP.get(c.programId);
+    if (!inst || !p || !row) continue; // absente : elle sera créée avec la bonne valeur
+    const next = naProgramCreateData(p, inst, doc);
+    if (row.tuitionFr === next.tuitionFr) continue;
+    if (row.tuitionFr !== c.previousTuitionFr) {
+      plan.skipped.push({ id: c.programId, reason: 'frais retouchés depuis le passage précédent (admin) — laissés tels quels' });
+      continue;
+    }
+    plan.programs.push({
+      id: c.programId,
+      data: {
+        tuitionFr: next.tuitionFr,
+        tuitionEn: next.tuitionEn,
+        tuitionMinEur: next.tuitionMinEur,
+        ...(row.applicationFeeEur == null && next.applicationFeeEur != null ? { applicationFeeEur: next.applicationFeeEur } : {}),
+        sourceUrl: next.sourceUrl,
+        lastVerifiedAt: new Date(`${c.consultedAt}T00:00:00.000Z`),
+      },
+    });
+  }
+  for (const c of doc.corrections?.institutions ?? []) {
+    const inst = doc.institutions.find((i) => i.id === c.institutionId);
+    const row = rowsI.get(c.institutionId);
+    if (!inst || !row || row.tuitionLabelFr === inst.tuitionLabelFr) continue;
+    if (row.tuitionLabelFr !== c.previousTuitionLabelFr) {
+      plan.skipped.push({ id: c.institutionId, reason: 'libellé de frais retouché depuis le passage précédent (admin) — laissé tel quel' });
+      continue;
+    }
+    plan.institutions.push({
+      id: c.institutionId,
+      data: {
+        tuitionLabelFr: inst.tuitionLabelFr,
+        tuitionLabelEn: inst.tuitionLabelEn,
+        lastVerifiedAt: new Date(`${c.consultedAt}T00:00:00.000Z`),
+      },
+    });
+  }
+  return plan;
 }

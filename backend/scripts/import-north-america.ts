@@ -31,18 +31,29 @@ import { Prisma, PrismaClient } from '@prisma/client';
 
 import { checkProductionSeed, linkedProgramIds } from '../src/common/seed-safety';
 import {
+  EU_ID_PREFIX,
+  EU_SEED_NAME,
+  NA_COUNTRIES,
   NA_ID_PREFIX,
   NA_SEED_NAME,
   type NaSource,
   naPlanWriteCount,
+  planNaCorrections,
   planNorthAmerica,
   validateNaSource,
 } from '../src/modules/catalog/north-america-import';
+import { M5_COUNTRY_SEEDS } from '../src/modules/countries/data/m5-countries.seed';
 
 if (existsSync('.env')) loadEnvFile?.('.env');
 
 const prisma = new PrismaClient();
-const SOURCE = path.join(__dirname, 'data', 'amerique-du-nord-2027.json');
+/// `--europe` : universités non partenaires de Belgique et d'Allemagne
+/// (scripts/data/europe-2027.json, ids `eu-*`), même format et mêmes garanties.
+const EUROPE = process.argv.slice(2).includes('--europe');
+const SOURCE = path.join(__dirname, 'data', EUROPE ? 'europe-2027.json' : 'amerique-du-nord-2027.json');
+const ID_PREFIX = EUROPE ? EU_ID_PREFIX : NA_ID_PREFIX;
+const SEED_NAME = EUROPE ? EU_SEED_NAME : NA_SEED_NAME;
+const COUNTRY_LABEL: Record<string, string> = { can: 'Canada', usa: 'États-Unis', bel: 'Belgique', deu: 'Allemagne' };
 
 type ProgramData = ReturnType<typeof planNorthAmerica>['newInstitutions'][number]['programs'][number];
 
@@ -80,10 +91,37 @@ async function main() {
     select: { id: true, institutionId: true, nameFr: true, levelFr: true },
   });
   const plan = planNorthAmerica(doc, institutions, programs);
+  const corrections = planNaCorrections(
+    doc,
+    await prisma.program.findMany({
+      where: { id: { in: (doc.corrections?.programs ?? []).map((c) => c.programId) } },
+      select: { id: true, tuitionFr: true, applicationFeeEur: true },
+    }),
+    await prisma.institution.findMany({
+      where: { id: { in: (doc.corrections?.institutions ?? []).map((c) => c.institutionId) } },
+      select: { id: true, tuitionLabelFr: true },
+    }),
+  );
 
-  for (const country of ['can', 'usa']) {
+  // Pays de destination absents (la Belgique, 12/11/2026) : créés depuis la
+  // fiche M5 versionnée, jamais réécrits s'ils existent.
+  const countryIds = [...new Set(doc.institutions.map((i) => NA_COUNTRIES[i.countryId].countryId))];
+  const existingCountries = new Set(
+    (await prisma.country.findMany({ where: { id: { in: countryIds } }, select: { id: true } })).map((c) => c.id),
+  );
+  const missingCountries = countryIds.filter((id) => !existingCountries.has(id));
+  for (const id of missingCountries) {
+    if (!M5_COUNTRY_SEEDS.some((c) => c.id === id)) {
+      console.error(`Pays « ${id} » absent de la base ET de m5-countries.seed.ts — rien ne sera écrit.`);
+      process.exit(1);
+    }
+    console.log(`\n══ Pays à créer : ${id} (fiche m5-countries.seed.ts)`);
+  }
+
+  for (const country of Object.keys(COUNTRY_LABEL)) {
     const own = doc.institutions.filter((i) => i.countryId === country);
-    console.log(`\n══ ${country === 'can' ? 'Canada' : 'États-Unis'} : ${own.length} établissement(s) dans la source`);
+    if (!own.length) continue;
+    console.log(`\n══ ${COUNTRY_LABEL[country]} : ${own.length} établissement(s) dans la source`);
     for (const inst of own) {
       const fresh = plan.newInstitutions.find((n) => n.institution.id === inst.id);
       const extra = plan.programAdditions.find((a) => a.institutionId === inst.id);
@@ -102,7 +140,15 @@ async function main() {
   }
   for (const s of plan.skipped) console.log(`  ⚠ ${s.id} (${s.name}) : ${s.reason}`);
 
-  const writes = naPlanWriteCount(plan);
+  if (corrections.programs.length || corrections.institutions.length || corrections.skipped.length) {
+    console.log('\n══ Corrections de lignes déjà publiées (prix complétés)');
+    for (const c of corrections.institutions) console.log(`   ~ ${c.id} : libellé de frais → ${c.data.tuitionLabelFr.slice(0, 80)}`);
+    for (const c of corrections.programs) console.log(`   ~ ${c.id} : ${c.data.tuitionFr.slice(0, 80)}`);
+    for (const s of corrections.skipped) console.log(`  ⚠ ${s.id} : ${s.reason}`);
+  }
+
+  const writes =
+    naPlanWriteCount(plan) + missingCountries.length + corrections.programs.length + corrections.institutions.length;
   console.log(`\nTOTAL : ${writes} écriture(s) prévue(s).`);
   if (!apply) {
     console.log('\n── SIMULATION — aucune écriture. Relancer avec --apply. ──');
@@ -114,10 +160,10 @@ async function main() {
   }
 
   const guard = await checkProductionSeed({
-    seed: NA_SEED_NAME,
+    seed: SEED_NAME,
     countExistingRows: async () =>
-      (await prisma.institution.count({ where: { id: { startsWith: NA_ID_PREFIX } } })) +
-      (await prisma.program.count({ where: { id: { startsWith: NA_ID_PREFIX } } })),
+      (await prisma.institution.count({ where: { id: { startsWith: ID_PREFIX } } })) +
+      (await prisma.program.count({ where: { id: { startsWith: ID_PREFIX } } })),
   });
   if (!guard.allowed) {
     console.error(guard.message);
@@ -127,6 +173,31 @@ async function main() {
   if (guard.message) console.warn(guard.message);
 
   let written = 0;
+  for (const id of missingCountries) {
+    const seed = M5_COUNTRY_SEEDS.find((c) => c.id === id)!;
+    const { quiz, lastVerifiedAt, sourceUrl, ...fields } = seed;
+    await prisma.$transaction(async (tx) => {
+      if (await tx.country.findUnique({ where: { id }, select: { id: true } })) return;
+      await tx.country.create({
+        data: {
+          ...fields,
+          isActive: true,
+          lastVerifiedAt: lastVerifiedAt ? new Date(lastVerifiedAt) : null,
+          sourceUrl: sourceUrl ?? null,
+        },
+      });
+      await tx.countryEligibilityQuiz.create({
+        data: {
+          countryId: id,
+          questions: quiz.questions as unknown as Prisma.InputJsonValue,
+          verdicts: quiz.verdicts as unknown as Prisma.InputJsonValue,
+        },
+      });
+    });
+    console.log(`   pays créé : ${id}`);
+    written += 1;
+  }
+
   for (const { institution, programs: rows } of plan.newInstitutions) {
     const done = await prisma.$transaction(
       async (tx) => {
@@ -171,6 +242,18 @@ async function main() {
       { timeout: 60_000 },
     );
     written += 1;
+  }
+
+  for (const c of corrections.institutions) {
+    // Revérifiée à l'écriture : la ligne doit porter encore l'ancienne valeur.
+    const prev = doc.corrections!.institutions.find((x) => x.institutionId === c.id)!.previousTuitionLabelFr;
+    const r = await prisma.institution.updateMany({ where: { id: c.id, tuitionLabelFr: prev }, data: c.data });
+    written += r.count;
+  }
+  for (const c of corrections.programs) {
+    const prev = doc.corrections!.programs.find((x) => x.programId === c.id)!.previousTuitionFr;
+    const r = await prisma.program.updateMany({ where: { id: c.id, tuitionFr: prev }, data: c.data });
+    written += r.count;
   }
 
   console.log(`\n── ÉCRIT : ${written} écriture(s). ──`);
