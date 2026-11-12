@@ -4184,7 +4184,7 @@ const Map<String, String> appTranslationsEn = {
   'app_tour_start': 'Start the tour',
   'app_tour_finish': 'Got it',
   'app_tour_skipped_hint':
-      'You can watch the tour again anytime: Profile → “Watch the tour again”.',
+      'You can watch the tour again anytime: Profile tab, then “Watch the tour again”.',
   'app_tour_welcome_title': 'Welcome to KPB Education!',
   'app_tour_welcome_title_named': 'Welcome, @name!',
   'app_tour_welcome_body':
@@ -4192,15 +4192,15 @@ const Map<String, String> appTranslationsEn = {
   'app_tour_home_title': 'Home',
   'app_tour_home_body':
       'This is your starting page. You find your next step, the scholarships that fit you and the deadlines not to miss.\n\nIf you get lost, tap here: you always come back to Home.',
-  'app_tour_tools_title': 'The ☰ menu: your tools',
+  'app_tour_tools_title': 'The menu: your tools',
   'app_tour_tools_body':
-      'This button, at the top left of Home, opens your tools to prepare your application:',
+      'This three-line button, at the top left of Home, opens your tools to prepare your application:',
   'app_tour_universities_title': 'Universities',
   'app_tour_universities_body':
       'Look for a school or a programme. Choose a country, a level (bachelor, master…) and a field (health, computing, business…).\n\nTap a programme to see its page, or “Compare” to put several side by side.',
   'app_tour_scholarships_title': 'Scholarships',
   'app_tour_scholarships_body':
-      'All open scholarships, with their deadline. Tap a scholarship to read the requirements.\n\nTap “Follow” to keep it: you find it again in Profile → “Followed”.',
+      'All open scholarships, with their deadline. Tap a scholarship to read the requirements.\n\nTap “Follow” to keep it: you find it again in the Profile tab, under “Followed”.',
   'app_tour_coach_title': 'KPB Intelligence',
   'app_tour_coach_body':
       'Got a question? Tap this button and type it, like you would to a friend. Our assistant answers right away, day and night.\n\nExample: “Which scholarships for a master’s in France?”',
@@ -4212,7 +4212,7 @@ const Map<String, String> appTranslationsEn = {
       'Your details, the app language (French or English), the scholarships you follow and your settings.\n\nFill in your profile well: the more complete it is, the better the app suggests the right scholarships and schools.',
   'app_tour_done_title': 'That’s it, you’re ready!',
   'app_tour_done_body':
-      'You now know where to find everything. If you forget, no problem: you can watch this tour again anytime in Profile → “Watch the tour again”.',
+      'You now know where to find everything. If you forget, no problem: you can watch this tour again anytime: Profile tab, then “Watch the tour again”.',
   'app_tour_profile_card_title': 'How to use the app?',
   'app_tour_profile_card_body':
       'Watch the guided tour again: in 1 minute, we show you where everything is.',

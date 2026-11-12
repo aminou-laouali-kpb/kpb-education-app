@@ -4479,7 +4479,7 @@ const Map<String, String> appTranslationsFr = {
   'app_tour_start': 'Commencer la visite',
   'app_tour_finish': 'J\'ai compris',
   'app_tour_skipped_hint':
-      'Tu pourras revoir la visite quand tu veux : Profil → « Revoir la visite ».',
+      'Tu pourras revoir la visite quand tu veux : onglet Profil, puis « Revoir la visite ».',
   'app_tour_welcome_title': 'Bienvenue sur KPB Education !',
   'app_tour_welcome_title_named': 'Bienvenue, @name !',
   'app_tour_welcome_body':
@@ -4487,15 +4487,15 @@ const Map<String, String> appTranslationsFr = {
   'app_tour_home_title': 'L\'Accueil',
   'app_tour_home_body':
       'C\'est ta page de départ. Tu y trouves ta prochaine étape, les bourses qui te correspondent et les dates limites à ne pas rater.\n\nSi tu es perdu, appuie ici : tu reviens toujours à l\'Accueil.',
-  'app_tour_tools_title': 'Le menu ☰ : tes outils',
+  'app_tour_tools_title': 'Le menu : tes outils',
   'app_tour_tools_body':
-      'Ce bouton, en haut à gauche de l\'Accueil, ouvre tes outils pour préparer ta candidature :',
+      'Ce bouton aux trois traits, en haut à gauche de l\'Accueil, ouvre tes outils pour préparer ta candidature :',
   'app_tour_universities_title': 'Universités',
   'app_tour_universities_body':
       'Cherche une école ou une formation. Choisis un pays, un niveau (licence, master…) et un domaine (santé, informatique, commerce…).\n\nAppuie sur une formation pour voir sa fiche, ou sur « Comparer » pour en mettre plusieurs côte à côte.',
   'app_tour_scholarships_title': 'Bourses',
   'app_tour_scholarships_body':
-      'Toutes les bourses ouvertes, avec leur date limite. Appuie sur une bourse pour lire les conditions.\n\nAppuie sur « Suivre » pour la garder : tu la retrouves dans Profil → « Mes suivis ».',
+      'Toutes les bourses ouvertes, avec leur date limite. Appuie sur une bourse pour lire les conditions.\n\nAppuie sur « Suivre » pour la garder : tu la retrouves dans l\'onglet Profil, rubrique « Mes suivis ».',
   'app_tour_coach_title': 'KPB Intelligence',
   'app_tour_coach_body':
       'Tu as une question ? Appuie sur ce bouton et écris-la, comme à un ami. Notre assistant te répond tout de suite, de jour comme de nuit.\n\nExemple : « Quelles bourses pour un master en France ? »',
@@ -4507,7 +4507,7 @@ const Map<String, String> appTranslationsFr = {
       'Tes informations, la langue de l\'application (français ou anglais), tes bourses suivies et tes réglages.\n\nComplète bien ton profil : plus il est complet, mieux l\'application te propose les bonnes bourses et les bonnes écoles.',
   'app_tour_done_title': 'C\'est tout, tu es prêt !',
   'app_tour_done_body':
-      'Tu sais maintenant où trouver chaque chose. Si tu oublies, pas de souci : tu peux revoir cette visite quand tu veux dans Profil → « Revoir la visite ».',
+      'Tu sais maintenant où trouver chaque chose. Si tu oublies, pas de souci : tu peux revoir cette visite quand tu veux : onglet Profil, puis « Revoir la visite ».',
   'app_tour_profile_card_title': 'Comment utiliser l\'application ?',
   'app_tour_profile_card_body':
       'Revois la visite guidée : en 1 minute, on te montre où se trouve chaque chose.',

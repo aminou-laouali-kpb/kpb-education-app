@@ -728,20 +728,24 @@ class _BubbleCard extends StatelessWidget {
                   Row(
                     children: [
                       if (!isFirst) ...[
-                        OutlinedButton(
-                          key: const ValueKey('app-tour-back'),
-                          onPressed: onBack,
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(0, 52),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                        Expanded(
+                          flex: 2,
+                          child: OutlinedButton(
+                            key: const ValueKey('app-tour-back'),
+                            onPressed: onBack,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
+                            child: _OneLine('app_tour_back'.tr),
                           ),
-                          child: Text('app_tour_back'.tr),
                         ),
                         const SizedBox(width: 10),
                       ],
                       Expanded(
+                        flex: 3,
                         child: FilledButton(
                           key: const ValueKey('app-tour-next'),
                           onPressed: onNext,
@@ -751,12 +755,8 @@ class _BubbleCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                            ),
                           ),
-                          child: Text(
+                          child: _OneLine(
                             isLast
                                 ? 'app_tour_finish'.tr
                                 : isFirst
@@ -775,6 +775,18 @@ class _BubbleCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Un libellé de bouton sur UNE ligne : réduit plutôt que coupé ou replié.
+class _OneLine extends StatelessWidget {
+  const _OneLine(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(text, maxLines: 1, softWrap: false),
+      );
 }
 
 class _ToolLine extends StatelessWidget {

@@ -26,17 +26,13 @@ import 'package:get/get.dart';
 
 import 'package:karatou/app/core/navigation/shell_tabs.dart';
 import 'package:karatou/app/core/translations/app_translations.dart';
-import 'package:karatou/app/core/translations/app_translations_en.dart';
-import 'package:karatou/app/core/translations/app_translations_fr.dart';
 import 'package:karatou/app/features/app_tour/app_tour.dart';
 import 'package:karatou/app/features/app_tour/app_tour_store.dart';
 
 class _Store implements AppTourStore {
-  _Store({this.seen = false, this.failRead = false, this.failWrite = false});
-
-  bool seen;
-  bool failRead;
-  bool failWrite;
+  bool seen = false;
+  bool failRead = false;
+  bool failWrite = false;
   int writes = 0;
 
   @override
