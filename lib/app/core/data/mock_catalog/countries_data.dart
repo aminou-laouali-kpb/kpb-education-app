@@ -595,8 +595,8 @@ const kCountries = <CountryModel>[
     whyStudy: LocalizedText(
         fr: 'Universités publiques reconnues qui enseignent en français, frais réduits pour de nombreux pays d\'Afrique francophone.',
         en: 'Recognised public universities teaching in French, reduced fees for many French-speaking African countries.'),
-    tuitionRange: LocalizedText(
-        fr: 'EUR 1 194–5 369/an', en: 'EUR 1 194–5 369/year'),
+    tuitionRange:
+        LocalizedText(fr: 'EUR 1 194–5 369/an', en: 'EUR 1 194–5 369/year'),
     livingCostRange:
         LocalizedText(fr: 'EUR 1 000–1 300/mois', en: 'EUR 1 000–1 300/month'),
     visaOverview: LocalizedText(

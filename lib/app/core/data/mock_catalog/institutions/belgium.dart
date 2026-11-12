@@ -17,7 +17,8 @@ const kInstitutionsBelgium = <InstitutionModel>[
         fr: 'Top 200 mondial. Droit, médecine, économie. Très forte communauté africaine. En plein cœur de Bruxelles (EU).',
         en: 'Top 200 globally. Law, medicine, economics. Very strong African community. In the heart of Brussels (EU).'),
     studyLevels: ['Bac+3', 'Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
+    tuitionLabel:
+        LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
     languageRequirements: LocalizedText(fr: 'Français (B2)', en: 'French (B2)'),
     intakePeriods: ['Septembre'],
     programIds: ['prog_be001', 'prog_be002'],
@@ -33,7 +34,8 @@ const kInstitutionsBelgium = <InstitutionModel>[
         fr: 'Top 200 mondial. Excellence en médecine, ingénierie et sciences humaines. Très forte tradition de coopération avec l\'Afrique.',
         en: 'Top 200 globally. Excellence in medicine, engineering and humanities. Strong tradition of cooperation with Africa.'),
     studyLevels: ['Bac+3', 'Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
+    tuitionLabel:
+        LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
     languageRequirements:
         LocalizedText(fr: 'Français (B2+)', en: 'French (B2+)'),
     intakePeriods: ['Septembre'],
