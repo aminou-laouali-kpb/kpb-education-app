@@ -317,6 +317,7 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
           ...r,
           tuitionFr: c?.previousTuitionFr ?? r.tuitionFr,
           durationFr: c?.fillDuration ? '' : r.durationFr,
+          requirementsFr: c?.previousRequirementsFr ?? r.requirementsFr,
           applicationFeeEur: c ? null : r.applicationFeeEur,
         };
       }),
@@ -341,7 +342,13 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
 
   it('complète les prix et durées des lignes publiées qui portent encore la valeur précédente, et seulement elles', () => {
     const { doc, rows, instRows } = seeded();
-    const progRows = rows.map((r) => ({ id: r.id, tuitionFr: r.tuitionFr, applicationFeeEur: r.applicationFeeEur, durationFr: r.durationFr }));
+    const progRows = rows.map((r) => ({
+      id: r.id,
+      tuitionFr: r.tuitionFr,
+      applicationFeeEur: r.applicationFeeEur,
+      durationFr: r.durationFr,
+      requirementsFr: r.requirementsFr,
+    }));
     const plan = planNaCorrections(doc, progRows, instRows);
     const priced = plan.programs.filter((c) => c.data.tuitionFr);
     expect(priced).toHaveLength(15);
@@ -353,6 +360,11 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
     for (const c of plan.programs.filter((x) => x.data.durationFr)) {
       expect(progRows.find((r) => r.id === c.id)!.durationFr).toBe('');
     }
+    for (const c of plan.programs.filter((x) => x.data.requirementsFr)) {
+      expect(c.whereRequirementsFr).toEqual(progRows.find((r) => r.id === c.id)!.requirementsFr);
+      expect(c.data.requirementsFr!.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(plan.programs.filter((x) => x.data.requirementsFr)).toHaveLength(21);
     expect(plan.institutions.map((c) => c.id).sort()).toEqual(['na-ca-uqac', 'na-ca-uqam']);
     expect(plan.skipped).toEqual([]);
 
@@ -368,7 +380,13 @@ describe('import:north-america — troisième passe sur une base qui a les deux 
     const fresh = doc.institutions.flatMap((i) => i.programs.map((p) => naProgramCreateData(p, i, doc)));
     const plan = planNaCorrections(
       doc,
-      fresh.map((r) => ({ id: r.id, tuitionFr: r.tuitionFr, applicationFeeEur: r.applicationFeeEur, durationFr: r.durationFr })),
+      fresh.map((r) => ({
+        id: r.id,
+        tuitionFr: r.tuitionFr,
+        applicationFeeEur: r.applicationFeeEur,
+        durationFr: r.durationFr,
+        requirementsFr: r.requirementsFr,
+      })),
       doc.institutions.map((i) => ({ id: i.id, tuitionLabelFr: i.tuitionLabelFr })),
     );
     expect(plan).toEqual({ programs: [], institutions: [], skipped: [] });

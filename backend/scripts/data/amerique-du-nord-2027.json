@@ -928,13 +928,16 @@
       "locationEn": "Mankato, Minnesota",
       "websiteUrl": "https://www.mnsu.edu/",
       "sourceUrl": "https://www.mnsu.edu/paying-for-college/cost-of-attendance/international-bachelor-student-cost-of-attendance/",
-      "overviewFr": "Université publique de Mankato (Minnesota). Les étudiants internationaux en licence reçoivent automatiquement l'International Maverick Scholarship, qui ramène les frais de scolarité estimés à 13 137 USD par an (21 013 USD sans). Le niveau d'anglais demandé est parmi les plus bas de cette liste (Duolingo 95, IELTS 5.5).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Public university in Mankato, Minnesota. International bachelor's students automatically receive the International Maverick Scholarship, which brings estimated tuition and fees to USD 13,137 a year (USD 21,013 without). Its English requirement is among the lowest on this list (Duolingo 95, IELTS 5.5).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Université publique de Mankato (Minnesota). Les étudiants internationaux en licence reçoivent automatiquement l'International Maverick Scholarship, qui ramène les frais de scolarité estimés à 13 137 USD par an (21 013 USD sans). Le niveau d'anglais demandé est parmi les plus bas de cette liste (Duolingo 95, IELTS 5.5).\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nFrais de candidature : 20 USD (licence) ; 40 USD (master).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Mankato, Minnesota. International bachelor's students automatically receive the International Maverick Scholarship, which brings estimated tuition and fees to USD 13,137 a year (USD 21,013 without). Its English requirement is among the lowest on this list (Duolingo 95, IELTS 5.5).\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nApplication fee: USD 20 (bachelor's); USD 40 (master's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : TOEFL iBT 3.5 (ou 61 avant le 21/01/2026), IELTS 5.5, Duolingo 95, PTE 47, SAT CR 400 ou ACT anglais 15 (plus élevé en soins infirmiers et aviation)",
       "languageRequirementsEn": "English: TOEFL iBT 3.5 (or 61 before 21/01/2026), IELTS 5.5, Duolingo 95, PTE 47, SAT CR 400 or ACT English 15 (higher for Nursing and Aviation)",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 20,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "20 USD (licence) ; 40 USD (master)",
+      "applicationFeeEn": "USD 20 (bachelor's); USD 40 (master's)",
       "tuitionLabelFr": "≈ 13 137 USD/an en licence avec la bourse automatique (21 013 USD sans) ; 15 822 USD/an en master (2026-2027)",
       "tuitionLabelEn": "≈ USD 13,137/year for bachelor's with the automatic scholarship (USD 21,013 without); USD 15,822/year for master's (2026-2027)",
       "intakePeriods": [
@@ -1269,10 +1272,18 @@
             "currency": "USD"
           },
           "requirementsFr": [
-            "Licence (ou équivalent)"
+            "Diplôme : un bac de 4 ans (ou équivalent) avec une moyenne d'au moins 3,0 sur 4,0. Le GRE n'est pas demandé.",
+            "Anglais : TOEFL iBT 80, IELTS 6,5, PTE 53 ou Duolingo 110 (sauf diplôme américain ou d'un pays de la liste de dispense).",
+            "Dossier : joins un CV détaillé ; une lettre de recommandation est facultative.",
+            "Ton diplôme étranger doit être évalué cours par cours par un organisme membre de NACES (obligatoire depuis le 1er août 2026).",
+            "Date limite pour l'automne 2027 : 1er mai 2027 si tu as besoin d'un nouveau visa étudiant. Tu candidates en ligne sur le portail de l'université et tu paies les frais en ligne."
           ],
           "requirementsEn": [
-            "Bachelor's degree (or equivalent)"
+            "Degree: a 4-year bachelor's (or equivalent) with a GPA of at least 3.0 out of 4.0. The GRE is not required.",
+            "English: TOEFL iBT 80, IELTS 6.5, PTE 53 or Duolingo 110 (unless you hold a US degree or one from a country on the waiver list).",
+            "File: include a detailed resume; one recommendation letter is optional.",
+            "Your foreign degree must be evaluated course by course by a NACES member organization (required since August 1, 2026).",
+            "Fall 2027 deadline: May 1, 2027 if you need a new student visa. You apply online through the university's portal and pay the fee online."
           ],
           "sourceUrl": "https://catalog.unomaha.edu/graduate/degree-programs-certificates-minors/aims/"
         }
@@ -1578,10 +1589,18 @@
             "currency": "USD"
           },
           "requirementsFr": [
-            "Licence (ou équivalent)"
+            "Diplôme : un bachelor d'une université accréditée, avec une moyenne d'au moins 3,0 sur 4,0.",
+            "Prérequis : au moins B en algèbre, géométrie et calcul de haut niveau. Des cours d'informatique avec B (programmation, structures de données, bases de données...) sont fortement conseillés.",
+            "Anglais : TOEFL iBT 71, IELTS 6,0, PTE 50 ou Duolingo 100. Une admission conditionnelle est possible si ton score est plus bas.",
+            "Dossier : relevés officiels, scores GRE, CV, lettre d'objectifs et 2 lettres de recommandation.",
+            "Date limite pour l'automne : 15 juin. Tu candidates sur le portail de candidature de Kent State (apply.kent.edu)."
           ],
           "requirementsEn": [
-            "Bachelor's degree (or equivalent)"
+            "Degree: a bachelor's from an accredited institution, with a GPA of at least 3.0 out of 4.0.",
+            "Prerequisites: at least a B in high-level algebra, geometry and calculus. Computer science courses with a B (programming, data structures, databases...) are strongly recommended.",
+            "English: TOEFL iBT 71, IELTS 6.0, PTE 50 or Duolingo 100. Conditional admission is possible if your score is lower.",
+            "File: official transcripts, GRE scores, resume, goal statement and 2 recommendation letters.",
+            "Fall deadline: June 15. You apply through the Kent State application portal (apply.kent.edu)."
           ],
           "sourceUrl": "https://catalog.kent.edu/colleges/sh/cs/artificial-intelligence-ms/"
         },
@@ -1601,10 +1620,18 @@
             "currency": "USD"
           },
           "requirementsFr": [
-            "Licence (ou équivalent)"
+            "Diplôme : un bachelor d'une université accréditée, avec une moyenne d'au moins 3,0 sur 4,0.",
+            "Prérequis : bases en statistiques, maths, informatique et gestion. Tu peux combler un manque avec BA 24056, CIS 24053, MATH 11012 ou MGMT 24163 (ou équivalents).",
+            "Anglais : TOEFL iBT 79, IELTS 6,5, PTE 58 ou Duolingo 110. Une admission conditionnelle est possible si ton score est plus bas.",
+            "Dossier : relevés officiels, CV, lettre d'objectifs et 2 lettres de recommandation.",
+            "Date limite internationale pour l'automne : 15 mars. Tu candidates sur le portail de candidature de Kent State (apply.kent.edu)."
           ],
           "requirementsEn": [
-            "Bachelor's degree (or equivalent)"
+            "Degree: a bachelor's from an accredited institution, with a GPA of at least 3.0 out of 4.0.",
+            "Prerequisites: basics in statistics, math, computing and business. You can fill gaps with BA 24056, CIS 24053, MATH 11012 or MGMT 24163 (or equivalents).",
+            "English: TOEFL iBT 79, IELTS 6.5, PTE 58 or Duolingo 110. Conditional admission is possible if your score is lower.",
+            "File: official transcripts, resume, goal statement and 2 recommendation letters.",
+            "International fall deadline: March 15. You apply through the Kent State application portal (apply.kent.edu)."
           ],
           "sourceUrl": "https://catalog.kent.edu/colleges/be/isba/business-analytics-ms/"
         }
@@ -1621,13 +1648,16 @@
       "locationEn": "Toledo, Ohio",
       "websiteUrl": "https://www.utoledo.edu/",
       "sourceUrl": "https://www.utoledo.edu/admission/international/tuition/",
-      "overviewFr": "Université publique de Toledo (Ohio). Pour 2026-2027, les frais de scolarité d'une licence sont estimés entre 24 160 et 24 760 USD par an, avant la bourse International Rocket Award (8 000 USD par an si ta moyenne est d'au moins 3.0). Dates limites pour les internationaux : 1er novembre 2026 pour janvier 2027, 1er juillet 2027 pour août 2027.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Public university in Toledo, Ohio. For 2026-2027, bachelor's tuition and fees are estimated at USD 24,160 – 24,760 a year, before the International Rocket Award (USD 8,000 a year with a GPA of 3.0 or higher). International deadlines: 1 November 2026 for January 2027, 1 July 2027 for August 2027.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Université publique de Toledo (Ohio). Pour 2026-2027, les frais de scolarité d'une licence sont estimés entre 24 160 et 24 760 USD par an, avant la bourse International Rocket Award (8 000 USD par an si ta moyenne est d'au moins 3.0). Dates limites pour les internationaux : 1er novembre 2026 pour janvier 2027, 1er juillet 2027 pour août 2027.\n\nAvant de candidater, vérifie sur travel.state.gov que ton pays n'est pas visé par les restrictions de visas en vigueur : depuis le 1er janvier 2026, plusieurs pays d'Afrique francophone n'ont plus accès au visa étudiant F-1.\n\nFrais de candidature : 0 USD (licence, première année : frais supprimés).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university in Toledo, Ohio. For 2026-2027, bachelor's tuition and fees are estimated at USD 24,160 – 24,760 a year, before the International Rocket Award (USD 8,000 a year with a GPA of 3.0 or higher). International deadlines: 1 November 2026 for January 2027, 1 July 2027 for August 2027.\n\nBefore you apply, check on travel.state.gov that your country is not covered by the visa restrictions in force: since 1 January 2026, several French-speaking African countries no longer have access to the F-1 student visa.\n\nApplication fee: USD 0 (bachelor's, first-year applicants: fee waived).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : TOEFL iBT 4 (ou 71 avant le 21/01/2026), IELTS 6.0, Duolingo 105, PTE 48, Cambridge 170",
       "languageRequirementsEn": "English: TOEFL iBT 4 (or 71 before 21/01/2026), IELTS 6.0, Duolingo 105, PTE 48, Cambridge 170",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 0,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "0 USD (licence, première année : frais supprimés)",
+      "applicationFeeEn": "USD 0 (bachelor's, first-year applicants: fee waived)",
       "tuitionLabelFr": "≈ 24 160 – 24 760 USD/an en licence (2026-2027, avant bourse)",
       "tuitionLabelEn": "≈ USD 24,160 – 24,760/year for bachelor's (2026-2027, before scholarship)",
       "intakePeriods": [
@@ -2158,13 +2188,16 @@
       "locationEn": "Montreal, Quebec",
       "websiteUrl": "https://www.concordia.ca/",
       "sourceUrl": "https://www.concordia.ca/students/financial/tuition-fees/rates/undergrad.html",
-      "overviewFr": "Université anglophone de Montréal, avec une grande école de génie et d'informatique (Gina Cody). Duolingo est accepté (105) et la plupart des programmes ouvrent en septembre et en janvier. Pour 2026-2027, compte 1 285 CAD par crédit en génie et informatique, soit environ 38 550 CAD pour une année de 30 crédits.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "English-language university in Montreal, with a large engineering and computer science school (Gina Cody). Duolingo is accepted (105) and most programmes start in September and January. For 2026-2027, expect CAD 1,285 per credit in engineering and computer science, about CAD 38,550 for a 30-credit year.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Université anglophone de Montréal, avec une grande école de génie et d'informatique (Gina Cody). Duolingo est accepté (105) et la plupart des programmes ouvrent en septembre et en janvier. Pour 2026-2027, compte 1 285 CAD par crédit en génie et informatique, soit environ 38 550 CAD pour une année de 30 crédits.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nFrais de candidature : 103 CAD (licence).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language university in Montreal, with a large engineering and computer science school (Gina Cody). Duolingo is accepted (105) and most programmes start in September and January. For 2026-2027, expect CAD 1,285 per credit in engineering and computer science, about CAD 38,550 for a 30-credit year.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nApplication fee: CAD 103 (bachelor's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : Duolingo 105 (sous-scores ≥ 90), IELTS 6.0 (≥ 5.5), TOEFL iBT 4.0 (ou 70), CAEL 50, PTE 50",
       "languageRequirementsEn": "English: Duolingo 105 (subscores ≥ 90), IELTS 6.0 (≥ 5.5), TOEFL iBT 4.0 (or 70), CAEL 50, PTE 50",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 103,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "103 CAD (licence)",
+      "applicationFeeEn": "CAD 103 (bachelor's)",
       "tuitionLabelFr": "1 160 – 1 400 CAD par crédit selon la faculté (≈ 34 800 – 42 000 CAD pour 30 crédits, internationaux 2026-2027)",
       "tuitionLabelEn": "CAD 1,160 – 1,400 per credit by faculty (≈ CAD 34,800 – 42,000 for 30 credits, international 2026-2027)",
       "intakePeriods": [
@@ -2191,10 +2224,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+            "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+            "Notes du programme (lycée canadien) : moyenne B, B+ en maths, avec un cours de maths comme le pré-calcul ou le calcul. Ton dossier est comparé à ces seuils.",
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+            "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+            "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
           ],
           "requirementsEn": [
-            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+            "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+            "Program grades (Canadian high school): B overall, B+ in math, with a math course such as pre-calculus or calculus. Your file is compared to these thresholds.",
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+            "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+            "You apply online on Concordia's website; CAD 103 fee paid by credit card."
           ],
           "sourceUrl": "https://www.concordia.ca/academics/undergraduate/computer-science.html"
         },
@@ -2214,10 +2255,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+            "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+            "Notes du programme (lycée canadien) : moyenne B, B+ en maths et B+ en physique, avec un cours de maths et de la physique de niveau terminale. Ton dossier est comparé à ces seuils.",
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+            "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+            "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
           ],
           "requirementsEn": [
-            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+            "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+            "Program grades (Canadian high school): B overall, B+ in math and B+ in physics, with a math course and Grade 12-level physics. Your file is compared to these thresholds.",
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+            "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+            "You apply online on Concordia's website; CAD 103 fee paid by credit card."
           ],
           "sourceUrl": "https://www.concordia.ca/academics/undergraduate/software-engineering.html"
         },
@@ -2237,10 +2286,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+            "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+            "Notes du programme (lycée canadien) : moyenne B-, B en maths et B en physique, avec un cours de maths et de la physique de niveau terminale. Ton dossier est comparé à ces seuils.",
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+            "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+            "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
           ],
           "requirementsEn": [
-            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+            "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+            "Program grades (Canadian high school): B- overall, B in math and B in physics, with a math course and Grade 12-level physics. Your file is compared to these thresholds.",
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+            "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+            "You apply online on Concordia's website; CAD 103 fee paid by credit card."
           ],
           "sourceUrl": "https://www.concordia.ca/academics/undergraduate/mechanical-engineering.html"
         },
@@ -2260,10 +2317,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+            "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+            "Notes du programme (lycée canadien) : moyenne B et B en maths, avec un cours de maths (pré-calcul, calcul, algèbre II...). Ton dossier est comparé à ces seuils.",
+            "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+            "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+            "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
           ],
           "requirementsEn": [
-            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English"
+            "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+            "Program grades (Canadian high school): B overall and B in math, with a math course (pre-calculus, calculus, Algebra II...). Your file is compared to these thresholds.",
+            "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+            "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+            "You apply online on Concordia's website; CAD 103 fee paid by credit card."
           ],
           "sourceUrl": "https://www.concordia.ca/academics/undergraduate/finance.html"
         }
@@ -2422,13 +2487,16 @@
       "locationEn": "St. John's, Newfoundland and Labrador",
       "websiteUrl": "https://www.mun.ca/",
       "sourceUrl": "https://www.mun.ca/undergrad/money-matters/",
-      "overviewFr": "Université anglophone de St. John's (Terre-Neuve-et-Labrador), parmi les moins chères du Canada pour les internationaux : 22 500 CAD de droits pour une année de 10 cours en 2026-2027 (tarifs gelés au niveau de 2025-2026). Tu peux commencer en septembre, en janvier ou en mai selon le programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "English-language university in St. John's, Newfoundland and Labrador, among the least expensive in Canada for international students: CAD 22,500 tuition for a 10-course year in 2026-2027 (rates frozen at 2025-2026 levels). You can start in September, January or May depending on the programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Université anglophone de St. John's (Terre-Neuve-et-Labrador), parmi les moins chères du Canada pour les internationaux : 22 500 CAD de droits pour une année de 10 cours en 2026-2027 (tarifs gelés au niveau de 2025-2026). Tu peux commencer en septembre, en janvier ou en mai selon le programme.\n\nFrais de candidature : 300 CAD (licence).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language university in St. John's, Newfoundland and Labrador, among the least expensive in Canada for international students: CAD 22,500 tuition for a 10-course year in 2026-2027 (rates frozen at 2025-2026 levels). You can start in September, January or May depending on the programme.\n\nApplication fee: CAD 300 (bachelor's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 4.5 (ou 83), Duolingo 115, CAEL 60, PTE 60, Cambridge 176 ; plus élevé en génie",
       "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 4.5 (or 83), Duolingo 115, CAEL 60, PTE 60, Cambridge 176; higher for engineering",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 300,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "300 CAD (licence)",
+      "applicationFeeEn": "CAD 300 (bachelor's)",
       "tuitionLabelFr": "22 500 CAD/an pour 10 cours (internationaux, 2026-2027, hors frais)",
       "tuitionLabelEn": "CAD 22,500/year for 10 courses (international, 2026-2027, before fees)",
       "intakePeriods": [
@@ -3615,10 +3683,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+            "Attention : la page du programme indique « Les admissions sont suspendues pour ce programme ». Vérifie avec l'UQAM avant de candidater.",
+            "Diplôme obtenu hors Québec après 13 ans de scolarité (ou équivalent), ou équivalent d'un bac en sciences ou en sciences appliquées.",
+            "Maths : calcul différentiel et intégral, et algèbre linéaire avec géométrie vectorielle.",
+            "Programme contingenté : à l'automne, 15 places au maximum pour les candidats hors Québec ; pas d'admission hors Québec en hiver. Sélection sur la qualité du dossier scolaire. Français attesté par un test (exemption avec un grade d'une université francophone).",
+            "Date limite internationale : 1er mars (temps complet seulement). Tu candidates en ligne sur le site de l'UQAM ; frais de 155 CAD."
           ],
           "requirementsEn": [
-            "2026 application fee: CAD 155 for international applicants"
+            "Warning: the program page says \"Les admissions sont suspendues pour ce programme\" (admissions are suspended). Check with UQAM before applying.",
+            "A diploma earned outside Québec after 13 years of schooling (or equivalent), or the equivalent of a bachelor's in science or applied science.",
+            "Math: differential and integral calculus, and linear algebra with vector geometry.",
+            "Limited-enrolment program: in the fall, at most 15 places for applicants from outside Québec; no admission from outside Québec in winter. Selection is based on the quality of your academic record. French shown by a test (exempt with a degree from a French-language university).",
+            "International deadline: March 1 (full-time only). You apply online on UQAM's website; CAD 155 fee."
           ],
           "sourceUrl": "https://services-medias.uqam.ca/media/uploads/sites/30/2026/06/15123825/2026-2027_EI_C1.pdf"
         },
@@ -3638,10 +3714,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+            "Diplôme : un bac en informatique, génie logiciel ou maths option informatique (ou équivalent), avec une moyenne d'au moins 3,2 sur 4,3. Autre voie : 2 ans d'expérience pertinente avec les connaissances requises.",
+            "Si ta moyenne est entre 2,7 et 3,2 sur 4,3, un comité étudie ton dossier : une admission reste possible.",
+            "Français suffisant à l'oral et à l'écrit ; une rencontre ou un examen peut être demandé, et des cours de français ou d'anglais peuvent être imposés.",
+            "Dossier : lettre d'intention sur tes intérêts de recherche ; lettres de recommandation facultatives. Contacte un professeur avant de candidater : sa lettre de soutien est un atout.",
+            "Admission continue pour ce programme ; dates internationales générales : 1er mars (automne), 1er août (hiver). Tu candidates en ligne sur le site de l'UQAM ; frais de 155 CAD."
           ],
           "requirementsEn": [
-            "2026 application fee: CAD 155 for international applicants"
+            "Degree: a bachelor's in computer science, software engineering or math with a computer science option (or equivalent), with an average of at least 3.2 out of 4.3. Other route: 2 years of relevant experience with the required knowledge.",
+            "If your average is between 2.7 and 3.2 out of 4.3, a committee reviews your file: admission is still possible.",
+            "Enough French, spoken and written; a meeting or exam may be required, and French or English courses may be imposed.",
+            "File: a letter of intent about your research interests; recommendation letters are optional. Contact a professor before applying: a support letter from them is an asset.",
+            "Rolling admission for this program; general international dates: March 1 (fall), August 1 (winter). You apply online on UQAM's website; CAD 155 fee."
           ],
           "sourceUrl": "https://services-medias.uqam.ca/media/uploads/sites/30/2026/06/15123828/2026-2027_EI_C2B.pdf"
         },
@@ -3863,10 +3947,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Exigence en mathématiques : algèbre linéaire et géométrie vectorielle"
+            "Diplôme : un bac général ou technologique (sciences, maths, physique/chimie, génie ou informatique) obtenu hors Québec après 13 ans de scolarité ou l'équivalent.",
+            "Moyenne d'au moins 13/20 (ou équivalent). Entre 11/20 et 13/20, ton dossier est étudié : il faut alors plus de 13/20 dans les matières d'intérêt.",
+            "Maths : algèbre linéaire et géométrie vectorielle (niveau collégial). Sinon, admission possible avec cours d'accueil et moyenne de 2,5/4,3 dans les 2 premiers trimestres.",
+            "Français : si le français n'est pas ta langue maternelle, joins la preuve de ta maîtrise (test reconnu par l'UQAC). Programme non contingenté, offert à temps complet à Saguenay.",
+            "Date limite internationale pour l'automne 2027 : 1er avril 2027 (hiver aussi possible). Tu candidates sur le portail d'admission de l'UQAC ; frais de 100 CAD."
           ],
           "requirementsEn": [
-            "Mathematics prerequisite: linear algebra and vector geometry"
+            "Degree: a general or technological baccalauréat (science, math, physics/chemistry, engineering or computing) earned outside Québec after 13 years of schooling or the equivalent.",
+            "An average of at least 13/20 (or equivalent). Between 11/20 and 13/20, your file is reviewed: you then need over 13/20 in the subjects of interest.",
+            "Math: linear algebra and vector geometry (college level). Otherwise, admission is possible with bridging courses and a 2.5/4.3 average in the first 2 terms.",
+            "French: if French is not your first language, attach proof of your skills (a test recognized by UQAC). Non-limited program, offered full-time in Saguenay.",
+            "International deadline for fall 2027: April 1, 2027 (winter entry also possible). You apply on UQAC's admission portal; CAD 100 fee."
           ],
           "sourceUrl": "https://apps.uqac.ca/calculcout/index.html"
         },
@@ -4069,13 +4161,16 @@
       "locationEn": "Moncton, New Brunswick",
       "websiteUrl": "https://www.umoncton.ca/",
       "sourceUrl": "https://www.umoncton.ca/couts-annee-universitaire",
-      "overviewFr": "Plus grande université francophone hors Québec, avec des campus à Moncton, Edmundston et Shippagan (Nouveau-Brunswick). En 2026-2027, les droits de scolarité d'un baccalauréat à temps plein sont de 15 761 CAD pour les internationaux. Elle participe au programme pilote fédéral pour les étudiants francophones en situation minoritaire (PPECFSM), une voie de permis d'études propre aux établissements francophones hors Québec.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Largest French-language university outside Quebec, with campuses in Moncton, Edmundston and Shippagan, New Brunswick. In 2026-2027, full-time bachelor's tuition is CAD 15,761 for international students. It takes part in the federal Francophone Minority Communities Student Pilot, a study permit route for French-language institutions outside Quebec.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Plus grande université francophone hors Québec, avec des campus à Moncton, Edmundston et Shippagan (Nouveau-Brunswick). En 2026-2027, les droits de scolarité d'un baccalauréat à temps plein sont de 15 761 CAD pour les internationaux. Elle participe au programme pilote fédéral pour les étudiants francophones en situation minoritaire (PPECFSM), une voie de permis d'études propre aux établissements francophones hors Québec.\n\nFrais de candidature : 300 CAD (licence ; 230 CAD sont crédités sur tes frais universitaires à la 1re session).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Largest French-language university outside Quebec, with campuses in Moncton, Edmundston and Shippagan, New Brunswick. In 2026-2027, full-time bachelor's tuition is CAD 15,761 for international students. It takes part in the federal Francophone Minority Communities Student Pilot, a study permit route for French-language institutions outside Quebec.\n\nApplication fee: CAD 300 (bachelor's; CAD 230 is credited to your university fees in the 1st term).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Français : programmes enseignés en français (au moins 6 crédits de français dans chaque programme)",
       "languageRequirementsEn": "French: programmes taught in French (at least 6 credits of French in every programme)",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 300,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "300 CAD (licence ; 230 CAD sont crédités sur tes frais universitaires à la 1re session)",
+      "applicationFeeEn": "CAD 300 (bachelor's; CAD 230 is credited to your university fees in the 1st term)",
       "tuitionLabelFr": "15 761 CAD/an en 1er cycle (internationaux, 2026-2027) ; ≈ 17 728 – 17 839 CAD avec frais et assurances",
       "tuitionLabelEn": "CAD 15,761/year for undergraduate (international, 2026-2027); ≈ CAD 17,728 – 17,839 with fees and insurance",
       "intakePeriods": [
@@ -4101,10 +4196,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Quatre ans à Moncton (les premières années aussi à Edmundston ou Shippagan)"
+            "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+            "Cours requis (condition D) : français, maths avancées, 2 sciences (biologie, chimie ou physique) et 1 autre cours admissible. Programme de 4 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+            "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+            "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+            "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
           ],
           "requirementsEn": [
-            "Four years in Moncton (first years also in Edmundston or Shippagan)"
+            "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+            "Required courses (condition D): French, advanced math, 2 sciences (biology, chemistry or physics) and 1 other eligible course. 4-year program in Moncton (1st year also in Edmundston or Shippagan).",
+            "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+            "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+            "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
           ],
           "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25207.pdf"
         },
@@ -4124,10 +4227,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Version coopérative aussi proposée"
+            "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+            "Cours requis (condition B) : français, maths et 3 autres cours admissibles. Programme de 4 ans à Moncton (2 premières années aussi à Edmundston ou Shippagan).",
+            "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+            "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+            "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
           ],
           "requirementsEn": [
-            "Co-op version also offered"
+            "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+            "Required courses (condition B): French, math and 3 other eligible courses. 4-year program in Moncton (first 2 years also in Edmundston or Shippagan).",
+            "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+            "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+            "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
           ],
           "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25234.pdf"
         },
@@ -4147,10 +4258,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Version coopérative aussi proposée"
+            "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+            "Cours requis (condition D) : français, maths avancées, 2 sciences et 1 autre cours admissible. Programme de 5 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+            "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+            "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+            "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
           ],
           "requirementsEn": [
-            "Co-op version also offered"
+            "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+            "Required courses (condition D): French, advanced math, 2 sciences and 1 other eligible course. 5-year program in Moncton (1st year also in Edmundston or Shippagan).",
+            "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+            "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+            "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
           ],
           "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25194.pdf"
         },
@@ -4170,10 +4289,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Version coopérative aussi proposée"
+            "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+            "Cours requis (condition D) : français, maths avancées, 2 sciences et 1 autre cours admissible. Programme de 5 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+            "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+            "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+            "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
           ],
           "requirementsEn": [
-            "Co-op version also offered"
+            "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+            "Required courses (condition D): French, advanced math, 2 sciences and 1 other eligible course. 5-year program in Moncton (1st year also in Edmundston or Shippagan).",
+            "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+            "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+            "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
           ],
           "sourceUrl": "https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25192.pdf"
         }
@@ -4769,8 +4896,8 @@
       "locationEn": "Kitchener-Waterloo, Ontario",
       "websiteUrl": "https://www.conestogac.on.ca/",
       "sourceUrl": "https://www.conestogac.on.ca/international/apply-to-conestoga/admission-requirements",
-      "overviewFr": "Collège public de la région de Kitchener-Waterloo (campus de Waterloo pour l'informatique, Cambridge pour l'ingénierie). Chaque fiche de programme publie le coût exact d'une année de deux trimestres pour les internationaux, frais annexes compris. Si ton anglais ne permet pas l'entrée directe, tu peux commencer par le programme English Language Studies du collège.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Public college in the Kitchener-Waterloo region (Waterloo campus for computing, Cambridge for engineering). Each programme page publishes the exact cost of a two-term year for international students, ancillary fees included. If your English does not allow direct entry, you can start with the college's English Language Studies programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Collège public de la région de Kitchener-Waterloo (campus de Waterloo pour l'informatique, Cambridge pour l'ingénierie). Chaque fiche de programme publie le coût exact d'une année de deux trimestres pour les internationaux, frais annexes compris. Si ton anglais ne permet pas l'entrée directe, tu peux commencer par le programme English Language Studies du collège.\n\nFrais de candidature : 100 CAD (tous niveaux, via le portail international OCAS).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in the Kitchener-Waterloo region (Waterloo campus for computing, Cambridge for engineering). Each programme page publishes the exact cost of a two-term year for international students, ancillary fees included. If your English does not allow direct entry, you can start with the college's English Language Studies programme.\n\nApplication fee: CAD 100 (all levels, via the OCAS international portal).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL 4.5 (2026) ou 80, Duolingo 110 ou PTE 53 pour les diplômes ; IELTS 6.5, TOEFL 5 ou 88, Duolingo 120 ou PTE 58 pour les baccalauréats et certificats postdiplôme (plus élevé pour certains programmes d'informatique et d'ingénierie) ; programme de langue en amont : General Arts and Science – English Language Studies (1 an (2 trimestres), rentrées en janvier, mai et septembre, 11 330 CAD de frais de scolarité (14 346 CAD avec frais annexes) pour 2 trimestres, 2026-2027)",
       "languageRequirementsEn": "English: IELTS 6.0, TOEFL 4.5 (2026) or 80, Duolingo 110 or PTE 53 for diplomas; IELTS 6.5, TOEFL 5 or 88, Duolingo 120 or PTE 58 for degrees and graduate certificates (higher for some IT and engineering programmes); upstream language programme: General Arts and Science – English Language Studies (1 year (2 terms), January, May and September intakes, CAD 11,330 tuition (CAD 14,346 with ancillary fees) for 2 terms, 2026-2027)",
       "languagePathway": {
@@ -4782,9 +4909,12 @@
         "costEn": "CAD 11,330 tuition (CAD 14,346 with ancillary fees) for 2 terms, 2026-2027",
         "sourceUrl": "https://www.conestogac.on.ca/fulltime/general-arts-and-science-english-language-studies"
       },
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 100,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "100 CAD (tous niveaux, via le portail international OCAS)",
+      "applicationFeeEn": "CAD 100 (all levels, via the OCAS international portal)",
       "tuitionLabelFr": "≈ 18 226 – 21 041 CAD par année de 2 trimestres selon le programme (internationaux, frais annexes compris, 2026-2027) ; dépôt non remboursable de 2 500 CAD",
       "tuitionLabelEn": "≈ CAD 18,226 – 21,041 per 2-term year by programme (international, ancillary fees included, 2026-2027); CAD 2,500 non-refundable deposit",
       "intakePeriods": [
@@ -4896,10 +5026,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+            "Diplôme : un diplôme collégial, un diplôme avancé ou un diplôme universitaire (ou équivalent) avec une moyenne B ou plus, évaluée selon les normes de l'Ontario.",
+            "Domaine : informatique, technologies de l'information, génie logiciel, programmation, systèmes informatiques ou développement d'applications.",
+            "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 88 (ou 5 sur la nouvelle échelle 2026), Duolingo 120 ou PTE 58. Les scores peuvent être plus élevés pour certains programmes d'informatique.",
+            "Rentrées : janvier 2027 et septembre 2027 (Waterloo), indiquées « Open » le 12 novembre 2026 ; mai 2027 est suspendue. Aucune date limite fixe n'est publiée.",
+            "Tu candidates sur le portail international OCAS (ontariocolleges.ca), pas sur le formulaire canadien. Frais de 100 CAD payés avec Flywire."
           ],
           "requirementsEn": [
-            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58"
+            "Degree: a college diploma, advanced diploma or university degree (or equivalent) with an average of B or above, assessed to Ontario standards.",
+            "Field: computer science, information technology, software engineering, programming, computer systems or application development.",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 88 (or 5 on the new 2026 scale), Duolingo 120 or PTE 58. Scores may be higher for some IT programs.",
+            "Intakes: January 2027 and September 2027 (Waterloo), shown as \"Open\" on November 12, 2026; May 2027 is suspended. No fixed deadline is published.",
+            "You apply on the OCAS international portal (ontariocolleges.ca), not the Canadian form. CAD 100 fee paid through Flywire."
           ],
           "sourceUrl": "https://www.conestogac.on.ca/fulltime/cybersecurity-response-planning",
           "offerings": [
@@ -4956,10 +5094,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+            "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, ou 19 ans et plus. Ton bac est évalué selon les normes de l'Ontario.",
+            "Cours : 6 cours de niveau 4U/M avec une moyenne d'au moins 65 % (souvent plus, selon la concurrence), dont anglais 4U et un cours de maths 4U.",
+            "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 88 (ou 5 sur la nouvelle échelle 2026), Duolingo 120 ou PTE 58. Les scores peuvent être plus élevés pour certains programmes d'informatique.",
+            "Rentrées : janvier 2027 et septembre 2027 (Waterloo), indiquées « Open » le 12 novembre 2026. Aucune date limite fixe n'est publiée.",
+            "Tu candidates sur le portail international OCAS (ontariocolleges.ca), pas sur le formulaire canadien. Frais de 100 CAD payés avec Flywire."
           ],
           "requirementsEn": [
-            "English: IELTS 6.5 (no band below 6.0), TOEFL 5 (2026) or 88, Duolingo 120, PTE 58"
+            "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, or age 19 or older. Your baccalauréat is assessed to Ontario standards.",
+            "Courses: 6 courses at the 4U/M level with an average of at least 65% (often higher, depending on competition), including English 4U and a 4U math course.",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 88 (or 5 on the new 2026 scale), Duolingo 120 or PTE 58. Scores may be higher for some IT programs.",
+            "Intakes: January 2027 and September 2027 (Waterloo), shown as \"Open\" on November 12, 2026. No fixed deadline is published.",
+            "You apply on the OCAS international portal (ontariocolleges.ca), not the Canadian form. CAD 100 fee paid through Flywire."
           ],
           "sourceUrl": "https://www.conestogac.on.ca/fulltime/bachelor-of-computer-science-honours",
           "offerings": [
@@ -5321,10 +5467,16 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+            "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, avec anglais de 12e année et maths de 11e ou 12e année. L'équivalence de ton bac dépend de ton pays (à choisir sur la page).",
+            "Anglais : IELTS 6,0 (aucune bande sous 5,5), TOEFL iBT 4,5 (échelle 2026, aucun score sous 4) ou 79, PTE 53 ou Duolingo 105 (aucun score sous 95).",
+            "Rentrées : janvier 2027 et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Programme avancé de 90 semaines avec stages (co-op).",
+            "Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
           ],
           "requirementsEn": [
-            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026) or 79, Duolingo 105 (no score below 95), PTE 53"
+            "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, with Grade 12 English and Grade 11 or 12 math. The equivalence of your baccalauréat depends on your country (choose it on the page).",
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026 scale, no score below 4) or 79, PTE 53 or Duolingo 105 (no score below 95).",
+            "Intakes: January 2027 and September 2027 (London), shown as \"Open\" on November 12, 2026. 90-week advanced diploma with co-op work terms.",
+            "You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
           ],
           "sourceUrl": "https://www.fanshawec.ca/programs/cpa3-computer-programming-and-analysis-co-op/next",
           "offerings": [
@@ -5356,10 +5508,16 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+            "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, avec anglais de 12e année et maths de 12e année (note finale d'au moins 65). L'équivalence de ton bac dépend de ton pays.",
+            "Anglais : IELTS 6,0 (aucune bande sous 5,5), TOEFL iBT 4,5 (échelle 2026, aucun score sous 4) ou 79, PTE 53 ou Duolingo 105 (aucun score sous 95).",
+            "Programme compétitif : il y a plus de candidats qualifiés que de places.",
+            "Rentrées : janvier 2027 et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
           ],
           "requirementsEn": [
-            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026) or 79, Duolingo 105 (no score below 95), PTE 53"
+            "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, with Grade 12 English and Grade 12 math (final grade of at least 65). The equivalence of your baccalauréat depends on your country.",
+            "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026 scale, no score below 4) or 79, PTE 53 or Duolingo 105 (no score below 95).",
+            "Competitive program: there are more qualified applicants than seats.",
+            "Intakes: January 2027 and September 2027 (London), shown as \"Open\" on November 12, 2026. You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
           ],
           "sourceUrl": "https://www.fanshawec.ca/programs/cyb1-cyber-security-co-op/next",
           "offerings": [
@@ -5391,10 +5549,16 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+            "Diplôme : un diplôme collégial, un diplôme avancé ou un diplôme universitaire (ou équivalent) en informatique ou dans un domaine proche, avec une formation en développement de logiciels.",
+            "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 5 (aucune bande sous 4,5), PTE 58 ou Duolingo 120 (aucun score sous 105).",
+            "Ce programme est réservé aux candidats internationaux (les Canadiens suivent AIM2).",
+            "Rentrées : janvier, mai et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
           ],
           "requirementsEn": [
-            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5, Duolingo 120 (no score below 105), PTE 58"
+            "Degree: a college diploma, advanced diploma or university degree (or equivalent) in computer science or a related field, with software development education.",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5 (no band below 4.5), PTE 58 or Duolingo 120 (no score below 105).",
+            "This program is for international applicants only (Canadians take AIM2).",
+            "Intakes: January, May and September 2027 (London), shown as \"Open\" on November 12, 2026. You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
           ],
           "sourceUrl": "https://www.fanshawec.ca/programs/aim1-artificial-intelligence-and-machine-learning/next",
           "offerings": [
@@ -5431,10 +5595,16 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+            "Diplôme : un diplôme collégial ou un diplôme avancé de l'Ontario, ou un diplôme universitaire, ou équivalent. Aucun domaine précis n'est indiqué.",
+            "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 5 (aucune bande sous 4,5), PTE 58 ou Duolingo 120 (aucun score sous 105).",
+            "Rentrées : janvier, mai et septembre 2027 (London), indiquées « Open » le 12 novembre 2026.",
+            "Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
           ],
           "requirementsEn": [
-            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5, Duolingo 120 (no score below 105), PTE 58"
+            "Degree: an Ontario College Diploma or Advanced Diploma, or a university degree, or equivalent. No specific field is stated.",
+            "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5 (no band below 4.5), PTE 58 or Duolingo 120 (no score below 105).",
+            "Intakes: January, May and September 2027 (London), shown as \"Open\" on November 12, 2026.",
+            "You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
           ],
           "sourceUrl": "https://www.fanshawec.ca/programs/daa1-data-analytics/next",
           "offerings": [
@@ -5469,8 +5639,8 @@
       "locationEn": "Oakville, Ontario",
       "websiteUrl": "https://www.sheridancollege.ca/",
       "sourceUrl": "https://www.sheridancollege.ca/admissions/how-to-apply/admission-requirements/english-language",
-      "overviewFr": "Collège public de la région de Toronto (campus Trafalgar à Oakville, Davis à Brampton, Hazel McCallion à Mississauga). Les prix publiés pour 2026-2027 incluent l'assurance santé et les frais annexes. Si ton anglais n'est pas encore au niveau, ta lettre d'offre peut indiquer ton niveau de placement dans le programme English for Academic Purposes (EAP) de Sheridan, à réussir avant ton programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Public college in the Toronto region (Trafalgar campus in Oakville, Davis in Brampton, Hazel McCallion in Mississauga). Published 2026-2027 prices include health insurance and ancillary fees. If your English is not yet at the required level, your offer letter can show your placement level in Sheridan's English for Academic Purposes (EAP) programme, to pass before your programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Collège public de la région de Toronto (campus Trafalgar à Oakville, Davis à Brampton, Hazel McCallion à Mississauga). Les prix publiés pour 2026-2027 incluent l'assurance santé et les frais annexes. Si ton anglais n'est pas encore au niveau, ta lettre d'offre peut indiquer ton niveau de placement dans le programme English for Academic Purposes (EAP) de Sheridan, à réussir avant ton programme.\n\nFrais de candidature : 110 CAD (tous niveaux, tarif 2026-2027).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public college in the Toronto region (Trafalgar campus in Oakville, Davis in Brampton, Hazel McCallion in Mississauga). Published 2026-2027 prices include health insurance and ancillary fees. If your English is not yet at the required level, your offer letter can show your placement level in Sheridan's English for Academic Purposes (EAP) programme, to pass before your programme.\n\nApplication fee: CAD 110 (all levels, 2026-27 rate).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : IELTS 6.0, TOEFL iBT 4 (2026) ou 80, Duolingo 105 ou PTE 58 pour les certificats et diplômes ; IELTS 6.5, TOEFL iBT 4.5 ou 88, Duolingo 115 ou PTE 60 pour les baccalauréats et certificats postdiplôme ; programme de langue en amont : English for Academic Purposes (EAP) (5 niveaux de 14 semaines ; niveau 5 réussi à 70 % (diplômes) ou 75 % (baccalauréats), 16 836,44 CAD pour 2 semestres (internationaux, 2026-2027))",
       "languageRequirementsEn": "English: IELTS 6.0, TOEFL iBT 4 (2026) or 80, Duolingo 105 or PTE 58 for certificates and diplomas; IELTS 6.5, TOEFL iBT 4.5 or 88, Duolingo 115 or PTE 60 for degrees and graduate certificates; upstream language programme: English for Academic Purposes (EAP) (5 levels of 14 weeks; Level 5 passed with 70% (diplomas) or 75% (degrees), CAD 16,836.44 for 2 semesters (international, 2026-2027))",
       "languagePathway": {
@@ -5482,9 +5652,12 @@
         "costEn": "CAD 16,836.44 for 2 semesters (international, 2026-2027)",
         "sourceUrl": "https://www.sheridancollege.ca/programs/english-for-academic-purposes"
       },
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 110,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "110 CAD (tous niveaux, tarif 2026-2027)",
+      "applicationFeeEn": "CAD 110 (all levels, 2026-27 rate)",
       "tuitionLabelFr": "≈ 19 700 – 25 792 CAD pour les 2 premiers semestres selon le programme (internationaux, assurance et frais compris, 2026-2027)",
       "tuitionLabelEn": "≈ CAD 19,700 – 25,792 for the first 2 semesters by programme (international, insurance and fees included, 2026-2027)",
       "intakePeriods": [
@@ -6706,13 +6879,16 @@
       "locationEn": "Montreal, Quebec",
       "websiteUrl": "https://www.polymtl.ca/",
       "sourceUrl": "https://etudiant.polymtl.ca/etudes/droits-de-scolarite/cout-des-etudes/baccalaureat",
-      "overviewFr": "Grande école d'ingénierie francophone de Montréal, sur le campus de l'Université de Montréal. Ses baccalauréats en ingénierie comptent 120 crédits et sont agréés par Ingénieurs Canada. En 2026-2027, un crédit coûte 1 127,57 CAD à un étudiant international (montant forfaitaire compris), plus une assurance maladie obligatoire de 900 CAD par an. Pour l'automne 2027, la demande internationale se fait avant le 1er février 2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "Major French-language engineering school in Montreal, on the Université de Montréal campus. Its engineering bachelor's degrees have 120 credits and are accredited by Engineers Canada. In 2026-2027, one credit costs an international student CAD 1,127.57 (lump sum included), plus mandatory health insurance of CAD 900 a year. For fall 2027, international applications are due by 1 February 2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Grande école d'ingénierie francophone de Montréal, sur le campus de l'Université de Montréal. Ses baccalauréats en ingénierie comptent 120 crédits et sont agréés par Ingénieurs Canada. En 2026-2027, un crédit coûte 1 127,57 CAD à un étudiant international (montant forfaitaire compris), plus une assurance maladie obligatoire de 900 CAD par an. Pour l'automne 2027, la demande internationale se fait avant le 1er février 2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nFrais de candidature : 107 CAD (licence).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Major French-language engineering school in Montreal, on the Université de Montréal campus. Its engineering bachelor's degrees have 120 credits and are accredited by Engineers Canada. In 2026-2027, one credit costs an international student CAD 1,127.57 (lump sum included), plus mandatory health insurance of CAD 900 a year. For fall 2027, international applications are due by 1 February 2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nApplication fee: CAD 107 (bachelor's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Français : connaissance suffisante de la langue française exigée (règlement des études du baccalauréat, article 14)",
       "languageRequirementsEn": "French: sufficient knowledge of French required (bachelor's study regulations, section 14)",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 106.91,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "107 CAD (licence)",
+      "applicationFeeEn": "CAD 107 (bachelor's)",
       "tuitionLabelFr": "≈ 33 827 CAD/an (30 crédits au tarif international, 2026-2027, hors frais et assurance)",
       "tuitionLabelEn": "≈ CAD 33,827/year (30 credits at the international rate, 2026-2027, before fees and insurance)",
       "intakePeriods": [
@@ -6872,13 +7048,16 @@
       "locationEn": "Montreal, Quebec",
       "websiteUrl": "https://www.hec.ca/",
       "sourceUrl": "https://www.hec.ca/en/students/tuition-fees/pdf/tuition-fees-baa.pdf",
-      "overviewFr": "École de gestion francophone de Montréal, sur le campus de l'Université de Montréal, titulaire des agréments AMBA, AACSB et EQUIS. Le B.A.A. (90 crédits) se suit en français ou en cheminement bilingue français-anglais, avec 15 spécialisations dont la science des données et l'analytique d'affaires. Au tarif international, un crédit du B.A.A. coûte 1 077,43 CAD en 2026-2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "French-language business school in Montreal, on the Université de Montréal campus, holding AMBA, AACSB and EQUIS accreditations. The B.A.A. (90 credits) is taught in French or in a French-English bilingual track, with 15 specializations including data science and business analytics. At the international rate, one B.A.A. credit costs CAD 1,077.43 in 2026-2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "École de gestion francophone de Montréal, sur le campus de l'Université de Montréal, titulaire des agréments AMBA, AACSB et EQUIS. Le B.A.A. (90 crédits) se suit en français ou en cheminement bilingue français-anglais, avec 15 spécialisations dont la science des données et l'analytique d'affaires. Au tarif international, un crédit du B.A.A. coûte 1 077,43 CAD en 2026-2027.\n\nAu Québec, il te faudra aussi un Certificat d'acceptation du Québec (CAQ) avant de demander ton permis d'études.\n\nFrais de candidature : 346 CAD (baccalauréat et maîtrise).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language business school in Montreal, on the Université de Montréal campus, holding AMBA, AACSB and EQUIS accreditations. The B.A.A. (90 credits) is taught in French or in a French-English bilingual track, with 15 specializations including data science and business analytics. At the international rate, one B.A.A. credit costs CAD 1,077.43 in 2026-2027.\n\nIn Quebec, you will also need a Québec Acceptance Certificate (CAQ) before applying for your study permit.\n\nApplication fee: CAD 346 (bachelor's and master's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Français : cours en français (B.A.A. aussi en cheminement bilingue) ; en maîtrise, niveau intermédiaire-avancé à un test reconnu si ta scolarité n'atteste pas que tu es francophone",
       "languageRequirementsEn": "French: courses in French (B.A.A. also in a bilingual track); for master's, intermediate-advanced level on a recognized test if your schooling does not show you are French-speaking",
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 346.23,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "346 CAD (baccalauréat et maîtrise)",
+      "applicationFeeEn": "CAD 346 (bachelor's and master's)",
       "tuitionLabelFr": "≈ 32 323 CAD/an au B.A.A. (30 crédits au tarif international, 2026-2027, hors frais) ; 34 500 – 39 000 CAD pour une M. Sc. complète",
       "tuitionLabelEn": "≈ CAD 32,323/year for the B.A.A. (30 credits at the international rate, 2026-2027, before fees); CAD 34,500 – 39,000 for a full M.Sc.",
       "intakePeriods": [
@@ -7129,10 +7308,18 @@
             "currency": "CAD"
           },
           "requirementsFr": [
-            "Rentrées d'automne et d'hiver"
+            "Filière sur cours : un bac en informatique, génie logiciel ou génie informatique (ou équivalent) avec au moins 70 % (B). Maths, stats, physique ou ingénierie : même seuil, avec le cours CS 454 en plus.",
+            "Autres domaines (finance, économie, chimie...) : au moins 75 % (B+), avec les cours MAT 200 et CS 454 en plus. L'université peut refuser un profil trop éloigné.",
+            "Filière avec mémoire : pré-candidature obligatoire et un professeur prêt à te superviser. Il faut un diplôme en informatique avec une mention d'un niveau « high upper-second ».",
+            "Anglais : TOEFL iBT 90 ou IELTS 6,5 (en principe). Joins aussi ton relevé de notes, ta lettre sur tes intérêts de recherche et le formulaire de pré-approbation.",
+            "Rentrées d'automne et d'hiver. Tu candidates sur le système de candidature de Bishop's ; pas de date limite propre à ce master sur la page (vérifie auprès du département)."
           ],
           "requirementsEn": [
-            "Fall and winter entry"
+            "Course-based stream: a bachelor's in computer science, software or computer engineering (or equivalent) with at least 70% (B). Math, statistics, physics or engineering: same threshold, with CS 454 added.",
+            "Other fields (finance, economics, chemistry...): at least 75% (B+), with MAT 200 and CS 454 added. The university may refuse a background that is too far from the field.",
+            "Thesis stream: a pre-application is compulsory and a professor must be willing to supervise you. You need a computing degree with a high upper-second class standing.",
+            "English: TOEFL iBT 90 or IELTS 6.5 (in principle). Also include your transcript, your statement of research interests and the pre-approval form.",
+            "Fall and winter entry. You apply through Bishop's application system; no deadline specific to this master's is shown on the page (check with the department)."
           ],
           "sourceUrl": "https://www.ubishops.ca/program/computer-science-msc/"
         }
@@ -7150,8 +7337,8 @@
       "locationEn": "Fredericton, New Brunswick",
       "websiteUrl": "https://www.unb.ca/",
       "sourceUrl": "https://www.unb.ca/international/admission/english.html",
-      "overviewFr": "Université publique anglophone du Nouveau-Brunswick, avec des campus à Fredericton et Saint John. En 2026-2027, les frais de scolarité d'une année en informatique à Fredericton sont de 22 514 CAD pour un étudiant international (25 871 CAD en génie). Si tu n'as pas encore le score d'anglais demandé, tu peux être admis à condition de suivre d'abord le parcours PAEP (Program of Academic English Preparation) ; dès IELTS 5.5 ou 6.0, tu suis déjà certains cours de ton programme.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
-      "overviewEn": "English-language public university in New Brunswick, with campuses in Fredericton and Saint John. In 2026-2027, a year of computer science tuition in Fredericton is CAD 22,514 for an international student (CAD 25,871 in engineering). If you do not yet have the required English score, you can be admitted on condition that you first follow the PAEP pathway (Program of Academic English Preparation); from IELTS 5.5 or 6.0, you already take some courses in your programme.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "overviewFr": "Université publique anglophone du Nouveau-Brunswick, avec des campus à Fredericton et Saint John. En 2026-2027, les frais de scolarité d'une année en informatique à Fredericton sont de 22 514 CAD pour un étudiant international (25 871 CAD en génie). Si tu n'as pas encore le score d'anglais demandé, tu peux être admis à condition de suivre d'abord le parcours PAEP (Program of Academic English Preparation) ; dès IELTS 5.5 ou 6.0, tu suis déjà certains cours de ton programme.\n\nFrais de candidature : 125 CAD (licence).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "English-language public university in New Brunswick, with campuses in Fredericton and Saint John. In 2026-2027, a year of computer science tuition in Fredericton is CAD 22,514 for an international student (CAD 25,871 in engineering). If you do not yet have the required English score, you can be admitted on condition that you first follow the PAEP pathway (Program of Academic English Preparation); from IELTS 5.5 or 6.0, you already take some courses in your programme.\n\nApplication fee: CAD 125 (bachelor's).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
       "languageRequirementsFr": "Anglais : IELTS 6.5, TOEFL iBT 4.5 (2026) ou 85, Duolingo 115, CAEL 60, PTE 59 (IELTS 7.0 et Duolingo 130 en sciences infirmières) ; programme de langue en amont : Program of Academic English Preparation (PAEP) (admission conditionnelle ; anglais académique à temps complet, avec des cours du programme dès IELTS 5.5–6.0, frais de scolarité de premier cycle à temps complet de UNB)",
       "languageRequirementsEn": "English: IELTS 6.5, TOEFL iBT 4.5 (2026) or 85, Duolingo 115, CAEL 60, PTE 59 (IELTS 7.0 and Duolingo 130 for Nursing); upstream language programme: Program of Academic English Preparation (PAEP) (conditional admission; full-time academic English, with programme courses from IELTS 5.5–6.0, UNB full-time undergraduate tuition)",
       "languagePathway": {
@@ -7163,9 +7350,12 @@
         "costEn": "UNB full-time undergraduate tuition",
         "sourceUrl": "https://www.unb.ca/elp/english/paep.html"
       },
-      "applicationFee": null,
-      "applicationFeeFr": "",
-      "applicationFeeEn": "",
+      "applicationFee": {
+        "amount": 125,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "125 CAD (licence)",
+      "applicationFeeEn": "CAD 125 (bachelor's)",
       "tuitionLabelFr": "≈ 22 514 – 25 871 CAD/an selon la faculté à Fredericton (internationaux, 2026-2027, hors frais et assurances)",
       "tuitionLabelEn": "≈ CAD 22,514 – 25,871/year by faculty in Fredericton (international, 2026-2027, before fees and insurance)",
       "intakePeriods": [
@@ -8954,12 +9144,18 @@
       {
         "programId": "na-ca-uqam--baccalaureat-informatique-gestion",
         "previousTuitionFr": "Droits de base + montant forfaitaire par crédit pour les internationaux (montant 2026-2027 à confirmer)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+        ]
       },
       {
         "programId": "na-ca-uqam--maitrise-informatique",
         "previousTuitionFr": "Droits de base + montant forfaitaire par crédit pour les internationaux (montant 2026-2027 à confirmer)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Frais d'admission 2026 : 155 CAD pour les candidats internationaux"
+        ]
       },
       {
         "programId": "na-ca-montreal--maitrise-sante-publique",
@@ -8981,6 +9177,9 @@
         "programId": "na-ca-uqac--baccalaureat-science-donnees-intelligence-affaires",
         "previousTuitionFr": "Fixés par le gouvernement du Québec ; montant annuel indiqué sur l'attestation d'admission",
         "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Exigence en mathématiques : algèbre linéaire et géométrie vectorielle"
+        ],
         "fillDuration": true
       },
       {
@@ -8996,27 +9195,344 @@
       {
         "programId": "na-ca-hec--msc-science-donnees-analytique-affaires",
         "previousTuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
       },
       {
         "programId": "na-ca-hec--msc-intelligence-affaires",
         "previousTuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
       },
       {
         "programId": "na-ca-hec--msc-finance",
         "previousTuitionFr": "34 500 – 39 000 CAD pour le programme complet de 45 crédits (internationaux, avec mémoire ou projet supervisé)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
       },
       {
         "programId": "na-ca-sheridan--computer-systems-technology-software-development-network-engineering",
         "previousTuitionFr": "≈ 19 700 – 25 792 CAD pour les 2 premiers semestres selon le programme (internationaux, assurance et frais compris, 2026-2027)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
       },
       {
         "programId": "na-ca-unb--bsc-software-engineering",
         "previousTuitionFr": "≈ 22 514 – 25 871 CAD/an selon la faculté à Fredericton (internationaux, 2026-2027, hors frais et assurances)",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-nebraska-omaha--ms-artificial-intelligence",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Licence (ou équivalent)"
+        ]
+      },
+      {
+        "programId": "na-us-kent-state--ms-artificial-intelligence",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Licence (ou équivalent)"
+        ]
+      },
+      {
+        "programId": "na-us-kent-state--ms-business-analytics",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Licence (ou équivalent)"
+        ]
+      },
+      {
+        "programId": "na-ca-concordia--bcompsc-computer-science",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-concordia--beng-software-engineering",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-concordia--beng-mechanical-engineering",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-concordia--bcomm-finance",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6.0 (5.5 par épreuve), TOEFL iBT 4.0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-moncton--baccalaureat-informatique-appliquee",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Quatre ans à Moncton (les premières années aussi à Edmundston ou Shippagan)"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-moncton--baa-finance",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Version coopérative aussi proposée"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-moncton--bing-genie-mecanique",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Version coopérative aussi proposée"
+        ],
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-moncton--bing-genie-civil",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Version coopérative aussi proposée"
+        ],
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-conestoga--cybersecurity-response-planning",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-conestoga--bachelor-of-computer-science-honours",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL 5 (2026) ou 88, Duolingo 120, PTE 58"
+        ],
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-fanshawe--cpa3-computer-programming-and-analysis-co-op",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+        ]
+      },
+      {
+        "programId": "na-ca-fanshawe--cyb1-cyber-security-co-op",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.0 (aucune bande sous 5.5), TOEFL iBT 4.5 (2026) ou 79, Duolingo 105 (aucun score sous 95), PTE 53"
+        ]
+      },
+      {
+        "programId": "na-ca-fanshawe--aim1-artificial-intelligence-and-machine-learning",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+        ]
+      },
+      {
+        "programId": "na-ca-fanshawe--daa1-data-analytics",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Anglais : IELTS 6.5 (aucune bande sous 6.0), TOEFL iBT 5, Duolingo 120 (aucun score sous 105), PTE 58"
+        ]
+      },
+      {
+        "programId": "na-ca-bishops--msc-computer-science",
+        "consultedAt": "2026-11-12",
+        "previousRequirementsFr": [
+          "Rentrées d'automne et d'hiver"
+        ]
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--bs-computer-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--bs-finance",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--bsme-mechanical-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--bs-public-health",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--ms-data-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-minnesota-state-mankato--ms-artificial-intelligence",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-us-toledo--bs-computer-science-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-us-toledo--bs-computer-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-us-toledo--bs-data-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-us-toledo--bba-finance",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-us-toledo--bs-mechanical-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-us-toledo--bs-public-health",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-commerce-coop",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-commerce",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true,
+        "fillDuration": true
+      },
+      {
+        "programId": "na-ca-conestoga--computer-programming",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-conestoga--computer-programming-and-analysis",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-conestoga--applied-artificial-intelligence-machine-learning",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-conestoga--bachelor-of-engineering-mechanical-systems-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-sheridan--computer-programming",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-sheridan--practical-nursing",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-sheridan--honours-bachelor-computer-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-sheridan--bachelor-cyber-security",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-polytechnique--baccalaureat-genie-informatique",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-polytechnique--baccalaureat-genie-logiciel",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-polytechnique--baccalaureat-genie-electrique",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-polytechnique--baccalaureat-genie-mecanique",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-polytechnique--baccalaureat-genie-biomedical",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-hec--baa",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-unb--bachelor-computer-science",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-unb--bsce-mechanical-engineering",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
+      },
+      {
+        "programId": "na-ca-unb--bachelor-of-nursing",
+        "consultedAt": "2026-11-12",
+        "fillApplicationFee": true
       },
       {
         "programId": "na-us-houston--bba-finance",
@@ -9044,21 +9560,6 @@
         "consultedAt": "2026-11-12"
       },
       {
-        "programId": "na-us-toledo--bs-mechanical-engineering",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-us-toledo--bba-finance",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-us-toledo--bs-public-health",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
         "programId": "na-ca-york--computer-science",
         "fillDuration": true,
         "consultedAt": "2026-11-12"
@@ -9079,31 +9580,6 @@
         "consultedAt": "2026-11-12"
       },
       {
-        "programId": "na-ca-memorial--bachelor-of-engineering",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-ca-memorial--bachelor-of-commerce",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-ca-memorial--bachelor-of-science",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-ca-moncton--bing-genie-mecanique",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-ca-moncton--bing-genie-civil",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
         "programId": "na-ca-uqat--baccalaureat-genie-electrique",
         "fillDuration": true,
         "consultedAt": "2026-11-12"
@@ -9120,21 +9596,6 @@
       },
       {
         "programId": "na-ca-uqat--baccalaureat-sciences-comptables",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-us-toledo--bs-computer-science",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-us-toledo--bs-data-science",
-        "fillDuration": true,
-        "consultedAt": "2026-11-12"
-      },
-      {
-        "programId": "na-us-toledo--bs-computer-science-engineering",
         "fillDuration": true,
         "consultedAt": "2026-11-12"
       }

@@ -2977,5 +2977,469 @@
       "durationFr": "4 ans (au moins 120 crédits ; davantage pour ce programme accrédité ABET)",
       "durationEn": "4 years (at least 120 credit hours; more for this ABET-accredited programme)"
     }
+  ],
+  "applicationFeeFixes": [
+    {
+      "institutionId": "na-us-minnesota-state-mankato",
+      "applicationFee": {
+        "amount": 20,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "20 USD (licence) ; 40 USD (master)",
+      "applicationFeeEn": "USD 20 (bachelor's); USD 40 (master's)"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "applicationFee": {
+        "amount": 0,
+        "currency": "USD"
+      },
+      "applicationFeeFr": "0 USD (licence, première année : frais supprimés)",
+      "applicationFeeEn": "USD 0 (bachelor's, first-year applicants: fee waived)"
+    },
+    {
+      "institutionId": "na-ca-concordia",
+      "applicationFee": {
+        "amount": 103,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "103 CAD (licence)",
+      "applicationFeeEn": "CAD 103 (bachelor's)"
+    },
+    {
+      "institutionId": "na-ca-memorial",
+      "applicationFee": {
+        "amount": 300,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "300 CAD (licence)",
+      "applicationFeeEn": "CAD 300 (bachelor's)"
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "applicationFee": {
+        "amount": 300,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "300 CAD (licence ; 230 CAD sont crédités sur tes frais universitaires à la 1re session)",
+      "applicationFeeEn": "CAD 300 (bachelor's; CAD 230 is credited to your university fees in the 1st term)"
+    },
+    {
+      "institutionId": "na-ca-conestoga",
+      "applicationFee": {
+        "amount": 100,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "100 CAD (tous niveaux, via le portail international OCAS)",
+      "applicationFeeEn": "CAD 100 (all levels, via the OCAS international portal)"
+    },
+    {
+      "institutionId": "na-ca-sheridan",
+      "applicationFee": {
+        "amount": 110,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "110 CAD (tous niveaux, tarif 2026-2027)",
+      "applicationFeeEn": "CAD 110 (all levels, 2026-27 rate)"
+    },
+    {
+      "institutionId": "na-ca-polytechnique",
+      "applicationFee": {
+        "amount": 106.91,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "107 CAD (licence)",
+      "applicationFeeEn": "CAD 107 (bachelor's)"
+    },
+    {
+      "institutionId": "na-ca-hec",
+      "applicationFee": {
+        "amount": 346.23,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "346 CAD (baccalauréat et maîtrise)",
+      "applicationFeeEn": "CAD 346 (bachelor's and master's)"
+    },
+    {
+      "institutionId": "na-ca-unb",
+      "applicationFee": {
+        "amount": 125,
+        "currency": "CAD"
+      },
+      "applicationFeeFr": "125 CAD (licence)",
+      "applicationFeeEn": "CAD 125 (bachelor's)"
+    }
+  ],
+  "requirementsFixes": [
+    {
+      "institutionId": "na-us-nebraska-omaha",
+      "slug": "ms-artificial-intelligence",
+      "requirementsFr": [
+        "Diplôme : un bac de 4 ans (ou équivalent) avec une moyenne d'au moins 3,0 sur 4,0. Le GRE n'est pas demandé.",
+        "Anglais : TOEFL iBT 80, IELTS 6,5, PTE 53 ou Duolingo 110 (sauf diplôme américain ou d'un pays de la liste de dispense).",
+        "Dossier : joins un CV détaillé ; une lettre de recommandation est facultative.",
+        "Ton diplôme étranger doit être évalué cours par cours par un organisme membre de NACES (obligatoire depuis le 1er août 2026).",
+        "Date limite pour l'automne 2027 : 1er mai 2027 si tu as besoin d'un nouveau visa étudiant. Tu candidates en ligne sur le portail de l'université et tu paies les frais en ligne."
+      ],
+      "requirementsEn": [
+        "Degree: a 4-year bachelor's (or equivalent) with a GPA of at least 3.0 out of 4.0. The GRE is not required.",
+        "English: TOEFL iBT 80, IELTS 6.5, PTE 53 or Duolingo 110 (unless you hold a US degree or one from a country on the waiver list).",
+        "File: include a detailed resume; one recommendation letter is optional.",
+        "Your foreign degree must be evaluated course by course by a NACES member organization (required since August 1, 2026).",
+        "Fall 2027 deadline: May 1, 2027 if you need a new student visa. You apply online through the university's portal and pay the fee online."
+      ]
+    },
+    {
+      "institutionId": "na-us-kent-state",
+      "slug": "ms-artificial-intelligence",
+      "requirementsFr": [
+        "Diplôme : un bachelor d'une université accréditée, avec une moyenne d'au moins 3,0 sur 4,0.",
+        "Prérequis : au moins B en algèbre, géométrie et calcul de haut niveau. Des cours d'informatique avec B (programmation, structures de données, bases de données...) sont fortement conseillés.",
+        "Anglais : TOEFL iBT 71, IELTS 6,0, PTE 50 ou Duolingo 100. Une admission conditionnelle est possible si ton score est plus bas.",
+        "Dossier : relevés officiels, scores GRE, CV, lettre d'objectifs et 2 lettres de recommandation.",
+        "Date limite pour l'automne : 15 juin. Tu candidates sur le portail de candidature de Kent State (apply.kent.edu)."
+      ],
+      "requirementsEn": [
+        "Degree: a bachelor's from an accredited institution, with a GPA of at least 3.0 out of 4.0.",
+        "Prerequisites: at least a B in high-level algebra, geometry and calculus. Computer science courses with a B (programming, data structures, databases...) are strongly recommended.",
+        "English: TOEFL iBT 71, IELTS 6.0, PTE 50 or Duolingo 100. Conditional admission is possible if your score is lower.",
+        "File: official transcripts, GRE scores, resume, goal statement and 2 recommendation letters.",
+        "Fall deadline: June 15. You apply through the Kent State application portal (apply.kent.edu)."
+      ]
+    },
+    {
+      "institutionId": "na-us-kent-state",
+      "slug": "ms-business-analytics",
+      "requirementsFr": [
+        "Diplôme : un bachelor d'une université accréditée, avec une moyenne d'au moins 3,0 sur 4,0.",
+        "Prérequis : bases en statistiques, maths, informatique et gestion. Tu peux combler un manque avec BA 24056, CIS 24053, MATH 11012 ou MGMT 24163 (ou équivalents).",
+        "Anglais : TOEFL iBT 79, IELTS 6,5, PTE 58 ou Duolingo 110. Une admission conditionnelle est possible si ton score est plus bas.",
+        "Dossier : relevés officiels, CV, lettre d'objectifs et 2 lettres de recommandation.",
+        "Date limite internationale pour l'automne : 15 mars. Tu candidates sur le portail de candidature de Kent State (apply.kent.edu)."
+      ],
+      "requirementsEn": [
+        "Degree: a bachelor's from an accredited institution, with a GPA of at least 3.0 out of 4.0.",
+        "Prerequisites: basics in statistics, math, computing and business. You can fill gaps with BA 24056, CIS 24053, MATH 11012 or MGMT 24163 (or equivalents).",
+        "English: TOEFL iBT 79, IELTS 6.5, PTE 58 or Duolingo 110. Conditional admission is possible if your score is lower.",
+        "File: official transcripts, resume, goal statement and 2 recommendation letters.",
+        "International fall deadline: March 15. You apply through the Kent State application portal (apply.kent.edu)."
+      ]
+    },
+    {
+      "institutionId": "na-ca-concordia",
+      "slug": "bcompsc-computer-science",
+      "requirementsFr": [
+        "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+        "Notes du programme (lycée canadien) : moyenne B, B+ en maths, avec un cours de maths comme le pré-calcul ou le calcul. Ton dossier est comparé à ces seuils.",
+        "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+        "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+        "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+        "Program grades (Canadian high school): B overall, B+ in math, with a math course such as pre-calculus or calculus. Your file is compared to these thresholds.",
+        "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+        "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+        "You apply online on Concordia's website; CAD 103 fee paid by credit card."
+      ]
+    },
+    {
+      "institutionId": "na-ca-concordia",
+      "slug": "beng-software-engineering",
+      "requirementsFr": [
+        "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+        "Notes du programme (lycée canadien) : moyenne B, B+ en maths et B+ en physique, avec un cours de maths et de la physique de niveau terminale. Ton dossier est comparé à ces seuils.",
+        "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+        "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+        "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+        "Program grades (Canadian high school): B overall, B+ in math and B+ in physics, with a math course and Grade 12-level physics. Your file is compared to these thresholds.",
+        "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+        "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+        "You apply online on Concordia's website; CAD 103 fee paid by credit card."
+      ]
+    },
+    {
+      "institutionId": "na-ca-concordia",
+      "slug": "beng-mechanical-engineering",
+      "requirementsFr": [
+        "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+        "Notes du programme (lycée canadien) : moyenne B-, B en maths et B en physique, avec un cours de maths et de la physique de niveau terminale. Ton dossier est comparé à ces seuils.",
+        "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+        "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+        "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+        "Program grades (Canadian high school): B- overall, B in math and B in physics, with a math course and Grade 12-level physics. Your file is compared to these thresholds.",
+        "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+        "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+        "You apply online on Concordia's website; CAD 103 fee paid by credit card."
+      ]
+    },
+    {
+      "institutionId": "na-ca-concordia",
+      "slug": "bcomm-finance",
+      "requirementsFr": [
+        "Diplôme : ton baccalauréat est accepté (liste de Concordia : Sénégal, Côte d'Ivoire, Cameroun francophone, Maroc, Burkina Faso, Niger, Bénin, Togo...).",
+        "Notes du programme (lycée canadien) : moyenne B et B en maths, avec un cours de maths (pré-calcul, calcul, algèbre II...). Ton dossier est comparé à ces seuils.",
+        "Anglais : Duolingo 105 (aucun sous-score sous 90), IELTS 6,0 (5,5 par épreuve), TOEFL iBT 4,0 (ou 70) ou CAEL 50 ; dispense après 3 ans d'études entièrement en anglais.",
+        "Dates limites : rentrée de septembre, 1er mars 2027 (candidats internationaux : avant le 1er février, pour les démarches d'immigration) ; rentrée de janvier, 1er novembre (avant le 1er août pour les internationaux).",
+        "Tu candidates en ligne sur le site de Concordia ; frais de 103 CAD payés par carte de crédit."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat is accepted (Concordia's list includes Senegal, Côte d'Ivoire, francophone Cameroon, Morocco, Burkina Faso, Niger, Benin, Togo...).",
+        "Program grades (Canadian high school): B overall and B in math, with a math course (pre-calculus, calculus, Algebra II...). Your file is compared to these thresholds.",
+        "English: Duolingo 105 (no subscore below 90), IELTS 6.0 (5.5 per band), TOEFL iBT 4.0 (or 70) or CAEL 50; waived after 3 years of study entirely in English.",
+        "Deadlines: September entry, March 1, 2027 (international applicants: apply by February 1 for immigration paperwork); January entry, November 1 (by August 1 for international applicants).",
+        "You apply online on Concordia's website; CAD 103 fee paid by credit card."
+      ]
+    },
+    {
+      "institutionId": "na-ca-uqam",
+      "slug": "baccalaureat-informatique-gestion",
+      "requirementsFr": [
+        "Attention : la page du programme indique « Les admissions sont suspendues pour ce programme ». Vérifie avec l'UQAM avant de candidater.",
+        "Diplôme obtenu hors Québec après 13 ans de scolarité (ou équivalent), ou équivalent d'un bac en sciences ou en sciences appliquées.",
+        "Maths : calcul différentiel et intégral, et algèbre linéaire avec géométrie vectorielle.",
+        "Programme contingenté : à l'automne, 15 places au maximum pour les candidats hors Québec ; pas d'admission hors Québec en hiver. Sélection sur la qualité du dossier scolaire. Français attesté par un test (exemption avec un grade d'une université francophone).",
+        "Date limite internationale : 1er mars (temps complet seulement). Tu candidates en ligne sur le site de l'UQAM ; frais de 155 CAD."
+      ],
+      "requirementsEn": [
+        "Warning: the program page says \"Les admissions sont suspendues pour ce programme\" (admissions are suspended). Check with UQAM before applying.",
+        "A diploma earned outside Québec after 13 years of schooling (or equivalent), or the equivalent of a bachelor's in science or applied science.",
+        "Math: differential and integral calculus, and linear algebra with vector geometry.",
+        "Limited-enrolment program: in the fall, at most 15 places for applicants from outside Québec; no admission from outside Québec in winter. Selection is based on the quality of your academic record. French shown by a test (exempt with a degree from a French-language university).",
+        "International deadline: March 1 (full-time only). You apply online on UQAM's website; CAD 155 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-uqam",
+      "slug": "maitrise-informatique",
+      "requirementsFr": [
+        "Diplôme : un bac en informatique, génie logiciel ou maths option informatique (ou équivalent), avec une moyenne d'au moins 3,2 sur 4,3. Autre voie : 2 ans d'expérience pertinente avec les connaissances requises.",
+        "Si ta moyenne est entre 2,7 et 3,2 sur 4,3, un comité étudie ton dossier : une admission reste possible.",
+        "Français suffisant à l'oral et à l'écrit ; une rencontre ou un examen peut être demandé, et des cours de français ou d'anglais peuvent être imposés.",
+        "Dossier : lettre d'intention sur tes intérêts de recherche ; lettres de recommandation facultatives. Contacte un professeur avant de candidater : sa lettre de soutien est un atout.",
+        "Admission continue pour ce programme ; dates internationales générales : 1er mars (automne), 1er août (hiver). Tu candidates en ligne sur le site de l'UQAM ; frais de 155 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: a bachelor's in computer science, software engineering or math with a computer science option (or equivalent), with an average of at least 3.2 out of 4.3. Other route: 2 years of relevant experience with the required knowledge.",
+        "If your average is between 2.7 and 3.2 out of 4.3, a committee reviews your file: admission is still possible.",
+        "Enough French, spoken and written; a meeting or exam may be required, and French or English courses may be imposed.",
+        "File: a letter of intent about your research interests; recommendation letters are optional. Contact a professor before applying: a support letter from them is an asset.",
+        "Rolling admission for this program; general international dates: March 1 (fall), August 1 (winter). You apply online on UQAM's website; CAD 155 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-uqac",
+      "slug": "baccalaureat-science-donnees-intelligence-affaires",
+      "requirementsFr": [
+        "Diplôme : un bac général ou technologique (sciences, maths, physique/chimie, génie ou informatique) obtenu hors Québec après 13 ans de scolarité ou l'équivalent.",
+        "Moyenne d'au moins 13/20 (ou équivalent). Entre 11/20 et 13/20, ton dossier est étudié : il faut alors plus de 13/20 dans les matières d'intérêt.",
+        "Maths : algèbre linéaire et géométrie vectorielle (niveau collégial). Sinon, admission possible avec cours d'accueil et moyenne de 2,5/4,3 dans les 2 premiers trimestres.",
+        "Français : si le français n'est pas ta langue maternelle, joins la preuve de ta maîtrise (test reconnu par l'UQAC). Programme non contingenté, offert à temps complet à Saguenay.",
+        "Date limite internationale pour l'automne 2027 : 1er avril 2027 (hiver aussi possible). Tu candidates sur le portail d'admission de l'UQAC ; frais de 100 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: a general or technological baccalauréat (science, math, physics/chemistry, engineering or computing) earned outside Québec after 13 years of schooling or the equivalent.",
+        "An average of at least 13/20 (or equivalent). Between 11/20 and 13/20, your file is reviewed: you then need over 13/20 in the subjects of interest.",
+        "Math: linear algebra and vector geometry (college level). Otherwise, admission is possible with bridging courses and a 2.5/4.3 average in the first 2 terms.",
+        "French: if French is not your first language, attach proof of your skills (a test recognized by UQAC). Non-limited program, offered full-time in Saguenay.",
+        "International deadline for fall 2027: April 1, 2027 (winter entry also possible). You apply on UQAC's admission portal; CAD 100 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "baccalaureat-informatique-appliquee",
+      "requirementsFr": [
+        "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+        "Cours requis (condition D) : français, maths avancées, 2 sciences (biologie, chimie ou physique) et 1 autre cours admissible. Programme de 4 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+        "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+        "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+        "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+        "Required courses (condition D): French, advanced math, 2 sciences (biology, chemistry or physics) and 1 other eligible course. 4-year program in Moncton (1st year also in Edmundston or Shippagan).",
+        "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+        "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+        "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "baa-finance",
+      "requirementsFr": [
+        "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+        "Cours requis (condition B) : français, maths et 3 autres cours admissibles. Programme de 4 ans à Moncton (2 premières années aussi à Edmundston ou Shippagan).",
+        "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+        "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+        "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+        "Required courses (condition B): French, math and 3 other eligible courses. 4-year program in Moncton (first 2 years also in Edmundston or Shippagan).",
+        "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+        "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+        "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "bing-genie-mecanique",
+      "requirementsFr": [
+        "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+        "Cours requis (condition D) : français, maths avancées, 2 sciences et 1 autre cours admissible. Programme de 5 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+        "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+        "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+        "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+        "Required courses (condition D): French, advanced math, 2 sciences and 1 other eligible course. 5-year program in Moncton (1st year also in Edmundston or Shippagan).",
+        "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+        "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+        "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "bing-genie-civil",
+      "requirementsFr": [
+        "Diplôme : ton bac (fin d'études secondaires) est évalué par le comité d'admission, qui compare ta formation à 5 cours préuniversitaires de 12e année.",
+        "Cours requis (condition D) : français, maths avancées, 2 sciences et 1 autre cours admissible. Programme de 5 ans à Moncton (1re année aussi à Edmundston ou Shippagan).",
+        "Moyenne minimale sur ces 5 cours : 65 % (brochure 2026-2027) ou 70 % (règlement universitaire) : demande à l'université laquelle s'applique à ton dossier.",
+        "Français : une connaissance suffisante est exigée ; l'université évalue ton niveau (test de classement ou entrevue). Chaque programme compte au moins 6 crédits de français.",
+        "Dates limites internationales : 31 mai (automne) et 30 septembre (hiver). Tu candidates sur le Portail de l'admission ; frais de 300 CAD."
+      ],
+      "requirementsEn": [
+        "Degree: your baccalauréat (end of secondary studies) is assessed by the admissions committee, which compares your education to 5 pre-university Grade 12 courses.",
+        "Required courses (condition D): French, advanced math, 2 sciences and 1 other eligible course. 5-year program in Moncton (1st year also in Edmundston or Shippagan).",
+        "Minimum average on these 5 courses: 65% (2026-2027 brochure) or 70% (university regulation): ask the university which one applies to your file.",
+        "French: sufficient knowledge is required; the university assesses your level (placement test or interview). Each program includes at least 6 credits of French.",
+        "International deadlines: May 31 (fall) and September 30 (winter). You apply through the Admission Portal; CAD 300 fee."
+      ]
+    },
+    {
+      "institutionId": "na-ca-conestoga",
+      "slug": "cybersecurity-response-planning",
+      "requirementsFr": [
+        "Diplôme : un diplôme collégial, un diplôme avancé ou un diplôme universitaire (ou équivalent) avec une moyenne B ou plus, évaluée selon les normes de l'Ontario.",
+        "Domaine : informatique, technologies de l'information, génie logiciel, programmation, systèmes informatiques ou développement d'applications.",
+        "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 88 (ou 5 sur la nouvelle échelle 2026), Duolingo 120 ou PTE 58. Les scores peuvent être plus élevés pour certains programmes d'informatique.",
+        "Rentrées : janvier 2027 et septembre 2027 (Waterloo), indiquées « Open » le 12 novembre 2026 ; mai 2027 est suspendue. Aucune date limite fixe n'est publiée.",
+        "Tu candidates sur le portail international OCAS (ontariocolleges.ca), pas sur le formulaire canadien. Frais de 100 CAD payés avec Flywire."
+      ],
+      "requirementsEn": [
+        "Degree: a college diploma, advanced diploma or university degree (or equivalent) with an average of B or above, assessed to Ontario standards.",
+        "Field: computer science, information technology, software engineering, programming, computer systems or application development.",
+        "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 88 (or 5 on the new 2026 scale), Duolingo 120 or PTE 58. Scores may be higher for some IT programs.",
+        "Intakes: January 2027 and September 2027 (Waterloo), shown as \"Open\" on November 12, 2026; May 2027 is suspended. No fixed deadline is published.",
+        "You apply on the OCAS international portal (ontariocolleges.ca), not the Canadian form. CAD 100 fee paid through Flywire."
+      ]
+    },
+    {
+      "institutionId": "na-ca-conestoga",
+      "slug": "bachelor-of-computer-science-honours",
+      "requirementsFr": [
+        "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, ou 19 ans et plus. Ton bac est évalué selon les normes de l'Ontario.",
+        "Cours : 6 cours de niveau 4U/M avec une moyenne d'au moins 65 % (souvent plus, selon la concurrence), dont anglais 4U et un cours de maths 4U.",
+        "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 88 (ou 5 sur la nouvelle échelle 2026), Duolingo 120 ou PTE 58. Les scores peuvent être plus élevés pour certains programmes d'informatique.",
+        "Rentrées : janvier 2027 et septembre 2027 (Waterloo), indiquées « Open » le 12 novembre 2026. Aucune date limite fixe n'est publiée.",
+        "Tu candidates sur le portail international OCAS (ontariocolleges.ca), pas sur le formulaire canadien. Frais de 100 CAD payés avec Flywire."
+      ],
+      "requirementsEn": [
+        "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, or age 19 or older. Your baccalauréat is assessed to Ontario standards.",
+        "Courses: 6 courses at the 4U/M level with an average of at least 65% (often higher, depending on competition), including English 4U and a 4U math course.",
+        "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 88 (or 5 on the new 2026 scale), Duolingo 120 or PTE 58. Scores may be higher for some IT programs.",
+        "Intakes: January 2027 and September 2027 (Waterloo), shown as \"Open\" on November 12, 2026. No fixed deadline is published.",
+        "You apply on the OCAS international portal (ontariocolleges.ca), not the Canadian form. CAD 100 fee paid through Flywire."
+      ]
+    },
+    {
+      "institutionId": "na-ca-fanshawe",
+      "slug": "cpa3-computer-programming-and-analysis-co-op",
+      "requirementsFr": [
+        "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, avec anglais de 12e année et maths de 11e ou 12e année. L'équivalence de ton bac dépend de ton pays (à choisir sur la page).",
+        "Anglais : IELTS 6,0 (aucune bande sous 5,5), TOEFL iBT 4,5 (échelle 2026, aucun score sous 4) ou 79, PTE 53 ou Duolingo 105 (aucun score sous 95).",
+        "Rentrées : janvier 2027 et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Programme avancé de 90 semaines avec stages (co-op).",
+        "Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
+      ],
+      "requirementsEn": [
+        "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, with Grade 12 English and Grade 11 or 12 math. The equivalence of your baccalauréat depends on your country (choose it on the page).",
+        "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026 scale, no score below 4) or 79, PTE 53 or Duolingo 105 (no score below 95).",
+        "Intakes: January 2027 and September 2027 (London), shown as \"Open\" on November 12, 2026. 90-week advanced diploma with co-op work terms.",
+        "You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
+      ]
+    },
+    {
+      "institutionId": "na-ca-fanshawe",
+      "slug": "cyb1-cyber-security-co-op",
+      "requirementsFr": [
+        "Diplôme : diplôme d'études secondaires de l'Ontario (OSSD) ou équivalent, avec anglais de 12e année et maths de 12e année (note finale d'au moins 65). L'équivalence de ton bac dépend de ton pays.",
+        "Anglais : IELTS 6,0 (aucune bande sous 5,5), TOEFL iBT 4,5 (échelle 2026, aucun score sous 4) ou 79, PTE 53 ou Duolingo 105 (aucun score sous 95).",
+        "Programme compétitif : il y a plus de candidats qualifiés que de places.",
+        "Rentrées : janvier 2027 et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
+      ],
+      "requirementsEn": [
+        "Degree: Ontario Secondary School Diploma (OSSD) or equivalent, with Grade 12 English and Grade 12 math (final grade of at least 65). The equivalence of your baccalauréat depends on your country.",
+        "English: IELTS 6.0 (no band below 5.5), TOEFL iBT 4.5 (2026 scale, no score below 4) or 79, PTE 53 or Duolingo 105 (no score below 95).",
+        "Competitive program: there are more qualified applicants than seats.",
+        "Intakes: January 2027 and September 2027 (London), shown as \"Open\" on November 12, 2026. You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
+      ]
+    },
+    {
+      "institutionId": "na-ca-fanshawe",
+      "slug": "aim1-artificial-intelligence-and-machine-learning",
+      "requirementsFr": [
+        "Diplôme : un diplôme collégial, un diplôme avancé ou un diplôme universitaire (ou équivalent) en informatique ou dans un domaine proche, avec une formation en développement de logiciels.",
+        "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 5 (aucune bande sous 4,5), PTE 58 ou Duolingo 120 (aucun score sous 105).",
+        "Ce programme est réservé aux candidats internationaux (les Canadiens suivent AIM2).",
+        "Rentrées : janvier, mai et septembre 2027 (London), indiquées « Open » le 12 novembre 2026. Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
+      ],
+      "requirementsEn": [
+        "Degree: a college diploma, advanced diploma or university degree (or equivalent) in computer science or a related field, with software development education.",
+        "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5 (no band below 4.5), PTE 58 or Duolingo 120 (no score below 105).",
+        "This program is for international applicants only (Canadians take AIM2).",
+        "Intakes: January, May and September 2027 (London), shown as \"Open\" on November 12, 2026. You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
+      ]
+    },
+    {
+      "institutionId": "na-ca-fanshawe",
+      "slug": "daa1-data-analytics",
+      "requirementsFr": [
+        "Diplôme : un diplôme collégial ou un diplôme avancé de l'Ontario, ou un diplôme universitaire, ou équivalent. Aucun domaine précis n'est indiqué.",
+        "Anglais : IELTS 6,5 (aucune bande sous 6,0), TOEFL iBT 5 (aucune bande sous 4,5), PTE 58 ou Duolingo 120 (aucun score sous 105).",
+        "Rentrées : janvier, mai et septembre 2027 (London), indiquées « Open » le 12 novembre 2026.",
+        "Tu candidates sur le portail VAS (Virtual Application System) de Fanshawe : le Centre international t'envoie une lettre d'admission si tu es accepté."
+      ],
+      "requirementsEn": [
+        "Degree: an Ontario College Diploma or Advanced Diploma, or a university degree, or equivalent. No specific field is stated.",
+        "English: IELTS 6.5 (no band below 6.0), TOEFL iBT 5 (no band below 4.5), PTE 58 or Duolingo 120 (no score below 105).",
+        "Intakes: January, May and September 2027 (London), shown as \"Open\" on November 12, 2026.",
+        "You apply through Fanshawe's VAS (Virtual Application System): the International Centre sends you a Letter of Admission if you are accepted."
+      ]
+    },
+    {
+      "institutionId": "na-ca-bishops",
+      "slug": "msc-computer-science",
+      "requirementsFr": [
+        "Filière sur cours : un bac en informatique, génie logiciel ou génie informatique (ou équivalent) avec au moins 70 % (B). Maths, stats, physique ou ingénierie : même seuil, avec le cours CS 454 en plus.",
+        "Autres domaines (finance, économie, chimie...) : au moins 75 % (B+), avec les cours MAT 200 et CS 454 en plus. L'université peut refuser un profil trop éloigné.",
+        "Filière avec mémoire : pré-candidature obligatoire et un professeur prêt à te superviser. Il faut un diplôme en informatique avec une mention d'un niveau « high upper-second ».",
+        "Anglais : TOEFL iBT 90 ou IELTS 6,5 (en principe). Joins aussi ton relevé de notes, ta lettre sur tes intérêts de recherche et le formulaire de pré-approbation.",
+        "Rentrées d'automne et d'hiver. Tu candidates sur le système de candidature de Bishop's ; pas de date limite propre à ce master sur la page (vérifie auprès du département)."
+      ],
+      "requirementsEn": [
+        "Course-based stream: a bachelor's in computer science, software or computer engineering (or equivalent) with at least 70% (B). Math, statistics, physics or engineering: same threshold, with CS 454 added.",
+        "Other fields (finance, economics, chemistry...): at least 75% (B+), with MAT 200 and CS 454 added. The university may refuse a background that is too far from the field.",
+        "Thesis stream: a pre-application is compulsory and a professor must be willing to supervise you. You need a computing degree with a high upper-second class standing.",
+        "English: TOEFL iBT 90 or IELTS 6.5 (in principle). Also include your transcript, your statement of research interests and the pre-approval form.",
+        "Fall and winter entry. You apply through Bishop's application system; no deadline specific to this master's is shown on the page (check with the department)."
+      ]
+    }
   ]
 }
