@@ -122,7 +122,7 @@ class EligibilityRule {
   final bool bilingualFrEn;
 }
 
-/// The 9 MVP destinations, in canonical order.
+/// The MVP destinations, in canonical order (Belgique ajoutée le 12/11/2026).
 const kEligibilityRules = <EligibilityRule>[
   EligibilityRule(
     countryId: 'fra',
@@ -219,6 +219,19 @@ const kEligibilityRules = <EligibilityRule>[
     acceptsEnglishPrograms: true,
     noteFr:
         'Espagnol recommandé ; offre de programmes en anglais en forte hausse.',
+  ),
+  // Belgique francophone (12/11/2026) : preuve de moyens de 1 062 €/mois
+  // exigée pour le visa D ; coût de la vie 1 000 – 1 300 €/mois (Study in
+  // Belgium, WBI).
+  EligibilityRule(
+    countryId: 'bel',
+    nameFr: 'Belgique',
+    flag: '🇧🇪',
+    budgetComfortEur: 1300,
+    budgetMinimumEur: 1062,
+    primaryLanguage: PrimaryLang.fr,
+    noteFr:
+        'Cours en français (B2 en général). Droits réduits à 1 194 €/an pour de nombreux pays d\'Afrique francophone.',
   ),
 ];
 
@@ -421,6 +434,8 @@ class EligibilityEngine {
         return _scoreUk(a);
       case 'esp':
         return _scoreSpain(a);
+      case 'bel':
+        return _scoreBelgium(a);
       default:
         return 'eligible_with_conditions';
     }
@@ -442,6 +457,23 @@ class EligibilityEngine {
     if (_qin(diploma, const ['yes_obtained', 'yes_this_year']) &&
         (french == 'basic' || funds == 'no' || visa == 'yes_recent')) {
       return 'eligible_with_conditions';
+    }
+    return 'eligible_with_conditions';
+  }
+
+  /// Belgique francophone (quiz `bel` de m5-countries.seed.ts) : diplôme,
+  /// français (cours en français, B2 en général) et preuve de moyens de
+  /// 1 062 €/mois exigée pour le visa D.
+  String _scoreBelgium(Map<String, String> a) {
+    final diploma = _qp(a, 'q2_diploma');
+    final french = _qp(a, 'q3_french_level');
+    final means = _qp(a, 'q4_means');
+    if (diploma == 'no') return 'not_eligible';
+    if (french == 'basic' && means == 'no') return 'not_eligible';
+    if (_qin(diploma, const ['yes_obtained', 'yes_this_year']) &&
+        _qin(french, const ['native', 'b2']) &&
+        means == 'yes_easily') {
+      return 'eligible';
     }
     return 'eligible_with_conditions';
   }

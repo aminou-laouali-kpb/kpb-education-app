@@ -8,7 +8,9 @@ provenance fait par fait : `backend/scripts/data/amerique-du-nord-2027.sources.m
 Import : `npm run import:north-america` (runbook :
 `docs/runbook-catalogue-amerique-du-nord.md`).
 
-**Livré : 36 établissements (26 au Canada, 10 aux États-Unis), 172 formations.**
+**Livré : 44 établissements (31 au Canada, 13 aux États-Unis), 238 formations
+— plus 6 en Europe (4 en Belgique, 2 en Allemagne), 30 formations.** Troisième
+passe du 12/11/2026 : section « Troisième passe et Europe » ci-dessous.
 Première passe (16/10/2026) : 20 établissements, 97 formations. Seconde passe
 Canada (17/10/2026, décisions du propriétaire) : 16 établissements, 75
 formations — Québec d'abord, Nouveau-Brunswick, collèges de l'Ontario à
@@ -285,3 +287,61 @@ Première passe :
    d'appliquer (+97 formations).
 5. Wichita State : janvier 2027 n'est encore possible qu'en service
    « Standard » (150 USD, date limite 1/11/2026).
+
+
+## Troisième passe et Europe (12/11/2026)
+
+Demande du propriétaire (12/11/2026) : renforcer les universités où postulent
+le plus les élèves d'Afrique francophone (Sherbrooke, UQAM, UQTR, UQO, UQAC,
+UdeM…), avec **un prix par formation**, et ajouter 2–3 universités
+américaines accessibles, 1–2 allemandes et 3–4 belges. Relevés du 12/11/2026
+sur les sites officiels, **contre-vérifiés indépendamment** le même jour
+(chaque montant, seuil et date relu à la source). Provenance :
+`backend/scripts/data/amerique-du-nord-2027.sources.md` (section « Troisième
+passe ») et `backend/scripts/data/europe-2027.sources.md`.
+
+### Ce qui change
+
+| Lot | Contenu |
+|---|---|
+| Québec renforcé | +4 formations à l'UdeM, Sherbrooke, Laval, UQAM, UQTR, UQO, UQAC (28) : sciences comptables, administration, génie civil / électrique, droit, communication, gestion de projet, MBA… |
+| Prix complétés | 15 formations publiées sans montant (UQAM ×4, UQAC ×4, HEC ×3, UdeM, Sherbrooke, Sheridan, UNB) + libellés UQAM / UQAC chiffrés |
+| Francophonie hors Québec (PPECFSM) | Université de Saint-Boniface, Université de l'Ontario français, Université Sainte-Anne, Collège La Cité, Collège Boréal — 20 formations |
+| États-Unis | Southeast Missouri State, Fort Hays State, Missouri State — 18 formations (Duolingo 95 en licence, sans SAT/ACT) |
+| Belgique | UCLouvain, ULiège, ULB, UNamur — 20 formations ; pays `bel` créé |
+| Allemagne | Hochschule Rhein-Waal, TU Dresden — 10 formations en anglais, sans frais de scolarité |
+
+**Exemption des droits majorés au Québec** : des ententes existent avec la
+plupart des pays d'Afrique francophone, mais avec très peu de places (ex.
+Bénin 10, Togo 8, Cameroun 16) et une candidature auprès du responsable des
+exemptions du pays, pas de l'université. Les formations québécoises le disent.
+
+**Belgique, droits 2026-2027** (circulaire ARES 2026-001, minerval
+progressif) : 1 194 EUR + 4 175 EUR de contribution supplémentaire = 5 369 EUR
+pour un hors-UE ; **1 194 EUR seulement** pour les ressortissants des pays des
+annexes 1 à 3 (dont Sénégal, Mali, Niger, Bénin, Togo, Burkina Faso, RDC,
+Guinée, Cameroun, Côte d'Ivoire, Congo ; pas le Gabon ni le Maroc).
+`tuitionAnnual` = 5 369 EUR ; la réduction est écrite dans chaque fiche.
+
+**Allemagne** : aucun frais de scolarité ; cotisation semestrielle (≈ 730 EUR/an
+à Rhein-Waal, 722 EUR/an à TU Dresden). Compte bloqué 992 EUR/mois (2026).
+APS exigé seulement pour la Chine, le Vietnam et l'Inde.
+
+### À VALIDER / limites connues
+
+- **Application de la Belgique dans l'app** : le verrou des pays de l'app
+  (`kMvpCountryIds`) masque toute destination hors liste. `bel` y est ajouté :
+  les fiches belges n'apparaissent qu'à partir de la **prochaine build**.
+  L'Allemagne, le Canada et les États-Unis sont visibles tout de suite.
+- **Dates 2027-2028** non encore publiées pour la Belgique (31 mars en
+  2026-2027) et pour l'hiver 2028 au Québec : les fiches le disent.
+- Rentrées de **janvier 2027 closes** pour les 3 universités américaines :
+  les fiches annoncent août 2027.
+- **MBA UQTR / UQO** : 3 ans d'expérience exigés. **Masters en santé publique
+  UCLouvain / ULiège** : diplôme de 5 ans et expérience exigés — peu adaptés à
+  un élève qui sort du bachelier, gardés pour les profils expérimentés.
+- **Montants dérivés** (non publiés tels quels) : La Cité, deux programmes
+  (2 × l'étape 1, marqué « ≈ ») ; UQAM maîtrise en informatique (moyenne sur
+  2 ans).
+- Coût des programmes d'anglais intensif de SEMO, FHSU et Missouri State : non
+  publiés par les universités.

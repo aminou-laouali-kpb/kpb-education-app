@@ -5,10 +5,10 @@ import 'package:karatou/app/features/eligibility/eligibility_simulator_data.dart
 void main() {
   const engine = EligibilityEngine();
 
-  test('returns a result for each of the 9 MVP destinations', () {
+  test('returns a result for each MVP destination', () {
     final results = engine.evaluate(const EligibilityInput());
     expect(results.length, kEligibilityRules.length);
-    expect(kEligibilityRules.length, 9);
+    expect(kEligibilityRules.length, 10);
   });
 
   test('results are sorted by score descending', () {

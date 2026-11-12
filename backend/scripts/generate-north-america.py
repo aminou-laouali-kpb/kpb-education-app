@@ -1206,6 +1206,7 @@ if os.path.exists(AJOUTS):
         aj = json.load(f)
     C3 = aj["consultedAt"]
     by_id = {x["id"]: x for x in I}
+    before = {f"{x['id']}--{p['slug']}" for x in I for p in x["programs"]}
     # Valeurs avant correction (l'app affiche le libellé de l'école quand la
     # formation n'a pas de prix : c'est ce qui est en base).
     def shown_tuition(x, slug):
@@ -1234,8 +1235,30 @@ if os.path.exists(AJOUTS):
                 by_id[add["id"]]["programs"].append(p)
         else:
             add.setdefault("consultedAt", C3)
+            lp = add.get("languagePathway")
+            if lp and lp["nameFr"] not in add["languageRequirementsFr"]:
+                # Même règle que plus haut : le programme de langue en amont est
+                # écrit dans les exigences linguistiques, seul champ affiché.
+                cost_fr = f", {lp['costFr']}" if lp["costFr"] else ""
+                cost_en = f", {lp['costEn']}" if lp["costEn"] else ""
+                add["languageRequirementsFr"] += f" ; programme de langue en amont : {lp['nameFr']} ({lp['durationFr']}{cost_fr})"
+                add["languageRequirementsEn"] += f"; upstream language programme: {lp['nameEn']} ({lp['durationEn']}{cost_en})"
             I.append(add)
             by_id[add["id"]] = add
+    for fx in aj.get("durationFixes", []):
+        x = by_id[fx["institutionId"]]
+        p = next(p for p in x["programs"] if p["slug"] == fx["slug"])
+        if p["durationFr"]:
+            continue
+        p["durationFr"], p["durationEn"] = fx["durationFr"], fx["durationEn"]
+        pid = f"{x['id']}--{fx['slug']}"
+        if pid not in before:
+            continue  # formation nouvelle : créée avec sa durée
+        c = next((c for c in corrections["programs"] if c["programId"] == pid), None)
+        if c:
+            c["fillDuration"] = True
+        else:
+            corrections["programs"].append({"programId": pid, "fillDuration": True, "consultedAt": C3})
 
 doc = {
     "source": "Relevés sur les sites officiels des établissements, consultés le 16/10/2026 (seconde passe Canada : 17/10/2026 ; troisième passe : 12/11/2026) — voir amerique-du-nord-2027.sources.md",

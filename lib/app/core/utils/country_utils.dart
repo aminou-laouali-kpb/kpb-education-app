@@ -39,6 +39,7 @@ const _legacyCountryIdAliases = <String, String>{
   'united arab emirates': 'are',
   'united states': 'usa',
   'china': 'chn',
+  'belgium': 'bel',
 };
 
 /// Destination countries available at launch (ISO-3 ids, matching the backend
@@ -55,12 +56,15 @@ const kMvpCountryIds = <String>{
   'gbr',
   'esp',
   'chn',
+  // Belgique francophone : universités NON partenaires (UCLouvain, ULiège,
+  // ULB, UNamur), ajoutées au catalogue le 12/11/2026 (`import:europe`).
+  'bel',
 };
 
 String normalizeCountryId(String id) =>
     _legacyCountryIdAliases[id.trim().toLowerCase()] ?? id.trim().toLowerCase();
 
-/// True when [id] (full-word or ISO-3) resolves to one of the nine MVP
+/// True when [id] (full-word or ISO-3) resolves to one of the MVP
 /// destination countries.
 bool isMvpCountryId(String id) =>
     kMvpCountryIds.contains(normalizeCountryId(id));

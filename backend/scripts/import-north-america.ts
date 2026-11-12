@@ -95,7 +95,7 @@ async function main() {
     doc,
     await prisma.program.findMany({
       where: { id: { in: (doc.corrections?.programs ?? []).map((c) => c.programId) } },
-      select: { id: true, tuitionFr: true, applicationFeeEur: true },
+      select: { id: true, tuitionFr: true, applicationFeeEur: true, durationFr: true },
     }),
     await prisma.institution.findMany({
       where: { id: { in: (doc.corrections?.institutions ?? []).map((c) => c.institutionId) } },
@@ -143,7 +143,10 @@ async function main() {
   if (corrections.programs.length || corrections.institutions.length || corrections.skipped.length) {
     console.log('\n══ Corrections de lignes déjà publiées (prix complétés)');
     for (const c of corrections.institutions) console.log(`   ~ ${c.id} : libellé de frais → ${c.data.tuitionLabelFr.slice(0, 80)}`);
-    for (const c of corrections.programs) console.log(`   ~ ${c.id} : ${c.data.tuitionFr.slice(0, 80)}`);
+    for (const c of corrections.programs) {
+      const what = [c.data.tuitionFr && `frais → ${c.data.tuitionFr.slice(0, 70)}`, c.data.durationFr && `durée → ${c.data.durationFr}`];
+      console.log(`   ~ ${c.id} : ${what.filter(Boolean).join(' ; ')}`);
+    }
     for (const s of corrections.skipped) console.log(`  ⚠ ${s.id} : ${s.reason}`);
   }
 
@@ -251,8 +254,11 @@ async function main() {
     written += r.count;
   }
   for (const c of corrections.programs) {
-    const prev = doc.corrections!.programs.find((x) => x.programId === c.id)!.previousTuitionFr;
-    const r = await prisma.program.updateMany({ where: { id: c.id, tuitionFr: prev }, data: c.data });
+    // Revérifiée à l'écriture : frais encore à l'ancienne valeur, durée encore vide.
+    const where: Prisma.ProgramWhereInput = { id: c.id };
+    if (c.whereTuitionFr !== undefined) where.tuitionFr = c.whereTuitionFr;
+    if (c.data.durationFr !== undefined) where.durationFr = '';
+    const r = await prisma.program.updateMany({ where, data: c.data });
     written += r.count;
   }
 

@@ -147,7 +147,10 @@ export type NaInstitutionSource = {
  */
 export type NaProgramCorrection = {
   programId: string;
-  previousTuitionFr: string;
+  /// Frais complétés : réécrits seulement si la ligne porte encore cette valeur.
+  previousTuitionFr?: string;
+  /// Durée complétée : écrite seulement si la ligne n'en a pas.
+  fillDuration?: boolean;
   consultedAt: string;
 };
 export type NaInstitutionCorrection = {
@@ -336,7 +339,7 @@ export function validateNaSource(doc: NaSource): string[] {
   );
   for (const c of doc.corrections?.programs ?? []) {
     if (!programIds.has(c.programId)) errors.push(`correction ${c.programId} : formation absente de la source`);
-    if (!c.previousTuitionFr) errors.push(`correction ${c.programId} : previousTuitionFr vide`);
+    if (!c.previousTuitionFr && !c.fillDuration) errors.push(`correction ${c.programId} : ni frais ni durée à corriger`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(c.consultedAt ?? '')) errors.push(`correction ${c.programId} : consultedAt illisible`);
   }
   for (const c of doc.corrections?.institutions ?? []) {
@@ -517,18 +520,27 @@ export function naPlanWriteCount(plan: NaPlan): number {
   return plan.newInstitutions.length + plan.programAdditions.length;
 }
 
-export type NaCorrectionRowProgram = { id: string; tuitionFr: string; applicationFeeEur: number | null };
+export type NaCorrectionRowProgram = {
+  id: string;
+  tuitionFr: string;
+  applicationFeeEur: number | null;
+  durationFr: string;
+};
 export type NaCorrectionRowInstitution = { id: string; tuitionLabelFr: string };
 
 export type NaCorrectionPlan = {
   programs: {
     id: string;
+    /// Valeur que la ligne doit encore porter pour être réécrite (frais).
+    whereTuitionFr?: string;
     data: {
-      tuitionFr: string;
-      tuitionEn: string;
-      tuitionMinEur: number | null;
+      tuitionFr?: string;
+      tuitionEn?: string;
+      tuitionMinEur?: number | null;
       applicationFeeEur?: number | null;
-      sourceUrl: string;
+      durationFr?: string;
+      durationEn?: string;
+      sourceUrl?: string;
       lastVerifiedAt: Date;
     };
   }[];
@@ -556,22 +568,30 @@ export function planNaCorrections(
     const row = rowsP.get(c.programId);
     if (!inst || !p || !row) continue; // absente : elle sera créée avec la bonne valeur
     const next = naProgramCreateData(p, inst, doc);
-    if (row.tuitionFr === next.tuitionFr) continue;
-    if (row.tuitionFr !== c.previousTuitionFr) {
-      plan.skipped.push({ id: c.programId, reason: 'frais retouchés depuis le passage précédent (admin) — laissés tels quels' });
-      continue;
+    const data: NaCorrectionPlan['programs'][number]['data'] = {
+      lastVerifiedAt: new Date(`${c.consultedAt}T00:00:00.000Z`),
+    };
+    let whereTuitionFr: string | undefined;
+    if (c.previousTuitionFr && row.tuitionFr !== next.tuitionFr) {
+      if (row.tuitionFr !== c.previousTuitionFr) {
+        plan.skipped.push({ id: c.programId, reason: 'frais retouchés depuis le passage précédent (admin) — laissés tels quels' });
+      } else {
+        whereTuitionFr = c.previousTuitionFr;
+        Object.assign(data, {
+          tuitionFr: next.tuitionFr,
+          tuitionEn: next.tuitionEn,
+          tuitionMinEur: next.tuitionMinEur,
+          sourceUrl: next.sourceUrl,
+          ...(row.applicationFeeEur == null && next.applicationFeeEur != null
+            ? { applicationFeeEur: next.applicationFeeEur }
+            : {}),
+        });
+      }
     }
-    plan.programs.push({
-      id: c.programId,
-      data: {
-        tuitionFr: next.tuitionFr,
-        tuitionEn: next.tuitionEn,
-        tuitionMinEur: next.tuitionMinEur,
-        ...(row.applicationFeeEur == null && next.applicationFeeEur != null ? { applicationFeeEur: next.applicationFeeEur } : {}),
-        sourceUrl: next.sourceUrl,
-        lastVerifiedAt: new Date(`${c.consultedAt}T00:00:00.000Z`),
-      },
-    });
+    if (c.fillDuration && !row.durationFr && next.durationFr) {
+      Object.assign(data, { durationFr: next.durationFr, durationEn: next.durationEn });
+    }
+    if (Object.keys(data).length > 1) plan.programs.push({ id: c.programId, whereTuitionFr, data });
   }
   for (const c of doc.corrections?.institutions ?? []) {
     const inst = doc.institutions.find((i) => i.id === c.institutionId);
