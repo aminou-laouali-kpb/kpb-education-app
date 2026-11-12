@@ -12,6 +12,7 @@ import {
   awaitingSignature,
   caseDetailPath,
   caseListPath,
+  displayedAdvisorName,
   hasActiveCaseFilters,
   normalizeCaseListPage,
   normalizeCaseListSummary,
@@ -19,6 +20,25 @@ import {
   type AdminCaseDetail,
   type AdminCaseListItem,
 } from './case-list';
+
+describe('displayedAdvisorName — la colonne « Conseiller »', () => {
+  it('un nom vide ou blanc compte comme « sans conseiller », comme le filtre serveur', () => {
+    expect(displayedAdvisorName(null)).toBeNull();
+    expect(displayedAdvisorName(undefined)).toBeNull();
+    expect(displayedAdvisorName('')).toBeNull();
+    expect(displayedAdvisorName('   ')).toBeNull();
+  });
+
+  it('un vrai nom est affiché sans ses espaces autour', () => {
+    expect(displayedAdvisorName('  Moussa Diop ')).toBe('Moussa Diop');
+  });
+
+  it('la page passe par cette fonction (pas de `?? unassigned` qui laisse passer "")', () => {
+    const page = readFileSync(join(__dirname, '../app/cases/page.tsx'), 'utf8');
+    expect(page).not.toMatch(/assignedAdvisorName \?\? t\('cases\.unassigned'\)/);
+    expect(page).toContain('displayedAdvisorName(item.assignedAdvisorName)');
+  });
+});
 
 // La liste des dossiers (audit avant la 59). Avant : `GET /admin/cases` sans
 // paramètre, tous les dossiers et toutes leurs relations, tri dans le

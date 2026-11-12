@@ -92,6 +92,19 @@ export const EMPTY_CASE_LIST_FILTERS: CaseListFilters = {
  */
 export const UNASSIGNED_ADVISOR = '__unassigned__';
 
+/**
+ * Le nom à afficher dans la colonne « Conseiller », ou `null` si le dossier
+ * n'en a pas. Un nom vide ou fait d'espaces compte comme « sans conseiller » :
+ * c'est ce que fait le filtre `unassigned=true` côté serveur, et la colonne
+ * restait blanche au lieu de dire « Non assigné ».
+ */
+export function displayedAdvisorName(
+  name: string | null | undefined,
+): string | null {
+  const trimmed = name?.trim();
+  return trimmed ? trimmed : null;
+}
+
 export const CASE_LIST_SUMMARY_PATH = '/admin/cases/summary';
 
 export function caseDetailPath(caseId: string): string {

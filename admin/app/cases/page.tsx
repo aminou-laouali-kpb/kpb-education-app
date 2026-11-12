@@ -24,6 +24,7 @@ import {
   awaitingSignature,
   caseDetailPath,
   caseListPath,
+  displayedAdvisorName,
   hasActiveCaseFilters,
   normalizeCaseListPage,
   normalizeCaseListSummary,
@@ -649,8 +650,11 @@ export default function CasesPage() {
                   ) : null}
                 </div>
                 <CellText
-                  primary={item.assignedAdvisorName ?? t('cases.unassigned')}
-                  muted={!item.assignedAdvisorName}
+                  primary={
+                    displayedAdvisorName(item.assignedAdvisorName) ??
+                    t('cases.unassigned')
+                  }
+                  muted={!displayedAdvisorName(item.assignedAdvisorName)}
                 />
                 <CellText
                   primary={item.nextStepTitle}
