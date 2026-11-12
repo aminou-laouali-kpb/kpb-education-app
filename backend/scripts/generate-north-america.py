@@ -1245,6 +1245,31 @@ if os.path.exists(AJOUTS):
                 add["languageRequirementsEn"] += f"; upstream language programme: {lp['nameEn']} ({lp['durationEn']}{cost_en})"
             I.append(add)
             by_id[add["id"]] = add
+    def correction(pid):
+        c = next((c for c in corrections["programs"] if c["programId"] == pid), None)
+        if not c:
+            c = {"programId": pid, "consultedAt": C3}
+            corrections["programs"].append(c)
+        return c
+    for fx in aj.get("requirementsFixes", []):
+        x = by_id[fx["institutionId"]]
+        p = next(p for p in x["programs"] if p["slug"] == fx["slug"])
+        pid = f"{x['id']}--{fx['slug']}"
+        if pid in before:
+            correction(pid)["previousRequirementsFr"] = list(p["requirementsFr"])
+        p["requirementsFr"], p["requirementsEn"] = fx["requirementsFr"], fx["requirementsEn"]
+    for fx in aj.get("applicationFeeFixes", []):
+        x = by_id[fx["institutionId"]]
+        if x.get("applicationFee"):
+            continue
+        x["applicationFee"] = fx["applicationFee"]
+        x["applicationFeeFr"], x["applicationFeeEn"] = fx["applicationFeeFr"], fx["applicationFeeEn"]
+        x["overviewFr"] = x["overviewFr"].replace("\n\nKPB n'est pas partenaire", f"\n\nFrais de candidature : {fx['applicationFeeFr']}.\n\nKPB n'est pas partenaire", 1)
+        x["overviewEn"] = x["overviewEn"].replace("\n\nKPB is not a partner", f"\n\nApplication fee: {fx['applicationFeeEn']}.\n\nKPB is not a partner", 1)
+        for p in x["programs"]:
+            pid = f"{x['id']}--{p['slug']}"
+            if pid in before:
+                correction(pid)["fillApplicationFee"] = True
     for fx in aj.get("durationFixes", []):
         x = by_id[fx["institutionId"]]
         p = next(p for p in x["programs"] if p["slug"] == fx["slug"])

@@ -2777,5 +2777,205 @@
       "applicationFeeFr": "104,53 CAD",
       "applicationFeeEn": "CAD 104.53"
     }
+  ],
+  "durationFixes": [
+    {
+      "institutionId": "na-us-houston",
+      "slug": "bba-finance",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credit hours"
+    },
+    {
+      "institutionId": "na-us-houston",
+      "slug": "bsme-mechanical-engineering",
+      "durationFr": "128 crédits",
+      "durationEn": "128 credit hours"
+    },
+    {
+      "institutionId": "na-us-houston",
+      "slug": "ms-business-analytics",
+      "durationFr": "36 crédits",
+      "durationEn": "36 credit hours"
+    },
+    {
+      "institutionId": "na-us-houston",
+      "slug": "ms-finance",
+      "durationFr": "30 crédits",
+      "durationEn": "30 credits"
+    },
+    {
+      "institutionId": "na-us-arizona-state",
+      "slug": "bs-financial-technology",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credit hours"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bs-mechanical-engineering",
+      "durationFr": "128 crédits",
+      "durationEn": "128 credit hours"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bba-finance",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credit hours"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bs-public-health",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credit hours"
+    },
+    {
+      "institutionId": "na-ca-york",
+      "slug": "computer-science",
+      "durationFr": "4 ans (120 crédits)",
+      "durationEn": "4 years (120 credits)"
+    },
+    {
+      "institutionId": "na-ca-york",
+      "slug": "data-science",
+      "durationFr": "4 ans (120 crédits)",
+      "durationEn": "4 years (120 credits)"
+    },
+    {
+      "institutionId": "na-ca-york",
+      "slug": "mechanical-engineering",
+      "durationFr": "4 ans (140 crédits)",
+      "durationEn": "4 years (140 credits)"
+    },
+    {
+      "institutionId": "na-ca-york",
+      "slug": "international-studies-glendon",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-ca-memorial",
+      "slug": "bachelor-of-engineering",
+      "durationFr": "5 ans",
+      "durationEn": "5 years"
+    },
+    {
+      "institutionId": "na-ca-memorial",
+      "slug": "bachelor-of-commerce",
+      "durationFr": "4 ans (120 crédits)",
+      "durationEn": "4 years (120 credit hours)"
+    },
+    {
+      "institutionId": "na-ca-memorial",
+      "slug": "bachelor-of-science",
+      "durationFr": "4 ans",
+      "durationEn": "4 years"
+    },
+    {
+      "institutionId": "na-ca-uqac",
+      "slug": "baccalaureat-informatique",
+      "durationFr": "90 crédits",
+      "durationEn": "90 credits"
+    },
+    {
+      "institutionId": "na-ca-uqac",
+      "slug": "baccalaureat-science-donnees-intelligence-affaires",
+      "durationFr": "90 crédits",
+      "durationEn": "90 credits"
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "bing-genie-mecanique",
+      "durationFr": "5 ans (150 crédits)",
+      "durationEn": "5 years (150 credits)"
+    },
+    {
+      "institutionId": "na-ca-moncton",
+      "slug": "bing-genie-civil",
+      "durationFr": "5 ans (150 crédits)",
+      "durationEn": "5 years (150 credits)"
+    },
+    {
+      "institutionId": "na-ca-uqat",
+      "slug": "baccalaureat-genie-electrique",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-ca-uqat",
+      "slug": "baccalaureat-genie-mecanique",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-ca-uqat",
+      "slug": "baccalaureat-administration",
+      "durationFr": "90 crédits",
+      "durationEn": "90 credits"
+    },
+    {
+      "institutionId": "na-ca-uqat",
+      "slug": "baccalaureat-sciences-comptables",
+      "durationFr": "90 crédits",
+      "durationEn": "90 credits"
+    },
+    {
+      "institutionId": "na-ca-uof",
+      "slug": "baccalaureat-sante-mentale",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-ca-uof",
+      "slug": "baccalaureat-travail-social",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-ca-uof",
+      "slug": "baccalaureat-communication-medias-numeriques",
+      "durationFr": "120 crédits",
+      "durationEn": "120 credits"
+    },
+    {
+      "institutionId": "na-us-missouri-state",
+      "slug": "mba",
+      "durationFr": "34 crédits",
+      "durationEn": "34 credit hours"
+    },
+    {
+      "institutionId": "na-us-missouri-state",
+      "slug": "ms-computer-science",
+      "durationFr": "4 semestres (environ 1,5 an)",
+      "durationEn": "4 semesters (about 1.5 years)"
+    },
+    {
+      "institutionId": "na-us-missouri-state",
+      "slug": "bs-computer-science",
+      "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+      "durationEn": "4 years (at least 120 credit hours, university minimum)"
+    },
+    {
+      "institutionId": "na-us-missouri-state",
+      "slug": "bs-finance",
+      "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+      "durationEn": "4 years (at least 120 credit hours, university minimum)"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bs-computer-science",
+      "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+      "durationEn": "4 years (at least 120 credit hours, university minimum)"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bs-data-science",
+      "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+      "durationEn": "4 years (at least 120 credit hours, university minimum)"
+    },
+    {
+      "institutionId": "na-us-toledo",
+      "slug": "bs-computer-science-engineering",
+      "durationFr": "4 ans (au moins 120 crédits ; davantage pour ce programme accrédité ABET)",
+      "durationEn": "4 years (at least 120 credit hours; more for this ABET-accredited programme)"
+    }
   ]
 }

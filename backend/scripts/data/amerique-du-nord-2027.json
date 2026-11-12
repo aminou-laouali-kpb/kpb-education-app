@@ -86,8 +86,8 @@
           "level": "BBA",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
           "tuitionFr": "29 206 USD/an (2 semestres, Business/Engineering, non-résident, cohorte 2027 à tarif fixe)",
           "tuitionEn": "USD 29,206/year (2 semesters, Business/Engineering, non-resident, fixed-rate 2027 cohort)",
           "tuitionAnnual": {
@@ -125,8 +125,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "128 crédits",
+          "durationEn": "128 credit hours",
           "tuitionFr": "29 206 USD/an (2 semestres, Business/Engineering, non-résident, cohorte 2027 à tarif fixe)",
           "tuitionEn": "USD 29,206/year (2 semesters, Business/Engineering, non-resident, fixed-rate 2027 cohort)",
           "tuitionAnnual": {
@@ -166,8 +166,8 @@
           "level": "Master",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "36 crédits",
+          "durationEn": "36 credit hours",
           "tuitionFr": "26 365 USD/an (estimation : 18 crédits × 1 465 USD, Business, non-résident 2026-2027)",
           "tuitionEn": "USD 26,365/year (estimate: 18 credits × USD 1,465, Business, non-resident 2026-2027)",
           "tuitionAnnual": {
@@ -197,8 +197,8 @@
           "level": "Master",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "30 crédits",
+          "durationEn": "30 credits",
           "tuitionFr": "26 365 USD/an (estimation : 18 crédits × 1 465 USD, Business, non-résident 2026-2027)",
           "tuitionEn": "USD 26,365/year (estimate: 18 credits × USD 1,465, Business, non-resident 2026-2027)",
           "tuitionAnnual": {
@@ -1401,8 +1401,8 @@
           "level": "Bachelor",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
           "tuitionFr": "39 062 USD/an (frais de scolarité de base, campus de la région de Phoenix, 2026-2027, hors frais)",
           "tuitionEn": "USD 39,062/year (base tuition, metro Phoenix campuses, 2026-2027, before fees)",
           "tuitionAnnual": {
@@ -1645,8 +1645,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (au moins 120 crédits ; davantage pour ce programme accrédité ABET)",
+          "durationEn": "4 years (at least 120 credit hours; more for this ABET-accredited programme)",
           "tuitionFr": "24 760 USD/an (frais de scolarité et frais avec frais d'ingénierie, 2026-2027, avant bourse)",
           "tuitionEn": "USD 24,760/year (tuition and fees including engineering fees, 2026-2027, before scholarship)",
           "tuitionAnnual": {
@@ -1682,8 +1682,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+          "durationEn": "4 years (at least 120 credit hours, university minimum)",
           "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
           "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
           "tuitionAnnual": {
@@ -1719,8 +1719,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+          "durationEn": "4 years (at least 120 credit hours, university minimum)",
           "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
           "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
           "tuitionAnnual": {
@@ -1756,8 +1756,8 @@
           "level": "BBA",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
           "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
           "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
           "tuitionAnnual": {
@@ -1793,8 +1793,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "128 crédits",
+          "durationEn": "128 credit hours",
           "tuitionFr": "24 760 USD/an (frais de scolarité et frais avec frais d'ingénierie, 2026-2027, avant bourse)",
           "tuitionEn": "USD 24,760/year (tuition and fees including engineering fees, 2026-2027, before scholarship)",
           "tuitionAnnual": {
@@ -1832,8 +1832,8 @@
           "level": "Bachelor",
           "fieldId": "d04",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credit hours",
           "tuitionFr": "24 160 USD/an (frais de scolarité et frais, 2026-2027, avant bourse ; 24 760 USD en ingénierie)",
           "tuitionEn": "USD 24,160/year (tuition and fees, 2026-2027, before scholarship; USD 24,760 in engineering)",
           "tuitionAnnual": {
@@ -2308,8 +2308,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
           "tuitionFr": "38 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
           "tuitionEn": "CAD 38,000/year (York estimate, 30 credits, 2026-2027)",
           "tuitionAnnual": {
@@ -2335,8 +2335,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credits)",
           "tuitionFr": "40 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
           "tuitionEn": "CAD 40,000/year (York estimate, 30 credits, 2026-2027)",
           "tuitionAnnual": {
@@ -2362,8 +2362,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (140 crédits)",
+          "durationEn": "4 years (140 credits)",
           "tuitionFr": "47 000 CAD/an (estimation York, 36 crédits en 1re année, 2026-2027)",
           "tuitionEn": "CAD 47,000/year (York estimate, 36 first-year credits, 2026-2027)",
           "tuitionAnnual": {
@@ -2389,8 +2389,8 @@
           "level": "Bachelor",
           "fieldId": "d07",
           "language": "bi",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "40 000 CAD/an (estimation York, 30 crédits, 2026-2027)",
           "tuitionEn": "CAD 40,000/year (York estimate, 30 credits, 2026-2027)",
           "tuitionAnnual": {
@@ -2447,8 +2447,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "5 ans",
+          "durationEn": "5 years",
           "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
           "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
           "tuitionAnnual": {
@@ -2499,8 +2499,8 @@
           "level": "Bachelor",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (120 crédits)",
+          "durationEn": "4 years (120 credit hours)",
           "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
           "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
           "tuitionAnnual": {
@@ -2524,8 +2524,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans",
+          "durationEn": "4 years",
           "tuitionFr": "22 500 CAD/an (droits pour 10 cours (2 semestres), nouveaux étudiants internationaux 2026-2027, hors frais)",
           "tuitionEn": "CAD 22,500/year (tuition for 10 courses (2 semesters), new international students 2026-2027, before fees)",
           "tuitionAnnual": {
@@ -3829,8 +3829,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
           "tuitionFr": "24 614 CAD/an (30 crédits au tarif non canadien, droits de scolarité 2026-2027, hors frais afférents ; environ 26 247 CAD/an avec frais afférents et assurances obligatoires, simulateur officiel de l'UQAC, automne 2026)",
           "tuitionEn": "CAD 24,614/year (30 credits at the non-Canadian rate, 2026-2027 tuition, before related fees; about CAD 26,247/year with mandatory related fees and insurance, UQAC official calculator, fall 2026)",
           "tuitionAnnual": {
@@ -3854,8 +3854,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
           "tuitionFr": "24 614 CAD/an (30 crédits au tarif non canadien, droits de scolarité 2026-2027, hors frais afférents ; environ 26 247 CAD/an avec frais afférents et assurances obligatoires, simulateur officiel de l'UQAC, automne 2026)",
           "tuitionEn": "CAD 24,614/year (30 credits at the non-Canadian rate, 2026-2027 tuition, before related fees; about CAD 26,247/year with mandatory related fees and insurance, UQAC official calculator, fall 2026)",
           "tuitionAnnual": {
@@ -4138,8 +4138,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "5 ans (150 crédits)",
+          "durationEn": "5 years (150 credits)",
           "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
           "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
           "tuitionAnnual": {
@@ -4161,8 +4161,8 @@
           "level": "Bachelor",
           "fieldId": "d05",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "5 ans (150 crédits)",
+          "durationEn": "5 years (150 credits)",
           "tuitionFr": "15 761 CAD/an (droits de scolarité, 1er cycle à temps plein, internationaux 2026-2027 ; ≈ 17 728 – 17 839 CAD avec frais et assurances)",
           "tuitionEn": "CAD 15,761/year (tuition, full-time undergraduate, international 2026-2027; ≈ CAD 17,728 – 17,839 with fees and insurance)",
           "tuitionAnnual": {
@@ -6460,8 +6460,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
           "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
           "tuitionAnnual": {
@@ -6487,8 +6487,8 @@
           "level": "Bachelor",
           "fieldId": "d03",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
           "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
           "tuitionAnnual": {
@@ -6514,8 +6514,8 @@
           "level": "Bachelor",
           "fieldId": "d02",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
           "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
           "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
           "tuitionAnnual": {
@@ -6539,8 +6539,8 @@
           "level": "Bachelor",
           "fieldId": "d02",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "90 crédits",
+          "durationEn": "90 credits",
           "tuitionFr": "24 230 CAD/an (30 crédits au tarif international du 1er cycle (droits et montant forfaitaire), 2026-2027, hors frais afférents)",
           "tuitionEn": "CAD 24,230/year (30 credits at the international undergraduate rate (tuition and lump sum), 2026-2027, before related fees)",
           "tuitionAnnual": {
@@ -7640,8 +7640,8 @@
           "level": "Bachelor",
           "fieldId": "d04",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "13 000 CAD/an (30 crédits × 433 CAD, droits accessoires en plus : environ 640 CAD, tarif 2026-2027)",
           "tuitionEn": "CAD 13,000/year (30 credits × CAD 433, ancillary fees extra: about CAD 640, 2026-2027 rate)",
           "tuitionAnnual": {
@@ -7667,8 +7667,8 @@
           "level": "Bachelor",
           "fieldId": "d09",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "13 000 CAD/an (30 crédits × 433 CAD, droits accessoires en plus : environ 640 CAD, tarif 2026-2027)",
           "tuitionEn": "CAD 13,000/year (30 credits × CAD 433, ancillary fees extra: about CAD 640, 2026-2027 rate)",
           "tuitionAnnual": {
@@ -7696,8 +7696,8 @@
           "level": "Bachelor",
           "fieldId": "d06",
           "language": "fr",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "120 crédits",
+          "durationEn": "120 credits",
           "tuitionFr": "13 000 CAD/an (30 crédits × 433 CAD, droits accessoires en plus : environ 640 CAD, tarif 2026-2027)",
           "tuitionEn": "CAD 13,000/year (30 credits × CAD 433, ancillary fees extra: about CAD 640, 2026-2027 rate)",
           "tuitionAnnual": {
@@ -8758,8 +8758,8 @@
           "level": "Bachelor",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+          "durationEn": "4 years (at least 120 credit hours, university minimum)",
           "tuitionFr": "23 760 USD/an (estimation officielle pour les internationaux : 15 crédits × 2 semestres, frais compris, 2026-2027)",
           "tuitionEn": "USD 23,760/year (official estimate for international students: 15 credits × 2 semesters, fees included, 2026-2027)",
           "tuitionAnnual": {
@@ -8789,8 +8789,8 @@
           "level": "Bachelor",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 ans (au moins 120 crédits, minimum de l'université)",
+          "durationEn": "4 years (at least 120 credit hours, university minimum)",
           "tuitionFr": "23 760 USD/an (estimation officielle pour les internationaux : 15 crédits × 2 semestres, frais compris, 2026-2027)",
           "tuitionEn": "USD 23,760/year (official estimate for international students: 15 credits × 2 semesters, fees included, 2026-2027)",
           "tuitionAnnual": {
@@ -8851,8 +8851,8 @@
           "level": "Master",
           "fieldId": "d02",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "34 crédits",
+          "durationEn": "34 credit hours",
           "tuitionFr": "17 694 USD/an (estimation officielle pour les internationaux : 9 crédits × 2 semestres, frais compris, 2026-2027)",
           "tuitionEn": "USD 17,694/year (official estimate for international students: 9 credits × 2 semesters, fees included, 2026-2027)",
           "tuitionAnnual": {
@@ -8882,8 +8882,8 @@
           "level": "Master",
           "fieldId": "d01",
           "language": "en",
-          "durationFr": "",
-          "durationEn": "",
+          "durationFr": "4 semestres (environ 1,5 an)",
+          "durationEn": "4 semesters (about 1.5 years)",
           "tuitionFr": "17 694 USD/an (estimation officielle pour les internationaux : 9 crédits × 2 semestres, frais compris, 2026-2027)",
           "tuitionEn": "USD 17,694/year (official estimate for international students: 9 credits × 2 semesters, fees included, 2026-2027)",
           "tuitionAnnual": {
@@ -8974,12 +8974,14 @@
       {
         "programId": "na-ca-uqac--baccalaureat-informatique",
         "previousTuitionFr": "Fixés par le gouvernement du Québec ; montant annuel indiqué sur l'attestation d'admission",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillDuration": true
       },
       {
         "programId": "na-ca-uqac--baccalaureat-science-donnees-intelligence-affaires",
         "previousTuitionFr": "Fixés par le gouvernement du Québec ; montant annuel indiqué sur l'attestation d'admission",
-        "consultedAt": "2026-11-12"
+        "consultedAt": "2026-11-12",
+        "fillDuration": true
       },
       {
         "programId": "na-ca-uqac--baccalaureat-genie-mecanique",
@@ -9014,6 +9016,126 @@
       {
         "programId": "na-ca-unb--bsc-software-engineering",
         "previousTuitionFr": "≈ 22 514 – 25 871 CAD/an selon la faculté à Fredericton (internationaux, 2026-2027, hors frais et assurances)",
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-houston--bba-finance",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-houston--bsme-mechanical-engineering",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-houston--ms-business-analytics",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-houston--ms-finance",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-arizona-state--bs-financial-technology",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bs-mechanical-engineering",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bba-finance",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bs-public-health",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-york--computer-science",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-york--data-science",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-york--mechanical-engineering",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-york--international-studies-glendon",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-engineering",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-commerce",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-memorial--bachelor-of-science",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-moncton--bing-genie-mecanique",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-moncton--bing-genie-civil",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-uqat--baccalaureat-genie-electrique",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-uqat--baccalaureat-genie-mecanique",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-uqat--baccalaureat-administration",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-ca-uqat--baccalaureat-sciences-comptables",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bs-computer-science",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bs-data-science",
+        "fillDuration": true,
+        "consultedAt": "2026-11-12"
+      },
+      {
+        "programId": "na-us-toledo--bs-computer-science-engineering",
+        "fillDuration": true,
         "consultedAt": "2026-11-12"
       }
     ],

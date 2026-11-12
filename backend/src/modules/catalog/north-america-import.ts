@@ -151,6 +151,11 @@ export type NaProgramCorrection = {
   previousTuitionFr?: string;
   /// Durée complétée : écrite seulement si la ligne n'en a pas.
   fillDuration?: boolean;
+  /// Conditions d'admission complétées : réécrites seulement si la ligne porte
+  /// encore exactement cette liste.
+  previousRequirementsFr?: string[];
+  /// Frais de candidature trouvés : écrits seulement si la ligne n'en a pas.
+  fillApplicationFee?: boolean;
   consultedAt: string;
 };
 export type NaInstitutionCorrection = {
@@ -339,7 +344,9 @@ export function validateNaSource(doc: NaSource): string[] {
   );
   for (const c of doc.corrections?.programs ?? []) {
     if (!programIds.has(c.programId)) errors.push(`correction ${c.programId} : formation absente de la source`);
-    if (!c.previousTuitionFr && !c.fillDuration) errors.push(`correction ${c.programId} : ni frais ni durée à corriger`);
+    if (!c.previousTuitionFr && !c.fillDuration && !c.previousRequirementsFr && !c.fillApplicationFee) {
+      errors.push(`correction ${c.programId} : rien à corriger`);
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(c.consultedAt ?? '')) errors.push(`correction ${c.programId} : consultedAt illisible`);
   }
   for (const c of doc.corrections?.institutions ?? []) {
@@ -525,14 +532,16 @@ export type NaCorrectionRowProgram = {
   tuitionFr: string;
   applicationFeeEur: number | null;
   durationFr: string;
+  requirementsFr?: string[];
 };
 export type NaCorrectionRowInstitution = { id: string; tuitionLabelFr: string };
 
 export type NaCorrectionPlan = {
   programs: {
     id: string;
-    /// Valeur que la ligne doit encore porter pour être réécrite (frais).
+    /// Valeurs que la ligne doit encore porter pour être réécrite.
     whereTuitionFr?: string;
+    whereRequirementsFr?: string[];
     data: {
       tuitionFr?: string;
       tuitionEn?: string;
@@ -540,6 +549,8 @@ export type NaCorrectionPlan = {
       applicationFeeEur?: number | null;
       durationFr?: string;
       durationEn?: string;
+      requirementsFr?: string[];
+      requirementsEn?: string[];
       sourceUrl?: string;
       lastVerifiedAt: Date;
     };
@@ -591,7 +602,20 @@ export function planNaCorrections(
     if (c.fillDuration && !row.durationFr && next.durationFr) {
       Object.assign(data, { durationFr: next.durationFr, durationEn: next.durationEn });
     }
-    if (Object.keys(data).length > 1) plan.programs.push({ id: c.programId, whereTuitionFr, data });
+    let whereRequirementsFr: string[] | undefined;
+    const same = (a: readonly string[] = [], b: readonly string[] = []) => a.length === b.length && a.every((x, k) => x === b[k]);
+    if (c.previousRequirementsFr && row.requirementsFr && !same(row.requirementsFr, next.requirementsFr)) {
+      if (!same(row.requirementsFr, c.previousRequirementsFr)) {
+        plan.skipped.push({ id: c.programId, reason: 'conditions retouchées depuis le passage précédent (admin) — laissées telles quelles' });
+      } else {
+        whereRequirementsFr = c.previousRequirementsFr;
+        Object.assign(data, { requirementsFr: next.requirementsFr, requirementsEn: next.requirementsEn });
+      }
+    }
+    if (c.fillApplicationFee && row.applicationFeeEur == null && next.applicationFeeEur != null) {
+      data.applicationFeeEur = next.applicationFeeEur;
+    }
+    if (Object.keys(data).length > 1) plan.programs.push({ id: c.programId, whereTuitionFr, whereRequirementsFr, data });
   }
   for (const c of doc.corrections?.institutions ?? []) {
     const inst = doc.institutions.find((i) => i.id === c.institutionId);

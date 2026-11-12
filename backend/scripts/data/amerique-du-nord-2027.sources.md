@@ -648,3 +648,42 @@ Format : fait → URL → citation courte. Seules des sources officielles (étab
 - MSU : frais de dossier master non publiés (« Application fees vary depending on the program or CAS ») → https://graduate.missouristate.edu/FutureStudents/applying-for-admission.htm
 - MSU : crédits MBA / MPH / durée licence : NON TROUVÉS (pages https://mba.missouristate.edu/ProgramRequirements.htm et https://www.missouristate.edu/SHS/PublicHealth/default.htm chargées en JavaScript ; catalog.missouristate.edu renvoie une réponse vide aux requêtes automatiques)
 - Janvier 2027 : toutes les dates limites de janvier 2027 (SEMO 1er nov., FHSU 1er nov., MSU 1er nov./1er oct.) sont passées au 12/11/2026 : offerings supprimés (une seule rentrée ouverte), intakePeriods = Automne 2027.
+
+
+### Durées complétées (12/11/2026)
+
+Durées des formations publiées sans durée : fait → URL → citation. Toledo et Missouri State n'affichent pas le total d'heures par programme (catalogues inaccessibles aux robots) : le minimum officiel de l'université est retenu, écrit « au moins ».
+
+- na-us-houston / bba-finance : 120 crédits → https://www.bauer.uh.edu/undergraduate/documents/2025-2026-BBA-Degree-Plan.pdf → « Total Degree Requirements 120 hours minimum »
+- na-us-houston / bsme-mechanical-engineering : 128 crédits → https://www.me.uh.edu/sites/me-new/files/flowcharts/BSME_Degree_Plan_May2023.pdf → « Effective: Fall 2023 (128 Total Credit Hours) »
+- na-us-houston / ms-business-analytics : 36 crédits → https://www.bauer.uh.edu/ms-business-analytics/curriculum.php → « The MS degree in Business Analytics requires 36 semester credit hours »
+- na-us-houston / ms-finance : 30 crédits → https://bauer.uh.edu/msfinance/ → « The program requires completing 30 credits (the equivalent of 10 full-semester courses) »
+- na-us-arizona-state / bs-financial-technology : 120 crédits → https://degrees.asu.edu/bachelors/major/ASU00/BAFINTBS/financial-technology → « Courses 120 credit hours »
+- na-us-toledo / bs-mechanical-engineering : 128 crédits → https://www.utoledo.edu/engineering/mechanical-industrial-manufacturing-engineering/pdfs/bsme-flowchart-version-19-march-2023.pdf → « Total hours: 128 Required »
+- na-us-toledo / bba-finance : 120 crédits → https://catalog.utoledo.edu/undergraduate/business-innovation/department-finance/bba-finance/bba-finance.pdf → « Total Hours 120 (via search excerpt of catalog PDF; direct fetch blocked by WAF) »
+- na-us-toledo / bs-public-health : 120 crédits → https://catalog.utoledo.edu/undergraduate/health-human-services/population-health/bs-public-health/bs-public-health.pdf → « requires 120 credit hours for graduation (via search excerpt of catalog PDF; direct fetch blocked by WAF) »
+- na-ca-york / computer-science : 4 ans (120 crédits) → https://calendars.students.yorku.ca/faculty/lassonde-school-of-engineering → « Honours and Specialized Honours Bachelor of Science (BSc) programs, which are usually completed in four years of full-time study, require at least 120 credits »
+- na-ca-york / data-science : 4 ans (120 crédits) → https://calendars.students.yorku.ca/faculty/science → « Honours Bachelor of science (Honours BSc) programs are usually completed in four years of full-time study, require at least 120 credits »
+- na-ca-york / mechanical-engineering : 4 ans (140 crédits) → https://calendars.students.yorku.ca/faculty/lassonde-school-of-engineering → « The Specialized Honours Bachelor of Engineering (BEng) program requires at least four years of full-time study and at least 140 credits »
+- na-ca-york / international-studies-glendon : 120 crédits → https://calendars.students.yorku.ca/faculty/glendon-college/en → « Honours Bachelor of Arts (120 Credits) ... must have successfully completed at least 120 credits »
+- na-ca-memorial / bachelor-of-engineering : 5 ans → https://www.mun.ca/undergrad/programs/engineering/ → « Campus: St. John's Length: Five years »
+- na-ca-memorial / bachelor-of-commerce : 4 ans (120 crédits) → https://www.mun.ca/undergrad/programs/business/bachelor-of-commerce/ → « Length: Four years ... 40 courses (120 credit hours) »
+- na-ca-memorial / bachelor-of-science : 4 ans → https://www.mun.ca/undergrad/programs/science/bachelor-of-science/ → « Faculty: Science Length: Four years »
+- na-ca-uqac / baccalaureat-informatique : 90 crédits → https://www.uqac.ca/programme/7833-baccalaureat-en-informatique/ → « Nombre de crédit : 90 »
+- na-ca-uqac / baccalaureat-science-donnees-intelligence-affaires : 90 crédits → https://www.uqac.ca/programme/6710-bacc-info-sciences-donnees-intelligence-daffaires/ → « Nombre de crédit : 90 »
+- na-ca-moncton / bing-genie-mecanique : 5 ans (150 crédits) → https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25194.pdf → « CRÉDITS REQUIS : 150 (1ère à 5e année - 30 crédits par année) »
+- na-ca-moncton / bing-genie-civil : 5 ans (150 crédits) → https://www.umoncton.ca/institutionnel/modules/repertoire/pdf/25192.pdf → « CRÉDITS REQUIS : 150 (1ère à 5e année - 30 crédits par année) »
+- na-ca-uqat / baccalaureat-genie-electrique : 120 crédits → http://programmes.uqat.ca/programmes/pdf/6513abrg.pdf → « Baccalauréat en génie électrique - 6513 ... 120 crédits, Premier cycle »
+- na-ca-uqat / baccalaureat-genie-mecanique : 120 crédits → http://programmes.uqat.ca/programmes/pdf/7947abrg.pdf → « Baccalauréat en génie mécanique - 7947 ... 120 crédits, Premier cycle »
+- na-ca-uqat / baccalaureat-administration : 90 crédits → http://programmes.uqat.ca/programmes/pdf/7764abrg.pdf → « Baccalauréat en administration - 7764 ... 90 crédits, Premier cycle (base collégiale) »
+- na-ca-uqat / baccalaureat-sciences-comptables : 90 crédits → http://programmes.uqat.ca/programmes/pdf/7766abrg.pdf → « Baccalauréat en sciences comptables - 7766 ... 90 crédits, Premier cycle »
+- na-ca-uof / baccalaureat-sante-mentale : 120 crédits → https://uontario.ca/fileadmin/user_upload/PV_CG_2023-05-25_signe.pdf → « la structure du programme proposé comprend 120 crédits, requis pour un baccalauréat spécialisé (procès-verbal du Conseil de gouvernance) »
+- na-ca-uof / baccalaureat-travail-social : 120 crédits → https://uontario.ca/fileadmin/user_upload/PV_CG_2023-09-20_signe2.pdf → « Au niveau du cursus, le programme comprend 120 crédits (procès-verbal du Conseil de gouvernance) »
+- na-ca-uof / baccalaureat-communication-medias-numeriques : 120 crédits → https://uontario.ca/fileadmin/Site_Corpo/Annuaire/Annuaire_universitaire_2024.2025.pdf → « Pour obtenir un baccalauréat spécialisé de 120 crédits offert par l'Université (règle générale de l'annuaire; page programme sans durée) »
+- na-us-missouri-state / mba : 34 crédits → https://mba.missouristate.edu/MBAvsSTEM.htm → « 34 credit hours (12 courses without foundation courses) »
+- na-us-missouri-state / ms-computer-science : 4 semestres (environ 1,5 an) → https://ComputerScience.MissouriState.edu/Graduate/default.htm → « It's possible to finish in just four semesters (about 1.5 years) »
+- na-us-missouri-state / bs-computer-science : 4 ans (au moins 120 crédits, minimum de l'université) → https://catalog.missouristate.edu/content.php?catoid=6&navoid=319 → « Completed a total of at least 120 semester hours of credit »
+- na-us-missouri-state / bs-finance : 4 ans (au moins 120 crédits, minimum de l'université) → https://catalog.missouristate.edu/content.php?catoid=6&navoid=319 → « Completed a total of at least 120 semester hours of credit »
+- na-us-toledo / bs-computer-science : 4 ans (au moins 120 crédits, minimum de l'université) → https://catalog.utoledo.edu/pdf/UToledo-General-Section-2024-2025.pdf → « A minimum of 120 semester hours must be earned to be awarded a bachelor's degree »
+- na-us-toledo / bs-data-science : 4 ans (au moins 120 crédits, minimum de l'université) → https://catalog.utoledo.edu/pdf/UToledo-General-Section-2024-2025.pdf → « A minimum of 120 semester hours must be earned to be awarded a bachelor's degree »
+- na-us-toledo / bs-computer-science-engineering : 4 ans (au moins 120 crédits ; davantage pour ce programme accrédité ABET) → https://catalog.utoledo.edu/pdf/UToledo-General-Section-2024-2025.pdf → « some colleges/programs require more than the minimum for accreditation »

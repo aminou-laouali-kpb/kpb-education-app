@@ -95,7 +95,7 @@ async function main() {
     doc,
     await prisma.program.findMany({
       where: { id: { in: (doc.corrections?.programs ?? []).map((c) => c.programId) } },
-      select: { id: true, tuitionFr: true, applicationFeeEur: true, durationFr: true },
+      select: { id: true, tuitionFr: true, applicationFeeEur: true, durationFr: true, requirementsFr: true },
     }),
     await prisma.institution.findMany({
       where: { id: { in: (doc.corrections?.institutions ?? []).map((c) => c.institutionId) } },
@@ -144,7 +144,12 @@ async function main() {
     console.log('\n══ Corrections de lignes déjà publiées (prix complétés)');
     for (const c of corrections.institutions) console.log(`   ~ ${c.id} : libellé de frais → ${c.data.tuitionLabelFr.slice(0, 80)}`);
     for (const c of corrections.programs) {
-      const what = [c.data.tuitionFr && `frais → ${c.data.tuitionFr.slice(0, 70)}`, c.data.durationFr && `durée → ${c.data.durationFr}`];
+      const what = [
+        c.data.tuitionFr && `frais → ${c.data.tuitionFr.slice(0, 70)}`,
+        c.data.durationFr && `durée → ${c.data.durationFr}`,
+        c.data.requirementsFr && `conditions → ${c.data.requirementsFr.length} ligne(s)`,
+        c.data.applicationFeeEur != null && `frais de candidature → ${c.data.applicationFeeEur} €`,
+      ];
       console.log(`   ~ ${c.id} : ${what.filter(Boolean).join(' ; ')}`);
     }
     for (const s of corrections.skipped) console.log(`  ⚠ ${s.id} : ${s.reason}`);
@@ -258,6 +263,8 @@ async function main() {
     const where: Prisma.ProgramWhereInput = { id: c.id };
     if (c.whereTuitionFr !== undefined) where.tuitionFr = c.whereTuitionFr;
     if (c.data.durationFr !== undefined) where.durationFr = '';
+    if (c.whereRequirementsFr !== undefined) where.requirementsFr = { equals: c.whereRequirementsFr };
+    if (c.data.applicationFeeEur !== undefined && c.data.tuitionFr === undefined) where.applicationFeeEur = null;
     const r = await prisma.program.updateMany({ where, data: c.data });
     written += r.count;
   }
