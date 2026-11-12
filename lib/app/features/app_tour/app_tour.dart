@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import '../../core/navigation/shell_tabs.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/ui/app_tokens.dart';
+import '../../core/ui/components/kpb_toast.dart';
 import 'app_tour_store.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,7 +194,7 @@ abstract final class AppTour {
 
   /// Le délai avant l'ouverture automatique : le temps que l'accueil se pose.
   @visibleForTesting
-  static Duration autoStartDelay = const Duration(milliseconds: 900);
+  static Duration autoStartDelay = KpbMotion.reveal + KpbMotion.page;
 
   static bool _autoShownThisRun = false;
   static bool _open = false;
@@ -204,7 +205,7 @@ abstract final class AppTour {
     store = const SharedPreferencesAppTourStore();
     analytics = const _ServiceAppTourAnalytics();
     autoStartEnabled = false;
-    autoStartDelay = const Duration(milliseconds: 900);
+    autoStartDelay = KpbMotion.reveal + KpbMotion.page;
     _autoShownThisRun = false;
     _open = false;
     _host = null;
@@ -281,8 +282,8 @@ abstract final class AppTour {
         PageRouteBuilder<AppTourExit>(
           opaque: false,
           settings: const RouteSettings(name: 'app_tour'),
-          transitionDuration: const Duration(milliseconds: 220),
-          reverseTransitionDuration: const Duration(milliseconds: 180),
+          transitionDuration: KpbMotion.resolve(host.context).base,
+          reverseTransitionDuration: KpbMotion.resolve(host.context).fast,
           pageBuilder: (_, __, ___) => _AppTourOverlay(
             host: host,
             steps: steps,
@@ -314,12 +315,7 @@ abstract final class AppTour {
 
     // « Passer » : on lui dit où la retrouver, sinon il la croit perdue.
     if (how == AppTourExit.skipped && host.context.mounted) {
-      ScaffoldMessenger.maybeOf(host.context)?.showSnackBar(
-        SnackBar(
-          content: Text('app_tour_skipped_hint'.tr),
-          duration: const Duration(seconds: 5),
-        ),
-      );
+      KpbToast.info('app_tour_skipped_hint'.tr, context: host.context);
     }
   }
 }
@@ -356,7 +352,7 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
   bool _closing = false;
   late final AnimationController _pulse = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1400),
+    duration: KpbMotion.reveal * 2.5,
   );
 
   AppTourStep get _step => widget.steps[_index];
@@ -627,7 +623,7 @@ class _BubbleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x33000000),
+              color: KpbShadow.softNavy,
               blurRadius: 24,
               offset: Offset(0, 8),
             ),
@@ -694,7 +690,7 @@ class _BubbleCard extends StatelessWidget {
                               style: const TextStyle(
                                 color: KpbColors.brandNavy,
                                 fontWeight: FontWeight.w800,
-                                fontSize: 20,
+                                fontSize: KpbFontSize.xl,
                                 height: 1.25,
                               ),
                             ),
@@ -707,7 +703,7 @@ class _BubbleCard extends StatelessWidget {
                       step.bodyKey.tr,
                       style: const TextStyle(
                         color: KpbColors.textPrimary,
-                        fontSize: 16,
+                        fontSize: KpbFontSize.md,
                         height: 1.45,
                       ),
                     ),
@@ -822,7 +818,7 @@ class _ToolLine extends StatelessWidget {
             ),
             style: const TextStyle(
               color: KpbColors.textPrimary,
-              fontSize: 15,
+              fontSize: KpbFontSize.md,
               height: 1.35,
             ),
           ),
@@ -845,7 +841,7 @@ class _Dots extends StatelessWidget {
         children: [
           for (var i = 0; i < total; i++)
             AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+              duration: KpbMotion.of(context).base,
               margin: const EdgeInsets.symmetric(horizontal: 3),
               width: i == index ? 20 : 8,
               height: 8,
@@ -905,7 +901,7 @@ class _ScrimPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scrim = Paint()..color = const Color(0xC70F172A);
+    final scrim = Paint()..color = KpbColors.brandNavy.withValues(alpha: 0.78);
     final full = Offset.zero & size;
     final h = hole;
     if (h == null) {
