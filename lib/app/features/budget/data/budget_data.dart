@@ -181,6 +181,27 @@ final List<LivingBudgetProfile> mockBudgetProfiles = [
       BudgetCategory(nameKey: 'budget_category_leisure', typical: 110),
     ],
   ),
+  // Belgique francophone — estimation officielle Study in Belgium (WBI),
+  // relevée le 12/11/2026 : 1 000 à 1 300 €/mois ; logement 575 € charges
+  // comprises, alimentation 300 €, études 50 €, assurance 30 €, transport
+  // 50 €, activités 50 €, autres 170 €.
+  LivingBudgetProfile(
+    country: 'Belgium',
+    currency: 'EUR',
+    monthlyMin: 1000,
+    monthlyMax: 1300,
+    categories: [
+      BudgetCategory(nameKey: 'budget_category_rent', typical: 500),
+      BudgetCategory(nameKey: 'budget_category_utilities', typical: 75),
+      BudgetCategory(nameKey: 'budget_category_food', typical: 300),
+      BudgetCategory(nameKey: 'budget_category_transport', typical: 50),
+      BudgetCategory(nameKey: 'budget_category_health', typical: 30),
+      BudgetCategory(nameKey: 'budget_category_phone_internet', typical: 30),
+      BudgetCategory(nameKey: 'budget_category_supplies', typical: 50),
+      BudgetCategory(nameKey: 'budget_category_clothing_hygiene', typical: 50),
+      BudgetCategory(nameKey: 'budget_category_leisure', typical: 140),
+    ],
+  ),
   LivingBudgetProfile(
     country: 'Spain',
     currency: 'EUR',

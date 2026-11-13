@@ -58,6 +58,13 @@ void main() {
       // A known destination card + the (unique) PDF export CTA prove the
       // results section rendered.
       expect(find.textContaining('France'), findsWidgets);
+      // Dix destinations depuis la Belgique (12/11/2026) : le bouton, sous la
+      // liste, sort de la zone que la ListView construit — on y fait défiler.
+      await tester.scrollUntilVisible(
+        find.text('eligibility_export_pdf'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('eligibility_export_pdf'), findsOneWidget);
 
       // Chantier H2 : le verdict, jamais un pourcentage. Le score est une

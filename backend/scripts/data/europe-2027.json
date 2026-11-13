@@ -1,0 +1,1230 @@
+{
+  "source": "Relevés sur les sites officiels des établissements (Belgique : UCLouvain, ULiège, ULB, UNamur ; Allemagne : Hochschule Rhein-Waal, TU Dresden), consultés le 12/11/2026 et contre-vérifiés — voir europe-2027.sources.md",
+  "consultedAt": "2026-11-12",
+  "exchangeRates": {
+    "date": "2026-11-12",
+    "source": "Sans objet : montants en EUR",
+    "perEur": {}
+  },
+  "institutions": [
+    {
+      "id": "eu-be-uclouvain",
+      "countryId": "bel",
+      "nameFr": "Université catholique de Louvain (UCLouvain)",
+      "nameEn": "Université catholique de Louvain (UCLouvain)",
+      "acronym": "UCLouvain",
+      "locationFr": "Louvain-la-Neuve (Brabant wallon) et Bruxelles, Belgique",
+      "locationEn": "Louvain-la-Neuve (Walloon Brabant) and Brussels, Belgium",
+      "websiteUrl": "https://uclouvain.be/",
+      "sourceUrl": "https://www.uclouvain.be/fr/inscriptions/montant-droits-inscription",
+      "overviewFr": "Université francophone dont le campus principal est à Louvain-la-Neuve ; la santé publique se donne à Bruxelles Woluwe. Elle est privée mais subventionnée par les pouvoirs publics. Les bacheliers de l'École polytechnique sont donnés en français, et les masters d'ingénieur en anglais. La rentrée a lieu à la mi-septembre.\n\nComment postuler : demande d'admission en ligne sur le site de l'UCLouvain, avec l'équivalence de ton diplôme secondaire délivrée par la Fédération Wallonie-Bruxelles. Date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; la date 2027-2028 n'est pas encore publiée).\n\nPays d'Afrique francophone au tarif de 1 194 EUR (annexes 1 à 3) : Bénin, Burkina Faso, Burundi, Cameroun, Comores, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinée, Guinée équatoriale, Madagascar, Mali, Mauritanie, Niger, RDC, République centrafricaine, Rwanda, Sénégal, Tchad, Togo. Le Gabon, le Maroc, l'Algérie et la Tunisie ne sont pas dans la liste.\n\nFrais de candidature : 300 EUR (déduits de tes droits si tu es admis).\n\nPour étudier en Belgique, tu demandes un visa D (études) à l'ambassade ou au centre de visa de ton pays, avec ta lettre d'admission. Tu dois prouver des moyens de subsistance d'au moins 1 062 EUR net par mois en 2026-2027 (12 744 EUR pour 12 mois) : garant (annexe 32), bourse ou compte bloqué. L'UCLouvain propose un compte bloqué (frais de gestion de 150 EUR).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university whose main campus is in Louvain-la-Neuve; public health is taught in Brussels Woluwe. It is private but publicly subsidised. Bachelor courses at the Polytechnic School are taught in French, and engineering master's courses in English. The academic year starts in mid-September.\n\nHow to apply: online admission application on the UCLouvain website, with the equivalence of your secondary diploma issued by the Wallonia-Brussels Federation. Deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; the 2027-2028 date is not yet published).\n\nFrancophone African countries at the EUR 1,194 rate (annexes 1 to 3): Benin, Burkina Faso, Burundi, Cameroon, Comoros, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinea, Equatorial Guinea, Madagascar, Mali, Mauritania, Niger, DR Congo, Central African Republic, Rwanda, Senegal, Chad, Togo. Gabon, Morocco, Algeria and Tunisia are not on the list.\n\nApplication fee: EUR 300 (deducted from your tuition if you are admitted).\n\nTo study in Belgium, you apply for a type D (study) visa at the embassy or visa centre in your country, with your admission letter. You must prove means of subsistence of at least EUR 1,062 net per month in 2026-2027 (EUR 12,744 for 12 months): guarantor (annex 32), scholarship or blocked account. UCLouvain offers a blocked account (EUR 150 handling fee).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : niveau B2 (écrit et oral) recommandé, sans être une exigence formelle ; pour un master, preuve de français (DELF, DALF, TCF) si tes études n'étaient pas en français ; le bachelier d'ingénieur civil est en français",
+      "languageRequirementsEn": "French: level B2 (written and oral) recommended, though not a formal requirement; for a master's, proof of French (DELF, DALF, TCF) if your studies were not in French; the civil engineering bachelor's is taught in French",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 300,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "300 EUR",
+      "applicationFeeEn": "EUR 300",
+      "tuitionLabelFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+      "tuitionLabelEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+      "intakePeriods": [
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "bachelier-sciences-informatiques",
+          "nameFr": "Bachelier en sciences informatiques",
+          "nameEn": "Bachelor's in Computer Science (Bachelier en sciences informatiques)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Louvain-la-Neuve",
+          "durationEn": "180 ECTS credits (3 years), Louvain-la-Neuve",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec décision d'équivalence définitive de la Fédération Wallonie-Bruxelles (Service des équivalences) : sans elle, ton dossier est refusé",
+            "Diplôme obtenu dans les 3 années avant ta demande, avec une moyenne générale d'au moins 13/20",
+            "Niveau de français B2 (écrit et oral) recommandé, sans être une exigence formelle ; tu dois pouvoir suivre les cours en français ; aucun test précis n'est demandé pour le bachelier",
+            "Demande d'admission en ligne ; date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée)",
+            "Frais de dossier : 300 EUR, déduits de tes droits si tu es admis, non remboursés sinon",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Avoir suivi une option mathématique forte (6 heures) est un atout, pas une obligation"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with a final equivalence decision from the Wallonia-Brussels Federation (Equivalence Service): without it, your application is refused",
+            "Diploma obtained in the 3 years before you apply, with an overall average of at least 13/20",
+            "French level B2 (written and oral) recommended, though not a formal requirement; you must be able to follow classes in French; no specific test is required for the bachelor's",
+            "Online admission application; deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published)",
+            "Application fee: EUR 300, deducted from your tuition if you are admitted, non-refundable otherwise",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "A strong maths option (6 hours) is an asset, not a requirement"
+          ],
+          "sourceUrl": "https://uclouvain.be/prog-2026-sinf1ba.html"
+        },
+        {
+          "slug": "bachelier-ingenieur-civil",
+          "nameFr": "Bachelier en sciences de l'ingénieur, orientation ingénieur civil",
+          "nameEn": "Bachelor's in Engineering Sciences, civil engineering track (Bachelier ingénieur civil)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Louvain-la-Neuve",
+          "durationEn": "180 ECTS credits (3 years), Louvain-la-Neuve",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec décision d'équivalence définitive de la Fédération Wallonie-Bruxelles (Service des équivalences) : sans elle, ton dossier est refusé",
+            "Diplôme obtenu dans les 3 années avant ta demande, avec une moyenne générale d'au moins 13/20",
+            "Niveau de français B2 (écrit et oral) recommandé, sans être une exigence formelle ; tu dois pouvoir suivre les cours en français ; aucun test précis n'est demandé pour le bachelier",
+            "Demande d'admission en ligne ; date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée)",
+            "Frais de dossier : 300 EUR, déduits de tes droits si tu es admis, non remboursés sinon",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Examen d'admission obligatoire, en présentiel : 2 sessions (début juillet, début septembre) ; inscription en ligne, 50 EUR, clôture vers mi-juin et mi-août",
+            "Option forte en mathématiques (6 h/semaine) vivement conseillée ; l'examen est valable aussi à l'ULB, à l'ULiège et à l'UMons"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with a final equivalence decision from the Wallonia-Brussels Federation (Equivalence Service): without it, your application is refused",
+            "Diploma obtained in the 3 years before you apply, with an overall average of at least 13/20",
+            "French level B2 (written and oral) recommended, though not a formal requirement; you must be able to follow classes in French; no specific test is required for the bachelor's",
+            "Online admission application; deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published)",
+            "Application fee: EUR 300, deducted from your tuition if you are admitted, non-refundable otherwise",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Admission exam is compulsory and in person: 2 sessions (early July, early September); online registration, EUR 50, closing around mid-June and mid-August",
+            "A strong maths option (6 h/week) is strongly recommended; the exam is also valid at ULB, ULiège and UMons"
+          ],
+          "sourceUrl": "https://uclouvain.be/prog-2026-fsa1ba.html"
+        },
+        {
+          "slug": "bachelier-sciences-economiques-gestion",
+          "nameFr": "Bachelier en sciences économiques et de gestion",
+          "nameEn": "Bachelor's in Economics and Management (Bachelier en sciences économiques et de gestion)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Louvain-la-Neuve",
+          "durationEn": "180 ECTS credits (3 years), Louvain-la-Neuve",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec décision d'équivalence définitive de la Fédération Wallonie-Bruxelles (Service des équivalences) : sans elle, ton dossier est refusé",
+            "Diplôme obtenu dans les 3 années avant ta demande, avec une moyenne générale d'au moins 13/20",
+            "Niveau de français B2 (écrit et oral) recommandé, sans être une exigence formelle ; tu dois pouvoir suivre les cours en français ; aucun test précis n'est demandé pour le bachelier",
+            "Demande d'admission en ligne ; date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée)",
+            "Frais de dossier : 300 EUR, déduits de tes droits si tu es admis, non remboursés sinon",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with a final equivalence decision from the Wallonia-Brussels Federation (Equivalence Service): without it, your application is refused",
+            "Diploma obtained in the 3 years before you apply, with an overall average of at least 13/20",
+            "French level B2 (written and oral) recommended, though not a formal requirement; you must be able to follow classes in French; no specific test is required for the bachelor's",
+            "Online admission application; deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published)",
+            "Application fee: EUR 300, deducted from your tuition if you are admitted, non-refundable otherwise",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://uclouvain.be/prog-2026-ecge1ba.html"
+        },
+        {
+          "slug": "bachelier-droit",
+          "nameFr": "Bachelier en droit",
+          "nameEn": "Bachelor's in Law (Bachelier en droit)",
+          "level": "Bachelor",
+          "fieldId": "d07",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Louvain-la-Neuve",
+          "durationEn": "180 ECTS credits (3 years), Louvain-la-Neuve",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec décision d'équivalence définitive de la Fédération Wallonie-Bruxelles (Service des équivalences) : sans elle, ton dossier est refusé",
+            "Diplôme obtenu dans les 3 années avant ta demande, avec une moyenne générale d'au moins 13/20",
+            "Niveau de français B2 (écrit et oral) recommandé, sans être une exigence formelle ; tu dois pouvoir suivre les cours en français ; aucun test précis n'est demandé pour le bachelier",
+            "Demande d'admission en ligne ; date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée)",
+            "Frais de dossier : 300 EUR, déduits de tes droits si tu es admis, non remboursés sinon",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with a final equivalence decision from the Wallonia-Brussels Federation (Equivalence Service): without it, your application is refused",
+            "Diploma obtained in the 3 years before you apply, with an overall average of at least 13/20",
+            "French level B2 (written and oral) recommended, though not a formal requirement; you must be able to follow classes in French; no specific test is required for the bachelor's",
+            "Online admission application; deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published)",
+            "Application fee: EUR 300, deducted from your tuition if you are admitted, non-refundable otherwise",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://uclouvain.be/prog-2026-droi1ba.html"
+        },
+        {
+          "slug": "master-sciences-sante-publique",
+          "nameFr": "Master en sciences de la santé publique",
+          "nameEn": "Master's in Public Health (Master en sciences de la santé publique)",
+          "level": "Master",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "120 crédits ECTS (2 ans), Bruxelles Woluwe",
+          "durationEn": "120 ECTS credits (2 years), Brussels Woluwe",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme hors UE : un diplôme de 2e cycle (master) d'au moins 5 ans, délivré par une université reconnue dans la base mondiale WHED ; la page du programme ne prévoit pas d'accès avec un simple bachelier hors UE",
+            "Avoir réussi chaque année avec une moyenne d'au moins 12/20 ; l'accès se fait sur dossier (accepté directement, accepté avec jusqu'à 60 crédits de compléments, ou refusé) ; les dossiers hors critères sont écartés d'office",
+            "Au moins 1 an d'expérience professionnelle en santé publique, attestée (ONG, programmes nationaux ou internationaux, recherche), et un projet réaliste expliqué dans ta lettre de motivation",
+            "Très bonne connaissance du français (lu, parlé, écrit), bonne connaissance passive de l'anglais (lu) et de la suite Office ; preuve de français (DELF, DALF ou TCF) si tes études n'étaient pas en français",
+            "Dossier en ligne : diplômes et relevés, CV daté et signé, lettre de motivation ; date limite pour un visa : 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée)",
+            "Frais de dossier : 300 EUR, déduits de tes droits si tu es admis, non remboursés sinon",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Cours en français, à Bruxelles Woluwe, horaire de jour, mémoire obligatoire ; remplis aussi le formulaire de renseignements de la Faculté de santé publique"
+          ],
+          "requirementsEn": [
+            "Non-EU degree: a second-cycle (master's) degree of at least 5 years from a university recognised in the WHED world database; the programme page does not provide for access with a plain non-EU bachelor's",
+            "You must have passed every year with an average of at least 12/20; access is by file review (accepted directly, accepted with up to 60 credits of bridging courses, or refused); files outside the criteria are rejected outright",
+            "At least 1 year of documented professional experience in public health (NGO, national or international programmes, research), and a realistic project explained in your motivation letter",
+            "Very good knowledge of French (reading, speaking, writing), good passive knowledge of English (reading) and of the Office suite; proof of French (DELF, DALF or TCF) if your studies were not in French",
+            "Online file: diplomas and transcripts, dated and signed CV, motivation letter; deadline if you need a visa: 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published)",
+            "Application fee: EUR 300, deducted from your tuition if you are admitted, non-refundable otherwise",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Taught in French, in Brussels Woluwe, daytime schedule, thesis required; also fill in the information form of the Faculty of Public Health"
+          ],
+          "sourceUrl": "https://uclouvain.be/prog-2026-esp2m"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "eu-be-uliege",
+      "countryId": "bel",
+      "nameFr": "Université de Liège (ULiège)",
+      "nameEn": "University of Liège (ULiège)",
+      "acronym": "ULiège",
+      "locationFr": "Liège (Sart-Tilman et centre-ville), Belgique",
+      "locationEn": "Liège (Sart-Tilman and city centre), Belgium",
+      "websiteUrl": "https://www.uliege.be/",
+      "sourceUrl": "https://www.enseignement.uliege.be/cms/c_13939496/fr/etudiant-hors-ue",
+      "overviewFr": "Université francophone de Liège, avec deux grands sites : Sart-Tilman et le centre-ville. Elle propose des bacheliers et masters dans presque tous les domaines. Les cours reprennent mi-septembre. La fiche officielle indique « français, anglais » pour les sciences informatiques et l'ingénieur civil (nombreux cours en anglais) ; les autres programmes ci-dessous sont en français.\n\nComment postuler : formulaire d'admission en ligne sur my.uliege.be/admissions, avec les documents en PDF, du 18 février au 31 mars 2026 pour 2026-2027 ; la date 2027-2028 n'est pas encore publiée. Pour un bachelier, ajoute l'équivalence de ton diplôme secondaire (Fédération Wallonie-Bruxelles).\n\nPays d'Afrique francophone au tarif de 1 194 EUR (annexes 1 à 3) : Bénin, Burkina Faso, Burundi, Cameroun, Comores, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinée, Guinée équatoriale, Madagascar, Mali, Mauritanie, Niger, RDC, République centrafricaine, Rwanda, Sénégal, Tchad, Togo. Le Gabon, le Maroc, l'Algérie et la Tunisie ne sont pas dans la liste.\n\nFrais de candidature : 200 EUR (acompte déduit de tes droits si ton inscription est acceptée, perdu sinon).\n\nPour étudier en Belgique, tu demandes un visa D (études) à l'ambassade ou au centre de visa de ton pays, avec ta lettre d'admission. Tu dois prouver des moyens de subsistance d'au moins 1 062 EUR net par mois en 2026-2027 (12 744 EUR pour 12 mois) : garant (annexe 32), bourse ou compte bloqué. L'ULiège propose un dépôt sur compte bloqué (frais de gestion de 150 EUR).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Liège, with two main sites: Sart-Tilman and the city centre. It offers bachelor's and master's degrees in almost every field. Classes start in mid-September. The official programme sheets list \"French, English\" for computer science and civil engineering (many courses in English); the other programmes below are in French.\n\nHow to apply: online admission form at my.uliege.be/admissions, with PDF documents, from 18 February to 31 March 2026 for 2026-2027; the 2027-2028 date is not yet published. For a bachelor's, add the equivalence of your secondary diploma (Wallonia-Brussels Federation).\n\nFrancophone African countries at the EUR 1,194 rate (annexes 1 to 3): Benin, Burkina Faso, Burundi, Cameroon, Comoros, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinea, Equatorial Guinea, Madagascar, Mali, Mauritania, Niger, DR Congo, Central African Republic, Rwanda, Senegal, Chad, Togo. Gabon, Morocco, Algeria and Tunisia are not on the list.\n\nApplication fee: EUR 200 (deposit deducted from your tuition if your enrolment is accepted, lost otherwise).\n\nTo study in Belgium, you apply for a type D (study) visa at the embassy or visa centre in your country, with your admission letter. You must prove means of subsistence of at least EUR 1,062 net per month in 2026-2027 (EUR 12,744 for 12 months): guarantor (annex 32), scholarship or blocked account. ULiège offers a blocked-account deposit (EUR 150 handling fee).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : preuve de niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+      "languageRequirementsEn": "French: proof of B2 level if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 200,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "200 EUR",
+      "applicationFeeEn": "EUR 200",
+      "tuitionLabelFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+      "tuitionLabelEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+      "intakePeriods": [
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "fr",
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bachelier-sciences-informatiques",
+          "nameFr": "Bachelier en sciences informatiques",
+          "nameEn": "Bachelor's in Computer Science (Bachelier en sciences informatiques)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "bi",
+          "durationFr": "180 crédits ECTS (3 ans), Liège Sart-Tilman",
+          "durationEn": "180 ECTS credits (3 years), Liège Sart-Tilman",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger : décision d'équivalence au CESS de la Fédération Wallonie-Bruxelles, ou réussite de l'examen d'admission aux études de 1er cycle",
+            "Diplôme récent (2024, 2025 ou 2026 pour 2026-2027) avec une moyenne générale d'au moins 13/20 ; au moins 12/20 en mathématiques et en physique (pas d'exigence en chimie pour les sciences informatiques)",
+            "Preuve de français niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+            "Dossier en ligne avant le 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; acompte de 200 EUR, condition pour que ton dossier soit examiné",
+            "Plan de financement avec preuves officielles : 10 000 EUR + droits d'inscription ; compte bloqué possible après l'autorisation d'inscription",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Cours en français et en anglais, horaire de jour"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma: equivalence decision to the Belgian CESS from the Wallonia-Brussels Federation, or a pass in the first-cycle admission exam",
+            "Recent diploma (2024, 2025 or 2026 for 2026-2027) with an overall average of at least 13/20; at least 12/20 in mathematics and physics (no chemistry requirement for computer science)",
+            "Proof of French at B2 level if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+            "Online file before 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published); EUR 200 deposit, required for your file to be examined",
+            "Funding plan with official proof: EUR 10,000 + tuition fees; blocked account possible after the enrolment authorisation",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Courses in French and English, daytime schedule"
+          ],
+          "sourceUrl": "https://www.programmes.uliege.be/cocoon/20262027/programmes/A1INFO01_B.html"
+        },
+        {
+          "slug": "bachelier-ingenieur-civil",
+          "nameFr": "Bachelier en sciences de l'ingénieur, orientation ingénieur civil",
+          "nameEn": "Bachelor's in Engineering Sciences, civil engineering track (Bachelier ingénieur civil)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "bi",
+          "durationFr": "180 crédits ECTS pour le bachelier (cursus ingénieur civil complet : 5 ans), Liège Sart-Tilman",
+          "durationEn": "180 ECTS credits for the bachelor's (full civil engineering path: 5 years), Liège Sart-Tilman",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger : décision d'équivalence au CESS de la Fédération Wallonie-Bruxelles, ou réussite de l'examen d'admission aux études de 1er cycle",
+            "Diplôme récent (2024, 2025 ou 2026 pour 2026-2027) avec une moyenne générale d'au moins 13/20 ; au moins 12/20 en mathématiques, physique et chimie",
+            "Preuve de français niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+            "Dossier en ligne avant le 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; acompte de 200 EUR, condition pour que ton dossier soit examiné",
+            "Plan de financement avec preuves officielles : 10 000 EUR + droits d'inscription ; compte bloqué possible après l'autorisation d'inscription",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Examen spécial d'admission obligatoire, en présentiel au Sart-Tilman : 5 et 6 juillet 2027, ou 30 et 31 août 2027 ; inscription après ton acceptation, 50 EUR ; seulement la partie maths si tu as le CESS, sinon l'épreuve complète"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma: equivalence decision to the Belgian CESS from the Wallonia-Brussels Federation, or a pass in the first-cycle admission exam",
+            "Recent diploma (2024, 2025 or 2026 for 2026-2027) with an overall average of at least 13/20; at least 12/20 in mathematics, physics and chemistry",
+            "Proof of French at B2 level if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+            "Online file before 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published); EUR 200 deposit, required for your file to be examined",
+            "Funding plan with official proof: EUR 10,000 + tuition fees; blocked account possible after the enrolment authorisation",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Special admission exam is compulsory, in person at Sart-Tilman: 5-6 July 2027, or 30-31 August 2027; register after you are accepted, EUR 50; maths part only if you hold the CESS, otherwise the full exam"
+          ],
+          "sourceUrl": "https://www.programmes.uliege.be/cocoon/20262027/formations/bref/A1ICIV01.html"
+        },
+        {
+          "slug": "bachelier-ingenieur-de-gestion",
+          "nameFr": "Bachelier : ingénieur de gestion",
+          "nameEn": "Bachelor's in Management Engineering (Bachelier ingénieur de gestion)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Liège centre-ville",
+          "durationEn": "180 ECTS credits (3 years), Liège city centre",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger : décision d'équivalence au CESS de la Fédération Wallonie-Bruxelles, ou réussite de l'examen d'admission aux études de 1er cycle",
+            "Diplôme récent (2024, 2025 ou 2026 pour 2026-2027) avec une moyenne générale d'au moins 13/20 ; au moins 12/20 en français, mathématiques et anglais (HEC Liège)",
+            "Preuve de français niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+            "Dossier en ligne avant le 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; acompte de 200 EUR, condition pour que ton dossier soit examiné",
+            "Plan de financement avec preuves officielles : 10 000 EUR + droits d'inscription ; compte bloqué possible après l'autorisation d'inscription",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Cours en français, horaire de jour, au centre-ville de Liège"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma: equivalence decision to the Belgian CESS from the Wallonia-Brussels Federation, or a pass in the first-cycle admission exam",
+            "Recent diploma (2024, 2025 or 2026 for 2026-2027) with an overall average of at least 13/20; at least 12/20 in French, mathematics and English (HEC Liège)",
+            "Proof of French at B2 level if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+            "Online file before 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published); EUR 200 deposit, required for your file to be examined",
+            "Funding plan with official proof: EUR 10,000 + tuition fees; blocked account possible after the enrolment authorisation",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Courses in French, daytime schedule, in Liège city centre"
+          ],
+          "sourceUrl": "https://www.programmes.uliege.be/cocoon/20262027/formations/master/G1IGES01.html"
+        },
+        {
+          "slug": "bachelier-droit",
+          "nameFr": "Bachelier en droit",
+          "nameEn": "Bachelor's in Law (Bachelier en droit)",
+          "level": "Bachelor",
+          "fieldId": "d07",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), Liège Sart-Tilman",
+          "durationEn": "180 ECTS credits (3 years), Liège Sart-Tilman",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger : décision d'équivalence au CESS de la Fédération Wallonie-Bruxelles, ou réussite de l'examen d'admission aux études de 1er cycle",
+            "Diplôme récent (2024, 2025 ou 2026 pour 2026-2027) avec une moyenne générale d'au moins 13/20 ; au moins 12/20 en français et en mathématiques (droit)",
+            "Preuve de français niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+            "Dossier en ligne avant le 31 mars (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; acompte de 200 EUR, condition pour que ton dossier soit examiné",
+            "Plan de financement avec preuves officielles : 10 000 EUR + droits d'inscription ; compte bloqué possible après l'autorisation d'inscription",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Cours en français, horaire de jour ; test de français pour les étudiants de première année en septembre"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma: equivalence decision to the Belgian CESS from the Wallonia-Brussels Federation, or a pass in the first-cycle admission exam",
+            "Recent diploma (2024, 2025 or 2026 for 2026-2027) with an overall average of at least 13/20; at least 12/20 in French and mathematics (law)",
+            "Proof of French at B2 level if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+            "Online file before 31 March (31 March 2026 for 2026-2027; 2027-2028 date not yet published); EUR 200 deposit, required for your file to be examined",
+            "Funding plan with official proof: EUR 10,000 + tuition fees; blocked account possible after the enrolment authorisation",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Courses in French, daytime schedule; French test for first-year students in September"
+          ],
+          "sourceUrl": "https://www.programmes.uliege.be/cocoon/20262027/formations/bref/D1DROI01.html"
+        },
+        {
+          "slug": "master-sciences-sante-publique-praticien",
+          "nameFr": "Master en sciences de la santé publique, finalité spécialisée praticien spécialisé de santé publique",
+          "nameEn": "Master's in Public Health, specialised focus in public health practice (Master en sciences de la santé publique)",
+          "level": "Master",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "120 crédits ECTS (2 ans), Liège Sart-Tilman, horaire adapté",
+          "durationEn": "120 ECTS credits (2 years), Liège Sart-Tilman, adapted schedule",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Un diplôme de 1er cycle (3 ans, au moins 180 crédits) d'un établissement reconnu, ou être en dernière année ; un diplôme étranger doit être jugé comparable par le jury ; profil conseillé : bachelier en santé, psychosocial ou communication",
+            "Avoir acquis au moins 75 % des crédits de chaque année d'études supérieures (ou avoir réussi chaque année, sauf une) avec une moyenne globale d'au moins 12/20 ; études en rapport avec la filière",
+            "Condition propre à ce master : moyenne d'au moins 65 % sur l'ensemble de tes études supérieures et au moins 3 ans d'expérience professionnelle probante après ton diplôme ; lettre de motivation avec ton projet professionnel",
+            "Admission sur décision des autorités académiques, avec compléments de programme possibles (jusqu'à 10 à 30 crédits selon ton bachelier) ; preuve de français niveau B2 si on te la demande (DELF, DALF, TEF ou TCF) ; dispense possible si le français est ta langue maternelle ou une langue officielle de ton pays",
+            "Dossier en ligne du 18 février au 31 mars 2026 pour 2026-2027 (date 2027-2028 pas encore publiée) ; frais administratifs de 200 EUR, non remboursables si les conditions d'accès ne sont pas remplies",
+            "Plan de financement avec preuves officielles : 10 000 EUR + droits d'inscription ; compte bloqué possible pour le visa",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "A first-cycle degree (3 years, at least 180 credits) from a recognised institution, or be in your final year; a foreign degree must be judged comparable by the jury; recommended profile: bachelor's in health, psychosocial or communication",
+            "You must have earned at least 75% of the credits of each higher-education year (or passed every year, except possibly one) with an overall average of at least 12/20; previous studies related to the field",
+            "Specific condition for this master's: an average of at least 65% over all your higher-education studies and at least 3 years of proven professional experience after your degree; motivation letter with your career plan",
+            "Admission by decision of the academic authorities, with possible bridging courses (up to 10 to 30 credits depending on your bachelor's); proof of French level B2 if requested (DELF, DALF, TEF or TCF); exemption possible if French is your mother tongue or an official language of your country",
+            "Online file from 18 February to 31 March 2026 for 2026-2027 (2027-2028 date not yet published); administrative fee of EUR 200, non-refundable if the access conditions are not met",
+            "Funding plan with official proof: EUR 10,000 + tuition fees; blocked account possible for the visa",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.programmes.uliege.be/cocoon/20262027/formations/condac/M2SPSS01.html"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "eu-be-ulb",
+      "countryId": "bel",
+      "nameFr": "Université libre de Bruxelles (ULB)",
+      "nameEn": "Université libre de Bruxelles (ULB)",
+      "acronym": "ULB",
+      "locationFr": "Bruxelles (campus du Solbosch et d'Erasme), Belgique",
+      "locationEn": "Brussels (Solbosch and Erasme campuses), Belgium",
+      "websiteUrl": "https://www.ulb.be/",
+      "sourceUrl": "https://www.ulb.be/en/enrolment/tuitions-fees",
+      "overviewFr": "Université francophone de Bruxelles, avec les campus du Solbosch (ingénieur, Solvay, informatique) et d'Erasme (santé publique). Les cours ci-dessous sont donnés en français. Pour étudier, un budget annuel d'environ 14 000 EUR est conseillé en plus du voyage, d'après le guide officiel de l'ULB. La rentrée a lieu en septembre.\n\nComment postuler : candidature en ligne à l'ULB ; le comité central d'admission examine ton dossier après paiement des frais. Pour un bachelier, tu as besoin de l'équivalence de ton diplôme secondaire (Fédération Wallonie-Bruxelles). L'ingénieur civil demande en plus un examen spécial d'admission.\n\nPays d'Afrique francophone au tarif de 1 194 EUR (annexes 1 à 3) : Bénin, Burkina Faso, Burundi, Cameroun, Comores, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinée, Guinée équatoriale, Madagascar, Mali, Mauritanie, Niger, RDC, République centrafricaine, Rwanda, Sénégal, Tchad, Togo. Le Gabon, le Maroc, l'Algérie et la Tunisie ne sont pas dans la liste.\n\nFrais de candidature : 200 EUR, à payer avant le 31 mars (non remboursables).\n\nPour étudier en Belgique, tu demandes un visa D (études) à l'ambassade ou au centre de visa de ton pays, avec ta lettre d'admission. Tu dois prouver des moyens de subsistance d'au moins 1 062 EUR net par mois en 2026-2027 (12 744 EUR pour 12 mois) : garant (annexe 32), bourse ou compte bloqué.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "French-language university in Brussels, with the Solbosch campus (engineering, Solvay, computer science) and the Erasme campus (public health). The courses below are taught in French. The official ULB guide advises a yearly budget of about EUR 14,000 on top of travel. The academic year starts in September.\n\nHow to apply: online application to ULB; the central admissions committee examines your file after the fee is paid. For a bachelor's you need the equivalence of your secondary diploma (Wallonia-Brussels Federation). Civil engineering also requires a special admission exam.\n\nFrancophone African countries at the EUR 1,194 rate (annexes 1 to 3): Benin, Burkina Faso, Burundi, Cameroon, Comoros, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinea, Equatorial Guinea, Madagascar, Mali, Mauritania, Niger, DR Congo, Central African Republic, Rwanda, Senegal, Chad, Togo. Gabon, Morocco, Algeria and Tunisia are not on the list.\n\nApplication fee: EUR 200, payable before 31 March (non-refundable).\n\nTo study in Belgium, you apply for a type D (study) visa at the embassy or visa centre in your country, with your admission letter. You must prove means of subsistence of at least EUR 1,062 net per month in 2026-2027 (EUR 12,744 for 12 months): guarantor (annex 32), scholarship or blocked account.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : programmes donnés en français ; preuve de niveau B2 demandée pour le droit si le français ne fait pas partie de ton diplôme, et pour les masters en enseignement",
+      "languageRequirementsEn": "French: programmes taught in French; proof of B2 level required for law if French is not part of your diploma, and for teaching master's programmes",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 200,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "200 EUR",
+      "applicationFeeEn": "EUR 200",
+      "tuitionLabelFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+      "tuitionLabelEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+      "intakePeriods": [
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "fr"
+      ],
+      "programs": [
+        {
+          "slug": "bachelier-sciences-informatiques",
+          "nameFr": "Bachelier en sciences informatiques",
+          "nameEn": "Bachelor's in Computer Science (Bachelier en sciences informatiques)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "3 ans (180 crédits ECTS), campus Plaine/Solbosch",
+          "durationEn": "3 years (180 ECTS credits), Plaine/Solbosch campus",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec équivalence au CESS belge (Service des équivalences de la Fédération Wallonie-Bruxelles) : prouve ta demande avant le 31 mars (diplôme de 1 an ou plus) ou le 15 juillet (dernière année du secondaire)",
+            "Moyenne générale d'au moins 13/20 et au moins 12/20 dans les matières liées à ton programme : langue seconde, mathématiques, sciences",
+            "Cours en français ; l'ULB ne liste pas de test de français pour ce programme (vérifie ta situation auprès d'elle)",
+            "Candidature en ligne ; frais administratifs de 200 EUR à payer avant le 31 mars (2026 pour 2026-2027 ; date 2027-2028 pas encore publiée), condition pour que ton dossier soit examiné",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with equivalence to the Belgian CESS (Wallonia-Brussels Federation Equivalence Service): prove your request by 31 March (diploma 1 year old or more) or 15 July (final secondary year)",
+            "Overall average of at least 13/20 and at least 12/20 in the subjects linked to your programme: second language, mathematics, sciences",
+            "Courses in French; ULB lists no French test for this programme (check your situation with ULB)",
+            "Online application; EUR 200 administrative fee payable before 31 March (2026 for 2026-2027; 2027-2028 date not yet published), required for your file to be examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.ulb.be/fr/programme/ba-info"
+        },
+        {
+          "slug": "bachelier-ingenieur-civil",
+          "nameFr": "Bachelier en sciences de l'ingénieur, orientation ingénieur civil",
+          "nameEn": "Bachelor's in Engineering Sciences, civil engineering track (Bachelier ingénieur civil)",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "fr",
+          "durationFr": "3 ans (180 crédits ECTS), Solbosch (Bruxelles) ou Charleroi",
+          "durationEn": "3 years (180 ECTS credits), Solbosch (Brussels) or Charleroi",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec équivalence au CESS belge (Service des équivalences de la Fédération Wallonie-Bruxelles) : prouve ta demande avant le 31 mars (diplôme de 1 an ou plus) ; pour l'ingénieur civil, tu peux le faire après cette date (jusqu'au 15 juillet)",
+            "Moyenne générale d'au moins 13/20 et au moins 12/20 dans les matières liées à ton programme : langue seconde, mathématiques, sciences",
+            "Cours en français ; si tu réussis l'examen spécial d'admission, tu es dispensé de l'examen de maîtrise du français",
+            "Candidature en ligne ; frais administratifs de 200 EUR à payer avant le 31 mars (2026 pour 2026-2027 ; date 2027-2028 pas encore publiée), condition pour que ton dossier soit examiné",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Examen spécial d'admission obligatoire : dossier avant le 30 avril si tu habites hors UE, inscription en ligne dès mai, 50 EUR ; tu dois être présent à l'ULB à Bruxelles pendant toute la session (début juillet ou début septembre)",
+            "Ton équivalence doit indiquer « études supérieures de type long, limité au secteur sciences et techniques : sciences de l'ingénieur et technologie » (moyenne d'au moins 13/20) ; sinon tu dois passer en plus l'examen d'admission universitaire complet"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with equivalence to the Belgian CESS (Equivalence Service of the Wallonia-Brussels Federation): prove your application before 31 March (diploma 1 year old or more); for civil engineering you may do so after that date (until 15 July)",
+            "Overall average of at least 13/20 and at least 12/20 in the subjects linked to your programme: second language, mathematics, sciences",
+            "Taught in French; if you pass the special admission exam, you are exempt from the French proficiency test",
+            "Online application; EUR 200 administrative fee payable before 31 March (2026 for 2026-2027; 2027-2028 date not yet published), required for your file to be examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Special admission exam is compulsory: file before 30 April if you live outside the EU, online registration from May, EUR 50; you must be in person at ULB in Brussels for the whole session (early July or early September)",
+            "Your equivalence must state \"long-type higher education, limited to the sciences and technology sector: engineering sciences and technology\" (average of at least 13/20); otherwise you must also sit the full university admission exam"
+          ],
+          "sourceUrl": "https://www.ulb.be/en/programme/ba-irci"
+        },
+        {
+          "slug": "bachelier-ingenieur-de-gestion",
+          "nameFr": "Bachelier en ingénieur de gestion, option français (Solvay)",
+          "nameEn": "Bachelor's in Management Engineering, French option (Solvay)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "3 ans (180 crédits ECTS), Solbosch, Solvay Brussels School",
+          "durationEn": "3 years (180 ECTS credits), Solbosch, Solvay Brussels School",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec équivalence au CESS belge (Service des équivalences de la Fédération Wallonie-Bruxelles) : prouve ta demande avant le 31 mars (diplôme de 1 an ou plus) ou le 15 juillet (dernière année du secondaire)",
+            "Moyenne générale d'au moins 13/20 et au moins 12/20 dans les matières liées à ton programme : langue seconde, mathématiques, sciences",
+            "Cours en français ; l'ULB ne liste pas de test de français pour ce programme (vérifie ta situation auprès d'elle)",
+            "Candidature en ligne ; frais administratifs de 200 EUR à payer avant le 31 mars (2026 pour 2026-2027 ; date 2027-2028 pas encore publiée), condition pour que ton dossier soit examiné",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with equivalence to the Belgian CESS (Wallonia-Brussels Federation Equivalence Service): prove your request by 31 March (diploma 1 year old or more) or 15 July (final secondary year)",
+            "Overall average of at least 13/20 and at least 12/20 in the subjects linked to your programme: second language, mathematics, sciences",
+            "Courses in French; ULB lists no French test for this programme (check your situation with ULB)",
+            "Online application; EUR 200 administrative fee payable before 31 March (2026 for 2026-2027; 2027-2028 date not yet published), required for your file to be examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.ulb.be/fr/programme/ba-ingef"
+        },
+        {
+          "slug": "bachelier-sciences-economiques",
+          "nameFr": "Bachelier en sciences économiques, orientation générale, option français (Solvay)",
+          "nameEn": "Bachelor's in Economics, general track, French option (Solvay)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "3 ans (180 crédits ECTS), Solbosch, Solvay Brussels School",
+          "durationEn": "3 years (180 ECTS credits), Solbosch, Solvay Brussels School",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Diplôme secondaire étranger avec équivalence au CESS belge (Service des équivalences de la Fédération Wallonie-Bruxelles) : prouve ta demande avant le 31 mars (diplôme de 1 an ou plus) ou le 15 juillet (dernière année du secondaire)",
+            "Moyenne générale d'au moins 13/20 et au moins 12/20 dans les matières liées à ton programme : langue seconde, mathématiques, sciences",
+            "Cours en français ; l'ULB ne liste pas de test de français pour ce programme (vérifie ta situation auprès d'elle)",
+            "Candidature en ligne ; frais administratifs de 200 EUR à payer avant le 31 mars (2026 pour 2026-2027 ; date 2027-2028 pas encore publiée), condition pour que ton dossier soit examiné",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Foreign secondary diploma with equivalence to the Belgian CESS (Wallonia-Brussels Federation Equivalence Service): prove your request by 31 March (diploma 1 year old or more) or 15 July (final secondary year)",
+            "Overall average of at least 13/20 and at least 12/20 in the subjects linked to your programme: second language, mathematics, sciences",
+            "Courses in French; ULB lists no French test for this programme (check your situation with ULB)",
+            "Online application; EUR 200 administrative fee payable before 31 March (2026 for 2026-2027; 2027-2028 date not yet published), required for your file to be examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.ulb.be/fr/programme/ba-econf"
+        },
+        {
+          "slug": "master-sciences-sante-publique",
+          "nameFr": "Master en sciences de la santé publique",
+          "nameEn": "Master's in Public Health (Master en sciences de la santé publique)",
+          "level": "Master",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "2 ans (120 crédits ECTS), campus Erasme, horaire aménagé",
+          "durationEn": "2 years (120 ECTS credits), Erasme campus, adapted schedule",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Un diplôme de 1er cycle (bachelier ou équivalent) ; si tu as un diplôme étranger, le jury de l'ULB juge s'il est comparable (au moins 180 crédits) ; aucune équivalence à demander pour un master",
+            "Enseignements complémentaires de 5 à 30 crédits selon ton parcours ; accès possible aussi aux professionnels par valorisation des acquis de l'expérience (au moins 5 ans d'expérience)",
+            "Choisis une des 4 finalités : épidémiologie et biostatistique, politiques et promotion de la santé, gestion des soins, santé environnementale ; stage et mémoire inclus",
+            "Cours en français, à 100 % en présentiel ; l'ULB ne demande de test de français que pour les masters en enseignement",
+            "Candidature en ligne ; frais administratifs de 200 EUR à payer avant le 31 mars (2026 pour 2026-2027 ; date 2027-2028 pas encore publiée), non remboursables",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "A first-cycle degree (bachelor's or equivalent); if you hold a foreign degree, the ULB jury judges whether it is comparable (at least 180 credits); no equivalence to apply for a master's",
+            "Complementary courses of 5 to 30 credits depending on your background; also open to professionals through accreditation of prior experience (at least 5 years of experience)",
+            "Choose one of 4 tracks: epidemiology and biostatistics, health policy and promotion, healthcare management, environmental health; internship and thesis included",
+            "Taught in French, 100% in person; ULB only asks for a French test for teaching master's programmes",
+            "Online application; administrative fee of EUR 200 payable before 31 March (2026 for 2026-2027; 2027-2028 date not yet published), non-refundable",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.ulb.be/fr/programme/ma-sapu"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "eu-be-unamur",
+      "countryId": "bel",
+      "nameFr": "Université de Namur (UNamur)",
+      "nameEn": "University of Namur (UNamur)",
+      "acronym": "UNamur",
+      "locationFr": "Namur, Wallonie, Belgique",
+      "locationEn": "Namur, Wallonia, Belgium",
+      "websiteUrl": "https://www.unamur.be/",
+      "sourceUrl": "https://www.unamur.be/en/registration/international/fees",
+      "overviewFr": "Université francophone de taille moyenne, au cœur de la ville de Namur. Elle propose des bacheliers en informatique, économie et gestion, droit et sciences biomédicales, et un master de sciences biomédicales donné en anglais. La rentrée a lieu en septembre.\n\nComment postuler : formulaire d'inscription en ligne sur le site de l'UNamur. Pour un bachelier, demande l'équivalence de ton diplôme secondaire au Service des équivalences de la Fédération Wallonie-Bruxelles avant le 15 juillet. Dossier complet avant le 31 mars si tu as besoin d'un visa (31 août sans visa).\n\nPays d'Afrique francophone au tarif de 1 194 EUR (annexes 1 à 3) : Bénin, Burkina Faso, Burundi, Cameroun, Comores, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinée, Guinée équatoriale, Madagascar, Mali, Mauritanie, Niger, RDC, République centrafricaine, Rwanda, Sénégal, Tchad, Togo. Le Gabon, le Maroc, l'Algérie et la Tunisie ne sont pas dans la liste.\n\nFrais de candidature : 200 EUR (forfait obligatoire avant l'examen de ton dossier).\n\nPour étudier en Belgique, tu demandes un visa D (études) à l'ambassade ou au centre de visa de ton pays, avec ta lettre d'admission. Tu dois prouver des moyens de subsistance d'au moins 1 062 EUR net par mois en 2026-2027 (12 744 EUR pour 12 mois) : garant (annexe 32), bourse ou compte bloqué. L'UNamur propose une garantie versée sur son compte (1 062 EUR net par mois + 150 EUR de frais de gestion ; les droits d'inscription sont en plus).\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Mid-sized French-language university in the heart of the city of Namur. It offers bachelor's degrees in computer science, economics and management, law and biomedical sciences, and a master's in biomedical sciences taught in English. The academic year starts in September.\n\nHow to apply: online registration form on the UNamur website. For a bachelor's, apply for the equivalence of your secondary diploma to the Wallonia-Brussels Federation Equivalence Service before 15 July. Complete file by 31 March if you need a visa (31 August without a visa).\n\nFrancophone African countries at the EUR 1,194 rate (annexes 1 to 3): Benin, Burkina Faso, Burundi, Cameroon, Comoros, Congo-Brazzaville, Côte d'Ivoire, Djibouti, Guinea, Equatorial Guinea, Madagascar, Mali, Mauritania, Niger, DR Congo, Central African Republic, Rwanda, Senegal, Chad, Togo. Gabon, Morocco, Algeria and Tunisia are not on the list.\n\nApplication fee: EUR 200 (flat fee required before your file is examined).\n\nTo study in Belgium, you apply for a type D (study) visa at the embassy or visa centre in your country, with your admission letter. You must prove means of subsistence of at least EUR 1,062 net per month in 2026-2027 (EUR 12,744 for 12 months): guarantor (annex 32), scholarship or blocked account. UNamur offers a guarantee paid into its account (EUR 1,062 net per month + EUR 150 handling fee; tuition is extra).\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Français : test obligatoire (TCF B2, DALF C1-C2 ou DELF B2 minimum) pour l'économie-gestion (faculté EMCP), l'informatique, les sciences biomédicales et d'autres sciences ; le master de sciences biomédicales est en anglais (certificat d'anglais B2 et test de français exigés)",
+      "languageRequirementsEn": "French: test compulsory (TCF B2, DALF C1-C2 or DELF minimum B2) for economics and management (EMCP faculty), computer science, biomedical sciences and other sciences; the biomedical sciences master's is taught in English (English B2 certificate and French test required)",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 200,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "200 EUR",
+      "applicationFeeEn": "EUR 200",
+      "tuitionLabelFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+      "tuitionLabelEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+      "intakePeriods": [
+        "Septembre 2027"
+      ],
+      "teachingLanguages": [
+        "fr",
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "bachelier-sciences-informatiques",
+          "nameFr": "Bachelier en sciences informatiques",
+          "nameEn": "Bachelor's in Computer Science (Bachelier en sciences informatiques)",
+          "level": "Bachelor",
+          "fieldId": "d01",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 blocs annuels), horaire de jour, Namur",
+          "durationEn": "180 ECTS credits (3 annual blocks), daytime schedule, Namur",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Équivalence de ton diplôme secondaire par le Service des équivalences de la Fédération Wallonie-Bruxelles : demande avant le 15 juillet",
+            "Moyenne d'au moins 14/20 ; diplôme de moins de 3 ans par rapport à l'année de ta demande",
+            "Test de français obligatoire : TCF (B2), DALF (C1-C2) ou DELF (B2 minimum)",
+            "Dossier complet avant le 31 mars si tu as besoin d'un visa (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; 31 août sans visa",
+            "Frais d'examen du dossier : 200 EUR, non remboursables, à payer avant l'examen de ta demande",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+            "Moyenne minimale plus haute que pour les autres bacheliers : 14/20"
+          ],
+          "requirementsEn": [
+            "Equivalence of your secondary diploma by the Wallonia-Brussels Federation Equivalence Service: apply before 15 July",
+            "Average of at least 14/20; diploma no more than 3 years old at the time of your application",
+            "French test compulsory: TCF (B2), DALF (C1-C2) or DELF (B2 minimum)",
+            "Complete file by 31 March if you need a visa (31 March 2026 for 2026-2027; 2027-2028 date not yet published); 31 August without a visa",
+            "File review fee: EUR 200, non-refundable, payable before your application is examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+            "Higher minimum average than for other bachelor's degrees: 14/20"
+          ],
+          "sourceUrl": "https://www.unamur.be/en/bachelor-computer-science-2026-2027"
+        },
+        {
+          "slug": "bachelier-economie-gestion",
+          "nameFr": "Bachelier en sciences économiques et de gestion",
+          "nameEn": "Bachelor's in Economics and Management (Bachelier en sciences économiques et de gestion)",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), horaire de jour, Namur",
+          "durationEn": "180 ECTS credits (3 years), daytime schedule, Namur",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Équivalence de ton diplôme secondaire par le Service des équivalences de la Fédération Wallonie-Bruxelles : demande avant le 15 juillet",
+            "Moyenne d'au moins 14/20 ; diplôme de moins de 3 ans par rapport à l'année de ta demande",
+            "Test de français obligatoire (faculté EMCP : économie, gestion, communication, sciences politiques) : TCF (B2), DALF (C1-C2) ou DELF (B2 minimum)",
+            "Dossier complet avant le 31 mars si tu as besoin d'un visa (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; 31 août sans visa",
+            "Frais d'examen du dossier : 200 EUR, non remboursables, à payer avant l'examen de ta demande",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Equivalence of your secondary diploma by the Wallonia-Brussels Federation Equivalence Service: apply before 15 July",
+            "Average of at least 14/20; diploma less than 3 years old relative to the year of your application",
+            "French test compulsory (EMCP faculty: economics, management, communication, political science): TCF (B2), DALF (C1-C2) or DELF (minimum B2)",
+            "Complete file by 31 March if you need a visa (31 March 2026 for 2026-2027; 2027-2028 date not yet published); 31 August without a visa",
+            "File review fee: EUR 200, non-refundable, payable before your application is examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.unamur.be/en/bachelor-economics-and-management-2026-2027"
+        },
+        {
+          "slug": "bachelier-droit",
+          "nameFr": "Bachelier en droit",
+          "nameEn": "Bachelor's in Law (Bachelier en droit)",
+          "level": "Bachelor",
+          "fieldId": "d07",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), horaire de jour, Namur",
+          "durationEn": "180 ECTS credits (3 years), daytime schedule, Namur",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Équivalence de ton diplôme secondaire par le Service des équivalences de la Fédération Wallonie-Bruxelles : demande avant le 15 juillet",
+            "Moyenne d'au moins 13/20 ; diplôme de moins de 3 ans par rapport à l'année de ta demande",
+            "Études en français ; ce programme ne figure pas dans la liste des programmes qui exigent un test de français (vérifie auprès de l'UNamur)",
+            "Dossier complet avant le 31 mars si tu as besoin d'un visa (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; 31 août sans visa",
+            "Frais d'examen du dossier : 200 EUR, non remboursables, à payer avant l'examen de ta demande",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Equivalence of your secondary diploma by the Wallonia-Brussels Federation Equivalence Service: apply before 15 July",
+            "Average of at least 13/20; diploma no more than 3 years old at the time of your application",
+            "Studies in French; this programme is not on the list of programmes that require a French test (check with UNamur)",
+            "Complete file by 31 March if you need a visa (31 March 2026 for 2026-2027; 2027-2028 date not yet published); 31 August without a visa",
+            "File review fee: EUR 200, non-refundable, payable before your application is examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.unamur.be/en/bachelor-law-2026-2027"
+        },
+        {
+          "slug": "bachelier-sciences-biomedicales",
+          "nameFr": "Bachelier en sciences biomédicales",
+          "nameEn": "Bachelor's in Biomedical Sciences (Bachelier en sciences biomédicales)",
+          "level": "Bachelor",
+          "fieldId": "d04",
+          "language": "fr",
+          "durationFr": "180 crédits ECTS (3 ans), horaire de jour, Namur",
+          "durationEn": "180 ECTS credits (3 years), daytime schedule, Namur",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Équivalence de ton diplôme secondaire par le Service des équivalences de la Fédération Wallonie-Bruxelles : demande avant le 15 juillet",
+            "Moyenne d'au moins 13/20 ; diplôme de moins de 3 ans par rapport à l'année de ta demande",
+            "Test de français obligatoire : TCF (B2), DALF (C1-C2) ou DELF (B2 minimum)",
+            "Dossier complet avant le 31 mars si tu as besoin d'un visa (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; 31 août sans visa",
+            "Frais d'examen du dossier : 200 EUR, non remboursables, à payer avant l'examen de ta demande",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Equivalence of your secondary diploma by the Wallonia-Brussels Federation Equivalence Service: apply before 15 July",
+            "Average of at least 13/20; diploma no more than 3 years old at the time of your application",
+            "French test compulsory: TCF (B2), DALF (C1-C2) or DELF (B2 minimum)",
+            "Complete file by 31 March if you need a visa (31 March 2026 for 2026-2027; 2027-2028 date not yet published); 31 August without a visa",
+            "File review fee: EUR 200, non-refundable, payable before your application is examined",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.unamur.be/en/bachelor-biomedical-sciences-2026-2027"
+        },
+        {
+          "slug": "master-sciences-biomedicales",
+          "nameFr": "Master en sciences biomédicales (finalités recherche clinique ou recherche fondamentale et préclinique)",
+          "nameEn": "Master's in Biomedical Sciences (clinical research or fundamental and preclinical research focus)",
+          "level": "Master",
+          "fieldId": "d04",
+          "language": "en",
+          "durationFr": "120 crédits ECTS (2 ans), Faculté de médecine, Namur",
+          "durationEn": "120 ECTS credits (2 years), Faculty of Medicine, Namur",
+          "tuitionFr": "5 369 EUR/an en 2026-2027 pour un étudiant hors UE standard (1 194 EUR de minerval + 4 175 EUR de contribution supplémentaire) ; seulement 1 194 EUR/an si tu es ressortissant d'un pays des annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)",
+          "tuitionEn": "EUR 5,369/year in 2026-2027 for a standard non-EU student (EUR 1,194 tuition + EUR 4,175 additional contribution); only EUR 1,194/year if you are a national of a country in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)",
+          "tuitionAnnual": {
+            "amount": 5369,
+            "currency": "EUR"
+          },
+          "requirementsFr": [
+            "Accès sur dossier avec un diplôme de 1er cycle hors UE ; des unités d'enseignement supplémentaires peuvent t'être demandées ; pas d'équivalence du diplôme exigée pour un master",
+            "Refus possible notamment : diplôme d'une institution privée non reconnue dans ton pays, diplôme de 1er cycle de type « professionnel » (licence professionnelle, BTS...), ou moyenne inférieure à 14/20 dans au moins une année du 1er cycle et aussi inférieure à 14/20 en anglais chaque année",
+            "Master donné en anglais : certificat d'anglais obligatoire (type TOEFL ou IELTS, niveau B2)",
+            "Preuve de français obligatoire : TCF (B2), DALF (C1-C2) ou DELF (B2 minimum)",
+            "Formulaire de demande d'admission avant le 31 mars si tu es hors UE (31 mars 2026 pour 2026-2027 ; date 2027-2028 pas encore publiée) ; frais d'examen du dossier : 200 EUR, non remboursables",
+            "Stage de 3 à 4 mois et mémoire d'environ 10 mois ; deux filières : gestion de la recherche clinique, recherche fondamentale et préclinique",
+            "Droits 2026-2027 : 5 369 EUR/an, ou 1 194 EUR/an si ton pays figure aux annexes 1 à 3 de la circulaire ARES 2026-001 (pays les moins avancés, etc.)"
+          ],
+          "requirementsEn": [
+            "Access by file review with a non-EU first-cycle degree; additional teaching units may be required; no diploma equivalence required for a master's",
+            "You may be refused in particular if: your degree is from a private institution not recognised in your country, a \"professional\" first-cycle degree (professional licence, BTS...), or an average below 14/20 in at least one first-cycle year and also below 14/20 in English each year",
+            "Programme taught in English: English certificate compulsory (TOEFL or IELTS type, level B2)",
+            "Proof of French compulsory: TCF (B2), DALF (C1-C2) or DELF (minimum B2)",
+            "Admission application form before 31 March if you are non-EU (31 March 2026 for 2026-2027; 2027-2028 date not yet published); file review fee: EUR 200, non-refundable",
+            "3 to 4-month internship and a thesis of about 10 months; two tracks: clinical research management, fundamental and preclinical research",
+            "2026-2027 fees: EUR 5,369/year, or EUR 1,194/year if your country is listed in annexes 1 to 3 of ARES circular 2026-001 (least developed countries, etc.)"
+          ],
+          "sourceUrl": "https://www.unamur.be/en/master-biomedical-sciences-2026-2027"
+        }
+      ],
+      "institutionType": "universite_publique"
+    },
+    {
+      "id": "eu-de-hochschule-rhein-waal",
+      "countryId": "deu",
+      "nameFr": "Hochschule Rhein-Waal (Université des sciences appliquées Rhin-Waal)",
+      "nameEn": "Rhine-Waal University of Applied Sciences (Hochschule Rhein-Waal)",
+      "acronym": "HSRW",
+      "institutionType": "universite_publique",
+      "locationFr": "Kleve et Kamp-Lintfort, Rhénanie-du-Nord-Westphalie",
+      "locationEn": "Kleve and Kamp-Lintfort, North Rhine-Westphalia",
+      "websiteUrl": "https://www.hochschule-rhein-waal.de/en",
+      "sourceUrl": "https://www.hochschule-rhein-waal.de/en/study/before-starting-university/application-process/guide-for-international-applicants",
+      "overviewFr": "Haute école publique de Rhénanie-du-Nord-Westphalie, avec deux campus (Kleve et Kamp-Lintfort), proche de la frontière néerlandaise. Elle propose de nombreux bachelors et masters enseignés en anglais. Tu ne paies pas de frais de scolarité : seulement une cotisation semestrielle de 365 EUR (hiver 2026/27, Deutschlandticket inclus), soit environ 730 EUR par an. Si ton bac est étranger, tu candidates par uni-assist. Bachelor : une seule rentrée (semestre d'hiver), candidature de mai au 15 juillet. Master : rentrée d'hiver (candidature de mai au 15 juillet) ou d'été (de décembre au 15 janvier).\n\nFrais de candidature : 75 EUR via uni-assist pour le premier choix de formation du semestre, puis 30 EUR par choix supplémentaire (sauf si l'université prend les frais en charge).\n\nPour ton visa étudiant, tu dois prouver tes moyens de subsistance, par exemple avec un compte bloqué (Sperrkonto) : au moins 992 EUR par mois en 2026, soit 11 904 EUR pour 12 mois (montant publié par l'ambassade d'Allemagne à Yaoundé). L'APS (certificat de vérification académique) n'est obligatoire que pour la Chine, le Vietnam et l'Inde : tu n'en as pas besoin depuis l'Afrique francophone. Cameroun : l'Allemagne a suspendu la légalisation des actes camerounais ; son ambassade peut vérifier tes diplômes à la demande d'une autorité allemande (délai annoncé : 8 à 12 mois), donc anticipe.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Public university of applied sciences in North Rhine-Westphalia, with two campuses (Kleve and Kamp-Lintfort) near the Dutch border. It offers many bachelor's and master's programmes taught in English. You pay no tuition fees: only a semester contribution of EUR 365 (winter 2026/27, Deutschlandticket included), about EUR 730 per year. If your school-leaving certificate is foreign, you apply through uni-assist. Bachelor's: one intake only (winter semester), applications from May to 15 July. Master's: winter intake (applications from May to 15 July) or summer intake (December to 15 January).\n\nApplication fee: EUR 75 through uni-assist for the first study course of the semester, then EUR 30 for each additional course (unless the university pays the fee).\n\nFor your student visa, you must prove you can support yourself, for example with a blocked account (Sperrkonto): at least EUR 992 per month in 2026, i.e. EUR 11,904 for 12 months (amount published by the German Embassy in Yaoundé). The APS (academic evaluation certificate) is compulsory only for China, Vietnam and India: you do not need it from French-speaking Africa. Cameroon: Germany has suspended the legalisation of Cameroonian documents; its embassy can check your diplomas at the request of a German authority (announced delay: 8 to 12 months), so plan ahead.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : niveau B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026) pour les formations ci-dessous ; aucun test d'allemand pour les programmes en anglais",
+      "languageRequirementsEn": "English: B2 level (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)) for the programmes below; no German test for English-taught programmes",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 75,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "75 EUR (uni-assist, 1er choix) ; 30 EUR par choix supplémentaire",
+      "applicationFeeEn": "EUR 75 (uni-assist, first choice); EUR 30 for each additional choice",
+      "tuitionLabelFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+      "tuitionLabelEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+      "intakePeriods": [
+        "Semestre d'hiver (septembre / octobre 2027)",
+        "Semestre d'été (mars 2027, masters uniquement)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "infotronic-systems-engineering-bsc",
+          "nameFr": "Infotronic Systems Engineering (informatique et électronique)",
+          "nameEn": "Infotronic Systems Engineering, B.Sc.",
+          "level": "Bachelor",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "7 semestres, 210 ECTS (campus de Kamp-Lintfort)",
+          "durationEn": "7 semesters, 210 ECTS (Kamp-Lintfort campus)",
+          "requirementsFr": [
+            "Diplôme : bac (ou équivalent) donnant accès à l'université en Allemagne. Selon ton pays, l'accès direct n'est pas garanti : uni-assist vérifie ton diplôme (base DAAD / anabin) et peut t'orienter vers un Studienkolleg (année préparatoire, cours en allemand, 2 semestres en général)",
+            "Anglais : certificat de niveau B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026) ; aucun test d'allemand pour les bachelors en anglais ; Duolingo ne figure pas sur la liste officielle",
+            "Candidature via uni-assist (ton diplôme étranger y est évalué) ; frais uni-assist : 75 EUR (30 EUR par choix supplémentaire)",
+            "Programme à admission limitée : sélection sur dossier ; inscris-toi d'abord sur hochschulstart.de (numéros BID et BAN), puis candidate via uni-assist",
+            "Date limite : 15 juillet (rentrée d'hiver uniquement) ; pas de rentrée d'été en bachelor"
+          ],
+          "requirementsEn": [
+            "Diploma: baccalauréat (or equivalent) giving access to university in Germany. Depending on your country, direct access is not guaranteed: uni-assist checks your diploma (DAAD / anabin database) and may direct you to a Studienkolleg (preparatory year, taught in German, usually 2 semesters)",
+            "English: B2 certificate (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)); no German test for English-taught bachelor's programmes; Duolingo is not on the official list",
+            "Apply through uni-assist (your foreign diploma is assessed there); uni-assist fee: EUR 75 (EUR 30 for each additional course)",
+            "Restricted-admission programme: selection on your file; first register on hochschulstart.de (BID and BAN numbers), then apply through uni-assist",
+            "Deadline: 15 July (winter intake only); no summer intake for bachelor's programmes"
+          ],
+          "sourceUrl": "https://www.hochschule-rhein-waal.de/en/infotronic-systems-engineering-bsc",
+          "tuitionFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 730,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "environment-and-energy-bsc",
+          "nameFr": "Environment and Energy (environnement et énergie)",
+          "nameEn": "Environment and Energy, B.Sc.",
+          "level": "Bachelor",
+          "fieldId": "d08",
+          "language": "en",
+          "durationFr": "7 semestres (campus de Kamp-Lintfort)",
+          "durationEn": "7 semesters (Kamp-Lintfort campus)",
+          "requirementsFr": [
+            "Diplôme : bac (ou équivalent) donnant accès à l'université en Allemagne. Selon ton pays, l'accès direct n'est pas garanti : uni-assist vérifie ton diplôme (base DAAD / anabin) et peut t'orienter vers un Studienkolleg (année préparatoire, cours en allemand, 2 semestres en général)",
+            "Anglais : certificat de niveau B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026) ; aucun test d'allemand pour les bachelors en anglais ; Duolingo ne figure pas sur la liste officielle",
+            "Candidature via uni-assist (ton diplôme étranger y est évalué) ; frais uni-assist : 75 EUR (30 EUR par choix supplémentaire)",
+            "Programme sans numerus clausus (admission ouverte), sous réserve que ton diplôme étranger soit reconnu par uni-assist",
+            "Date limite : 15 juillet (rentrée d'hiver uniquement) ; pas de rentrée d'été en bachelor"
+          ],
+          "requirementsEn": [
+            "Diploma: baccalauréat (or equivalent) giving access to university in Germany. Depending on your country, direct access is not guaranteed: uni-assist checks your diploma (DAAD / anabin database) and may direct you to a Studienkolleg (preparatory year, taught in German, usually 2 semesters)",
+            "English: B2 certificate (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)); no German test for English-taught bachelor's programmes; Duolingo is not on the official list",
+            "Apply through uni-assist (your foreign diploma is assessed there); uni-assist fee: EUR 75 (EUR 30 for each additional course)",
+            "Programme without numerus clausus (open admission), provided uni-assist recognises your foreign diploma",
+            "Deadline: 15 July (winter intake only); no summer intake for bachelor's programmes"
+          ],
+          "sourceUrl": "https://www.hochschule-rhein-waal.de/en/environment-and-energy-bsc",
+          "tuitionFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 730,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "international-business-and-management-ba",
+          "nameFr": "International Business and Management (commerce international et management)",
+          "nameEn": "International Business and Management, B.A.",
+          "level": "Bachelor",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "7 semestres, 210 ECTS, dont un semestre à l'étranger (campus de Kleve)",
+          "durationEn": "7 semesters, 210 ECTS, including a semester abroad (Kleve campus)",
+          "requirementsFr": [
+            "Diplôme : bac (ou équivalent) donnant accès à l'université en Allemagne. Selon ton pays, l'accès direct n'est pas garanti : uni-assist vérifie ton diplôme (base DAAD / anabin) et peut t'orienter vers un Studienkolleg (année préparatoire, cours en allemand, 2 semestres en général)",
+            "Anglais : certificat de niveau B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026) ; aucun test d'allemand pour les bachelors en anglais ; Duolingo ne figure pas sur la liste officielle",
+            "Candidature via uni-assist (ton diplôme étranger y est évalué) ; frais uni-assist : 75 EUR (30 EUR par choix supplémentaire)",
+            "Si ton diplôme ne donne pas l'accès direct, la haute école organise un examen d'accès en anglais (maths, économie, anglais), sans frais, pour 20 candidats au maximum ; il donne accès à cette seule formation",
+            "Programme à admission limitée : inscris-toi d'abord sur hochschulstart.de (BID et BAN), puis candidate via uni-assist",
+            "Un stage préalable d'au moins 8 semaines est demandé, au plus tard à la réinscription du 4e semestre",
+            "Date limite : 15 juillet (rentrée d'hiver uniquement)"
+          ],
+          "requirementsEn": [
+            "Diploma: baccalauréat (or equivalent) giving access to university in Germany. Depending on your country, direct access is not guaranteed: uni-assist checks your diploma (DAAD / anabin database) and may direct you to a Studienkolleg (preparatory year, taught in German, usually 2 semesters)",
+            "English: B2 certificate (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)); no German test for English-taught bachelor's programmes; Duolingo is not on the official list",
+            "Apply through uni-assist (your foreign diploma is assessed there); uni-assist fee: EUR 75 (EUR 30 for each additional course)",
+            "If your diploma does not give direct access, the university runs an entrance exam in English (maths, economics, English), free of charge, for up to 20 candidates; it gives access to this programme only",
+            "Restricted-admission programme: first register on hochschulstart.de (BID and BAN), then apply through uni-assist",
+            "A pre-study placement of at least 8 weeks is required, at the latest when you re-enrol for the 4th semester",
+            "Deadline: 15 July (winter intake only)"
+          ],
+          "sourceUrl": "https://www.hochschule-rhein-waal.de/en/international-business-and-management-ba",
+          "tuitionFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 730,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "information-engineering-and-computer-science-msc",
+          "nameFr": "Information Engineering and Computer Science (informatique, données et IA)",
+          "nameEn": "Information Engineering and Computer Science, M.Sc.",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "3 semestres, 90 ECTS (campus de Kamp-Lintfort)",
+          "durationEn": "3 semesters, 90 ECTS (Kamp-Lintfort campus)",
+          "requirementsFr": [
+            "Diplôme : licence/bachelor (BSc, BA ou équivalent) avec de l'informatique pratique et technique et des bases en maths, sciences et ingénierie ; note finale d'au moins 2,3 sur l'échelle allemande (1,0 est la meilleure note)",
+            "Test d'aptitude si ton bachelor est hors de l'Espace européen de l'enseignement supérieur : TestAS (100 points minimum) ou GATE ou GRE (Q 160, V 145, A 4,5)",
+            "Anglais : B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026) ; pas d'allemand requis",
+            "Candidature via uni-assist (ton diplôme étranger y est évalué) ; frais uni-assist : 75 EUR (30 EUR par choix supplémentaire)",
+            "Dates limites : 15 juillet (rentrée d'hiver, 1er septembre) et 15 janvier (rentrée d'été, 1er mars) ; admission sans numerus clausus mais examen du dossier"
+          ],
+          "requirementsEn": [
+            "Diploma: bachelor's degree (BSc, BA or equivalent) including practical and technical computer science and basics in maths, science and engineering; final grade of at least 2.3 on the German scale (1.0 is the best grade)",
+            "Aptitude test if your bachelor's was obtained outside the European Higher Education Area: TestAS (minimum 100 points) or GATE or GRE (Q 160, V 145, A 4.5)",
+            "English: B2 (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)); no German required",
+            "Apply through uni-assist (your foreign diploma is assessed there); uni-assist fee: EUR 75 (EUR 30 for each additional course)",
+            "Deadlines: 15 July (winter intake, 1 September) and 15 January (summer intake, 1 March); no numerus clausus but your file is reviewed"
+          ],
+          "sourceUrl": "https://www.hochschule-rhein-waal.de/en/information-engineering-and-computer-science-msc",
+          "offerings": [
+            {
+              "campus": "Kamp-Lintfort",
+              "intake": "03/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Kamp-Lintfort",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ],
+          "tuitionFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 730,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "sustainable-development-management-ma",
+          "nameFr": "Sustainable Development Management (gestion du développement durable)",
+          "nameEn": "Sustainable Development Management, M.A.",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "3 semestres, 90 ECTS (campus de Kleve)",
+          "durationEn": "3 semesters, 90 ECTS (Kleve campus)",
+          "requirementsFr": [
+            "Diplôme : bachelor en économie, sciences sociales (sociologie, science politique) ou ingénierie économique ; moyenne cumulée d'au moins 2,5 sur l'échelle allemande ; 210 crédits ECTS (avec 180 ECTS, un plan d'études personnalisé te permet de rattraper les 30 crédits manquants)",
+            "Anglais : B2 (IELTS Academic 5,5 minimum ou TOEFL iBT 72 minimum, ou 4 pour un test passé à partir du 21/01/2026), même si tu as étudié en anglais ; certificat de moins de 2 ans",
+            "Candidature via uni-assist (ton diplôme étranger y est évalué) ; frais uni-assist : 75 EUR (30 EUR par choix supplémentaire)",
+            "Programme à admission limitée : sélection sur dossier",
+            "Dates limites : 15 juillet (rentrée d'hiver) et 15 janvier (rentrée d'été)"
+          ],
+          "requirementsEn": [
+            "Diploma: bachelor's in economics, social sciences (sociology, political science) or industrial engineering with a business focus; cumulative grade of at least 2.5 on the German scale; 210 ECTS credits (with 180 ECTS, a personalised study plan lets you make up the missing 30 credits)",
+            "English: B2 (IELTS Academic 5.5 minimum or TOEFL iBT 72 minimum (4 for a test taken from 21/01/2026)), even if you studied in English; certificate less than 2 years old",
+            "Apply through uni-assist (your foreign diploma is assessed there); uni-assist fee: EUR 75 (EUR 30 for each additional course)",
+            "Restricted-admission programme: selection on your file",
+            "Deadlines: 15 July (winter intake) and 15 January (summer intake)"
+          ],
+          "sourceUrl": "https://www.hochschule-rhein-waal.de/en/sustainable-development-management-ma",
+          "offerings": [
+            {
+              "campus": "Kleve",
+              "intake": "03/2027",
+              "session": "spring"
+            },
+            {
+              "campus": "Kleve",
+              "intake": "09/2027",
+              "session": "fall"
+            }
+          ],
+          "tuitionFr": "730 EUR/an de cotisation semestrielle (2 × 365 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 730/year semester contribution (2 × EUR 365, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 730,
+            "currency": "EUR"
+          }
+        }
+      ]
+    },
+    {
+      "id": "eu-de-tu-dresden",
+      "countryId": "deu",
+      "nameFr": "Université technique de Dresde (TU Dresden)",
+      "nameEn": "Dresden University of Technology (TU Dresden)",
+      "acronym": "TUD",
+      "institutionType": "universite_publique",
+      "locationFr": "Dresde, Saxe",
+      "locationEn": "Dresden, Saxony",
+      "websiteUrl": "https://tu-dresden.de/",
+      "sourceUrl": "https://tu-dresden.de/studium/vor-dem-studium/ressourcen/dateien/internationales/informationen-fuer-internationale-bewerber?lang=en",
+      "overviewFr": "Grande université publique de Dresde, en Saxe. Tu ne paies pas de frais de scolarité : seulement une cotisation semestrielle de 361 EUR (hiver 2026/27, Deutschlandticket inclus), soit 722 EUR par an. Les formations ci-dessous sont des masters enseignés en anglais, avec une seule rentrée (semestre d'hiver, octobre) ; nous n'avons pas trouvé de bachelor en anglais. Avec un diplôme étranger, tu candidates par uni-assist, du 1er avril au 31 mai pour les non-UE, et tu passes aussi une procédure d'aptitude propre à chaque master.\n\nFrais de candidature : 75 EUR via uni-assist pour la première candidature, puis 30 EUR par candidature supplémentaire.\n\nPour ton visa étudiant, tu dois prouver tes moyens de subsistance, par exemple avec un compte bloqué (Sperrkonto) : au moins 992 EUR par mois en 2026, soit 11 904 EUR pour 12 mois (montant publié par l'ambassade d'Allemagne à Yaoundé). L'APS (certificat de vérification académique) n'est obligatoire que pour la Chine, le Vietnam et l'Inde : tu n'en as pas besoin depuis l'Afrique francophone. Cameroun : l'Allemagne a suspendu la légalisation des actes camerounais ; son ambassade peut vérifier tes diplômes à la demande d'une autorité allemande (délai annoncé : 8 à 12 mois), donc anticipe.\n\nKPB n'est pas partenaire de cet établissement : tu candidates directement auprès de lui. L'admission reste sa décision.",
+      "overviewEn": "Large public university in Dresden, Saxony. You pay no tuition fees: only a semester contribution of EUR 361 (winter 2026/27, Deutschlandticket included), i.e. EUR 722 per year. The programmes below are master's degrees taught in English, with a single intake (winter semester, October); we found no English-taught bachelor's. With a foreign degree, you apply through uni-assist, from 1 April to 31 May for non-EU applicants, and you also go through an aptitude procedure specific to each master's.\n\nApplication fee: EUR 75 through uni-assist for the first application, then EUR 30 for each additional application.\n\nFor your student visa, you must prove you can support yourself, for example with a blocked account (Sperrkonto): at least EUR 992 per month in 2026, i.e. EUR 11,904 for 12 months (amount published by the German Embassy in Yaoundé). The APS (academic evaluation certificate) is compulsory only for China, Vietnam and India: you do not need it from French-speaking Africa. Cameroon: Germany has suspended the legalisation of Cameroonian documents; its embassy can check your diplomas at the request of a German authority (announced delay: 8 to 12 months), so plan ahead.\n\nKPB is not a partner of this institution: you apply directly to it. Admission remains its decision.",
+      "languageRequirementsFr": "Anglais : B2 pour la plupart des masters (TOEFL iBT 72 à 94 ou IELTS 5,5 à 6,5 selon le programme), C1 pour Hydro Science and Engineering (TOEFL iBT 95 ou IELTS 6,5) ; pas d'allemand requis pour les masters en anglais",
+      "languageRequirementsEn": "English: B2 for most master's programmes (TOEFL iBT 72 to 94 or IELTS 5.5 to 6.5 depending on the programme), C1 for Hydro Science and Engineering (TOEFL iBT 95 or IELTS 6.5); no German required for English-taught master's programmes",
+      "languagePathway": null,
+      "applicationFee": {
+        "amount": 75,
+        "currency": "EUR"
+      },
+      "applicationFeeFr": "75 EUR (uni-assist, 1re candidature) ; 30 EUR par candidature supplémentaire",
+      "applicationFeeEn": "EUR 75 (uni-assist, first application); EUR 30 for each additional application",
+      "tuitionLabelFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+      "tuitionLabelEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+      "intakePeriods": [
+        "Semestre d'hiver (octobre 2027)"
+      ],
+      "teachingLanguages": [
+        "en"
+      ],
+      "programs": [
+        {
+          "slug": "computational-modeling-and-simulation-msc",
+          "nameFr": "Computational Modeling and Simulation (modélisation, données et simulation numérique)",
+          "nameEn": "Computational Modeling and Simulation, M.Sc.",
+          "level": "Master",
+          "fieldId": "d01",
+          "language": "en",
+          "durationFr": "4 semestres, 120 ECTS",
+          "durationEn": "4 semesters, 120 ECTS",
+          "requirementsFr": [
+            "Diplôme : premier diplôme (bachelor ou plus) en informatique, maths, sciences, économie/finance ou ingénierie",
+            "Bases demandées : programmation (langage compilé), analyse, algèbre linéaire, probabilités, algorithmes ; connaissances de niveau bachelor dans le domaine du parcours choisi",
+            "Anglais : B2 (IELTS 6,0 minimum ou TOEFL iBT 80 minimum, 4,5 pour un test passé depuis janvier 2026, ou autres tests listés) ; pas d'allemand requis",
+            "Candidature via uni-assist avec ton diplôme étranger (75 EUR, 30 EUR par candidature supplémentaire) ; inscris-toi aussi à la procédure d'aptitude du programme (CMS)",
+            "Date limite non-UE : du 1er avril au 31 mai ; rentrée d'hiver uniquement (octobre)"
+          ],
+          "requirementsEn": [
+            "Diploma: first degree (bachelor's or higher) in computer science, mathematics, natural sciences, economics/finance or engineering",
+            "Expected background: programming (compiled language), calculus, linear algebra, probability, algorithms; bachelor-level knowledge in the application area of your chosen track",
+            "English: B2 (IELTS 6.0 minimum or TOEFL iBT 80 minimum, 4.5 for a test taken since January 2026, or other listed tests); no German required",
+            "Apply through uni-assist with your foreign degree (EUR 75, EUR 30 for each additional application); also register for the programme's aptitude procedure (CMS)",
+            "Non-EU deadline: 1 April to 31 May; winter intake only (October)"
+          ],
+          "sourceUrl": "https://tu-dresden.de/ing/informatik/studium/studienangebot/master-studiengaenge/computational-modeling-and-simulation/application?set_language=en",
+          "tuitionFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 722,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "nanoelectronic-systems-msc",
+          "nameFr": "Nanoelectronic Systems (systèmes nanoélectroniques)",
+          "nameEn": "Nanoelectronic Systems, M.Sc.",
+          "level": "Master",
+          "fieldId": "d03",
+          "language": "en",
+          "durationFr": "4 semestres, 120 ECTS",
+          "durationEn": "4 semesters, 120 ECTS",
+          "requirementsFr": [
+            "Diplôme : premier diplôme professionnalisant en génie électrique, ingénierie des systèmes d'information, informatique, physique ou domaine équivalent",
+            "Connaissances spécifiques exigées par le règlement d'aptitude (maths avancées, programmation orientée objet, etc.)",
+            "Anglais : B2 (TOEFL iBT 94 ou IELTS 6,5, ou un diplôme enseigné entièrement en anglais) ; pas d'allemand requis",
+            "Candidature via uni-assist avec ton diplôme étranger (75 EUR, 30 EUR par candidature supplémentaire) ; inscris-toi aussi à la procédure d'aptitude du programme",
+            "Date limite non-UE : du 1er avril au 31 mai ; rentrée d'hiver uniquement (octobre)"
+          ],
+          "requirementsEn": [
+            "Diploma: first professional degree in electrical engineering, information systems engineering, computer science, physics or an equivalent field",
+            "Specific knowledge required by the aptitude regulations (advanced mathematics, object-oriented programming, etc.)",
+            "English: B2 (TOEFL iBT 94 or IELTS 6.5, or a degree taught entirely in English); no German required",
+            "Apply through uni-assist with your foreign degree (EUR 75, EUR 30 for each additional application); also register for the programme's aptitude procedure",
+            "Non-EU deadline: 1 April to 31 May; winter intake only (October)"
+          ],
+          "sourceUrl": "https://tu-dresden.de/studium/vor-dem-studium/studienangebot/sins/sins_studiengang?set_language=en&autoid=1858",
+          "tuitionFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 722,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "hydro-science-and-engineering-msc",
+          "nameFr": "Hydro Science and Engineering (hydrologie, eau et environnement)",
+          "nameEn": "Hydro Science and Engineering, M.Sc.",
+          "level": "Master",
+          "fieldId": "d08",
+          "language": "en",
+          "durationFr": "4 semestres, 120 ECTS",
+          "durationEn": "4 semesters, 120 ECTS",
+          "requirementsFr": [
+            "Diplôme : premier diplôme scientifique ou d'ingénieur (hydrologie, météo, géographie, géologie, chimie, biologie, gestion de l'eau, génie civil, environnement ou proche)",
+            "Bases en maths et sciences naturelles, vérifiées par un test d'aptitude",
+            "Anglais : niveau C1 (exemples : TOEFL iBT 95 ou 5,0 pour un test récent, IELTS 6,5 avec au moins 6,0 à chaque partie, UNIcert III, ou diplôme enseigné entièrement en anglais) ; pas d'allemand requis",
+            "Candidature via uni-assist avec ton diplôme étranger (75 EUR, 30 EUR par candidature supplémentaire) ; inscris-toi aussi à la procédure d'aptitude du programme",
+            "Date limite non-UE : du 1er avril au 31 mai ; rentrée d'hiver uniquement (octobre)"
+          ],
+          "requirementsEn": [
+            "Diploma: first science or engineering degree (hydrology, meteorology, geography, geology, chemistry, biology, water management, civil engineering, environmental engineering or related)",
+            "Basic knowledge of mathematics and natural sciences, checked by an aptitude test",
+            "English: C1 level (examples: TOEFL iBT 95 or 5.0 for a recent test, IELTS 6.5 with at least 6.0 in each part, UNIcert III, or a degree taught entirely in English); no German required",
+            "Apply through uni-assist with your foreign degree (EUR 75, EUR 30 for each additional application); also register for the programme's aptitude procedure",
+            "Non-EU deadline: 1 April to 31 May; winter intake only (October)"
+          ],
+          "sourceUrl": "https://tu-dresden.de/studium/vor-dem-studium/studienangebot/sins/sins_studiengang?set_language=en&autoid=71",
+          "tuitionFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 722,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "public-and-international-economics-msc",
+          "nameFr": "Public and International Economics (économie publique et internationale)",
+          "nameEn": "Public and International Economics, M.Sc.",
+          "level": "Master",
+          "fieldId": "d02",
+          "language": "en",
+          "durationFr": "4 semestres, 120 ECTS",
+          "durationEn": "4 semesters, 120 ECTS",
+          "requirementsFr": [
+            "Diplôme : premier diplôme en économie ou domaine proche, reconnu en Allemagne",
+            "Aptitude : 35 crédits ECTS en économie avec une bonne moyenne et 15 crédits ECTS en méthodes quantitatives (maths, statistiques, économétrie)",
+            "Anglais : niveau B2 (TOEFL iBT 72 ou 4,0 pour un test récent, IELTS 5,5 minimum, ou diplôme enseigné entièrement en anglais) ; pas d'allemand requis",
+            "Candidature via uni-assist avec ton diplôme étranger (75 EUR, 30 EUR par candidature supplémentaire) ; inscris-toi aussi à la procédure d'aptitude du programme",
+            "Date limite non-UE : du 1er avril au 31 mai ; rentrée d'hiver uniquement (octobre)"
+          ],
+          "requirementsEn": [
+            "Diploma: first degree in economics or a related field, recognised in Germany",
+            "Aptitude: 35 ECTS credits in economics with a good average and 15 ECTS credits in quantitative methods (maths, statistics, econometrics)",
+            "English: B2 level (TOEFL iBT 72 or 4.0 for a recent test, IELTS 5.5 minimum, or a degree taught entirely in English); no German required",
+            "Apply through uni-assist with your foreign degree (EUR 75, EUR 30 for each additional application); also register for the programme's aptitude procedure",
+            "Non-EU deadline: 1 April to 31 May; winter intake only (October)"
+          ],
+          "sourceUrl": "https://tu-dresden.de/studium/vor-dem-studium/studienangebot/sins/sins_studiengang?set_language=en&autoid=113",
+          "tuitionFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 722,
+            "currency": "EUR"
+          }
+        },
+        {
+          "slug": "air-transport-and-logistics-msc",
+          "nameFr": "Air Transport and Logistics (transport aérien et logistique)",
+          "nameEn": "Air Transport and Logistics, M.Sc.",
+          "level": "Master",
+          "fieldId": "d12",
+          "language": "en",
+          "durationFr": "4 semestres, 120 ECTS",
+          "durationEn": "4 semesters, 120 ECTS",
+          "requirementsFr": [
+            "Diplôme : premier diplôme en ingénierie (génie civil, transports, mécanique, électrique), informatique, sciences (physique, maths, géographie) ou économie des transports",
+            "Connaissances spécifiques en maths, physique, mécanique technique et informatique ; un entretien peut être organisé",
+            "Anglais : niveau B2 (TOEFL iBT 72 ou 4 pour un test récent, IELTS 5,5, ou diplôme enseigné entièrement en anglais) ; pas d'allemand requis",
+            "Candidature via uni-assist avec ton diplôme étranger (75 EUR, 30 EUR par candidature supplémentaire) ; inscris-toi aussi à la procédure d'aptitude du programme",
+            "Date limite non-UE : du 1er avril au 31 mai ; rentrée d'hiver uniquement (octobre)"
+          ],
+          "requirementsEn": [
+            "Diploma: first degree in engineering (civil, transport, mechanical, electrical), computer science, natural sciences (physics, maths, geography) or transport economics",
+            "Specific knowledge in mathematics, physics, technical mechanics and computer science; an interview may be held",
+            "English: B2 level (TOEFL iBT 72 or 4 for a recent test, IELTS 5.5, or a degree taught entirely in English); no German required",
+            "Apply through uni-assist with your foreign degree (EUR 75, EUR 30 for each additional application); also register for the programme's aptitude procedure",
+            "Non-EU deadline: 1 April to 31 May; winter intake only (October)"
+          ],
+          "sourceUrl": "https://tu-dresden.de/studium/vor-dem-studium/studienangebot/sins/sins_studiengang?set_language=en&autoid=29417",
+          "tuitionFr": "722 EUR/an de cotisation semestrielle (2 × 361 EUR, hiver 2026/27, Deutschlandticket inclus), sans frais de scolarité",
+          "tuitionEn": "EUR 722/year semester contribution (2 × EUR 361, winter 2026/27, Deutschlandticket included), no tuition fees",
+          "tuitionAnnual": {
+            "amount": 722,
+            "currency": "EUR"
+          }
+        }
+      ]
+    }
+  ]
+}

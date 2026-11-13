@@ -2,6 +2,11 @@
 // ignore_for_file: lines_longer_than_80_chars
 import '../../../models/app_models.dart';
 
+// Catalogue de repli (hors ligne). Frais 2026-2027 de la Fédération
+// Wallonie-Bruxelles (circulaire ARES 2026-001) : 1 194 EUR pour les pays des
+// annexes 1 à 3, 5 369 EUR pour les autres hors UE. Les établissements
+// flamands (UGent, VUB), non vérifiés, sont retirés depuis que la Belgique est
+// une destination visible (12/11/2026).
 const kInstitutionsBelgium = <InstitutionModel>[
   InstitutionModel(
     id: 'ulb',
@@ -12,7 +17,8 @@ const kInstitutionsBelgium = <InstitutionModel>[
         fr: 'Top 200 mondial. Droit, médecine, économie. Très forte communauté africaine. En plein cœur de Bruxelles (EU).',
         en: 'Top 200 globally. Law, medicine, economics. Very strong African community. In the heart of Brussels (EU).'),
     studyLevels: ['Bac+3', 'Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '835–4 175 EUR/an', en: '835–4 175 EUR/yr'),
+    tuitionLabel:
+        LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
     languageRequirements: LocalizedText(fr: 'Français (B2)', en: 'French (B2)'),
     intakePeriods: ['Septembre'],
     programIds: ['prog_be001', 'prog_be002'],
@@ -28,46 +34,12 @@ const kInstitutionsBelgium = <InstitutionModel>[
         fr: 'Top 200 mondial. Excellence en médecine, ingénierie et sciences humaines. Très forte tradition de coopération avec l\'Afrique.',
         en: 'Top 200 globally. Excellence in medicine, engineering and humanities. Strong tradition of cooperation with Africa.'),
     studyLevels: ['Bac+3', 'Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '992–4 175 EUR/an', en: '992–4 175 EUR/yr'),
+    tuitionLabel:
+        LocalizedText(fr: '1 194–5 369 EUR/an', en: '1 194–5 369 EUR/yr'),
     languageRequirements:
         LocalizedText(fr: 'Français (B2+)', en: 'French (B2+)'),
     intakePeriods: ['Septembre'],
     programIds: ['prog_be003'],
     isPartner: false,
   ),
-  InstitutionModel(
-    id: 'ugent',
-    name: LocalizedText(
-        fr: 'Université de Gand (UGhent)', en: 'Ghent University'),
-    countryId: 'belgium',
-    location: LocalizedText(fr: 'Gand', en: 'Ghent'),
-    overview: LocalizedText(
-        fr: 'Top 100 mondial. Langue néerlandaise mais nombreux masters en anglais. Bource de développement pour étudiants africains.',
-        en: 'Top 100 globally. Dutch language but many English-taught masters. Development scholarships for African students.'),
-    studyLevels: ['Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '920–4 175 EUR/an', en: '920–4 175 EUR/yr'),
-    languageRequirements: LocalizedText(
-        fr: 'Anglais (IELTS 6.5) pour masters en EN',
-        en: 'English (IELTS 6.5) for EN-taught masters'),
-    intakePeriods: ['Septembre'],
-    programIds: ['prog_be004'],
-    isPartner: false,
-  ),
-  InstitutionModel(
-    id: 'vub',
-    name: LocalizedText(fr: 'Vrije Universiteit Brussel (VUB)', en: 'VUB'),
-    countryId: 'belgium',
-    location: LocalizedText(fr: 'Bruxelles', en: 'Brussels'),
-    overview: LocalizedText(
-        fr: 'Université anglophone en plein cœur de Bruxelles. Fort en IA, ingénierie et sciences politiques. Bourses VUB Africa.',
-        en: 'English-language university in the heart of Brussels. Strong in AI, engineering and political science. VUB Africa scholarships.'),
-    studyLevels: ['Bac+3', 'Bac+5', 'Doctorat'],
-    tuitionLabel: LocalizedText(fr: '992–4 175 EUR/an', en: '992–4 175 EUR/yr'),
-    languageRequirements:
-        LocalizedText(fr: 'Anglais (IELTS 6.5)', en: 'English (IELTS 6.5)'),
-    intakePeriods: ['Septembre'],
-    programIds: ['prog_be005'],
-    isPartner: false,
-  ),
-  // ── PORTUGAL ──────────────────────────────────────────────────────────────
 ];

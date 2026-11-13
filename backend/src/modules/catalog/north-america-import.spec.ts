@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { M5_COUNTRY_SEEDS } from '../countries/data/m5-countries.seed';
 import {
   NA_COUNTRIES,
   NA_INSTITUTION_TYPES,
@@ -12,6 +13,7 @@ import {
   naProgramCreateData,
   naProgramId,
   naToEur,
+  planNaCorrections,
   planNorthAmerica,
   tuitionLabelProblems,
   validateNaSource,
@@ -27,6 +29,29 @@ const SECOND_PASS = {
   ontarioColleges: ['na-ca-humber', 'na-ca-seneca', 'na-ca-conestoga', 'na-ca-centennial', 'na-ca-fanshawe', 'na-ca-sheridan'],
 };
 const SECOND_PASS_IDS = Object.values(SECOND_PASS).flat();
+
+/// Troisième passe (12/11/2026) : francophones hors Québec (PPECFSM), trois
+/// universités américaines accessibles, formations et prix ajoutés aux
+/// universités québécoises les plus demandées.
+const THIRD = '2026-11-12';
+const THIRD_PASS_IDS = [
+  'na-ca-saint-boniface', 'na-ca-uof', 'na-ca-sainte-anne', 'na-ca-la-cite', 'na-ca-boreal',
+  'na-us-southeast-missouri-state', 'na-us-fort-hays-state', 'na-us-missouri-state',
+];
+const THIRD_PASS_GROWN = ['na-ca-montreal', 'na-ca-sherbrooke', 'na-ca-laval', 'na-ca-uqam', 'na-ca-uqtr', 'na-ca-uqo', 'na-ca-uqac'];
+
+/// La source telle qu'elle était avant la troisième passe (ni établissements,
+/// ni formations, ni corrections du 12/11/2026).
+function beforeThirdPass(doc: NaSource): NaSource {
+  return {
+    ...doc,
+    corrections: undefined,
+    institutions: doc.institutions
+      .filter((i) => i.consultedAt !== THIRD)
+      .map((i) => ({ ...i, programs: i.programs.filter((p) => p.consultedAt !== THIRD) })),
+  };
+}
+const EUROPE = path.join(__dirname, '..', '..', '..', 'scripts', 'data', 'europe-2027.json');
 
 const SOURCE = path.join(__dirname, '..', '..', '..', 'scripts', 'data', 'amerique-du-nord-2027.json');
 const load = (): NaSource => JSON.parse(fs.readFileSync(SOURCE, 'utf8')) as NaSource;
@@ -59,23 +84,34 @@ describe('import:north-america — source versionnée', () => {
     );
   });
 
-  it('compte 26 établissements au Canada (10 + 16 en seconde passe), 10 aux États-Unis, 4 à 8 formations chacun', () => {
+  it('compte 31 établissements au Canada (10 + 16 + 5), 13 aux États-Unis (10 + 3), 4 à 9 formations chacun', () => {
     const by = (c: string) => doc.institutions.filter((i) => i.countryId === c);
-    expect(by('can')).toHaveLength(26);
-    expect(by('usa')).toHaveLength(10);
+    expect(by('can')).toHaveLength(31);
+    expect(by('usa')).toHaveLength(13);
     for (const inst of doc.institutions) {
       expect(inst.programs.length).toBeGreaterThanOrEqual(4);
-      expect(inst.programs.length).toBeLessThanOrEqual(8);
+      expect(inst.programs.length).toBeLessThanOrEqual(9);
       expect(inst.id.startsWith(NA_COUNTRIES[inst.countryId].prefix)).toBe(true);
     }
-    expect(doc.institutions.reduce((n, i) => n + i.programs.length, 0)).toBe(172);
+    expect(doc.institutions.reduce((n, i) => n + i.programs.length, 0)).toBe(238);
+  });
+
+  it('troisième passe : 8 établissements, 28 formations ajoutées à 7 universités québécoises, chaque formation chiffrée', () => {
+    expect(doc.institutions.filter((i) => i.consultedAt === THIRD).map((i) => i.id).sort()).toEqual([...THIRD_PASS_IDS].sort());
+    const grown = doc.institutions.filter((i) => i.programs.some((p) => p.consultedAt === THIRD));
+    expect(grown.map((i) => i.id).sort()).toEqual([...THIRD_PASS_GROWN].sort());
+    expect(grown.reduce((n, i) => n + i.programs.filter((p) => p.consultedAt === THIRD).length, 0)).toBe(28);
+    // Plus aucune formation sans montant annuel (UQAM, UQAC, HEC… complétés).
+    expect(doc.institutions.flatMap((i) => i.programs).filter((p) => !p.tuitionAnnual)).toEqual([]);
+    expect(doc.corrections!.programs.filter((c) => c.previousTuitionFr)).toHaveLength(15);
+    expect(doc.corrections!.institutions.map((c) => c.institutionId).sort()).toEqual(['na-ca-uqac', 'na-ca-uqam']);
   });
 
   it('seconde passe : 8 au Québec, 2 au Nouveau-Brunswick, 6 collèges de l’Ontario, 75 formations, relevés du 17/10/2026', () => {
-    const second = doc.institutions.filter((i) => i.consultedAt);
+    const second = doc.institutions.filter((i) => i.consultedAt === '2026-10-17');
     expect(second.map((i) => i.id).sort()).toEqual([...SECOND_PASS_IDS].sort());
     expect(new Set(second.map((i) => i.consultedAt))).toEqual(new Set(['2026-10-17']));
-    expect(second.reduce((n, i) => n + i.programs.length, 0)).toBe(75);
+    expect(second.reduce((n, i) => n + i.programs.filter((p) => !p.consultedAt).length, 0)).toBe(75);
     const province = (id: string) => doc.institutions.find((i) => i.id === id)!.locationFr.split(', ')[1];
     expect(SECOND_PASS.quebec.map(province)).toEqual(Array(8).fill('Québec'));
     expect(SECOND_PASS.newBrunswick.map(province)).toEqual(['Nouveau-Brunswick', 'Nouveau-Brunswick']);
@@ -129,13 +165,17 @@ describe('import:north-america — lignes écrites', () => {
   const plan = planNorthAmerica(doc, [], []);
 
   it('crée des établissements NON partenaires, actifs, sourcés et datés', () => {
-    expect(plan.newInstitutions).toHaveLength(36);
+    expect(plan.newInstitutions).toHaveLength(44);
     for (const { institution, programs } of plan.newInstitutions) {
       expect(institution.isPartner).toBe(false);
       expect(institution.isActive).toBe(true);
-      const day = SECOND_PASS_IDS.includes(institution.id) ? '2026-10-17' : '2026-10-16';
+      const day = THIRD_PASS_IDS.includes(institution.id) ? THIRD : SECOND_PASS_IDS.includes(institution.id) ? '2026-10-17' : '2026-10-16';
       expect(institution.lastVerifiedAt.toISOString()).toBe(`${day}T00:00:00.000Z`);
-      for (const p of programs) expect(p.lastVerifiedAt.toISOString()).toBe(`${day}T00:00:00.000Z`);
+      const src = doc.institutions.find((i) => i.id === institution.id)!;
+      for (const p of programs) {
+        const own = src.programs.find((x) => naProgramId(src.id, x.slug) === p.id)!.consultedAt;
+        expect(p.lastVerifiedAt.toISOString()).toBe(`${own ?? day}T00:00:00.000Z`);
+      }
       expect(institution.institutionType === null || NA_INSTITUTION_TYPES[institution.institutionType]).toBeTruthy();
       expect(institution.sourceUrl).toMatch(/^https:\/\//);
       expect(institution.overviewFr).toContain("KPB n'est pas partenaire");
@@ -175,7 +215,8 @@ describe('import:north-america — lignes écrites', () => {
   });
 
   it('sans montant publié, `tuitionMinEur` reste nul et le libellé de l’école est repris', () => {
-    const uqac = doc.institutions.find((i) => i.id === 'na-ca-uqac')!;
+    const uqac = structuredClone(doc.institutions.find((i) => i.id === 'na-ca-uqac')!);
+    Object.assign(uqac.programs[0], { tuitionFr: '', tuitionEn: '', tuitionAnnual: null });
     const row = naProgramCreateData(uqac.programs[0], uqac, doc);
     expect(row.tuitionMinEur).toBeNull();
     expect(row.tuitionFr).toBe(uqac.tuitionLabelFr);
@@ -200,15 +241,15 @@ describe('import:north-america — création seule, rejouable', () => {
     const institutions: NaExistingInstitution[] = [];
     const programs: NaExistingProgram[] = [];
     const first = planNorthAmerica(doc, institutions, programs);
-    expect(naPlanWriteCount(first)).toBe(36);
+    expect(naPlanWriteCount(first)).toBe(44);
     applyInMemory(first, institutions, programs);
     const second = planNorthAmerica(doc, institutions, programs);
     expect(naPlanWriteCount(second)).toBe(0);
-    expect(second.unchanged).toHaveLength(36);
+    expect(second.unchanged).toHaveLength(44);
   });
 
   it('première passe déjà en base : la seconde ne crée que les 16 nouveaux établissements', () => {
-    const doc = load();
+    const doc = beforeThirdPass(load());
     const firstPass = { ...doc, institutions: doc.institutions.filter((i) => !i.consultedAt) };
     const institutions: NaExistingInstitution[] = [];
     const programs: NaExistingProgram[] = [];
@@ -254,6 +295,154 @@ describe('import:north-america — création seule, rejouable', () => {
     const laval = plan.programAdditions.find((a) => a.institutionId === 'na-ca-laval')!;
     expect(laval.programs.map((p) => p.nameFr)).not.toContain('Baccalauréat en informatique');
     expect(plan.skipped.some((s) => s.reason.includes('cl-laval-info'))).toBe(true);
+  });
+});
+
+describe('import:north-america — troisième passe sur une base qui a les deux premières', () => {
+  /** Base telle qu'en production après les deux premières passes. */
+  function seeded() {
+    const doc = load();
+    const old = beforeThirdPass(doc);
+    const institutions: NaExistingInstitution[] = [];
+    const programs: NaExistingProgram[] = [];
+    applyInMemory(planNorthAmerica(old, institutions, programs), institutions, programs);
+    // Les lignes telles que les deux premières passes les ont écrites : la
+    // source garde, pour chaque correction, la valeur d'avant.
+    const fix = new Map(doc.corrections!.programs.map((c) => [c.programId, c]));
+    const rows = old.institutions.flatMap((i) =>
+      i.programs.map((p) => {
+        const r = naProgramCreateData(p, i, old);
+        const c = fix.get(r.id);
+        return {
+          ...r,
+          tuitionFr: c?.previousTuitionFr ?? r.tuitionFr,
+          durationFr: c?.fillDuration ? '' : r.durationFr,
+          requirementsFr: c?.previousRequirementsFr ?? r.requirementsFr,
+          applicationFeeEur: c ? null : r.applicationFeeEur,
+          isActive: true,
+        };
+      }),
+    );
+    const labels = new Map(doc.corrections!.institutions.map((c) => [c.institutionId, c.previousTuitionLabelFr]));
+    const instRows = old.institutions.map((i) => ({ id: i.id, tuitionLabelFr: labels.get(i.id) ?? i.tuitionLabelFr }));
+    return { doc, old, institutions, programs, rows, instRows };
+  }
+
+  it('crée les 8 établissements, ajoute les 28 formations aux 7 universités québécoises, rien d’autre', () => {
+    const { doc, institutions, programs } = seeded();
+    const plan = planNorthAmerica(doc, institutions, programs);
+    expect(plan.newInstitutions.map((n) => n.institution.id).sort()).toEqual([...THIRD_PASS_IDS].sort());
+    expect(plan.programAdditions.map((a) => a.institutionId).sort()).toEqual([...THIRD_PASS_GROWN].sort());
+    expect(plan.programAdditions.reduce((n, a) => n + a.programs.length, 0)).toBe(28);
+    for (const a of plan.programAdditions) {
+      for (const p of a.programs) expect(p.lastVerifiedAt.toISOString()).toBe(`${THIRD}T00:00:00.000Z`);
+      expect(a.addProgramIds).toEqual(a.programs.map((p) => p.id));
+    }
+    expect(plan.skipped).toEqual([]);
+  });
+
+  it('complète les prix et durées des lignes publiées qui portent encore la valeur précédente, et seulement elles', () => {
+    const { doc, rows, instRows } = seeded();
+    const progRows = rows.map((r) => ({
+      id: r.id,
+      tuitionFr: r.tuitionFr,
+      applicationFeeEur: r.applicationFeeEur,
+      durationFr: r.durationFr,
+      requirementsFr: r.requirementsFr,
+      isActive: r.isActive,
+    }));
+    const plan = planNaCorrections(doc, progRows, instRows);
+    const priced = plan.programs.filter((c) => c.data.tuitionFr);
+    expect(priced).toHaveLength(15);
+    for (const c of priced) {
+      expect(c.whereTuitionFr).toBe(progRows.find((r) => r.id === c.id)!.tuitionFr);
+      expect(c.data.tuitionMinEur).toBeGreaterThan(0);
+      expect(c.data.lastVerifiedAt.toISOString()).toBe(`${THIRD}T00:00:00.000Z`);
+    }
+    for (const c of plan.programs.filter((x) => x.data.durationFr)) {
+      expect(progRows.find((r) => r.id === c.id)!.durationFr).toBe('');
+    }
+    for (const c of plan.programs.filter((x) => x.data.requirementsFr)) {
+      expect(c.whereRequirementsFr).toEqual(progRows.find((r) => r.id === c.id)!.requirementsFr);
+      expect(c.data.requirementsFr!.length).toBeGreaterThanOrEqual(3);
+    }
+    expect(plan.programs.filter((x) => x.data.requirementsFr)).toHaveLength(21);
+    expect(plan.institutions.map((c) => c.id).sort()).toEqual(['na-ca-uqac', 'na-ca-uqam']);
+    expect(plan.skipped).toEqual([]);
+    // Admissions suspendues par l'UQAM : la fiche publiée passe hors ligne.
+    expect(plan.programs.filter((c) => c.data.isActive === false).map((c) => c.id)).toEqual([
+      'na-ca-uqam--baccalaureat-informatique-gestion',
+    ]);
+
+    // Une retouche faite dans l'admin n'est jamais écrasée.
+    const edited = progRows.map((r) => (r.id === priced[0].id ? { ...r, tuitionFr: 'Retouché dans l’admin' } : r));
+    const again = planNaCorrections(doc, edited, instRows.map((r) => (r.id === 'na-ca-uqam' ? { ...r, tuitionLabelFr: 'Retouché' } : r)));
+    expect(again.programs.find((c) => c.id === priced[0].id)?.data.tuitionFr).toBeUndefined();
+    expect(again.skipped.map((s) => s.id)).toEqual(expect.arrayContaining([priced[0].id, 'na-ca-uqam']));
+  });
+
+  it('une formation aux admissions suspendues est créée hors ligne', () => {
+    const doc = load();
+    const uqam = doc.institutions.find((i) => i.id === 'na-ca-uqam')!;
+    const p = uqam.programs.find((x) => x.slug === 'baccalaureat-informatique-gestion')!;
+    expect(naProgramCreateData(p, uqam, doc).isActive).toBe(false);
+    expect(doc.institutions.flatMap((i) => i.programs).filter((x) => x.isActive === false)).toHaveLength(1);
+  });
+
+  it('rejouée après application : plus aucune correction', () => {
+    const { doc } = seeded();
+    const fresh = doc.institutions.flatMap((i) => i.programs.map((p) => naProgramCreateData(p, i, doc)));
+    const plan = planNaCorrections(
+      doc,
+      fresh.map((r) => ({
+        id: r.id,
+        tuitionFr: r.tuitionFr,
+        applicationFeeEur: r.applicationFeeEur,
+        durationFr: r.durationFr,
+        requirementsFr: r.requirementsFr,
+        isActive: r.isActive,
+      })),
+      doc.institutions.map((i) => ({ id: i.id, tuitionLabelFr: i.tuitionLabelFr })),
+    );
+    expect(plan).toEqual({ programs: [], institutions: [], skipped: [] });
+  });
+});
+
+describe('import:europe — Belgique et Allemagne', () => {
+  const doc = JSON.parse(fs.readFileSync(EUROPE, 'utf8')) as NaSource;
+
+  it('est valide : 4 universités belges, 2 allemandes, 5 formations chacune, en EUR', () => {
+    expect(validateNaSource(doc)).toEqual([]);
+    expect(doc.institutions.filter((i) => i.countryId === 'bel').map((i) => i.id).sort()).toEqual(
+      ['eu-be-uclouvain', 'eu-be-ulb', 'eu-be-uliege', 'eu-be-unamur'],
+    );
+    expect(doc.institutions.filter((i) => i.countryId === 'deu')).toHaveLength(2);
+    for (const inst of doc.institutions) {
+      expect(inst.programs).toHaveLength(5);
+      for (const p of inst.programs) expect(p.tuitionAnnual?.currency).toBe('EUR');
+    }
+  });
+
+  it('les frais belges 2026-2027 : 5 369 EUR hors UE, 1 194 EUR pour les pays des annexes ARES', () => {
+    for (const inst of doc.institutions.filter((i) => i.countryId === 'bel')) {
+      for (const p of inst.programs) expect(p.tuitionAnnual).toEqual({ amount: 5369, currency: 'EUR' });
+      expect(inst.tuitionLabelFr).toContain('1 194 EUR');
+    }
+  });
+
+  it('écrit des lignes non partenaires en euros, sans conversion', () => {
+    const plan = planNorthAmerica(doc, [], []);
+    expect(plan.newInstitutions).toHaveLength(6);
+    const ulb = plan.newInstitutions.find((n) => n.institution.id === 'eu-be-ulb')!;
+    expect(ulb.institution.isPartner).toBe(false);
+    expect(ulb.institution.countryId).toBe('bel');
+    expect(ulb.programs[0].tuitionMinEur).toBe(5369);
+  });
+
+  it('chaque pays de la source a sa fiche M5 (la Belgique est créée par l’import si elle manque)', () => {
+    for (const c of new Set(doc.institutions.map((i) => i.countryId))) {
+      expect(M5_COUNTRY_SEEDS.some((s) => s.id === c)).toBe(true);
+    }
   });
 });
 
