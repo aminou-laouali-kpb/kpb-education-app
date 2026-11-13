@@ -183,6 +183,19 @@ jobs:
       - name: PostgreSQL advisory locks integration
         run: npm run test:integration:advisory-locks
 
+      # Dossiers et profils : copie française des anciens dossiers, nettoyage
+      # des événements « réassigné », idempotence des messages de dossier
+      # (index unique et NULL multiples), reprise des dates de naissance.
+      # Ces quatre scripts existaient mais n'étaient joués nulle part, et sans
+      # KPB_RUN_POSTGRES_INTEGRATION=true leurs specs étaient sautées. Chaque
+      # script pose désormais la variable lui-même.
+      - name: PostgreSQL cases and profiles integration
+        run: |
+          npm run test:integration:cases-fr
+          npm run test:integration:reassigned-cleanup
+          npm run test:integration:case-message-idempotence
+          npm run test:integration:birthdates
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5
