@@ -126,8 +126,9 @@ que si la ligne n'en a pas. Une retouche faite dans l'admin n'est jamais
    puis décoché. Relancer la simulation → `TOTAL : 0`.
 3. **Amérique du Nord** : la simulation `import-north-america` doit annoncer
    8 « À CRÉER », 7 « à compléter » (28 formations), et les corrections
-   « ~ » (prix et durées), sans « ⚠ ». Les deux premières passes étant en
-   base, l'application se fait depuis le VPS :
+   « ~ » (prix et durées), sans « ⚠ ». Depuis le 13/11/2026, l'action
+   `import-north-america` (dry_run décoché) passe elle-même
+   `KPB_ALLOW_PRODUCTION_SEED=1` à l'application ; à défaut, depuis le VPS :
 
 ```bash
 docker compose exec -T -e KPB_ALLOW_PRODUCTION_SEED=1 api npm run import:north-america -- --apply
