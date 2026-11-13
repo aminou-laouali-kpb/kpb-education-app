@@ -121,7 +121,7 @@ export class AiBudgetService {
         prisma.$transaction(async (tx) => {
           // Serializes the small pilot quota allocation section across API
           // instances. The provider call happens after this transaction.
-          await tx.$queryRaw(
+          await tx.$executeRaw(
             Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${`${FEATURE}:${dayKey}`}))`,
           );
 

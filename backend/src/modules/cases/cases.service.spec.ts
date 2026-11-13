@@ -172,8 +172,8 @@ describe('CasesService — referral crediting is fire-and-forget (KPB-77)', () =
   it('still returns the created case even when crediting throws', async () => {
     const prisma = {
       isEnabled: true,
-      // create() awaits this and treats the result as the persisted case.
-      execute: async () => ({ id: 'case-1' }),
+      // create() awaits this and treats `record` as the persisted case.
+      execute: async () => ({ record: { id: 'case-1' }, duplicate: false }),
     } as unknown as PrismaService;
     const push = { sendToUser: async () => {} } as unknown as PushSenderService;
     // The credits service blows up — the case path must not.
@@ -200,7 +200,7 @@ describe('CasesService — commercial lead email', () => {
   function makeCreateService(leadMail?: CaseLeadMailService) {
     const prisma = {
       isEnabled: true,
-      execute: async () => ({ id: 'case-1' }),
+      execute: async () => ({ record: { id: 'case-1' }, duplicate: false }),
     } as unknown as PrismaService;
     const push = { sendToUser: async () => {} } as unknown as PushSenderService;
     const moduleRef = {
@@ -361,6 +361,7 @@ describe('CasesService — student projection never leaks internal data', () => 
           case: {
             findMany: async () => [dbCase],
             findUnique: async () => dbCase,
+            findFirst: async () => dbCase,
           },
           $transaction: async (fn2: (tx: any) => Promise<any>) =>
             fn2({
@@ -400,10 +401,22 @@ describe('CasesService — student projection never leaks internal data', () => 
     expectNoInternal(item);
   });
 
-  it('the admin list still includes internal data', async () => {
-    const [item] = await makeListService([]).findAllForAdmin();
-    expect(item.internalNotes).toHaveLength(1);
-    expect(item.assignedAdvisorPhone).toBe('+221700000000');
+  it('the admin list still includes internal fields, without the relations', async () => {
+    const { items } = await makeListService([]).findAllForAdmin();
+    expect(items[0].assignedAdvisorPhone).toBe('+221700000000');
+    expect(items[0].leadTag).toBe('hot');
+    // Les notes se lisent pour le dossier ouvert, pas dans la liste.
+    expect(items[0]).not.toHaveProperty('internalNotes');
+  });
+
+  it('the opened case still includes internal notes for staff', async () => {
+    const detail = await makeListService([]).findOneForAdmin('case-1', {
+      id: 'a',
+      role: InternalRole.Admin,
+      fullName: 'A',
+    });
+    expect(detail.internalNotes).toHaveLength(1);
+    expect(detail.assignedAdvisorPhone).toBe('+221700000000');
   });
 
   it('broadcasts the student projection on caseUpdated after an admin update', async () => {
@@ -449,10 +462,24 @@ describe('CasesService — counselor scope on admin routes', () => {
   it('lists only the cases assigned to the counselor', async () => {
     const { service, calls } = makeScoped(true);
     await service.findAllForAdmin(counselor);
-    expect(calls[0].where.OR).toEqual([
+    expect(calls[0].where.AND[0].OR).toEqual([
       { counsellor: { adminUserId: 'admin-7' } },
       { assignedAdvisorName: { equals: 'Awa KPB', mode: 'insensitive' } },
     ]);
+  });
+
+  it('opens only a case assigned to the counselor (404 otherwise)', async () => {
+    const { service, calls } = makeScoped(false);
+    await expect(
+      service.findOneForAdmin('case-9', counselor),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(calls[0].where).toMatchObject({
+      id: 'case-9',
+      OR: [
+        { counsellor: { adminUserId: 'admin-7' } },
+        { assignedAdvisorName: { equals: 'Awa KPB', mode: 'insensitive' } },
+      ],
+    });
   });
 
   it("refuses a counselor writing to a case that isn't theirs", async () => {

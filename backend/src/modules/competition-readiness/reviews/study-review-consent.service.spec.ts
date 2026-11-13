@@ -48,7 +48,7 @@ describe("StudyReviewConsentService", () => {
   it("creates an active receipt for an adult and retires old notices", async () => {
     const contract = await service.getNotice("student-1", "fr");
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       userProfile: {
         findUnique: jest
           .fn()
@@ -99,7 +99,7 @@ describe("StudyReviewConsentService", () => {
 
   it("requires a verified guardian before a minor can grant document sharing", async () => {
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       userProfile: {
         findUnique: jest
           .fn()

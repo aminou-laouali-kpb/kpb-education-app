@@ -63,6 +63,8 @@ function makeCreateService(existingScholarships: string[]) {
         return { id: 'case-1', seq: 1, createdAt: NOW };
       },
       update: async () => ({}),
+      // Aucune demande identique en cours : la création suit son cours.
+      findFirst: async () => null,
       findUnique: async () => caseRow({ scholarshipId: created[0]?.scholarshipId ?? null }),
     },
     caseTimelineEvent: { create: async () => ({}) },
@@ -212,12 +214,12 @@ describe('CasesService — déduplication par bourse, dans la portée de l’él
 
   it('un conseiller lit le même résumé sur SES dossiers', async () => {
     const { service, wheres } = makeListService();
-    const items = await service.findAllForAdmin({
+    const { items } = await service.findAllForAdmin({
       id: 'adm-1',
       role: InternalRole.Counselor,
       fullName: 'Awa Conseil',
     });
-    expect(wheres[0]).toHaveProperty('OR');
+    expect(wheres[0]).toMatchObject({ AND: [{ OR: expect.any(Array) }] });
     expect(items[0]).toMatchObject({ scholarship: { id: 'eiffel', nameFr: 'Bourse Eiffel' } });
   });
 

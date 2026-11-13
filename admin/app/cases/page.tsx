@@ -1,6 +1,13 @@
 'use client';
 
-import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
+import {
+  CSSProperties,
+  FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
@@ -8,13 +15,33 @@ import { useLocale } from '../../components/locale-provider';
 import { AdminCapability, hasAdminCapability } from '../../lib/admin-capabilities';
 import { apiFetch } from '../../lib/api-client';
 import {
+  CASE_LIST_SUMMARY_PATH,
+  CASE_SEARCH_MAX_LENGTH,
+  EMPTY_CASE_LIST_FILTERS,
+  EMPTY_CASE_LIST_SUMMARY,
+  UNASSIGNED_ADVISOR,
+  appendCasePage,
+  awaitingSignature,
+  caseDetailPath,
+  caseListPath,
+  displayedAdvisorName,
+  hasActiveCaseFilters,
+  normalizeCaseListPage,
+  normalizeCaseListSummary,
+  normalizeCaseSearch,
+  patchCaseListItem,
+  type AdminCaseDetail,
+  type AdminCaseListItem,
+  type CaseListFilters,
+  type CaseListSummary,
+} from '../../lib/case-list';
+import {
   applyReplyOverride,
   sortAwaitingReplyFirst,
   type CaseReplyFields,
 } from '../../lib/case-messages';
 import {
   linkedScholarshipView,
-  type CaseScholarshipFields,
   type LinkedScholarshipView,
 } from '../../lib/case-scholarship';
 import {
@@ -32,47 +59,6 @@ import {
   Textarea,
 } from '../../components/ui';
 import { CaseMessagesThread } from './case-messages-thread';
-
-interface CaseTaskItem {
-  id: string;
-  title: string;
-  assigneeName: string | null;
-  status: string;
-  dueAt: string | null;
-}
-
-interface CaseNoteItem {
-  id: string;
-  authorName: string;
-  authorRole: string;
-  body: string;
-  createdAt: string;
-}
-
-interface CaseTimelineItem {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  createdAt: string;
-}
-
-interface AdminCaseItem extends CaseScholarshipFields, CaseReplyFields {
-  id: string;
-  referenceCode: string;
-  studentName: string;
-  studentEmail: string;
-  preferredLanguage: string;
-  type: string;
-  status: string;
-  contextLabel: string;
-  assignedAdvisorName: string | null;
-  nextStepTitle: string;
-  nextStepDescription: string;
-  tasks: CaseTaskItem[];
-  internalNotes: CaseNoteItem[];
-  timeline: CaseTimelineItem[];
-}
 
 const allStatuses = [
   'draft', 'submitted', 'under_review', 'documents_needed',
@@ -104,10 +90,34 @@ export default function CasesPage() {
     session?.user.role,
     AdminCapability.ManageScholarshipContent,
   );
-  const linkedScholarship = (item: AdminCaseItem): LinkedScholarshipView | null =>
+  const linkedScholarship = (
+    item: AdminCaseListItem,
+  ): LinkedScholarshipView | null =>
     linkedScholarshipView(item, locale, canOpenScholarship);
-  const [cases, setCases] = useState<AdminCaseItem[]>([]);
+  // Un conseiller ne voit que ses dossiers : le filtre par conseiller ne lui
+  // apprendrait rien.
+  const isCounselor = session?.user.role === 'counselor';
+  // La page chargée, pas tous les dossiers : le serveur filtre, cherche et
+  // pagine (50 par page). Les tâches, notes et historique ne sont lus que
+  // pour le dossier ouvert (`detail`).
+  const [cases, setCases] = useState<AdminCaseListItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [filters, setFilters] = useState<CaseListFilters>(
+    EMPTY_CASE_LIST_FILTERS,
+  );
+  const [searchDraft, setSearchDraft] = useState('');
+  const [listLoading, setListLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [summary, setSummary] = useState<CaseListSummary>(
+    EMPTY_CASE_LIST_SUMMARY,
+  );
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<AdminCaseDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  // Une réponse arrivée après un changement de filtre ou de dossier est
+  // ignorée : sans ce compteur, la page lente d'avant écraserait la bonne.
+  const listRequest = useRef(0);
+  const detailRequest = useRef(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // No advisor phone/WhatsApp fields on purpose: students and parents only
@@ -132,7 +142,6 @@ export default function CasesPage() {
   const [statusForm, setStatusForm] = useState({
     status: '',
   });
-  const [awaitingFirst, setAwaitingFirst] = useState(false);
   // Ce que le fil ouvert a vu (réponse attendue, dernier message), sans
   // toucher à `cases` : le modifier recréerait le dossier sélectionné et
   // remettrait à zéro les formulaires en cours de saisie à chaque relève.
@@ -140,19 +149,111 @@ export default function CasesPage() {
     Record<string, CaseReplyFields>
   >({});
 
-  async function loadCases() {
+  async function loadFirstPage(next: CaseListFilters) {
+    const request = ++listRequest.current;
+    setListLoading(true);
     setErrorMessage(null);
     try {
-      const response = await apiFetch<AdminCaseItem[]>('/admin/cases');
-      setCases(response);
-      if (!selectedCaseId && response[0]) {
-        setSelectedCaseId(response[0].id);
-      }
+      const page = normalizeCaseListPage<AdminCaseListItem>(
+        await apiFetch<unknown>(caseListPath(next)),
+      );
+      if (request !== listRequest.current) return;
+      setCases(page.items);
+      setNextCursor(page.nextCursor);
+      // Le dossier ouvert suit la liste : s'il n'y figure plus, le premier.
+      setSelectedCaseId((current) =>
+        current && page.items.some((item) => item.id === current)
+          ? current
+          : (page.items[0]?.id ?? null),
+      );
+    } catch (error) {
+      if (request !== listRequest.current) return;
+      setErrorMessage(
+        error instanceof Error ? error.message : t('cases.loadError'),
+      );
+    } finally {
+      if (request === listRequest.current) setListLoading(false);
+    }
+  }
+
+  async function loadMore() {
+    if (!nextCursor || loadingMore) return;
+    const request = listRequest.current;
+    setLoadingMore(true);
+    setErrorMessage(null);
+    try {
+      const page = normalizeCaseListPage<AdminCaseListItem>(
+        await apiFetch<unknown>(caseListPath(filters, nextCursor)),
+      );
+      // Les filtres ont changé entre-temps : cette page n'est plus la suite.
+      if (request !== listRequest.current) return;
+      setCases((current) => appendCasePage(current, page.items));
+      setNextCursor(page.nextCursor);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('cases.loadError'),
       );
+    } finally {
+      setLoadingMore(false);
     }
+  }
+
+  async function loadSummary() {
+    try {
+      setSummary(
+        normalizeCaseListSummary(
+          await apiFetch<unknown>(CASE_LIST_SUMMARY_PATH),
+        ),
+      );
+    } catch {
+      // Le compteur et la liste des conseillers sont un confort : sans eux, la
+      // liste reste utilisable, on garde les dernières valeurs connues.
+    }
+  }
+
+  async function loadDetail(caseId: string): Promise<AdminCaseDetail | null> {
+    const request = ++detailRequest.current;
+    setDetailLoading(true);
+    try {
+      const loaded = await apiFetch<AdminCaseDetail>(caseDetailPath(caseId));
+      if (request !== detailRequest.current) return null;
+      setDetail(loaded);
+      return loaded;
+    } catch (error) {
+      if (request !== detailRequest.current) return null;
+      setDetail(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : t('cases.detailError'),
+      );
+      return null;
+    } finally {
+      if (request === detailRequest.current) setDetailLoading(false);
+    }
+  }
+
+  /**
+   * Après une action sur le dossier ouvert : on relit CE dossier et on met sa
+   * ligne à jour, sans recharger la liste (les pages déjà chargées et la
+   * position de lecture restent).
+   */
+  async function refreshSelectedCase() {
+    if (!selectedCaseId) return;
+    const loaded = await loadDetail(selectedCaseId);
+    if (loaded) setCases((current) => patchCaseListItem(current, loaded));
+    void loadSummary();
+  }
+
+  function submitSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFilters((current) => ({
+      ...current,
+      q: normalizeCaseSearch(searchDraft),
+    }));
+  }
+
+  function resetFilters() {
+    setSearchDraft('');
+    setFilters(EMPTY_CASE_LIST_FILTERS);
   }
 
   function renderLinkedScholarship(view: LinkedScholarshipView | null) {
@@ -192,21 +293,57 @@ export default function CasesPage() {
     if (!session) {
       return;
     }
-    void loadCases();
+    void loadFirstPage(filters);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  }, [session, filters]);
 
   const visibleCases = useMemo(() => {
     const merged = cases.map((item) =>
       applyReplyOverride(item, replyOverrides[item.id]),
     );
-    return awaitingFirst ? sortAwaitingReplyFirst(merged) : merged;
-  }, [cases, replyOverrides, awaitingFirst]);
+    // « Réponses attendues » : celui qui attend depuis le plus longtemps en
+    // tête, parmi les dossiers que le serveur a rendus.
+    return filters.awaiting ? sortAwaitingReplyFirst(merged) : merged;
+  }, [cases, replyOverrides, filters.awaiting]);
 
-  const awaitingCount = useMemo(
-    () => visibleCases.filter((item) => item.awaitingReply === true).length,
-    [visibleCases],
+  // Le compteur vient du serveur (tous les dossiers visibles, pas la page
+  // chargée). Il est relu quand le fil ouvert voit « réponse attendue »
+  // changer : l'équipe vient de répondre, ou l'élève d'écrire.
+  const replySignature = useMemo(
+    () => awaitingSignature(replyOverrides),
+    [replyOverrides],
   );
+  useEffect(() => {
+    if (!session) {
+      return;
+    }
+    void loadSummary();
+  }, [session, replySignature]);
+
+  useEffect(() => {
+    if (!session || !selectedCaseId) {
+      detailRequest.current += 1;
+      setDetail(null);
+      setDetailLoading(false);
+      return;
+    }
+    void loadDetail(selectedCaseId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, selectedCaseId]);
+
+  const advisorOptions = useMemo(() => {
+    const selected =
+      filters.advisor && filters.advisor !== UNASSIGNED_ADVISOR
+        ? [filters.advisor]
+        : [];
+    const known = new Set(summary.advisors.map((name) => name.toLowerCase()));
+    return [
+      ...summary.advisors,
+      ...selected.filter((name) => !known.has(name.toLowerCase())),
+    ];
+  }, [summary.advisors, filters.advisor]);
+
+  const filtersActive = hasActiveCaseFilters(filters);
 
   function handleReplyFieldsChange(caseId: string, fields: CaseReplyFields) {
     setReplyOverrides((current) => {
@@ -222,25 +359,24 @@ export default function CasesPage() {
     });
   }
 
-  const selectedCase = useMemo(
-    () => cases.find((item) => item.id === selectedCaseId) ?? null,
-    [cases, selectedCaseId],
-  );
+  // Le panneau n'affiche le détail que du dossier sélectionné : pendant le
+  // chargement d'un autre dossier, jamais celui d'avant sous le nouveau nom.
+  const selectedCase = detail && detail.id === selectedCaseId ? detail : null;
 
   useEffect(() => {
-    if (!selectedCase) {
+    if (!detail) {
       return;
     }
     setAssignForm({
-      assignedAdvisorName: selectedCase.assignedAdvisorName ?? '',
-      nextStepTitle: selectedCase.nextStepTitle,
-      nextStepDescription: selectedCase.nextStepDescription,
+      assignedAdvisorName: detail.assignedAdvisorName ?? '',
+      nextStepTitle: detail.nextStepTitle,
+      nextStepDescription: detail.nextStepDescription,
       scheduledAt: '',
     });
     setStatusForm({
-      status: selectedCase.status,
+      status: detail.status,
     });
-  }, [selectedCase]);
+  }, [detail]);
 
   async function submitAssignment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -263,7 +399,7 @@ export default function CasesPage() {
         },
       });
       setStatusMessage(t('cases.assignSuccess'));
-      await loadCases();
+      await refreshSelectedCase();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('cases.assignError'),
@@ -287,7 +423,7 @@ export default function CasesPage() {
         },
       });
       setStatusMessage(t('cases.statusSuccess'));
-      await loadCases();
+      await refreshSelectedCase();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('cases.statusError'),
@@ -324,7 +460,7 @@ export default function CasesPage() {
         status: 'open',
       });
       setStatusMessage(t('cases.taskSuccess'));
-      await loadCases();
+      await refreshSelectedCase();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('cases.taskError'),
@@ -351,7 +487,7 @@ export default function CasesPage() {
       });
       setNoteForm({ body: '' });
       setStatusMessage(t('cases.noteSuccess'));
-      await loadCases();
+      await refreshSelectedCase();
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : t('cases.noteError'),
@@ -365,6 +501,79 @@ export default function CasesPage() {
         {statusMessage ? <Alert variant="success">{statusMessage}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
+        <form
+          onSubmit={submitSearch}
+          style={{
+            display: 'grid',
+            gap: 10,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            alignItems: 'end',
+          }}
+        >
+          <Field label={t('cases.searchLabel')}>
+            {({ id }) => (
+              <Input
+                id={id}
+                type="search"
+                value={searchDraft}
+                maxLength={CASE_SEARCH_MAX_LENGTH}
+                placeholder={t('cases.searchPlaceholder')}
+                onChange={(event) => setSearchDraft(event.target.value)}
+              />
+            )}
+          </Field>
+          <Field label={t('cases.filterStatusLabel')}>
+            {({ id }) => (
+              <Select
+                id={id}
+                value={filters.status}
+                onChange={(event) =>
+                  setFilters((current) => ({
+                    ...current,
+                    status: event.target.value,
+                  }))
+                }
+              >
+                <option value="">{t('cases.filterStatusAll')}</option>
+                {allStatuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          {isCounselor ? null : (
+            <Field label={t('cases.filterAdvisorLabel')}>
+              {({ id }) => (
+                <Select
+                  id={id}
+                  value={filters.advisor}
+                  onChange={(event) =>
+                    setFilters((current) => ({
+                      ...current,
+                      advisor: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">{t('cases.filterAdvisorAll')}</option>
+                  <option value={UNASSIGNED_ADVISOR}>
+                    {t('cases.filterAdvisorNone')}
+                  </option>
+                  {advisorOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            </Field>
+          )}
+          <Button type="submit" variant="secondary" loading={listLoading}>
+            {t('cases.searchCta')}
+          </Button>
+        </form>
+
         <div
           style={{
             display: 'flex',
@@ -374,13 +583,23 @@ export default function CasesPage() {
             flexWrap: 'wrap',
           }}
         >
+          {filtersActive ? (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              {t('cases.resetFilters')}
+            </Button>
+          ) : null}
           <Button
-            variant={awaitingFirst ? 'primary' : 'secondary'}
+            variant={filters.awaiting ? 'primary' : 'secondary'}
             size="sm"
-            aria-pressed={awaitingFirst}
-            onClick={() => setAwaitingFirst((current) => !current)}
+            aria-pressed={filters.awaiting}
+            onClick={() =>
+              setFilters((current) => ({
+                ...current,
+                awaiting: !current.awaiting,
+              }))
+            }
           >
-            {t('cases.awaitingFirstToggle')} ({awaitingCount})
+            {t('cases.awaitingOnlyToggle')} ({summary.awaitingCount})
           </Button>
         </div>
 
@@ -398,7 +617,15 @@ export default function CasesPage() {
           footnote={t('cases.tableNote')}
         >
           {visibleCases.length === 0 ? (
-            <EmptyState title={t('cases.empty')} />
+            <EmptyState
+              title={
+                listLoading
+                  ? t('cases.loading')
+                  : filtersActive
+                    ? t('cases.emptyFiltered')
+                    : t('cases.empty')
+              }
+            />
           ) : (
             visibleCases.map((item) => (
               <AdminTableRow
@@ -423,8 +650,11 @@ export default function CasesPage() {
                   ) : null}
                 </div>
                 <CellText
-                  primary={item.assignedAdvisorName ?? t('cases.unassigned')}
-                  muted={!item.assignedAdvisorName}
+                  primary={
+                    displayedAdvisorName(item.assignedAdvisorName) ??
+                    t('cases.unassigned')
+                  }
+                  muted={!displayedAdvisorName(item.assignedAdvisorName)}
                 />
                 <CellText
                   primary={item.nextStepTitle}
@@ -434,6 +664,27 @@ export default function CasesPage() {
             ))
           )}
         </AdminTable>
+
+        {nextCursor ? (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="secondary"
+              loading={loadingMore}
+              onClick={() => void loadMore()}
+            >
+              {loadingMore ? t('cases.loadingMore') : t('cases.loadMore')}
+            </Button>
+          </div>
+        ) : null}
+
+        {selectedCaseId && !selectedCase && detailLoading ? (
+          <p
+            role="status"
+            style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}
+          >
+            {t('cases.detailLoading')}
+          </p>
+        ) : null}
 
         {selectedCase ? (
           <div style={{ display: 'grid', gap: 14, gridTemplateColumns: '1.15fr 0.85fr' }}>
@@ -467,6 +718,11 @@ export default function CasesPage() {
                 <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--ink)' }}>
                   {t('cases.timelineHeading')}
                 </strong>
+                {selectedCase.timelineTruncated ? (
+                  <p style={{ margin: '8px 0 0', fontSize: 'var(--text-sm)', color: 'var(--text-muted)' }}>
+                    {t('cases.timelineTruncated')}
+                  </p>
+                ) : null}
                 <div style={{ display: 'grid', gap: 12, marginTop: 10 }}>
                   {selectedCase.timeline.map((item) => (
                     <div

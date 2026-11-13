@@ -175,6 +175,15 @@ abstract final class AnalyticsEventName {
   static const eefTourShown = 'eef_tour_shown';
   static const eefTourCompleted = 'eef_tour_completed';
 
+  /// La visite guidée de l'APPLICATION (build 59) : `app_tour_shown` quand
+  /// elle s'ouvre (`tour_trigger` = `first_open` ou `replay`),
+  /// `app_tour_completed` quand elle se ferme (`tour_exit` = `finished` ou
+  /// `skipped`, `tour_cards_seen` = étapes atteintes, `tour_steps_total` =
+  /// étapes de cette visite, deux entiers). Propriétés fermées : rien sur
+  /// l'élève. Lire l'abandon : `tour_cards_seen` des `skipped`.
+  static const appTourShown = 'app_tour_shown';
+  static const appTourCompleted = 'app_tour_completed';
+
   /// Liste d'attente Karatou Premium. `premium_waitlist_joined` est la seule
   /// mesure directe de la demande pour le Pass — celle qui dira s'il vaut la
   /// peine d'être construit, et pour combien d'étudiants.
@@ -375,6 +384,7 @@ abstract final class AnalyticsParamKey {
   static const tourTrigger = 'tour_trigger';
   static const tourExit = 'tour_exit';
   static const tourCardsSeen = 'tour_cards_seen';
+  static const tourStepsTotal = 'tour_steps_total';
   static const surface = 'surface';
   static const variant = 'variant';
 

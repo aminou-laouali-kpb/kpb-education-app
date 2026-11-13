@@ -165,6 +165,37 @@ jobs:
           KPB_RUN_POSTGRES_INTEGRATION: 'true'
         run: npm run test:integration:referral-campaign
 
+      # Liste des dossiers de l'administration (curseur, filtres, recherche,
+      # « l'élève attend une réponse », portée du conseiller) et dossiers créés
+      # en double : tout vit dans des `where` et du SQL. Sur un vrai Postgres,
+      # le verrou par élève écrit avec `$queryRaw` faisait échouer CHAQUE
+      # création de dossier alors que les tests unitaires passaient.
+      - name: PostgreSQL admin case list + duplicate case integration
+        run: npm run test:integration:cases-admin
+
+      # Verrous consultatifs (`pg_advisory_xact_lock`) de Competition
+      # Readiness : consentement IA, budget IA, preuves de résultat, relecture
+      # de dossier. Écrits avec `tx.$queryRaw`, ils levaient « Failed to
+      # deserialize column of type 'void' » sur un vrai Postgres alors que les
+      # tests unitaires (doubles) passaient. Le script pose lui-même
+      # KPB_RUN_POSTGRES_INTEGRATION=true : sans elle, ces specs sont sautées
+      # et passent vertes sans rien prouver.
+      - name: PostgreSQL advisory locks integration
+        run: npm run test:integration:advisory-locks
+
+      # Dossiers et profils : copie française des anciens dossiers, nettoyage
+      # des événements « réassigné », idempotence des messages de dossier
+      # (index unique et NULL multiples), reprise des dates de naissance.
+      # Ces quatre scripts existaient mais n'étaient joués nulle part, et sans
+      # KPB_RUN_POSTGRES_INTEGRATION=true leurs specs étaient sautées. Chaque
+      # script pose désormais la variable lui-même.
+      - name: PostgreSQL cases and profiles integration
+        run: |
+          npm run test:integration:cases-fr
+          npm run test:integration:reassigned-cleanup
+          npm run test:integration:case-message-idempotence
+          npm run test:integration:birthdates
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5

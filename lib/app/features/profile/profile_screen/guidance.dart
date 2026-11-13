@@ -302,6 +302,13 @@ class _GuestProfilePrompt extends StatelessWidget {
                     },
                     child: Text('auth_guest_profile_have_account'.tr),
                   ),
+                  // L'invité aussi peut revoir la visite guidée.
+                  TextButton.icon(
+                    key: const ValueKey('guest-profile-app-tour-replay'),
+                    onPressed: () => unawaited(AppTour.replay()),
+                    icon: const Icon(Icons.explore_rounded),
+                    label: Text('app_tour_replay'.tr),
+                  ),
                   const SizedBox(height: 12),
                   const LegalLinksRow(showContact: true),
                 ],

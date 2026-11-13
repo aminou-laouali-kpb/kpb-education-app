@@ -48,6 +48,7 @@ import '../alumni/alumni_apply_screen.dart';
 import '../salon/salon_screen.dart';
 import '../../core/ui/app_tokens.dart';
 import '../../core/ui/shell_chrome.dart';
+import '../app_tour/app_tour.dart';
 import 'profile_avatar.dart';
 import '../../core/ui/components/kpb_toast.dart';
 
@@ -144,6 +145,8 @@ class ProfileScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _HeaderCard(profile: profile),
+                      const SizedBox(height: 12),
+                      const _AppTourCard(),
                       const SizedBox(height: 12),
                       _ProfileCompletionGuide(
                         profile: profile,

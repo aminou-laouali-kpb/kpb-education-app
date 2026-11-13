@@ -19,6 +19,7 @@ import '../scholarship_match/scholarship_match_actions.dart';
 import '../scholarships/live_scholarships_screen.dart';
 import '../universities/universities_screen.dart';
 import '../ai_advisor/coach_fab.dart';
+import '../app_tour/app_tour.dart';
 import 'kpb_tools_drawer.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,7 +34,7 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends State<AppShell> implements AppTourHost {
   // A fresh key per AppShell instance. The drawer opener targets whichever shell
   // is live (see KpbToolsDrawer.registerShell); giving each instance its own key
   // means two shells overlapping for a single transition frame never collide on
@@ -41,23 +42,62 @@ class _AppShellState extends State<AppShell> {
   // foregrounded via a kpb:// URL.
   final GlobalKey<ScaffoldState> _shellKey = GlobalKey<ScaffoldState>();
 
+  /// Les boutons que la visite guidée éclaire — une instance par shell, pour
+  /// la même raison que [_shellKey].
+  final AppTourTargets _tour = AppTourTargets();
+
+  AppController get _controller => Get.find<AppController>();
+
+  @override
+  AppTourTargets get targets => _tour;
+
+  @override
+  int get currentTab => _controller.shellIndex;
+
+  @override
+  void goToTab(int tab) => _controller.goToTab(tab);
+
+  @override
+  bool get coachVisible => CoachFab.isVisibleFor(_controller);
+
+  @override
+  List<AppTourTool> get tools => KpbToolsDrawer.visibleTools;
+
+  @override
+  String get firstName {
+    final first = (_controller.profile?.fullName ?? '')
+        .trim()
+        .split(RegExp(r'\s+'))
+        .first;
+    return first.length > 20 ? '' : first;
+  }
+
   @override
   void initState() {
     super.initState();
     KpbToolsDrawer.registerShell(_shellKey);
+    AppTour.registerHost(this);
     // Une intention laissée en invité (« Faire le test ») s'ouvre au premier
     // rendu de l'accueil d'un élève connecté — après l'onboarding ou
     // « Passer », jamais pendant l'écran des premiers résultats.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !Get.isRegistered<AppController>()) return;
-      unawaited(
-        consumeScholarshipMatchPendingIntent(Get.find<AppController>()),
-      );
+      unawaited(_firstFrame());
     });
+  }
+
+  Future<void> _firstFrame() async {
+    await consumeScholarshipMatchPendingIntent(Get.find<AppController>());
+    // La visite guidée, à la toute première arrivée sur l'accueil. Elle
+    // attend que l'accueil soit posé, et renonce (jusqu'au prochain
+    // démarrage) si un écran a été ouvert entre-temps.
+    if (!mounted) return;
+    await AppTour.autoStart(this);
   }
 
   @override
   void dispose() {
+    AppTour.unregisterHost(this);
     KpbToolsDrawer.unregisterShell(_shellKey);
     super.dispose();
   }
@@ -202,7 +242,10 @@ class _AppShellState extends State<AppShell> {
                                     padding: const EdgeInsets.only(
                                         left: KpbSpacing.xs,
                                         top: KpbSpacing.xs),
-                                    child: _KpbDrawerButton(),
+                                    child: KeyedSubtree(
+                                      key: _tour.tools,
+                                      child: _KpbDrawerButton(),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -211,12 +254,14 @@ class _AppShellState extends State<AppShell> {
                             // `KpbShellChrome.bottomReserve(context)` free at its
                             // bottom edge (KpbShellBottomSpacer) — otherwise the
                             // pill and the nav bar hide the last row.
-                            if (index != StudentShellTab.home) const CoachFab(),
+                            if (index != StudentShellTab.home)
+                              CoachFab(tourTarget: _tour.coach),
                             Positioned(
                               left: 0,
                               right: 0,
                               bottom: 0,
                               child: _KpbFloatingNavBar(
+                                targets: _tour,
                                 currentIndex: index,
                                 onTap: controller.goToTab,
                               ),
@@ -238,10 +283,12 @@ class _AppShellState extends State<AppShell> {
 
 class _KpbFloatingNavBar extends StatelessWidget {
   const _KpbFloatingNavBar({
+    required this.targets,
     required this.currentIndex,
     required this.onTap,
   });
 
+  final AppTourTargets targets;
   final int currentIndex;
   final ValueChanged<int> onTap;
 
@@ -270,6 +317,7 @@ class _KpbFloatingNavBar extends StatelessWidget {
             children: [
               _NavItem(
                 key: const ValueKey('kpb_nav_home'),
+                tourTarget: targets.home,
                 icon: Icons.home_outlined,
                 selectedIcon: Icons.home_rounded,
                 label: 'nav_home'.tr,
@@ -279,6 +327,7 @@ class _KpbFloatingNavBar extends StatelessWidget {
               // The source design gives the university search the second slot.
               _NavItem(
                 key: const ValueKey('kpb_nav_universities'),
+                tourTarget: targets.universities,
                 icon: Icons.school_outlined,
                 selectedIcon: Icons.school_rounded,
                 label: 'nav_universities'.tr,
@@ -287,6 +336,7 @@ class _KpbFloatingNavBar extends StatelessWidget {
               ),
               _NavItem(
                 key: const ValueKey('kpb_nav_scholarships'),
+                tourTarget: targets.scholarships,
                 // La cloche est réservée aux notifications : les bourses ont
                 // leur propre icône (programme UX, « une notion, un mot »).
                 icon: Icons.workspace_premium_outlined,
@@ -297,6 +347,7 @@ class _KpbFloatingNavBar extends StatelessWidget {
               ),
               _NavItem(
                 key: const ValueKey('kpb_nav_cases'),
+                tourTarget: targets.cases,
                 icon: Icons.folder_copy_outlined,
                 selectedIcon: Icons.folder_copy_rounded,
                 label: 'nav_cases'.tr,
@@ -306,6 +357,7 @@ class _KpbFloatingNavBar extends StatelessWidget {
               ),
               _NavItem(
                 key: const ValueKey('kpb_nav_profile'),
+                tourTarget: targets.profile,
                 icon: Icons.person_outline_rounded,
                 selectedIcon: Icons.person_rounded,
                 label: 'nav_profile'.tr,
@@ -329,6 +381,7 @@ class _NavItem extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.badgeCount = 0,
+    this.tourTarget,
   });
 
   final IconData icon;
@@ -338,95 +391,101 @@ class _NavItem extends StatelessWidget {
   final VoidCallback onTap;
   final int badgeCount;
 
+  /// La clé que la visite guidée éclaire.
+  final GlobalKey? tourTarget;
+
   @override
   Widget build(BuildContext context) {
     const activeColor = KpbColors.actionPrimary;
     const inactiveColor = KpbColors.textMuted;
 
     return Expanded(
-      child: Semantics(
-        button: true,
-        selected: isSelected,
-        // Un seul nœud par onglet : sans excludeSemantics, le lecteur d'écran
-        // lisait chaque libellé deux fois (celui-ci, puis le Text enfant), et
-        // n'annonçait pas la pastille (audit build 57, T7-12).
-        excludeSemantics: true,
-        label: badgeCount > 0
-            ? 'nav_badge_a11y'.trParams({
-                'label': label,
-                'count': badgeCount > 9 ? '9+' : '$badgeCount',
-              })
-            : label,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              if (!isSelected) KpbHaptics.selection();
-              onTap();
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 2),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 52,
-                    height: 28,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOut,
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? KpbColors.actionPrimarySoft
-                            : Colors.transparent,
-                        borderRadius: KpbRadius.pillBr,
-                      ),
-                      alignment: Alignment.center,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 180),
-                            child: Icon(
-                              isSelected ? selectedIcon : icon,
-                              key: ValueKey<bool>(isSelected),
-                              color: isSelected ? activeColor : inactiveColor,
-                              size: 20,
+      child: KeyedSubtree(
+        key: tourTarget,
+        child: Semantics(
+          button: true,
+          selected: isSelected,
+          // Un seul nœud par onglet : sans excludeSemantics, le lecteur d'écran
+          // lisait chaque libellé deux fois (celui-ci, puis le Text enfant), et
+          // n'annonçait pas la pastille (audit build 57, T7-12).
+          excludeSemantics: true,
+          label: badgeCount > 0
+              ? 'nav_badge_a11y'.trParams({
+                  'label': label,
+                  'count': badgeCount > 9 ? '9+' : '$badgeCount',
+                })
+              : label,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                if (!isSelected) KpbHaptics.selection();
+                onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6, bottom: 2),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 52,
+                      height: 28,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? KpbColors.actionPrimarySoft
+                              : Colors.transparent,
+                          borderRadius: KpbRadius.pillBr,
+                        ),
+                        alignment: Alignment.center,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              child: Icon(
+                                isSelected ? selectedIcon : icon,
+                                key: ValueKey<bool>(isSelected),
+                                color: isSelected ? activeColor : inactiveColor,
+                                size: 20,
+                              ),
                             ),
-                          ),
-                          if (badgeCount > 0)
-                            Positioned(
-                              right: -12,
-                              top: -7,
-                              child: _NavBadge(count: badgeCount),
-                            ),
-                        ],
+                            if (badgeCount > 0)
+                              Positioned(
+                                right: -12,
+                                top: -7,
+                                child: _NavBadge(count: badgeCount),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  // Scale the label down instead of truncating ("Destinatio…")
-                  // or wrapping: every tab's label always fits on one line.
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: isSelected ? activeColor : inactiveColor,
-                        fontWeight:
-                            isSelected ? FontWeight.w800 : FontWeight.w600,
-                        // Plancher de lisibilité : 12 sp (11 sp au pire,
-                        // une fois réduit par le FittedBox sur 360 dp).
-                        fontSize: KpbFontSize.xs,
-                        height: 1,
+                    const SizedBox(height: 3),
+                    // Scale the label down instead of truncating ("Destinatio…")
+                    // or wrapping: every tab's label always fits on one line.
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: isSelected ? activeColor : inactiveColor,
+                          fontWeight:
+                              isSelected ? FontWeight.w800 : FontWeight.w600,
+                          // Plancher de lisibilité : 12 sp (11 sp au pire,
+                          // une fois réduit par le FittedBox sur 360 dp).
+                          fontSize: KpbFontSize.xs,
+                          height: 1,
+                        ),
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        textAlign: TextAlign.center,
                       ),
-                      maxLines: 1,
-                      softWrap: false,
-                      overflow: TextOverflow.visible,
-                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

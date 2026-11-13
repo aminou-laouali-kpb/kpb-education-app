@@ -24,7 +24,7 @@ describe('OutcomeConsentService', () => {
 
   it('fails the consent bootstrap closed for a non-student account', async () => {
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       scholarshipWorkspace: {
         findFirst: jest.fn().mockResolvedValue({ id: 'workspace-1' }),
       },
@@ -58,7 +58,7 @@ describe('OutcomeConsentService', () => {
       ...data,
     }));
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       scholarshipWorkspace: {
         findFirst: jest.fn().mockResolvedValue({ id: 'workspace-1' }),
       },
