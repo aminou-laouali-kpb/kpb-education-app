@@ -19,12 +19,24 @@
 > (le commit archivé de la 58, déployé après son envoi le 08/11/2026). Les drapeaux n'ont pas été
 > remesurés depuis le 07/11/2026 : l'étape 2 le fait.
 >
+> **Révision du 13/11/2026 — la production a pris de l'avance sur la build.** Le backend et
+> l'admin ont été déployés le 13/11/2026 sur `main` (`1034bb01` à 06 h 23 UTC, puis `b730a4ef` à
+> 07 h 10 UTC, run 43383015342), **avant** l'archive de la 59 : la production sert le serveur de
+> la 59 **plus** les correctifs sans build de l'audit (#412, #415). Le préflight en
+> `tolerates-old` exige une production **en retard** sur la build : il ne peut plus passer.
+> Décision du propriétaire du 13/11/2026 : **la 59 se construit sur le code que sert la
+> production**, et le préflight passe en **`requires-new`** (production = `RELEASE`, exactement).
+> Conséquence : la 59 embarque aussi #414 (catalogue de repli : Québec, francophonie hors Québec,
+> trois universités américaines, Belgique, Allemagne). Les étapes 0.3, 1, 2, 5, 6 et 9 sont
+> réécrites en ce sens ; le reste ne change pas.
+>
 > **🔒 = étape de distribution ou de production.** Déploiement du backend, AAB importé, IPA
 > envoyée, soumission, élargissement d'un palier, ouverture d'un drapeau :
 > **aucune ne se fait sans le feu vert explicite du propriétaire, donné pour cette étape.** Le reste (lire, comparer,
 > lancer un préflight en lecture seule) se fait librement.
 >
-> **Ce que la mise à jour ne fait PAS** : déployer le backend avant le préflight, ouvrir
+> **Ce que la mise à jour ne fait PAS** : déployer un autre commit que `RELEASE` avant la fin du
+> préflight, ouvrir
 > `features.caseMessaging` en dehors d'une fenêtre de recette refermée avant la soumission, ouvrir
 > `features.scholarshipMatch`, `features.onboardingV2`, `features.community`,
 > `features.assistBridge` ou les drapeaux du parrainage, passer le mode d'ouverture hors de
@@ -37,9 +49,11 @@
   App Store Connect refuse une version qui ne lui est pas strictement supérieure (ITMS-90062), et
   la 2.3.1 n'a jamais été soumise. Le numéro 58 est consommé (téléversé chez Apple et chez
   Google) : la 59 en est le successeur direct. La 58 ne repart pas.
-- **Couplage backend : `tolerates-old`**, comme la 58. La 59 fonctionne contre la production
-  actuelle (`5332a128`) **et** contre le serveur de la 59 : chaque nouveauté serveur qu'elle lit
-  a un repli quand elle manque (registre, entrée « Préparation de la build 59 ») :
+- **Couplage backend : `requires-new`** (révisé le 13/11/2026 ; la 58 et la première version de
+  cette checklist disaient `tolerates-old`). La production sert déjà le serveur de la 59 : le
+  préflight exige qu'elle serve **exactement** `RELEASE`. Les replis de l'app restent dans le
+  code (registre, entrée « Préparation de la build 59 ») et protègent la 59 si le serveur devait
+  revenir en arrière :
   - `features.caseMessaging` **absente** (serveur de la 58) vaut `false` : le dossier renvoie vers
     WhatsApp exactement comme la 58 ; ouverte, la saisie utilise `POST /cases/:id/messages`, déjà
     servie par la production ;
@@ -48,11 +62,11 @@
     message anglais du serveur ; sans `campaign.rulesUrl`, le lien du règlement vient du classement
     public, sinon de sa page ;
   - la carte invité suit `features.scholarshipMatch`, déjà servie (fermée).
-- **Un déploiement serveur est dû après l'envoi aux testeurs** (étape 1) : le serveur de la 59
-  (routes `/admin/cases/:id/messages`, notification de réponse, alerte e-mail, clé
-  `caseMessaging`, compétition) et une migration additive,
-  `20261109120000_case_message_case_created_idx`. La 59 n'en dépend pas à la revue
-  (`caseMessaging` y vaut `false`) ; la recette de la messagerie, si.
+- **Le serveur de la 59 est en production depuis le 13/11/2026** (étape 1) : routes
+  `/admin/cases/:id/messages`, notification de réponse, alerte e-mail, clé `caseMessaging`
+  (servie à `false`), compétition, et la migration additive
+  `20261109120000_case_message_case_created_idx`. **Plus aucun déploiement n'est dû** pour la 59 ;
+  la recette de la messagerie se joue directement contre la production.
 - **Durcissement du 10/11/2026 (audit avant l'archive).** Dix
   corrections entrent dans la 59 parce qu'elles exigeaient une build : un dossier trop long
   n'est plus refusé ; le numéro WhatsApp peut être servi par le serveur
@@ -61,14 +75,15 @@
   du serveur ; un avis peut être affiché en haut de l'accueil (`notice`) ; la recherche
   ignore les accents ; la sonde « hors ligne » vise l'API de KPB ; les liens `kpb://` et les
   raccourcis de l'icône respectent l'écran d'entrée ; les parcours se rafraîchissent ; l'écran
-  d'erreur de démarrage a une issue. Toutes gardent le couplage `tolerates-old` : les deux clés
-  nouvelles, absentes du serveur de la 58, valent « rien à faire ».
+  d'erreur de démarrage a une issue. Les deux clés nouvelles (`support.whatsappNumber`,
+  `notice`) valent « rien à faire » quand elles manquent ; la production les sert à `null`
+  depuis le 13/11/2026.
 - **Dépendances et manifestes : rien ne bouge** depuis la 58. `pubspec.yaml` ne change que par sa
   ligne `version:` (étape 0.3).
 - **Le préflight de l'IPA exportée (`--app`) reste obligatoire**, comme pour la 58.
-- **Recette en deux temps** (étape 6) : d'abord contre la production telle qu'elle est (preuve du
-  `tolerates-old`), puis, après le déploiement, la messagerie de bout en bout, sur la fiche
-  `docs/device-qa-build59.md`.
+- **Recette en un seul temps** (étape 6, révisée le 13/11/2026) : contre la production, qui sert
+  déjà le serveur de la 59, messagerie comprise, sur la fiche `docs/device-qa-build59.md`. Le
+  « temps A » (la 59 face au serveur de la 58) n'est plus jouable.
 - **Notes de revue recomptées** : plus aucun prix affiché (onglet parent « Accompagnement ») et
   `features.caseMessaging` déclarée parmi les fonctions activables à distance ; le pack 59 §3
   remplace les packs 57 §3 et 58 §3.
@@ -111,11 +126,13 @@
 
 ### 0.3 L'état à constater
 
-Dans la suite, **`RELEASE`** = le SHA complet (40 caractères) de `main` après la fusion de la PR
-de la 59 et de la PR de préparation. **Ordre imposé : commit, PR, CI verte, fusion, puis relever
-`RELEASE`** ; ensuite **plus rien ne se fusionne sur `main`** jusqu'à la fin de l'étape 5 (le
-workflow Flutter CI partage son groupe de concurrence avec `main`, et le préflight vérifie les CI
-du SHA exact).
+Dans la suite, **`RELEASE`** = le SHA complet (40 caractères) de la tête de `main`, **qui doit
+être aussi le commit que sert la production** (révision du 13/11/2026 : `requires-new`). **Ordre
+imposé : commit, PR, CI verte, fusion, déploiement de la tête de `main` (🔒), puis relever
+`RELEASE`** ; ensuite **plus rien ne se fusionne sur `main` et plus rien ne se déploie** jusqu'à
+la fin de l'étape 5 (le workflow Flutter CI partage son groupe de concurrence avec `main`, et le
+préflight vérifie les CI du SHA exact et le SHA servi). Si une PR est fusionnée malgré tout :
+redéployer la nouvelle tête (🔒, feu vert du propriétaire), puis relever `RELEASE` à nouveau.
 
 ```bash
 git fetch origin
@@ -125,6 +142,8 @@ git rev-parse origin/main        # relever ce SHA complet (40 caractères)
 ```bash
 export RELEASE=<SHA>             # coller ici le SHA relevé ci-dessus : jamais un SHA écrit de mémoire
 test "$(git rev-parse origin/main)" = "$RELEASE" && echo "RELEASE = tête de main : OK"
+PROD=$(curl -fsS https://api.kpbeducation.cloud/api/health/version | jq -r .sha)
+test "$PROD" = "${RELEASE:0:${#PROD}}" && echo "production = RELEASE : OK"
 ```
 
 ```bash
@@ -134,7 +153,9 @@ git log --oneline --first-parent 5332a128.."$RELEASE"
 #   attendu (relevé du 09/11/2026) : #409 (registre de la 58), puis la ou les PR de la 59
 #   (branche claude/build-59 : 7b6804ad, 39fcd758, ce0138d7, 595a1813, c263f322, 0c19e934) et la
 #   PR de préparation de la 59, puis la PR de durcissement du 10/11/2026 (branche
-#   claude/build-59-durcissement, audit avant l'archive) — et rien d'autre.
+#   claude/build-59-durcissement, audit avant l'archive) — puis, relevé du 13/11/2026 :
+#   #410 (la 59), #411 (durcissement), #413 (visite guidée), #414 (catalogue de repli),
+#   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
@@ -151,14 +172,18 @@ git show "$RELEASE:pubspec.lock" | grep -c 'onesignal_flutter'                # 
 Si une commande affiche autre chose que l'attendu, **ne pas archiver** : arbitrer d'abord (un
 `pubspec_overrides.yaml` local réécrit `pubspec.lock` : voir la checklist de la 56, étape 0).
 
-## 1. Serveur et admin — un déploiement dû APRÈS l'envoi aux testeurs 🔒
+## 1. Serveur et admin — déjà en production depuis le 13/11/2026 🔒
 
-La production sert le backend de la 58 (`5332a128`, déployé le 08/11/2026 après son envoi). Le
-contrôle : la production est un **ancêtre** de `RELEASE`, et l'écart serveur est celui de la 59,
-rien d'autre.
+**Révision du 13/11/2026.** La production a servi le backend de la 58 (`5332a128`) jusqu'au
+13/11/2026 ; elle sert depuis `b730a4ef` (déployé par `deploy.yml`, `scope` = `full`, run
+43383015342, contrôle de santé vert) : le serveur de la 59, plus #414, #415, #412 et #416.
+Mesuré le 13/11/2026 à 07 h 11 UTC : `features.caseMessaging` = `false`, `support.whatsappNumber`
+= `null`, `notice` = `null`. Le contrôle : l'archive de la 58 est un ancêtre de `RELEASE`,
+l'écart serveur est celui listé ci-dessous, et **la production sert exactement `RELEASE`**
+(§0.3).
 
 ```bash
-git merge-base --is-ancestor 5332a128 "$RELEASE" && echo "production = ancêtre de RELEASE : OK"
+git merge-base --is-ancestor 5332a128 "$RELEASE" && echo "archive de la 58 = ancêtre de RELEASE : OK"
 git diff --stat 5332a128 "$RELEASE" -- backend admin docker-compose.yml
 #   attendu (relevé du 09/11/2026 sur claude/build-59) : backend/src/modules/cases (routes admin
 #   des messages, notification de réponse, alerte e-mail), backend/src/modules/config (clé
@@ -171,27 +196,30 @@ git diff --stat 5332a128 "$RELEASE" -- backend admin docker-compose.yml
 #   backend/src/modules/coach et ai (un message n'est plus décompté quand le modèle ne répond
 #   pas), backend/src/modules/kayak (plafond gardé à 60), docker-compose.yml (relais de
 #   KPB_APP_WHATSAPP_NUMBER, KPB_APP_NOTICE_FR, _EN, _URL).
+#   Puis, relevé du 13/11/2026 : backend/src/modules/cases et admin/app/cases, admin/lib (liste des
+#   dossiers paginée, plus de dossier en double, #412), backend/src/modules/competition-readiness
+#   (verrous, #415), docker-compose.yml (rotation des journaux, #412), scripts d'intégration (#416).
 git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 #   attendu : une seule migration, 20261109120000_case_message_case_created_idx.
 ```
 
-- **Ne pas déployer avant le préflight.** `tolerates-old` exige que la production soit un
-  **ancêtre** de `RELEASE`, jamais en avance : un déploiement à un commit postérieur à `RELEASE`
-  fait échouer l'étape 5.
-- **Quand** : après l'envoi de la 59 aux testeurs (étape 6.1, temps A joué), **avant** le temps B
-  de la recette (la messagerie de bout en bout l'exige), au feu vert du propriétaire :
-  `deploy.yml`, `ref` = `RELEASE`, `scope` = `full`. Le serveur de la 59 ne casse ni la 58 des
-  testeurs ni la 2.3.0 en vente : une clé de plus dans `features`, un index, des routes admin.
+- **Ne déployer aucun autre commit avant la fin du préflight.** `requires-new` exige que la
+  production serve **exactement** `RELEASE` : un déploiement à un autre commit fait échouer
+  l'étape 5. Si la production ne sert pas `RELEASE` (une PR fusionnée après le déploiement du
+  13/11/2026) : `deploy.yml`, `ref` = `RELEASE`, `scope` = `full`, au feu vert du propriétaire,
+  **avant** l'archive.
+- Le serveur de la 59 ne casse pas la 2.3.0 en vente : une clé de plus dans `features`, un index,
+  des routes admin (vérifié par sa revue du 09/11/2026 ; en production depuis le 13/11/2026).
 - Une seule migration est attendue, additive (un index, `CREATE INDEX IF NOT EXISTS`, sans verrou
   long sur une table de quelques milliers de lignes) : `20261109120000_case_message_case_created_idx`.
   `deploy.yml` l'applique (`prisma migrate deploy`).
-- **Aucune opération serveur obligatoire après ce déploiement.** `KPB_CASE_MESSAGING_ENABLED` et
+- **Aucune opération serveur obligatoire après le déploiement.** `KPB_CASE_MESSAGING_ENABLED` et
   `KPB_SCHOLARSHIP_MATCH_ENABLED` restent à `false` (défaut de `docker-compose.yml`). Leur ouverture
   est une décision d'exploitation (étape 9), jamais une étape du déploiement.
-- Contrôle après le déploiement :
+- Contrôle (fait le 13/11/2026, à refaire à l'étape 2) :
   `curl -fsS https://api.kpbeducation.cloud/api/config/app | jq '.features.caseMessaging'` →
   `false` (et non plus `null`).
-- Les deux leviers du durcissement sont servis à leur valeur neutre après le déploiement :
+- Les deux leviers du durcissement sont servis à leur valeur neutre :
   `jq '.support.whatsappNumber, .notice'` → `null`, `null`. Le numéro WhatsApp servi se pose par
   l'action **VPS ops** `app-whatsapp-set` (constante `APP_WHATSAPP_NUMBER` de
   `.github/scripts/vps-ops.sh`, relue en PR). L'avis (`KPB_APP_NOTICE_*`) se pose par l'action
@@ -203,21 +231,21 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 ## 2. Vérifications de départ (5 min)
 
 ```bash
-curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : 5332a128… (relevé attendu au 09/11/2026)
+curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : b730a4ef4c7e (relevé du 13/11/2026)
 PROD=$(curl -fsS https://api.kpbeducation.cloud/api/health/version | jq -r .sha)
-git merge-base --is-ancestor "$PROD" "$RELEASE" && echo "production ($PROD) = ancêtre de RELEASE : OK"
+test "$PROD" = "${RELEASE:0:${#PROD}}" && echo "production ($PROD) = RELEASE : OK"
 curl -fsS https://api.kpbeducation.cloud/api/health | jq '.push'   # {configured: true, fcm: true, oneSignal: true}
 curl -fsS https://api.kpbeducation.cloud/api/config/app \
   | jq '.features | {eef, eefTeaser, eefSpace, eefHelpBubble, eefPrivateSchools, scholarshipMatch, onboardingV2, followPushPrimer, homeNextStep}'
 #   attendu : false, true, true, false, false, false, false, true, true
 curl -fsS https://api.kpbeducation.cloud/api/config/app \
   | jq '.features | {referralInstallReferrer, referralOnboardingCode, referralLeaderboard, community, assistBridge, caseMessaging}'
-#   attendu : false, false, false, false, false, et caseMessaging null (serveur de la 58) ou false
-#   (serveur de la 59) — jamais true à la soumission
+#   attendu : false, false, false, false, false, false — caseMessaging vaut false (serveur de la 59,
+#   en production depuis le 13/11/2026), jamais null, jamais true à la soumission
 ```
 
-- **Si la production n'est pas un ancêtre de `RELEASE`** (déployée depuis une autre branche, ou
-  en avance) : **ne pas continuer** ; le préflight échouera.
+- **Si la production ne sert pas exactement `RELEASE`** (une PR fusionnée ou un déploiement
+  depuis le relevé) : **ne pas continuer** ; le préflight échouera (étape 1).
 - **Si `push.fcm` vaut `false`** : **ne pas continuer** (la 59 ne recevrait aucune notification).
 - **Si `scholarshipMatch`, `onboardingV2`, `caseMessaging` vaut `true`** (ou l'un des trois
   drapeaux du parrainage, ou `community`, ou `assistBridge`) : **ne pas continuer** ; Actions →
@@ -346,30 +374,31 @@ gh run list --workflow uptime.yml --event schedule --limit 30 --json createdAt,c
 # attendu : {sondes: ≈ 5, hors_succes: 0} et aucune erreur. « sondes = 0 » n'est PAS une preuve.
 ```
 
-Puis lancer le préflight **avec la dérogation** et le couplage **`tolerates-old`** (la production
-sert un ancêtre de `RELEASE` : étape 1) :
+Puis lancer le préflight **avec la dérogation** et le couplage **`requires-new`** (la production
+sert exactement `RELEASE` : étape 1) :
 
 ```bash
 gh workflow run release-preflight.yml --ref main \
-  -f ref="$RELEASE" -f backend_coupling=tolerates-old -f require_24h_stability=false
+  -f ref="$RELEASE" -f backend_coupling=requires-new -f require_24h_stability=false
 ```
 
 - `ref` = `RELEASE` (le SHA complet, pas `main`) ;
-- `backend_coupling` = **`tolerates-old`** : la production doit être un **ancêtre** de `RELEASE`.
-  Le journal dit « production is N commit(s) BEHIND » et « The coupled deploy is now OWED » : c'est
-  le déploiement de l'étape 1, dû après l'envoi aux testeurs ;
+- `backend_coupling` = **`requires-new`** (révisé le 13/11/2026) : la production doit servir
+  **exactement** `RELEASE`. Le journal dit « backend is on … ✅ ». `tolerates-old` échouerait :
+  il refuse une production en avance sur la build, et c'est ce qu'elle était le 13/11/2026 face
+  au commit audité `d4d643fa` ;
 - `require_24h_stability` = `false`, dérogation journalisée, conservée avec la preuve des sondes.
 
 ## 6. Recette sur appareil (TestFlight + Play Internal) 🔒
 
 1. IPA → TestFlight ; AAB → Play Console → **Tests internes** (feu vert du propriétaire pour
    chacun). Installer **la ligne `2.3.1 (59)`** ; Android : `versionCode` 59.
-2. **Temps A — contre la production telle qu'elle est** (`5332a128`) : dérouler
-   **`docs/device-qa-build59.md`** sauf les lignes « serveur 59 », sur l'artefact, **en release**
-   (jamais un build de debug). C'est la preuve du `tolerates-old` : dossier sans saisie, WhatsApp,
-   refus de code lus au message anglais.
-3. **Le déploiement de l'étape 1** (🔒, feu vert du propriétaire), puis **temps B** : les lignes
-   « serveur 59 ». La messagerie se joue dans une **fenêtre** : Actions → **VPS ops** →
+2. **Contre la production** (qui sert `RELEASE`, serveur de la 59 compris : étape 1) : dérouler
+   **`docs/device-qa-build59.md`** en entier, lignes « serveur 59 » comprises, sur l'artefact,
+   **en release** (jamais un build de debug). D'abord messagerie fermée (dossier sans saisie,
+   WhatsApp), puis la fenêtre. Le « temps A » de la première version (la 59 face au serveur de
+   la 58) n'est plus jouable depuis le 13/11/2026.
+3. La messagerie se joue dans une **fenêtre** : Actions → **VPS ops** →
    `case-messaging-on` (simulation, puis application), un compte admin qui répond, un compte
    élève de test. La compétition se joue en **préproduction** (jamais ouverte en production pour
    la recette), comme « Mes 10 bourses » et la carte invité.
@@ -389,7 +418,8 @@ Chaque point a sa ligne dans `docs/device-qa-build59.md` :
 - **vrai mode avion** : bandeau hors ligne global, toasts « Hors ligne » et « Connexion rétablie » ;
 - **VoiceOver réel** sur les constats d'accessibilité ;
 - **notifications réelles** : la demande d'autorisation, une alerte d'ouverture, le **tap** sur
-  une notification, et **la réponse de l'équipe dans un dossier** (« … t'a répondu », temps B) ;
+  une notification, et **la réponse de l'équipe dans un dossier** (« … t'a répondu », fenêtre
+  de messagerie ouverte) ;
 - **connexion Google** (jamais jouée par l'audit), et **un compte existant sur une installation
   neuve** (« Déjà un compte ? ») ;
 - **☰ invité en 1re session**, **« Suivre » puis retour**, tunnel **« Être accompagné »** ;
@@ -397,7 +427,7 @@ Chaque point a sa ligne dans `docs/device-qa-build59.md` :
 - **HorsLigne-1** (la carte « Études en France » revient après un démarrage hors ligne) et
   **HorsLigne-5** (l'alerte d'ouverture est posée côté serveur, pas seulement le favori).
 
-La recette ne vaut que signée (appareil, OS, build, profil réseau, temps A ou B) en bas de la
+La recette ne vaut que signée (appareil, OS, build, profil réseau, voie de recette) en bas de la
 fiche.
 
 ## 7. Consoles
@@ -440,8 +470,8 @@ L'étape 9 de la checklist de la 57 s'applique en lisant « 59 » pour « 57 » 
    utilisateurs, la valeur 2.3.1 ne vise que la 59.
 4. **`KPB_MIN_APP_VERSION`** reste `0.0.0` jusqu'à environ 85 % des comptes actifs en 2.3.1
    (`GET /admin/app-builds`), jamais pendant un palier.
-5. **Le déploiement serveur dû** (étape 1), s'il n'a pas été fait pendant la recette : après l'envoi
-   aux testeurs, au feu vert du propriétaire.
+5. **Aucun déploiement serveur dû pour la 59** : le serveur de la 59 est en production depuis le
+   13/11/2026 (étape 1). Tout déploiement ultérieur suit son propre feu vert.
 6. **Messagerie du dossier** : `KPB_CASE_MESSAGING_ENABLED=true` par Actions → **VPS ops** →
    `case-messaging-on` (simulation, puis application), **seulement quand l'équipe est prête à
    répondre depuis l'administration** (décision c du §0.1 : qui, quel délai). Un message laissé
