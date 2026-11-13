@@ -55,7 +55,7 @@ export class OutcomeConsentService {
     const noticeContract = this.notice(input.languageCode);
     const result = await this.prismaService.execute((prisma) =>
       prisma.$transaction(async (tx) => {
-        await tx.$queryRaw(
+        await tx.$executeRaw(
           Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${`outcome-consent:${userId}`}))`,
         );
         const workspace = await tx.scholarshipWorkspace.findFirst({

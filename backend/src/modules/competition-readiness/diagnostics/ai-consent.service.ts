@@ -53,7 +53,7 @@ export class AiConsentService {
     const noticeContract = this.notice(input.languageCode);
     const result = await this.prismaService.execute((prisma) =>
       prisma.$transaction(async (tx) => {
-        await tx.$queryRaw(
+        await tx.$executeRaw(
           Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${`ai-consent:${userId}`}))`,
         );
         const profile = await tx.userProfile.findUnique({

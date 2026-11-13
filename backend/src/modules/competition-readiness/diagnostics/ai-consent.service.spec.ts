@@ -48,7 +48,7 @@ describe("AiConsentService", () => {
   it("creates a guardian-linked receipt for an eligible minor", async () => {
     const contract = await service.getNotice("student-minor", "fr");
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       userProfile: {
         findUnique: jest
           .fn()
@@ -99,7 +99,7 @@ describe("AiConsentService", () => {
   it("blocks processing below the configured minimum age before provider use", async () => {
     process.env.KPB_AI_DIAGNOSTIC_MIN_AGE = "16";
     const tx = {
-      $queryRaw: jest.fn(),
+      $executeRaw: jest.fn(),
       userProfile: {
         findUnique: jest
           .fn()
