@@ -77,6 +77,7 @@
     "test:integration:case-message-idempotence": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/cases/cases-message-idempotence.postgres.spec.ts",
     "test:integration:cases-admin": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/cases/cases-admin-list.postgres.spec.ts src/modules/cases/cases-create-dedupe.postgres.spec.ts",
     "test:integration:advisory-locks": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/competition-readiness/outcomes/outcome-consent.postgres.spec.ts src/modules/competition-readiness/diagnostics/ai-consent.postgres.spec.ts src/modules/competition-readiness/diagnostics/ai-budget.postgres.spec.ts src/modules/competition-readiness/reviews/study-review-consent.postgres.spec.ts",
+    "test:integration:community-consent": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/community/community.postgres.spec.ts src/modules/community/community-verif-bot.postgres.spec.ts src/modules/assist-bridge/assist-bridge.postgres.spec.ts src/modules/notifications/campaign-consent.postgres.spec.ts src/modules/profiles/profiles-nationality.postgres.spec.ts",
     "cleanup:reassigned-events": "ts-node scripts/cleanup-reassigned-events.ts",
     "test:integration:birthdates": "KPB_RUN_POSTGRES_INTEGRATION=true jest --runInBand src/modules/profiles/birthdate-backfill.postgres.spec.ts",
     "backfill:birthdates": "ts-node scripts/backfill-birthdates.ts",
