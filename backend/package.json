@@ -17,6 +17,7 @@
     "import:omnes-spring": "ts-node scripts/import-omnes-spring.ts",
     "import:igensia": "ts-node scripts/import-igensia.ts",
     "import:north-america": "ts-node scripts/import-north-america.ts",
+    "import:europe": "ts-node scripts/import-north-america.ts --europe",
     "dedupe:omnes": "ts-node scripts/dedupe-omnes-programs.ts",
     "reclassify:omnes-fields": "ts-node scripts/reclassify-omnes-fields.ts",
     "roll:omnes-fall-2027": "ts-node scripts/roll-omnes-fall-2027.ts",

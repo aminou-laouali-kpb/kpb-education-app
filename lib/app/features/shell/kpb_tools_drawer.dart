@@ -16,6 +16,7 @@ import '../tools/impact_dashboard_screen.dart';
 import '../tools/interview_simulator_screen.dart';
 import '../tools/motivation_letters_screen.dart';
 import '../travel/flight_estimator_screen.dart';
+import '../app_tour/app_tour.dart';
 
 /// Global hamburger drawer for the KPB student tools.
 ///
@@ -167,6 +168,13 @@ class KpbToolsDrawer extends StatelessWidget {
   /// « drapeau à VRAI ⇒ les quatre outils reviennent » dépendrait de l'ordre
   /// des tests dans le fichier, ce qui est précisément le genre de garde-fou
   /// qui reste vert pour de mauvaises raisons.
+  /// Les outils que le tiroir affiche en ce moment, dans son ordre. La visite
+  /// guidée (`AppTour`) les lit ici : elle ne nomme jamais un outil masqué.
+  static List<AppTourTool> get visibleTools => [
+        for (final t in _tools)
+          (labelKey: t.labelKey, icon: t.icon, color: t.color),
+      ];
+
   static List<_ToolEntry> get _tools => <_ToolEntry>[
         // ── Espace « Études en France » ────────────────────────────────────
         // Placé EN TÊTE pendant la campagne : c'est le module que la vitrine

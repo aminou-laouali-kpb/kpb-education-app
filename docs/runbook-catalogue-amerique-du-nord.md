@@ -102,3 +102,39 @@ Les tests épinglent les comptes (26 + 10 établissements, 172 formations, 16
 en seconde passe) : un ajout les fait échouer, c'est voulu. Un nouvel établissement ou une nouvelle
 formation sont créés au prochain passage ; une **correction** d'une fiche déjà
 en base ne l'est pas (création seule) : elle se fait dans l'admin.
+
+
+## Troisième passe et Europe (12/11/2026)
+
+| Opération `vps-ops` | Script | Source | Ce qu'elle écrit |
+|---|---|---|---|
+| `import-north-america` | `npm run import:north-america` | `amerique-du-nord-2027.json` (généré, ajouts dans `amerique-du-nord-2027.ajouts-2026-11.json`) | 8 établissements, 28 formations ajoutées à 7 universités du Québec, **corrections** de prix et de durées |
+| `import-europe` | `npm run import:europe` | `europe-2027.json` ; provenance `europe-2027.sources.md` | pays `bel` (s'il manque), 6 établissements `eu-be-*` / `eu-de-*`, 30 formations |
+
+**Corrections** : l'import reste création seule, SAUF la liste `corrections`
+de la source : un prix n'est réécrit que si la ligne porte encore la valeur
+écrite par le passage précédent (`previousTuitionFr`), une durée n'est écrite
+que si la ligne n'en a pas. Une retouche faite dans l'admin n'est jamais
+écrasée (ligne « ⚠ » du rapport).
+
+### Procédure
+
+1. `npm run verify:catalog` : marge d'au moins 58 formations (28 + 30).
+2. **Europe** (aucune ligne `eu-*` en base, la garde laisse passer) :
+   `import-europe`, `dry_run` coché → attendu « Pays à créer : bel »,
+   6 établissements « À CRÉER », 30 formations, `TOTAL : 7 écriture(s)` ;
+   puis décoché. Relancer la simulation → `TOTAL : 0`.
+3. **Amérique du Nord** : la simulation `import-north-america` doit annoncer
+   8 « À CRÉER », 7 « à compléter » (28 formations), et les corrections
+   « ~ » (prix et durées), sans « ⚠ ». Les deux premières passes étant en
+   base, l'application se fait depuis le VPS :
+
+```bash
+docker compose exec -T -e KPB_ALLOW_PRODUCTION_SEED=1 api npm run import:north-america -- --apply
+docker compose exec -T api npm run verify:catalog
+docker compose exec -T api npm run import:north-america   # TOTAL : 0 écriture(s)
+```
+
+4. **App** : Canada / États-Unis / Allemagne visibles tout de suite (vue
+   « Tous », recherche « Saint-Boniface », « Fort Hays », « Dresden ») ; la
+   Belgique après la build qui ajoute `bel` au verrou des pays.

@@ -1216,6 +1216,26 @@ case "$ACTION" in
     fi
     ;;
 
+  import-europe)
+    # Crée des universités NON partenaires de Belgique (UCLouvain, ULiège,
+    # ULB, UNamur) et d'Allemagne (Hochschule Rhein-Waal, TU Dresden) et leurs
+    # formations, depuis `backend/scripts/data/europe-2027.json` (provenance :
+    # `europe-2027.sources.md` ; critères : docs/catalogue-amerique-du-nord.md,
+    # section « Europe »). Crée aussi le pays Belgique (`bel`) s'il manque,
+    # depuis m5-countries.seed.ts, sans jamais réécrire un pays existant.
+    # CRÉATION SEULE, rejouable : « 0 écriture » une fois appliqué.
+    if [ "$DRY_RUN" = "true" ]; then
+      echo "── SIMULATION (rien n'est écrit) ──"
+      docker compose exec -T api npm run import:europe
+    else
+      echo "── APPLICATION ──"
+      docker compose exec -T api npm run import:europe -- --apply
+      echo
+      echo "── Intégrité du catalogue ──"
+      docker compose exec -T api npm run verify:catalog
+    fi
+    ;;
+
   import-north-america)
     # Crée des universités NON partenaires (`isPartner: false`) du Canada et
     # des États-Unis et leurs formations phares, depuis

@@ -99,6 +99,10 @@
 | Nouveau-25 | **Raccourcis de l'icône sur une installation neuve** (Android : appui long sur l'icône → « Mes dossiers ») avant toute connexion | L'app s'ouvre sur l'écran d'entrée, pas sur un accueil vide ; après « Explorer sans compte », le raccourci ouvre l'onglet Dossiers | — | ☐ |
 | Nouveau-26 | **Écran Services** (Profil → « Services KPB », préproduction avec une offre servie) | Chaque offre affiche « Tarif sur demande, auprès de ton conseiller KPB » ; aucun montant | ☐ | ☐ |
 | Nouveau-27 | **Parcours rafraîchis** : ouvrir Parcours, tuer l'app, la rouvrir le lendemain (ou avancer la date du téléphone d'un jour) | La liste se met à jour sans tirer l'écran ; hors réseau, la liste gardée reste affichée | ☐ | ☐ |
+| Nouveau-28 | **Visite guidée, 1re arrivée** : app désinstallée puis installée, connexion (ou « Explorer sans compte ») jusqu'à l'accueil | Environ 1 s après l'accueil, l'écran s'assombrit : « Bienvenue… », « Étape 1 sur 9 » (8 en invité : pas de KPB Intelligence). Chaque étape éclaire le BON bouton (onglets en bas, ☰ en haut à gauche, KPB Intelligence) et affiche l'onglet dont elle parle ; la liste des outils du ☰ est celle du tiroir ; « J'ai compris » ramène à l'accueil | ☐ | ☐ |
+| Nouveau-29 | **Visite : une seule fois** — tuer l'app après « J'ai compris », la rouvrir ; puis réinstaller, quitter l'app au milieu de la visite, la rouvrir | Fermée : ne revient plus. Quittée au milieu : revient au démarrage suivant | ☐ | ☐ |
+| Nouveau-30 | **Visite : Passer, Retour, texte 1,5, VoiceOver / TalkBack, 360 dp** | « Passer » ferme et affiche « Tu pourras revoir la visite… » ; Retour du téléphone = étape précédente ; un tap sur le voile ne fait rien ; à 1,5 la bulle reste lisible (elle défile) sans recouvrir le bouton ; le lecteur d'écran lit le titre de chaque étape | ☐ | ☐ |
+| Nouveau-31 | **Profil → « Revoir la visite »** (élève et invité) | La visite repart de l'étape 1 et, fermée, rend l'élève au Profil | ☐ | ☐ |
 
 ## Correctifs de l'audit (#387, #389) — ce que seul un appareil prouve
 

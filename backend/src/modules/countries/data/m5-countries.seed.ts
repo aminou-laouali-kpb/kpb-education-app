@@ -747,4 +747,101 @@ export const M5_COUNTRY_SEEDS: M5CountrySeed[] = [
       verdicts: defaultVerdicts('Espagne', 'Spain', ['fra', 'mar']),
     },
   },
+  {
+    // Belgique francophone (Fédération Wallonie-Bruxelles) — ajoutée le
+    // 12/11/2026 avec les universités NON partenaires UCLouvain, ULiège, ULB et
+    // UNamur (`import:europe`). Créée en base par cet import si elle manque,
+    // jamais réécrite. Faits relevés le 12/11/2026, un fait = une URL :
+    // backend/scripts/data/europe-2027.sources.md, section « Pays ».
+    id: 'bel',
+    code: 'BEL',
+    lastVerifiedAt: '2026-11-12',
+    sourceUrl: 'https://www.studyinbelgium.be/en/how-much-does-it-cost-live-and-study-french-speaking-belgium',
+    flagEmoji: '🇧🇪',
+    displayOrder: 10,
+    nameFr: 'Belgique',
+    nameEn: 'Belgium',
+    taglineFr: 'Universités publiques en français, frais réduits pour de nombreux pays africains',
+    taglineEn: 'French-taught public universities, reduced fees for many African countries',
+    nextIntakeLabelFr: 'Septembre 2027',
+    nextIntakeLabelEn: 'September 2027',
+    mainLanguageFr: 'Français (Wallonie et Bruxelles)',
+    mainLanguageEn: 'French (Wallonia and Brussels)',
+    whyStudyFr:
+      "Des universités publiques reconnues qui enseignent en français, et des droits d'inscription de 1 194 EUR par an pour les étudiants de nombreux pays d'Afrique francophone.",
+    whyStudyEn:
+      'Recognised public universities teaching in French, and tuition of EUR 1,194 a year for students from many French-speaking African countries.',
+    marketingDescriptionFr:
+      "KPB n'est pas partenaire des universités belges : tu candidates directement auprès d'elles. KPB peut t'aider à préparer ton dossier, ton équivalence et ton visa.",
+    marketingDescriptionEn:
+      'KPB is not a partner of Belgian universities: you apply directly to them. KPB can help you prepare your file, your equivalence and your visa.',
+    whyStudyBulletsFr: [
+      'Études en français',
+      '1 194 EUR/an pour les pays des annexes ARES (Sénégal, Cameroun, Côte d\'Ivoire…)',
+      '20 h de travail par semaine pendant les cours',
+      '12 mois après le diplôme pour chercher un emploi',
+    ],
+    whyStudyBulletsEn: [
+      'Study in French',
+      'EUR 1,194/year for countries listed by ARES (Senegal, Cameroon, Côte d\'Ivoire…)',
+      '20 hours of work a week during term',
+      '12 months after graduating to look for a job',
+    ],
+    howItWorksFr:
+      "Équivalence du diplôme (Fédération Wallonie-Bruxelles) → Demande d'admission à l'université (souvent avant le 31 mars pour les candidats hors UE) → Preuve de moyens → Visa D → Arrivée.",
+    howItWorksEn:
+      'Diploma equivalence (Wallonia-Brussels Federation) → University application (often by 31 March for non-EU applicants) → Proof of means → D visa → Arrival.',
+    costsOverviewFr:
+      "Droits 2026-2027 : 5 369 EUR/an hors UE (1 194 EUR + contribution de 4 175 EUR) ; 1 194 EUR/an pour les pays des annexes 1 à 3 de l'ARES. Preuve de moyens : 1 062 EUR par mois (12 744 EUR par an).",
+    costsOverviewEn:
+      'Tuition 2026-2027: EUR 5,369/year outside the EU (EUR 1,194 + EUR 4,175 contribution); EUR 1,194/year for countries in ARES annexes 1 to 3. Proof of means: EUR 1,062 a month (EUR 12,744 a year).',
+    languageSectionFr:
+      'Cours en français : niveau B2 en général (DELF, DALF, TEF ou TCF), dispense possible si le français est langue officielle de ton pays. Certains masters sont en anglais.',
+    languageSectionEn:
+      'Courses in French: usually B2 level (DELF, DALF, TEF or TCF), with possible exemption if French is an official language of your country. Some master\'s are in English.',
+    partnerSchoolsFr: 'Aucune école partenaire KPB en Belgique : UCLouvain, ULiège, ULB et UNamur sont au catalogue à titre d\'information.',
+    partnerSchoolsEn: 'No KPB partner school in Belgium: UCLouvain, ULiège, ULB and UNamur are in the catalogue for information.',
+    scholarshipsSectionFr: 'Bourses ARES et Wallonie-Bruxelles International possibles — voir le module Bourses.',
+    scholarshipsSectionEn: 'ARES and Wallonia-Brussels International scholarships may apply — see Scholarships.',
+    whatsAppPrefillFr: 'Bonjour KPB, je veux étudier en Belgique. Pouvez-vous m\'aider ?',
+    whatsAppPrefillEn: 'Hello KPB, I want to study in Belgium. Can you help?',
+    mvpNoteFr: '',
+    mvpNoteEn: '',
+    tuitionRangeFr: '1 194 – 5 369 € / an',
+    tuitionRangeEn: '€1,194 – 5,369 / year',
+    livingCostRangeFr: '1 000 – 1 300 € / mois',
+    livingCostRangeEn: '€1,000 – 1,300 / month',
+    visaOverviewFr: 'Visa D études : lettre d\'admission, équivalence, preuve de moyens de 1 062 € par mois, certificat médical.',
+    visaOverviewEn: 'D study visa: admission letter, equivalence, proof of means of €1,062 a month, medical certificate.',
+    admissionDifficultyFr: 'Moyenne',
+    admissionDifficultyEn: 'Medium',
+    popularFieldIds: ['engineering', 'business', 'computer_science'],
+    quiz: {
+      questions: [
+        levelQuestion,
+        diplomaQuestion,
+        q(
+          'q3_french_level',
+          'Quel est ton niveau de français ?',
+          'What is your French level?',
+          [
+            ['native', 'Français langue officielle / d\'études', 'French is my official or school language'],
+            ['b2', 'B2 ou plus (certifié)', 'B2 or above (certified)'],
+            ['basic', 'Moins de B2', 'Below B2'],
+          ],
+        ),
+        q(
+          'q4_means',
+          'Peux-tu prouver 1 062 € de ressources par mois (garant ou compte bloqué) ?',
+          'Can you prove €1,062 of means per month (sponsor or blocked account)?',
+          [
+            ['yes_easily', 'Oui, sans problème', 'Yes, easily'],
+            ['yes_difficult', 'Oui, mais tendu', 'Yes, but tight'],
+            ['no', 'Non', 'No'],
+          ],
+        ),
+      ],
+      verdicts: defaultVerdicts('Belgique', 'Belgium', ['fra', 'can']),
+    },
+  },
 ];

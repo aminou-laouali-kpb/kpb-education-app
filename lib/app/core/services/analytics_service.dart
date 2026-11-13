@@ -1055,6 +1055,56 @@ class AnalyticsService {
     }
   }
 
+  /// Les propriétés de `app_tour_shown` : la seule clé `tour_trigger`.
+  @visibleForTesting
+  static Map<String, Object> appTourShownParams({required String trigger}) =>
+      <String, Object>{AnalyticsParamKey.tourTrigger: trigger};
+
+  /// La visite guidée de l'application s'est ouverte. [trigger] :
+  /// `first_open` ou `replay`.
+  Future<void> logAppTourShown({required String trigger}) async {
+    final params = appTourShownParams(trigger: trigger);
+    try {
+      await _logEvent(AnalyticsEventName.appTourShown, params);
+      _mirror(AnalyticsEventName.appTourShown, params);
+    } catch (e, s) {
+      _logError('logAppTourShown', e, s);
+    }
+  }
+
+  /// Les propriétés de `app_tour_completed` : `tour_exit`, `tour_cards_seen`
+  /// et `tour_steps_total` (deux ENTIERS).
+  @visibleForTesting
+  static Map<String, Object> appTourCompletedParams({
+    required String exit,
+    required int stepsSeen,
+    required int stepsTotal,
+  }) =>
+      <String, Object>{
+        AnalyticsParamKey.tourExit: exit,
+        AnalyticsParamKey.tourCardsSeen: stepsSeen,
+        AnalyticsParamKey.tourStepsTotal: stepsTotal,
+      };
+
+  /// La visite guidée de l'application s'est fermée.
+  Future<void> logAppTourCompleted({
+    required String exit,
+    required int stepsSeen,
+    required int stepsTotal,
+  }) async {
+    final params = appTourCompletedParams(
+      exit: exit,
+      stepsSeen: stepsSeen,
+      stepsTotal: stepsTotal,
+    );
+    try {
+      await _logEvent(AnalyticsEventName.appTourCompleted, params);
+      _mirror(AnalyticsEventName.appTourCompleted, params);
+    } catch (e, s) {
+      _logError('logAppTourCompleted', e, s);
+    }
+  }
+
   /// Le catalogue n'a pas pu répondre. [reason] : `network` ou `server`.
   Future<void> logEefCatalogFailed(String reason) async {
     final params = <String, Object>{AnalyticsParamKey.reason: reason};

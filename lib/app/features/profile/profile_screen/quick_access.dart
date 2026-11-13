@@ -266,3 +266,54 @@ class _QuickAccessTile extends StatelessWidget {
     );
   }
 }
+
+/// « Comment utiliser l'application ? » — rejoue la visite guidée. Placée
+/// haut dans le Profil, à l'endroit que la visite annonce à sa dernière étape.
+class _AppTourCard extends StatelessWidget {
+  const _AppTourCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              color: KpbColors.actionPrimarySoft,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.explore_rounded,
+                color: KpbColors.actionPrimary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SectionTitle('app_tour_profile_card_title'.tr),
+                const SizedBox(height: 2),
+                Text(
+                  'app_tour_profile_card_body'.tr,
+                  style: const TextStyle(
+                    color: KpbColors.textSecondary,
+                    fontSize: KpbFontSize.sm,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                FilledButton.tonalIcon(
+                  key: const ValueKey('profile-app-tour-replay'),
+                  onPressed: () => unawaited(AppTour.replay()),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text('app_tour_replay'.tr),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

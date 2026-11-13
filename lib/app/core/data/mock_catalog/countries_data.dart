@@ -552,4 +552,57 @@ const kCountries = <CountryModel>[
     admissionDifficulty: LocalizedText(fr: 'Facile', en: 'Easy'),
     popularFieldIds: ['d02', 'd03', 'd12'],
   ),
+  CountryModel(
+    // Belgique francophone — ajoutée le 12/11/2026 avec les universités NON
+    // partenaires UCLouvain, ULiège, ULB et UNamur. Faits : circulaire ARES
+    // 2026-001, Study in Belgium (WBI), Bruxelles-J (relevé du 12/11/2026).
+    id: 'belgium',
+    flagEmoji: '🇧🇪',
+    tagline: LocalizedText(
+        fr: 'Universités publiques en français · frais réduits pour de nombreux pays africains',
+        en: 'French-taught public universities · reduced fees for many African countries'),
+    mainLanguage: LocalizedText(
+        fr: 'Français (Wallonie et Bruxelles)',
+        en: 'French (Wallonia and Brussels)'),
+    marketingDescription: LocalizedText(
+        fr: 'KPB n\'est pas partenaire des universités belges : tu candidates directement auprès d\'elles. KPB peut t\'aider à préparer ton dossier, ton équivalence et ton visa.',
+        en: 'KPB is not a partner of Belgian universities: you apply directly to them. KPB can help you prepare your file, your equivalence and your visa.'),
+    whyStudyBulletsFr: [
+      'Études en français',
+      '1 194 EUR/an pour les pays des annexes ARES (Sénégal, Cameroun, Côte d\'Ivoire…)',
+      '20 h de travail par semaine pendant les cours',
+      '12 mois après le diplôme pour chercher un emploi'
+    ],
+    whyStudyBulletsEn: [
+      'Study in French',
+      'EUR 1,194/year for countries listed by ARES (Senegal, Cameroon, Côte d\'Ivoire…)',
+      '20 hours of work a week during term',
+      '12 months after graduating to look for a job'
+    ],
+    howItWorks: LocalizedText(
+        fr: 'Équivalence du diplôme (Fédération Wallonie-Bruxelles) · Demande d\'admission à l\'université (souvent avant le 31 mars hors UE) · Preuve de moyens · Visa D · Arrivée',
+        en: 'Diploma equivalence (Wallonia-Brussels Federation) · University application (often by 31 March outside the EU) · Proof of means · D visa · Arrival'),
+    costsOverview: LocalizedText(
+        fr: 'Droits 2026-2027 : 5 369 EUR/an hors UE ; 1 194 EUR/an pour les pays des annexes 1 à 3 de l\'ARES. Preuve de moyens : 1 062 EUR par mois.',
+        en: 'Tuition 2026-2027: EUR 5,369/year outside the EU; EUR 1,194/year for countries in ARES annexes 1 to 3. Proof of means: EUR 1,062 a month.'),
+    languageSection: LocalizedText(
+        fr: 'Cours en français : niveau B2 en général (DELF, DALF, TEF ou TCF), dispense possible si le français est langue officielle de ton pays.',
+        en: 'Courses in French: usually B2 level (DELF, DALF, TEF or TCF), with possible exemption if French is an official language of your country.'),
+    whatsAppPrefill: LocalizedText(
+        fr: 'Bonjour KPB, je veux étudier en Belgique. Pouvez-vous m\'aider ?',
+        en: 'Hello KPB, I want to study in Belgium. Can you help?'),
+    name: LocalizedText(fr: 'Belgique', en: 'Belgium'),
+    whyStudy: LocalizedText(
+        fr: 'Universités publiques reconnues qui enseignent en français, frais réduits pour de nombreux pays d\'Afrique francophone.',
+        en: 'Recognised public universities teaching in French, reduced fees for many French-speaking African countries.'),
+    tuitionRange:
+        LocalizedText(fr: 'EUR 1 194–5 369/an', en: 'EUR 1 194–5 369/year'),
+    livingCostRange:
+        LocalizedText(fr: 'EUR 1 000–1 300/mois', en: 'EUR 1 000–1 300/month'),
+    visaOverview: LocalizedText(
+        fr: 'Visa D études avec lettre d\'admission et preuve de moyens.',
+        en: 'D study visa with admission letter and proof of means.'),
+    admissionDifficulty: LocalizedText(fr: 'Modérée', en: 'Moderate'),
+    popularFieldIds: ['d03', 'd02', 'd01'],
+  ),
 ];

@@ -113,6 +113,10 @@ const _nonProcessorSuffixes = <String>[
   'studyinromania.gov.ro',
   'si.se',
   'daad.de',
+  // Study in Belgium (Wallonie-Bruxelles International) : source officielle de
+  // la fiche pays Belgique ajoutée le 12/11/2026. Un lien que l'étudiant OUVRE,
+  // jamais un destinataire de ses données.
+  'studyinbelgium.be',
   'studyin.kz',
   'studyinazerbaijan.edu.az',
   'turkiyeburslari.gov.tr',
