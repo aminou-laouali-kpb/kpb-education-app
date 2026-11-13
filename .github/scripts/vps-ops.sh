@@ -1247,16 +1247,23 @@ case "$ACTION" in
     # ids des formations manquantes sont ajoutés à `programIds`), un homonyme
     # déjà en base sous un autre id (Université d'Ottawa, `uottawa`) bloque la
     # création. Rejouable : « 0 écriture » une fois appliqué. Seconde passe
-    # Canada (17/10/2026, 16 établissements) : si la première est déjà en base,
-    # la garde de production refuse l'application sans
-    # KPB_ALLOW_PRODUCTION_SEED=1 — procédure dans le runbook :
-    # docs/runbook-catalogue-amerique-du-nord.md.
+    # Canada (17/10/2026) et troisième passe (12/11/2026) : la garde de
+    # production refuserait l'application une fois des lignes `na-*` en base ;
+    # l'action passe KPB_ALLOW_PRODUCTION_SEED=1 à l'application (voir plus bas).
+    # Runbook : docs/runbook-catalogue-amerique-du-nord.md.
     if [ "$DRY_RUN" = "true" ]; then
       echo "── SIMULATION (rien n'est écrit) ──"
       docker compose exec -T api npm run import:north-america
     else
       echo "── APPLICATION ──"
-      docker compose exec -T api npm run import:north-america -- --apply
+      # Les passes suivantes (seconde passe du 17/10, troisième du 12/11/2026)
+      # s'appliquent sur une base qui a déjà des lignes `na-*` : la garde de
+      # production les refuserait. L'import est création seule, ses corrections
+      # ne réécrivent qu'une valeur encore à l'état du passage précédent, et il
+      # est rejouable à 0 écriture : la dérogation est passée ici, pour cette
+      # seule commande (décision du propriétaire, 13/11/2026), plutôt que
+      # depuis une session SSH sur le VPS.
+      docker compose exec -T -e KPB_ALLOW_PRODUCTION_SEED=1 api npm run import:north-america -- --apply
       echo
       echo "── Intégrité du catalogue ──"
       docker compose exec -T api npm run verify:catalog
