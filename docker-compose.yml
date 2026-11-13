@@ -12,6 +12,25 @@
 # can't OOM-kill the student-facing API. See docs/DEPLOYMENT.md.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Rotation des journaux, pour CHAQUE service.
+#
+# Sans bloc `logging`, Docker garde le journal d'un conteneur dans un seul
+# fichier `json-file` qui grossit sans limite, jusqu'à remplir le disque — celui
+# de la base de données et des pièces des élèves (audit avant la 59). Ici :
+# 5 fichiers de 10 Mo au plus par conteneur, soit 50 Mo ; le plus ancien est
+# supprimé quand un nouveau commence.
+#
+# Docker ne lit ce réglage qu'à la CRÉATION d'un conteneur. Un déploiement
+# recrée `api`, `admin` et `web` : eux le prennent tout de suite. `clamav`, `db`
+# et `db-backup` gardent leur journal sans limite jusqu'à leur prochaine
+# recréation (`recreate-clamav` pour le premier ; pour la base, une recréation
+# décidée, avec sa courte coupure).
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   api:
     build:
@@ -20,6 +39,7 @@ services:
     image: kpb-backend:${KPB_IMAGE_TAG:-local}
     container_name: kpb_api
     restart: always
+    logging: *default-logging
     # No host port: ingress is via the shared Traefik (labels below).
     mem_limit: 768m
     networks:
@@ -329,6 +349,7 @@ services:
     image: clamav/clamav:stable
     container_name: kpb_clamav
     restart: always
+    logging: *default-logging
     # 3 Go, pas 1,5. MESURÉ le 04/09/2026, clamd fraîchement redémarré et base
     # chargée : 956 Mo occupés sur les 1536 Mo du plafond, soit 62 %. Or clamd
     # détient DEUX copies de la base pendant un rechargement de signatures —
@@ -353,6 +374,7 @@ services:
     image: postgres:15-alpine
     container_name: kpb_db
     restart: always
+    logging: *default-logging
     mem_limit: 1g
     networks:
       - internal
@@ -378,6 +400,7 @@ services:
     image: postgres:15-alpine
     container_name: kpb_db_backup
     restart: always
+    logging: *default-logging
     networks:
       - internal
     depends_on:
@@ -417,6 +440,7 @@ services:
     image: kpb-admin:${KPB_IMAGE_TAG:-local}
     container_name: kpb_admin
     restart: always
+    logging: *default-logging
     mem_limit: 384m
     # Sans healthcheck, une image admin qui plante passait le déploiement
     # (le portail ne testait que l'API). La page de connexion est publique et
@@ -447,6 +471,7 @@ services:
     image: nginx:1.27-alpine
     container_name: kpb_web
     restart: always
+    logging: *default-logging
     mem_limit: 64m
     networks:
       - traefik
