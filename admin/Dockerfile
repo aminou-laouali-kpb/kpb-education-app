@@ -1,5 +1,5 @@
 # Stage 1: build the Next.js standalone bundle
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -18,7 +18,7 @@ ENV NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 RUN npm run build
 
 # Stage 2: minimal runtime (Next standalone server)
-FROM node:22-alpine
+FROM node:26-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
