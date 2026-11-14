@@ -851,9 +851,28 @@ describePostgres('Annonce d’ouverture — intégration PostgreSQL', () => {
     );
 
     process.env.KPB_SCHOLARSHIP_OPENING_MODE = 'outbox_followers';
+    const beforeMirror = Date.now();
     const mirrored = await runMirror(prisma, { apply: true });
     expect(mirrored.refused).toBeNull();
     expect(mirrored.inserted).toBeGreaterThanOrEqual(1);
+    // La CLI écrit ses dates en SQL brut : en heure UTC, quel que soit le
+    // fuseau de la base (la CI joue cette spec en UTC+14).
+    const mirroredAt = [
+      (
+        await prisma.savedItem.findFirstOrThrow({
+          where: { userId: alertOld, itemType: 'scholarship', itemId: sid },
+        })
+      ).createdAt,
+      (
+        await prisma.scholarshipAlertSubscription.findFirstOrThrow({
+          where: { userId: alertOld, scholarshipId: sid },
+        })
+      ).updatedAt,
+    ];
+    for (const date of mirroredAt) {
+      expect(date.getTime()).toBeGreaterThanOrEqual(beforeMirror - 1);
+      expect(date.getTime()).toBeLessThanOrEqual(Date.now() + 1);
+    }
     expect(
       await prisma.scholarshipAlertSubscription.findMany({
         where: { scholarshipId: sid },

@@ -138,6 +138,49 @@ describePostgres("budget IA — verrou, PostgreSQL", () => {
     expect(row.outcome).toBe("reserved");
   });
 
+  // Le SQL brut écrit `updatedAt` (colonne sans fuseau, en UTC). Lancée avec
+  // KPB_POSTGRES_TEST_TIMEZONE décalé (la CI : UTC+14), cette spec prouve que
+  // l'heure écrite ne dépend pas du fuseau de la base.
+  it("réserver puis solder écrit updatedAt en heure UTC, quel que soit le fuseau de la base", async () => {
+    const reservedAt = new Date(Date.now() - 5 * 60_000);
+    attempt += 1;
+    const decision = await service.reserve({
+      userId: ids.userId,
+      diagnosticId: ids.diagnostic,
+      attemptKey: `${ids.diagnostic}:${attempt}`,
+      attemptNumber: attempt,
+      provider,
+      model,
+      promptVersion: "success-lab-v1",
+      now: reservedAt,
+    });
+    expect(decision.allowed).toBe(true);
+    if (!decision.allowed) return;
+    const afterReserve = await prisma.aiBudgetPeriod.findUniqueOrThrow({
+      where: { id: decision.budgetPeriodId },
+    });
+    expect(afterReserve.updatedAt.toISOString()).toBe(reservedAt.toISOString());
+
+    const settledAt = new Date(Date.now() - 60_000);
+    await service.settle(
+      decision,
+      {
+        data: {},
+        provider: "openrouter",
+        model,
+        inputTokens: 10,
+        outputTokens: 10,
+        latencyMs: 1,
+        outcome: "success",
+      },
+      settledAt,
+    );
+    const afterSettle = await prisma.aiBudgetPeriod.findUniqueOrThrow({
+      where: { id: decision.budgetPeriodId },
+    });
+    expect(afterSettle.updatedAt.toISOString()).toBe(settledAt.toISOString());
+  });
+
   it("deux réservations simultanées au dernier créneau du jour : une seule passe", async () => {
     process.env.KPB_AI_DIAGNOSTIC_DAILY_CALL_CAP = String(
       (await attemptsToday()) + 1,
