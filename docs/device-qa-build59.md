@@ -14,13 +14,11 @@
 > **Écrite le 09/11/2026 d'après le code (8279d0ea..claude/build-59), JAMAIS jouée sur appareil.**
 > Un « attendu » qui se révèle faux se corrige ici ; on ne plie pas la recette à la build.
 >
-> **Où et comment tester — deux temps (checklist 59, étapes 1 et 6).**
-> - **Temps A — contre la production telle qu'elle est** (`5332a128`, le serveur de la 58) :
->   toute la fiche **sauf** les lignes marquées « serveur 59 ». C'est la preuve du couplage
->   `tolerates-old` : la 59 face à l'ancien serveur, `caseMessaging` absente, WhatsApp seul dans
->   le dossier, compétition sans statut `ineligible`.
-> - **Temps B — après le déploiement du serveur de la 59** (checklist 59, étape 1 : dû après
->   l'envoi aux testeurs, au feu vert du propriétaire) : les lignes « serveur 59 ». La messagerie
+> **Où et comment tester (checklist 59, étapes 1 et 6 ; révisé le 13/11/2026).**
+> - **Contre la production, en un seul temps** : depuis le 13/11/2026 elle sert le serveur de la
+>   59 (`b730a4ef`, `caseMessaging` servie à `false`). Toute la fiche s'y joue, lignes « serveur
+>   59 » comprises. L'ancien « temps A » (la 59 face au serveur de la 58, `5332a128`) n'est plus
+>   jouable : les replis qu'il prouvait restent couverts par les tests du dépôt. La messagerie
 >   s'ouvre par une **fenêtre** (Actions → **VPS ops** → `case-messaging-on`, simulation puis
 >   application) et se **referme avant de soumettre** (`case-messaging-off`, qui agit même
 >   `dry_run` coché). Seule la 59 lit `caseMessaging` : la fenêtre ne touche ni la 58 des
@@ -80,7 +78,7 @@
 | Nouveau-6 | **Carte invité** (préproduction, `scholarshipMatch` ouvert) : installation neuve → « Explorer sans compte » → Accueil | La carte « Découvre les bourses pour lesquelles tu es éligible » au-dessus de la liste neutre ; bouton « Créer mon compte et voir mes bourses » | ☐ | ☐ |
 | Nouveau-7 | **Carte invité → inscription → test** (suite de Nouveau-6) | Le bouton mène à la création de compte ; après l'inscription (et l'onboarding), le test « Mes 10 bourses » s'ouvre de lui-même (intention gardée 24 h) ; le consentement à la nationalité est demandé (Lecteur-11) | ☐ | ☐ |
 | Nouveau-8 | **Carte invité absente** en production (`scholarshipMatch` fermé), invité | Aucune carte « Découvre les bourses… » ; la liste neutre seule, comme la 58 | ☐ | ☐ |
-| Nouveau-9 | **Messagerie fermée** (temps A, production `5332a128`, clé `caseMessaging` absente) : ouvrir un dossier | Aucun champ de saisie ; le bouton WhatsApp (« Écrire à ton conseiller sur WhatsApp », ou « à l'équipe KPB ») ouvre WhatsApp avec la référence ; le tunnel « Être accompagné » ne propose pas « Dans l'application » comme canal — exactement la 58 (Audit-21) | ☐ | ☐ |
+| Nouveau-9 | **Messagerie fermée** (production, `caseMessaging` à `false`, avant la fenêtre ; l'ancien temps A contre `5332a128`, clé absente, n'est plus jouable) : ouvrir un dossier | Aucun champ de saisie ; le bouton WhatsApp (« Écrire à ton conseiller sur WhatsApp », ou « à l'équipe KPB ») ouvre WhatsApp avec la référence ; le tunnel « Être accompagné » ne propose pas « Dans l'application » comme canal — exactement la 58 (Audit-21) | ☐ | ☐ |
 | Nouveau-10 | **Messagerie ouverte, de bout en bout** (serveur 59, fenêtre `case-messaging-on`) : l'élève écrit dans son dossier | Le champ de saisie apparaît **et** le bouton WhatsApp reste en dessous ; le message part, s'affiche comme envoyé ; le conseiller attribué reçoit l'alerte e-mail « Nouveau message — <référence> — <nom> » (sans le texte du message) | ☐ | ☐ |
 | Nouveau-11 | **Réponse depuis l'administration** (serveur 59) : admin → Dossiers → le dossier → fil → répondre | Le fil de l'admin montre le message de l'élève ; la réponse part au nom de l'agent connecté ; elle apparaît dans le fil de l'admin | ☐ | ☐ |
 | Nouveau-12 | **Notification « … t'a répondu »** (serveur 59), app tuée, puis en arrière-plan, puis au premier plan | Notification réelle reçue ; le tap ouvre le dossier ; la réponse est **déjà dans le fil** (dossiers relus à la notification, sans attendre 30 s) ; au premier plan, le fil se met à jour | ☐ | ☐ |
@@ -88,7 +86,7 @@
 | Nouveau-14 | **Fenêtre refermée** : `case-messaging-off`, relancer l'app | Le champ disparaît, WhatsApp reste ; les messages déjà échangés restent lisibles dans le fil | ☐ | ☐ |
 | Nouveau-15 | **Compétition, phase en cours** (préproduction, `referralLeaderboard` ouvert), ambassadeur participant, TalkBack / VoiceOver, 1,5 sur 360 dp | Titre « Compétition des ambassadeurs » ; « Ton code de parrainage » ; règle dite (nouveau compte + profil complété pendant la compétition) ; bouton « règlement » **toujours** présent et qui ouvre le règlement de la campagne ; aucun montant | ☐ | ☐ |
 | Nouveau-16 | **Filleul « Ne compte pas »** (serveur 59) : un compte créé AVANT la compétition saisit le code de l'ambassadeur | Côté ambassadeur : la ligne « Ne comptent pas » (1) et son explication ; ni qualifié ni en attente | ☐ | ☐ |
-| Nouveau-17 | **Refus expliqués** (écran Parrainage et étape d'onboarding) : code d'un autre parrain alors qu'on en a déjà un ; code saisi après avoir ouvert un dossier ; code de quelqu'un qui a déjà saisi le sien | « Tu es déjà rattaché à un autre parrain. » ; « … tu as déjà ouvert un dossier. » ; « … deux amis ne peuvent pas se parrainer l'un l'autre. » — avec le serveur 59 (codes `referral_*`) **et** avec la production `5332a128` (repli sur le message anglais) | ☐ | ☐ |
+| Nouveau-17 | **Refus expliqués** (écran Parrainage et étape d'onboarding) : code d'un autre parrain alors qu'on en a déjà un ; code saisi après avoir ouvert un dossier ; code de quelqu'un qui a déjà saisi le sien | « Tu es déjà rattaché à un autre parrain. » ; « … tu as déjà ouvert un dossier. » ; « … deux amis ne peuvent pas se parrainer l'un l'autre. » — avec le serveur 59 (codes `referral_*`) (le repli sur le message anglais, prévu face à la production `5332a128`, n'est plus jouable depuis le 13/11/2026 : il reste couvert par les tests) | ☐ | ☐ |
 | Nouveau-18 | **Fin de compétition** (campagne de test passée en phase terminée) : participant, puis non-participant qui saisit un code | Participant : phase « terminée », classement provisoire ou final ; non-participant : « La compétition des ambassadeurs est terminée : un code saisi maintenant ne compte plus pour elle… » ; le code rattache quand même au parrain | ☐ | ☐ |
 | Nouveau-19 | **Compétition fermée** (production, état de soumission) | Aucune carte ni écran « Compétition » ; pas d'étape « code de parrainage » à l'onboarding (Drapeau-1) | ☐ | ☐ |
 | Nouveau-20 | **Dossier au long récit** (audit avant l'archive) : tunnel « Être accompagné », dicter ou coller un texte de plus de 2 000 caractères | Le champ s'arrête à 1 900 caractères, le compteur l'indique ; « Envoyer » crée le dossier et il apparaît dans l'administration | ☐ | ☐ |
@@ -280,6 +278,6 @@ Fenêtre de recette en production ou en préproduction : poser le drapeau dans l
 ## Signature
 
 Appareils (modèle, OS, RAM, taille d'écran en dp), build (numéro, source), date, profil réseau,
-voie de recette (temps A contre la production `5332a128`, temps B après le déploiement du serveur de la 59, préproduction, backend local), et ce qui a
+voie de recette (production — serveur de la 59 depuis le 13/11/2026, l'ancien temps A contre `5332a128` n'étant plus jouable —, préproduction, backend local), et ce qui a
 échoué ou n'a pas été joué ; pour la 3G, le moyen (SIM 3G, point d'accès bridé, conditionneur). Un ✗ non résolu bloque la soumission. La recette ne vaut pour l'audit que jouée **en release** sur un iPhone SE et un Android de 360 dp. **A9** de la fiche 54 se signe
 par Push-3 et Push-4.

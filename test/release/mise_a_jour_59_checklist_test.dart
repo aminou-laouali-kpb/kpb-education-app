@@ -12,6 +12,13 @@
 // couplage `tolerates-old` ; le serveur de la 59 se déploie APRÈS l'envoi aux
 // testeurs, avant la recette de la messagerie.
 //
+// Révision du 13/11/2026 : la production a été déployée sur `main` (`b730a4ef`)
+// AVANT l'archive. `tolerates-old` refuse une production en avance sur la
+// build ; décision du propriétaire : la 59 se construit sur le commit que sert
+// la production, et le préflight passe en `requires-new` (production =
+// RELEASE, exactement). Plus aucun déploiement n'est dû, la recette se joue en
+// un seul temps contre la production.
+//
 // Ce test lit les documents et le code ; il ne lance aucune commande (elles
 // touchent les boutiques et la production).
 
@@ -110,7 +117,7 @@ void main() {
         '../kpb-release-58',
         'EXPECTED_VERSION_CODE="58"',
         'EXPECTED_BUILD="58"',
-        'backend_coupling=requires-new',
+        'backend_coupling=tolerates-old',
         'version: 2.3.1+58`',
       ]) {
         expect(
@@ -215,9 +222,9 @@ void main() {
       expect(step, contains('ios/Podfile.lock'));
     });
 
-    test('backend : tolerates-old, production ancêtre, déploiement dû après',
-        () {
+    test('backend : requires-new, la production sert exactement RELEASE', () {
       final step1 = _section(doc, '## 1. Serveur et admin');
+      expect(step1, contains('déjà en production depuis le 13/11/2026'));
       expect(step1,
           contains('git merge-base --is-ancestor $_production "\$RELEASE"'));
       expect(
@@ -226,13 +233,29 @@ void main() {
             'docker-compose.yml'),
       );
       final flat1 = _flat(step1);
-      expect(flat1, contains('**Ne pas déployer avant le préflight.**'));
-      expect(flat1, contains('après l\'envoi de la 59 aux testeurs'));
-      expect(flat1, contains('**avant** le temps B de la recette'));
       expect(
           flat1,
           contains(
-              '**Aucune opération serveur obligatoire après ce déploiement.**'));
+              '**Ne déployer aucun autre commit avant la fin du préflight.**'));
+      expect(flat1, contains('**avant** l\'archive'));
+      expect(flat1, isNot(contains('dû après')));
+      expect(
+          flat1,
+          contains(
+              '**Aucune opération serveur obligatoire après le déploiement.**'));
+      // RELEASE est relevé ET comparé au SHA servi, avant l'archive (§0.3),
+      // puis revérifié au départ (§2) : un écart fait échouer le préflight.
+      for (final heading in ['### 0.3', '## 2. Vérifications']) {
+        expect(
+          _section(doc, heading),
+          contains('test "\$PROD" = "\${RELEASE:0:\${#PROD}}"'),
+          reason: '$heading ne compare plus la production à RELEASE',
+        );
+      }
+      expect(
+          _flat(_section(doc, '### 0.3')),
+          contains(
+              'plus rien ne se fusionne sur `main` et plus rien ne se déploie'));
       // La seule migration de la 59, vérifiée sur le disque : une de plus ou
       // de moins casse ce test.
       expect(step1, contains(_migration59));
@@ -251,7 +274,8 @@ void main() {
       expect(sql, hasLength(1));
       expect(sql.single, startsWith('CREATE INDEX IF NOT EXISTS'));
 
-      expect(flat, contains('**Couplage backend : `tolerates-old`**'));
+      expect(flat, contains('**Couplage backend : `requires-new`**'));
+      expect(flat, contains('**Révision du 13/11/2026'));
       // Le registre dit le même couplage, avec sa raison.
       final ledger = _read('docs/release-ledger.md');
       final entry = ledger.substring(
@@ -326,11 +350,13 @@ void main() {
       // Fermer la fenêtre de recette avant la soumission.
       final recette = _flat(_section(doc, '## 6.'));
       expect(recette, contains('`case-messaging-off`'));
-      expect(recette, contains('**Temps A'));
-      expect(recette, contains('temps B'));
+      // Révision du 13/11/2026 : un seul temps, contre la production qui sert
+      // déjà le serveur de la 59 ; l'ancien temps A est dit injouable.
+      expect(recette, contains('**Contre la production**'));
+      expect(recette, contains('n\'est plus jouable depuis le 13/11/2026'));
     });
 
-    test('le préflight : tolerates-old, ref, dérogation après la preuve', () {
+    test('le préflight : requires-new, ref, dérogation après la preuve', () {
       final blocks = _blocksAt(doc);
       final launch = blocks
           .where(
@@ -341,7 +367,7 @@ void main() {
       for (final part in [
         '--ref main',
         r'-f ref="$RELEASE"',
-        '-f backend_coupling=tolerates-old',
+        '-f backend_coupling=requires-new',
         '-f require_24h_stability=false',
       ]) {
         expect(command, contains(part));
@@ -356,7 +382,7 @@ void main() {
       expect(proof, lessThan(waiver));
       expect(doc, contains('n\'est PAS une preuve'));
       expect(_read('.github/workflows/release-preflight.yml'),
-          contains('- tolerates-old'));
+          contains('- requires-new'));
     });
 
     test('le préflight de l\'IPA exportée reste obligatoire', () {
@@ -624,8 +650,8 @@ void main() {
       expect(qa, contains('**iPhone SE**'));
       expect(qa, contains('360 × 640 dp'));
       expect(qa, contains('**en release**'));
-      expect(qa, contains('**Temps A'));
-      expect(qa, contains('**Temps B'));
+      expect(qa, contains('**Contre la production, en un seul temps**'));
+      expect(qa, contains('n\'est plus\n>   jouable'));
       // Plus aucune attente de la 58 sur la build installée.
       expect(rows['Boutique-1'], isNot(contains('→ 58')));
     });
@@ -652,7 +678,7 @@ void main() {
         expect(line59, contains(before),
             reason: 'la ligne « 59 » perd un marqueur « avant » : $before');
       }
-      expect(line59, contains('`tolerates-old`'));
+      expect(line59, contains('**`requires-new`** depuis le 13/11/2026'));
       expect(line59, contains('caseMessaging'));
       for (final paper in [_path, _packPath, _qaPath]) {
         expect(line59, contains(paper));

@@ -200,9 +200,12 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   par défaut) et la compétition des ambassadeurs corrigée (statut `ineligible`, refus
   expliqués, fin annoncée). La version marketing reste `2.3.1` : la 2.3.0 est en vente, la
   2.3.1 ne l'a jamais été.
-  Couplage backend **`tolerates-old`** : la 59 fonctionne contre la production actuelle
-  (`5332a128`, le serveur de la 58) comme contre le serveur de la 59
-  (`### Préparation de la build 59 (09/11/2026)`).
+  Couplage backend **`requires-new`** depuis le 13/11/2026 (d'abord `tolerates-old` : la 59
+  fonctionne contre le serveur de la 58, `5332a128`, comme contre le serveur de la 59 —
+  `### Préparation de la build 59 (09/11/2026)`). Le 13/11/2026, la production a été déployée
+  sur `main` (`b730a4ef`) avant l'archive : décision du propriétaire, la 59 se construit sur le
+  commit que sert la production, et le préflight passe en `requires-new`
+  (checklist 59, révision du 13/11/2026).
 
   **Papiers** : `docs/mise-a-jour-59-checklist.md` (l'ordre des opérations),
   `docs/release-59-store-pack.md` (ce qui change par rapport aux packs 57 et 58 : notes de
