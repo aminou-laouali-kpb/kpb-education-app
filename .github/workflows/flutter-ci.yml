@@ -31,7 +31,7 @@ jobs:
     name: Analyze & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: subosito/flutter-action@v2.23.0
         with:
@@ -116,9 +116,9 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -178,7 +178,7 @@ jobs:
           }
 
       - name: Upload APK
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: app-debug-android
           path: build/app/outputs/flutter-apk/app-debug.apk
@@ -197,9 +197,9 @@ jobs:
       KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -373,7 +373,7 @@ jobs:
             --expected-cert-sha256 "$EXPECTED_CERT_SHA256"
 
       - name: Upload signed AAB
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: app-release-android-aab
           path: build/app/outputs/bundle/release/app-release.aab
@@ -383,7 +383,7 @@ jobs:
     needs: quality
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: subosito/flutter-action@v2.23.0
         with:
@@ -450,7 +450,7 @@ jobs:
           echo 'Unsigned iOS artifact correctly rejected by the strict store preflight.'
 
       - name: Upload unsigned iOS compile artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: app-unsigned-ios-compile-only
           path: build/ios/iphoneos/Runner.app
