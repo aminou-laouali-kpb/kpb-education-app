@@ -16,6 +16,7 @@ import {
   SCHOLARSHIP_OPENED_KIND,
   type OpeningAudienceScope,
 } from './scholarship-opening.contract';
+import { utcTimestamp } from '../../../common/sql-time';
 
 /**
  * « Qui suit cette bourse ? » à l'échelle, contre un vrai PostgreSQL.
@@ -69,6 +70,10 @@ const DAY = 24 * 60 * 60 * 1000;
 
 // ── L'ancien texte (référence de sémantique) ────────────────────────────────
 // Copie conforme de `followerRowsCte` avant sa réécriture : ne pas « corriger ».
+// Seule exception (14/11/2026) : ses deux dates passent par `utcTimestamp`,
+// comme le texte en service. Sinon, la base de CI étant en UTC+14, l'ancien
+// texte lisait ses dates à quatorze heures d'écart et la comparaison
+// mesurait le fuseau, pas la sémantique.
 
 function legacyFollowerRowsCte(
   scholarshipId: string,
@@ -104,7 +109,7 @@ function legacyFollowerRowsCte(
   const beforeAnnouncementExpr =
     followSince === null
       ? Prisma.sql`false`
-      : Prisma.sql`(b."followSince" IS NULL OR b."followSince" <= ${followSince})`;
+      : Prisma.sql`(b."followSince" IS NULL OR b."followSince" <= ${utcTimestamp(followSince)})`;
 
   return Prisma.sql`
     WITH follow_fav AS (
@@ -138,7 +143,7 @@ function legacyFollowerRowsCte(
             AND r."kind" = ${SCHOLARSHIP_OPENED_KIND}
             AND r."scholarshipId" = ${scholarshipId}
             ${otherCycleClause}
-            AND r."createdAt" > ${renotifySince}
+            AND r."createdAt" > ${utcTimestamp(renotifySince)}
         ) AS "recentlyNotified",
         EXISTS (
           SELECT 1 FROM "DeviceToken" d WHERE d."userProfileId" = c."userId"

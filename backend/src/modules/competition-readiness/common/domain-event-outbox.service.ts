@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, type DomainEventOutbox } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { utcTimestamp } from '../../../common/sql-time';
 import { COMPETITION_READINESS_SCHEMA_VERSION } from './competition-readiness.contract';
 import { hashCanonicalPayload } from './idempotency.service';
 
@@ -191,11 +192,11 @@ export class DomainEventOutboxService {
             AND (
               (
                 "status" = 'pending'
-                AND "nextAttemptAt" <= ${now}
+                AND "nextAttemptAt" <= ${utcTimestamp(now)}
               )
               OR (
                 "status" = 'processing'
-                AND "leaseExpiresAt" <= ${now}
+                AND "leaseExpiresAt" <= ${utcTimestamp(now)}
               )
             )
           ORDER BY "nextAttemptAt" ASC, "occurredAt" ASC, "id" ASC
@@ -205,9 +206,9 @@ export class DomainEventOutboxService {
         UPDATE "DomainEventOutbox" AS event
         SET
           "status" = 'processing',
-          "lockedAt" = ${now},
+          "lockedAt" = ${utcTimestamp(now)},
           "lockedBy" = ${workerId},
-          "leaseExpiresAt" = ${leaseExpiresAt}
+          "leaseExpiresAt" = ${utcTimestamp(leaseExpiresAt)}
         FROM candidates
         WHERE event."id" = candidates."id"
         RETURNING event.*

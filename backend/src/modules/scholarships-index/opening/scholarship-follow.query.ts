@@ -21,6 +21,8 @@
 
 import { Prisma } from '@prisma/client';
 
+import { utcTimestamp } from '../../../common/sql-time';
+
 import {
   FOLLOWED_SCHOLARSHIP_OPT_OUT,
   openingDedupeKey,
@@ -139,7 +141,7 @@ export function followerRowsCte(
   const beforeAnnouncementExpr =
     followSince === null
       ? Prisma.sql`false`
-      : Prisma.sql`(b."followSince" IS NULL OR b."followSince" <= ${followSince})`;
+      : Prisma.sql`(b."followSince" IS NULL OR b."followSince" <= ${utcTimestamp(followSince)})`;
 
   return Prisma.sql`
     WITH follow_src AS (
@@ -159,7 +161,7 @@ export function followerRowsCte(
       WHERE r."kind" = ${SCHOLARSHIP_OPENED_KIND}
         AND r."scholarshipId" = ${scholarshipId}
         ${otherCycleClause}
-        AND r."createdAt" > ${renotifySince}
+        AND r."createdAt" > ${utcTimestamp(renotifySince)}
     ),
     follow_user AS (
       SELECT
@@ -430,7 +432,7 @@ export function newFollowerCountsSql(
   const rows = Prisma.join(
     targets.map(
       (target) =>
-        Prisma.sql`(${target.scholarshipId}::text, ${openingDedupeKey(target.cycleId, '')}::text, ${target.since}::timestamp(3))`,
+        Prisma.sql`(${target.scholarshipId}::text, ${openingDedupeKey(target.cycleId, '')}::text, ${utcTimestamp(target.since)})`,
     ),
   );
   return Prisma.sql`

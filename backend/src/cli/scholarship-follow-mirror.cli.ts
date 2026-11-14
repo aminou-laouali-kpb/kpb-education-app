@@ -24,6 +24,8 @@ import { loadEnvFile } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
 
+import { SQL_NOW_UTC } from '../common/sql-time';
+
 import {
   readScholarshipOpeningMode,
   type ScholarshipOpeningMode,
@@ -114,7 +116,7 @@ export async function runMirror(
   const [counts] = await prisma.$queryRaw<{ inserted: number; flagged: number }[]>`
     WITH ins AS (
       INSERT INTO "SavedItem" ("id", "userId", "itemType", "itemId", "createdAt")
-      SELECT gen_random_uuid()::text, a."userId", 'scholarship', a."scholarshipId", now()
+      SELECT gen_random_uuid()::text, a."userId", 'scholarship', a."scholarshipId", ${SQL_NOW_UTC}
       FROM "ScholarshipAlertSubscription" a
       JOIN "Scholarship" s ON s."id" = a."scholarshipId"
       WHERE a."mutedAt" IS NULL
@@ -123,7 +125,7 @@ export async function runMirror(
     ),
     flagged AS (
       UPDATE "ScholarshipAlertSubscription" a
-      SET "impliedFollow" = true, "updatedAt" = now()
+      SET "impliedFollow" = true, "updatedAt" = ${SQL_NOW_UTC}
       FROM ins
       WHERE a."userId" = ins."userId" AND a."scholarshipId" = ins."itemId"
       RETURNING a."id"

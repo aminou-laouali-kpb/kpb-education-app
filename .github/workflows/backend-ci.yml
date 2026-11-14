@@ -38,6 +38,11 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://kpb:kpb@localhost:5432/kpb_ci?schema=public
+      # Les specs Postgres tournent avec une session SQL en UTC+14
+      # (`backend/jest.postgres-utc.js`) : le SQL brut doit donner le même
+      # résultat quel que soit le fuseau de la base. La production est en UTC ;
+      # une requête qui n'en serait juste QUE là échoue ici.
+      KPB_POSTGRES_TEST_TIMEZONE: Pacific/Kiritimati
       # Non-secret CI placeholders so the API can construct and boot in the
       # smoke step. These are NOT real secrets and are safe to keep in the repo.
       PORT: '4000'
