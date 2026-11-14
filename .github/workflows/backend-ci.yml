@@ -196,6 +196,13 @@ jobs:
           npm run test:integration:case-message-idempotence
           npm run test:integration:birthdates
 
+      # Communauté (fil, modération, bot de vérification), pont d'assistance,
+      # consentement aux campagnes et nationalité du profil. Ces cinq specs
+      # existaient sans être jouées par aucune CI. Le script pose lui-même
+      # KPB_RUN_POSTGRES_INTEGRATION=true.
+      - name: PostgreSQL community, assist bridge and consent integration
+        run: npm run test:integration:community-consent
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5
