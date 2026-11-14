@@ -14,9 +14,9 @@
 > **Écrite le 09/11/2026 d'après le code (8279d0ea..claude/build-59), JAMAIS jouée sur appareil.**
 > Un « attendu » qui se révèle faux se corrige ici ; on ne plie pas la recette à la build.
 >
-> **Où et comment tester (checklist 59, étapes 1 et 6 ; révisé le 13/11/2026).**
+> **Où et comment tester (checklist 59, étapes 1 et 6 ; révisé le 13/11/2026, mis à jour le 14/11/2026).**
 > - **Contre la production, en un seul temps** : depuis le 13/11/2026 elle sert le serveur de la
->   59 (`b730a4ef`, `caseMessaging` servie à `false`). Toute la fiche s'y joue, lignes « serveur
+>   59 (`92a5fea1` depuis le 14/11/2026, `caseMessaging` servie à `false`). Toute la fiche s'y joue, lignes « serveur
 >   59 » comprises. L'ancien « temps A » (la 59 face au serveur de la 58, `5332a128`) n'est plus
 >   jouable : les replis qu'il prouvait restent couverts par les tests du dépôt. La messagerie
 >   s'ouvre par une **fenêtre** (Actions → **VPS ops** → `case-messaging-on`, simulation puis

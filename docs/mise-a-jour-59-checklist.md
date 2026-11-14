@@ -30,6 +30,15 @@
 > trois universités américaines, Belgique, Allemagne). Les étapes 0.3, 1, 2, 5, 6 et 9 sont
 > réécrites en ce sens ; le reste ne change pas.
 >
+> **Mise à jour du 14/11/2026 — la production sert `92a5fea1`.** Après la révision, cinq PR ont
+> été fusionnées puis déployées au feu vert du propriétaire (#417 à #421 ; dernier déploiement :
+> run 43639436240, 14/11/2026 à 20 h 52 UTC, contrôle de santé vert). Côté serveur, seule #421
+> change du code : le SQL brut ne dépend plus du fuseau horaire de la base (aucune migration,
+> aucune route nouvelle). Les autres touchent la CI, les tests, un runbook et cette checklist.
+> **La fusion de cette mise à jour déplace à son tour la tête de `main`** (documents seulement) :
+> la redéployer (🔒, feu vert du propriétaire), puis relever `RELEASE` (§0.3) — jamais
+> `92a5fea1` écrit de mémoire.
+>
 > **🔒 = étape de distribution ou de production.** Déploiement du backend, AAB importé, IPA
 > envoyée, soumission, élargissement d'un palier, ouverture d'un drapeau :
 > **aucune ne se fait sans le feu vert explicite du propriétaire, donné pour cette étape.** Le reste (lire, comparer,
@@ -155,7 +164,9 @@ git log --oneline --first-parent 5332a128.."$RELEASE"
 #   PR de préparation de la 59, puis la PR de durcissement du 10/11/2026 (branche
 #   claude/build-59-durcissement, audit avant l'archive) — puis, relevé du 13/11/2026 :
 #   #410 (la 59), #411 (durcissement), #413 (visite guidée), #414 (catalogue de repli),
-#   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — et rien d'autre.
+#   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — puis, relevé du
+#   14/11/2026 : #417 (runbook du catalogue), #418 (CI), #419 (cette checklist), #420 (tests
+#   Postgres en UTC), #421 (SQL brut indépendant du fuseau) — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
@@ -178,7 +189,9 @@ Si une commande affiche autre chose que l'attendu, **ne pas archiver** : arbitre
 13/11/2026 ; elle sert depuis `b730a4ef` (déployé par `deploy.yml`, `scope` = `full`, run
 43383015342, contrôle de santé vert) : le serveur de la 59, plus #414, #415, #412 et #416.
 Mesuré le 13/11/2026 à 07 h 11 UTC : `features.caseMessaging` = `false`, `support.whatsappNumber`
-= `null`, `notice` = `null`. Le contrôle : l'archive de la 58 est un ancêtre de `RELEASE`,
+= `null`, `notice` = `null`. **Mise à jour du 14/11/2026** : la production sert `92a5fea1`
+(run 43639436240, contrôle de santé vert), soit en plus #417 à #421 ; remesuré à 20 h 54 UTC :
+mêmes valeurs (`false`, `null`, `null`). Le contrôle : l'archive de la 58 est un ancêtre de `RELEASE`,
 l'écart serveur est celui listé ci-dessous, et **la production sert exactement `RELEASE`**
 (§0.3).
 
@@ -199,6 +212,9 @@ git diff --stat 5332a128 "$RELEASE" -- backend admin docker-compose.yml
 #   Puis, relevé du 13/11/2026 : backend/src/modules/cases et admin/app/cases, admin/lib (liste des
 #   dossiers paginée, plus de dossier en double, #412), backend/src/modules/competition-readiness
 #   (verrous, #415), docker-compose.yml (rotation des journaux, #412), scripts d'intégration (#416).
+#   Puis, relevé du 14/11/2026 : backend/src/common/sql-time.ts et les services qui écrivent du
+#   SQL brut (outbox, budget IA, révisions d'études, envoi des push, suivi et ouverture des
+#   bourses, #421), backend/jest.config.js et jest.postgres-utc.js (tests, #420).
 git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 #   attendu : une seule migration, 20261109120000_case_message_case_created_idx.
 ```
@@ -206,7 +222,7 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 - **Ne déployer aucun autre commit avant la fin du préflight.** `requires-new` exige que la
   production serve **exactement** `RELEASE` : un déploiement à un autre commit fait échouer
   l'étape 5. Si la production ne sert pas `RELEASE` (une PR fusionnée après le déploiement du
-  13/11/2026) : `deploy.yml`, `ref` = `RELEASE`, `scope` = `full`, au feu vert du propriétaire,
+  14/11/2026) : `deploy.yml`, `ref` = `RELEASE`, `scope` = `full`, au feu vert du propriétaire,
   **avant** l'archive.
 - Le serveur de la 59 ne casse pas la 2.3.0 en vente : une clé de plus dans `features`, un index,
   des routes admin (vérifié par sa revue du 09/11/2026 ; en production depuis le 13/11/2026).
@@ -216,7 +232,7 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 - **Aucune opération serveur obligatoire après le déploiement.** `KPB_CASE_MESSAGING_ENABLED` et
   `KPB_SCHOLARSHIP_MATCH_ENABLED` restent à `false` (défaut de `docker-compose.yml`). Leur ouverture
   est une décision d'exploitation (étape 9), jamais une étape du déploiement.
-- Contrôle (fait le 13/11/2026, à refaire à l'étape 2) :
+- Contrôle (fait le 13/11/2026 et le 14/11/2026, à refaire à l'étape 2) :
   `curl -fsS https://api.kpbeducation.cloud/api/config/app | jq '.features.caseMessaging'` →
   `false` (et non plus `null`).
 - Les deux leviers du durcissement sont servis à leur valeur neutre :
@@ -231,7 +247,7 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 ## 2. Vérifications de départ (5 min)
 
 ```bash
-curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : b730a4ef4c7e (relevé du 13/11/2026)
+curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : 92a5fea1d919 (relevé du 14/11/2026)
 PROD=$(curl -fsS https://api.kpbeducation.cloud/api/health/version | jq -r .sha)
 test "$PROD" = "${RELEASE:0:${#PROD}}" && echo "production ($PROD) = RELEASE : OK"
 curl -fsS https://api.kpbeducation.cloud/api/health | jq '.push'   # {configured: true, fcm: true, oneSignal: true}
