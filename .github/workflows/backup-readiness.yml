@@ -20,6 +20,17 @@ jobs:
     name: Backup heartbeat and freshness evidence
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Declared for its SECRETS, not to deploy. The SSH secrets are meant to move
+    # from the repository into the `production` environment (restricted to
+    # `main` since 2026-10-02). A job that does not declare the environment then
+    # stops receiving them, and the release preflight refuses to pass without a
+    # heartbeat under 8 h old. Scheduled runs are on `main`, so the branch rule
+    # lets this one through. `deployment: false`: a read-only check four times a
+    # day must not bury the real production operations in the environment's
+    # deployment history.
+    environment:
+      name: production
+      deployment: false
     steps:
       - uses: actions/checkout@v5
 

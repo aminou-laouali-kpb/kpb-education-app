@@ -34,6 +34,36 @@ jobs:
             end
           '
 
+      # The production SSH secrets must only reach jobs that declare the
+      # `production` environment, which accepts `main` only. They are still
+      # repository secrets; once they move into the environment, a job that does
+      # not declare it loses them — the backup heartbeat would have, before it
+      # declared it. Parsed per JOB: one file can hold a job that declares the
+      # environment next to one that does not.
+      - name: Production SSH secrets only reach jobs in the production environment
+        run: |
+          ruby -e '
+            require "yaml"
+            ssh = /secrets\.(VPS_SSH_KEY|VPS_HOST|VPS_USER|VPS_PATH)\b/
+            seen = 0
+            offenders = []
+            Dir[".github/workflows/*.{yml,yaml}"].sort.each do |path|
+              workflow = YAML.safe_load(File.read(path), permitted_classes: [], permitted_symbols: [], aliases: true)
+              (workflow["jobs"] || {}).each do |id, job|
+                next unless job.to_s.match?(ssh)
+                seen += 1
+                env = job["environment"]
+                name = env.is_a?(Hash) ? env["name"] : env
+                offenders << "#{path} :: #{id}" unless name == "production"
+              end
+            end
+            abort "No job reads the production SSH secrets: this guard no longer looks at anything." if seen.zero?
+            unless offenders.empty?
+              abort "Jobs reading the production SSH secrets without environment production:\n  " + offenders.join("\n  ")
+            end
+            puts "#{seen} jobs read the production SSH secrets, all through environment production"
+          '
+
       - name: Validate production Compose configuration
         env:
           POSTGRES_USER: release_ci
