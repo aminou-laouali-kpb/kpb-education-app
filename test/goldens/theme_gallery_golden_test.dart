@@ -5,6 +5,11 @@
 //   flutter test --update-goldens --tags=golden test/goldens
 //   flutter test --tags=golden test/goldens
 // La CI Linux exclut le tag (rendu de police différent).
+//
+// La comparaison tolère le bruit d'anti-crénelage du texte entre deux Mac
+// (≈0,2 % des pixels, sur le contour des lettres) mais refuse tout changement
+// de glyphe, de couleur, d'aplat ou de position — voir
+// `test/support/golden_tolerance.dart` pour les seuils et leur limite.
 @Tags(['golden'])
 library;
 
@@ -19,6 +24,8 @@ import 'package:karatou/app/core/ui/components/kpb_status_chip.dart';
 import 'package:karatou/app/core/models/app_models.dart';
 import 'package:karatou/app/core/ui/components/profile_fit_badge.dart';
 import 'package:karatou/app/core/ui/components/section_header.dart';
+
+import '../support/golden_tolerance.dart';
 
 Widget _gallery() {
   return MaterialApp(
@@ -114,6 +121,8 @@ Widget _gallery() {
 }
 
 void main() {
+  useTolerantGoldenComparator();
+
   testWidgets('galerie du système visuel — 390×844 @1x', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     tester.view.devicePixelRatio = 1.0;
