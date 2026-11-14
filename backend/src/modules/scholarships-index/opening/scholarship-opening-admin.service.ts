@@ -19,6 +19,7 @@ import {
   servedCycleStatus,
 } from '../../../common/public-scholarship-where';
 import { readQuietHours } from '../../../common/push-quiet-hours';
+import { SQL_NOW_UTC, utcTimestamp } from '../../../common/sql-time';
 import { PushSenderService } from '../../notifications/push-sender.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { OpeningPreviewQueryDto } from '../dto/opening-preview-query.dto';
@@ -675,7 +676,7 @@ export class ScholarshipOpeningAdminService {
           await tx.$executeRaw`SET LOCAL lock_timeout = '5s'`;
           await tx.$executeRaw`
             UPDATE "ScholarshipCycle"
-            SET "openingStoppedAt" = now(), "updatedAt" = now()
+            SET "openingStoppedAt" = ${SQL_NOW_UTC}, "updatedAt" = ${SQL_NOW_UTC}
             WHERE "id" = ${cycleId} AND "scholarshipId" = ${scholarshipId}
           `;
           const stopped = await tx.$executeRaw`
@@ -684,7 +685,7 @@ export class ScholarshipOpeningAdminService {
             WHERE "cycleId" = ${cycleId}
               AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
               AND "pushStatus" = 'pending'
-              AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < now())
+              AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < ${SQL_NOW_UTC})
           `;
           const inFlight = await tx.userNotification.count({
             where: { cycleId, kind: SCHOLARSHIP_OPENED_KIND, pushStatus: 'pending' },
@@ -736,7 +737,7 @@ export class ScholarshipOpeningAdminService {
       this.run((p) =>
         p.$queryRaw<OpeningReportGroup[]>`
           SELECT "pushStatus", "pushLastError", "pushProvider",
-                 ("pushNotBefore" > ${now}) AS "future",
+                 ("pushNotBefore" > ${utcTimestamp(now)}) AS "future",
                  count(*)::int AS "n",
                  count("readAt")::int AS "read"
           FROM "UserNotification"
@@ -750,7 +751,7 @@ export class ScholarshipOpeningAdminService {
             count(DISTINCT "pushBatchId") FILTER (WHERE "pushStatus" = 'accepted')::int
               AS "acceptedPushes",
             min("pushNotBefore") FILTER (
-              WHERE "pushStatus" = 'pending' AND "pushNotBefore" <= ${now}
+              WHERE "pushStatus" = 'pending' AND "pushNotBefore" <= ${utcTimestamp(now)}
             ) AS "oldestDuePendingAt"
           FROM "UserNotification"
           WHERE "cycleId" = ${cycleId} AND "kind" = ${SCHOLARSHIP_OPENED_KIND}

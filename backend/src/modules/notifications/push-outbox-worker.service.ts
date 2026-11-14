@@ -6,6 +6,7 @@ import { Interval } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 
 import { readQuietHours } from '../../common/push-quiet-hours';
+import { utcTimestamp } from '../../common/sql-time';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScholarshipOpeningFanoutService } from '../scholarships-index/opening/scholarship-opening-fanout.service';
 import {
@@ -182,7 +183,7 @@ export function pacingGuardSql(
           AND o."kind" = ${SCHOLARSHIP_OPENED_KIND}
           AND o."pushStatus" = 'pending'
           AND o."pushLockedBy" <> ${workerId}
-          AND o."pushLockedUntil" > ${now}
+          AND o."pushLockedUntil" > ${utcTimestamp(now)}
       ) AS "contended",
       r."pushedAt",
       r."pushBatchId"
@@ -193,7 +194,7 @@ export function pacingGuardSql(
       WHERE a."userId" = u."userId"
         AND a."kind" = ${SCHOLARSHIP_OPENED_KIND}
         AND a."pushStatus" = 'accepted'
-        AND a."pushedAt" >= ${new Date(now.getTime() - PACING_LOOKBACK_MS)}
+        AND a."pushedAt" >= ${utcTimestamp(new Date(now.getTime() - PACING_LOOKBACK_MS))}
     ) r ON true
   `;
 }
@@ -419,15 +420,15 @@ export class PushOutboxWorkerService {
           FROM "UserNotification"
           WHERE "pushStatus" = 'pending'
             AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
-            AND "pushNotBefore" <= ${now}
-            AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < ${now})
+            AND "pushNotBefore" <= ${utcTimestamp(now)}
+            AND ("pushLockedUntil" IS NULL OR "pushLockedUntil" < ${utcTimestamp(now)})
             ${filter}
           ORDER BY "pushNotBefore", "id"
           FOR UPDATE SKIP LOCKED
           ${limit}
         )
         UPDATE "UserNotification" AS n
-        SET "pushLockedUntil" = ${lockedUntil}, "pushLockedBy" = ${this.workerId}
+        SET "pushLockedUntil" = ${utcTimestamp(lockedUntil)}, "pushLockedBy" = ${this.workerId}
         FROM c
         WHERE n."id" = c."id"
         RETURNING n."id", n."userId", n."scholarshipId", n."cycleId", n."kind",
@@ -483,7 +484,7 @@ export class PushOutboxWorkerService {
                 s."isActive"
                   AND s."moderationStatus" = 'approved'
                   AND s."lastVerifiedAt" IS NOT NULL
-                  AND (s."deadlineAt" IS NULL OR s."deadlineAt" >= ${now}),
+                  AND (s."deadlineAt" IS NULL OR s."deadlineAt" >= ${utcTimestamp(now)}),
                 false
               ) AS "scholarshipPublic",
               s."nameFr",

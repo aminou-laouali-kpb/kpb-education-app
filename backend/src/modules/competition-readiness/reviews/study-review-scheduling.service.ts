@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 import { InternalRole } from '../../../common/enums/internal-role.enum';
 import { PrismaService } from '../../prisma/prisma.service';
+import { utcTimestamp } from '../../../common/sql-time';
 import {
   CompetitionReadinessHttpException,
   databaseUnavailable,
@@ -514,11 +515,11 @@ export class StudyReviewSchedulingService {
                   ELSE "status"
                 END,
                 "version" = "version" + 1,
-                "updatedAt" = ${now}
+                "updatedAt" = ${utcTimestamp(now)}
               WHERE "id" = ${offer.slotId}
                 AND "status" = 'available'::"AvailabilitySlotStatus"
                 AND "bookedCount" < "capacity"
-                AND "startsAt" > ${now}
+                AND "startsAt" > ${utcTimestamp(now)}
               RETURNING "id"
             `,
           );
@@ -968,11 +969,11 @@ export class StudyReviewSchedulingService {
                   ELSE "status"
                 END,
                 "version" = "version" + 1,
-                "updatedAt" = ${now}
+                "updatedAt" = ${utcTimestamp(now)}
               WHERE "id" = ${offer.slotId}
                 AND "status" = 'available'::"AvailabilitySlotStatus"
                 AND "bookedCount" < "capacity"
-                AND "startsAt" > ${now}
+                AND "startsAt" > ${utcTimestamp(now)}
               RETURNING "id"
             `,
           );
@@ -1139,7 +1140,7 @@ export class StudyReviewSchedulingService {
             ELSE "status"
           END,
           "version" = "version" + 1,
-          "updatedAt" = ${now}
+          "updatedAt" = ${utcTimestamp(now)}
         WHERE "id" = ${slotId}
           AND "bookedCount" > 0
         RETURNING "id"

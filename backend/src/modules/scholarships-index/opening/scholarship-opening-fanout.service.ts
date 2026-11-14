@@ -4,6 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
 import { publicScholarshipWhere } from '../../../common/public-scholarship-where';
+import { SQL_NOW_UTC, utcTimestamp } from '../../../common/sql-time';
 import { PrismaService } from '../../prisma/prisma.service';
 import { renotifySince } from './scholarship-opening-audience.service';
 import { followerRowsCte } from './scholarship-follow.query';
@@ -147,7 +148,7 @@ export class ScholarshipOpeningFanoutService {
              "openingFanoutById", "openingNotifiedAt", "openingNotifiedById",
              "openingAudience"
       FROM "ScholarshipCycle"
-      WHERE "openingFanoutDueAt" <= ${now} ${excludeClause}
+      WHERE "openingFanoutDueAt" <= ${utcTimestamp(now)} ${excludeClause}
       ORDER BY "openingFanoutDueAt"
       FOR UPDATE SKIP LOCKED
       LIMIT 1
@@ -344,7 +345,7 @@ export function fanoutInsertSql(input: {
     INSERT INTO "UserNotification" (
       "id", "userId", "scholarshipId", "cycleId", "kind", "dedupeKey",
       "titleFr", "titleEn", "bodyFr", "bodyEn", "route", "data",
-      "pushStatus", "pushNotBefore", "pushLastError"
+      "pushStatus", "pushNotBefore", "pushLastError", "createdAt"
     )
     SELECT
       gen_random_uuid()::text,
@@ -366,11 +367,14 @@ export function fanoutInsertSql(input: {
       -- Désinscription globale ou push coupé : l'entrée d'inbox est écrite,
       -- seul le push est sauté.
       CASE WHEN r."optedOut" OR NOT r."pushEnabled" THEN 'skipped' ELSE 'pending' END,
-      ${input.now},
+      ${utcTimestamp(input.now)},
       CASE
         WHEN r."optedOut" THEN 'opt_out'
         WHEN NOT r."pushEnabled" THEN 'push_disabled'
-      END
+      END,
+      -- La colonne a pour défaut CURRENT_TIMESTAMP, qui suit le fuseau de la
+      -- session : on écrit l'heure UTC nous-mêmes.
+      ${SQL_NOW_UTC}
     FROM follow_rows r
     WHERE r."toNotify"
     ON CONFLICT ("dedupeKey") DO NOTHING

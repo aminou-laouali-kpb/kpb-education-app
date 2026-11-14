@@ -6,6 +6,7 @@ import {
   utcOffsetHoursForCountry,
 } from '../../../common/country-timezone';
 import type { QuietHours } from '../../../common/push-quiet-hours';
+import { utcTimestamp } from '../../../common/sql-time';
 import {
   pacingDeferral,
   type RecentOpeningPush,
@@ -223,7 +224,7 @@ export class ScholarshipOpeningAudienceService {
       WHERE "userId" = ANY(${[...userIds]}::text[])
         AND "kind" = ${SCHOLARSHIP_OPENED_KIND}
         AND "pushStatus" = 'accepted'
-        AND "pushedAt" >= ${new Date(now.getTime() - PACING_LOOKBACK_MS)}
+        AND "pushedAt" >= ${utcTimestamp(new Date(now.getTime() - PACING_LOOKBACK_MS))}
     `;
     type Row = { userId: string; pushedAt: Date; pushBatchId: string | null };
     const rows = db

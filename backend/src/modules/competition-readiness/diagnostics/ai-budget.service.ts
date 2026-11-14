@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 
 import type { StructuredCompletionResult } from '../../ai/llm.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { utcTimestamp } from '../../../common/sql-time';
 import {
   estimateAiCostMicrosUsd,
   parseMicrosUsd,
@@ -233,7 +234,7 @@ export class AiBudgetService {
               UPDATE "AiBudgetPeriod"
               SET "reservedMicrosUsd" = "reservedMicrosUsd" + ${reservedMicrosUsd},
                   "version" = "version" + 1,
-                  "updatedAt" = ${now}
+                  "updatedAt" = ${utcTimestamp(now)}
               WHERE "id" = ${period.id}
                 AND "spentMicrosUsd" + "reservedMicrosUsd" + ${reservedMicrosUsd} <= "budgetMicrosUsd"
               RETURNING "id"
@@ -320,7 +321,7 @@ export class AiBudgetService {
             SET "reservedMicrosUsd" = "reservedMicrosUsd" - ${reservation.reservedMicrosUsd},
                 "spentMicrosUsd" = "spentMicrosUsd" + ${estimatedCostMicrosUsd},
                 "version" = "version" + 1,
-                "updatedAt" = ${now}
+                "updatedAt" = ${utcTimestamp(now)}
             WHERE "id" = ${reservation.budgetPeriodId}
               AND "reservedMicrosUsd" >= ${reservation.reservedMicrosUsd}
               AND "spentMicrosUsd" + ${estimatedCostMicrosUsd} <= "budgetMicrosUsd"
