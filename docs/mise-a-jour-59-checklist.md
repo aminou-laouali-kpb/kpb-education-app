@@ -166,7 +166,9 @@ git log --oneline --first-parent 5332a128.."$RELEASE"
 #   #410 (la 59), #411 (durcissement), #413 (visite guidée), #414 (catalogue de repli),
 #   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — puis, relevé du
 #   14/11/2026 : #417 (runbook du catalogue), #418 (CI), #419 (cette checklist), #420 (tests
-#   Postgres en UTC), #421 (SQL brut indépendant du fuseau) — et rien d'autre.
+#   Postgres en UTC), #421 (SQL brut indépendant du fuseau) — puis #422 (cette checklist),
+#   #423 (tests serveur hors UTC), #424 (visite guidée : plus d'erreur sur un shell démonté,
+#   trouvée au simulateur le 14/11/2026 ; app seulement) — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
