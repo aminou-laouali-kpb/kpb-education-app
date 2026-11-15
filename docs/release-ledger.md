@@ -205,8 +205,8 @@ Un numéro ne passe sous **Consommés** que quand le numéro suivant est prépar
   `### Préparation de la build 59 (09/11/2026)`). Le 13/11/2026, la production a été déployée
   sur `main` (`b730a4ef`) avant l'archive : décision du propriétaire, la 59 se construit sur le
   commit que sert la production, et le préflight passe en `requires-new`
-  (checklist 59, révision du 13/11/2026). Le 14/11/2026, #417 à #421 ont été fusionnées puis
-  déployées : la production sert `92a5fea1` (seule #421 change du code serveur : SQL brut
+  (checklist 59, révision du 13/11/2026). Le 14/11/2026, #417 à #423 ont été fusionnées puis
+  déployées : la production sert `3a60074e` (seule #421 change du code serveur : SQL brut
   indépendant du fuseau de la base, sans migration). `RELEASE` se relève sur la tête de `main`
   une fois celle-ci déployée (checklist 59, §0.3).
 

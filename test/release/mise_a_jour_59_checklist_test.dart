@@ -19,8 +19,8 @@
 // RELEASE, exactement). Plus aucun déploiement n'est dû, la recette se joue en
 // un seul temps contre la production.
 //
-// Mise à jour du 14/11/2026 : #417 à #421 fusionnées et déployées ; la
-// production sert `92a5fea1`. La fusion de cette révision déplace la tête de
+// Mise à jour du 14/11/2026 : #417 à #423 fusionnées et déployées ; la
+// production sert `3a60074e`. La fusion de cette révision déplace la tête de
 // `main` : on la redéploie, puis on relève RELEASE (§0.3).
 //
 // Ce test lit les documents et le code ; il ne lance aucune commande (elles
@@ -281,6 +281,8 @@ void main() {
       expect(flat, contains('**Couplage backend : `requires-new`**'));
       expect(flat, contains('**Révision du 13/11/2026'));
       expect(flat, contains('**Mise à jour du 14/11/2026'));
+      expect(flat,
+          contains('**cette checklist ne se révise > plus avant l\'archive**'));
       expect(
           flat,
           contains(
