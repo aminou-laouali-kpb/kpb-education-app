@@ -15,6 +15,8 @@
 // - elle éclaire le vrai bouton, montre l'onglet dont elle parle, et rend
 //   l'élève là où il était ;
 // - « Passer » lui dit où la retrouver ;
+// - elle ne touche jamais un shell démonté, et une visite retirée de l'écran
+//   sans avoir été fermée n'est pas « vue » ;
 // - elle ne nomme que les outils présents, et chaque texte existe en français
 //   et en anglais.
 
@@ -385,6 +387,111 @@ void main() {
     final tab = tester.getRect(find.byKey(shell.targets.home));
     final bubble = tester.getRect(card('home'));
     expect(bubble.bottom, lessThanOrEqualTo(tab.top));
+  });
+
+  // ── Le shell qui disparaît (constaté dans le simulateur le 14/11/2026) ────
+  //
+  // À chaque entrée dans l'app, deux shells se succèdent : le premier est
+  // démonté avant la fin du délai d'ouverture. La visite lisait
+  // `host.context` sur ce shell démonté, ce qui LÈVE — et l'app envoie toute
+  // erreur non rattrapée à Crashlytics comme un plantage. Les tests d'avant
+  // ne le voyaient pas : ils mettaient le délai à zéro.
+
+  testWidgets(
+      'le shell est démonté avant la fin du délai : aucune erreur, '
+      'aucune visite', (tester) async {
+    // Plus long que la transition d'écran, comme dans l'app (830 ms contre
+    // 280 ms) : le délai finit APRÈS le démontage. Plus court, le shell est
+    // encore monté quand le délai finit et le test ne prouve rien.
+    AppTour.autoStartDelay = const Duration(seconds: 2);
+    final shell = await pumpShell(tester);
+    final started = AppTour.autoStart(shell);
+
+    unawaited(Get.offAll<void>(() => const Scaffold(body: Text('ailleurs'))));
+    await tester.pumpAndSettle();
+    expect(shell.mounted, isFalse);
+    await tester.pump(const Duration(seconds: 3));
+
+    // Sans la garde, ce futur se termine en erreur (« This widget has been
+    // unmounted… » en debug, « Null check operator… » en release).
+    await started;
+    expect(find.byKey(const ValueKey('app-tour')), findsNothing);
+    expect(analytics.shownTriggers, isEmpty);
+    expect(store.writes, 0);
+  });
+
+  testWidgets(
+      'la pile est remplacée pendant la visite : rien n\'est noté, et le '
+      'prochain accueil la rouvre', (tester) async {
+    final shell = await pumpShell(tester);
+    final opened = AppTour.autoStart(shell);
+    await tester.pumpAndSettle();
+    expect(card('welcome'), findsOneWidget);
+
+    // Retour à la connexion, mise à jour obligatoire, notification ouverte :
+    // toute la pile part, la visite avec.
+    unawaited(Get.offAll<void>(() => const _Shell()));
+    await tester.pumpAndSettle();
+    await opened;
+
+    expect(shell.mounted, isFalse);
+    expect(find.byKey(const ValueKey('app-tour')), findsNothing);
+    // L'élève ne l'a ni finie ni refusée : elle n'est pas « vue ».
+    expect(store.writes, 0);
+    expect(analytics.completedCalls, isEmpty);
+
+    final next = tester.state<_ShellState>(find.byType(_Shell));
+    await autoStart(tester, next);
+    expect(card('welcome'), findsOneWidget);
+    expect(analytics.shownTriggers, ['first_open', 'first_open']);
+  });
+
+  testWidgets(
+      '« Revoir la visite » sur un shell démonté : aucune erreur, rien ne '
+      's\'ouvre', (tester) async {
+    store.seen = true;
+    final shell = await pumpShell(tester);
+    AppTour.registerHost(shell);
+    unawaited(Get.offAll<void>(() => const Scaffold(body: Text('ailleurs'))));
+    await tester.pumpAndSettle();
+
+    await AppTour.replay();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('app-tour')), findsNothing);
+    expect(analytics.shownTriggers, isEmpty);
+  });
+
+  testWidgets('l\'anneau d\'un bouton collé au bord de l\'écran reste entier',
+      (tester) async {
+    final shell = await pumpShell(tester);
+    await autoStart(tester, shell);
+    await tester.tap(find.byKey(const ValueKey('app-tour-next')));
+    await tester.pumpAndSettle();
+
+    // Étape « Accueil » : l'onglet touche le bord gauche et le bas de l'écran.
+    final tab = tester.getRect(find.byKey(shell.targets.home));
+    expect(tab.left, 0);
+    final screen = tester.getRect(find.byKey(const ValueKey('app-tour')));
+
+    // Le trou que peint le voile (classe privée : lu par son champ public).
+    final holes = tester
+        .widgetList<CustomPaint>(find.descendant(
+          of: find.byKey(const ValueKey('app-tour')),
+          matching: find.byType(CustomPaint),
+        ))
+        .map((paint) => paint.painter)
+        .where((painter) => '${painter.runtimeType}' == '_ScrimPainter')
+        // ignore: avoid_dynamic_calls
+        .map((painter) => (painter as dynamic).hole as Rect?)
+        .toList();
+    final hole = holes.single!;
+
+    // L'anneau doré grandit jusqu'à 9 px autour du trou, trait compris ~10,5.
+    expect(hole.left, greaterThanOrEqualTo(screen.left + 10.5));
+    expect(hole.bottom, lessThanOrEqualTo(screen.bottom - 10.5));
+    // Et le trou éclaire toujours le bouton.
+    expect(hole.overlaps(tab), isTrue);
+    expect(hole.right, greaterThanOrEqualTo(tab.right));
   });
 
   group('textes', () {

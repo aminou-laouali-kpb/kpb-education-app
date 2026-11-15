@@ -33,6 +33,9 @@ import 'app_tour_store.dart';
 //   tiroir lui-même (`KpbToolsDrawer.visibleTools`).
 // - Elle ne s'ouvre pas par-dessus autre chose : si un écran, une feuille ou un
 //   dialogue est déjà ouvert, elle attend le prochain démarrage.
+// - Elle ne touche jamais un shell démonté : tout passe par `host.mounted`.
+// - Retirée de l'écran sans que l'élève l'ait fermée (un autre écran a remplacé
+//   toute la pile), elle n'est pas « vue » : rien n'est noté, elle reviendra.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Les boutons que la visite éclaire. Une instance PAR shell (comme la clé du
@@ -53,6 +56,12 @@ typedef AppTourTool = ({String labelKey, IconData icon, Color color});
 
 /// Ce dont la visite a besoin du shell vivant.
 abstract interface class AppTourHost {
+  /// Le shell est-il encore à l'écran ? À lire AVANT [context] : sur un `State`
+  /// démonté, `context` lève (une erreur que Crashlytics compte comme un
+  /// plantage). Deux shells se succèdent à chaque entrée dans l'app, et le
+  /// premier est démonté avant la fin du délai d'ouverture de la visite.
+  bool get mounted;
+
   BuildContext get context;
   AppTourTargets get targets;
 
@@ -240,10 +249,15 @@ abstract final class AppTour {
     } catch (_) {
       return false;
     }
+    // `mounted` d'abord : `context` lève sur un shell démonté.
+    if (!host.mounted) return false;
     final context = host.context;
     if (!context.mounted || !_isTopRoute(context)) return false;
     _autoShownThisRun = true;
-    await show(host, trigger: AppTourTrigger.firstOpen);
+    final closedByStudent = await show(host, trigger: AppTourTrigger.firstOpen);
+    // Retirée de l'écran avant que l'élève l'ait fermée : le prochain accueil
+    // peut la rouvrir.
+    if (!closedByStudent) _autoShownThisRun = false;
     return true;
   }
 
@@ -252,23 +266,25 @@ abstract final class AppTour {
   static Future<void> autoStart(AppTourHost host) async {
     if (!autoStartEnabled) return;
     await Future<void>.delayed(autoStartDelay);
-    if (!host.context.mounted) return;
+    if (!host.mounted) return;
     await showIfFirstOpen(host);
   }
 
   /// « Revoir la visite » (Profil) : sur le shell vivant.
   static Future<void> replay() async {
     final host = _host;
-    if (host == null || !host.context.mounted || _open) return;
+    if (host == null || !host.mounted || _open) return;
     await show(host, trigger: AppTourTrigger.replay);
   }
 
-  /// Ouvre la visite. Écrit le drapeau à la fermeture, quelle qu'elle soit.
-  static Future<void> show(
+  /// Ouvre la visite. Écrit le drapeau quand l'élève la ferme (« J'ai
+  /// compris » ou « Passer »). Rend `true` si c'est lui qui l'a fermée, `false`
+  /// si elle ne s'est pas ouverte ou a été retirée de l'écran autrement.
+  static Future<bool> show(
     AppTourHost host, {
     required AppTourTrigger trigger,
   }) async {
-    if (_open) return;
+    if (_open || !host.mounted) return false;
     _open = true;
     final startTab = host.currentTab;
     final steps = stepsFor(coachVisible: host.coachVisible);
@@ -297,7 +313,13 @@ abstract final class AppTour {
       _open = false;
     }
 
-    final how = exit ?? AppTourExit.skipped;
+    // Ni « J'ai compris » ni « Passer » : la visite a été retirée avec toute
+    // la pile (retour à la connexion, mise à jour obligatoire, notification
+    // ouverte). L'élève ne l'a pas vue jusqu'au bout et ne l'a pas refusée :
+    // on ne note rien, et on ne touche pas au shell, peut-être démonté.
+    final how = exit;
+    if (how == null) return false;
+
     analytics.completed(
       exit: how.key,
       stepsSeen: progress.seen,
@@ -311,12 +333,16 @@ abstract final class AppTour {
 
     // L'élève retrouve l'écran d'où il est parti (l'accueil au premier
     // lancement, le Profil quand il l'a rejouée).
-    if (host.context.mounted) host.goToTab(startTab);
+    if (host.mounted) host.goToTab(startTab);
 
     // « Passer » : on lui dit où la retrouver, sinon il la croit perdue.
-    if (how == AppTourExit.skipped && host.context.mounted) {
-      KpbToast.info('app_tour_skipped_hint'.tr, context: host.context);
+    if (how == AppTourExit.skipped && host.mounted) {
+      final context = host.context;
+      if (context.mounted) {
+        KpbToast.info('app_tour_skipped_hint'.tr, context: context);
+      }
     }
+    return true;
   }
 }
 
@@ -393,7 +419,7 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
     // l'onglet, la seconde a posé le bouton KPB Intelligence, absent de
     // l'accueil).
     binding.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted || !widget.host.mounted) return;
       if (widget.host.currentTab != step.tab) widget.host.goToTab(step.tab);
       binding.addPostFrameCallback((_) {
         _measure();
@@ -418,6 +444,22 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
     if (rect != _hole) setState(() => _hole = rect);
   }
 
+  /// Le trou autour du bouton : un peu plus large que lui, mais tenu à
+  /// l'intérieur de l'écran, pour que l'anneau d'un bouton collé au bord
+  /// (Accueil, Profil, le menu) reste entier.
+  Rect? _holeIn(Size size) {
+    final raw = _hole?.inflate(6);
+    if (raw == null) return null;
+    const edge = 11.0;
+    final kept = raw.intersect(Rect.fromLTRB(
+      edge,
+      edge,
+      size.width - edge,
+      size.height - edge,
+    ));
+    return kept.width > 0 && kept.height > 0 ? kept : raw;
+  }
+
   void _go(int target) {
     if (target < 0 || target >= widget.steps.length) return;
     setState(() => _enter(target));
@@ -434,7 +476,6 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
     final steps = widget.steps;
     final isFirst = _index == 0;
     final isLast = _index == steps.length - 1;
-    final hole = _hole?.inflate(6);
 
     return PopScope(
       canPop: false,
@@ -458,6 +499,7 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
           child: LayoutBuilder(
             builder: (context, constraints) {
               final size = constraints.biggest;
+              final hole = _holeIn(size);
               return Stack(
                 children: [
                   // Le voile : il absorbe les taps (un tap au hasard ne doit
@@ -466,12 +508,16 @@ class _AppTourOverlayState extends State<_AppTourOverlay>
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {},
-                      child: AnimatedBuilder(
-                        animation: _pulse,
-                        builder: (_, __) => CustomPaint(
-                          painter: _ScrimPainter(
-                            hole: hole,
-                            pulse: _pulse.value,
+                      // Sa propre couche : l'anneau qui pulse ne fait pas
+                      // redessiner la bulle soixante fois par seconde.
+                      child: RepaintBoundary(
+                        child: AnimatedBuilder(
+                          animation: _pulse,
+                          builder: (_, __) => CustomPaint(
+                            painter: _ScrimPainter(
+                              hole: hole,
+                              pulse: _pulse.value,
+                            ),
                           ),
                         ),
                       ),

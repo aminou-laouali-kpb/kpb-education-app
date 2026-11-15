@@ -36,7 +36,8 @@
 > contrôles de santé verts). Côté serveur, seule #421 change du code : le SQL brut ne dépend
 > plus du fuseau horaire de la base (aucune migration, aucune route nouvelle). Les autres
 > touchent la CI, les tests (#420, #423), un runbook et cette checklist (#419, #422).
-> **La fusion de cette mise à jour déplace à son tour la tête de `main`** (documents seulement) :
+> #424 (visite guidée, app seulement) est fusionnée mais pas déployée : elle entre dans la 59.
+> **La fusion de cette mise à jour déplace à son tour la tête de `main`** (#424 et documents) :
 > la redéployer (🔒, feu vert du propriétaire), puis relever `RELEASE` (§0.3) — jamais
 > `3a60074e` écrit de mémoire. Pour ne plus tourner en rond : **cette checklist ne se révise
 > plus avant l'archive** ; un écart de SHA avec ce texte se règle par le relevé du §0.3.
@@ -168,8 +169,10 @@ git log --oneline --first-parent 5332a128.."$RELEASE"
 #   #410 (la 59), #411 (durcissement), #413 (visite guidée), #414 (catalogue de repli),
 #   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — puis, relevé du
 #   14/11/2026 : #417 (runbook du catalogue), #418 (CI), #419 (cette checklist), #420 (tests
-#   Postgres en UTC), #421 (SQL brut indépendant du fuseau), #422 (cette checklist), #423
-#   (tests hors UTC), puis la PR de cette révision — et rien d'autre.
+#   Postgres en UTC), #421 (SQL brut indépendant du fuseau) — puis #422 (cette checklist),
+#   #423 (tests serveur hors UTC), #424 (visite guidée : plus d'erreur sur un shell démonté,
+#   trouvée au simulateur le 14/11/2026 ; app seulement), puis la PR de la révision du soir
+#   (#425) — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
