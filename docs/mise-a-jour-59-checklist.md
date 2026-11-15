@@ -30,14 +30,16 @@
 > trois universités américaines, Belgique, Allemagne). Les étapes 0.3, 1, 2, 5, 6 et 9 sont
 > réécrites en ce sens ; le reste ne change pas.
 >
-> **Mise à jour du 14/11/2026 — la production sert `92a5fea1`.** Après la révision, cinq PR ont
-> été fusionnées puis déployées au feu vert du propriétaire (#417 à #421 ; dernier déploiement :
-> run 43639436240, 14/11/2026 à 20 h 52 UTC, contrôle de santé vert). Côté serveur, seule #421
-> change du code : le SQL brut ne dépend plus du fuseau horaire de la base (aucune migration,
-> aucune route nouvelle). Les autres touchent la CI, les tests, un runbook et cette checklist.
+> **Mise à jour du 14/11/2026 — la production sert `3a60074e`.** Après la révision, sept PR ont
+> été fusionnées puis déployées au feu vert du propriétaire (#417 à #423 ; déploiements : run
+> 43639436240 sur `92a5fea1` à 20 h 52 UTC, puis run 43647550902 sur `3a60074e` à 22 h 24 UTC,
+> contrôles de santé verts). Côté serveur, seule #421 change du code : le SQL brut ne dépend
+> plus du fuseau horaire de la base (aucune migration, aucune route nouvelle). Les autres
+> touchent la CI, les tests (#420, #423), un runbook et cette checklist (#419, #422).
 > **La fusion de cette mise à jour déplace à son tour la tête de `main`** (documents seulement) :
 > la redéployer (🔒, feu vert du propriétaire), puis relever `RELEASE` (§0.3) — jamais
-> `92a5fea1` écrit de mémoire.
+> `3a60074e` écrit de mémoire. Pour ne plus tourner en rond : **cette checklist ne se révise
+> plus avant l'archive** ; un écart de SHA avec ce texte se règle par le relevé du §0.3.
 >
 > **🔒 = étape de distribution ou de production.** Déploiement du backend, AAB importé, IPA
 > envoyée, soumission, élargissement d'un palier, ouverture d'un drapeau :
@@ -166,7 +168,8 @@ git log --oneline --first-parent 5332a128.."$RELEASE"
 #   #410 (la 59), #411 (durcissement), #413 (visite guidée), #414 (catalogue de repli),
 #   #415 (verrous Postgres), #412 (correctifs sans build), #416 (CI) — puis, relevé du
 #   14/11/2026 : #417 (runbook du catalogue), #418 (CI), #419 (cette checklist), #420 (tests
-#   Postgres en UTC), #421 (SQL brut indépendant du fuseau) — et rien d'autre.
+#   Postgres en UTC), #421 (SQL brut indépendant du fuseau), #422 (cette checklist), #423
+#   (tests hors UTC), puis la PR de cette révision — et rien d'autre.
 #   Une PR de plus : la nommer ici et arbitrer avant d'archiver.
 git diff --stat 5332a128 "$RELEASE" -- pubspec.lock ios/Runner/Info.plist \
   ios/Runner/PrivacyInfo.xcprivacy android/app/src/main/AndroidManifest.xml android/app/build.gradle \
@@ -189,9 +192,9 @@ Si une commande affiche autre chose que l'attendu, **ne pas archiver** : arbitre
 13/11/2026 ; elle sert depuis `b730a4ef` (déployé par `deploy.yml`, `scope` = `full`, run
 43383015342, contrôle de santé vert) : le serveur de la 59, plus #414, #415, #412 et #416.
 Mesuré le 13/11/2026 à 07 h 11 UTC : `features.caseMessaging` = `false`, `support.whatsappNumber`
-= `null`, `notice` = `null`. **Mise à jour du 14/11/2026** : la production sert `92a5fea1`
-(run 43639436240, contrôle de santé vert), soit en plus #417 à #421 ; remesuré à 20 h 54 UTC :
-mêmes valeurs (`false`, `null`, `null`). Le contrôle : l'archive de la 58 est un ancêtre de `RELEASE`,
+= `null`, `notice` = `null`. **Mise à jour du 14/11/2026** : la production sert `3a60074e`
+(run 43647550902, 22 h 24 UTC, contrôle de santé vert), soit en plus #417 à #423 ; remesuré
+après le déploiement : mêmes valeurs (`false`, `null`, `null`). Le contrôle : l'archive de la 58 est un ancêtre de `RELEASE`,
 l'écart serveur est celui listé ci-dessous, et **la production sert exactement `RELEASE`**
 (§0.3).
 
@@ -214,7 +217,8 @@ git diff --stat 5332a128 "$RELEASE" -- backend admin docker-compose.yml
 #   (verrous, #415), docker-compose.yml (rotation des journaux, #412), scripts d'intégration (#416).
 #   Puis, relevé du 14/11/2026 : backend/src/common/sql-time.ts et les services qui écrivent du
 #   SQL brut (outbox, budget IA, révisions d'études, envoi des push, suivi et ouverture des
-#   bourses, #421), backend/jest.config.js et jest.postgres-utc.js (tests, #420).
+#   bourses, #421), backend/jest.config.js et jest.postgres-utc.js (tests, #420), trois specs
+#   Postgres et un script de backend/package.json (tests, #423).
 git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 #   attendu : une seule migration, 20261109120000_case_message_case_created_idx.
 ```
@@ -247,7 +251,7 @@ git diff --stat 5332a128 "$RELEASE" -- backend/prisma/migrations
 ## 2. Vérifications de départ (5 min)
 
 ```bash
-curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : 92a5fea1d919 (relevé du 14/11/2026)
+curl -fsS https://api.kpbeducation.cloud/api/health/version      # sha : 3a60074edaa1 (relevé du 14/11/2026, avant la PR de révision)
 PROD=$(curl -fsS https://api.kpbeducation.cloud/api/health/version | jq -r .sha)
 test "$PROD" = "${RELEASE:0:${#PROD}}" && echo "production ($PROD) = RELEASE : OK"
 curl -fsS https://api.kpbeducation.cloud/api/health | jq '.push'   # {configured: true, fcm: true, oneSignal: true}
