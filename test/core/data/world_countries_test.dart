@@ -46,6 +46,12 @@ List<IsoRow> readServerRows() {
   return rows;
 }
 
+/// Pays proposés par l'app que la table du serveur ne porte pas encore (hors
+/// norme ISO 3166-1). Le serveur lit leur nom comme un pays inconnu, comme
+/// « Autre » : pas de fuseau horaire propre, pas d'éligibilité par pays.
+/// Même liste que `EXTRA_COUNTRIES` dans scripts/generate-world-countries.js.
+const appOnlyIso2 = {'XK'};
+
 void main() {
   group('accord avec la table du serveur', () {
     final rows = readServerRows();
@@ -58,11 +64,23 @@ void main() {
       expect(rows.any((r) => r.alpha2 == 'US'), isTrue);
     });
 
-    test('tous les pays habités du serveur sont proposés, et aucun autre', () {
+    test(
+        'tous les pays habités du serveur sont proposés, et aucun autre '
+        'que les exceptions nommées', () {
       expect(
         worldCountries.map((c) => c.iso2).toSet(),
-        rows.map((r) => r.alpha2).toSet(),
+        {...rows.map((r) => r.alpha2), ...appOnlyIso2},
       );
+    });
+
+    test('une exception disparaît le jour où le serveur connaît le pays', () {
+      // Sinon la liste d'exceptions masquerait un désaccord réel.
+      final known = rows.map((r) => r.alpha2).toSet();
+      expect(appOnlyIso2.intersection(known), isEmpty,
+          reason: 'Le serveur connaît maintenant ce pays : retire-le de '
+              'appOnlyIso2 et de EXTRA_COUNTRIES.');
+      expect(worldCountryByIso2('XK')?.nameFr, 'Kosovo');
+      expect(worldCountryByIso2('XK')?.dialCode, '+383');
     });
 
     test(
@@ -80,7 +98,14 @@ void main() {
       }
       final wrong = [
         for (final country in worldCountries)
-          if (owners[serverFold(country.nameFr)]?.length != 1 ||
+          if (appOnlyIso2.contains(country.iso2))
+            // Le serveur ne doit PAS le prendre pour un autre pays.
+            if (owners.containsKey(serverFold(country.nameFr)))
+              '${country.iso2} « ${country.nameFr} » est lu comme '
+                  '${owners[serverFold(country.nameFr)]}'
+            else
+              ...const <String>[]
+          else if (owners[serverFold(country.nameFr)]?.length != 1 ||
               owners[serverFold(country.nameFr)]!.single != country.iso2)
             '${country.iso2} « ${country.nameFr} » → '
                 '${owners[serverFold(country.nameFr)]}',

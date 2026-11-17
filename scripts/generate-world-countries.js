@@ -38,6 +38,14 @@ const NAME_EN_OVERRIDES = {
   CG: 'Congo',
 };
 
+// Pays absents de la norme ISO 3166-1, donc de la table du serveur, mais qui
+// ont leur propre indicatif attribué par l'UIT. Le serveur ne sait pas encore
+// les relire : il traite leur nom comme un pays inconnu, comme « Autre ».
+// La même liste est tenue dans test/core/data/world_countries_test.dart.
+const EXTRA_COUNTRIES = [
+  { alpha2: 'XK', nameFr: 'Kosovo', nameEn: 'Kosovo' }, // +383 depuis 2016.
+];
+
 // Territoires habités que libphonenumber ne décrit pas : indicatif du réseau
 // qui les dessert.
 const DIAL_CODE_OVERRIDES = {
@@ -92,7 +100,7 @@ function main() {
   const version = require(path.join(PHONE_ROOT, 'package.json')).version;
   const metadata = new Metadata(raw);
 
-  const countries = readIsoRows().map((row) => {
+  const countries = [...readIsoRows(), ...EXTRA_COUNTRIES].map((row) => {
     let dialCode = DIAL_CODE_OVERRIDES[row.alpha2];
     let lengths = [];
     if (raw.countries[row.alpha2]) {
@@ -135,8 +143,8 @@ function main() {
     '',
     "part of 'world_countries.dart';",
     '',
-    `/// Les ${countries.length} pays et territoires habités de la norme ISO 3166-1, triés par`,
-    '/// nom français.',
+    `/// Les ${countries.length} pays et territoires : ceux, habités, de la norme ISO 3166-1, et,`,
+    `/// hors norme : ${EXTRA_COUNTRIES.map((c) => c.nameFr).join(', ')}. Triés par nom français.`,
     'const List<WorldCountry> _worldCountriesTable = <WorldCountry>[',
   ];
   fs.writeFileSync(OUTPUT, [...header, ...lines, '];', ''].join('\n'));

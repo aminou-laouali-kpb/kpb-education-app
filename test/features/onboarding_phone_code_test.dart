@@ -37,7 +37,7 @@ String get _source => File('lib/app/features/onboarding/onboarding_screen.dart')
 /// Les indicatifs proposés à l'inscription : un par pays de la table mondiale
 /// (`world_countries.dart`), dans l'ordre de la liste. La table des 37
 /// indicatifs écrits à la main a disparu ; les gardes ci-dessous portent
-/// maintenant sur les 242 pays.
+/// maintenant sur tous les pays de la table.
 List<({String flag, String code, String country})> readDialCodes() => [
       for (final c in worldCountriesInListOrder('fr'))
         (flag: c.flag, code: c.dialCode, country: c.nameFr),

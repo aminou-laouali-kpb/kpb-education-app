@@ -6,8 +6,8 @@
 
 part of 'world_countries.dart';
 
-/// Les 242 pays et territoires habités de la norme ISO 3166-1, triés par
-/// nom français.
+/// Les 243 pays et territoires : ceux, habités, de la norme ISO 3166-1, et,
+/// hors norme : Kosovo. Triés par nom français.
 const List<WorldCountry> _worldCountriesTable = <WorldCountry>[
   WorldCountry('AF', 'Afghanistan', 'Afghanistan', '+93'),
   WorldCountry('ZA', 'Afrique du Sud', 'South Africa', '+27', minDigits: 5),
@@ -135,6 +135,7 @@ const List<WorldCountry> _worldCountriesTable = <WorldCountry>[
   WorldCountry('KE', 'Kenya', 'Kenya', '+254'),
   WorldCountry('KG', 'Kirghizistan', 'Kyrgyzstan', '+996'),
   WorldCountry('KI', 'Kiribati', 'Kiribati', '+686'),
+  WorldCountry('XK', 'Kosovo', 'Kosovo', '+383'),
   WorldCountry('KW', 'Koweït', 'Kuwait', '+965'),
   WorldCountry('RE', 'La Réunion', 'Réunion', '+262'),
   WorldCountry('LA', 'Laos', 'Laos', '+856'),
