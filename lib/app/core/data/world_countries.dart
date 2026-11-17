@@ -9,10 +9,13 @@ part 'world_countries_table.dart';
 /// L'inscription proposait 34 pays et 37 indicatifs écrits à la main. Un élève
 /// du Kenya, d'Égypte, d'Haïti ou du Liban ne trouvait ni son pays ni son
 /// indicatif — et c'était la première chose que l'app lui demandait. La table
-/// porte maintenant tous les pays du monde : ceux, habités, de la norme ISO
-/// 3166-1, plus le Kosovo (hors norme, mais avec son propre indicatif). Elle
-/// est générée depuis les mêmes noms que le serveur et depuis les indicatifs
-/// de libphonenumber (`scripts/generate-world-countries.js`).
+/// porte maintenant tous les pays habités de la norme ISO 3166-1, générée
+/// depuis les mêmes noms que le serveur et depuis les indicatifs de
+/// libphonenumber (`scripts/generate-world-countries.js`).
+///
+/// Deux absences sont VOULUES (décision du propriétaire, 17/11/2026) : le
+/// Sahara occidental, écarté par le générateur, et le Kosovo, hors norme et
+/// jamais ajouté. Un test les garde hors de la liste.
 class WorldCountry {
   const WorldCountry(
     this.iso2,

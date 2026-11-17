@@ -6,8 +6,8 @@
 
 part of 'world_countries.dart';
 
-/// Les 243 pays et territoires : ceux, habités, de la norme ISO 3166-1, et,
-/// hors norme : Kosovo. Triés par nom français.
+/// Les 241 pays et territoires habités de la norme ISO 3166-1, triés par
+/// nom français. Écartés par décision du propriétaire : EH.
 const List<WorldCountry> _worldCountriesTable = <WorldCountry>[
   WorldCountry('AF', 'Afghanistan', 'Afghanistan', '+93'),
   WorldCountry('ZA', 'Afrique du Sud', 'South Africa', '+27', minDigits: 5),
@@ -135,7 +135,6 @@ const List<WorldCountry> _worldCountriesTable = <WorldCountry>[
   WorldCountry('KE', 'Kenya', 'Kenya', '+254'),
   WorldCountry('KG', 'Kirghizistan', 'Kyrgyzstan', '+996'),
   WorldCountry('KI', 'Kiribati', 'Kiribati', '+686'),
-  WorldCountry('XK', 'Kosovo', 'Kosovo', '+383'),
   WorldCountry('KW', 'Koweït', 'Kuwait', '+965'),
   WorldCountry('RE', 'La Réunion', 'Réunion', '+262'),
   WorldCountry('LA', 'Laos', 'Laos', '+856'),
@@ -203,7 +202,6 @@ const List<WorldCountry> _worldCountriesTable = <WorldCountry>[
   WorldCountry('GB', 'Royaume-Uni', 'United Kingdom', '+44'),
   WorldCountry('RU', 'Russie', 'Russia', '+7'),
   WorldCountry('RW', 'Rwanda', 'Rwanda', '+250'),
-  WorldCountry('EH', 'Sahara occidental', 'Western Sahara', '+212'),
   WorldCountry('BL', 'Saint-Barthélemy', 'Saint Barthélemy', '+590'),
   WorldCountry(
       'KN', 'Saint-Christophe-et-Niévès', 'Saint Kitts and Nevis', '+1'),

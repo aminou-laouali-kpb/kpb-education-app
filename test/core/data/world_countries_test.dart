@@ -46,11 +46,10 @@ List<IsoRow> readServerRows() {
   return rows;
 }
 
-/// Pays proposés par l'app que la table du serveur ne porte pas encore (hors
-/// norme ISO 3166-1). Le serveur lit leur nom comme un pays inconnu, comme
-/// « Autre » : pas de fuseau horaire propre, pas d'éligibilité par pays.
-/// Même liste que `EXTRA_COUNTRIES` dans scripts/generate-world-countries.js.
-const appOnlyIso2 = {'XK'};
+/// Territoires de la norme que l'app ne propose pas : décision du propriétaire
+/// (17/11/2026). Même liste que `EXCLUDED_ALPHA2` dans
+/// scripts/generate-world-countries.js.
+const excludedIso2 = {'EH'};
 
 void main() {
   group('accord avec la table du serveur', () {
@@ -65,22 +64,33 @@ void main() {
     });
 
     test(
-        'tous les pays habités du serveur sont proposés, et aucun autre '
-        'que les exceptions nommées', () {
+        'tous les pays habités du serveur sont proposés, sauf ceux que le '
+        'propriétaire a écartés, et aucun autre', () {
+      final server = rows.map((r) => r.alpha2).toSet();
+      // Une exclusion qui ne désigne plus rien masquerait un désaccord.
+      expect(server.containsAll(excludedIso2), isTrue);
       expect(
         worldCountries.map((c) => c.iso2).toSet(),
-        {...rows.map((r) => r.alpha2), ...appOnlyIso2},
+        server.difference(excludedIso2),
       );
     });
 
-    test('une exception disparaît le jour où le serveur connaît le pays', () {
-      // Sinon la liste d'exceptions masquerait un désaccord réel.
-      final known = rows.map((r) => r.alpha2).toSet();
-      expect(appOnlyIso2.intersection(known), isEmpty,
-          reason: 'Le serveur connaît maintenant ce pays : retire-le de '
-              'appOnlyIso2 et de EXTRA_COUNTRIES.');
-      expect(worldCountryByIso2('XK')?.nameFr, 'Kosovo');
-      expect(worldCountryByIso2('XK')?.dialCode, '+383');
+    test(
+        'le Sahara occidental et le Kosovo ne sont pas proposés (décision du '
+        'propriétaire) — ni par code, ni par nom, ni par la recherche', () {
+      for (final iso2 in ['EH', 'XK']) {
+        expect(worldCountryByIso2(iso2), isNull, reason: iso2);
+      }
+      for (final name in ['Sahara occidental', 'Western Sahara', 'Kosovo']) {
+        expect(worldCountryByName(name), isNull, reason: name);
+        expect(filterWorldCountries(worldCountries, name), isEmpty,
+            reason: name);
+      }
+      // L'indicatif +212 reste celui du Maroc, et de lui seul.
+      expect(
+        filterWorldCountries(worldCountries, '+212').map((c) => c.iso2),
+        ['MA'],
+      );
     });
 
     test(
@@ -98,14 +108,7 @@ void main() {
       }
       final wrong = [
         for (final country in worldCountries)
-          if (appOnlyIso2.contains(country.iso2))
-            // Le serveur ne doit PAS le prendre pour un autre pays.
-            if (owners.containsKey(serverFold(country.nameFr)))
-              '${country.iso2} « ${country.nameFr} » est lu comme '
-                  '${owners[serverFold(country.nameFr)]}'
-            else
-              ...const <String>[]
-          else if (owners[serverFold(country.nameFr)]?.length != 1 ||
+          if (owners[serverFold(country.nameFr)]?.length != 1 ||
               owners[serverFold(country.nameFr)]!.single != country.iso2)
             '${country.iso2} « ${country.nameFr} » → '
                 '${owners[serverFold(country.nameFr)]}',
