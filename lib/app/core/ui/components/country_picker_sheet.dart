@@ -238,7 +238,7 @@ class _CountryRow extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(flag, style: const TextStyle(fontSize: 22)),
+                  Text(flag, style: const TextStyle(fontSize: KpbFontSize.xl)),
                   const SizedBox(width: KpbSpacing.md),
                   Expanded(child: Text(name, style: KpbTextStyles.body)),
                   if (dialCode != null) ...[
