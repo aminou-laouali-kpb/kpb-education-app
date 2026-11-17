@@ -28,33 +28,38 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:karatou/app/core/data/world_countries.dart';
 import 'package:karatou/app/features/onboarding/onboarding_screen.dart';
 
 String get _source => File('lib/app/features/onboarding/onboarding_screen.dart')
     .readAsStringSync();
 
-/// Les entrées `_DialCode('…', '…', '…')` telles qu'écrites dans la source.
-List<({String flag, String code, String country})> readDialCodes() {
-  final table =
-      RegExp(r'const _dialCodes = <_DialCode>\[(.*?)\];', dotAll: true)
-          .firstMatch(_source);
-  expect(table, isNotNull,
-      reason: 'La table _dialCodes a disparu de onboarding_screen.dart.');
-  final entry =
-      RegExp(r"_DialCode\('([^']*)', '([^']*)', '((?:[^'\\]|\\.)*)'\)");
-  return entry
-      .allMatches(table!.group(1)!)
-      .map((m) => (flag: m.group(1)!, code: m.group(2)!, country: m.group(3)!))
-      .toList();
-}
+/// Les indicatifs proposés à l'inscription : un par pays de la table mondiale
+/// (`world_countries.dart`), dans l'ordre de la liste. La table des 37
+/// indicatifs écrits à la main a disparu ; les gardes ci-dessous portent
+/// maintenant sur les 242 pays.
+List<({String flag, String code, String country})> readDialCodes() => [
+      for (final c in worldCountriesInListOrder('fr'))
+        (flag: c.flag, code: c.dialCode, country: c.nameFr),
+    ];
 
 void main() {
   test(
       '(a) chaque indicatif matche ^\\+\\d{1,4}\$ — l\'emoji ne peut pas '
       'revenir', () {
     final codes = readDialCodes();
-    expect(codes.length, greaterThanOrEqualTo(20),
-        reason: 'L\'extraction ne lit plus la table : garde morte.');
+    expect(codes.length, greaterThanOrEqualTo(200),
+        reason: 'La table mondiale est vide ou tronquée : garde morte.');
+    // Et c'est bien CETTE table que l'écran propose : sans ce lien, les
+    // gardes ci-dessous éprouveraient une liste que personne n'affiche.
+    expect(
+      _source.contains(
+          "for (final country in worldCountriesInListOrder('fr'))\n"
+          '    _DialCode(country.flag, country.dialCode, country.nameFr, country),'),
+      isTrue,
+      reason: 'L\'écran ne construit plus ses indicatifs depuis la table '
+          'mondiale (`dialCode`).',
+    );
 
     final pattern = RegExp(r'^\+\d{1,4}$');
     final violations = [
@@ -83,10 +88,13 @@ void main() {
         reason: 'Deux entrées du menu sont indiscernables : l\'utilisateur ne '
             'peut plus choisir entre elles.');
     // Et les deux « +1 » existent bien tous les deux.
-    expect(codes.where((c) => c.code == '+1').length, 2,
-        reason: 'Le Canada et les États-Unis partagent le +1 : si l\'un des '
-            'deux a disparu, la désambiguïsation a été résolue en supprimant '
-            'une option au lieu de nommer le pays.');
+    for (final country in ['Canada', 'États-Unis']) {
+      expect(
+          codes.where((c) => c.country == country && c.code == '+1').length, 1,
+          reason: 'Le Canada et les États-Unis partagent le +1 : si l\'un des '
+              'deux a disparu, la désambiguïsation a été résolue en supprimant '
+              'une option au lieu de nommer le pays.');
+    }
   });
 
   test('(b) le profil est construit depuis `.code`, jamais depuis `.label`',
@@ -154,6 +162,26 @@ void main() {
       expect(validateOnboardingPhone('12', required: true), isNotNull);
       expect(
           validateOnboardingPhone('1234567890123', required: true), isNotNull);
+    });
+
+    test('les bornes suivent le pays de l\'indicatif quand il en a d\'autres',
+        () {
+      // Andorre : des mobiles à 6 chiffres. Les refuser reviendrait à ne pas
+      // proposer son indicatif.
+      final andorra = worldCountryByIso2('AD')!;
+      expect(andorra.minDigits, 6);
+      expect(
+        validateOnboardingPhone('312345',
+            required: true,
+            minDigits: andorra.minDigits,
+            maxDigits: andorra.maxDigits),
+        isNull,
+      );
+      // Sans ces bornes — le public de l'app — rien ne change : 6 chiffres
+      // restent refusés, et le message donne les bornes appliquées.
+      final niger = worldCountryByIso2('NE')!;
+      expect((niger.minDigits, niger.maxDigits), (7, 12));
+      expect(validateOnboardingPhone('312345', required: true), isNotNull);
     });
 
     test('vide : refusé seulement quand le champ est obligatoire', () {

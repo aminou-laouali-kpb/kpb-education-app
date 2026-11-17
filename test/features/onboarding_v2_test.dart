@@ -139,6 +139,31 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  const countryKey = ValueKey('onboarding-country');
+
+  /// Le pays ne se choisit plus dans une liste déroulante de 34 noms, mais
+  /// dans la feuille de TOUS les pays : on cherche, puis on touche la ligne.
+  Future<void> chooseCountry(WidgetTester tester, String name) async {
+    await tester.ensureVisible(find.byKey(countryKey));
+    await tester.tap(find.byKey(countryKey));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byKey(const ValueKey('country-picker-search')), name);
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(
+      of: find.byKey(const ValueKey('country-picker-list')),
+      matching: find.text(name),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  /// Le pays enregistré par le champ (le nom français, celui du profil).
+  String? shownCountry(WidgetTester tester) =>
+      tester.state<FormFieldState<String>>(find.byKey(countryKey)).value;
+
+  FormField<String> countryField(WidgetTester tester) =>
+      tester.widget<FormField<String>>(find.byKey(countryKey));
+
   Future<void> enterPhone(WidgetTester tester) async {
     final phone = find.byWidgetPredicate(
       (w) => w is TextField && w.keyboardType == TextInputType.phone,
@@ -146,13 +171,6 @@ void main() {
     await tester.ensureVisible(phone);
     await tester.enterText(phone, '90000000');
     await tester.pump();
-  }
-
-  DropdownButtonFormField<String> dropdown(WidgetTester tester, String label) {
-    return tester.widget<DropdownButtonFormField<String>>(find.ancestor(
-      of: find.text(label),
-      matching: find.byType(DropdownButtonFormField<String>),
-    ));
   }
 
   /// La valeur affichée d'une liste déroulante (celle de son état).
@@ -177,8 +195,8 @@ void main() {
 
       expect(find.text('1 / 3'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Passer'), findsNothing);
-      expect(shownValue(tester, 'Pays'), 'Niger');
-      expect(dropdown(tester, 'Pays').validator, isNull);
+      expect(shownCountry(tester), 'Niger');
+      expect(countryField(tester).validator, isNull);
 
       await enterPhone(tester);
       await tapPrimary(tester, 'Continuer');
@@ -204,8 +222,27 @@ void main() {
       await pumpOnboarding(tester, v2: true);
       expect(find.text('1 / 3'), findsOneWidget);
       expect(find.widgetWithText(TextButton, 'Passer'), findsOneWidget);
-      expect(shownValue(tester, 'Pays'), isNull);
+      expect(shownCountry(tester), isNull);
       expect(find.text('Niger'), findsNothing);
+    });
+
+    testWidgets(
+        'un pays que l\'ancienne liste n\'avait pas : le Kenya se choisit, '
+        'son indicatif +254 se règle seul, et le profil les enregistre',
+        (tester) async {
+      final controller = await pumpOnboarding(tester, v2: true);
+
+      await chooseCountry(tester, 'Kenya');
+      expect(shownCountry(tester), 'Kenya');
+      await enterPhone(tester);
+      await tapPrimary(tester, 'Continuer');
+
+      expect(find.text('2 / 3'), findsOneWidget);
+      final saved = controller.profile!;
+      // Le nom français est la valeur enregistrée : celle que le serveur relit.
+      expect(saved.countryOfResidence, 'Kenya');
+      expect(saved.phone, '+254 90000000');
+      expect(saved.whatsApp, '+254 90000000');
     });
 
     testWidgets(
@@ -220,10 +257,7 @@ void main() {
       expect(find.text('1 / 3'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.ancestor(
-            of: find.text('Pays'),
-            matching: find.byType(DropdownButtonFormField<String>),
-          ),
+          of: find.byKey(countryKey),
           matching: find.text('Ce champ est obligatoire'),
         ),
         findsOneWidget,
@@ -234,7 +268,7 @@ void main() {
         AnalyticsParamKey.reason: 'required_fields'
       });
 
-      await choose(tester, 'Pays', 'Sénégal');
+      await chooseCountry(tester, 'Sénégal');
       await tapPrimary(tester, 'Continuer');
       expect(find.text('2 / 3'), findsOneWidget);
       expect(controller.profile!.countryOfResidence, 'Sénégal');
@@ -276,7 +310,7 @@ void main() {
         'jamais de toast', (tester) async {
       await pumpOnboarding(tester, v2: true);
       await enterPhone(tester);
-      await choose(tester, 'Pays', 'Niger');
+      await chooseCountry(tester, 'Niger');
       await tapPrimary(tester, 'Continuer');
       await choose(tester, 'Niveau actuel', 'Lycée');
       await choose(tester, 'Niveau visé', 'Licence');
@@ -411,7 +445,7 @@ void main() {
       RemoteFeatureFlags.instance.debugSetFeaturesForTest({});
       await tester.pump();
       expect(find.widgetWithText(TextButton, 'Passer'), findsOneWidget);
-      expect(shownValue(tester, 'Pays'), isNull);
+      expect(shownCountry(tester), isNull);
     });
   });
 }

@@ -1441,7 +1441,15 @@ const Map<String, String> appTranslationsEn = {
   'case_recap_contact': 'Contact',
   'phone_no_plus':
       'Leave out the “+”: the country code is already chosen on the left.',
-  'phone_digits_range': 'Between 7 and 12 digits.',
+  'phone_digits_range': 'Between @min and @max digits.',
+  'dial_code_picker_title': 'Country dial code',
+  'country_picker_title': 'Your country of residence',
+  'country_picker_search': 'Search for a country',
+  'country_picker_search_dial': 'Search for a country or dial code',
+  'country_picker_none': 'No country matches.',
+  'country_picker_none_other':
+      'No country matches. Check the spelling, or choose “@other”.',
+  'country_other': 'Other',
   'dial_code_other': 'Other code',
   'dial_code_custom_label': 'Your country code (e.g. +254)',
   'dial_code_custom_invalid': 'A “+” followed by 1 to 4 digits.',
