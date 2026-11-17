@@ -86,12 +86,25 @@ class _DD extends StatelessWidget {
 /// (Comores 7, Nigeria 10 ou 11, Côte d'Ivoire 10) sans accepter « 12 » ni une
 /// ligne de chiffres collés (audit build 57, T1-10). Vide : seulement refusé
 /// quand le champ est obligatoire.
-String? validateOnboardingPhone(String? value, {required bool required}) {
+///
+/// [minDigits] et [maxDigits] viennent du pays de l'indicatif choisi
+/// ([WorldCountry]) : quelques pays ont des mobiles plus courts (Andorre, 6
+/// chiffres) ou plus longs (Autriche, 13), et les refuser reviendrait à ne
+/// pas avoir leur indicatif.
+String? validateOnboardingPhone(
+  String? value, {
+  required bool required,
+  int minDigits = WorldCountry.defaultMinDigits,
+  int maxDigits = WorldCountry.defaultMaxDigits,
+}) {
   final text = value?.trim() ?? '';
   if (text.isEmpty) return required ? 'field_required'.tr : null;
   if (text.contains('+')) return 'phone_no_plus'.tr;
   final digits = text.replaceAll(RegExp(r'\D'), '');
-  if (digits.length < 7 || digits.length > 12) return 'phone_digits_range'.tr;
+  if (digits.length < minDigits || digits.length > maxDigits) {
+    return 'phone_digits_range'
+        .trParams({'min': '$minDigits', 'max': '$maxDigits'});
+  }
   return null;
 }
 
@@ -124,7 +137,11 @@ class _PhoneRow extends StatelessWidget {
     required this.label,
     required this.required,
     required this.onDialCode,
+    this.dialCodeKey,
   });
+
+  /// Clé du bouton d'indicatif (tests).
+  final Key? dialCodeKey;
   final TextEditingController controller;
   final TextEditingController customCodeController;
   final _DialCode dialCode;
@@ -134,35 +151,64 @@ class _PhoneRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isOther = identical(dialCode, _otherDialCode);
+    Future<void> pickDialCode() async {
+      final pick = await showCountryPickerSheet(
+        context,
+        title: 'dial_code_picker_title'.tr,
+        selectedIso2: dialCode.world?.iso2,
+        otherSelected: isOther,
+        showDialCodes: true,
+        otherLabel: 'dial_code_other'.tr,
+      );
+      // Le formulaire a pu être quitté pendant que la feuille était ouverte.
+      if (pick == null || !context.mounted) return;
+      onDialCode(
+          pick.isOther ? _otherDialCode : _dialCodeByIso2[pick.country!.iso2]!);
+    }
+
     final row = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 52,
-          decoration: BoxDecoration(
+        // Un bouton qui ouvre la liste de TOUS les indicatifs, avec une
+        // recherche : le menu déroulant n'en proposait que 37.
+        Semantics(
+          button: true,
+          label:
+              '${'dial_code_picker_title'.tr} : ${isOther ? 'dial_code_other'.tr : '${dialCode.world!.nameFor(Get.locale?.languageCode)} ${dialCode.code}'}',
+          excludeSemantics: true,
+          // Le lecteur d'écran n'entend que ce libellé : l'action doit être
+          // portée ici aussi, sinon le bouton s'annonce mais ne s'ouvre pas.
+          onTap: pickDialCode,
+          child: Material(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(KpbRadius.md),
-            border: Border.all(color: KpbColors.border),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<_DialCode>(
-              value: dialCode,
-              isDense: true,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              items: [..._dialCodes, _otherDialCode]
-                  .map((d) => DropdownMenuItem(
-                        value: d,
-                        child: Text(
-                          identical(d, _otherDialCode)
-                              ? '${d.flag} ${'dial_code_other'.tr}'
-                              : d.label,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                if (v != null) onDialCode(v);
-              },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(KpbRadius.md),
+              side: BorderSide(color: KpbColors.border),
+            ),
+            child: InkWell(
+              key: dialCodeKey,
+              borderRadius: BorderRadius.circular(KpbRadius.md),
+              onTap: pickDialCode,
+              child: SizedBox(
+                height: 52,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isOther
+                            ? '${dialCode.flag} ${'dial_code_other'.tr}'
+                            : '${dialCode.flag} ${dialCode.code}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      Icon(Icons.arrow_drop_down_rounded,
+                          color: KpbColors.textMuted),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -171,13 +217,20 @@ class _PhoneRow extends StatelessWidget {
           child: TextFormField(
             controller: controller,
             keyboardType: TextInputType.phone,
-            validator: (v) => validateOnboardingPhone(v, required: required),
+            validator: (v) => validateOnboardingPhone(
+              v,
+              required: required,
+              minDigits:
+                  dialCode.world?.minDigits ?? WorldCountry.defaultMinDigits,
+              maxDigits:
+                  dialCode.world?.maxDigits ?? WorldCountry.defaultMaxDigits,
+            ),
             decoration: InputDecoration(labelText: label),
           ),
         ),
       ],
     );
-    if (!identical(dialCode, _otherDialCode)) return row;
+    if (!isOther) return row;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -194,6 +247,84 @@ class _PhoneRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Le pays de résidence : un champ qui ouvre la liste de TOUS les pays, avec
+/// une recherche.
+///
+/// C'était une liste déroulante de 34 pays : un élève du Kenya ou d'Haïti
+/// n'avait que « Autre ». La valeur enregistrée reste le nom français du pays
+/// ([WorldCountry.nameFr]), celui que le serveur sait relire ; seul
+/// l'affichage suit la langue de l'app.
+class _CountryField extends StatelessWidget {
+  const _CountryField({
+    required this.value,
+    required this.required,
+    required this.onChanged,
+  });
+
+  /// Nul tant que rien n'est choisi (onboarding V2) : le champ reste vide.
+  final String? value;
+
+  /// Exigé pour continuer : l'erreur s'écrit dans le champ.
+  final bool required;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField<String>(
+      key: const ValueKey('onboarding-country'),
+      initialValue: value,
+      validator: required
+          ? (v) => (v == null || v.trim().isEmpty) ? 'field_required'.tr : null
+          : null,
+      builder: (field) {
+        final current = field.value;
+        final isOther = current == _otherCountry;
+        final country = isOther ? null : worldCountryByName(current);
+        final shown = current == null
+            ? null
+            : isOther
+                ? '🌍 ${'country_other'.tr}'
+                : country == null
+                    ? current
+                    : '${country.flag} ${country.nameFor(Get.locale?.languageCode)}';
+        Future<void> pickCountry() async {
+          final pick = await showCountryPickerSheet(
+            context,
+            title: 'country_picker_title'.tr,
+            selectedIso2: country?.iso2,
+            otherSelected: isOther,
+            otherLabel: 'country_other'.tr,
+          );
+          if (pick == null || !field.mounted) return;
+          final picked = pick.isOther ? _otherCountry : pick.country!.nameFr;
+          field.didChange(picked);
+          onChanged(picked);
+        }
+
+        return Semantics(
+          button: true,
+          label: shown == null ? 'country'.tr : '${'country'.tr} : $shown',
+          excludeSemantics: true,
+          onTap: pickCountry,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(KpbRadius.md),
+            onTap: pickCountry,
+            child: InputDecorator(
+              isEmpty: shown == null,
+              decoration: InputDecoration(
+                labelText: 'country'.tr,
+                errorText: field.errorText,
+                suffixIcon: const Icon(Icons.arrow_drop_down_rounded),
+              ),
+              child: shown == null ? null : Text(shown),
+            ),
+          ),
+        );
+      },
     );
   }
 }

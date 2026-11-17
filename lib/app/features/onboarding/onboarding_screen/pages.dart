@@ -212,6 +212,7 @@ class _PageIdentity extends StatelessWidget {
           label: 'phone'.tr,
           required: true,
           onDialCode: onPhoneCode,
+          dialCodeKey: const ValueKey('onboarding-phone-dial-code'),
         ),
         const SizedBox(height: KpbSpacing.sm),
 
@@ -230,19 +231,16 @@ class _PageIdentity extends StatelessWidget {
             label: 'whatsapp'.tr,
             required: false,
             onDialCode: onWaCode,
+            dialCodeKey: const ValueKey('onboarding-whatsapp-dial-code'),
           ),
           const SizedBox(height: KpbSpacing.md),
         ],
 
         // Pays de résidence
         const SizedBox(height: KpbSpacing.md),
-        DropdownButtonFormField<String>(
-          initialValue: country,
-          decoration: InputDecoration(labelText: 'country'.tr),
-          validator: requireCountry ? _req : null,
-          items: _countries
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-              .toList(),
+        _CountryField(
+          value: country,
+          required: requireCountry,
           onChanged: onCountry,
         ),
         const SizedBox(height: KpbSpacing.lg),
