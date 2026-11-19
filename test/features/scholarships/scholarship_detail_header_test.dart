@@ -89,6 +89,7 @@ LiveScholarshipModel _scholarship({
   List<String> keyRequirements = const <String>[],
   String deadlineLabel = '',
   String title = 'Chevening',
+  List<Map<String, dynamic>> videos = const <Map<String, dynamic>>[],
 }) =>
     LiveScholarshipModel.fromJson(<String, dynamic>{
       'id': 'chevening',
@@ -106,6 +107,7 @@ LiveScholarshipModel _scholarship({
       if (lastVerifiedAt != null) 'lastVerifiedAt': lastVerifiedAt,
       'tags': <String>[],
       'matchScore': 0,
+      'videos': videos,
       if (cycle != null) 'currentCycle': cycle,
     });
 
@@ -171,6 +173,14 @@ Future<MockApiClient> _pump(
   await tester.pumpAndSettle();
   return mock;
 }
+
+final _videoHero = find.byKey(const ValueKey<String>('scholarship-video-hero'));
+Map<String, dynamic> _video(String id, String title) => <String, dynamic>{
+      'id': 'v-$id',
+      'youtubeVideoId': id,
+      'title': title,
+      'languageCode': 'fr',
+    };
 
 final _header = find.byKey(const ValueKey<String>('scholarship-status-header'));
 final _bar = find.byKey(const ValueKey<String>('scholarship-action-bar'));
@@ -671,6 +681,52 @@ void main() {
       expect(find.text('Bourse introuvable'), findsOneWidget);
       expect(find.text('Réessayer'), findsOneWidget);
       expect(_bar, findsNothing);
+    });
+  });
+  group('vidéo en tête de fiche', () {
+    testWidgets('la vidéo est AVANT l\'en-tête de statut', (tester) async {
+      await _pump(
+        tester,
+        _scholarship(
+          cycle: _cycle(closesAt: _inDays(40)),
+          videos: [_video('wgRQvBWUSxM', 'Bourse Ashesi 2027-2028')],
+        ),
+      );
+      expect(_videoHero, findsOneWidget);
+      expect(find.text('Bourse Ashesi 2027-2028'), findsOneWidget);
+      expect(
+        tester.getTopLeft(_videoHero).dy,
+        lessThan(tester.getTopLeft(_header).dy),
+      );
+    });
+
+    testWidgets('sans vidéo, aucune vignette', (tester) async {
+      await _pump(tester, _scholarship(cycle: _cycle(closesAt: _inDays(40))));
+      expect(_videoHero, findsNothing);
+      expect(_header, findsOneWidget);
+    });
+
+    testWidgets('la première vidéo n\'est pas répétée dans le carrousel',
+        (tester) async {
+      await _pump(
+        tester,
+        _scholarship(
+          cycle: _cycle(closesAt: _inDays(40)),
+          videos: [
+            _video('wgRQvBWUSxM', 'Première vidéo'),
+            _video('GAU4cdY7FoE', 'Seconde vidéo'),
+          ],
+        ),
+      );
+      expect(_videoHero, findsOneWidget);
+      expect(find.text('Première vidéo'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('Seconde vidéo'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Seconde vidéo'), findsOneWidget);
+      expect(find.text('Première vidéo'), findsOneWidget);
     });
   });
 }

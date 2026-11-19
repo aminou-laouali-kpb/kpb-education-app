@@ -126,15 +126,6 @@ class _ScholarshipVideoPlayerScreenState
                     const SizedBox(height: 8),
                     Text(current.description, style: KpbTextStyles.body),
                   ],
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: _openOnYoutube,
-                      icon: const Icon(Icons.open_in_new_rounded),
-                      label: Text('scholarship_video_open_youtube'.tr),
-                    ),
-                  ),
                   if (widget.videos.length > 1) ...[
                     const SizedBox(height: 18),
                     Semantics(
@@ -152,6 +143,23 @@ class _ScholarshipVideoPlayerScreenState
                         onTap: () => _playAt(index),
                       ),
                   ],
+                  // Lien volontairement discret, tout en bas : la vidéo se
+                  // regarde dans l'app, on ne pousse pas l'élève dehors.
+                  const SizedBox(height: 28),
+                  Center(
+                    child: TextButton(
+                      key: const ValueKey<String>('scholarship-video-youtube'),
+                      onPressed: _openOnYoutube,
+                      style: TextButton.styleFrom(
+                        foregroundColor: context.kpb.textMuted,
+                        textStyle: const TextStyle(
+                          fontSize: KpbFontSize.xs,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      child: Text('scholarship_video_open_youtube'.tr),
+                    ),
+                  ),
                 ],
               ),
             ),
