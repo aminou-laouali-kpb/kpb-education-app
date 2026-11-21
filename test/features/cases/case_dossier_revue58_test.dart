@@ -135,6 +135,71 @@ void main() {
     resetGetxSingleton();
   });
 
+  group('avec qui l’élève échange (commercial qui répond sans attribution)',
+      () {
+    CaseMessage msg(String id, String name, String role, int minute) =>
+        CaseMessage(
+          id: id,
+          senderName: name,
+          senderRole: role,
+          body: LocalizedText(fr: 'texte $id', en: 'text $id'),
+          createdAt: _now.add(Duration(minutes: minute)),
+        );
+
+    final thread = [
+      msg('m0', 'KPB Operations', 'system', 0),
+      msg('m1', 'Awa', 'student', 1),
+      msg('m2', 'Jojo Commercial', 'commercial', 2),
+      msg('m3', 'Awa', 'student', 3),
+    ];
+
+    testWidgets(
+        'le nom du commercial est sur sa bulle, pas sur le message auto',
+        (tester) async {
+      await _pumpDetail(tester, _case(advisor: null, messages: thread));
+
+      expect(find.text('Jojo Commercial'), findsOneWidget);
+      expect(find.text('KPB Operations'), findsNothing);
+    });
+
+    testWidgets(
+        'WhatsApp : « Continuer avec Jojo », son nom et la référence dans le '
+        'message, fiche KYC sans son nom', (tester) async {
+      await _pumpDetail(tester, _case(advisor: null, messages: thread));
+
+      expect(find.text('Continuer avec Jojo Commercial sur WhatsApp'),
+          findsOneWidget);
+      expect(find.textContaining('la même personne qui te répond'),
+          findsOneWidget);
+
+      await tester.ensureVisible(
+          find.byKey(const ValueKey('case-write-advisor-whatsapp')));
+      await tester
+          .tap(find.byKey(const ValueKey('case-write-advisor-whatsapp')));
+      await tester.pumpAndSettle();
+
+      final sheet = tester.widget<KpbVerifiedAdvisorSheet>(
+          find.byType(KpbVerifiedAdvisorSheet));
+      expect(sheet.prefill, contains('Jojo Commercial'));
+      expect(sheet.prefill, contains('KPB-2026-058'));
+      expect(sheet.advisorName, isNull,
+          reason: 'un commercial n’a pas le contrôle KYC des conseillers');
+    });
+
+    test(
+        'caseContactName : conseiller attribué d’abord, sinon le dernier '
+        'membre de l’équipe qui a écrit', () {
+      expect(caseContactName(_case(advisor: 'Awa Traoré', messages: thread)),
+          'Awa Traoré');
+      expect(caseContactName(_case(advisor: null, messages: thread)),
+          'Jojo Commercial');
+      expect(
+          caseContactName(_case(advisor: null, messages: thread.sublist(0, 2))),
+          isNull,
+          reason: 'le message automatique ne compte pas');
+    });
+  });
+
   group('constat 33 — messagerie fermée, renvoi WhatsApp', () {
     testWidgets('par défaut : pas de champ de saisie, bouton WhatsApp',
         (tester) async {

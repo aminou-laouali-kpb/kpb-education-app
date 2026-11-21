@@ -54,6 +54,20 @@ class _MessageBubble extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Le nom de la personne de l'équipe qui écrit : l'élève sait
+                  // avec qui il échange (et à qui demander sur WhatsApp).
+                  if (!isStudent && msg.senderRole != 'system')
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text(
+                        msg.senderName,
+                        style: const TextStyle(
+                          fontSize: KpbFontSize.xs,
+                          fontWeight: FontWeight.w700,
+                          color: KpbColors.actionPrimary,
+                        ),
+                      ),
+                    ),
                   Text(
                     ctrl.resolve(msg.body),
                     style: TextStyle(
