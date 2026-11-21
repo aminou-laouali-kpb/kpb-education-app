@@ -1372,6 +1372,7 @@ export class ProfilesService {
         prizeAwards,
         prizeForfeits,
         campaignDeliveries,
+        passGrants,
       ] = await Promise.all([
         prisma.case.findMany({
           where: { userId: id },
@@ -1922,6 +1923,21 @@ export class ProfilesService {
             campaign: { select: { name: true, templateId: true } },
           },
         }),
+        // Périodes de Pass Karatou : dates, durée, référence de paiement et
+        // statut. Pas le nom du commercial ni ses notes internes.
+        prisma.passGrant.findMany({
+          where: { userId: id },
+          orderBy: { createdAt: 'asc' },
+          select: {
+            startsAt: true,
+            endsAt: true,
+            durationDays: true,
+            paymentReference: true,
+            amountXof: true,
+            createdAt: true,
+            revokedAt: true,
+          },
+        }),
       ]);
 
       // Les avis que l'étudiant a rédigés sur ses conseillers : son nom, sa note
@@ -2081,6 +2097,7 @@ export class ProfilesService {
         eefInterest: eefInterest[0] ?? null,
         scholarshipMatchRuns,
         scholarshipAlertSubscriptions,
+        passGrants,
         referral: {
           code: row.referralCode,
           creditBalance: row.reviewCredits,

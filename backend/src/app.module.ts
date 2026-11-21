@@ -104,7 +104,14 @@ import { AdminAppBuildsService } from './modules/app-builds/admin-app-builds.ser
 import { AppBuildInterceptor } from './modules/app-builds/app-build.interceptor';
 import { AppBuildTrackerService } from './modules/app-builds/app-build-tracker.service';
 import { AcademyAdminService } from './modules/academy/academy-admin.service';
-import { AcademyController } from './modules/academy/academy.controller';
+import { AcademyController, MeAcademyController } from './modules/academy/academy.controller';
+import {
+  AdminPassController,
+  PassWebhookController,
+  StudentPassController,
+} from './modules/pass/pass.controller';
+import { PassWebhookGuard } from './modules/pass/pass-webhook.guard';
+import { PassService } from './modules/pass/pass.service';
 import { AcademyService } from './modules/academy/academy.service';
 import { AdminAcademyController } from './modules/academy/admin-academy.controller';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
@@ -283,7 +290,11 @@ import { SalonService } from './modules/salon/salon.service';
     AdminAppBuildsController,
     AdminCatalogController,
     AcademyController,
+    MeAcademyController,
     AdminAcademyController,
+    PassWebhookController,
+    StudentPassController,
+    AdminPassController,
     ImpactController,
     ToolsController,
     YoutubeController,
@@ -404,6 +415,8 @@ import { SalonService } from './modules/salon/salon.service';
     ScholarshipEligibilityAdminService,
     AcademyService,
     AcademyAdminService,
+    PassService,
+    PassWebhookGuard,
     ImpactService,
     ToolsService,
     YoutubeService,

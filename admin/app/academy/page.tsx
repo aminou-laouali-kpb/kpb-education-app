@@ -237,6 +237,9 @@ export default function AcademyPage() {
                     {t(`academy.status.${course.status}`)}
                   </Badge>
                   <Badge variant={seen.variant}>{seen.label}</Badge>
+                  {course.requiresPass ? (
+                    <Badge variant="brand">{t('academy.passOnlyBadge')}</Badge>
+                  ) : null}
                 </div>
                 <CellText
                   primary={fill(t('academy.lessonsCount'), {

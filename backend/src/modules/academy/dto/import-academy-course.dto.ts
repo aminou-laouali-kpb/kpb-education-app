@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -54,6 +55,11 @@ export class ImportAcademyLessonDto {
   @IsOptional()
   @IsEnum(PublicationStatus)
   status?: PublicationStatus;
+
+  /** Absent : `false` à la création, inchangé sur une leçon existante. */
+  @IsOptional()
+  @IsBoolean()
+  isFreePreview?: boolean;
 }
 
 /**
@@ -99,6 +105,11 @@ export class ImportAcademyCourseDto {
   @Min(0)
   @Max(1000)
   displayOrder?: number;
+
+  /** Absent : `false` à la création, inchangé sur un cours existant. */
+  @IsOptional()
+  @IsBoolean()
+  requiresPass?: boolean;
 
   @IsArray()
   @ArrayMinSize(1)

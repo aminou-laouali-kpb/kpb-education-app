@@ -98,6 +98,7 @@ describe('toCourseInput', () => {
       titleFr: 'Préparation HSK 1',
       status: 'draft',
       displayOrder: 0,
+      requiresPass: false,
     });
   });
 
@@ -138,6 +139,7 @@ describe('toLessonInput', () => {
       titleFr: 'Les tons',
       durationSeconds: 245,
       status: 'published',
+      isFreePreview: false,
     });
   });
 

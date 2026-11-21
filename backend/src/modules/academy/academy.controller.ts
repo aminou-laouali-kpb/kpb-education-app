@@ -1,5 +1,7 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Req, UseGuards } from '@nestjs/common';
 
+import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import { PassService } from '../pass/pass.service';
 import { AcademyService } from './academy.service';
 
 /**
@@ -23,5 +25,30 @@ export class AcademyController {
   @Get('courses/:idOrSlug')
   getCourse(@Param('idOrSlug') idOrSlug: string) {
     return this.academy.getCourse(idOrSlug);
+  }
+}
+
+/**
+ * Le même cours, pour un élève connecté : les leçons réservées au Pass ne
+ * s'ouvrent que si son Pass Karatou est actif à l'instant de la requête.
+ */
+@Controller('me/academy')
+@UseGuards(StudentAuthGuard)
+export class MeAcademyController {
+  constructor(
+    private readonly academy: AcademyService,
+    private readonly pass: PassService,
+  ) {}
+
+  @Get('courses/:idOrSlug')
+  async getCourse(
+    @Req() req: { studentUser: { id: string } },
+    @Param('idOrSlug') idOrSlug: string,
+  ) {
+    const hasPass = await this.pass.hasActivePass(req.studentUser.id);
+    return {
+      ...(await this.academy.getCourse(idOrSlug, hasPass)),
+      viewerHasPass: hasPass,
+    };
   }
 }

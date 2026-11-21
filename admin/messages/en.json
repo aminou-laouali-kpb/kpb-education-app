@@ -17,6 +17,7 @@
     "verification": "Verification",
     "scholarshipsModeration": "Scholarships (review)",
     "serviceSales": "Service sales",
+    "pass": "Karatou Pass",
     "community": "Community",
     "notifications": "Notifications",
     "users": "Users",
@@ -2349,7 +2350,7 @@
     "loadError": "Could not load the courses.",
     "saveError": "The change was not saved.",
     "empty": "No course yet. Create one or import a manifest.",
-    "visibilityHelp": "The app only shows a course that is published AND has at least one published lesson. Courses are free: the app has no payment.",
+    "visibilityHelp": "The app only shows a course that is published AND has at least one published lesson. A “Karatou Pass only” course shows its outline to everyone, but only its preview lessons play without the Pass.",
     "columns": {
       "course": "Course",
       "status": "Status",
@@ -2386,7 +2387,6 @@
     "displayOrderLabel": "Position in the list",
     "coverLabel": "Cover image (optional)",
     "coverHint": "Without a cover image, the app shows the first lesson's thumbnail.",
-    "freeNote": "The course is free: there is no purchase in the app.",
     "descriptionFrLabel": "Description (FR)",
     "descriptionEnLabel": "Description (EN) — empty: the FR description",
     "courseCreated": "Course created, as a draft.",
@@ -2435,6 +2435,55 @@
       "lessonsReport": "{created} created · {updated} updated · {unchanged} unchanged",
       "notInManifest": "{n} lesson(s) of the course missing from the manifest, left as they are:",
       "draftReminder": "A draft course stays hidden from the app: open it, review the lessons, then set it to “Published”."
-    }
+    },
+    "requiresPassLabel": "Karatou Pass only",
+    "requiresPassHint": "Members only: without an active Pass, the student sees the outline but can only play the lessons ticked “Free preview”.",
+    "freePreviewLabel": "Free preview (playable without the Pass)",
+    "freePreviewBadge": "Free preview",
+    "passOnlyBadge": "Pass"
+  },
+  "pass": {
+    "title": "Karatou Pass",
+    "subtitle": "Open access after a payment verified outside the app, follow up and revoke.",
+    "formTitle": "Activate a Pass",
+    "formHint": "Only after checking the mobile money receipt. Same action as the n8n form: one payment reference never opens two accesses. The student gets a notification.",
+    "emailLabel": "Student account e-mail",
+    "referenceLabel": "Payment reference",
+    "durationLabel": "Length",
+    "durationDays": "{n} days",
+    "durationCustom": "Other length…",
+    "durationCustomLabel": "Number of days",
+    "amountLabel": "Amount paid (FCFA, optional)",
+    "noteLabel": "Internal note (optional)",
+    "grantCta": "Activate the Pass",
+    "grantedOk": "Pass activated for {name} ({email}) until {until}. Check it is the right person.",
+    "alreadyGranted": "This payment had already opened the Pass of {name} ({email}), active until {until}. Nothing was added.",
+    "loadError": "Could not load the accesses.",
+    "saveError": "The operation did not go through.",
+    "searchLabel": "Search (e-mail, name, reference)",
+    "searchCta": "Search",
+    "loading": "Loading…",
+    "empty": "No access yet.",
+    "columns": {
+      "student": "Student",
+      "period": "Period",
+      "payment": "Payment",
+      "grantedBy": "Granted by",
+      "state": "State",
+      "actions": "Actions"
+    },
+    "state": {
+      "active": "Active",
+      "upcoming": "Upcoming",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "sourceWebhook": "via n8n",
+    "sourceAdmin": "via the console",
+    "revokeCta": "Revoke",
+    "cancelCta": "Cancel",
+    "revokeTitle": "Revoke {name}'s Pass?",
+    "revokeBody": "Access to members-only courses closes right away. The row stays in the history.",
+    "revokeReasonLabel": "Reason (required)"
   }
 }

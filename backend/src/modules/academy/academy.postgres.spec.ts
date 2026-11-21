@@ -1,9 +1,11 @@
 import { randomUUID } from 'node:crypto';
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { AccountType, PrismaClient } from '@prisma/client';
 
 import { PublicationStatus } from '../../common/enums/publication-status.enum';
+import type { NotificationDispatchService } from '../notifications/notification-dispatch.service';
+import { PassService } from '../pass/pass.service';
 import type { PrismaService } from '../prisma/prisma.service';
 import { AcademyAdminService } from './academy-admin.service';
 import { AcademyService } from './academy.service';
@@ -39,6 +41,7 @@ describePostgres('Academy — intégration PostgreSQL', () => {
     `https://www.youtube.com/watch?v=${letter.repeat(11)}`;
 
   async function cleanup() {
+    await prisma.userProfile.deleteMany({ where: { email: { endsWith: `@${suffix}.test` } } });
     const courses = await prisma.academyCourse.findMany({
       where: { slug: { endsWith: `-${suffix}` } },
       select: { id: true },
@@ -258,5 +261,108 @@ describePostgres('Academy — intégration PostgreSQL', () => {
     await expect(admin.updateCourse(a.id, { slug: slug('b') })).rejects.toBeInstanceOf(
       ConflictException,
     );
+  });
+
+  describe('Pass Karatou et cours réservé', () => {
+    const notices: string[] = [];
+    const pass = new PassService(prismaService, {
+      dispatch: async (input: { dedupeKey: string }) => {
+        notices.push(input.dedupeKey);
+        return 'pushed';
+      },
+    } as unknown as NotificationDispatchService);
+    const email = `eleve@${suffix}.test`;
+    let userId: string;
+
+    beforeAll(async () => {
+      const user = await prisma.userProfile.create({
+        data: {
+          accountType: AccountType.student,
+          fullName: 'Élève Pass',
+          email,
+          preferredLanguage: 'fr',
+          phone: '',
+          countryOfResidence: 'ner',
+        },
+      });
+      userId = user.id;
+      await prisma.academyCourse.create({
+        data: {
+          slug: slug('reserve'),
+          titleFr: 'Réservé',
+          titleEn: 'Members',
+          descriptionFr: '',
+          descriptionEn: '',
+          priceXOF: 0,
+          priceEUR: 0,
+          status: 'published',
+          requiresPass: true,
+          lessons: {
+            create: [
+              { titleFr: 'Introduction', titleEn: 'Intro', videoUrl: video('p'), durationSeconds: 60, order: 1, isFreePreview: true },
+              { titleFr: 'Leçon 2', titleEn: 'Lesson 2', videoUrl: video('q'), durationSeconds: 60, order: 2 },
+            ],
+          },
+        },
+      });
+    });
+
+    it('sans Pass : le programme est visible, la leçon réservée ne livre pas sa vidéo', async () => {
+      const course = await publicReads.getCourse(slug('reserve'), await pass.hasActivePass(userId));
+      expect(course).toMatchObject({ requiresPass: true, freeLessonCount: 1 });
+      expect(course.lessons.map((l) => [l.title.fr, l.locked, l.videoUrl])).toEqual([
+        ['Introduction', false, video('p')],
+        ['Leçon 2', true, null],
+      ]);
+    });
+
+    it('le webhook ouvre le Pass une seule fois par paiement, puis la leçon se lit', async () => {
+      const grant = {
+        email: email.toUpperCase(),
+        durationDays: 30,
+        paymentReference: `om-${suffix}`,
+        source: 'webhook' as const,
+        grantedBy: 'Ventes',
+        actorAdminId: null,
+        requestId: 'it',
+      };
+      const first = await pass.grant(grant);
+      // Le même reçu recopié autrement par un second commercial.
+      const replay = await pass.grant({ ...grant, paymentReference: ` OM ${suffix} ` });
+      expect(first.status).toBe('granted');
+      expect(replay).toMatchObject({ status: 'already_granted', grantId: first.grantId });
+      expect(await prisma.passGrant.count({ where: { userId } })).toBe(1);
+      expect(notices).toEqual([`pass-activated:${first.grantId}`]);
+      expect(
+        await prisma.adminAuditEvent.count({ where: { entityId: first.grantId, action: 'pass.granted' } }),
+      ).toBe(1);
+
+      const course = await publicReads.getCourse(slug('reserve'), await pass.hasActivePass(userId));
+      expect(course.lessons[1]).toMatchObject({ locked: false, videoUrl: video('q') });
+    });
+
+    it('un second paiement prolonge le Pass ; la révocation le referme', async () => {
+      const before = await pass.status(userId);
+      const second = await pass.grant({
+        email,
+        durationDays: 10,
+        paymentReference: `wave-${suffix}`,
+        source: 'admin',
+        grantedBy: 'admin@kpb.test',
+        actorAdminId: null,
+        requestId: 'it',
+      });
+      expect(second.startsAt).toBe(before.activeUntil);
+
+      for (const row of await prisma.passGrant.findMany({ where: { userId } })) {
+        await pass.revoke(row.id, { reason: 'Paiement annulé', revokedBy: 'admin', actorAdminId: null, requestId: 'it' });
+      }
+      expect(await pass.status(userId)).toEqual({ active: false, activeUntil: null });
+    });
+
+    it('la suppression du compte emporte ses accès (cascade)', async () => {
+      await prisma.userProfile.delete({ where: { id: userId } });
+      expect(await prisma.passGrant.count({ where: { userId } })).toBe(0);
+    });
   });
 });

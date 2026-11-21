@@ -27,6 +27,8 @@ export interface AcademyLesson {
   durationSeconds: number;
   order: number;
   status: AcademyStatus;
+  /** Lisible sans Pass dans un cours réservé. */
+  isFreePreview: boolean;
 }
 
 export interface AcademyCourse {
@@ -41,6 +43,8 @@ export interface AcademyCourse {
   priceEUR: number;
   status: AcademyStatus;
   displayOrder: number;
+  /** Réservé au Pass Karatou, sauf les leçons d'aperçu. */
+  requiresPass: boolean;
   lessonCount: number;
   publishedLessonCount: number;
   publishedDurationSeconds: number;
@@ -62,6 +66,7 @@ export interface AcademyCourseInput {
   coverImageUrl?: string | null;
   status?: AcademyStatus;
   displayOrder?: number;
+  requiresPass?: boolean;
 }
 
 export interface AcademyLessonInput {
@@ -70,6 +75,7 @@ export interface AcademyLessonInput {
   titleEn?: string;
   durationSeconds?: number;
   status?: AcademyStatus;
+  isFreePreview?: boolean;
 }
 
 /** Ce que `POST /admin/academy/courses/import` accepte, champ pour champ. */
@@ -80,6 +86,7 @@ export interface AcademyImportLesson {
   titleEn?: string;
   durationSeconds: number;
   status?: AcademyStatus;
+  isFreePreview?: boolean;
 }
 
 export interface AcademyImportCourse {
@@ -90,6 +97,7 @@ export interface AcademyImportCourse {
   descriptionEn?: string;
   coverImageUrl?: string;
   displayOrder?: number;
+  requiresPass?: boolean;
   lessons: AcademyImportLesson[];
 }
 
@@ -209,6 +217,7 @@ export interface CourseDraft {
   coverImageUrl: string;
   displayOrder: string;
   status: AcademyStatus;
+  requiresPass: boolean;
 }
 
 export const EMPTY_COURSE_DRAFT: CourseDraft = {
@@ -221,6 +230,7 @@ export const EMPTY_COURSE_DRAFT: CourseDraft = {
   displayOrder: '0',
   // Brouillon d'abord : on publie quand les leçons sont là et relues.
   status: 'draft',
+  requiresPass: false,
 };
 
 export function courseToDraft(course: AcademyCourse): CourseDraft {
@@ -234,6 +244,7 @@ export function courseToDraft(course: AcademyCourse): CourseDraft {
     coverImageUrl: course.coverImageUrl ?? '',
     displayOrder: String(course.displayOrder),
     status: course.status,
+    requiresPass: course.requiresPass,
   };
 }
 
@@ -288,6 +299,7 @@ export function toCourseInput(
     titleFr,
     status: draft.status,
     displayOrder,
+    requiresPass: draft.requiresPass,
   };
   const titleEn = draft.titleEn.trim();
   const descriptionFr = draft.descriptionFr.trim();
@@ -312,6 +324,7 @@ export interface LessonDraft {
   titleEn: string;
   duration: string;
   status: AcademyStatus;
+  isFreePreview: boolean;
 }
 
 export const EMPTY_LESSON_DRAFT: LessonDraft = {
@@ -320,6 +333,7 @@ export const EMPTY_LESSON_DRAFT: LessonDraft = {
   titleEn: '',
   duration: '',
   status: 'published',
+  isFreePreview: false,
 };
 
 export function lessonToDraft(lesson: AcademyLesson): LessonDraft {
@@ -329,6 +343,7 @@ export function lessonToDraft(lesson: AcademyLesson): LessonDraft {
     titleEn: lesson.titleEn === lesson.titleFr ? '' : lesson.titleEn,
     duration: formatDuration(lesson.durationSeconds),
     status: lesson.status,
+    isFreePreview: lesson.isFreePreview,
   };
 }
 
@@ -358,6 +373,7 @@ export function toLessonInput(
     ...(mode === 'edit' || titleEn ? { titleEn } : {}),
     durationSeconds,
     status: draft.status,
+    isFreePreview: draft.isFreePreview,
   };
 }
 
@@ -469,6 +485,10 @@ export function parseManifest(raw: string): ParsedManifest {
       if (isHttpsUrl(cover)) course.coverImageUrl = cover;
       else problems.push(`${label} : « coverImageUrl » doit commencer par https://.`);
     }
+    if (module.requiresPass !== undefined) {
+      if (typeof module.requiresPass === 'boolean') course.requiresPass = module.requiresPass;
+      else problems.push(`${label} : « requiresPass » doit valoir true ou false.`);
+    }
     if (module.displayOrder !== undefined) {
       const displayOrder = integer(module.displayOrder);
       if (displayOrder === null || displayOrder > 1000) {
@@ -535,6 +555,10 @@ export function parseManifest(raw: string): ParsedManifest {
       const lessonTitleEn = text(lesson.titleEn);
       if (lessonTitleEn) parsed.titleEn = lessonTitleEn;
       if (status) parsed.status = status as AcademyStatus;
+      if (lesson.isFreePreview !== undefined) {
+        if (typeof lesson.isFreePreview === 'boolean') parsed.isFreePreview = lesson.isFreePreview;
+        else problems.push(`${at} : « isFreePreview » doit valoir true ou false.`);
+      }
       course.lessons.push(parsed);
     });
     course.lessons.sort((a, b) => a.order - b.order);

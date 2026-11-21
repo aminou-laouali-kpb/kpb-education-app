@@ -169,8 +169,16 @@ export function CourseForm({
           )}
         </Field>
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          type="checkbox"
+          checked={draft.requiresPass}
+          onChange={(event) => onChange({ requiresPass: event.target.checked })}
+        />
+        {t('academy.requiresPassLabel')}
+      </label>
       <p style={hintStyle}>
-        {t('academy.coverHint')} {t('academy.freeNote')}
+        {t('academy.requiresPassHint')} {t('academy.coverHint')}
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
         <Button type="submit" loading={pending}>

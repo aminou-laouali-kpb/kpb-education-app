@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -66,6 +67,11 @@ export class CreateAcademyCourseDto {
   @Min(0)
   @Max(1000)
   displayOrder?: number;
+
+  /** Réservé au Pass Karatou : sans Pass, seules les leçons « aperçu » se lisent. */
+  @IsOptional()
+  @IsBoolean()
+  requiresPass?: boolean;
 }
 
 export class UpdateAcademyCourseDto {
@@ -111,4 +117,9 @@ export class UpdateAcademyCourseDto {
   @Min(0)
   @Max(1000)
   displayOrder?: number;
+
+  /** Réservé au Pass Karatou : sans Pass, seules les leçons « aperçu » se lisent. */
+  @IsOptional()
+  @IsBoolean()
+  requiresPass?: boolean;
 }

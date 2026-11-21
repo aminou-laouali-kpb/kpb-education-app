@@ -71,6 +71,13 @@ export enum AdminCapability {
    */
   ManageAcademyCourses = 'manage_academy_courses',
   /**
+   * Accorder, lister et révoquer les accès Pass Karatou après un paiement
+   * vérifié hors de l'app. Miroir exact du `@Roles(Admin, SuperAdmin,
+   * Commercial)` d'`AdminPassController` : l'équipe qui encaisse ouvre l'accès.
+   * PAS ContentManager, qui prépare les cours mais ne voit pas les paiements.
+   */
+  ManagePassGrants = 'manage_pass_grants',
+  /**
    * Publier ou retirer un établissement de l'import « Études en France » et ses
    * formations.
    *
@@ -181,6 +188,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewAiAggregateCosts,
   ]),
   [InternalRole.Commercial]: Object.freeze([
+    AdminCapability.ManagePassGrants,
     AdminCapability.ManageNotificationCampaigns,
     AdminCapability.ViewReferralCampaigns,
     AdminCapability.ViewInterestList,
@@ -224,6 +232,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
     AdminCapability.ManageAcademyCourses,
+    AdminCapability.ManagePassGrants,
     AdminCapability.PublishEefCatalog,
     AdminCapability.SendLargeScholarshipOpening,
     AdminCapability.ManagePartnerAgreements,

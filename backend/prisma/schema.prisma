@@ -497,6 +497,8 @@ model UserProfile {
   // profil (contrainte @unique portée par EefInterest.userId).
   eefInterest                   EefInterest?
   premiumWaitlist               PremiumWaitlistEntry?
+  // Accès Pass Karatou accordés par l'équipe commerciale (webhook n8n ou admin).
+  passGrants                    PassGrant[]
   // ── Phase 3 — Alumni mentor layer ─────────────────────────────────────────
   // Students who got admitted become verified mentors with a badge in the
   // community. We keep the fields flat on UserProfile (rather than a separate
@@ -1618,6 +1620,9 @@ model AcademyCourse {
   priceEUR      Float
   status        PublicationStatus @default(draft)
   displayOrder  Int               @default(0)
+  // Réservé au Pass Karatou : seules les leçons `isFreePreview` sont lisibles
+  // sans Pass actif. Faux par défaut : un cours existant ne se ferme pas seul.
+  requiresPass  Boolean           @default(false)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   lessons       AcademyLesson[]
@@ -1638,11 +1643,42 @@ model AcademyLesson {
   // `published` par défaut : c'est le statut du COURS qui ouvre ou ferme
   // l'accès ; celui de la leçon sert à en retenir une seule.
   status          PublicationStatus @default(published)
+  // Lisible sans Pass dans un cours `requiresPass` (introduction, 1re leçon).
+  isFreePreview   Boolean           @default(false)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   course          AcademyCourse     @relation(fields: [courseId], references: [id])
 
   @@index([courseId, order])
+}
+
+/// Une période de Pass Karatou, accordée après un paiement hors de l'app
+/// (mobile money vérifié par un commercial). Un Pass est actif quand une ligne
+/// non révoquée couvre l'instant présent. Un nouvel accès prolonge le Pass en
+/// cours au lieu de le chevaucher. Voir docs/pass-karatou.md.
+model PassGrant {
+  id               String      @id @default(cuid())
+  userId           String
+  startsAt         DateTime
+  endsAt           DateTime
+  durationDays     Int
+  // Référence de la transaction mobile money : une seule fois, jamais deux
+  // accès pour un même paiement.
+  paymentReference String      @unique
+  amountXof        Int?
+  // `webhook` (n8n) ou `admin` (console).
+  source           String
+  // Commercial ou administrateur qui a accordé l'accès.
+  grantedBy        String
+  note             String?
+  revokedAt        DateTime?
+  revokedBy        String?
+  revokedReason    String?
+  createdAt        DateTime    @default(now())
+  user             UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, endsAt])
+  @@index([createdAt])
 }
 
 model AcademyPurchase {

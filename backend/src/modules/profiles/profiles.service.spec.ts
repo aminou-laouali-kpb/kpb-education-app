@@ -35,6 +35,7 @@ describe('ProfilesService — account deletion & export', () => {
     'paymentIntent',
     'savedItem',
     'academyPurchase',
+    'passGrant',
     'salonRegistration',
     'coachConversation',
     'orientationSession',

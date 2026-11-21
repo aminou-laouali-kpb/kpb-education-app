@@ -29,9 +29,9 @@ l'ordre de leur position. L'admin affiche l'état réel sur chaque cours :
 publiée ».
 
 Sans image de couverture, l'API renvoie la miniature YouTube de la première
-leçon publiée. Les cours sont **gratuits** : l'API d'admin n'accepte aucun prix,
-parce que l'app n'a aucun parcours d'achat. Un prix affiché ne verrouillerait
-rien.
+leçon lisible sans Pass. L'API d'admin n'accepte aucun prix : l'app n'a aucun
+parcours d'achat. Un cours peut en revanche être **réservé au Pass Karatou**
+(accordé hors de l'app) : voir `docs/pass-karatou.md`.
 
 ## Importer les vidéos produites avec HyperFrames
 

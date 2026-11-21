@@ -3,6 +3,7 @@ import {
   ArrayNotEmpty,
   ArrayUnique,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -47,6 +48,11 @@ export class CreateAcademyLessonDto {
   @IsOptional()
   @IsEnum(PublicationStatus)
   status?: PublicationStatus;
+
+  /** Lisible sans Pass dans un cours réservé (introduction, 1re leçon). */
+  @IsOptional()
+  @IsBoolean()
+  isFreePreview?: boolean;
 }
 
 export class UpdateAcademyLessonDto {
@@ -76,6 +82,11 @@ export class UpdateAcademyLessonDto {
   @IsOptional()
   @IsEnum(PublicationStatus)
   status?: PublicationStatus;
+
+  /** Lisible sans Pass dans un cours réservé (introduction, 1re leçon). */
+  @IsOptional()
+  @IsBoolean()
+  isFreePreview?: boolean;
 }
 
 /**

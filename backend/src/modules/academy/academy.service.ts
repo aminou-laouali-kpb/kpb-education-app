@@ -49,7 +49,13 @@ function academyUnavailable(resource: string) {
 
 type PublicLessonRow = Pick<
   AcademyLesson,
-  'id' | 'titleFr' | 'titleEn' | 'videoUrl' | 'durationSeconds' | 'order'
+  | 'id'
+  | 'titleFr'
+  | 'titleEn'
+  | 'videoUrl'
+  | 'durationSeconds'
+  | 'order'
+  | 'isFreePreview'
 >;
 
 type PublicCourseRow = AcademyCourse & { lessons: PublicLessonRow[] };
@@ -57,11 +63,15 @@ type PublicCourseRow = AcademyCourse & { lessons: PublicLessonRow[] };
 export interface AcademyPublicLesson {
   id: string;
   title: { fr: string; en: string };
-  videoUrl: string;
+  /** `null` pour une leçon verrouillée : la vidéo n'est pas servie. */
+  videoUrl: string | null;
   youtubeVideoId: string | null;
   thumbnailUrl: string | null;
   durationSeconds: number;
   order: number;
+  isFreePreview: boolean;
+  /** Réservée au Pass Karatou et le lecteur n'en a pas. */
+  locked: boolean;
 }
 
 export interface AcademyPublicCourse {
@@ -75,6 +85,9 @@ export interface AcademyPublicCourse {
   isFree: boolean;
   lessonCount: number;
   totalDurationSeconds: number;
+  /** Réservé au Pass Karatou (sauf les leçons d'aperçu). */
+  requiresPass: boolean;
+  freeLessonCount: number;
 }
 
 const PUBLIC_LESSON_SELECT = {
@@ -84,25 +97,43 @@ const PUBLIC_LESSON_SELECT = {
   videoUrl: true,
   durationSeconds: true,
   order: true,
+  isFreePreview: true,
 } satisfies Prisma.AcademyLessonSelect;
 
-function publicLesson(lesson: PublicLessonRow): AcademyPublicLesson {
-  const youtubeVideoId = lessonYoutubeId(lesson.videoUrl);
+/**
+ * Une leçon verrouillée garde son titre et sa durée (le programme du cours
+ * reste lisible) mais perd tout ce qui mène à la vidéo.
+ */
+function publicLesson(lesson: PublicLessonRow, locked: boolean): AcademyPublicLesson {
+  const youtubeVideoId = locked ? null : lessonYoutubeId(lesson.videoUrl);
   return {
     id: lesson.id,
     title: { fr: lesson.titleFr, en: lesson.titleEn },
-    videoUrl: lesson.videoUrl,
+    videoUrl: locked ? null : lesson.videoUrl,
     youtubeVideoId,
     thumbnailUrl: lessonThumbnailUrl(youtubeVideoId),
     durationSeconds: lesson.durationSeconds,
     order: lesson.order,
+    isFreePreview: lesson.isFreePreview,
+    locked,
   };
 }
 
+/** La règle du verrou, en un seul endroit. */
+export function isLessonLocked(
+  course: { requiresPass: boolean },
+  lesson: { isFreePreview: boolean },
+  hasPass: boolean,
+): boolean {
+  return course.requiresPass && !lesson.isFreePreview && !hasPass;
+}
+
 function publicCourse(course: PublicCourseRow): AcademyPublicCourse {
-  const firstLessonVideo = course.lessons[0]
-    ? lessonYoutubeId(course.lessons[0].videoUrl)
-    : null;
+  // Couverture par défaut : la première leçon LISIBLE sans Pass.
+  const firstOpen = course.lessons.find(
+    (lesson) => !isLessonLocked(course, lesson, false),
+  );
+  const firstLessonVideo = firstOpen ? lessonYoutubeId(firstOpen.videoUrl) : null;
   return {
     id: course.id,
     slug: course.slug,
@@ -117,6 +148,8 @@ function publicCourse(course: PublicCourseRow): AcademyPublicCourse {
       (total, lesson) => total + lesson.durationSeconds,
       0,
     ),
+    requiresPass: course.requiresPass,
+    freeLessonCount: course.lessons.filter((lesson) => lesson.isFreePreview).length,
   };
 }
 
@@ -149,9 +182,13 @@ export class AcademyService {
     };
   }
 
-  /** Par identifiant ou par slug (`/academy/courses/hsk-1`). */
+  /**
+   * Par identifiant ou par slug (`/academy/courses/hsk-1`). `hasPass` vient
+   * de la route authentifiée ; la route publique passe toujours `false`.
+   */
   async getCourse(
     idOrSlug: string,
+    hasPass = false,
   ): Promise<AcademyPublicCourse & { lessons: AcademyPublicLesson[] }> {
     const key = idOrSlug.trim();
     const course = await this.prismaService.execute((prisma) =>
@@ -177,7 +214,9 @@ export class AcademyService {
     }
     return {
       ...publicCourse(course),
-      lessons: course.lessons.map(publicLesson),
+      lessons: course.lessons.map((lesson) =>
+        publicLesson(lesson, isLessonLocked(course, lesson, hasPass)),
+      ),
     };
   }
 }

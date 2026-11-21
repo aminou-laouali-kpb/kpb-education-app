@@ -179,6 +179,11 @@ export function LessonsEditor({
           {lesson.status !== 'published' ? (
             <Badge variant="warning">{t('academy.lessonHiddenBadge')}</Badge>
           ) : null}
+          {course.requiresPass ? (
+            <Badge variant={lesson.isFreePreview ? 'success' : 'brand'}>
+              {lesson.isFreePreview ? t('academy.freePreviewBadge') : t('academy.passOnlyBadge')}
+            </Badge>
+          ) : null}
           <Select
             aria-label={t('academy.statusLabel')}
             value={lesson.status}
@@ -319,6 +324,14 @@ export function LessonsEditor({
             )}
           </Field>
         </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input
+            type="checkbox"
+            checked={draft.isFreePreview}
+            onChange={(event) => patch({ isFreePreview: event.target.checked })}
+          />
+          {t('academy.freePreviewLabel')}
+        </label>
         <div style={{ display: 'flex', gap: 8 }}>
           <Button type="submit" loading={pending}>
             {editingId ? t('academy.updateLessonCta') : t('academy.addLessonCta')}

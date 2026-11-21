@@ -17,6 +17,7 @@
     "verification": "Vérification",
     "scholarshipsModeration": "Bourses (modération)",
     "serviceSales": "Ventes services",
+    "pass": "Pass Karatou",
     "community": "Communauté",
     "notifications": "Notifications",
     "users": "Utilisateurs",
@@ -2349,7 +2350,7 @@
     "loadError": "Impossible de charger les cours.",
     "saveError": "L'enregistrement n'a pas eu lieu.",
     "empty": "Aucun cours pour l'instant. Créez-en un ou importez un manifeste.",
-    "visibilityHelp": "L'app n'affiche un cours que s'il est publié ET qu'il a au moins une leçon publiée. Les cours sont gratuits : l'app n'a pas de paiement.",
+    "visibilityHelp": "L'app n'affiche un cours que s'il est publié ET qu'il a au moins une leçon publiée. Un cours « Réservé au Pass Karatou » montre son programme à tous, mais seules ses leçons d'aperçu se lisent sans Pass.",
     "columns": {
       "course": "Cours",
       "status": "Statut",
@@ -2386,7 +2387,6 @@
     "displayOrderLabel": "Position dans la liste",
     "coverLabel": "Image de couverture (facultatif)",
     "coverHint": "Sans image de couverture, l'app montre la miniature de la première leçon.",
-    "freeNote": "Le cours est gratuit : il n'y a pas d'achat dans l'app.",
     "descriptionFrLabel": "Description (FR)",
     "descriptionEnLabel": "Description (EN) — vide : la description FR",
     "courseCreated": "Cours créé, en brouillon.",
@@ -2435,6 +2435,55 @@
       "lessonsReport": "{created} créée(s) · {updated} mise(s) à jour · {unchanged} inchangée(s)",
       "notInManifest": "{n} leçon(s) du cours absente(s) du manifeste, laissée(s) telles quelles :",
       "draftReminder": "Un cours en brouillon reste invisible dans l'app : ouvrez-le, relisez les leçons, puis passez-le en « Publié »."
-    }
+    },
+    "requiresPassLabel": "Réservé au Pass Karatou",
+    "requiresPassHint": "Réservé : sans Pass actif, l'élève voit le programme mais ne lit que les leçons cochées « Aperçu gratuit ».",
+    "freePreviewLabel": "Aperçu gratuit (lisible sans Pass)",
+    "freePreviewBadge": "Aperçu gratuit",
+    "passOnlyBadge": "Pass"
+  },
+  "pass": {
+    "title": "Pass Karatou",
+    "subtitle": "Ouvrir l'accès après un paiement vérifié hors de l'app, suivre et révoquer.",
+    "formTitle": "Activer un Pass",
+    "formHint": "À faire seulement après avoir vérifié le reçu mobile money. Même action que le formulaire n8n : la même référence de paiement n'ouvre jamais deux accès. L'élève reçoit une notification.",
+    "emailLabel": "E-mail du compte de l'élève",
+    "referenceLabel": "Référence du paiement",
+    "durationLabel": "Durée",
+    "durationDays": "{n} jours",
+    "durationCustom": "Autre durée…",
+    "durationCustomLabel": "Nombre de jours",
+    "amountLabel": "Montant payé (FCFA, facultatif)",
+    "noteLabel": "Note interne (facultatif)",
+    "grantCta": "Activer le Pass",
+    "grantedOk": "Pass activé pour {name} ({email}), jusqu'au {until}. Vérifiez que c'est bien la bonne personne.",
+    "alreadyGranted": "Ce paiement avait déjà ouvert le Pass de {name} ({email}), actif jusqu'au {until}. Rien n'a été ajouté.",
+    "loadError": "Impossible de charger les accès.",
+    "saveError": "L'opération n'a pas eu lieu.",
+    "searchLabel": "Chercher (e-mail, nom, référence)",
+    "searchCta": "Chercher",
+    "loading": "Chargement…",
+    "empty": "Aucun accès pour l'instant.",
+    "columns": {
+      "student": "Élève",
+      "period": "Période",
+      "payment": "Paiement",
+      "grantedBy": "Accordé par",
+      "state": "État",
+      "actions": "Actions"
+    },
+    "state": {
+      "active": "Actif",
+      "upcoming": "À venir",
+      "expired": "Expiré",
+      "revoked": "Révoqué"
+    },
+    "sourceWebhook": "via n8n",
+    "sourceAdmin": "via la console",
+    "revokeCta": "Révoquer",
+    "cancelCta": "Annuler",
+    "revokeTitle": "Révoquer le Pass de {name} ?",
+    "revokeBody": "L'accès aux cours réservés se ferme tout de suite. La ligne reste dans l'historique.",
+    "revokeReasonLabel": "Motif (obligatoire)"
   }
 }

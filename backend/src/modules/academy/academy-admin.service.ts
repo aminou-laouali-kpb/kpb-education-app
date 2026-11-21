@@ -88,6 +88,7 @@ function adminCourse(
     priceEUR: course.priceEUR,
     status: course.status,
     displayOrder: course.displayOrder,
+    requiresPass: course.requiresPass,
     createdAt: course.createdAt,
     updatedAt: course.updatedAt,
     lessonCount: lessons.length,
@@ -244,6 +245,7 @@ export class AcademyAdminService {
       priceEUR: 0,
       status: input.status ?? 'draft',
       displayOrder: input.displayOrder ?? 0,
+      requiresPass: input.requiresPass ?? false,
     };
 
     const result = await this.run((prisma) =>
@@ -308,6 +310,9 @@ export class AcademyAdminService {
           ...(input.status !== undefined ? { status: input.status } : {}),
           ...(input.displayOrder !== undefined
             ? { displayOrder: input.displayOrder }
+            : {}),
+          ...(input.requiresPass !== undefined
+            ? { requiresPass: input.requiresPass }
             : {}),
         };
         await tx.academyCourse.update({ where: { id }, data });
@@ -394,6 +399,7 @@ export class AcademyAdminService {
             durationSeconds: input.durationSeconds,
             order,
             status: input.status ?? 'published',
+            isFreePreview: input.isFreePreview ?? false,
           },
         });
         return { kind: 'ok' as const, lesson };
@@ -453,6 +459,9 @@ export class AcademyAdminService {
               ? { durationSeconds: input.durationSeconds }
               : {}),
             ...(input.status !== undefined ? { status: input.status } : {}),
+            ...(input.isFreePreview !== undefined
+              ? { isFreePreview: input.isFreePreview }
+              : {}),
           },
         });
         return { kind: 'ok' as const, lesson: updated };
@@ -564,6 +573,7 @@ export class AcademyAdminService {
           titleEn: optionalText(lesson.titleEn),
           durationSeconds: lesson.durationSeconds,
           status: lesson.status,
+          isFreePreview: lesson.isFreePreview,
           ...video,
         };
       })
@@ -592,6 +602,7 @@ export class AcademyAdminService {
               priceEUR: 0,
               status: 'draft',
               displayOrder: input.displayOrder ?? 0,
+              requiresPass: input.requiresPass ?? false,
             },
           });
           courseId = created.id;
@@ -626,6 +637,12 @@ export class AcademyAdminService {
           ) {
             patch.displayOrder = input.displayOrder;
           }
+          if (
+            input.requiresPass !== undefined &&
+            existing.requiresPass !== input.requiresPass
+          ) {
+            patch.requiresPass = input.requiresPass;
+          }
           if (Object.keys(patch).length > 0) {
             await tx.academyCourse.update({
               where: { id: existing.id },
@@ -658,6 +675,7 @@ export class AcademyAdminService {
                 durationSeconds: lesson.durationSeconds,
                 order: lesson.order,
                 status: lesson.status ?? 'published',
+                isFreePreview: lesson.isFreePreview ?? false,
               },
             });
             counts.created += 1;
@@ -677,6 +695,12 @@ export class AcademyAdminService {
           if (match.order !== lesson.order) patch.order = lesson.order;
           if (lesson.status !== undefined && match.status !== lesson.status) {
             patch.status = lesson.status;
+          }
+          if (
+            lesson.isFreePreview !== undefined &&
+            match.isFreePreview !== lesson.isFreePreview
+          ) {
+            patch.isFreePreview = lesson.isFreePreview;
           }
           if (Object.keys(patch).length > 0) {
             await tx.academyLesson.update({
