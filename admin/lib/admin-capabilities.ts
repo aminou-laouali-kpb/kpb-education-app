@@ -61,6 +61,16 @@ export enum AdminCapability {
    */
   ManageCatalogContent = 'manage_catalog_content',
   /**
+   * Créer, importer, publier et ordonner les cours Academy (préparation HSK…)
+   * et leurs leçons vidéo.
+   *
+   * Miroir exact du `@Roles(Admin, SuperAdmin, ContentManager)` porté par
+   * `AdminAcademyController`. Distincte de [ManageCatalogContent] bien qu'elle
+   * vise aujourd'hui les mêmes rôles : ce sont deux contrôleurs, et élargir
+   * l'un ne doit pas élargir l'autre en silence.
+   */
+  ManageAcademyCourses = 'manage_academy_courses',
+  /**
    * Publier ou retirer un établissement de l'import « Études en France » et ses
    * formations.
    *
@@ -187,6 +197,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewScholarshipContent,
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
+    AdminCapability.ManageAcademyCourses,
   ]),
   [InternalRole.Moderator]: Object.freeze([
     AdminCapability.ModerateCommunity,
@@ -212,6 +223,7 @@ const ROLE_CAPABILITIES = {
     AdminCapability.ViewScholarshipContent,
     AdminCapability.ManageScholarshipContent,
     AdminCapability.ManageCatalogContent,
+    AdminCapability.ManageAcademyCourses,
     AdminCapability.PublishEefCatalog,
     AdminCapability.SendLargeScholarshipOpening,
     AdminCapability.ManagePartnerAgreements,

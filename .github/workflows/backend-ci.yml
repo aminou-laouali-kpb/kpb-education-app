@@ -208,6 +208,14 @@ jobs:
       - name: PostgreSQL community, assist bridge and consent integration
         run: npm run test:integration:community-consent
 
+      # Cours Academy (préparation HSK…) : ce que l'app voit se décide dans des
+      # `where` Prisma (cours publié, leçon publiée, au moins une leçon
+      # publiée), et l'import de manifeste doit pouvoir être rejoué sans
+      # dupliquer, republier ni dépublier. Le script pose lui-même
+      # KPB_RUN_POSTGRES_INTEGRATION=true.
+      - name: PostgreSQL academy courses integration
+        run: npm run test:integration:academy
+
       - name: Seed active countries + base catalog
         run: |
           npm run seed:countries-m5

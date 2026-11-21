@@ -180,6 +180,15 @@ catalogue général.
 Purpose:
 - feed the mobile relaunch with dashboard-managed offers, destination coverage, and editorial content
 
+## Academy (cours vidéo)
+
+- `GET /academy/courses`
+- `GET /academy/courses/:idOrSlug`
+- `/admin/academy/courses/*` (Admin, SuperAdmin, ContentManager) : cours, leçons, ordre, import de manifeste
+
+Seuls les cours publiés qui ont au moins une leçon publiée sont servis. Contrat
+détaillé, format d'import et pièges : `docs/academy-cours.md`.
+
 ## Community
 
 **Nouvelle communauté (chantier Communauté C1 + C2, 17/10/2026)** : le contrat complet —

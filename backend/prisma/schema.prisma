@@ -1605,6 +1605,10 @@ model ScholarshipVideo {
 
 model AcademyCourse {
   id            String            @id @default(cuid())
+  // Identifiant stable et lisible (« hsk-1 ») : clé de l'import de manifeste
+  // et des liens profonds. Nullable pour une migration additive ; l'API
+  // d'administration l'exige à la création.
+  slug          String?           @unique
   titleFr       String
   titleEn       String
   descriptionFr String
@@ -1613,6 +1617,7 @@ model AcademyCourse {
   priceXOF      Int
   priceEUR      Float
   status        PublicationStatus @default(draft)
+  displayOrder  Int               @default(0)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   lessons       AcademyLesson[]
@@ -1621,16 +1626,23 @@ model AcademyCourse {
 }
 
 model AcademyLesson {
-  id              String        @id @default(cuid())
+  id              String            @id @default(cuid())
   courseId        String
   titleFr         String
   titleEn         String
+  // URL canonique `https://www.youtube.com/watch?v=<id>` : l'API d'admin
+  // n'écrit que celle-là (voir academy-lesson.util.ts).
   videoUrl        String
   durationSeconds Int
   order           Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  course          AcademyCourse @relation(fields: [courseId], references: [id])
+  // `published` par défaut : c'est le statut du COURS qui ouvre ou ferme
+  // l'accès ; celui de la leçon sert à en retenir une seule.
+  status          PublicationStatus @default(published)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  course          AcademyCourse     @relation(fields: [courseId], references: [id])
+
+  @@index([courseId, order])
 }
 
 model AcademyPurchase {

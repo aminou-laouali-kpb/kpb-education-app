@@ -33,6 +33,8 @@ const ICON_PATHS: Record<string, string> = {
     'M4 20V7l8-4 8 4v13M8 11h8M8 15h5M16 15l1.5 1.5L20 14',
   // Un podium : la compétition ambassadeurs.
   referral: 'M3 20h18M5 20v-6h4v6M10 20V9h4v11M15 20v-8h4v8M12 3l1 2 2 .3-1.5 1.4.4 2.1L12 7.8 10.1 8.8l.4-2.1L9 5.3l2-.3z',
+  // Un écran avec un bouton lecture : les cours vidéo Academy.
+  academy: 'M3 5h18v12H3zM8 21h8M12 17v4M10 8.5v5l4-2.5z',
   logout: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 8l-4 4 4 4M6 12h10',
 };
 
@@ -81,6 +83,14 @@ const NAV_LINKS: readonly NavLinkDefinition[] = [
     // cliquerait, et récolterait un 403 — même motif que pour `/etudes-en-france`.
     visibleForRole: (role) =>
       hasAdminCapability(role, AdminCapability.ManageCatalogContent),
+  },
+  {
+    href: '/academy',
+    labelKey: 'nav.academy',
+    icon: 'academy',
+    // `AdminAcademyController` : Admin, SuperAdmin, ContentManager.
+    visibleForRole: (role) =>
+      hasAdminCapability(role, AdminCapability.ManageAcademyCourses),
   },
   { href: '/verification', labelKey: 'nav.verification', icon: 'verification' },
   {

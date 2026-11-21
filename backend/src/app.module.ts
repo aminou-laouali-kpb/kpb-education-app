@@ -103,6 +103,10 @@ import { AdminAppBuildsController } from './modules/app-builds/admin-app-builds.
 import { AdminAppBuildsService } from './modules/app-builds/admin-app-builds.service';
 import { AppBuildInterceptor } from './modules/app-builds/app-build.interceptor';
 import { AppBuildTrackerService } from './modules/app-builds/app-build-tracker.service';
+import { AcademyAdminService } from './modules/academy/academy-admin.service';
+import { AcademyController } from './modules/academy/academy.controller';
+import { AcademyService } from './modules/academy/academy.service';
+import { AdminAcademyController } from './modules/academy/admin-academy.controller';
 import { AdminCatalogController } from './modules/admin-catalog/admin-catalog.controller';
 import { AdminCatalogService } from './modules/admin-catalog/admin-catalog.service';
 import { AdminScholarshipEligibilityController } from './modules/admin-catalog/admin-scholarship-eligibility.controller';
@@ -278,6 +282,8 @@ import { SalonService } from './modules/salon/salon.service';
     AdminDashboardController,
     AdminAppBuildsController,
     AdminCatalogController,
+    AcademyController,
+    AdminAcademyController,
     ImpactController,
     ToolsController,
     YoutubeController,
@@ -396,6 +402,8 @@ import { SalonService } from './modules/salon/salon.service';
     AppBuildTrackerService,
     AdminCatalogService,
     ScholarshipEligibilityAdminService,
+    AcademyService,
+    AcademyAdminService,
     ImpactService,
     ToolsService,
     YoutubeService,
