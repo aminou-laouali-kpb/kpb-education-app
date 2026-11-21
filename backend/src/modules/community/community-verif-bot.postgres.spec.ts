@@ -47,7 +47,9 @@ const LLM = 'KPB_COMMUNITY_VERIF_BOT_LLM';
  */
 describePostgres('Bot Vérif — PostgreSQL', () => {
   const prisma = new PrismaClient();
-  const sfx = randomUUID().slice(0, 8);
+  // Lettre en tête : 8 chiffres ressembleraient à un numéro pour le filtre
+  // anti-arnaque (même piège que community.postgres.spec.ts).
+  const sfx = `x${randomUUID().slice(0, 7)}`;
   const prismaService = {
     isEnabled: true,
     execute: async <T>(op: (c: PrismaClient) => Promise<T>) => op(prisma),
