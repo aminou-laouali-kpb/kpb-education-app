@@ -14,7 +14,7 @@ réordonnancement, ajout d'une leçon, lecture publique.
 | Écriture | `/admin/academy/courses/*` (`AdminAcademyController`) |
 | Stockage | tables `AcademyCourse` et `AcademyLesson` |
 | Lecture app | `GET /academy/courses`, `GET /academy/courses/:idOrSlug` |
-| App mobile | **pas encore branchée** : l'Academy de l'app lit toujours `lib/app/core/data/mock_catalog/academy_data.dart` et reste masquée par `KPB_MVP_ONLY` |
+| App mobile | Profil → « Cours de langue (HSK, TOEFL…) », affiché seulement si le drapeau distant `academy` est ouvert (VPS ops → `academy-on`, fermé par défaut). Écrans : `lib/app/features/academy/` |
 
 Les routes publiques n'ont pas de `MvpGuard` : elles ne servent que ce que
 l'équipe a publié, et rien ne l'est par défaut. La publication dans l'admin est

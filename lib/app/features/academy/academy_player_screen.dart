@@ -11,10 +11,15 @@ class AcademyPlayerScreen extends StatefulWidget {
   const AcademyPlayerScreen({
     super.key,
     required this.course,
+    required this.lessons,
     this.initialLessonIndex = 0,
   });
 
   final AcademyCourseModel course;
+
+  /// Les seules leçons LISIBLES par cet élève, dans l'ordre du cours : les
+  /// leçons verrouillées n'arrivent jamais jusqu'au lecteur.
+  final List<AcademyLessonModel> lessons;
   final int initialLessonIndex;
 
   @override
@@ -29,9 +34,10 @@ class _AcademyPlayerScreenState extends State<AcademyPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    final controller = Get.find<AppController>();
-    _lessons = controller.getCourseLessons(widget.course.id);
-    _currentIndex = widget.initialLessonIndex;
+    _lessons = widget.lessons.where((lesson) => lesson.playable).toList();
+    _currentIndex = widget.initialLessonIndex
+        .clamp(0, _lessons.isEmpty ? 0 : _lessons.length - 1)
+        .toInt();
     if (_lessons.isNotEmpty) {
       _initPlayer(_lessons[_currentIndex].videoUrl);
     }

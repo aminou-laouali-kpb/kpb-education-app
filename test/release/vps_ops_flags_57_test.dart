@@ -99,6 +99,9 @@ const _flags = <_Flag>[
   // Messagerie du dossier (build 59), même forme que « Mes 10 bourses ».
   _Flag('case-messaging-on', 'KPB_CASE_MESSAGING_ENABLED', 'true',
       'caseMessaging', true, _controller, 'KPB_CASE_MESSAGING_ENABLED'),
+  _Flag('academy-on', 'KPB_ACADEMY_ENABLED', 'true', 'academy', true,
+      _controller, 'KPB_ACADEMY_ENABLED'),
+  _Flag('academy-off', 'KPB_ACADEMY_ENABLED', 'false', 'academy', false),
   _Flag('case-messaging-off', 'KPB_CASE_MESSAGING_ENABLED', 'false',
       'caseMessaging', false),
 ];

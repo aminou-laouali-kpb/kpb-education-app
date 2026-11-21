@@ -43,6 +43,7 @@ import '../scholarship_match/scholarship_match_results_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../search/search_screen.dart';
 import '../services/service_packages_screen.dart';
+import '../academy/academy_list_screen.dart';
 import '../alumni/alumni_directory_screen.dart';
 import '../alumni/alumni_apply_screen.dart';
 import '../salon/salon_screen.dart';

@@ -422,6 +422,11 @@ export class AppConfigController {
         // l'administration (`/admin/cases/:id/messages`). Fermée, l'app
         // renvoie vers WhatsApp comme la 58.
         caseMessaging: enabled(process.env.KPB_CASE_MESSAGING_ENABLED),
+        // Cours Academy (préparation HSK, TOEFL…) et Pass Karatou dans l'app.
+        // FERMÉ par défaut : seule `true` montre l'entrée « Cours de langue ».
+        // Les routes `/academy/*` restent servies quel que soit son état (elles
+        // ne livrent que ce que l'équipe a publié) : la clé ne pilote que l'app.
+        academy: enabled(process.env.KPB_ACADEMY_ENABLED),
         // Onboarding « la valeur d'abord » (chantier I3) : aucun champ
         // pré-rempli sans choix de l'élève, « Passer » dès la page 1, erreurs
         // dans le champ. FERMÉ par défaut : l'ancien parcours reste le repli,

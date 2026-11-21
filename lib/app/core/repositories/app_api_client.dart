@@ -22,6 +22,7 @@ import '../utils/community_mention_tokens.dart';
 import 'app_version_headers.dart';
 
 part 'app_api_client/eef.dart';
+part 'app_api_client/academy.dart';
 part 'app_api_client/premium.dart';
 part 'app_api_client/success_lab.dart';
 part 'app_api_client/engagement.dart';
@@ -85,6 +86,7 @@ class AppApiClient extends _ApiClientBase
     with
         _EefApi,
         _PremiumApi,
+        _AcademyApi,
         _SuccessLabApi,
         _EngagementApi,
         _CoachApi,

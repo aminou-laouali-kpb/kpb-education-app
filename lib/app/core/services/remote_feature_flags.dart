@@ -445,6 +445,15 @@ class RemoteFeatureFlags {
   bool get caseMessagingEnabled =>
       _flag('caseMessaging', AppConfig.caseInAppMessagingEnabled);
 
+  /// Les cours Academy (préparation HSK, TOEFL…) et le Pass Karatou sont-ils
+  /// ouverts ?
+  ///
+  /// Clé `academy`, FERMÉE par défaut : absente (backend plus ancien),
+  /// illisible ou serveur injoignable, elle vaut `false` et l'entrée « Cours
+  /// de langue » n'apparaît pas. Elle s'ouvre côté serveur (`academy-on`),
+  /// sans nouvelle build, quand un cours est publié dans l'admin.
+  bool get academyEnabled => _flag('academy', false);
+
   /// L'onboarding « la valeur d'abord » (chantier I3) est-il ouvert ?
   ///
   /// Clé `onboardingV2`, FERMÉE par défaut : absente (backend plus ancien),

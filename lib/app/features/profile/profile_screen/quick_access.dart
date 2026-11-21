@@ -54,6 +54,15 @@ class _QuickAccessCard extends StatelessWidget {
           KpbColors.warning,
           'profile_quick_eligibility_simulator'.tr,
           () => Get.to(() => const EligibilitySimulatorScreen()));
+      // Cours de langue et Pass Karatou (drapeau distant `academy`, fermé par
+      // défaut) : ouverts depuis le serveur, sans nouvelle build.
+      if (RemoteFeatureFlags.instance.academyEnabled) {
+        add(
+            Icons.translate_rounded,
+            KpbColors.actionPrimary,
+            'academy_entry_title'.tr,
+            () => Get.to(() => const AcademyListScreen()));
+      }
       add(
           Icons.play_circle_outline_rounded,
           KpbColors.error,

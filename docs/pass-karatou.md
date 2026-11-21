@@ -88,4 +88,13 @@ Dans **Cours (Academy)** : cocher « Réservé au Pass Karatou » sur le cours, 
 3. Déployer (migration additive `20261122120000_pass_karatou`).
 4. Tester avec un compte de test, puis révoquer l'accès de test dans l'admin.
 
-L'app mobile ne lit pas encore ces routes : c'est la prochaine étape.
+## Dans l'app
+
+L'entrée « Cours de langue (HSK, TOEFL…) » du profil n'apparaît que si le
+drapeau distant `academy` est ouvert (Actions → VPS ops → `academy-on`, retour
+arrière `academy-off`). Un cours réservé montre tout son programme ; une leçon
+verrouillée affiche un cadenas et renvoie vers l'écran du Pass, sans prix ni
+verbe d'achat. Avec un Pass actif, toutes les leçons s'ouvrent.
+
+**Avant `academy-on`** : l'écran du Pass dit encore « Bientôt disponible » et
+présente une liste d'attente. À réécrire quand le Pass est réellement proposé.
