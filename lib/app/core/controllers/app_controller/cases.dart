@@ -516,8 +516,12 @@ mixin _CasesMixin on _AppControllerBase {
       senderName: data['senderName'] as String? ?? 'KPB',
       senderRole: senderRole,
       body: LocalizedText(fr: body, en: body),
-      createdAt: DateTime.tryParse(data['createdAt'] as String? ?? '') ??
-          DateTime.now(),
+      // Heure LOCALE, comme les messages lus par la synchro (CaseApiCodec) :
+      // sans `toLocal`, une réponse reçue en direct s'affichait à l'heure UTC
+      // (16:33 au lieu de 17:33 au Bénin) jusqu'à la synchro suivante.
+      createdAt:
+          DateTime.tryParse(data['createdAt'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
       clientMessageId: clientMessageId,
     );
 

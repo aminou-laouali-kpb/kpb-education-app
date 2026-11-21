@@ -5,13 +5,14 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { Server, Socket } from 'socket.io';
+import { Namespace, Server, Socket } from 'socket.io';
 
 import { resolveCorsOrigins } from '../../common/cors-origins';
 import { InternalRole } from '../../common/enums/internal-role.enum';
@@ -56,7 +57,7 @@ interface RateLimitBucket {
   },
 })
 export class CaseMessagingGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly logger = new Logger(CaseMessagingGateway.name);
   private readonly rateLimitBuckets = new Map<string, RateLimitBucket>();
@@ -75,21 +76,41 @@ export class CaseMessagingGateway
     private readonly pushService: PushSenderService,
   ) {}
 
-  async handleConnection(client: Socket) {
-    const token = client.handshake.auth?.token;
-    if (typeof token !== 'string' || !token) {
-      client.disconnect();
-      return;
-    }
+  /**
+   * Le jeton est vérifié PENDANT la poignée de main, avant que la connexion
+   * soit acceptée. Avant, il l'était dans `handleConnection`, qui tourne après
+   * coup : le client recevait déjà `connect`, l'app envoyait aussitôt
+   * `joinCase`, le serveur ne connaissait pas encore l'élève, le traitait en
+   * inconnu et coupait la socket (« io server disconnect », sans reconnexion
+   * automatique). Le fil ne se mettait alors plus à jour en direct.
+   */
+  afterInit(server: Server | Namespace) {
+    server.use((socket, next) => {
+      void this.authenticate(socket).then((ok) =>
+        ok ? next() : next(new Error('UNAUTHORIZED')),
+      );
+    });
+  }
 
+  async handleConnection(client: Socket) {
+    // Déjà authentifiée par le middleware ci-dessus ; repli si la socket
+    // arrive sans lui (tests, adaptateur différent).
+    if (client.data.userId) return;
+    if (!(await this.authenticate(client))) client.disconnect();
+  }
+
+  private async authenticate(client: Socket): Promise<boolean> {
+    const token = client.handshake.auth?.token;
+    if (typeof token !== 'string' || !token) return false;
     try {
       const user = await this.supabaseAuthService.verifyAndResolve(token);
       client.data.userId = user.id;
       client.data.role = 'student';
       client.data.fullName = user.fullName;
       this.logger.log('Authenticated student case socket connected.');
+      return true;
     } catch {
-      client.disconnect();
+      return false;
     }
   }
 

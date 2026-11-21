@@ -43,7 +43,10 @@ async function codeOf(promise: Promise<unknown>): Promise<{ status: number; code
  */
 describePostgres('Communauté — PostgreSQL', () => {
   const prisma = new PrismaClient();
-  const sfx = randomUUID().slice(0, 8);
+  // Toujours une lettre en tête : un suffixe de 8 chiffres (2,3 % des tirages)
+  // ressemble à un numéro de téléphone dans « Bourse Eiffel <sfx> », le filtre
+  // anti-arnaque met alors la publication en attente et tout le scénario rougit.
+  const sfx = `x${randomUUID().slice(0, 7)}`;
   const prismaService = {
     isEnabled: true,
     execute: async <T>(op: (c: PrismaClient) => Promise<T>) => op(prisma),
