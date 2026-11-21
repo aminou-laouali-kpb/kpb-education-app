@@ -525,6 +525,26 @@ void main() {
           controller.caseMessageDelivery(refused), CaseMessageDelivery.failed);
     });
 
+    test('une réponse reçue en direct est rangée à l\'heure locale', () async {
+      final (controller, _) = await _device(_case(_serverId));
+      final sentAt = DateTime.utc(2026, 11, 21, 16, 33);
+      controller.ingestRemoteCaseMessage(_serverId, <String, dynamic>{
+        'id': 'msg-staff',
+        'senderRole': 'commercial',
+        'senderName': 'Jojo',
+        'body': 'Bonjour Awa',
+        'createdAt': sentAt.toIso8601String(),
+      });
+
+      final reply = controller
+          .caseById(_serverId)!
+          .messages
+          .firstWhere((m) => m.id == 'msg-staff');
+      expect(reply.createdAt.isUtc, isFalse,
+          reason: 'affichée en UTC, elle avait une heure de retard au Bénin');
+      expect(reply.createdAt, sentAt.toLocal());
+    });
+
     test('(b) « Non envoyé » (4xx) survit au redémarrage et à la synchro',
         () async {
       final repo = FakeRepository(

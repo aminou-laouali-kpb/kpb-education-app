@@ -63,7 +63,8 @@ class _MessageBubble extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    DateFormat('HH:mm', ctrl.localeCode).format(msg.createdAt),
+                    DateFormat('HH:mm', ctrl.localeCode)
+                        .format(msg.createdAt.toLocal()),
                     style: TextStyle(
                       fontSize: 10,
                       color: isStudent ? Colors.white54 : KpbColors.textFaint,

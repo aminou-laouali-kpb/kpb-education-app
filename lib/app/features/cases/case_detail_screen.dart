@@ -721,6 +721,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 controller: _messageController,
                 maxLines: 3,
                 minLines: 1,
+                // Un toucher hors du champ range le clavier : sinon il restait
+                // ouvert et cachait la réponse qui venait d'arriver.
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 // La limite du serveur : au-delà, le message était refusé pour
                 // de bon et « Réessayer » échouait à chaque fois. Sans
                 // compteur : une conversation n'est pas un formulaire.

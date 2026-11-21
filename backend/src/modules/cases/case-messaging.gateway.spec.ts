@@ -104,6 +104,54 @@ describe('CaseMessagingGateway security', () => {
     expect(socket.disconnect).not.toHaveBeenCalled();
   });
 
+  it('authentifie PENDANT la poignée de main : l’élève est connu avant le premier joinCase', async () => {
+    const { gateway, verifyAndResolve } = makeGateway();
+    let resolveVerify!: (user: unknown) => void;
+    verifyAndResolve.mockReturnValue(
+      new Promise((resolve) => (resolveVerify = resolve)),
+    );
+    let middleware!: (s: Socket, next: (err?: Error) => void) => void;
+    gateway.afterInit({
+      use: (fn: typeof middleware) => (middleware = fn),
+    } as unknown as Server);
+    const { socket } = makeSocket({});
+    Object.assign(socket.handshake, { auth: { token: 'verified-token' } });
+    const next = jest.fn();
+
+    middleware(socket, next);
+    await Promise.resolve();
+    // Jeton pas encore vérifié : la connexion n'est PAS encore acceptée.
+    expect(next).not.toHaveBeenCalled();
+
+    resolveVerify({ id: 'student-1', fullName: 'Aïcha Étudiante' });
+    await new Promise((r) => setImmediate(r));
+    expect(next).toHaveBeenCalledWith();
+    expect(socket.data).toMatchObject({ userId: 'student-1', role: 'student' });
+
+    // handleConnection ne revérifie pas une socket déjà authentifiée.
+    await gateway.handleConnection(socket);
+    expect(verifyAndResolve).toHaveBeenCalledTimes(1);
+    expect(socket.disconnect).not.toHaveBeenCalled();
+  });
+
+  it('refuse la poignée de main sans jeton valide', async () => {
+    const { gateway, verifyAndResolve } = makeGateway();
+    verifyAndResolve.mockRejectedValue(new Error('bad token'));
+    let middleware!: (s: Socket, next: (err?: Error) => void) => void;
+    gateway.afterInit({
+      use: (fn: typeof middleware) => (middleware = fn),
+    } as unknown as Server);
+    const next = jest.fn();
+    const { socket } = makeSocket({});
+    Object.assign(socket.handshake, { auth: { token: 'forged' } });
+
+    middleware(socket, next);
+    await new Promise((r) => setImmediate(r));
+
+    expect(next).toHaveBeenCalledWith(expect.any(Error));
+    expect(socket.data).not.toHaveProperty('userId');
+  });
+
   it('rejects legacy query-string bearer tokens', async () => {
     const { gateway, verifyAndResolve } = makeGateway();
     const { socket } = makeSocket({});
