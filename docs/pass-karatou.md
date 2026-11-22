@@ -108,6 +108,13 @@ Pass s'ouvre entre deux demandes, le montant dû baisse. Une vente payée ne bou
 plus. Dans l'admin → Ventes services, le montant porte la mention
 « Pass Karatou −20 % ».
 
+Un élève passé par WhatsApp sans le bouton de l'app : admin → Ventes services →
+**Enregistrer une vente** (Commercial, Contenu, Admin). On saisit l'e-mail du
+compte, le service, le statut (en attente ou payé) et une note ; le serveur
+retrouve le compte, relit le Pass et calcule le montant (aucun montant saisi à
+la main). Source `admin`, auteur dans la note interne. Route :
+`POST /admin/service-packages/purchases`.
+
 ## Dans l'app
 
 L'entrée « Cours de langue (HSK, TOEFL…) » du profil n'apparaît que si le

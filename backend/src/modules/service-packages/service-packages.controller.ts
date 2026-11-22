@@ -16,6 +16,7 @@ import { InternalRole } from '../../common/enums/internal-role.enum';
 import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import { AdminRecordPurchaseDto } from './dto/admin-record-purchase.dto';
 import { ServicePackagesService } from './service-packages.service';
 
 // The student access-token payload only carries id/email/role; fullName and
@@ -142,6 +143,18 @@ export class AdminServicePackagesController {
     @Body() body: Parameters<ServicePackagesService['updatePackage']>[1],
   ) {
     return this.servicePackagesService.updatePackage(id, body);
+  }
+
+  /** Vente saisie par l'équipe ; la remise du Pass est calculée ici. */
+  @Post('purchases')
+  recordPurchase(
+    @Req() req: Request & { adminUser?: { email?: string } },
+    @Body() body: AdminRecordPurchaseDto,
+  ) {
+    return this.servicePackagesService.recordPurchaseByAdmin({
+      ...body,
+      recordedBy: req.adminUser?.email ?? 'admin',
+    });
   }
 
   @Get('purchases/list')

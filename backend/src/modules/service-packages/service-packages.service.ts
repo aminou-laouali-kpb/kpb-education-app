@@ -363,6 +363,66 @@ export class ServicePackagesService {
 
   // ── Admin CRUD ────────────────────────────────────────────────────────────
 
+  /**
+   * Vente saisie par l'équipe pour un élève passé par WhatsApp sans toucher
+   * le bouton de l'app. Même prix que le flux de l'app : −20 % si son Pass
+   * Karatou est actif à cet instant.
+   */
+  async recordPurchaseByAdmin(input: {
+    email: string;
+    packageCode: string;
+    status?: 'pending_payment' | 'paid';
+    note?: string;
+    recordedBy: string;
+  }) {
+    const email = input.email.trim();
+    const user = await this.prismaService.execute((prisma) =>
+      prisma.userProfile.findFirst({
+        where: { email: { equals: email, mode: 'insensitive' } },
+        select: { id: true, fullName: true, email: true },
+      }),
+    );
+    if (!user) {
+      throw new NotFoundException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message:
+          "Aucun compte KPB avec cet e-mail. Vérifiez l'adresse utilisée dans l'app.",
+      });
+    }
+    const pkg = await this.getPublic(input.packageCode);
+    const price = await this.pricing(user.id, pkg.priceXOF);
+    const notes = [
+      `Enregistrée dans l'admin par ${input.recordedBy}.`,
+      `SKU: ${pkg.code}`,
+      price.discountPercent > 0
+        ? `Pass Karatou actif : −${price.discountPercent} % (prix catalogue ${pkg.priceXOF} FCFA, dû ${price.amountXOF} FCFA).`
+        : null,
+      input.note?.trim() || null,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    const purchase = await this.prismaService.execute((prisma) =>
+      prisma.servicePurchase.create({
+        data: {
+          packageId: pkg.id,
+          userId: user.id,
+          ...price,
+          status: input.status ?? 'pending_payment',
+          source: 'admin',
+          internalNotes: notes,
+        },
+        include: {
+          package: true,
+          user: { select: { id: true, fullName: true, email: true } },
+        },
+      }),
+    );
+    if (!purchase) {
+      throw new Error('Failed to record service purchase.');
+    }
+    return purchase;
+  }
+
   async listAdmin() {
     const items = await this.prismaService.execute((prisma) =>
       prisma.servicePackage.findMany({

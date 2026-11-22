@@ -1421,7 +1421,20 @@
     "notesLabel": "Notes internes",
     "saveCta": "Enregistrer le cycle de vie",
     "passDiscountBadge": "Pass Karatou −{percent} %",
-    "passDiscountDetail": "Pass Karatou : −{percent} % sur le prix catalogue de {list} FCFA"
+    "passDiscountDetail": "Pass Karatou : −{percent} % sur le prix catalogue de {list} FCFA",
+    "recordOpenCta": "Enregistrer une vente",
+    "recordTitle": "Enregistrer une vente",
+    "recordHint": "Pour un élève passé par WhatsApp sans le bouton de l'app. Le compte est retrouvé par son e-mail et la remise du Pass Karatou (−20 %) est calculée automatiquement : aucun montant à saisir.",
+    "recordEmailLabel": "E-mail du compte de l'élève",
+    "recordPackageLabel": "Service",
+    "recordStatusLabel": "Statut",
+    "recordNoteLabel": "Note interne (facultatif : référence du reçu…)",
+    "recordCta": "Enregistrer la vente",
+    "recordCancel": "Annuler",
+    "recordEmailInvalid": "E-mail invalide : celui avec lequel l'élève se connecte à l'app.",
+    "recordPackageMissing": "Choisissez un service.",
+    "recordedPlain": "Vente enregistrée : {service} pour {name} ({email}), {amount} FCFA.",
+    "recordedDiscounted": "Vente enregistrée : {service} pour {name} ({email}), {amount} FCFA — Pass Karatou −{percent} % sur {list} FCFA."
   },
   "errors": {
     "title": "Une erreur est survenue",

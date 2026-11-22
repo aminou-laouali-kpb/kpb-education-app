@@ -203,3 +203,65 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
     });
   });
 });
+
+describe('ServicePackagesService — vente saisie dans l’admin', () => {
+  const pkg = { id: 'pkg-1', code: 'dossier_pret', isActive: true, priceXOF: 50000, nameFr: 'Dossier prêt' };
+
+  function makeService(opts: { user?: unknown; hasPass?: boolean }) {
+    const created: Array<Record<string, unknown>> = [];
+    const client = {
+      userProfile: {
+        findFirst: async () =>
+          opts.user === undefined ? { id: 'u1', fullName: 'Awa', email: 'awa@x.org' } : opts.user,
+      },
+      servicePackage: { findUnique: async () => pkg },
+      servicePurchase: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          created.push(data);
+          return { id: 'sp-1', ...data };
+        },
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    const pass = { hasActivePass: async () => opts.hasPass ?? false } as unknown as PassService;
+    return { service: new ServicePackagesService(prisma, {} as PaymentsService, pass), created };
+  }
+
+  it('applique −20 % à un élève qui a un Pass, et trace l’auteur', async () => {
+    const { service, created } = makeService({ hasPass: true });
+    await service.recordPurchaseByAdmin({
+      email: ' Awa@X.org ',
+      packageCode: 'dossier_pret',
+      status: 'paid',
+      note: 'Reçu Wave 7781',
+      recordedBy: 'ventes@kpb.test',
+    });
+    expect(created[0]).toMatchObject({
+      userId: 'u1',
+      amountXOF: 40000,
+      listPriceXOF: 50000,
+      discountPercent: 20,
+      status: 'paid',
+      source: 'admin',
+    });
+    expect(String(created[0].internalNotes)).toContain('ventes@kpb.test');
+    expect(String(created[0].internalNotes)).toContain('Reçu Wave 7781');
+  });
+
+  it('prix catalogue et statut « en attente » par défaut sans Pass', async () => {
+    const { service, created } = makeService({ hasPass: false });
+    await service.recordPurchaseByAdmin({ email: 'awa@x.org', packageCode: 'dossier_pret', recordedBy: 'a' });
+    expect(created[0]).toMatchObject({ amountXOF: 50000, discountPercent: 0, status: 'pending_payment' });
+  });
+
+  it('refuse un e-mail sans compte (404 nommé)', async () => {
+    const { service, created } = makeService({ user: null });
+    await expect(
+      service.recordPurchaseByAdmin({ email: 'x@y.org', packageCode: 'dossier_pret', recordedBy: 'a' }),
+    ).rejects.toMatchObject({ status: 404, response: expect.objectContaining({ code: 'ACCOUNT_NOT_FOUND' }) });
+    expect(created).toHaveLength(0);
+  });
+});

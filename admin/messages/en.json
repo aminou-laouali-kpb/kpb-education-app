@@ -1421,7 +1421,20 @@
     "notesLabel": "Internal notes",
     "saveCta": "Save lifecycle",
     "passDiscountBadge": "Karatou Pass −{percent}%",
-    "passDiscountDetail": "Karatou Pass: −{percent}% off the list price of {list} FCFA"
+    "passDiscountDetail": "Karatou Pass: −{percent}% off the list price of {list} FCFA",
+    "recordOpenCta": "Record a sale",
+    "recordTitle": "Record a sale",
+    "recordHint": "For a student who came through WhatsApp without the app button. The account is found by its e-mail and the Karatou Pass discount (−20%) is computed automatically: no amount to type.",
+    "recordEmailLabel": "Student account e-mail",
+    "recordPackageLabel": "Service",
+    "recordStatusLabel": "Status",
+    "recordNoteLabel": "Internal note (optional: receipt reference…)",
+    "recordCta": "Record the sale",
+    "recordCancel": "Cancel",
+    "recordEmailInvalid": "Invalid e-mail: the one the student uses to sign in to the app.",
+    "recordPackageMissing": "Choose a service.",
+    "recordedPlain": "Sale recorded: {service} for {name} ({email}), {amount} FCFA.",
+    "recordedDiscounted": "Sale recorded: {service} for {name} ({email}), {amount} FCFA — Karatou Pass −{percent}% off {list} FCFA."
   },
   "errors": {
     "title": "Something went wrong",

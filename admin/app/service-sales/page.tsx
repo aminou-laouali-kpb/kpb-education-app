@@ -10,6 +10,10 @@ import {
 } from 'react';
 
 import { DashboardShell } from '../../components/dashboard-shell';
+import {
+  RecordSaleForm,
+  recordedSaleMessage,
+} from '../../components/service-sales/RecordSaleForm';
 import { useLocale } from '../../components/locale-provider';
 import { apiFetch } from '../../lib/api-client';
 import {
@@ -123,6 +127,7 @@ export default function ServiceSalesPage() {
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [recording, setRecording] = useState(false);
 
   const selected = useMemo(
     () => items.find((item) => item.id === selectedId) ?? null,
@@ -371,14 +376,37 @@ export default function ServiceSalesPage() {
               )}
             </Field>
           </div>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => void loadPurchases()}
-          >
-            {t('serviceSales.refreshCta')}
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button size="sm" onClick={() => setRecording(true)}>
+              {t('serviceSales.recordOpenCta')}
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void loadPurchases()}
+            >
+              {t('serviceSales.refreshCta')}
+            </Button>
+          </div>
         </div>
+
+        {recording ? (
+          <RecordSaleForm
+            onCancel={() => setRecording(false)}
+            onRecorded={(sale) => {
+              setRecording(false);
+              setErrorMessage(null);
+              setStatusMessage(
+                recordedSaleMessage(sale, {
+                  plain: t('serviceSales.recordedPlain'),
+                  discounted: t('serviceSales.recordedDiscounted'),
+                }),
+              );
+              setSelectedId(sale.id);
+              void loadPurchases();
+            }}
+          />
+        ) : null}
 
         <div
           style={{
