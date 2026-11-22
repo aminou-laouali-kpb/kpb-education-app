@@ -206,6 +206,7 @@ abstract class _AppControllerBase extends GetxController {
   Future<void> ensureSaved(SavedItemType type, String itemId);
   Future<void> ensureUnsaved(SavedItemType type, String itemId);
   void _resetScholarshipFollowState();
+  void _cancelOutboxRetry();
   Future<void> syncPushIdentity();
   Future<void> syncRemoteData({bool silent = false, bool force = false});
   void _setCatalogDataState(CatalogDataState state);
@@ -237,6 +238,41 @@ abstract class _AppControllerBase extends GetxController {
   /// The sync currently running, so [finishAuthSession] can wait for it
   /// instead of being silently skipped by the `isSyncing` guard.
   Future<void>? _inFlightSync;
+
+  /// Génération de la session utilisateur (audit du 22/11/2026, n° 3).
+  ///
+  /// Incrémentée à chaque changement de compte ([_resetUserState] : logout,
+  /// session perdue, suppression du compte). Chaque écrivain asynchrone
+  /// (synchro, création distante d'un dossier ou d'un favori, vidage de la
+  /// file des messages…) la capture AVANT son premier `await` et la compare
+  /// après chaque `await` : si elle a changé, la réponse appartient au compte
+  /// qui est parti et elle est abandonnée sans bruit. Avant, une réponse
+  /// arrivée après la déconnexion remettait en mémoire les dossiers et les
+  /// favoris du compte A, les écrivait sur disque, puis la synchro les
+  /// fusionnait dans le compte B (téléphone partagé).
+  int _sessionGeneration = 0;
+
+  /// Vrai si [generation] (capturée au début d'une tâche asynchrone) n'est
+  /// plus celle du compte courant : la tâche ne doit plus toucher à l'état.
+  ///
+  /// Vrai aussi PENDANT une déconnexion (ou une suppression du compte) : entre
+  /// la remise à zéro et l'effacement de la session Supabase (retrait du jeton
+  /// push, jusqu'à 3 s), le jeton du compte parti reste valide. Une tâche
+  /// lancée dans cette fenêtre capturerait la génération d'après le reset et
+  /// relirait les données de ce compte : elle n'écrit rien, et la génération
+  /// est de nouveau incrémentée à la fin de la déconnexion pour qu'elle reste
+  /// périmée ensuite.
+  bool _isStaleSession(int generation) =>
+      generation != _sessionGeneration || _isSessionClosing;
+
+  /// Déconnexions (ou suppressions du compte) en cours. Un compteur et non un
+  /// booléen : `handleSessionLost` peut relancer `logout` pendant qu'un autre
+  /// tourne encore, et le premier à finir ne doit pas rouvrir la fenêtre.
+  int _sessionClosings = 0;
+
+  /// Vrai entre la remise à zéro de l'état et l'effacement de la session :
+  /// aucune synchro ni écriture d'état du compte ne démarre dans ce créneau.
+  bool get _isSessionClosing => _sessionClosings > 0;
 
   /// Session ouverte mais profil illisible au dernier `finishAuthSession`
   /// (réseau, serveur). L'écran de démarrage propose alors « Réessayer »

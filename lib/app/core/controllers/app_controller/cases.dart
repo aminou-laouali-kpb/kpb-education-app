@@ -132,8 +132,10 @@ mixin _CasesMixin on _AppControllerBase {
     if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) {
       return null;
     }
+    final generation = _sessionGeneration;
     try {
       final raw = await _apiClient.listCasesForScholarship(id);
+      if (_isStaleSession(generation)) return null;
       for (final entry in raw) {
         final remote = CaseApiCodec.studentCaseFromApi(entry);
         // Un serveur plus ancien ignore le filtre et rend TOUTE la liste :
@@ -172,12 +174,16 @@ mixin _CasesMixin on _AppControllerBase {
     update();
 
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       await _apiClient.setCaseParentVisibility(
         caseId: caseId,
         parentCanView: canView,
       );
     } catch (e, s) {
+      // Déconnexion pendant l'appel (souvent la cause du 401) : le dossier du
+      // compte parti n'est plus là, rien à rétablir ni à écrire.
+      if (_isStaleSession(generation)) return;
       // Revert the optimistic flip so the UI reflects the real backend state.
       final i = _cases.indexWhere((item) => item.id == caseId);
       if (i >= 0) {
@@ -268,6 +274,7 @@ mixin _CasesMixin on _AppControllerBase {
     required String senderName,
     required String messageId,
   }) async {
+    final generation = _sessionGeneration;
     try {
       final outbox = CaseMessageOutbox.maybeInstance;
       await outbox?.enqueue(
@@ -276,9 +283,13 @@ mixin _CasesMixin on _AppControllerBase {
         senderName: senderName,
         localMessageId: messageId,
       );
+      // Déconnexion pendant l'écriture : la file est vidée par `logout`, le
+      // message du compte parti ne part pas.
+      if (_isStaleSession(generation)) return;
       // L'id serveur a pu arriver pendant l'écriture.
       final target = resolveCaseId(caseId);
       if (target != caseId) await outbox?.reassignCase(caseId, target);
+      if (_isStaleSession(generation)) return;
       if (_localCaseId.hasMatch(target)) {
         // Dossier pas encore connu du serveur : le poster rendait un 404 et
         // le message était perdu (revue avant la 58, n° 18). Il attend en
@@ -433,12 +444,22 @@ mixin _CasesMixin on _AppControllerBase {
     caseId = resolveCaseId(caseId);
     // Un dossier encore local n'a pas de room côté serveur.
     if (_localCaseId.hasMatch(caseId)) return;
+    // Le socket écoute le dossier du compte connecté à l'ouverture : après
+    // une déconnexion, ses événements ne réécrivent plus l'état (audit du
+    // 22/11/2026, n° 3).
+    final generation = _sessionGeneration;
     if (!await _apiClient.hasAuthSession()) return;
+    if (_isStaleSession(generation)) return;
 
     await _caseSocket.connect(caseId);
+    if (_isStaleSession(generation)) return;
 
-    _caseSocket.onMessage((data) => ingestRemoteCaseMessage(caseId, data));
+    _caseSocket.onMessage((data) {
+      if (_isStaleSession(generation)) return;
+      ingestRemoteCaseMessage(caseId, data);
+    });
     _caseSocket.onCaseUpdated((data) {
+      if (_isStaleSession(generation)) return;
       try {
         _upsertCase(CaseApiCodec.studentCaseFromApi(data));
         _persist();
@@ -622,6 +643,13 @@ mixin _CasesMixin on _AppControllerBase {
   @visibleForTesting
   Duration outboxRetryDelay = const Duration(seconds: 20);
 
+  /// Déconnexion : la relance différée ne part plus sous le compte suivant.
+  @override
+  void _cancelOutboxRetry() {
+    _outboxRetryTimer?.cancel();
+    _outboxRetryTimer = null;
+  }
+
   void _scheduleOutboxRetry() {
     if (_outboxRetryTimer?.isActive ?? false) return;
     _outboxRetryTimer = Timer(outboxRetryDelay, () {
@@ -636,6 +664,7 @@ mixin _CasesMixin on _AppControllerBase {
   Future<void> _createRemoteCase(StudentCase localCase) async {
     if (!AppConfig.enableRemoteSync) return;
     if (!_caseCreatesInFlight.add(localCase.id)) return;
+    final generation = _sessionGeneration;
     try {
       final response = await _apiClient.createCase(<String, dynamic>{
         'type': CaseApiCodec.encodeCaseType(localCase.type),
@@ -660,6 +689,9 @@ mixin _CasesMixin on _AppControllerBase {
         if (localCase.scholarshipId != null)
           'scholarshipId': localCase.scholarshipId,
       });
+      // Déconnexion pendant la création : le dossier du compte parti ne
+      // revient pas en mémoire (ni sur disque, ni dans le compte suivant).
+      if (_isStaleSession(generation)) return;
       final remote = CaseApiCodec.studentCaseFromApi(response);
       final outbox = CaseMessageOutbox.maybeInstance;
       final idChanged = remote.id.isNotEmpty && remote.id != localCase.id;
@@ -683,6 +715,7 @@ mixin _CasesMixin on _AppControllerBase {
       _persist();
       update();
       if (idChanged) await outbox?.reassignCase(localCase.id, remote.id);
+      if (_isStaleSession(generation)) return;
       if (outbox != null && outbox.hasPendingFor(remote.id)) {
         unawaited(flushPendingCaseMessages());
       }
@@ -760,6 +793,7 @@ mixin _CasesMixin on _AppControllerBase {
   ) async {
     final outbox = CaseMessageOutbox.maybeInstance;
     OutboxEntry? entry() => outbox?.entryForMessage(messageId);
+    final generation = _sessionGeneration;
     try {
       await _postCaseMessage(caseId, text, messageId);
     } catch (e, s) {
@@ -771,6 +805,9 @@ mixin _CasesMixin on _AppControllerBase {
         operation: 'create_remote_case_message',
       );
       final queued = entry();
+      // Échec d'un message du compte parti (401 une fois la session
+      // effacée) : ni marque « Non envoyé », ni message d'erreur.
+      if (_isStaleSession(generation)) return;
       if (_isPermanentRejection(e)) {
         // Refus définitif (message trop long, dossier introuvable…) : le
         // reposter à chaque reconnexion échouerait en silence. La bulle passe
@@ -785,7 +822,7 @@ mixin _CasesMixin on _AppControllerBase {
       }
       // Coupure réseau : reste en file, relance dans quelques secondes.
       if (queued != null) await outbox!.markFailure(queued.key, queued);
-      _scheduleOutboxRetry();
+      if (!_isStaleSession(generation)) _scheduleOutboxRetry();
       return;
     }
     // Le message EST parti : il sort de la file AVANT la relecture. Si la
@@ -798,7 +835,9 @@ mixin _CasesMixin on _AppControllerBase {
     // gardée à côté de la copie serveur, et le message s'affichait deux fois.
     _caseMessagesInFlight.remove(messageId);
     try {
+      if (_isStaleSession(generation)) return;
       final response = await _apiClient.getCase(caseId);
+      if (_isStaleSession(generation)) return;
       _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       _persist();
     } catch (e, s) {
@@ -844,11 +883,16 @@ mixin _CasesMixin on _AppControllerBase {
     if (!AppConfig.enableRemoteSync) return;
     final outbox = CaseMessageOutbox.maybeInstance;
     if (outbox == null || outbox.pendingCount == 0) return;
+    // Compte pour lequel ce vidage tourne : après une déconnexion, il s'arrête
+    // sans rien réécrire (la file du compte parti est vidée par `logout`).
+    final generation = _sessionGeneration;
     if (!await _apiClient.hasAuthSession()) return;
+    if (_isStaleSession(generation)) return;
     final touched = <String>{};
     var changed = false;
     var networkFailure = false;
     for (final entry in outbox.pending.toList()) {
+      if (_isStaleSession(generation)) return;
       final bubbleId = entry.localMessageId;
       // Un envoi direct s'en occupe déjà.
       if (bubbleId != null && _caseMessagesInFlight.contains(bubbleId)) {
@@ -892,8 +936,10 @@ mixin _CasesMixin on _AppControllerBase {
       }
     }
     for (final caseId in touched) {
+      if (_isStaleSession(generation)) return;
       try {
         final response = await _apiClient.getCase(caseId);
+        if (_isStaleSession(generation)) return;
         _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       } catch (e, s) {
         safeRecordError(
@@ -905,6 +951,7 @@ mixin _CasesMixin on _AppControllerBase {
         );
       }
     }
+    if (_isStaleSession(generation)) return;
     if (changed) {
       _persist();
       update();
@@ -925,13 +972,16 @@ mixin _CasesMixin on _AppControllerBase {
     String filePath,
   ) async {
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       await _apiClient.uploadCaseDocumentFile(
         caseId: caseId,
         filePath: filePath,
         title: resolve(document.title),
       );
+      if (_isStaleSession(generation)) return;
       final response = await _apiClient.getCase(caseId);
+      if (_isStaleSession(generation)) return;
       _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       _persist();
       update();

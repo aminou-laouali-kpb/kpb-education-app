@@ -14,6 +14,10 @@ mixin _CatalogSyncMixin on _AppControllerBase {
   Future<void> syncRemoteData({bool silent = false, bool force = false}) async {
     if (!AppConfig.enableRemoteSync) return;
     if (isSyncing) return;
+    // Déconnexion en cours : la session du compte parti est encore valide
+    // (retrait du jeton push), une synchro lancée maintenant relirait SES
+    // dossiers et SES favoris. Le compte suivant synchronisera à sa connexion.
+    if (_isSessionClosing) return;
 
     final now = DateTime.now();
     if (!force &&
@@ -29,6 +33,13 @@ mixin _CatalogSyncMixin on _AppControllerBase {
     }
 
     isSyncing = true;
+    // Compte pour lequel cette synchro tourne. Après chaque `await` de la
+    // partie COMPTE, une génération changée (déconnexion entre-temps) abandonne
+    // cette partie sans toucher à l'état : ses réponses appartiennent au compte
+    // parti. Le catalogue, lui, n'appartient à aucun compte : il va toujours
+    // jusqu'au bout (verrou MVP, état des données, persistance).
+    final generation = _sessionGeneration;
+    bool stale() => _isStaleSession(generation);
     final syncDone = Completer<void>();
     _inFlightSync = syncDone.future;
     _lastSyncAttemptAt = now;
@@ -58,12 +69,18 @@ mixin _CatalogSyncMixin on _AppControllerBase {
     try {
       final hasAuth = await _apiClient.hasAuthSession();
 
-      if (hasAuth) {
+      if (stale()) {
+        // Déconnexion entre-temps : rien à lire pour le compte parti.
+      } else if (hasAuth) {
+        // `break account` : sortie de la seule partie compte, le catalogue
+        // continue.
+        account:
         try {
           // Flush any messages typed while offline. Ceux d'un dossier encore
           // local attendent : ils partent à la fin de sa création distante
           // (relancée plus bas), plus jamais vers l'id `case-<ms>`.
           await flushPendingCaseMessages();
+          if (stale()) break account;
 
           // Le profil n'est réécrit que s'il a changé ici (geste local, hors
           // ligne ou consentement en attente) : chaque synchro renvoyait toute la
@@ -80,9 +97,11 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           } else if (_profileNeedsPush) {
             await _pushProfileUpdate();
           }
+          if (stale()) break account;
 
           if (!_profileNeedsPush) {
             final profileJson = await retryTransient(_apiClient.getProfile);
+            if (stale()) break account;
             if (_profileNeedsPush) {
               // Un geste local est arrivé PENDANT la lecture (la synchro
               // tourne désormais en arrière-plan après la connexion, pendant
@@ -108,6 +127,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
           }
 
           final remoteCasesRaw = await retryTransient(_apiClient.listCases);
+          if (stale()) break account;
           final remoteCases =
               remoteCasesRaw.map(CaseApiCodec.studentCaseFromApi).toList();
           final (mergedCases, caseStats) = mergeCasesRemoteWithLocal(
@@ -136,6 +156,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
 
           final remoteSavedItems =
               await retryTransient(_apiClient.listSavedItems);
+          if (stale()) break account;
           final remoteSavedParsed =
               remoteSavedItems.map(SavedItemApiCodec.fromApi).toList();
           final (mergedSaved, unionExtraLocals) = mergeSavedItemsUnion(
@@ -181,6 +202,9 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             }
           }
         } catch (error, stack) {
+          // Échec d'une requête du compte parti (souvent un 401 une fois la
+          // session effacée) : ni erreur affichée, ni attente imposée.
+          if (stale()) break account;
           authSyncFailed = true;
           failureStage = 'account';
           failureKind = classifySyncError(error);
@@ -280,11 +304,20 @@ mixin _CatalogSyncMixin on _AppControllerBase {
       // "offline, data from the last load" banner.
       _setCatalogDataState(aggregateCatalogDataState(catalogOutcomes));
 
-      lastSyncedAt = DateTime.now();
-      if (!authSyncFailed) {
-        syncError = null;
+      // Synchro d'une session périmée : elle ne doit ni effacer l'erreur ni
+      // dater la synchro du compte suivant, qui peut tourner en parallèle.
+      if (!stale()) {
+        lastSyncedAt = DateTime.now();
+        if (!authSyncFailed) {
+          syncError = null;
+        }
       }
-      _persist();
+      // Le snapshot ne contient que l'état du COMPTE (le catalogue est déjà
+      // mis en cache Hive par `syncCatalogResource`). Session périmée : on ne
+      // l'écrit pas. Pendant `deleteAccount`, la mémoire n'est remise à zéro
+      // qu'après l'effacement du disque : l'écrire réinstallerait le compte
+      // supprimé.
+      if (!stale()) _persist();
       SyncTelemetry.fullSyncFinished(
         success: !authSyncFailed,
         elapsed: DateTime.now().difference(syncStarted),
@@ -293,7 +326,9 @@ mixin _CatalogSyncMixin on _AppControllerBase {
         errorKind: failureKind,
       );
     } catch (error, stack) {
-      if (error is DioException && error.response?.statusCode == 429) {
+      if (error is DioException &&
+          error.response?.statusCode == 429 &&
+          !stale()) {
         _syncBackoffUntil = DateTime.now().add(const Duration(seconds: 60));
       }
       // The sync died — typically a catalog resource that could be fetched
@@ -306,7 +341,7 @@ mixin _CatalogSyncMixin on _AppControllerBase {
             ? CatalogDataState.offline
             : CatalogDataState.sample,
       );
-      syncError = userFacingSyncError(error, localeCode);
+      if (!stale()) syncError = userFacingSyncError(error, localeCode);
       if (error is! DioException || error.response?.statusCode != 429) {
         safeRecordError(
           error,
@@ -324,7 +359,12 @@ mixin _CatalogSyncMixin on _AppControllerBase {
         errorKind: classifySyncError(error),
       );
     } finally {
-      isSyncing = false;
+      // Après une déconnexion, `isSyncing` a déjà été remis à faux et une
+      // synchro du compte suivant a pu démarrer : on ne lui retire pas son
+      // verrou. Le verrou n'est rendu que par la synchro qui le détient
+      // encore (une synchro abandonnée pendant la fenêtre de suppression du
+      // compte, avant la remise à zéro, le rend aussi).
+      if (identical(_inFlightSync, syncDone.future)) isSyncing = false;
       catalogFirstSyncSettled = true;
       if (!syncDone.isCompleted) syncDone.complete();
       update();

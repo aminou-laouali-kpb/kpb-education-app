@@ -170,7 +170,13 @@ mixin _PreferencesMixin on _AppControllerBase {
       return;
     }
     if (profile == null) return;
-    if (!await _apiClient.hasAuthSession()) {
+    // Après une déconnexion, ni drapeau ni snapshot réécrits : un
+    // `_profileNeedsPush` remis à vrai empêchait le compte suivant de lire son
+    // propre profil à la synchro.
+    final generation = _sessionGeneration;
+    final hasAuth = await _apiClient.hasAuthSession();
+    if (_isStaleSession(generation)) return;
+    if (!hasAuth) {
       _profileNeedsPush = false;
       _persist();
       return;
@@ -189,6 +195,7 @@ mixin _PreferencesMixin on _AppControllerBase {
           key: ProfileConsentFields.valueOf(sent, key),
       };
       await _apiClient.updateProfile(_userProfilePayload(sent));
+      if (_isStaleSession(generation)) return;
       _pendingConsentKeys.removeWhere((key) =>
           sentConsents.containsKey(key) &&
           ProfileConsentFields.same(
@@ -203,6 +210,7 @@ mixin _PreferencesMixin on _AppControllerBase {
         domain: CrashlyticsObsDomain.profile,
         operation: 'push_profile_update',
       );
+      if (_isStaleSession(generation)) return;
       _profileNeedsPush = true;
       _persist();
     }

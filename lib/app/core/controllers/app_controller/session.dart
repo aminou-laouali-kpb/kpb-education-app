@@ -262,18 +262,28 @@ mixin _SessionMixin on _AppControllerBase {
   /// serveur.
   Future<AuthSessionOutcome> finishAuthSession() async {
     isGuestMode = false;
+    final generation = _sessionGeneration;
     var outcome = AuthSessionOutcome.ready;
     if (AppConfig.enableRemoteSync) {
       final hadProfile = profile != null;
       if (!hadProfile) outcome = await _pullAccountProfile();
+      // Déconnexion pendant la lecture du profil : rien à terminer.
+      if (_isStaleSession(generation)) return outcome;
       if (outcome == AuthSessionOutcome.ready) {
         // Le reste du compte (dossiers, favoris) et le catalogue, sans faire
         // attendre la navigation. Une synchro déjà en cours (celle de
         // l'invité, au démarrage) a pu partir SANS session : on la laisse
         // finir, puis on relance pour ce compte.
+        //
+        // Une déconnexion pendant cette attente (ou dans la fenêtre où la
+        // session du compte parti est encore valide) annule la relance : sinon
+        // elle partait APRÈS le reset, avec la génération du compte suivant et
+        // un `_lastSyncAttemptAt` remis à zéro, relisait les dossiers de A
+        // avec son jeton encore valide et les réécrivait sur disque.
         final running = _inFlightSync;
         unawaited(() async {
           if (isSyncing && running != null) await running;
+          if (_isStaleSession(generation)) return;
           await syncRemoteData(silent: true, force: !hadProfile);
         }());
       }
@@ -304,8 +314,11 @@ mixin _SessionMixin on _AppControllerBase {
   /// Un 404 est lu de la même façon : « pas de profil », donc onboarding.
   /// Toute autre erreur — réseau, délai, 5xx, 401 — est une lecture ratée.
   Future<AuthSessionOutcome> _pullAccountProfile() async {
+    final generation = _sessionGeneration;
     try {
       final profileJson = await retryTransient(_apiClient.getProfile);
+      // Profil du compte qui vient de se déconnecter : jamais réécrit.
+      if (_isStaleSession(generation)) return AuthSessionOutcome.ready;
       profile = _withPendingConsents(ProfileApiCodec.userProfileFromApi(
         profileJson,
         fallbackLocale: localeCode,
@@ -314,6 +327,7 @@ mixin _SessionMixin on _AppControllerBase {
       _clampShippedLocale();
       return AuthSessionOutcome.ready;
     } catch (error, stack) {
+      if (_isStaleSession(generation)) return AuthSessionOutcome.ready;
       if (error is DioException && error.response?.statusCode == 404) {
         return AuthSessionOutcome.ready;
       }
@@ -470,31 +484,49 @@ mixin _SessionMixin on _AppControllerBase {
     // l'appareil restait rattaché au compte. Au mieux : borné, et sans
     // attente hors ligne — la déconnexion ne bloque jamais.
     final pushDetached = PushService.instance.logout();
-    // Keep the historical logout contract: callers that do not await this
-    // Future must still observe an anonymous in-memory state immediately.
-    // Session/cache cleanup remains awaited below before the Future completes.
-    _resetUserState();
-    _persist();
-    update();
-    if (ConnectivityService.instance.isOnline) {
-      try {
-        await pushDetached.timeout(_pushDetachBudget);
-      } catch (_) {
-        // Délai dépassé : le jeton invalidé chez FCM fera répondre
-        // `UNREGISTERED` au prochain envoi, et le serveur le supprimera.
-      }
-    }
-    if (Get.isRegistered<AuthService>()) {
-      await Get.find<AuthService>().clearSession();
-    }
-    // Les messages en attente appartiennent au compte qui se déconnecte : sans
-    // ce vidage, ils étaient rejoués sous le compte suivant (téléphone partagé).
+    // Fenêtre de déconnexion (audit du 22/11/2026, n° 3) : de la remise à
+    // zéro jusqu'à l'effacement de la session, le jeton du compte parti reste
+    // valide. Aucune synchro ne démarre et aucun écrivain n'écrit pendant ce
+    // créneau (voir `_isStaleSession`) ; à sa fermeture, la génération change
+    // encore, pour que ce qui a démarré dedans reste périmé.
+    _sessionClosings++;
     try {
-      await CaseMessageOutbox.instance.clear();
-    } catch (_) {
-      // Outbox not initialized in this session — nothing to clear.
+      // Keep the historical logout contract: callers that do not await this
+      // Future must still observe an anonymous in-memory state immediately.
+      // Session/cache cleanup remains awaited below before the Future
+      // completes.
+      _resetUserState();
+      _persist();
+      update();
+      if (ConnectivityService.instance.isOnline) {
+        try {
+          await pushDetached.timeout(_pushDetachBudget);
+        } catch (_) {
+          // Délai dépassé : le jeton invalidé chez FCM fera répondre
+          // `UNREGISTERED` au prochain envoi, et le serveur le supprimera.
+        }
+      }
+      if (Get.isRegistered<AuthService>()) {
+        await Get.find<AuthService>().clearSession();
+      }
+      // Les messages en attente appartiennent au compte qui se déconnecte :
+      // sans ce vidage, ils étaient rejoués sous le compte suivant (téléphone
+      // partagé).
+      try {
+        await CaseMessageOutbox.instance.clear();
+      } catch (_) {
+        // Outbox not initialized in this session — nothing to clear.
+      }
+      await _clearSuccessLabLocalData();
+    } finally {
+      _closeSessionWindow();
     }
-    await _clearSuccessLabLocalData();
+  }
+
+  /// Ferme la fenêtre de déconnexion ouverte par `logout` / `deleteAccount`.
+  void _closeSessionWindow() {
+    _sessionGeneration++;
+    _sessionClosings--;
   }
 
   bool _sessionLossInProgress = false;
@@ -525,6 +557,14 @@ mixin _SessionMixin on _AppControllerBase {
   /// roadmap steps, read markers and remote ids survived a logout and were
   /// re-persisted for the next account on a shared phone.
   void _resetUserState() {
+    // Les réponses encore en vol appartiennent au compte qui part : elles
+    // seront abandonnées (voir `_sessionGeneration`). La synchro en cours ne
+    // bloque plus celle du compte suivant, et la relance différée de la file
+    // des messages ne part plus sous ce compte-là.
+    _sessionGeneration++;
+    isSyncing = false;
+    _inFlightSync = null;
+    _cancelOutboxRetry();
     profile = null;
     accountLoadFailed = false;
     // Le compte suivant (ou l'invité) repart de l'Accueil.
@@ -548,6 +588,13 @@ mixin _SessionMixin on _AppControllerBase {
     _reviewedCaseIds.clear();
     _completedRoadmapSteps = {};
     _commercialLeads.clear();
+    // Statistiques du conseiller : elles appartiennent aussi au compte.
+    commercialStats = CommercialStats.empty;
+    commercialLeadsError = null;
+    // Chargements du conseiller parti : sans ça, le dédoublonnage ignorait le
+    // chargement du conseiller suivant tant que celui du premier était en vol.
+    isLoadingCommercialLeads = false;
+    isLoadingCommercialStats = false;
     _lastSyncAttemptAt = null;
     _syncBackoffUntil = null;
     _resetScholarshipFollowState();
@@ -566,13 +613,22 @@ mixin _SessionMixin on _AppControllerBase {
     if (AppConfig.enableRemoteSync) {
       await _apiClient.deleteAccount();
     }
-    unawaited(PushService.instance.logout());
-    if (Get.isRegistered<AuthService>()) {
-      await Get.find<AuthService>().clearSession();
+    // Même fenêtre que `logout` : le compte est supprimé côté serveur, plus
+    // rien de lui n'est réécrit ni sur disque ni en mémoire pendant le
+    // nettoyage. Ouverte APRÈS la suppression : si elle échoue, le compte
+    // reste ouvert et ses requêtes en vol ne sont pas perdues.
+    _sessionClosings++;
+    try {
+      unawaited(PushService.instance.logout());
+      if (Get.isRegistered<AuthService>()) {
+        await Get.find<AuthService>().clearSession();
+      }
+      await _wipeLocalData();
+      _resetUserState();
+      update();
+    } finally {
+      _closeSessionWindow();
     }
-    await _wipeLocalData();
-    _resetUserState();
-    update();
   }
 
   Future<void> _wipeLocalData() async {
