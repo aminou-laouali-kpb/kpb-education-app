@@ -14,6 +14,17 @@ void main() {
       expect(quota.allowed, isTrue);
     });
 
+    test('Pass Karatou : unlimited lu, absent = faux (backend plus ancien)', () {
+      final pass = CoachQuota.fromJson({
+        'quotaRemaining': 99,
+        'quotaLimit': 100,
+        'unlimited': true,
+      });
+      expect(pass.unlimited, isTrue);
+      expect(pass.limit, 100);
+      expect(CoachQuota.fromJson({'quotaRemaining': 5}).unlimited, isFalse);
+    });
+
     test('allowed is false when quotaRemaining is 0', () {
       final quota = CoachQuota.fromJson({
         'quotaRemaining': 0,

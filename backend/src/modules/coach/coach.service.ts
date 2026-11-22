@@ -19,7 +19,7 @@ import {
   unsourcedFigureCaveat,
   type CoachLanguage,
 } from './coach-prompt.builder';
-import { CoachQuotaService } from './coach-quota.service';
+import { CoachQuotaService, PASS_COACH_DAILY_LIMIT } from './coach-quota.service';
 
 type CoachRole = 'user' | 'assistant';
 
@@ -296,8 +296,10 @@ export class CoachService {
       subscriber.next({
         data: {
           type: 'error',
-          message:
-            'Quota hebdomadaire atteint (5 messages). Le Pass Karatou arrive bientôt.',
+          // « quota » reste dans les deux phrases : l'app y reconnaît le refus.
+          message: quota.unlimited
+            ? `Quota du jour atteint (${PASS_COACH_DAILY_LIMIT} messages, garde-fou du Pass Karatou). Reviens demain.`
+            : 'Quota hebdomadaire atteint (5 messages). Le Pass Karatou arrive bientôt.',
         },
       } as MessageEvent);
       subscriber.complete();
@@ -384,7 +386,7 @@ export class CoachService {
       // Rembourser là offrirait des réponses gratuites tant que la panne dure.
       if (full === '') {
         try {
-          await this.quotaService.refund(params.userId, consumedAt);
+          await this.quotaService.refund(params.userId, consumedAt, quota.bucket);
         } catch (refundError) {
           this.logger.warn(
             `Coach quota refund failed: ${refundError instanceof Error ? refundError.message : String(refundError)}`,

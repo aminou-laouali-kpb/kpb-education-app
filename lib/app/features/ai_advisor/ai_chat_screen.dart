@@ -48,6 +48,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
   bool _isTyping = false;
   int? _remainingMessages;
   int? _weeklyQuota;
+
+  /// Pass Karatou actif : pas de compteur affiché, le garde-fou du jour reste
+  /// appliqué par le serveur.
+  bool _unlimited = false;
   List<String> _suggestions = const [];
   String? _assistantDraft;
   String? _bootstrapError;
@@ -80,6 +84,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         _bootstrapError = null;
         _remainingMessages = quota.remaining;
         _weeklyQuota = quota.limit;
+        _unlimited = quota.unlimited;
         _suggestions = suggestions;
         if (history.isNotEmpty) {
           // Rehydrate the persisted conversation (survives app restarts).
@@ -136,6 +141,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
   /// PR), so this only surfaces the real remaining/limit — never a paywall or
   /// fake checkout.
   void _showQuotaInfo() {
+    if (_unlimited) {
+      KpbToast.info('coach_pass_unlimited_info_body'.tr,
+          title: 'coach_quota_info_title'.tr);
+      return;
+    }
     KpbToast.info(
       'coach_quota_info_body'.trParams({
         'rem': '${_remainingMessages ?? '—'}',
@@ -228,8 +238,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
             if (isQuotaRefusal) {
               _remainingMessages = 0;
               _messages.add(AiMessage(
-                text: 'coach_quota_reached_body'
-                    .trParams({'quota': '$_weeklyQuota'}),
+                text: _unlimited
+                    ? 'coach_pass_daily_cap_body'
+                        .trParams({'quota': '$_weeklyQuota'})
+                    : 'coach_quota_reached_body'
+                        .trParams({'quota': '$_weeklyQuota'}),
                 isUser: false,
                 timestamp: DateTime.now(),
               ));
@@ -458,7 +471,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 borderRadius: BorderRadius.circular(100),
               ),
               child: Text(
-                '${_remainingMessages ?? '—'}/${_weeklyQuota ?? '—'}',
+                _unlimited
+                    ? 'coach_pass_unlimited_chip'.tr
+                    : '${_remainingMessages ?? '—'}/${_weeklyQuota ?? '—'}',
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
@@ -692,7 +707,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'coach_quota_handoff_body'.trParams({'quota': '$_weeklyQuota'}),
+            (_unlimited
+                    ? 'coach_pass_daily_cap_body'
+                    : 'coach_quota_handoff_body')
+                .trParams({'quota': '$_weeklyQuota'}),
             style: const TextStyle(
               fontSize: 12,
               height: 1.45,

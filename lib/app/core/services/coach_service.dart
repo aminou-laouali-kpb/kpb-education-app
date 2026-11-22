@@ -192,11 +192,16 @@ class CoachQuota {
     required this.remaining,
     required this.limit,
     required this.allowed,
+    this.unlimited = false,
   });
 
   final int remaining;
   final int limit;
   final bool allowed;
+
+  /// Pass Karatou actif : usage illimité, sous un garde-fou quotidien que le
+  /// serveur applique (`limit` est alors celui du JOUR, pas de la semaine).
+  final bool unlimited;
 
   factory CoachQuota.fromJson(Map<String, dynamic> json) {
     final remaining = json['quotaRemaining'] as int? ?? 0;
@@ -204,6 +209,7 @@ class CoachQuota {
       remaining: remaining,
       limit: json['quotaLimit'] as int? ?? 5,
       allowed: remaining > 0,
+      unlimited: json['unlimited'] == true,
     );
   }
 }

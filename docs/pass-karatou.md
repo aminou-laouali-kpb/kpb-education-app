@@ -88,6 +88,15 @@ Dans **Cours (Academy)** : cocher « Réservé au Pass Karatou » sur le cours, 
 3. Déployer (migration additive `20261122120000_pass_karatou`).
 4. Tester avec un compte de test, puis révoquer l'accès de test dans l'admin.
 
+## KPB Intelligence
+
+Sans Pass : 5 messages par semaine. Pass actif : illimité, sous un garde-fou de
+100 messages par JOUR contre l'abus (`PASS_COACH_DAILY_LIMIT`,
+`backend/src/modules/coach/coach-quota.service.ts`), sur un compteur séparé
+(`coach_pass`). Le Pass est relu à chaque message : une révocation vaut tout de
+suite, et l'élève retrouve son compteur gratuit intact. Dans l'app, la pastille
+affiche « Pass ∞ » au lieu du compteur.
+
 ## Dans l'app
 
 L'entrée « Cours de langue (HSK, TOEFL…) » du profil n'apparaît que si le

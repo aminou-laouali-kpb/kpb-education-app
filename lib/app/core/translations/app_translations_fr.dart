@@ -1058,6 +1058,9 @@ const Map<String, String> appTranslationsFr = {
   'coach_input_hint': 'Pose ta question sur les écoles, les budgets...',
   // ── App-engagement handoff : outils coaching + post-décision ──
   'coach_status_tagline': 'Connaît ton profil · répond aussitôt',
+  'coach_pass_unlimited_chip': 'Pass ∞',
+  'coach_pass_unlimited_info_body': 'Ton Pass Karatou est actif : KPB Intelligence est illimité. Seule une limite de sécurité de 100 messages par jour s\'applique.',
+  'coach_pass_daily_cap_body': 'Tu as envoyé @quota messages aujourd\'hui, la limite de sécurité du Pass Karatou. Reviens demain, ou continue avec un conseiller KPB.',
   'coach_quota_info_title': 'Messages KPB Intelligence',
   'coach_quota_info_body':
       'Il te reste @rem message(s) sur @total cette semaine.',
