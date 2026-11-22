@@ -91,10 +91,22 @@ export class AdminUsersService {
       };
     }
 
-    return this.users.find(
-      (user) =>
-        user.email.toLowerCase() === email.toLowerCase() && user.isActive,
-    );
+    // Repli sur la liste mock uniquement sans base ET hors production : si une
+    // base est configurée, un compte absent ou désactivé en base doit rester
+    // refusé, même si son e-mail figure dans les données mock (fondateurs).
+    if (!this.usesDatabase() && process.env.NODE_ENV !== 'production') {
+      return this.users.find(
+        (user) =>
+          user.email.toLowerCase() === email.toLowerCase() && user.isActive,
+      );
+    }
+
+    return undefined;
+  }
+
+  /** Vrai quand une base est configurée : elle fait alors seule autorité. */
+  usesDatabase(): boolean {
+    return this.prismaService.isEnabled;
   }
 
   async findActiveUserByEmailWithCredentials(email: string) {

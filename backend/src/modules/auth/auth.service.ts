@@ -164,24 +164,40 @@ export class AuthService {
   async verifyToken(token: string): Promise<AdminSessionUser> {
     try {
       const payload = this.jwtService.verify(token);
-      
-      const user = await this.adminUsersService.findActiveUserByEmail(payload.email);
-      if (!user) {
-        throw new UnauthorizedException('Admin account is no longer active.');
+      const email = typeof payload?.email === 'string' ? payload.email : '';
+      if (!email) {
+        throw new UnauthorizedException('Invalid admin token.');
       }
 
-      // For DB-backed accounts, reject a token whose password fingerprint no
-      // longer matches (e.g. after a reset), so a reset revokes any live
-      // session immediately rather than only blocking future refreshes.
-      const credentials =
-        await this.adminUsersService.findActiveUserByEmailWithCredentials(
-          payload.email,
-        );
-      if (
-        credentials &&
-        payload.pwd !== passwordFingerprint(credentials.passwordHash)
-      ) {
-        throw new UnauthorizedException('Admin session has been revoked.');
+      // Base disponible : seul l'utilisateur actif lu en base fait autorité.
+      // Pas de repli mock ici (sinon un compte fondateur désactivé en base
+      // restait accepté via la liste mock, sans contrôle d'empreinte pwd).
+      if (this.adminUsersService.usesDatabase()) {
+        const credentials =
+          await this.adminUsersService.findActiveUserByEmailWithCredentials(
+            email,
+          );
+        if (!credentials) {
+          throw new UnauthorizedException('Admin account is no longer active.');
+        }
+
+        // Rejette un jeton dont l'empreinte du mot de passe ne correspond plus
+        // (ex. après un reset) : le reset révoque immédiatement toute session.
+        if (payload.pwd !== passwordFingerprint(credentials.passwordHash)) {
+          throw new UnauthorizedException('Admin session has been revoked.');
+        }
+
+        return this.toSessionUser(credentials);
+      }
+
+      // Sans base : repli mock permis seulement hors production (même garde
+      // que login).
+      if (process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException('Admin account is no longer active.');
+      }
+      const user = await this.adminUsersService.findActiveUserByEmail(email);
+      if (!user) {
+        throw new UnauthorizedException('Admin account is no longer active.');
       }
 
       return this.toSessionUser(user);
