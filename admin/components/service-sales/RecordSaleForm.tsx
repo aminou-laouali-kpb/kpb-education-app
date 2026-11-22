@@ -2,7 +2,7 @@
 
 import { CSSProperties, FormEvent, useEffect, useState } from 'react';
 
-import { apiFetch } from '../../lib/api-client';
+import { apiFetch, type ApiError } from '../../lib/api-client';
 import { useLocale } from '../locale-provider';
 import { Alert, Button, Field, Input, Select, Textarea } from '../ui';
 
@@ -33,6 +33,31 @@ const formStyle: CSSProperties = {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export interface OpenSale {
+  id: string;
+  status: string;
+  amountXOF: number;
+  createdAt: string;
+  source: string;
+}
+
+/** La vente ouverte jointe à un refus 409 `DUPLICATE_OPEN_SALE`, ou `null`. */
+export function duplicateFromError(error: unknown): OpenSale | null {
+  const apiError = error as ApiError | undefined;
+  if (!apiError || apiError.status !== 409 || !apiError.body) return null;
+  try {
+    const body = JSON.parse(apiError.body) as {
+      code?: string;
+      details?: { existing?: OpenSale };
+    };
+    return body.code === 'DUPLICATE_OPEN_SALE' && body.details?.existing
+      ? body.details.existing
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function fcfa(value: number) {
   return new Intl.NumberFormat('fr-FR').format(value);
 }
@@ -57,6 +82,7 @@ export function RecordSaleForm({
   const [note, setNote] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState<OpenSale | null>(null);
 
   useEffect(() => {
     apiFetch<{ items: PackageOption[] }>('/admin/service-packages')
@@ -70,8 +96,8 @@ export function RecordSaleForm({
       );
   }, [t]);
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event: FormEvent | null, allowDuplicate = false) {
+    event?.preventDefault();
     if (!EMAIL.test(email.trim())) {
       setError(t('serviceSales.recordEmailInvalid'));
       return;
@@ -82,6 +108,7 @@ export function RecordSaleForm({
     }
     setPending(true);
     setError(null);
+    if (!allowDuplicate) setDuplicate(null);
     try {
       const sale = await apiFetch<RecordedSale>('/admin/service-packages/purchases', {
         method: 'POST',
@@ -90,10 +117,17 @@ export function RecordSaleForm({
           packageCode,
           status,
           ...(note.trim() ? { note: note.trim() } : {}),
+          ...(allowDuplicate ? { allowDuplicate: true } : {}),
         },
       });
+      setDuplicate(null);
       onRecorded(sale);
     } catch (exception) {
+      const open = duplicateFromError(exception);
+      if (open) {
+        setDuplicate(open);
+        return;
+      }
       setError(exception instanceof Error ? exception.message : t('serviceSales.updateError'));
     } finally {
       setPending(false);
@@ -107,6 +141,36 @@ export function RecordSaleForm({
         {t('serviceSales.recordHint')}
       </p>
       {error ? <Alert variant="danger">{error}</Alert> : null}
+      {duplicate ? (
+        <Alert variant="warning">
+          <div style={{ display: 'grid', gap: 8 }}>
+            <strong>{t('serviceSales.duplicateTitle')}</strong>
+            <span>
+              {t('serviceSales.duplicateBody')
+                .replace('{status}', t(`serviceSales.status_${duplicate.status}`))
+                .replace('{amount}', fcfa(duplicate.amountXOF))
+                .replace(
+                  '{date}',
+                  new Intl.DateTimeFormat('fr-FR').format(new Date(duplicate.createdAt)),
+                )}
+            </span>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                loading={pending}
+                onClick={() => void submit(null, true)}
+              >
+                {t('serviceSales.duplicateConfirmCta')}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+                {t('serviceSales.duplicateCancelCta')}
+              </Button>
+            </div>
+          </div>
+        </Alert>
+      ) : null}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
         <Field label={t('serviceSales.recordEmailLabel')}>
           {({ id }) => (

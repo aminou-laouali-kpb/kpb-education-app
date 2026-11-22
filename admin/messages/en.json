@@ -1434,7 +1434,11 @@
     "recordEmailInvalid": "Invalid e-mail: the one the student uses to sign in to the app.",
     "recordPackageMissing": "Choose a service.",
     "recordedPlain": "Sale recorded: {service} for {name} ({email}), {amount} FCFA.",
-    "recordedDiscounted": "Sale recorded: {service} for {name} ({email}), {amount} FCFA — Karatou Pass −{percent}% off {list} FCFA."
+    "recordedDiscounted": "Sale recorded: {service} for {name} ({email}), {amount} FCFA — Karatou Pass −{percent}% off {list} FCFA.",
+    "duplicateTitle": "A sale is already open for this service",
+    "duplicateBody": "This student already has a “{status}” sale of {amount} FCFA, created on {date}. Check it in the list: if it is the same purchase, update it instead of creating a new one.",
+    "duplicateConfirmCta": "It is a new purchase: record anyway",
+    "duplicateCancelCta": "Cancel"
   },
   "errors": {
     "title": "Something went wrong",

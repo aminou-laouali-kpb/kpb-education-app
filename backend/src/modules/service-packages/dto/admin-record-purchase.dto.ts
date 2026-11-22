@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -28,4 +29,12 @@ export class AdminRecordPurchaseDto {
   @IsString()
   @MaxLength(1000)
   note?: string;
+
+  /**
+   * Confirmé après l'alerte de doublon : un élève peut réellement acheter deux
+   * fois le même service. Absent ou faux, une vente ouverte bloque (409).
+   */
+  @IsOptional()
+  @IsBoolean()
+  allowDuplicate?: boolean;
 }

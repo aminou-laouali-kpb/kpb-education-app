@@ -3,7 +3,10 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { recordedSaleMessage } from '../components/service-sales/RecordSaleForm';
+import {
+  duplicateFromError,
+  recordedSaleMessage,
+} from '../components/service-sales/RecordSaleForm';
 
 const sale = {
   id: 'sp-1',
@@ -41,9 +44,28 @@ describe('vente saisie dans l’admin', () => {
         'recordOpenCta', 'recordTitle', 'recordHint', 'recordEmailLabel', 'recordPackageLabel',
         'recordStatusLabel', 'recordNoteLabel', 'recordCta', 'recordCancel', 'recordEmailInvalid',
         'recordPackageMissing', 'recordedPlain', 'recordedDiscounted',
+        'duplicateTitle', 'duplicateBody', 'duplicateConfirmCta', 'duplicateCancelCta',
       ]) {
         expect({ locale, key, ok: Boolean(messages.serviceSales[key]) }).toEqual({ locale, key, ok: true });
       }
     }
+  });
+
+  it('reconnaît le refus de doublon et en extrait la vente ouverte', () => {
+    const existing = {
+      id: 'sp-open',
+      status: 'pending_payment',
+      amountXOF: 50000,
+      createdAt: '2026-11-20T10:00:00.000Z',
+      source: 'admin',
+    };
+    const error = Object.assign(new Error('conflict'), {
+      status: 409,
+      body: JSON.stringify({ statusCode: 409, code: 'DUPLICATE_OPEN_SALE', details: { existing } }),
+    });
+    expect(duplicateFromError(error)).toEqual(existing);
+    expect(duplicateFromError(Object.assign(new Error('x'), { status: 409, body: '{"code":"OTHER"}' }))).toBeNull();
+    expect(duplicateFromError(Object.assign(new Error('x'), { status: 500, body: 'oops' }))).toBeNull();
+    expect(duplicateFromError(undefined)).toBeNull();
   });
 });

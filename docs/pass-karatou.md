@@ -115,6 +115,12 @@ retrouve le compte, relit le Pass et calcule le montant (aucun montant saisi à
 la main). Source `admin`, auteur dans la note interne. Route :
 `POST /admin/service-packages/purchases`.
 
+Doublon : si l'élève a déjà une vente **ouverte** (en attente, payée ou en
+cours) pour le même service, le serveur refuse (409 `DUPLICATE_OPEN_SALE`, vente
+existante dans `details.existing`). Le formulaire l'affiche ; « C'est un nouvel
+achat : enregistrer quand même » renvoie avec `allowDuplicate: true`, et la note
+interne garde « Doublon confirmé par l'équipe ».
+
 ## Dans l'app
 
 L'entrée « Cours de langue (HSK, TOEFL…) » du profil n'apparaît que si le

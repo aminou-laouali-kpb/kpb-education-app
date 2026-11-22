@@ -207,7 +207,7 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
 describe('ServicePackagesService — vente saisie dans l’admin', () => {
   const pkg = { id: 'pkg-1', code: 'dossier_pret', isActive: true, priceXOF: 50000, nameFr: 'Dossier prêt' };
 
-  function makeService(opts: { user?: unknown; hasPass?: boolean }) {
+  function makeService(opts: { user?: unknown; hasPass?: boolean; open?: unknown }) {
     const created: Array<Record<string, unknown>> = [];
     const client = {
       userProfile: {
@@ -216,6 +216,7 @@ describe('ServicePackagesService — vente saisie dans l’admin', () => {
       },
       servicePackage: { findUnique: async () => pkg },
       servicePurchase: {
+        findFirst: async () => opts.open ?? null,
         create: async ({ data }: { data: Record<string, unknown> }) => {
           created.push(data);
           return { id: 'sp-1', ...data };
@@ -263,5 +264,41 @@ describe('ServicePackagesService — vente saisie dans l’admin', () => {
       service.recordPurchaseByAdmin({ email: 'x@y.org', packageCode: 'dossier_pret', recordedBy: 'a' }),
     ).rejects.toMatchObject({ status: 404, response: expect.objectContaining({ code: 'ACCOUNT_NOT_FOUND' }) });
     expect(created).toHaveLength(0);
+  });
+
+  describe('alerte de doublon', () => {
+    const open = {
+      id: 'sp-open',
+      status: 'pending_payment',
+      amountXOF: 50000,
+      createdAt: new Date('2026-11-20T10:00:00Z'),
+      source: 'service_packages',
+    };
+
+    it('refuse une seconde vente ouverte du même service (409, vente existante jointe)', async () => {
+      const { service, created } = makeService({ open });
+      await expect(
+        service.recordPurchaseByAdmin({ email: 'awa@x.org', packageCode: 'dossier_pret', recordedBy: 'a' }),
+      ).rejects.toMatchObject({
+        status: 409,
+        response: expect.objectContaining({
+          code: 'DUPLICATE_OPEN_SALE',
+          details: { existing: expect.objectContaining({ id: 'sp-open', status: 'pending_payment' }) },
+        }),
+      });
+      expect(created).toHaveLength(0);
+    });
+
+    it('enregistre quand même après confirmation, et le note', async () => {
+      const { service, created } = makeService({ open });
+      await service.recordPurchaseByAdmin({
+        email: 'awa@x.org',
+        packageCode: 'dossier_pret',
+        allowDuplicate: true,
+        recordedBy: 'a',
+      });
+      expect(created).toHaveLength(1);
+      expect(String(created[0].internalNotes)).toContain('Doublon confirmé');
+    });
   });
 });

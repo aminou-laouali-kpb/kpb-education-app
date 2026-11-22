@@ -1434,7 +1434,11 @@
     "recordEmailInvalid": "E-mail invalide : celui avec lequel l'élève se connecte à l'app.",
     "recordPackageMissing": "Choisissez un service.",
     "recordedPlain": "Vente enregistrée : {service} pour {name} ({email}), {amount} FCFA.",
-    "recordedDiscounted": "Vente enregistrée : {service} pour {name} ({email}), {amount} FCFA — Pass Karatou −{percent} % sur {list} FCFA."
+    "recordedDiscounted": "Vente enregistrée : {service} pour {name} ({email}), {amount} FCFA — Pass Karatou −{percent} % sur {list} FCFA.",
+    "duplicateTitle": "Vente déjà ouverte pour ce service",
+    "duplicateBody": "Cet élève a déjà une vente « {status} » de {amount} FCFA, créée le {date}. Vérifiez-la dans la liste : s'il s'agit du même achat, mettez-la à jour au lieu d'en créer une nouvelle.",
+    "duplicateConfirmCta": "C'est un nouvel achat : enregistrer quand même",
+    "duplicateCancelCta": "Annuler"
   },
   "errors": {
     "title": "Une erreur est survenue",

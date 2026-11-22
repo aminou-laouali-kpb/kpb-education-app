@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -50,6 +51,9 @@ const PURCHASE_STATUSES: PurchaseStatus[] = [
  * We do *not* auto-refund on payment failure — ops investigates because the
  * failure mode is usually a stuck mobile-money transfer that resolves itself.
  */
+/** Une vente « ouverte » : ni livrée, ni annulée, ni remboursée. */
+const OPEN_PURCHASE_STATUSES = ['pending_payment', 'paid', 'in_progress'] as const;
+
 const CHECKOUT_PROVIDERS: ReadonlyArray<string> = ['cinetpay', 'paydunya'];
 
 /**
@@ -373,6 +377,7 @@ export class ServicePackagesService {
     packageCode: string;
     status?: 'pending_payment' | 'paid';
     note?: string;
+    allowDuplicate?: boolean;
     recordedBy: string;
   }) {
     const email = input.email.trim();
@@ -390,9 +395,44 @@ export class ServicePackagesService {
       });
     }
     const pkg = await this.getPublic(input.packageCode);
+
+    // Doublon : une vente du même service pour le même élève, pas encore
+    // livrée ni annulée. Le commercial la voit et confirme s'il le faut.
+    if (!input.allowDuplicate) {
+      const open = await this.prismaService.execute((prisma) =>
+        prisma.servicePurchase.findFirst({
+          where: {
+            userId: user.id,
+            packageId: pkg.id,
+            status: { in: [...OPEN_PURCHASE_STATUSES] },
+          },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true, status: true, amountXOF: true, createdAt: true, source: true },
+        }),
+      );
+      if (open) {
+        throw new ConflictException({
+          code: 'DUPLICATE_OPEN_SALE',
+          message:
+            'Cet élève a déjà une vente ouverte pour ce service. Vérifiez-la avant d\'en enregistrer une autre.',
+          // `details` : le seul champ libre que le filtre global transmet.
+          details: {
+            existing: {
+              id: open.id,
+              status: open.status,
+              amountXOF: open.amountXOF,
+              createdAt: open.createdAt.toISOString(),
+              source: open.source,
+            },
+          },
+        });
+      }
+    }
+
     const price = await this.pricing(user.id, pkg.priceXOF);
     const notes = [
       `Enregistrée dans l'admin par ${input.recordedBy}.`,
+      input.allowDuplicate ? 'Doublon confirmé par l\'équipe.' : null,
       `SKU: ${pkg.code}`,
       price.discountPercent > 0
         ? `Pass Karatou actif : −${price.discountPercent} % (prix catalogue ${pkg.priceXOF} FCFA, dû ${price.amountXOF} FCFA).`
