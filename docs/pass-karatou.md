@@ -105,5 +105,8 @@ arrière `academy-off`). Un cours réservé montre tout son programme ; une leç
 verrouillée affiche un cadenas et renvoie vers l'écran du Pass, sans prix ni
 verbe d'achat. Avec un Pass actif, toutes les leçons s'ouvrent.
 
-**Avant `academy-on`** : l'écran du Pass dit encore « Bientôt disponible » et
-présente une liste d'attente. À réécrire quand le Pass est réellement proposé.
+L'écran du Pass suit le même drapeau. Fermé : l'écran de la 59 (« Bientôt
+disponible », liste d'attente). Ouvert : l'offre réelle — conseiller qui suit le
+dossier, tous les cours, KPB Intelligence illimité, tableau gratuit / Pass,
+« Ton Pass Karatou est actif jusqu'au … » pour un membre — toujours sans prix
+ni verbe d'achat ; le seul bouton reste « Parler à un conseiller KPB ».

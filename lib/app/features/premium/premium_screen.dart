@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../../core/config/support_contact.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/models/app_models.dart';
 import '../../core/services/coach_service.dart';
+import '../../core/services/remote_feature_flags.dart';
 import '../../core/ui/components/kpb_guest_gate.dart';
 import '../../core/utils/whatsapp_utils.dart';
 import '../../core/ui/app_tokens.dart';
@@ -63,6 +65,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
   late final bool _isGuest;
   late final bool _isStudent;
 
+  /// Le Pass est-il réellement proposé ? Même drapeau distant que les cours
+  /// (`academy`) : fermé, l'écran reste celui de la liste d'attente (build 59) ;
+  /// ouvert, il décrit l'offre réelle. Lu UNE fois, à l'ouverture.
+  late final bool _passOpen;
+
+  /// Statut du Pass de l'élève (`GET /me/pass`), seulement Pass ouvert.
+  PassStatusModel _pass = PassStatusModel.none;
+
   @override
   void initState() {
     super.initState();
@@ -77,9 +87,16 @@ class _PremiumScreenState extends State<PremiumScreen> {
     // qui l'a construit. Un `Get.find<AppApiClient>()` aurait levé au premier
     // montage réel, et jamais dans un test qui l'injecte à la main.
     _waitlist = PremiumWaitlistController(apiClient: app.apiClient);
+    _passOpen = RemoteFeatureFlags.instance.academyEnabled;
     _loadQuota();
     // Un invité n'a pas de session : l'appel partirait pour revenir en 401.
-    if (!_isGuest) _waitlist.load();
+    if (!_isGuest) {
+      if (_passOpen) {
+        _loadPass(app);
+      } else {
+        _waitlist.load();
+      }
+    }
   }
 
   @override
@@ -173,6 +190,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
     }
   }
 
+  /// Lecture seule : un échec laisse « pas de Pass », jamais un faux accès.
+  Future<void> _loadPass(AppController app) async {
+    try {
+      final status = PassStatusModel.fromJson(await app.apiClient.getMyPass());
+      if (mounted) setState(() => _pass = status);
+    } catch (_) {}
+  }
+
+  String _passUntil() {
+    final until = _pass.activeUntil?.toLocal();
+    if (until == null) return '';
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${two(until.day)}/${two(until.month)}/${until.year}';
+  }
+
   void _contactAdvisor() {
     openWhatsAppOrToast(
       phone: SupportContact.whatsappNumber,
@@ -217,6 +249,10 @@ class _PremiumScreenState extends State<PremiumScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
+                  if (_passOpen && _pass.active) ...[
+                    _PassActiveCard(until: _passUntil()),
+                    const SizedBox(height: 14),
+                  ],
                   _heroCard(count),
                   const SizedBox(height: 14),
                   _pitchCard(),
@@ -226,11 +262,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   // l'étudiant de faire ici, et l'enterrer sous deux cartes
                   // descriptives aurait mesuré le défilement plutôt que
                   // l'intérêt.
-                  AnimatedBuilder(
-                    animation: _waitlist,
-                    builder: (_, __) => _waitlistCard(),
-                  ),
-                  const SizedBox(height: 14),
+                  // Pass ouvert : plus de liste d'attente, l'offre existe.
+                  if (!_passOpen) ...[
+                    AnimatedBuilder(
+                      animation: _waitlist,
+                      builder: (_, __) => _waitlistCard(),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   _comparisonCard(count),
                   const SizedBox(height: 14),
                   _howToCard(),
@@ -277,12 +316,12 @@ class _PremiumScreenState extends State<PremiumScreen> {
                     color: KpbColors.brandNavy, size: 24),
               ),
               const SizedBox(width: 12),
-              _SoonPill(label: 'premium_badge_soon'.tr),
+              if (!_passOpen) _SoonPill(label: 'premium_badge_soon'.tr),
             ],
           ),
           const SizedBox(height: 14),
           Text(
-            'premium_hero_title'.tr,
+            (_passOpen ? 'premium_open_hero_title' : 'premium_hero_title').tr,
             style: const TextStyle(
               fontSize: 21,
               fontWeight: FontWeight.w800,
@@ -292,7 +331,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'premium_hero_sub'.tr,
+            (_passOpen ? 'premium_open_hero_sub' : 'premium_hero_sub').tr,
             style: const TextStyle(
               fontSize: 12.5,
               height: 1.5,
@@ -300,11 +339,20 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          _ValueRow(text: 'premium_value_ai_coach'.trParams({'count': count})),
-          const SizedBox(height: 8),
-          _ValueRow(text: 'premium_value_advisors'.tr),
-          const SizedBox(height: 8),
-          _ValueRow(text: 'premium_value_more_soon'.tr),
+          if (_passOpen) ...[
+            _ValueRow(text: 'premium_open_value_advisor'.tr),
+            const SizedBox(height: 8),
+            _ValueRow(text: 'premium_open_value_courses'.tr),
+            const SizedBox(height: 8),
+            _ValueRow(text: 'premium_open_value_ai'.trParams({'count': count})),
+          ] else ...[
+            _ValueRow(
+                text: 'premium_value_ai_coach'.trParams({'count': count})),
+            const SizedBox(height: 8),
+            _ValueRow(text: 'premium_value_advisors'.tr),
+            const SizedBox(height: 8),
+            _ValueRow(text: 'premium_value_more_soon'.tr),
+          ],
         ],
       ),
     );
@@ -546,10 +594,42 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   flex: 14, align: TextAlign.left, strong: true),
               _cell('premium_free_ai_coach'.trParams({'count': count}),
                   flex: 9, leftBorder: true),
-              _cell('premium_unlimited_soon'.tr,
-                  flex: 9, leftBorder: true, highlight: true, strong: true),
+              _cell(
+                  (_passOpen
+                          ? 'premium_open_unlimited'
+                          : 'premium_unlimited_soon')
+                      .tr,
+                  flex: 9,
+                  leftBorder: true,
+                  highlight: true,
+                  strong: true),
             ],
           ),
+          if (_passOpen) ...[
+            for (final row in const [
+              (
+                'premium_row_courses',
+                'premium_free_courses',
+                'premium_open_courses'
+              ),
+              (
+                'premium_row_advisor',
+                'premium_free_advisor',
+                'premium_open_advisor'
+              ),
+            ]) ...[
+              Container(height: 1, color: KpbColors.surfaceMuted),
+              Row(
+                children: [
+                  _cell(row.$1.tr,
+                      flex: 14, align: TextAlign.left, strong: true),
+                  _cell(row.$2.tr, flex: 9, leftBorder: true),
+                  _cell(row.$3.tr,
+                      flex: 9, leftBorder: true, highlight: true, strong: true),
+                ],
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -615,7 +695,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'premium_how_body'.tr,
+            (_passOpen ? 'premium_open_how_body' : 'premium_how_body').tr,
             style: const TextStyle(
               fontSize: 12.5,
               height: 1.5,
@@ -774,6 +854,39 @@ class _ValueRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// « Ton Pass est actif jusqu'au … » : en tête d'écran, pour l'élève qui l'a.
+class _PassActiveCard extends StatelessWidget {
+  const _PassActiveCard({required this.until});
+
+  final String until;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const ValueKey('premium_pass_active'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: KpbColors.successLight,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.verified_rounded, color: KpbColors.success),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              until.isEmpty
+                  ? 'premium_pass_active'.tr
+                  : 'premium_pass_active_until'.trParams({'date': until}),
+              style: KpbTextStyles.titleSm.copyWith(color: KpbColors.brandNavy),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
