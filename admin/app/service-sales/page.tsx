@@ -48,6 +48,10 @@ interface ServicePurchaseItem {
   id: string;
   status: string;
   amountXOF: number;
+  /** Prix catalogue avant remise ; absent sur les ventes antérieures. */
+  listPriceXOF?: number | null;
+  discountPercent?: number;
+  discountReason?: string | null;
   source: string;
   internalNotes: string | null;
   createdAt: string;
@@ -250,6 +254,13 @@ export default function ServiceSalesPage() {
           <div style={{ display: 'grid', gap: 2 }}>
             <span style={metaLabelStyle}>{t('serviceSales.amountLabel')}</span>
             <span style={metaValueStyle}>{formatFcfa(item.amountXOF)} FCFA</span>
+            {item.discountPercent ? (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+                {t('serviceSales.passDiscountDetail')
+                  .replace('{percent}', String(item.discountPercent))
+                  .replace('{list}', formatFcfa(item.listPriceXOF ?? item.amountXOF))}
+              </span>
+            ) : null}
           </div>
           <div style={{ display: 'grid', gap: 2 }}>
             <span style={metaLabelStyle}>{t('serviceSales.dateLabel')}</span>
@@ -403,7 +414,17 @@ export default function ServiceSalesPage() {
                     primary={item.package.nameFr}
                     sub={item.user.fullName}
                   />
-                  <CellText primary={`${formatFcfa(item.amountXOF)} FCFA`} />
+                  <CellText
+                    primary={`${formatFcfa(item.amountXOF)} FCFA`}
+                    sub={
+                      item.discountPercent
+                        ? t('serviceSales.passDiscountBadge').replace(
+                            '{percent}',
+                            String(item.discountPercent),
+                          )
+                        : undefined
+                    }
+                  />
                   <CellText primary={formatDate(item.createdAt)} muted />
                   <div>
                     <Badge variant={STATUS_VARIANT[item.status] ?? 'neutral'}>

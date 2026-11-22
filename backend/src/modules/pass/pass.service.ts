@@ -15,6 +15,14 @@ import { PrismaService } from '../prisma/prisma.service';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Remise du Pass Karatou sur les services d'accompagnement KPB, en %. */
+export const PASS_SERVICE_DISCOUNT_PERCENT = 20;
+
+/** Prix remisé, arrondi au franc (le FCFA n'a pas de subdivision). */
+export function applyDiscount(priceXOF: number, percent: number): number {
+  return Math.round((priceXOF * (100 - percent)) / 100);
+}
+
 export type PassGrantSource = 'webhook' | 'admin';
 
 export interface PassGrantInput {

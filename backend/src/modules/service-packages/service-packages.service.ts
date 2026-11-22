@@ -3,10 +3,16 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import {
+  applyDiscount,
+  PASS_SERVICE_DISCOUNT_PERCENT,
+  PassService,
+} from '../pass/pass.service';
 
 type ProviderName = 'cinetpay' | 'paydunya' | 'stripe' | 'manual';
 type PurchaseStatus =
@@ -74,7 +80,38 @@ export class ServicePackagesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly paymentsService: PaymentsService,
+    // Optionnel pour les tests existants ; AppModule l'injecte.
+    @Optional() private readonly pass?: PassService,
   ) {}
+
+  /**
+   * Prix d'une vente pour CET élève, au moment de la demande : −20 % avec un
+   * Pass Karatou actif. Le prix catalogue est gardé à côté pour la compta. Une
+   * panne de lecture du Pass retombe sur le prix catalogue (jamais l'inverse).
+   */
+  private async pricing(userId: string, listPriceXOF: number) {
+    let hasPass = false;
+    if (this.pass) {
+      try {
+        hasPass = await this.pass.hasActivePass(userId);
+      } catch {
+        hasPass = false;
+      }
+    }
+    return hasPass
+      ? {
+          amountXOF: applyDiscount(listPriceXOF, PASS_SERVICE_DISCOUNT_PERCENT),
+          listPriceXOF,
+          discountPercent: PASS_SERVICE_DISCOUNT_PERCENT,
+          discountReason: 'pass_karatou' as string | null,
+        }
+      : {
+          amountXOF: listPriceXOF,
+          listPriceXOF,
+          discountPercent: 0,
+          discountReason: null as string | null,
+        };
+  }
 
   // ── Public catalog ────────────────────────────────────────────────────────
 
@@ -171,12 +208,13 @@ export class ServicePackagesService {
       fullName: profile?.fullName || input.customer?.fullName || '',
     };
 
+    const price = await this.pricing(input.userId, pkg.priceXOF);
     // L'intent d'abord : s'il échoue (fournisseur non configuré…), aucune
     // ligne ServicePurchase orpheline ne pollue le pipeline admin.
     const intent = await this.paymentsService.createIntent({
       userId: input.userId,
       provider,
-      amountMinor: pkg.priceXOF,
+      amountMinor: price.amountXOF,
       currency: 'XOF',
       caseId: linkedCase?.id,
       description: `KPB — ${pkg.nameFr}`,
@@ -194,7 +232,7 @@ export class ServicePackagesService {
           packageId: pkg.id,
           userId: input.userId,
           caseId: linkedCase?.id,
-          amountXOF: pkg.priceXOF,
+          ...price,
           status: 'pending_payment',
           source: 'checkout',
           paymentIntentId: intent.id,
@@ -224,8 +262,12 @@ export class ServicePackagesService {
       ? await this.getOwnedCase(input.userId, input.caseId)
       : null;
 
+    const price = await this.pricing(input.userId, pkg.priceXOF);
     const notes = [
       'Created from mobile WhatsApp CTA.',
+      price.discountPercent > 0
+        ? `Pass Karatou actif : −${price.discountPercent} % (prix catalogue ${pkg.priceXOF} FCFA, dû ${price.amountXOF} FCFA).`
+        : null,
       `SKU: ${pkg.code}`,
       `Source: ${source}`,
       linkedCase ? `Case: ${linkedCase.referenceCode}` : null,
@@ -256,6 +298,21 @@ export class ServicePackagesService {
       }),
     );
     if (existing) {
+      // Le Pass a pu s'ouvrir (ou se fermer) depuis la première demande : le
+      // montant dû suit l'état du Pass tant que rien n'est payé.
+      if (
+        existing.amountXOF !== price.amountXOF ||
+        existing.discountPercent !== price.discountPercent
+      ) {
+        const updated = await this.prismaService.execute((prisma) =>
+          prisma.servicePurchase.update({
+            where: { id: existing.id },
+            data: price,
+            ...STUDENT_PURCHASE_VIEW,
+          }),
+        );
+        return updated ?? existing;
+      }
       return existing;
     }
 
@@ -265,7 +322,7 @@ export class ServicePackagesService {
           packageId: pkg.id,
           userId: input.userId,
           caseId: linkedCase?.id,
-          amountXOF: pkg.priceXOF,
+          ...price,
           status: 'pending_payment',
           source,
           internalNotes: notes,

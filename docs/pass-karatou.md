@@ -97,6 +97,17 @@ Sans Pass : 5 messages par semaine. Pass actif : illimité, sous un garde-fou de
 suite, et l'élève retrouve son compteur gratuit intact. Dans l'app, la pastille
 affiche « Pass ∞ » au lieu du compteur.
 
+## Remise sur les services
+
+Quand un élève demande un service (bouton WhatsApp de l'app, ou paiement en
+ligne s'il est un jour rouvert), le serveur relit son Pass : actif, la vente est
+enregistrée à −20 % (`PASS_SERVICE_DISCOUNT_PERCENT`). La ligne garde le prix
+catalogue (`listPriceXOF`), le pourcentage et le motif `pass_karatou` ; la note
+interne le dit en clair. Une demande encore impayée suit l'état du Pass : si le
+Pass s'ouvre entre deux demandes, le montant dû baisse. Une vente payée ne bouge
+plus. Dans l'admin → Ventes services, le montant porte la mention
+« Pass Karatou −20 % ».
+
 ## Dans l'app
 
 L'entrée « Cours de langue (HSK, TOEFL…) » du profil n'apparaît que si le

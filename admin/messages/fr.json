@@ -1419,7 +1419,9 @@
     "manualPayment": "Manuel / WhatsApp",
     "lifecycleLabel": "Cycle de vie",
     "notesLabel": "Notes internes",
-    "saveCta": "Enregistrer le cycle de vie"
+    "saveCta": "Enregistrer le cycle de vie",
+    "passDiscountBadge": "Pass Karatou −{percent} %",
+    "passDiscountDetail": "Pass Karatou : −{percent} % sur le prix catalogue de {list} FCFA"
   },
   "errors": {
     "title": "Une erreur est survenue",

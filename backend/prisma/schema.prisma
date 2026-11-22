@@ -1929,7 +1929,14 @@ model ServicePurchase {
   paymentIntentId    String?               @unique
   status             ServicePurchaseStatus @default(pending_payment)
   // Price snapshot at purchase time — protects against later SKU edits.
+  // Montant DÛ, remise comprise.
   amountXOF          Int
+  // Prix catalogue avant remise (NULL : vente antérieure, sans remise connue).
+  listPriceXOF       Int?
+  // Remise appliquée à la création, en pour cent (20 = Pass Karatou actif).
+  discountPercent    Int                   @default(0)
+  // Motif de la remise : `pass_karatou`, ou NULL.
+  discountReason     String?
   // Freeform handoff notes from KPB back-office (not shown to student).
   internalNotes      String?
   deliveredAt        DateTime?

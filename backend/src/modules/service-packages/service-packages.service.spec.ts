@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
+import type { PassService } from '../pass/pass.service';
 import { ServicePackagesService } from './service-packages.service';
 
 /**
@@ -19,8 +20,11 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
     nameFr: 'Dossier prêt',
   };
 
-  function makeService(opts: { existing?: unknown; pkg?: unknown } = {}) {
+  function makeService(
+    opts: { existing?: unknown; pkg?: unknown; hasPass?: boolean | Error } = {},
+  ) {
     const created: Array<Record<string, unknown>> = [];
+    const updated: Array<Record<string, unknown>> = [];
     let intentCalls = 0;
     const client = {
       servicePackage: {
@@ -39,6 +43,10 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
           created.push(data);
           return { id: 'sp-new', ...data, package: activePkg, case: null };
         },
+        update: async ({ data }: { data: Record<string, unknown> }) => {
+          updated.push(data);
+          return { ...(opts.existing as object), ...data };
+        },
       },
     };
     const prisma = {
@@ -51,9 +59,19 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
         return { id: 'pi-1' };
       },
     } as unknown as PaymentsService;
+    const pass =
+      opts.hasPass === undefined
+        ? undefined
+        : ({
+            hasActivePass: async () => {
+              if (opts.hasPass instanceof Error) throw opts.hasPass;
+              return opts.hasPass;
+            },
+          } as unknown as PassService);
     return {
-      service: new ServicePackagesService(prisma, payments),
+      service: new ServicePackagesService(prisma, payments, pass),
       created,
+      updated,
       getIntentCalls: () => intentCalls,
     };
   }
@@ -76,6 +94,8 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
     const existing = {
       id: 'sp-existing',
       status: 'pending_payment',
+      amountXOF: 50000,
+      discountPercent: 0,
       package: activePkg,
       case: null,
     };
@@ -130,6 +150,56 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
       expect(created).toEqual([
         expect.objectContaining({ caseId: 'case-own', paymentIntentId: 'pi-1' }),
       ]);
+    });
+  });
+
+  describe('remise du Pass Karatou', () => {
+    it('Pass actif : −20 %, prix catalogue et motif enregistrés', async () => {
+      const { service, created } = makeService({ hasPass: true });
+      await service.createWhatsAppPurchase({ userId: 'u1', packageCode: 'dossier_pret' });
+      expect(created[0]).toMatchObject({
+        amountXOF: 40000,
+        listPriceXOF: 50000,
+        discountPercent: 20,
+        discountReason: 'pass_karatou',
+      });
+      expect(String(created[0].internalNotes)).toContain('Pass Karatou actif');
+    });
+
+    it('sans Pass : prix catalogue, aucune remise', async () => {
+      const { service, created } = makeService({ hasPass: false });
+      await service.createWhatsAppPurchase({ userId: 'u1', packageCode: 'dossier_pret' });
+      expect(created[0]).toMatchObject({
+        amountXOF: 50000,
+        listPriceXOF: 50000,
+        discountPercent: 0,
+        discountReason: null,
+      });
+    });
+
+    it('une panne de lecture du Pass garde le prix catalogue', async () => {
+      const { service, created } = makeService({ hasPass: new Error('db') });
+      await service.createWhatsAppPurchase({ userId: 'u1', packageCode: 'dossier_pret' });
+      expect(created[0]).toMatchObject({ amountXOF: 50000, discountPercent: 0 });
+    });
+
+    it('une demande encore impayée suit le Pass ouvert depuis', async () => {
+      const existing = {
+        id: 'sp-existing',
+        status: 'pending_payment',
+        amountXOF: 50000,
+        discountPercent: 0,
+        package: activePkg,
+        case: null,
+      };
+      const { service, created, updated } = makeService({ existing, hasPass: true });
+      const result = (await service.createWhatsAppPurchase({
+        userId: 'u1',
+        packageCode: 'dossier_pret',
+      })) as { id: string; amountXOF: number };
+      expect(created).toHaveLength(0);
+      expect(updated[0]).toMatchObject({ amountXOF: 40000, discountPercent: 20 });
+      expect(result).toMatchObject({ id: 'sp-existing', amountXOF: 40000 });
     });
   });
 });
