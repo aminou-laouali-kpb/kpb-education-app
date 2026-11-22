@@ -87,6 +87,7 @@ void main() {
 
     expect(find.text('Le Pass Karatou'), findsOneWidget);
     expect(find.text('BIENTÔT DISPONIBLE'), findsNothing);
+    expect(find.textContaining('20 % de réduction'), findsOneWidget);
     expect(find.textContaining('liste d\'attente'), findsNothing);
     expect(api.waitlistReads, 0);
     expect(find.byKey(const ValueKey('premium_pass_active')), findsNothing);
@@ -94,6 +95,9 @@ void main() {
         scrollable: find.byType(Scrollable).first);
     expect(find.text('Introduction et 1re leçon'), findsOneWidget);
     expect(find.text('Illimité'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('−20 %'), 200,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('−20 %'), findsOneWidget);
     expect(find.text('Parler à un conseiller KPB'), findsOneWidget);
     _expectStoreSafe();
   });

@@ -107,6 +107,7 @@ verbe d'achat. Avec un Pass actif, toutes les leçons s'ouvrent.
 
 L'écran du Pass suit le même drapeau. Fermé : l'écran de la 59 (« Bientôt
 disponible », liste d'attente). Ouvert : l'offre réelle — conseiller qui suit le
-dossier, tous les cours, KPB Intelligence illimité, tableau gratuit / Pass,
+dossier, tous les cours, KPB Intelligence illimité, −20 % sur l'accompagnement
+KPB, tableau gratuit / Pass,
 « Ton Pass Karatou est actif jusqu'au … » pour un membre — toujours sans prix
 ni verbe d'achat ; le seul bouton reste « Parler à un conseiller KPB ».

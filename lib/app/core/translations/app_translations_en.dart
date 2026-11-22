@@ -361,6 +361,10 @@ const Map<String, String> appTranslationsEn = {
   'premium_open_how_body': 'Talk to a KPB advisor: they explain the Pass and activate it on your account. You get a notification as soon as it is done.',
   'premium_pass_active': 'Your Karatou Pass is active.',
   'premium_pass_active_until': 'Your Karatou Pass is active until @date.',
+  'premium_open_value_discount': '20% off every KPB guidance service.',
+  'premium_row_discount': 'Discount on KPB guidance',
+  'premium_free_discount': '—',
+  'premium_open_discount': '−20%',
   'premium_how_title': 'How it works',
   'premium_how_body':
       'No in-app payment. The Pass is coming soon — a KPB advisor can already help you.',

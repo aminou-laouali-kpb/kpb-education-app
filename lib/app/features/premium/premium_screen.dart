@@ -345,6 +345,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
             _ValueRow(text: 'premium_open_value_courses'.tr),
             const SizedBox(height: 8),
             _ValueRow(text: 'premium_open_value_ai'.trParams({'count': count})),
+            const SizedBox(height: 8),
+            _ValueRow(text: 'premium_open_value_discount'.tr),
           ] else ...[
             _ValueRow(
                 text: 'premium_value_ai_coach'.trParams({'count': count})),
@@ -616,6 +618,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 'premium_row_advisor',
                 'premium_free_advisor',
                 'premium_open_advisor'
+              ),
+              (
+                'premium_row_discount',
+                'premium_free_discount',
+                'premium_open_discount'
               ),
             ]) ...[
               Container(height: 1, color: KpbColors.surfaceMuted),
