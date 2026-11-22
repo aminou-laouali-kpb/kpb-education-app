@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -17,6 +18,10 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ReferralCreditsService } from "../referrals/referral-credits.service";
 import { CaseLeadMailService } from "./case-lead-mail.service";
 import { CaseMessagingGateway } from "./case-messaging.gateway";
+import {
+  counsellorIdForAssignment,
+  isAdvisorNameChange,
+} from "./counsellor-link";
 import { AssignCaseDto } from "./dto/assign-case.dto";
 import { CreateCaseDto } from "./dto/create-case.dto";
 import { CreateCaseInternalNoteDto } from "./dto/create-case-internal-note.dto";
@@ -175,6 +180,27 @@ function counselorCaseScope(staff: StaffActor) {
         },
       },
     ],
+  };
+}
+
+/**
+ * État d'affectation actuel (nom + lien), lu dans la transaction de la mise à
+ * jour. Règles du lien `counsellorId` : voir `./counsellor-link`.
+ */
+async function currentAssignment(
+  tx: Prisma.TransactionClient,
+  id: string,
+): Promise<{
+  assignedAdvisorName: string | null;
+  counsellorId: string | null;
+}> {
+  const current = await tx.case.findUnique({
+    where: { id },
+    select: { assignedAdvisorName: true, counsellorId: true },
+  });
+  return {
+    assignedAdvisorName: current?.assignedAdvisorName ?? null,
+    counsellorId: current?.counsellorId ?? null,
   };
 }
 
@@ -774,11 +800,59 @@ export class CasesService {
    * étudiant : voir `CasesController`.
    */
   async update(id: string, input: UpdateCaseDto) {
+    return this.applyUpdate(id, input);
+  }
+
+  /**
+   * Même mise à jour, avec l'acteur connecté : un conseiller (rôle Counselor)
+   * ne peut pas CHANGER le nom d'affectation (403), comme il ne peut pas
+   * appeler `POST /admin/cases/:id/assign`. `update` garde sa signature à deux
+   * arguments (voir `cases.student-routes.spec.ts`).
+   */
+  async updateAsStaff(
+    id: string,
+    input: UpdateCaseDto,
+    actor: { role: InternalRole | string },
+  ) {
+    return this.applyUpdate(id, input, actor);
+  }
+
+  private async applyUpdate(
+    id: string,
+    input: UpdateCaseDto,
+    actor?: { role: InternalRole | string },
+  ) {
     this.assertDb();
     await this.requireDbCase(id);
 
     const updated = await this.prismaService.execute((prisma) =>
       prisma.$transaction(async (tx) => {
+        const current = await currentAssignment(tx, id);
+        const advisorChanged =
+          !!input.assignedAdvisorName &&
+          isAdvisorNameChange(
+            current.assignedAdvisorName,
+            input.assignedAdvisorName,
+          );
+        // Réaffecter est réservé à l'équipe (voir `POST /assign`) : un
+        // conseiller ne peut pas contourner cette règle par le PATCH. Renvoyer
+        // le même nom (formulaire pré-rempli) reste permis.
+        if (advisorChanged && actor?.role === InternalRole.Counselor) {
+          throw new ForbiddenException(
+            "Seule l'équipe peut réaffecter un dossier.",
+          );
+        }
+        // Même règle que `assignCase` (voir `counsellorIdForAssignment`) :
+        // nouveau nom => lien résolu (ou coupé) ; même nom => lien corrigé
+        // seulement s'il pointe vers une fiche qui ne porte pas ce nom et
+        // qu'une autre fiche correspond sans ambiguïté.
+        const counsellorId = input.assignedAdvisorName
+          ? await counsellorIdForAssignment(
+              tx,
+              current,
+              input.assignedAdvisorName,
+            )
+          : undefined;
         const c = await tx.case.update({
           where: { id },
           data: {
@@ -790,7 +864,10 @@ export class CasesService {
               ? { nextStepDescription: input.nextStepDescription }
               : {}),
             ...(input.assignedAdvisorName
-              ? { assignedAdvisorName: input.assignedAdvisorName }
+              ? {
+                  assignedAdvisorName: input.assignedAdvisorName,
+                  ...(counsellorId !== undefined ? { counsellorId } : {}),
+                }
               : {}),
             ...(input.scheduledAt
               ? { scheduledAt: new Date(input.scheduledAt) }
@@ -1271,11 +1348,25 @@ export class CasesService {
 
     const assigned = await this.prismaService.execute((prisma) =>
       prisma.$transaction(async (tx) => {
+        const counsellorId = await counsellorIdForAssignment(
+          tx,
+          await currentAssignment(tx, id),
+          input.assignedAdvisorName,
+        );
         await tx.case.update({
           where: { id },
           data: {
             status: newStatus,
             assignedAdvisorName: input.assignedAdvisorName,
+            // Le lien `counsellorId` porte l'accès (portée, messagerie,
+            // pièces) et l'alerte e-mail : il suit une réaffectation, ou il
+            // est coupé (null) si aucun conseiller ne correspond au nouveau
+            // nom. Même nom renvoyé (planifier un appel, prochaine étape) :
+            // le lien est conservé, sauf s'il pointe vers une fiche qui ne
+            // porte pas ce nom alors qu'une autre y correspond sans
+            // ambiguïté (dossiers réaffectés avant le correctif, ou lien nul
+            // dont la fiche a été créée depuis).
+            ...(counsellorId !== undefined ? { counsellorId } : {}),
             // Official-line policy (Item 12): a manual assignment clears any
             // legacy personal number instead of writing a new one.
             assignedAdvisorPhone: null,
