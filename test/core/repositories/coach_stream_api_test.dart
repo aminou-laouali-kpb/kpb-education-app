@@ -40,8 +40,7 @@ void main() {
     client = AppApiClient(dio: dio);
   });
 
-  Future<List<Map<String, dynamic>>> send() => client
-      .streamCoachReply(
+  Future<List<Map<String, dynamic>>> send() => client.streamCoachReply(
         conversationId: 'conv-1',
         userId: 'user-1',
         message: _secret,
@@ -52,8 +51,7 @@ void main() {
           'annualTuitionBudgetEur': 3000,
           'preferredLanguage': 'fr',
         },
-      )
-      .toList();
+      ).toList();
 
   test('POST sur la route de flux, message dans le corps, rien dans l\'URL',
       () async {
