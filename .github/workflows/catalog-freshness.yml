@@ -38,9 +38,9 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -99,7 +99,7 @@ jobs:
 
       - name: Ouvrir ou mettre à jour l'issue de fraîcheur
         if: steps.validate.outputs.valid != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         # Les deux valeurs passent par l'environnement et jamais par `${{ }}` :
         # `body` est multi-ligne, donc l'interpoler dans une chaîne JavaScript la
         # couperait — et une donnée interpolée dans du code est une injection en
@@ -186,7 +186,7 @@ jobs:
 
       - name: Refermer l'issue quand le catalogue est de nouveau propre
         if: steps.validate.outputs.valid == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const existing = await github.rest.issues.listForRepo({

@@ -47,7 +47,7 @@ jobs:
       # À CHAQUE exécution — une garde rouge en permanence, pour une raison qui
       # n'a rien à voir avec la production. Le seul autre `actions/checkout` du
       # fichier appartient au job `stability-24h`, qui est un job distinct.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: API — liveness and readiness
         env:
@@ -201,7 +201,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Verify scheduled uptime history
         env:
