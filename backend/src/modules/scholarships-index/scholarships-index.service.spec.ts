@@ -1106,6 +1106,56 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     expect(greatYopCall!.where.NOT.sourceKey.in).toContain('greatyop-a');
   });
 
+  // Audit 27 : la déduplication ne fusionne que des sources DIFFÉRENTES.
+  it('ne fusionne pas deux bourses de la même source au titre normalisé identique', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Chevening Scholarship 2026'),
+        scraped('greatyop-b', 'Chevening Scholarship 2025-2026'),
+      ],
+    });
+    const result = await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'greatyop-b',
+    ]);
+    expect(result.totalMerged).toBe(0);
+  });
+
+  it('fusionne un doublon inter-sources et compte `merged` sur la source absorbée seulement', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Bourse Été 2026'),
+        scraped('greatyop-b', 'Bourse Été 2025'),
+      ],
+      mastereTn: async () => [
+        { ...scraped('masteretn-x', 'Bourse Ete'), contentScore: 9 },
+      ],
+    });
+    const result = await service.refresh();
+    // « Été » et « Ete » se rejoignent (accents retirés, pas la lettre) ; la
+    // grappe garde une seule ligne par source : greatyop-b reste distincte.
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-b',
+      'masteretn-x',
+    ]);
+    const bySource = Object.fromEntries(result.sources.map((s) => [s.prefix, s.merged]));
+    expect(bySource).toEqual({ greatyop: 1, masteretn: 0 });
+    expect(result.totalMerged).toBe(1);
+  });
+
+  it('ne fusionne rien sur une clé normalisée vide', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [scraped('greatyop-a', '2026')],
+      mastereTn: async () => [scraped('masteretn-b', '— 2026 —')],
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'masteretn-b',
+    ]);
+  });
+
   it('leaves an approved row untouched and does not reactivate a rejected one', async () => {
     const { service, upserts } = makeService({
       greatYop: async () => [scraped('greatyop-approved'), scraped('greatyop-rejected')],

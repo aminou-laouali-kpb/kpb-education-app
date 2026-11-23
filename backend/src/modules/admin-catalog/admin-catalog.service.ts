@@ -828,11 +828,48 @@ export class AdminCatalogService {
     );
   }
 
+  /**
+   * Invariant `Program.countryId == Institution.countryId` — le pendant de la
+   * garde de `updateInstitution`. Sans lui, une formation rattachée à une
+   * université marocaine mais classée sous la France apparaît dans
+   * `programIds` de l'établissement et sous le mauvais pays dans Explore, puis
+   * bloque tout déplacement de l'établissement.
+   *
+   * Renvoie le pays de l'établissement (dérivé quand `requestedCountryId` est
+   * absent) ; 400 si l'établissement n'existe pas ou si le pays demandé diffère.
+   */
+  private async resolveProgramCountry(
+    institutionId: string,
+    requestedCountryId: string | undefined,
+  ): Promise<string> {
+    const institution = await this.prisma.execute((db) =>
+      db.institution.findUnique({
+        where: { id: institutionId },
+        select: { countryId: true },
+      }),
+    );
+    if (!institution) {
+      throw new BadRequestException(`Institution ${institutionId} not found.`);
+    }
+    if (requestedCountryId && requestedCountryId !== institution.countryId) {
+      throw new BadRequestException(
+        `Program countryId ${requestedCountryId} does not match institution ${institutionId} (${institution.countryId}).`,
+      );
+    }
+    return institution.countryId;
+  }
+
   async createProgram(input: Record<string, unknown>) {
     this.assertDb();
+    const institutionId = this.requireStr(input, 'institutionId');
+    // `countryId` devient facultatif : dérivé de l'établissement s'il manque.
+    const countryId = await this.resolveProgramCountry(
+      institutionId,
+      this.str(input.countryId),
+    );
     const data: Prisma.ProgramCreateInput = {
-      institutionId: this.requireStr(input, 'institutionId'),
-      countryId: this.requireStr(input, 'countryId'),
+      institutionId,
+      countryId,
       fieldId: this.requireStr(input, 'fieldId'),
       nameFr: this.requireStr(input, 'nameFr'),
       nameEn: this.str(input.nameEn) ?? this.requireStr(input, 'nameFr'),
@@ -916,6 +953,7 @@ export class AdminCatalogService {
         where: { id },
         select: {
           institutionId: true,
+          countryId: true,
           isActive: true,
           campusCity: true,
           searchText: true,
@@ -941,6 +979,17 @@ export class AdminCatalogService {
         nextActive: this.bool(input.isActive) ?? before.isActive,
         before,
       });
+    }
+    // Changer d'établissement ou de pays : le pays doit rester celui de
+    // l'établissement. Un simple changement d'établissement entraîne le pays.
+    const nextInstitutionId = this.str(input.institutionId);
+    const nextCountryId = this.str(input.countryId);
+    if (before && (nextInstitutionId || nextCountryId)) {
+      (data as Prisma.ProgramUpdateInput).countryId =
+        await this.resolveProgramCountry(
+          nextInstitutionId ?? before.institutionId,
+          nextCountryId,
+        );
     }
     const updated = await this.runUpdate(
       () => this.prisma.execute((db) => db.program.update({ where: { id }, data })),

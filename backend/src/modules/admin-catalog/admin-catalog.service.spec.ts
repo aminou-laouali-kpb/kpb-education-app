@@ -608,6 +608,9 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
       },
       institution: {
         updateMany: async () => ({ count: 1 }),
+        // `createProgram` lit désormais le pays de l'établissement
+        // (invariant Program.countryId == Institution.countryId).
+        findUnique: async () => ({ countryId: 'fra' }),
       },
     };
     const prisma = {
@@ -936,6 +939,8 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
             return { id: where.id, ...data };
           },
           updateMany: async () => ({ count: 1 }),
+          // Pays de l'établissement, lu par `createProgram` / `updateProgram`.
+          findUnique: async () => ({ countryId: 'fra' }),
         },
       };
       const prisma = {
@@ -1259,6 +1264,8 @@ describe('AdminCatalogService — entretien de Institution.programIds', () => {
           institutionUpdates.push(args);
           return { count: 1 };
         },
+        // Tous les établissements de ce harnais sont au Maroc.
+        findUnique: async () => ({ countryId: 'mar' }),
       },
     };
     const prisma = {
@@ -1371,5 +1378,112 @@ describe('AdminCatalogService — institution country change', () => {
     const { service, counts } = makeService(5);
     await service.updateInstitution('inst-1', { nameFr: 'Nom' });
     expect(counts).toHaveLength(0);
+  });
+});
+
+// Invariant `Program.countryId == Institution.countryId` : le pendant, côté
+// formation, de la garde de `updateInstitution` ci-dessus.
+describe('AdminCatalogService — pays de la formation = pays de l’établissement', () => {
+  function makeService(
+    before: { institutionId: string; countryId: string; isActive: boolean } | null = null,
+  ) {
+    const institutions: Record<string, { countryId: string }> = {
+      'inst-fra': { countryId: 'fra' },
+      'inst-mar': { countryId: 'mar' },
+    };
+    const creates: Array<Record<string, unknown>> = [];
+    const updates: Array<Record<string, unknown>> = [];
+    const client = {
+      program: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          creates.push(data);
+          return { id: 'prog-new', ...data };
+        },
+        update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+          updates.push(data);
+          return { id: where.id, ...data };
+        },
+        findUnique: async () => before,
+        findMany: async () => [],
+      },
+      institution: {
+        findUnique: async ({ where }: { where: { id: string } }) =>
+          institutions[where.id] ?? null,
+        updateMany: async () => ({ count: 1 }),
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    return { service: new AdminCatalogService(prisma), creates, updates };
+  }
+
+  const base = { fieldId: 'd01', nameFr: 'Licence Droit' };
+
+  it('createProgram refuse un pays différent de celui de l’établissement', async () => {
+    const { service, creates } = makeService();
+    await expect(
+      service.createProgram({ ...base, institutionId: 'inst-mar', countryId: 'fra' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(creates).toHaveLength(0);
+  });
+
+  it('createProgram dérive le pays de l’établissement quand il manque', async () => {
+    const { service, creates } = makeService();
+    await service.createProgram({ ...base, institutionId: 'inst-mar' });
+    expect(creates[0].countryId).toBe('mar');
+  });
+
+  it('createProgram refuse un établissement inconnu', async () => {
+    const { service, creates } = makeService();
+    await expect(
+      service.createProgram({ ...base, institutionId: 'inst-x', countryId: 'fra' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(creates).toHaveLength(0);
+  });
+
+  it('updateProgram : changer d’établissement entraîne le pays', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await service.updateProgram('prog-1', { institutionId: 'inst-mar' });
+    expect(updates[0]).toMatchObject({ institutionId: 'inst-mar', countryId: 'mar' });
+  });
+
+  it('updateProgram refuse un établissement d’un autre pays que le pays demandé', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await expect(
+      service.updateProgram('prog-1', { institutionId: 'inst-mar', countryId: 'fra' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(updates).toHaveLength(0);
+  });
+
+  it('updateProgram refuse de changer le pays seul, sans l’établissement', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await expect(
+      service.updateProgram('prog-1', { countryId: 'mar' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(updates).toHaveLength(0);
+  });
+
+  it('updateProgram sans établissement ni pays ne lit pas l’établissement', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await service.updateProgram('prog-1', { nameFr: 'Licence Histoire' });
+    expect(updates[0]).not.toHaveProperty('countryId');
   });
 });
