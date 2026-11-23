@@ -488,13 +488,20 @@ mixin _CasesMixin on _AppControllerBase {
     if (caseId == null || _localCaseId.hasMatch(caseId)) {
       await _caseSocket.disconnect();
       _caseSocketGeneration = null;
+      _caseTypingToken++;
       isCaseAdvisorTyping = false;
       update();
       return;
     }
-    // Déjà dans la room de ce dossier, pour le compte connecté : rien à faire.
+    // Déjà dans la room de ce dossier, pour le compte connecté, et le socket
+    // est vivant : rien à faire. `isActive` et non `isConnected` : pendant la
+    // poignée de main, le socket n'est pas encore connecté mais ne doit pas
+    // être recréé. Un socket détruit (refus de la poignée de main, « io
+    // server disconnect ») ne se reconnecte pas seul : rouvrir le dossier le
+    // relance.
     final joinedGeneration = _caseSocketGeneration;
     if (_caseSocket.currentCaseId == caseId &&
+        _caseSocket.isActive &&
         joinedGeneration != null &&
         !_isStaleSession(joinedGeneration)) {
       return;
@@ -521,24 +528,40 @@ mixin _CasesMixin on _AppControllerBase {
       } catch (_) {}
     });
     _caseSocket.onTyping((data) {
+      // Compte parti, ou signal d'un autre dossier : ignoré.
+      if (_isStaleSession(generation)) return;
+      final typingCaseId = data['caseId'];
+      if (typingCaseId is String && typingCaseId != caseId) return;
       final isTyping = data['isTyping'] as bool? ?? false;
       if (isCaseAdvisorTyping == isTyping) return;
       isCaseAdvisorTyping = isTyping;
+      // Tout signal invalide les minuteries précédentes.
+      final token = ++_caseTypingToken;
       update();
       if (isTyping) {
-        // Auto-reset after 4 s in case the stop event is missed.
+        // Auto-reset after 4 s in case the stop event is missed. La minuterie
+        // ne vaut que pour CE signal : un changement de dossier ou un signal
+        // plus récent l'annule.
         Future.delayed(const Duration(seconds: 4), () {
-          if (isCaseAdvisorTyping) {
-            isCaseAdvisorTyping = false;
-            update();
-          }
+          if (token != _caseTypingToken || !isCaseAdvisorTyping) return;
+          isCaseAdvisorTyping = false;
+          update();
         });
       }
     });
-    // L'indicateur « en train d'écrire » appartenait au dossier quitté.
-    isCaseAdvisorTyping = false;
+    // L'indicateur « en train d'écrire » appartenait au dossier quitté : il
+    // s'efface tout de suite à l'écran (sans `update()`, il restait affiché).
+    _clearCaseAdvisorTyping();
     _caseSocketGeneration = generation;
     await _caseSocket.connect(caseId);
+  }
+
+  /// Efface l'indicateur « en train d'écrire » et annule sa minuterie.
+  void _clearCaseAdvisorTyping() {
+    _caseTypingToken++;
+    if (!isCaseAdvisorTyping) return;
+    isCaseAdvisorTyping = false;
+    update();
   }
 
   String? _lastTypingCaseId;

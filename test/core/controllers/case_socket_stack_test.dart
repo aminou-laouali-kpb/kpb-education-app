@@ -19,20 +19,28 @@ import 'package:karatou/app/core/services/case_socket_service.dart';
 import '../../widget_test_helpers.dart';
 
 /// Socket de test : journalise les entrées et sorties de room, sans réseau.
+/// [alive] simule l'état du socket socket.io : faux quand il a été détruit
+/// sans reconnexion (refus de la poignée de main, « io server disconnect »).
 class _FakeCaseSocket extends CaseSocketService {
   final List<String> log = <String>[];
   String? _joined;
+  bool alive = false;
+  void Function(Map<String, dynamic> data)? typing;
 
   @override
   String? get currentCaseId => _joined;
 
   @override
-  bool get isConnected => _joined != null;
+  bool get isConnected => alive;
+
+  @override
+  bool get isActive => alive;
 
   @override
   Future<void> connect(String caseId) async {
     await disconnect();
     _joined = caseId;
+    alive = true;
     log.add('join:$caseId');
   }
 
@@ -41,7 +49,12 @@ class _FakeCaseSocket extends CaseSocketService {
     final joined = _joined;
     if (joined != null) log.add('leave:$joined');
     _joined = null;
+    alive = false;
   }
+
+  @override
+  void onTyping(void Function(Map<String, dynamic> data) callback) =>
+      typing = callback;
 }
 
 /// Session d'authentification présente ; [authGate], s'il est posé, retient
@@ -162,5 +175,77 @@ void main() {
         reason: 'un connect qui reprend après la fermeture de l’écran ne '
             'doit pas laisser un socket sur un dossier qui n’est plus affiché');
     expect(socket.log, isNot(contains('join:case-a')));
+  });
+
+  // ── Revue de fdbff58 (R1 à R4) ─────────────────────────────────────────
+
+  test(
+      'R1 socket mort (refus de la poignée de main) : rouvrir le même '
+      'dossier le relance', () async {
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    // Jeton expiré : socket.io détruit le socket sans reconnexion, mais le
+    // dossier rejoint reste noté.
+    socket.alive = false;
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    expect(socket.isActive, isTrue,
+        reason: 'rouvrir le dossier (notification) doit recréer un socket '
+            'mort, comme avant la pile de jetons');
+  });
+
+  test('R2 « en train d’écrire » effacé au retour de B vers A', () async {
+    bool? lastSeen;
+    controller.addListener(() => lastSeen = controller.isCaseAdvisorTyping);
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    final leaseB = controller.connectCaseDetailSocket('case-b');
+    await settle();
+    socket.typing!({'isTyping': true}); // le conseiller de B écrit
+    expect(lastSeen, isTrue);
+
+    await controller.disconnectCaseDetailSocket(leaseB); // retour sur A
+    await settle();
+    expect(controller.isCaseAdvisorTyping, isFalse);
+    expect(lastSeen, isFalse,
+        reason: 'sans update() après la remise à false, l’écran A affiche '
+            'encore l’indicateur de B');
+    await Future<void>.delayed(const Duration(seconds: 5)); // minuterie 4 s
+    expect(lastSeen, isFalse);
+  });
+
+  test('R3 ouvrir B par-dessus A pendant que le conseiller de A écrit',
+      () async {
+    bool? lastSeen;
+    controller.addListener(() => lastSeen = controller.isCaseAdvisorTyping);
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    socket.typing!({'isTyping': true});
+    expect(lastSeen, isTrue);
+    controller.connectCaseDetailSocket('case-b');
+    await settle();
+    expect(lastSeen, isFalse);
+  });
+
+  test('R4 après logout : room du compte parti quittée, typing ignoré',
+      () async {
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    final typing = socket.typing!;
+    await controller.logout();
+    typing({'isTyping': true});
+    expect(controller.isCaseAdvisorTyping, isFalse);
+    expect(socket.currentCaseId, isNull,
+        reason: 'logout doit quitter la room du compte parti');
+  });
+
+  test('un signal « en train d’écrire » d’un autre dossier est ignoré',
+      () async {
+    controller.connectCaseDetailSocket('case-a');
+    await settle();
+    socket.typing!({'caseId': 'case-b', 'isTyping': true});
+    expect(controller.isCaseAdvisorTyping, isFalse);
+    socket.typing!({'caseId': 'case-a', 'isTyping': true});
+    expect(controller.isCaseAdvisorTyping, isTrue);
   });
 }

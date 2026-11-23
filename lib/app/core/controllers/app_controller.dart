@@ -361,6 +361,10 @@ abstract class _AppControllerBase extends GetxController {
 
   /// Génération de session sous laquelle le socket a rejoint son dossier.
   int? _caseSocketGeneration;
+
+  /// Change à chaque signal « en train d'écrire » et à chaque changement de
+  /// dossier : la minuterie d'effacement d'un signal dépassé ne fait rien.
+  int _caseTypingToken = 0;
   final Map<String, DateTime> _caseLastReadAt = <String, DateTime>{};
   // True while the remote participant is typing (shown in CaseDetailScreen).
   bool isCaseAdvisorTyping = false;

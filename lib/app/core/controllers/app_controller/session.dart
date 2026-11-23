@@ -562,6 +562,12 @@ mixin _SessionMixin on _AppControllerBase {
     // bloque plus celle du compte suivant, et la relance différée de la file
     // des messages ne part plus sous ce compte-là.
     _sessionGeneration++;
+    // Le socket temps réel quitte la room du compte parti. Les jetons des
+    // écrans restent : la prochaine ouverture de dossier reconnecte.
+    unawaited(_caseSocket.disconnect());
+    _caseSocketGeneration = null;
+    _caseTypingToken++;
+    isCaseAdvisorTyping = false;
     isSyncing = false;
     _inFlightSync = null;
     _cancelOutboxRetry();
