@@ -1086,20 +1086,32 @@ export class AdminCatalogService {
     });
     const nextCountryId = this.str(input.countryId);
     if (nextCountryId) {
-      // Le verrou n'existait que dans l'interface (et sautait pendant le
-      // chargement) : changer le pays d'un établissement qui a des formations
-      // laissait ces formations rattachées à l'ancien pays, introuvables par
-      // le bon filtre.
-      const programsInOtherCountry = await this.prisma.execute((db) =>
-        db.program.count({
-          where: { institutionId: id, countryId: { not: nextCountryId } },
-        }),
+      // Changer le pays d'un établissement déplace ses formations avec lui,
+      // dans la même transaction : l'invariant
+      // `Program.countryId == Institution.countryId` (gardé côté formation par
+      // `resolveProgramCountry`) reste vrai, et un établissement qui a des
+      // formations peut encore changer de pays — l'ancien refus, combiné à
+      // la garde des formations, était une impasse.
+      return this.runUpdate(
+        () =>
+          this.prisma.execute((db) =>
+            db.$transaction(async (tx) => {
+              // L'établissement d'abord : s'il n'existe pas (P2025), rien
+              // n'est déplacé et la transaction est annulée.
+              const updated = await tx.institution.update({
+                where: { id },
+                data,
+              });
+              await tx.program.updateMany({
+                where: { institutionId: id, countryId: { not: nextCountryId } },
+                data: { countryId: nextCountryId },
+              });
+              return updated;
+            }),
+          ),
+        'Institution',
+        id,
       );
-      if ((programsInOtherCountry ?? 0) > 0) {
-        throw new BadRequestException(
-          `Cannot move institution ${id} to ${nextCountryId}: ${programsInOtherCountry} program(s) are still attached to another country. Move or delete them first.`,
-        );
-      }
     }
     return this.runUpdate(
       () =>

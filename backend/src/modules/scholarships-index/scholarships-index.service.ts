@@ -201,7 +201,17 @@ export class ScholarshipsIndexService {
 
     // ── Phase 2: Cross-source deduplication ──────────────────────────────────
     const allRows = allScraped.flatMap((s) => s.rows);
-    const { deduplicated, mergedKeys } = this.deduplicateAcrossSources(allRows);
+    // Préfixe RÉEL du scraper pour chaque ligne : plusieurs préfixes contiennent
+    // un tiret (turkiye-burslari / turkiye-mevlana…), on ne peut pas le
+    // retrouver en coupant la clé au premier tiret.
+    const prefixByKey = new Map<string, string>();
+    for (const s of allScraped) {
+      for (const r of s.rows) prefixByKey.set(r.sourceKey, s.prefix);
+    }
+    const { deduplicated, mergedKeys } = this.deduplicateAcrossSources(
+      allRows,
+      prefixByKey,
+    );
 
     // `merged` par source = ses propres lignes absorbées par le doublon d'une
     // autre source (et non plus le total global recopié sur chaque source).
@@ -613,7 +623,10 @@ export class ScholarshipsIndexService {
    * jamais créée. Les accents sont retirés (NFD) au lieu d'effacer la lettre,
    * et une clé vide ne fusionne rien.
    */
-  private deduplicateAcrossSources(rows: ScrapedScholarship[]): {
+  private deduplicateAcrossSources(
+    rows: ScrapedScholarship[],
+    prefixByKey: ReadonlyMap<string, string>,
+  ): {
     deduplicated: ScrapedScholarship[];
     /** `sourceKey` des lignes absorbées par le doublon d'une autre source. */
     mergedKeys: string[];
@@ -627,9 +640,9 @@ export class ScholarshipsIndexService {
         .replace(/[^a-z\s]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
-    // Préfixe de source = tout ce qui précède le premier tiret de la clé
-    // (les clés sont validées `${scraper.prefix}-…` en phase 1).
-    const sourceOf = (row: ScrapedScholarship) => row.sourceKey.split('-')[0];
+    // Source d'une ligne = préfixe du scraper qui l'a produite (phase 1).
+    const sourceOf = (row: ScrapedScholarship) =>
+      prefixByKey.get(row.sourceKey) ?? row.sourceKey;
 
     const deduplicated: ScrapedScholarship[] = [];
     const mergedKeys: string[] = [];
