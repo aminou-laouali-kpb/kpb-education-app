@@ -68,13 +68,49 @@ const DEFAULT_TIMEOUT_MS = 18000;
 /** Durée totale maximale d'une réponse du coach en flux (en-têtes + corps). */
 const DEFAULT_STREAM_TOTAL_TIMEOUT_MS = 60000;
 
-/** Le fournisseur du modèle n'a pas répondu (panne, délai, refus). */
+/**
+ * Le fournisseur du modèle n'a pas répondu (panne, délai, refus).
+ *
+ * [billed] : le fournisseur avait déjà accepté la requête (200) avant la
+ * panne — génération commencée, donc potentiellement facturée. Seule une
+ * panne NON facturée justifie de rendre le quota à l'élève : sinon un élève
+ * qui provoque l'échec (coupure, sortie vide) consommerait sans limite.
+ */
 export class LlmUnavailableError extends Error {
-  constructor(message: string) {
+  readonly billed: boolean;
+
+  constructor(message: string, options: { billed?: boolean } = {}) {
     super(message);
     this.name = 'LlmUnavailableError';
+    this.billed = options.billed ?? false;
   }
 }
+
+/**
+ * Motif d'un repli de `completeJson`. Les trois premiers (`*_unconfigured`,
+ * `*_http_error`, `*_network_error`) viennent d'une requête que le
+ * fournisseur n'a jamais acceptée ; les autres, d'une réponse 200 reçue.
+ */
+export type JsonFallbackReason =
+  | 'provider_unconfigured'
+  | 'provider_http_error'
+  | 'provider_network_error'
+  | 'provider_interrupted'
+  | 'provider_truncated'
+  | 'provider_no_json'
+  | 'provider_invalid_json';
+
+export type JsonCompletionResult<T> = {
+  data: T;
+  model: string;
+  /** Présent seulement quand [data] est la valeur de repli. */
+  fallbackReason?: JsonFallbackReason;
+  /**
+   * Vrai dès qu'une tentative a reçu une réponse 200 du fournisseur (donc
+   * potentiellement facturée), y compris quand le résultat est un repli.
+   */
+  billed: boolean;
+};
 
 @Injectable()
 export class LlmService {
@@ -257,10 +293,15 @@ export class LlmService {
     /// fits short answers). Up to two attempts run, so the caller's HTTP
     /// client must wait at least twice this long.
     timeoutMs?: number;
-  }): Promise<{ data: T; model: string }> {
+  }): Promise<JsonCompletionResult<T>> {
     const config = this.provider;
     if (!config) {
-      return { data: params.fallback, model: 'local-fallback' };
+      return {
+        data: params.fallback,
+        model: 'local-fallback',
+        fallbackReason: 'provider_unconfigured',
+        billed: false,
+      };
     }
 
     const body = JSON.stringify({
@@ -279,11 +320,26 @@ export class LlmService {
       ],
     });
 
+    // Une réponse 200 reçue à N'IMPORTE QUELLE tentative rend l'appel
+    // facturé : le motif de repli le dit à l'appelant, qui ne doit alors pas
+    // rembourser le quota (revue du constat 16).
+    let billed = false;
+    const fallback = (
+      fallbackReason: JsonFallbackReason,
+    ): JsonCompletionResult<T> => ({
+      data: params.fallback,
+      model: 'local-fallback',
+      fallbackReason,
+      billed,
+    });
+
     // One transient retry (timeout / network / 5xx) before degrading to the
     // local fallback, so a single blip doesn't drop the feature.
     for (let attempt = 0; attempt < 2; attempt++) {
+      let accepted = false;
+      let response: Awaited<ReturnType<LlmService['readChatResponse']>>;
       try {
-        const response = await this.fetchWithTimeout(
+        response = await this.fetchWithTimeout(
           config.chatUrl,
           {
             method: 'POST',
@@ -293,45 +349,62 @@ export class LlmService {
             },
             body,
           },
-          (res) => this.readChatResponse(res),
+          (res) => {
+            // En-têtes 200 reçus : la génération a commencé.
+            accepted = res.ok;
+            if (res.ok) billed = true;
+            return this.readChatResponse(res);
+          },
           params.timeoutMs,
         );
-
-        if (!response.ok) {
-          // Drain the provider response but never log it: error bodies can
-          // echo prompts, document excerpts or provider diagnostics.
-          this.logger.warn(
-            `${config.name} error ${response.status} (attempt ${attempt + 1}).`,
-          );
-          if (response.status >= 500 && attempt === 0) continue;
-          return { data: params.fallback, model: 'local-fallback' };
-        }
-
-        const payload = response.payload;
-        if (payload.choices?.[0]?.finish_reason === 'length') {
-          // Truncated at max_tokens: the JSON is incomplete (or was never
-          // started, when the budget went to reasoning). This used to degrade
-          // to the fallback without a trace.
-          this.logger.warn(
-            `${config.name} response truncated at max_tokens (attempt ${attempt + 1}, completion_tokens=${payload.usage?.completion_tokens ?? '?'}).`,
-          );
-          return { data: params.fallback, model: 'local-fallback' };
-        }
-        const text = payload.choices?.[0]?.message?.content ?? '';
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-          return { data: params.fallback, model: 'local-fallback' };
-        }
-        return { data: JSON.parse(jsonMatch[0]) as T, model: config.model };
       } catch {
         this.logger.warn(
           `${config.name} call failed (attempt ${attempt + 1}).`,
         );
         if (attempt === 0) continue;
-        return { data: params.fallback, model: 'local-fallback' };
+        return fallback(
+          accepted ? 'provider_interrupted' : 'provider_network_error',
+        );
+      }
+
+      if (!response.ok) {
+        // Drain the provider response but never log it: error bodies can
+        // echo prompts, document excerpts or provider diagnostics.
+        this.logger.warn(
+          `${config.name} error ${response.status} (attempt ${attempt + 1}).`,
+        );
+        if (response.status >= 500 && attempt === 0) continue;
+        return fallback('provider_http_error');
+      }
+
+      // À partir d'ici la réponse est payée : pas de seconde tentative.
+      const payload = response.payload;
+      if (payload.choices?.[0]?.finish_reason === 'length') {
+        // Truncated at max_tokens: the JSON is incomplete (or was never
+        // started, when the budget went to reasoning). This used to degrade
+        // to the fallback without a trace.
+        this.logger.warn(
+          `${config.name} response truncated at max_tokens (attempt ${attempt + 1}, completion_tokens=${payload.usage?.completion_tokens ?? '?'}).`,
+        );
+        return fallback('provider_truncated');
+      }
+      const text = payload.choices?.[0]?.message?.content ?? '';
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return fallback('provider_no_json');
+      }
+      try {
+        return {
+          data: JSON.parse(jsonMatch[0]) as T,
+          model: config.model,
+          billed,
+        };
+      } catch {
+        // Avant : relancé comme une panne réseau, donc payé deux fois.
+        return fallback('provider_invalid_json');
       }
     }
-    return { data: params.fallback, model: 'local-fallback' };
+    return fallback('provider_network_error');
   }
 
   /**
@@ -652,10 +725,12 @@ export class LlmService {
         try {
           result = await reader.read();
         } catch {
+          // Le flux avait été accepté (200) : génération commencée.
           throw new LlmUnavailableError(
             activeScope.signal.aborted
               ? `${config.name} stream aborted (timeout or client gone).`
               : `${config.name} stream interrupted.`,
+            { billed: true },
           );
         }
         const { done, value } = result;

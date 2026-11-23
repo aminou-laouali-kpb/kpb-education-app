@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { LlmService } from '../ai/llm.service';
+import { JsonCompletionResult, LlmService } from '../ai/llm.service';
 
 export interface CvSummaryDto {
   name: string;
@@ -63,13 +63,32 @@ export interface InterviewFeedback {
 export const LETTER_TIMEOUT_MS = 40_000;
 
 /**
- * Erreur rendue quand le modèle n'a rien produit d'exploitable (panne, 429,
- * réponse tronquée, JSON de la mauvaise forme). Une 503 : l'app installée
- * l'affiche déjà (« service IA indisponible ») et le contrôleur rend l'unité
- * de quota (audit 22/11/2026, constat 16).
+ * 503 pour une génération que le fournisseur n'a PAS facturée (IA non
+ * configurée, erreur réseau ou HTTP, délai avant toute réponse). Seule cette
+ * 503 rend l'unité de quota (voir `ToolsController`).
  */
-function generationFailed(): ServiceUnavailableException {
-  return new ServiceUnavailableException('AI generation failed.');
+export class AiGenerationNotBilledException extends ServiceUnavailableException {}
+
+/**
+ * Le modèle n'a rien produit d'exploitable. Une 503 dans les deux cas : l'app
+ * installée l'affiche déjà (« service IA indisponible »), au lieu d'un faux
+ * résultat (audit 22/11/2026, constat 16).
+ *
+ * Remboursement seulement si le fournisseur n'a rien facturé. Une réponse
+ * reçue puis tronquée ou mal formée a été payée, et l'élève peut la provoquer
+ * (consigne glissée dans sa réponse, lettre très longue) : la rembourser
+ * offrait des appels illimités au fournisseur (revue du constat 16).
+ */
+function generationFailed(
+  result: JsonCompletionResult<unknown>,
+): ServiceUnavailableException {
+  return result.billed
+    ? new ServiceUnavailableException('AI generation failed.')
+    : new AiGenerationNotBilledException('AI generation failed.');
+}
+
+function notConfigured(): AiGenerationNotBilledException {
+  return new AiGenerationNotBilledException('AI not configured.');
 }
 
 /** Texte non vide, sinon `undefined`. */
@@ -139,7 +158,7 @@ export class ToolsService {
     dto: CvSummaryDto,
   ): Promise<{ fr: string; en: string }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     // The student's civil name is intentionally omitted. The DTO still
@@ -188,7 +207,7 @@ export class ToolsService {
       result.model === 'local-fallback'
         ? undefined
         : parseBilingualText(result.data);
-    if (!summary) throw generationFailed();
+    if (!summary) throw generationFailed(result);
     return summary;
   }
 
@@ -198,7 +217,7 @@ export class ToolsService {
     dto: LetterPersonalizeDto,
   ): Promise<{ fr: string; en: string }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     // Civil name is accepted on the DTO (the letter PDF prints it) but must
@@ -234,7 +253,7 @@ export class ToolsService {
       result.model === 'local-fallback'
         ? undefined
         : parseBilingualText(result.data);
-    if (!letters) throw generationFailed();
+    if (!letters) throw generationFailed(result);
     return letters;
   }
 
@@ -244,7 +263,7 @@ export class ToolsService {
     dto: InterviewQuestionsDto,
   ): Promise<{ questions: string[] }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     const en = dto.language === 'en';
@@ -309,7 +328,7 @@ export class ToolsService {
     dto: InterviewFeedbackDto,
   ): Promise<InterviewFeedback> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     const en = dto.language === 'en';
@@ -331,7 +350,7 @@ export class ToolsService {
       result.model === 'local-fallback'
         ? undefined
         : parseInterviewFeedback(result.data);
-    if (!feedback) throw generationFailed();
+    if (!feedback) throw generationFailed(result);
     return feedback;
   }
 }

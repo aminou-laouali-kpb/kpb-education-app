@@ -4,7 +4,6 @@ import {
   Logger,
   Post,
   Req,
-  ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
@@ -16,6 +15,7 @@ import {
 } from '../ai/ai-quota.guard';
 import { AiQuotaService } from '../ai/ai-quota.service';
 import {
+  AiGenerationNotBilledException,
   CvSummaryDto,
   InterviewFeedbackDto,
   InterviewQuestionsDto,
@@ -80,10 +80,14 @@ export class ToolsController {
   }
 
   /**
-   * Le guard décompte AVANT l'appel au modèle. Quand l'outil répond 503 (IA
-   * non configurée, panne du fournisseur, sortie inexploitable), l'élève n'a
-   * rien reçu : on lui rend l'unité, comme le coach (audit 22/11/2026,
-   * constat 16). Un échec du remboursement ne masque jamais la 503.
+   * Le guard décompte AVANT l'appel au modèle. Quand le fournisseur n'a rien
+   * facturé (IA non configurée, erreur réseau ou HTTP, délai avant réponse),
+   * on rend l'unité, comme le coach (audit 22/11/2026, constat 16).
+   *
+   * Une sortie reçue mais tronquée ou mal formée reste une 503 pour l'élève
+   * SANS remboursement : elle a été payée et l'élève peut la provoquer, ce
+   * qui contournait le quota (revue du constat 16). Un échec du
+   * remboursement ne masque jamais la 503.
    */
   private async refundOnUnavailable<T>(
     req: ToolsRequest,
@@ -93,7 +97,7 @@ export class ToolsController {
       return await run();
     } catch (error) {
       const consumption = req.aiQuotaConsumption;
-      if (error instanceof ServiceUnavailableException && consumption) {
+      if (error instanceof AiGenerationNotBilledException && consumption) {
         try {
           await this.quota.refund({
             userId: consumption.userId,

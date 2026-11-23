@@ -359,12 +359,19 @@ export class CoachService {
         full += chunk;
         subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
       }
-      // Flux terminé sans aucun texte (budget parti en raisonnement caché,
-      // fin prématurée) : c'est une panne, pas une réponse. Pas de bulle vide
-      // enregistrée puis rejouée au modèle, et le message est rendu (constat
-      // 14 de l'audit 22/11/2026).
+      // Flux 200 terminé sans aucun texte : c'est une panne, pas une réponse.
+      // Pas de bulle vide enregistrée puis rejouée au modèle, et l'élève voit
+      // une erreur (constat 14 de l'audit 22/11/2026).
+      //
+      // Mais le message reste décompté : le fournisseur a accepté et facturé
+      // la requête, et l'élève peut provoquer une réponse vide (« réponds par
+      // des espaces »). La rembourser contournait le quota (revue du constat
+      // 16). La cause mesurée, le raisonnement caché, est corrigée à la
+      // source (`reasoning: {enabled:false}`) : ce cas doit rester rare.
       if (full.trim() === '') {
-        throw new LlmUnavailableError('Empty reply from the provider.');
+        throw new LlmUnavailableError('Empty reply from the provider.', {
+          billed: true,
+        });
       }
       // Output guardrail: if the model emitted a concrete figure while we
       // had NO verified context to ground it, it was invented — append a
@@ -396,9 +403,17 @@ export class CoachService {
       // Pas de remboursement dès qu'un jeton est parti : une réponse coupée en
       // route, ou un échec d'écriture après une réponse complète, a été LUE.
       // Rembourser là offrirait des réponses gratuites tant que la panne dure.
-      // Rien de lisible n'est parti (réponse vide, ou seulement des blancs) :
-      // même règle que la panne franche.
-      if (full.trim() === '') {
+      //
+      // Et seulement si le fournisseur n'a rien facturé (connexion refusée,
+      // erreur HTTP, délai avant la réponse) : une réponse 200 vide, ou un
+      // flux accepté puis coupé (délai, élève qui ferme l'écran), reste
+      // décompté — sinon chaque essai provoqué serait gratuit (revue du
+      // constat 16). Une erreur inattendue n'est pas remboursée non plus.
+      if (
+        full === '' &&
+        error instanceof LlmUnavailableError &&
+        !error.billed
+      ) {
         try {
           await this.quotaService.refund(params.userId, consumedAt);
         } catch (refundError) {

@@ -365,6 +365,7 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: { fr: 'Lettre', en: 'Letter' },
       model: 'deepseek/deepseek-v4-flash',
+      billed: true,
     });
     expect(sentBody().reasoning).toEqual({ enabled: false });
   });
@@ -404,6 +405,9 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: params.fallback,
       model: 'local-fallback',
+      // Réponse reçue puis tronquée : payée, l'appelant ne rembourse pas.
+      fallbackReason: 'provider_truncated',
+      billed: true,
     });
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('truncated at max_tokens'),
@@ -432,6 +436,8 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: params.fallback,
       model: 'local-fallback',
+      fallbackReason: 'provider_network_error',
+      billed: false,
     });
     // The per-call budget lets the same slow provider answer.
     await expect(
@@ -439,6 +445,7 @@ describe('LlmService.completeJson', () => {
     ).resolves.toEqual({
       data: { fr: 'Lettre', en: 'Letter' },
       model: 'deepseek/deepseek-v4-flash',
+      billed: true,
     });
   });
 });
@@ -490,6 +497,8 @@ describe('LlmService.streamText — fournisseur en panne', () => {
 
   it('avec throwOnUnavailable, lève LlmUnavailableError sans rien rendre', async () => {
     await expect(collect(true)).rejects.toBeInstanceOf(LlmUnavailableError);
+    // Erreur HTTP avant tout flux : rien de facturé, le coach peut rembourser.
+    await expect(collect(true)).rejects.toMatchObject({ billed: false });
   });
 });
 
@@ -606,7 +615,13 @@ describe('LlmService — raisonnement caché et délais de lecture du corps', ()
         user: 'u',
         fallback: { ok: false },
       }),
-    ).resolves.toEqual({ data: { ok: false }, model: 'local-fallback' });
+    ).resolves.toEqual({
+      data: { ok: false },
+      model: 'local-fallback',
+      // En-têtes 200 reçus : la génération a commencé, donc facturée.
+      fallbackReason: 'provider_interrupted',
+      billed: true,
+    });
     // Deux tentatives de 30 ms, pas les 300 s du bodyTimeout d'undici.
     expect(Date.now() - startedAt).toBeLessThan(2000);
     expect(global.fetch).toHaveBeenCalledTimes(2);
@@ -654,7 +669,7 @@ describe('LlmService — raisonnement caché et délais de lecture du corps', ()
           chunks.push(chunk);
         }
       })(),
-    ).rejects.toBeInstanceOf(LlmUnavailableError);
+    ).rejects.toMatchObject({ name: 'LlmUnavailableError', billed: true });
     expect(chunks).toEqual(['Début']);
   });
 
@@ -722,5 +737,98 @@ describe('LlmService — raisonnement caché et délais de lecture du corps', ()
     ).rejects.toBeInstanceOf(LlmUnavailableError);
     expect(chunks).toEqual(['Début']);
     expect(providerSignal?.aborted).toBe(true);
+  });
+});
+
+// Revue du constat 16 : l'appelant doit savoir si le repli a été facturé,
+// sans deviner, pour ne rembourser que ce qui n'a rien coûté.
+describe('LlmService.completeJson — motif de repli et facturation', () => {
+  const ENV = [...PROVIDER_ENV_VARS, 'LLM_TIMEOUT_MS'];
+  const previousEnv = Object.fromEntries(
+    ENV.map((name) => [name, process.env[name]]),
+  );
+  const originalFetch = global.fetch;
+  const params = { system: 's', user: 'u', fallback: { ok: false } };
+
+  beforeEach(() => {
+    for (const name of ENV) delete process.env[name];
+    process.env.LLM_API_KEY = 'openrouter-key';
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    global.fetch = originalFetch;
+    for (const name of ENV) {
+      const value = previousEnv[name];
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+
+  const content = (text: string) =>
+    new Response(
+      JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content: text } }] }),
+      { status: 200 },
+    );
+
+  it('non configuré : non facturé', async () => {
+    delete process.env.LLM_API_KEY;
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      model: 'local-fallback',
+      fallbackReason: 'provider_unconfigured',
+      billed: false,
+    });
+  });
+
+  it('erreur HTTP (429, 4xx, 5xx répétée) : non facturée', async () => {
+    global.fetch = jest
+      .fn()
+      .mockImplementation(async () => new Response('{}', { status: 503 }));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_http_error',
+      billed: false,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('5xx puis réponse tronquée : facturée (une tentative a abouti)', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(new Response('{}', { status: 502 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ choices: [{ finish_reason: 'length', message: { content: '{' } }] }),
+          { status: 200 },
+        ),
+      );
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_truncated',
+      billed: true,
+    });
+  });
+
+  it('pas de JSON dans la réponse : facturée', async () => {
+    global.fetch = jest.fn().mockResolvedValue(content('Désolé.'));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_no_json',
+      billed: true,
+    });
+  });
+
+  it('JSON invalide : facturé, et PAS de seconde tentative payée', async () => {
+    global.fetch = jest.fn().mockResolvedValue(content('{"score": excellent}'));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_invalid_json',
+      billed: true,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('LlmUnavailableError — facturation', () => {
+  it('non facturée par défaut, facturée sur demande', () => {
+    expect(new LlmUnavailableError('x').billed).toBe(false);
+    expect(new LlmUnavailableError('x', { billed: true }).billed).toBe(true);
   });
 });
