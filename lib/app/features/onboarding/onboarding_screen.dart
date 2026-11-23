@@ -4,11 +4,13 @@ import 'package:get/get.dart';
 
 import '../../core/config/app_routes.dart';
 import '../../core/controllers/app_controller.dart';
+import '../../core/data/world_countries.dart';
 import '../../core/i18n/app_locale.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/remote_feature_flags.dart';
 import '../../core/models/app_models.dart';
+import '../../core/ui/components/country_picker_sheet.dart';
 import '../../core/ui/kpb_components.dart';
 import '../../core/utils/currency_utils.dart';
 import '../legal/legal_pages.dart';
@@ -31,7 +33,7 @@ part 'onboarding_screen/fields.dart';
 // Dial codes
 // ─────────────────────────────────────────────────────────────────────────────
 class _DialCode {
-  const _DialCode(this.flag, this.code, this.country);
+  const _DialCode(this.flag, this.code, this.country, [this.world]);
 
   /// [code] est un INDICATIF, rien d'autre : il est concaténé tel quel dans
   /// `profile.phone` et `profile.whatsApp`, que le backend accepte sans
@@ -42,51 +44,27 @@ class _DialCode {
   /// pas dans WhatsApp. La désambiguïsation vit dans [label], qui n'est
   /// jamais persisté ; un test l'exige (onboarding_phone_code_test.dart).
   final String flag, code, country;
+
+  /// Le pays de la table mondiale ; nul pour « Autre indicatif ».
+  final WorldCountry? world;
   String get label => '$flag $code · $country';
 }
 
-const _dialCodes = <_DialCode>[
-  _DialCode('🇳🇪', '+227', 'Niger'),
-  _DialCode('🇳🇬', '+234', 'Nigeria'),
-  _DialCode('🇸🇳', '+221', 'Sénégal'),
-  _DialCode('🇨🇮', '+225', 'Côte d\'Ivoire'),
-  _DialCode('🇲🇱', '+223', 'Mali'),
-  _DialCode('🇬🇳', '+224', 'Guinée'),
-  _DialCode('🇧🇫', '+226', 'Burkina Faso'),
-  _DialCode('🇹🇬', '+228', 'Togo'),
-  _DialCode('🇧🇯', '+229', 'Bénin'),
-  _DialCode('🇲🇷', '+222', 'Mauritanie'),
-  _DialCode('🇬🇭', '+233', 'Ghana'),
-  _DialCode('🇨🇲', '+237', 'Cameroun'),
-  _DialCode('🇸🇱', '+232', 'Sierra Leone'),
-  _DialCode('🇬🇲', '+220', 'Gambie'),
-  _DialCode('🇱🇷', '+231', 'Liberia'),
-  _DialCode('🇬🇼', '+245', 'Guinée-Bissau'),
-  _DialCode('🇨🇻', '+238', 'Cap-Vert'),
-  // Afrique centrale, de l'Est et du Nord : ils manquaient, et le public de
-  // l'app y est (audit build 57, T1-10). Ajoutés APRÈS le Niger : l'indicatif
-  // par défaut (`_dialCodes[0]`) ne change pas.
-  _DialCode('🇨🇩', '+243', 'RD Congo'),
-  _DialCode('🇨🇬', '+242', 'Congo'),
-  _DialCode('🇬🇦', '+241', 'Gabon'),
-  _DialCode('🇹🇩', '+235', 'Tchad'),
-  _DialCode('🇨🇫', '+236', 'Centrafrique'),
-  _DialCode('🇲🇬', '+261', 'Madagascar'),
-  _DialCode('🇷🇼', '+250', 'Rwanda'),
-  _DialCode('🇧🇮', '+257', 'Burundi'),
-  _DialCode('🇩🇯', '+253', 'Djibouti'),
-  _DialCode('🇰🇲', '+269', 'Comores'),
-  _DialCode('🇹🇳', '+216', 'Tunisie'),
-  _DialCode('🇩🇿', '+213', 'Algérie'),
-  _DialCode('🇫🇷', '+33', 'France'),
-  _DialCode('🇨🇦', '+1', 'Canada'),
-  _DialCode('🇬🇧', '+44', 'Royaume-Uni'),
-  _DialCode('🇩🇪', '+49', 'Allemagne'),
-  _DialCode('🇲🇦', '+212', 'Maroc'),
-  _DialCode('🇹🇷', '+90', 'Turquie'),
-  _DialCode('🇪🇸', '+34', 'Espagne'),
-  _DialCode('🇺🇸', '+1', 'États-Unis'),
+/// Un indicatif par pays, pour TOUS les pays ([worldCountries]).
+///
+/// La liste s'arrêtait à 37 indicatifs écrits à la main : les élèves dont le
+/// pays manquait ne pouvaient pas créer leur compte avec leur vrai numéro.
+/// L'ordre est celui des listes (public de l'app en tête) : le Niger reste
+/// premier, donc l'indicatif par défaut (`_dialCodes[0]`) ne change pas.
+final List<_DialCode> _dialCodes = <_DialCode>[
+  for (final country in worldCountriesInListOrder('fr'))
+    _DialCode(country.flag, country.dialCode, country.nameFr, country),
 ];
+
+/// L'indicatif d'un pays de la table mondiale.
+final Map<String, _DialCode> _dialCodeByIso2 = <String, _DialCode>{
+  for (final dialCode in _dialCodes) dialCode.world!.iso2: dialCode,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data
@@ -110,43 +88,11 @@ const _documentKeys = [
   ('Transcripts', 'Relevés de notes'),
   ('Test score', 'Score de test'),
 ];
-const _countries = [
-  'Niger',
-  'Nigeria',
-  'Sénégal',
-  'Côte d\'Ivoire',
-  'Mali',
-  'Guinée',
-  'Burkina Faso',
-  'Togo',
-  'Bénin',
-  'Mauritanie',
-  'Ghana',
-  'Cameroun',
-  'Sierra Leone',
-  'Gambie',
-  'Liberia',
-  'Guinée-Bissau',
-  'Cap-Vert',
-  'RD Congo',
-  'Congo',
-  'Gabon',
-  'Tchad',
-  'Centrafrique',
-  'Madagascar',
-  'Rwanda',
-  'Burundi',
-  'Djibouti',
-  'Comores',
-  'Maroc',
-  'Tunisie',
-  'Algérie',
-  'France',
-  'Belgique',
-  'Suisse',
-  'Canada',
-  'Autre',
-];
+
+/// Pays de résidence « Autre » : la valeur enregistrée pour qui ne se
+/// reconnaît dans aucun pays de la liste. Le serveur la lit comme « pays
+/// inconnu ».
+const _otherCountry = 'Autre';
 
 // Localizes a dropdown/chip option by its stable value token (e.$1) so the
 // visible label follows the active locale instead of always showing French.
@@ -411,12 +357,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (kLanguageSwitchVisible && profile.preferredLanguage.isNotEmpty) {
       _language = profile.preferredLanguage;
     }
+    // Le pays revient sous son nom de liste : « niger » tapé dans l'écran de
+    // profil redevient « Niger ». Un texte qui n'est aucun pays connu n'est
+    // pas repris : l'élève choisit.
+    if (profile.countryOfResidence == _otherCountry) {
+      _country = _otherCountry;
+    } else {
+      final known = worldCountryByName(profile.countryOfResidence);
+      if (known != null) _country = known.nameFr;
+    }
     // Only restore dropdown-backed values when they exist in the current
     // option lists — a value persisted by an earlier onboarding flow that is
     // absent here would crash DropdownButtonFormField.
-    if (_countries.contains(profile.countryOfResidence)) {
-      _country = profile.countryOfResidence;
-    }
     if (_studyLevels.any((e) => e.$1 == profile.currentLevel)) {
       _currentLevel = profile.currentLevel!;
     }
@@ -486,7 +438,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _onCountryPicked(String? value) {
     setState(() {
       _country = value ?? _country;
-      final match = value == 'Autre'
+      final match = value == _otherCountry
           ? const [_otherDialCode]
           : _dialCodes.where((d) => d.country == value);
       if (match.isEmpty) return;
