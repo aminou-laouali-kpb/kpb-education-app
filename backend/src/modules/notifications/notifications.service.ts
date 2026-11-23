@@ -3,7 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  OnApplicationShutdown,
+  OnModuleDestroy,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { NotificationCampaign, Prisma } from '@prisma/client';
@@ -57,7 +57,7 @@ interface TemplateTitle {
 }
 
 @Injectable()
-export class NotificationsService implements OnApplicationShutdown {
+export class NotificationsService implements OnModuleDestroy {
   private readonly logger = new Logger(NotificationsService.name);
   /** Envois de campagnes immédiates lancés hors requête et pas encore finis. */
   private readonly inFlightCampaigns = new Set<Promise<void>>();
@@ -457,7 +457,21 @@ export class NotificationsService implements OnApplicationShutdown {
     }
   }
 
-  async onApplicationShutdown(): Promise<void> {
+  /**
+   * Attente des envois à l'arrêt : dans `onModuleDestroy`, le PREMIER hook
+   * d'arrêt de Nest. Nest 11 (`NestApplicationContext.close`) enchaîne
+   * `onModuleDestroy` → `beforeApplicationShutdown` → fermeture HTTP →
+   * `onApplicationShutdown` : les deux derniers hooks passent donc tous deux
+   * APRÈS `PrismaService.onModuleDestroy` ($disconnect). Tous nos services
+   * sont dans `AppModule`, dont les `onModuleDestroy` tournent en parallèle :
+   * aucun hook ne passe strictement avant la déconnexion. Ce n'est pas
+   * bloquant — Prisma relance le moteur à la requête suivante
+   * (`LibraryEngine.request` → `start()`) — mais on attend au plus tôt, avant
+   * que le serveur HTTP ne se ferme. Le délai reste borné par l'orchestrateur
+   * (`stop_grace_period` du service api) ; une campagne coupée malgré tout
+   * est rattrapée par la reprise du cron (`CampaignCronService`).
+   */
+  async onModuleDestroy(): Promise<void> {
     await this.waitForInFlightCampaigns();
   }
 

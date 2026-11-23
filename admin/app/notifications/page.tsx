@@ -163,6 +163,7 @@ export default function NotificationsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [templateForm, setTemplateForm] = useState({
     name: '',
@@ -349,6 +350,7 @@ export default function NotificationsPage() {
   async function submitCampaign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatusMessage(null);
+    setWarningMessage(null);
     setErrorMessage(null);
 
     try {
@@ -363,22 +365,33 @@ export default function NotificationsPage() {
         setErrorMessage(t('notifications.routeInvalid'));
         return;
       }
-      await apiFetch('/admin/notifications/campaigns', {
-        method: 'POST',
-        body: {
-          name: campaignForm.name,
-          templateId: campaignForm.templateId || null,
-          audienceType: campaignForm.audienceType,
-          filters: parsedFilters,
-          channels: splitList(campaignForm.channels),
-          scheduledFor: campaignForm.scheduledFor
-            ? new Date(campaignForm.scheduledFor).toISOString()
-            : null,
-          linkedCaseId: campaignForm.linkedCaseId || null,
-          purpose: campaignForm.purpose,
-          route: campaignRouteForBody(campaignForm.route),
+      const created = await apiFetch<{ duplicate?: boolean }>(
+        '/admin/notifications/campaigns',
+        {
+          method: 'POST',
+          body: {
+            name: campaignForm.name,
+            templateId: campaignForm.templateId || null,
+            audienceType: campaignForm.audienceType,
+            filters: parsedFilters,
+            channels: splitList(campaignForm.channels),
+            scheduledFor: campaignForm.scheduledFor
+              ? new Date(campaignForm.scheduledFor).toISOString()
+              : null,
+            linkedCaseId: campaignForm.linkedCaseId || null,
+            purpose: campaignForm.purpose,
+            route: campaignRouteForBody(campaignForm.route),
+          },
         },
-      });
+      );
+      // Le backend refuse de créer une 2e campagne identique dans les
+      // 10 minutes (double clic, relance après délai dépassé) et renvoie la
+      // première. Annoncer « campagne créée » laisserait croire à un envoi.
+      if (created?.duplicate) {
+        setWarningMessage(t('notifications.campaignDuplicate'));
+        await loadNotifications();
+        return;
+      }
       setCampaignForm({
         name: '',
         templateId: '',
@@ -407,6 +420,7 @@ export default function NotificationsPage() {
     <DashboardShell title={t('notifications.title')} subtitle={t('notifications.subtitle')}>
       <div style={{ display: 'grid', gap: 14 }}>
         {statusMessage ? <Alert variant="success">{statusMessage}</Alert> : null}
+        {warningMessage ? <Alert variant="warning">{warningMessage}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
         <div

@@ -39,6 +39,10 @@ services:
     image: kpb-backend:${KPB_IMAGE_TAG:-local}
     container_name: kpb_api
     restart: always
+    # Délai entre SIGTERM et SIGKILL (10 s par défaut). L'API attend à l'arrêt
+    # la fin des campagnes push/e-mail en cours (envoi hors requête) ; au-delà,
+    # le cron de reprise passe la campagne coupée à `failed`.
+    stop_grace_period: 60s
     logging: *default-logging
     # No host port: ingress is via the shared Traefik (labels below).
     mem_limit: 768m
