@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { NotificationCampaignStatus } from '../../common/enums/notification-campaign-status.enum';
 import { PrismaService } from '../prisma/prisma.service';
+import { claimCampaign } from './campaign-claim';
 import { CampaignExecutorService } from './campaign-executor.service';
 
 @Injectable()
@@ -61,16 +62,12 @@ export class CampaignCronService {
         // one to `Sending`. A plain `update` by id overwrote that and both
         // workers sent the campaign. Only the worker whose conditional update
         // actually flips `Scheduled` → `Sending` (count === 1) executes it.
-        const claim = await this.prismaService.execute((prisma) =>
-          prisma.notificationCampaign.updateMany({
-            where: {
-              id: campaign.id,
-              status: NotificationCampaignStatus.Scheduled,
-            },
-            data: { status: NotificationCampaignStatus.Sending },
-          }),
+        const claimed = await claimCampaign(
+          this.prismaService,
+          campaign.id,
+          NotificationCampaignStatus.Scheduled,
         );
-        if (claim?.count !== 1) {
+        if (!claimed) {
           this.logger.log(
             `Scheduled campaign ${campaign.id} already claimed by another worker — skipping.`,
           );

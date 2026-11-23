@@ -3,9 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnApplicationShutdown,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { NotificationCampaign, Prisma } from '@prisma/client';
 
 import { NotificationCampaignStatus } from '../../common/enums/notification-campaign-status.enum';
 import { CasesService } from '../cases/cases.service';
@@ -16,6 +17,7 @@ import {
   resolveExcludedCountries,
   audienceFilterMissing,
 } from './campaign-audience';
+import { claimCampaign } from './campaign-claim';
 import { CampaignExecutorService } from './campaign-executor.service';
 import {
   campaignChannelBlock,
@@ -26,14 +28,39 @@ import { CreateNotificationCampaignDto } from './dto/create-notification-campaig
 import { PreviewCampaignAudienceDto } from './dto/preview-campaign-audience.dto';
 import { UpsertNotificationTemplateDto } from './dto/upsert-notification-template.dto';
 
+/**
+ * Fenêtre pendant laquelle une soumission identique est traitée comme un
+ * double clic (ou une relance après délai dépassé) et non comme une nouvelle
+ * campagne.
+ */
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000;
+
+/** JSON à clés triées : deux objets égaux donnent la même empreinte. */
+function canonicalJson(value: unknown): string {
+  const normalize = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(normalize);
+    if (v && typeof v === 'object') {
+      return Object.fromEntries(
+        Object.keys(v as Record<string, unknown>)
+          .sort()
+          .map((key) => [key, normalize((v as Record<string, unknown>)[key])]),
+      );
+    }
+    return v;
+  };
+  return JSON.stringify(normalize(value));
+}
+
 interface TemplateTitle {
   fr: string;
   en: string;
 }
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnApplicationShutdown {
   private readonly logger = new Logger(NotificationsService.name);
+  /** Envois de campagnes immédiates lancés hors requête et pas encore finis. */
+  private readonly inFlightCampaigns = new Set<Promise<void>>();
 
   constructor(
     private readonly casesService: CasesService,
@@ -236,45 +263,106 @@ export class NotificationsService {
       );
     }
 
-    const initialStatus = scheduledFor
-      ? NotificationCampaignStatus.Scheduled
-      : NotificationCampaignStatus.Sending;
+    // ── Idempotence : une soumission en double ne crée PAS une 2e campagne ──
+    //
+    // Audit §12 : la requête restait bloquée le temps d'envoyer toute
+    // l'audience ; l'exploitant recliquait (ou le proxy coupait et il
+    // réessayait) et toute la base recevait le même push et le même e-mail
+    // deux fois. Désormais :
+    //  1. Un formulaire IDENTIQUE (mêmes champs, même échéance) soumis dans
+    //     les `DUPLICATE_WINDOW_MS` renvoie la campagne déjà créée, avec son
+    //     statut courant, au lieu d'en créer une seconde. Une campagne `failed`
+    //     ne compte pas : la resoumettre est la façon de la relancer.
+    //  2. Vérification et création se font sous un verrou consultatif Postgres
+    //     (`pg_advisory_xact_lock`) pris sur l'empreinte du formulaire : deux
+    //     requêtes concurrentes, même sur deux répliques, sont sérialisées et
+    //     la seconde voit la campagne de la première.
+    //  3. Une campagne immédiate naît `draft`, puis est RÉSERVÉE atomiquement
+    //     (`draft` → `sending`, comme le cron le fait pour `scheduled`) avant
+    //     tout envoi, et l'envoi tourne hors de la requête HTTP.
+    const scheduledDate = scheduledFor ? new Date(scheduledFor) : null;
+    const fingerprint = canonicalJson({
+      name,
+      templateId,
+      audienceType,
+      filters,
+      channels: [...channels].sort(),
+      scheduledFor: scheduledDate?.toISOString() ?? null,
+      linkedCaseId,
+      route,
+      purpose,
+    });
+    const since = new Date(Date.now() - DUPLICATE_WINDOW_MS);
 
-    const created = await this.prismaService.execute((prisma) =>
-      prisma.notificationCampaign.create({
-        data: {
-          name,
-          templateId,
-          audienceType,
-          filters: filters as Prisma.InputJsonValue,
-          channels: channels as ('push' | 'in_app' | 'email')[],
-          scheduledFor: scheduledFor ? new Date(scheduledFor) : null,
-          status: initialStatus,
-          linkedCaseId,
-          route,
-          purpose,
-        },
+    const outcome = await this.prismaService.execute((prisma) =>
+      prisma.$transaction(async (tx) => {
+        // Verrou relâché automatiquement à la fin de la transaction.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${fingerprint}))`;
+        const candidates = await tx.notificationCampaign.findMany({
+          where: {
+            name,
+            templateId,
+            audienceType,
+            scheduledFor: scheduledDate,
+            linkedCaseId,
+            route,
+            purpose,
+            createdAt: { gte: since },
+            status: { not: NotificationCampaignStatus.Failed },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        const existing = candidates.find(
+          (candidate) =>
+            canonicalJson({
+              name: candidate.name,
+              templateId: candidate.templateId,
+              audienceType: candidate.audienceType,
+              filters: candidate.filters,
+              channels: [...candidate.channels].sort(),
+              scheduledFor: candidate.scheduledFor?.toISOString() ?? null,
+              linkedCaseId: candidate.linkedCaseId,
+              route: candidate.route,
+              purpose: parseCampaignPurpose(candidate.purpose),
+            }) === fingerprint,
+        );
+        if (existing) {
+          return { campaign: existing, duplicate: true };
+        }
+        const created = await tx.notificationCampaign.create({
+          data: {
+            name,
+            templateId,
+            audienceType,
+            filters: filters as Prisma.InputJsonValue,
+            channels: channels as ('push' | 'in_app' | 'email')[],
+            scheduledFor: scheduledDate,
+            status: scheduledDate
+              ? NotificationCampaignStatus.Scheduled
+              : NotificationCampaignStatus.Draft,
+            linkedCaseId,
+            route,
+            purpose,
+          },
+        });
+        return { campaign: created, duplicate: false };
       }),
     );
-    if (!created) {
+    if (!outcome) {
       throw new ServiceUnavailableException('Failed to create campaign.');
     }
 
-    if (!scheduledFor) {
-      // L'échec d'exécution ne doit pas annuler la CRÉATION — la campagne
-      // existe, et l'exploitant doit pouvoir la retrouver et la relancer. Mais
-      // l'avaler sans un mot laissait l'API répondre 201 sur un envoi qui
-      // venait d'échouer, sans la moindre trace côté serveur.
-      //
-      // Le statut de la campagne, lui, dit désormais la vérité : l'exécuteur
-      // la passe à `failed` quand aucune livraison n'a abouti, et la liste de
-      // l'admin le montre au rechargement qui suit.
-      await this.campaignExecutor.execute(created.id).catch((error) => {
-        this.logger.error(
-          `Immediate execution of campaign ${created.id} failed:`,
-          error instanceof Error ? error.stack : String(error),
-        );
-      });
+    if (outcome.duplicate) {
+      this.logger.warn(
+        `Duplicate submission of campaign ${outcome.campaign.id} ignored ` +
+          `(status ${outcome.campaign.status}).`,
+      );
+      return { ...this.toCampaignResponse(outcome.campaign), duplicate: true };
+    }
+    const created = outcome.campaign;
+
+    if (!scheduledDate) {
+      this.startImmediateCampaign(created.id);
     }
 
     if (linkedCaseId) {
@@ -290,20 +378,87 @@ export class NotificationsService {
     const refreshed = await this.prismaService.execute((prisma) =>
       prisma.notificationCampaign.findUnique({ where: { id: created.id } }),
     );
-    const final = refreshed ?? created;
     return {
-      id: final.id,
-      name: final.name,
-      templateId: final.templateId,
-      audienceType: final.audienceType,
-      filters: final.filters,
-      channels: final.channels,
-      scheduledFor: final.scheduledFor?.toISOString() ?? null,
-      status: final.status,
-      linkedCaseId: final.linkedCaseId,
-      route: final.route,
-      purpose: parseCampaignPurpose(final.purpose),
+      ...this.toCampaignResponse(refreshed ?? created),
+      duplicate: false,
     };
+  }
+
+  private toCampaignResponse(campaign: NotificationCampaign) {
+    return {
+      id: campaign.id,
+      name: campaign.name,
+      templateId: campaign.templateId,
+      audienceType: campaign.audienceType,
+      filters: campaign.filters,
+      channels: campaign.channels,
+      scheduledFor: campaign.scheduledFor?.toISOString() ?? null,
+      status: campaign.status,
+      linkedCaseId: campaign.linkedCaseId,
+      route: campaign.route,
+      purpose: parseCampaignPurpose(campaign.purpose),
+    };
+  }
+
+  /**
+   * Réserve (`draft` → `sending`) puis exécute une campagne immédiate HORS de
+   * la requête HTTP : l'API répond aussitôt `sending`, la liste de l'admin
+   * montre l'avancement au rechargement, et une requête coupée par le client
+   * ou le proxy ne pousse plus personne à recliquer.
+   *
+   * L'échec d'exécution n'annule pas la CRÉATION — la campagne existe, et
+   * l'exploitant doit pouvoir la retrouver et la relancer : l'exécuteur la
+   * passe à `failed`, et le filet ci-dessous garantit qu'elle ne reste jamais
+   * bloquée en `sending` (même filet que le cron).
+   */
+  private startImmediateCampaign(campaignId: string): void {
+    const run = (async () => {
+      const claimed = await claimCampaign(
+        this.prismaService,
+        campaignId,
+        NotificationCampaignStatus.Draft,
+      );
+      if (!claimed) {
+        this.logger.warn(
+          `Immediate campaign ${campaignId} already claimed — not sending it twice.`,
+        );
+        return;
+      }
+      await this.campaignExecutor.execute(campaignId).catch(async (error) => {
+        this.logger.error(
+          `Immediate execution of campaign ${campaignId} failed:`,
+          error instanceof Error ? error.stack : String(error),
+        );
+        await this.prismaService.tryExecute((prisma) =>
+          prisma.notificationCampaign.updateMany({
+            where: { id: campaignId, status: NotificationCampaignStatus.Sending },
+            data: { status: NotificationCampaignStatus.Failed },
+          }),
+        );
+      });
+    })().catch((error) => {
+      this.logger.error(
+        `Immediate campaign ${campaignId} could not be started:`,
+        error instanceof Error ? error.stack : String(error),
+      );
+    });
+    this.inFlightCampaigns.add(run);
+    void run.finally(() => this.inFlightCampaigns.delete(run));
+  }
+
+  /**
+   * Attend la fin des envois immédiats en cours. Appelée à l'arrêt de
+   * l'application (un déploiement ne coupe pas une campagne en plein envoi
+   * sans attendre) et par les tests, qui vérifient ce qui est parti.
+   */
+  async waitForInFlightCampaigns(): Promise<void> {
+    while (this.inFlightCampaigns.size > 0) {
+      await Promise.allSettled([...this.inFlightCampaigns]);
+    }
+  }
+
+  async onApplicationShutdown(): Promise<void> {
+    await this.waitForInFlightCampaigns();
   }
 
   /**
