@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -52,22 +53,22 @@ export class SalonController {
 
   /**
    * Authentification FACULTATIVE : ces routes restent publiques (programme
-   * consultable sans compte), mais l'élève connecté — l'app envoie son jeton
-   * sur toutes les requêtes — est reconnu pour recevoir le lien de visio des
-   * sessions auxquelles il est inscrit. Jeton absent ou invalide : anonyme,
-   * jamais d'erreur (un jeton expiré ne doit pas masquer le programme).
+   * consultable sans compte). Sans en-tête `Authorization` : visiteur anonyme.
+   * Avec un jeton Bearer, il est vérifié comme partout ailleurs : invalide ou
+   * expiré ⇒ 401 (levé par `verifyAndResolve`), ce qui déclenche le
+   * rafraîchissement du jeton dans l'app puis une nouvelle tentative — le
+   * traiter en anonyme privait l'élève de son lien de visio sans rien dire.
    */
   private async viewerId(req: Request): Promise<string | undefined> {
     const header = req.headers?.authorization;
-    if (!header || !header.startsWith('Bearer ')) return undefined;
-    try {
-      const user = await this.supabaseAuthService.verifyAndResolve(
-        header.slice(7),
-      );
-      return user.id;
-    } catch {
-      return undefined;
+    if (!header) return undefined;
+    if (!header.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Invalid authorization header.');
     }
+    const user = await this.supabaseAuthService.verifyAndResolve(
+      header.slice(7),
+    );
+    return user.id;
   }
 }
 

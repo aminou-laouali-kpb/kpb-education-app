@@ -16,14 +16,28 @@ const PUBLISHED_STATUSES = ['scheduled', 'live'] as const;
 type SessionLinks = { joinUrl: string | null; recordingUrl: string | null };
 
 /**
- * Le lien de visio (et l'enregistrement) n'est servi qu'à un élève
- * authentifié ET inscrit à la session : sinon n'importe qui ayant l'id
- * rejoignait la réunion (« zoombombing ») et contournait `capacity`. Les
- * champs restent présents, à `null`, pour ne pas changer la forme de la
+ * Qui reçoit quel lien :
+ *  - `recordingUrl` : seulement l'élève authentifié ET inscrit ;
+ *  - `joinUrl` d'une session `scheduled` : seulement l'inscrit (sinon
+ *    n'importe qui ayant l'id rejoignait la réunion et contournait `capacity`) ;
+ *  - `joinUrl` d'une session `live` : tout élève AUTHENTIFIÉ, inscrit ou non.
+ *    Compromis pour l'app installée, qui ne recharge pas le programme après
+ *    une inscription : sans lui, un élève qui s'inscrit pendant le direct ne
+ *    voyait plus « Rejoindre ». Un anonyme ne l'a jamais.
+ * Les champs restent présents, à `null`, pour ne pas changer la forme de la
  * réponse lue par l'app.
  */
-function withLinksFor<T extends SessionLinks>(session: T, allowed: boolean): T {
-  return allowed ? session : { ...session, joinUrl: null, recordingUrl: null };
+function withLinksFor<T extends SessionLinks & { status: string }>(
+  session: T,
+  viewer: { authenticated: boolean; registered: boolean },
+): T {
+  const joinAllowed =
+    viewer.registered || (viewer.authenticated && session.status === 'live');
+  return {
+    ...session,
+    joinUrl: joinAllowed ? session.joinUrl : null,
+    recordingUrl: viewer.registered ? session.recordingUrl : null,
+  };
 }
 
 /** Erreur Prisma de contrainte d'unicité (`@@unique([sessionId, userId])`). */
@@ -91,7 +105,10 @@ export class SalonService {
     return {
       ...event,
       sessions: event.sessions.map((s) =>
-        withLinksFor(s, registered.has(s.id)),
+        withLinksFor(s, {
+          authenticated: !!viewerId,
+          registered: registered.has(s.id),
+        }),
       ),
     };
   }
@@ -114,7 +131,10 @@ export class SalonService {
     const registered = await this.activeRegistrationSessionIds(viewerId, [
       session.id,
     ]);
-    return withLinksFor(session, registered.has(session.id));
+    return withLinksFor(session, {
+      authenticated: !!viewerId,
+      registered: registered.has(session.id),
+    });
   }
 
   /** Les sessions (parmi `sessionIds`) où `viewerId` a une inscription active. */

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
 
@@ -346,10 +347,24 @@ describe('Routes publiques du salon (audit §31)', () => {
     });
   });
 
-  it('élève inscrit : le lien de SA session seulement (pas d’une inscription annulée)', async () => {
+  it('élève inscrit : liens de SES sessions (pas d’une inscription annulée)', async () => {
     const event = await seed().service.getEventBySlug('salon-2027', 'u1');
     const byId = Object.fromEntries(event.sessions.map((s) => [s.id, s]));
     expect(byId.s1.joinUrl).toBe('https://meet.example/abc');
+    expect(byId.s1.recordingUrl).toBe('https://rec.example/abc');
+    // s2 est `scheduled` et son inscription est annulée : rien.
+    expect(byId.s2.joinUrl).toBeNull();
+    expect(byId.s2.recordingUrl).toBeNull();
+  });
+
+  it('session `live` : joinUrl servi à tout élève authentifié, même non inscrit', async () => {
+    // Compromis pour l'app installée, qui ne recharge pas après inscription.
+    const event = await seed().service.getEventBySlug('salon-2027', 'u2');
+    const byId = Object.fromEntries(event.sessions.map((s) => [s.id, s]));
+    expect(byId.s1.joinUrl).toBe('https://meet.example/abc');
+    // L'enregistrement reste réservé aux inscrits.
+    expect(byId.s1.recordingUrl).toBeNull();
+    // Session `scheduled` : toujours réservée aux inscrits.
     expect(byId.s2.joinUrl).toBeNull();
   });
 
@@ -359,28 +374,56 @@ describe('Routes publiques du salon (audit §31)', () => {
     await expect(db.service.getSession('s4')).rejects.toBeInstanceOf(NotFoundException);
   });
 
-  it('getSession : lien servi au seul inscrit', async () => {
+  it('getSession : anonyme sans lien ; `live` ouvert aux authentifiés ; `scheduled` aux seuls inscrits', async () => {
     const db = seed();
     expect((await db.service.getSession('s1')).joinUrl).toBeNull();
-    expect((await db.service.getSession('s1', 'u2')).joinUrl).toBeNull();
-    expect((await db.service.getSession('s1', 'u1')).joinUrl).toBe('https://meet.example/abc');
+    const live = await db.service.getSession('s1', 'u2');
+    expect(live.joinUrl).toBe('https://meet.example/abc');
+    expect(live.recordingUrl).toBeNull();
+    expect((await db.service.getSession('s1', 'u1')).recordingUrl).toBe('https://rec.example/abc');
+    expect((await db.service.getSession('s2', 'u2')).joinUrl).toBeNull();
+    expect((await db.service.getSession('s2', 'u1')).joinUrl).toBeNull();
   });
 
-  it('le contrôleur reconnaît l’élève par son jeton, et reste public sans (ou avec un mauvais) jeton', async () => {
-    const db = seed();
-    const auth = {
-      verifyAndResolve: async (token: string) => {
-        if (token !== 'good') throw new Error('invalid');
-        return { id: 'u1' };
-      },
-    } as unknown as SupabaseAuthService;
-    const controller = new SalonController(db.service, auth);
+  describe('contrôleur : authentification facultative', () => {
+    const make = () => {
+      const db = seed();
+      const auth = {
+        verifyAndResolve: jest.fn(async (token: string) => {
+          if (token !== 'good') throw new UnauthorizedException('Invalid or expired access token.');
+          return { id: 'u2' };
+        }),
+      };
+      const controller = new SalonController(db.service, auth as unknown as SupabaseAuthService);
+      return { controller, auth };
+    };
     const req = (authorization?: string) => ({ headers: { authorization } }) as unknown as Request;
 
-    expect((await controller.getSession('s1', req('Bearer good'))).joinUrl).toBe('https://meet.example/abc');
-    expect((await controller.getSession('s1', req('Bearer bad'))).joinUrl).toBeNull();
-    expect((await controller.getSession('s1', req())).joinUrl).toBeNull();
-    const event = await controller.getEvent('salon-2027', req('Bearer good'));
-    expect(event.sessions[0].joinUrl).toBe('https://meet.example/abc');
+    it('sans en-tête : visiteur sans compte, programme servi sans lien, jamais de 401', async () => {
+      const { controller, auth } = make();
+      const event = await controller.getEvent('salon-2027', req());
+      expect(event.sessions.map((s) => s.id)).toEqual(['s1', 's2']);
+      event.sessions.forEach((s) => expect(s.joinUrl).toBeNull());
+      expect((await controller.getSession('s1', req())).joinUrl).toBeNull();
+      expect(auth.verifyAndResolve).not.toHaveBeenCalled();
+    });
+
+    it('jeton valide : élève reconnu (lien de la session live)', async () => {
+      const { controller } = make();
+      expect((await controller.getSession('s1', req('Bearer good'))).joinUrl).toBe('https://meet.example/abc');
+      const event = await controller.getEvent('salon-2027', req('Bearer good'));
+      expect(event.sessions[0].joinUrl).toBe('https://meet.example/abc');
+    });
+
+    it('jeton invalide ou expiré : 401, pour que l’app rafraîchisse son jeton', async () => {
+      const { controller } = make();
+      await expect(controller.getSession('s1', req('Bearer expired'))).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(controller.getEvent('salon-2027', req('Bearer expired'))).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('en-tête Authorization qui n’est pas un Bearer : 401', async () => {
+      const { controller } = make();
+      await expect(controller.getSession('s1', req('Basic abc'))).rejects.toBeInstanceOf(UnauthorizedException);
+    });
   });
 });
