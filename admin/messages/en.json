@@ -1317,6 +1317,7 @@
     "filtersJsonError": "Filters JSON is invalid. Please enter valid JSON.",
     "templateCreated": "Notification template created.",
     "campaignCreated": "Notification campaign created.",
+    "campaignDuplicate": "An identical campaign was already started less than 10 minutes ago (sending or finished): nothing was sent again. Check its status in the list below.",
     "templatesTitle": "Templates",
     "templatesHint": "Create reusable push, in-app, or email templates for group or case-specific communication.",
     "campaignsTitle": "Campaigns",

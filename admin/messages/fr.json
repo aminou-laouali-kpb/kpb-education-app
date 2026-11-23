@@ -1317,6 +1317,7 @@
     "filtersJsonError": "Le JSON des filtres est invalide. Saisissez un JSON valide.",
     "templateCreated": "Modèle de notification créé.",
     "campaignCreated": "Campagne de notification créée.",
+    "campaignDuplicate": "Une campagne identique a déjà été lancée il y a moins de 10 minutes (envoi en cours ou terminé) : rien n'a été renvoyé. Consultez son statut dans la liste ci-dessous.",
     "templatesTitle": "Modèles",
     "templatesHint": "Créez des modèles push, in-app ou e-mail réutilisables pour la communication groupée ou liée à un dossier.",
     "campaignsTitle": "Campagnes",

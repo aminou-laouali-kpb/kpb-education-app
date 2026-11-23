@@ -255,6 +255,15 @@ export function isArticleLink(url: string): boolean {
   return slug.split('-').filter(Boolean).length >= 3;
 }
 
+/**
+ * Vrai pour le 404 levé par `fetchPageHtml` (et lui seul) : WordPress répond
+ * 404 au-delà de la dernière page d'un listing. Les 5xx et les erreurs réseau
+ * ne disent rien de la fin du listing et restent des échecs.
+ */
+export function isHttpNotFound(error: unknown): boolean {
+  return error instanceof Error && /^HTTP 404 for /.test(error.message);
+}
+
 /** `fetch` with a timeout and the scraper's headers. */
 export async function fetchPageHtml(
   url: string,

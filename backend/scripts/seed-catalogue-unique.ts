@@ -8,25 +8,36 @@
  * Partner schools and their 94 programs are intentionally NOT seeded here — they
  * already live in src/modules/catalog/data/partner-schools.seed.ts.
  *
- * Idempotent: every record is upserted by id, so re-running is safe.
+ * Create-only : une ligne déjà en base (domaine, pays, établissement,
+ * formation) n'est JAMAIS réécrite. Un `update` complet vidait les
+ * descriptions et liens des domaines enrichis dans l'admin, réactivait le
+ * Sénégal retiré, et remplaçait `programIds` par la liste figée du seed — les
+ * formations ajoutées dans l'admin devenaient inaccessibles dans l'app.
+ * Seule écriture sur l'existant : une formation que CE lancement crée est
+ * ajoutée au `programIds` de son établissement (sans rien retirer).
+ *
+ * Refused on a production database that already holds rows of this seed,
+ * unless KPB_ALLOW_PRODUCTION_SEED=1 (see src/common/seed-safety.ts).
  *
  * Usage:
  *   npm run seed:catalogue-unique
  *   ts-node scripts/seed-catalogue-unique.ts
  */
+import { existsSync } from 'node:fs';
 import { loadEnvFile } from 'node:process';
 
 import { PrismaClient } from '@prisma/client';
 
+import { checkProductionSeed, linkedProgramIds } from '../src/common/seed-safety';
 import {
   catalogueUniqueInstitutions,
   catalogueUniquePrograms,
 } from '../src/common/data/catalogue-unique.seed';
 import { ORIENTATION_FIELDS } from '../src/modules/orientation/orientation-fields.data';
 
-loadEnvFile?.('.env');
-
-const prisma = new PrismaClient();
+// Le conteneur API n'embarque pas de `.env` (Compose fournit DATABASE_URL) :
+// un chargement inconditionnel levait ENOENT avant même le garde-fou.
+if (existsSync('.env')) loadEnvFile?.('.env');
 
 // The catalogue-unique deliverable was authored with human-readable country ids
 // (canada/germany/morocco/uk), but the canonical M5 countries use ISO codes
@@ -101,8 +112,33 @@ const SENEGAL = {
   isActive: true,
 };
 
-async function main() {
+type SeedClient = Pick<
+  PrismaClient,
+  'field' | 'country' | 'institution' | 'program'
+>;
+
+export async function seedCatalogueUnique(prisma: SeedClient): Promise<boolean> {
+  const fieldIds = ORIENTATION_FIELDS.map((f) => f.id);
+  const institutionIds = catalogueUniqueInstitutions.map((i) => i.id);
+  const programIds = catalogueUniquePrograms.map((p) => p.id);
+  const guard = await checkProductionSeed({
+    seed: 'seed:catalogue-unique',
+    countExistingRows: async () =>
+      (await prisma.field.count({ where: { id: { in: fieldIds } } })) +
+      (await prisma.country.count({ where: { id: 'senegal' } })) +
+      (await prisma.institution.count({ where: { id: { in: institutionIds } } })) +
+      (await prisma.program.count({ where: { id: { in: programIds } } })),
+  });
+  if (!guard.allowed) {
+    console.error(guard.message);
+    return false;
+  }
+  if (guard.message) console.warn(guard.message);
+
+  const created = { fields: 0, institutions: 0, programs: 0 };
+
   // 1) Field taxonomy d01..d12 (mapped from the orientation field metadata).
+  //    Create-only : les champs éditoriaux enrichis dans l'admin sont conservés.
   for (const f of ORIENTATION_FIELDS) {
     const data = {
       nameFr: f.nameFr,
@@ -122,50 +158,109 @@ async function main() {
       relatedCountryIds: [],
       relatedScholarshipIds: [],
     };
-    await prisma.field.upsert({
-      where: { id: f.id },
-      update: data,
-      create: { id: f.id, ...data },
-    });
+    if (await prisma.field.findUnique({ where: { id: f.id }, select: { id: true } })) {
+      continue;
+    }
+    await prisma.field.create({ data: { id: f.id, ...data } });
+    created.fields += 1;
   }
 
-  // 2) Senegal country.
+  // 2) Senegal country — create-only : un pays retiré (isActive=false) dans
+  //    l'admin n'est pas réactivé, son texte n'est pas réécrit.
   await prisma.country.upsert({
     where: { id: 'senegal' },
-    update: SENEGAL,
+    update: {},
     create: { id: 'senegal', ...SENEGAL },
   });
 
-  // 3) Institutions (countryId remapped to the canonical M5 ISO id).
+  // 3) Institutions (countryId remapped to the canonical M5 ISO id), créées
+  //    avec `programIds` vide : la liste est calculée en 5) depuis les
+  //    formations réellement rattachées, jamais recopiée du seed.
+  const createdInstitutions = new Set<string>();
   for (const inst of catalogueUniqueInstitutions) {
-    const data = { ...inst, countryId: canonicalCountryId(inst.countryId) };
-    await prisma.institution.upsert({
-      where: { id: inst.id },
-      update: data,
-      create: data,
+    if (
+      await prisma.institution.findUnique({ where: { id: inst.id }, select: { id: true } })
+    ) {
+      continue;
+    }
+    await prisma.institution.create({
+      data: { ...inst, countryId: canonicalCountryId(inst.countryId), programIds: [] },
     });
+    createdInstitutions.add(inst.id);
+    created.institutions += 1;
   }
 
-  // 4) Programs (countryId remapped to the canonical M5 ISO id).
+  // 4) Programs (countryId remapped to the canonical M5 ISO id) — create-only.
+  const createdProgramsByInstitution = new Map<string, string[]>();
   for (const prog of catalogueUniquePrograms) {
-    const data = { ...prog, countryId: canonicalCountryId(prog.countryId) };
-    await prisma.program.upsert({
-      where: { id: prog.id },
-      update: data,
-      create: data,
+    if (await prisma.program.findUnique({ where: { id: prog.id }, select: { id: true } })) {
+      continue;
+    }
+    await prisma.program.create({
+      data: { ...prog, countryId: canonicalCountryId(prog.countryId) },
     });
+    const list = createdProgramsByInstitution.get(prog.institutionId) ?? [];
+    list.push(prog.id);
+    createdProgramsByInstitution.set(prog.institutionId, list);
+    created.programs += 1;
+  }
+
+  // 5) `programIds` : un établissement créé ici reçoit ses formations
+  //    rattachées en base ; un établissement existant reçoit seulement, EN
+  //    PLUS de sa liste actuelle (maintenue par l'admin), les formations que
+  //    ce lancement vient de créer pour lui.
+  for (const inst of catalogueUniqueInstitutions) {
+    const newlyCreated = createdProgramsByInstitution.get(inst.id) ?? [];
+    if (createdInstitutions.has(inst.id)) {
+      const attached = await prisma.program.findMany({
+        where: { institutionId: inst.id },
+        select: { id: true },
+      });
+      await prisma.institution.update({
+        where: { id: inst.id },
+        data: {
+          programIds: linkedProgramIds(
+            inst.programIds,
+            attached.map((p) => p.id),
+          ),
+        },
+      });
+    } else if (newlyCreated.length > 0) {
+      const current = await prisma.institution.findUnique({
+        where: { id: inst.id },
+        select: { programIds: true },
+      });
+      const kept = current?.programIds ?? [];
+      await prisma.institution.update({
+        where: { id: inst.id },
+        data: {
+          programIds: [...kept, ...newlyCreated.filter((id) => !kept.includes(id))],
+        },
+      });
+    }
   }
 
   console.log(
-    `Seeded catalogue unique: ${ORIENTATION_FIELDS.length} fields, ` +
-      `1 country (senegal), ${catalogueUniqueInstitutions.length} institutions, ` +
-      `${catalogueUniquePrograms.length} programs.`,
+    `Seeded catalogue unique (create-only): ${created.fields}/${ORIENTATION_FIELDS.length} fields, ` +
+      `${created.institutions}/${catalogueUniqueInstitutions.length} institutions, ` +
+      `${created.programs}/${catalogueUniquePrograms.length} programs created; ` +
+      'existing rows left untouched (senegal included).',
   );
+  return true;
 }
 
-main()
-  .catch((e) => {
+async function main() {
+  const prisma = new PrismaClient();
+  try {
+    if (!(await seedCatalogueUnique(prisma))) process.exitCode = 1;
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+if (require.main === module) {
+  main().catch((e) => {
     console.error(e);
     process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  });
+}

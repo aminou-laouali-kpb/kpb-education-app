@@ -74,6 +74,33 @@ export function countryExclusion(countries: readonly string[]) {
   };
 }
 
+/** Période du battement de cœur d'une campagne en cours d'envoi. */
+export const CAMPAIGN_HEARTBEAT_MS = 60 * 1000;
+
+/**
+ * Rafraîchit `updatedAt` d'une campagne `sending` toutes les
+ * `CAMPAIGN_HEARTBEAT_MS`. La condition `status: sending` évite de toucher une
+ * campagne déjà terminée (ou passée à `failed` par la reprise du cron).
+ * Renvoie la fonction qui arrête le battement.
+ */
+export function startCampaignHeartbeat(
+  prismaService: PrismaService,
+  campaignId: string,
+  intervalMs = CAMPAIGN_HEARTBEAT_MS,
+): () => void {
+  const timer = setInterval(() => {
+    void prismaService.tryExecute((prisma) =>
+      prisma.notificationCampaign.updateMany({
+        where: { id: campaignId, status: NotificationCampaignStatus.Sending },
+        data: { updatedAt: new Date() },
+      }),
+    );
+  }, intervalMs);
+  // Ne retient pas le processus à l'arrêt.
+  timer.unref?.();
+  return () => clearInterval(timer);
+}
+
 @Injectable()
 export class CampaignExecutorService {
   private readonly logger = new Logger(CampaignExecutorService.name);
@@ -93,6 +120,13 @@ export class CampaignExecutorService {
       return { enqueued: 0 };
     }
 
+    // Battement de cœur : tant que CE processus exécute la campagne, son
+    // `updatedAt` avance chaque minute — même si un envoi traîne, puisqu'un
+    // minuteur tourne pendant les `await`. Le cron s'en sert pour reconnaître
+    // une campagne `sending` orpheline (processus mort en plein envoi) sans
+    // jamais couper un envoi vivant. Les livraisons ne suffisent pas comme
+    // trace : un échec d'envoi ne date rien (`deliveredAt` reste vide).
+    const stopHeartbeat = startCampaignHeartbeat(this.prismaService, campaignId);
     try {
       return await this.run(campaign, campaignId);
     } catch (error) {
@@ -106,6 +140,8 @@ export class CampaignExecutorService {
         }),
       );
       throw error;
+    } finally {
+      stopHeartbeat();
     }
   }
 

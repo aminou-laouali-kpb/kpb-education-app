@@ -1,7 +1,7 @@
 import { MessageEvent, NotFoundException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
-import { LlmService } from '../ai/llm.service';
+import { LlmService, LlmUnavailableError } from '../ai/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CoachQuotaService } from './coach-quota.service';
 import { COACH_MESSAGE_MAX_LENGTH, CoachService } from './coach.service';
@@ -156,7 +156,8 @@ describe('CoachService — AI consent gate', () => {
     const llm = {
       async *streamText(params: Record<string, unknown>) {
         asked = params;
-        throw new Error('provider did not answer');
+        // Panne avant toute réponse 200 : rien de facturé.
+        throw new LlmUnavailableError('provider did not answer');
       },
     } as unknown as LlmService;
     let consumedAt: Date | undefined;
@@ -426,5 +427,121 @@ describe('CoachService — AI consent gate', () => {
       code: 'age_verification_required',
     });
     expect(events.some((e) => e.type === 'token')).toBe(false);
+  });
+
+  // ── Audit 22/11/2026, constats 14 et 15 ───────────────────────────────────
+
+  // Le flux 200 se termine sans un seul jeton. Ce n'est pas une réponse : pas
+  // de bulle vide enregistrée, événement d'erreur. Mais PAS de remboursement :
+  // la requête a été facturée et l'élève peut provoquer une réponse vide
+  // (revue du constat 16).
+  it('une réponse vide n’est ni enregistrée ni remboursée', async () => {
+    const service = makeService(new Date());
+    const refund = jest.fn();
+    const internals = service as unknown as {
+      quotaService: { refund: jest.Mock };
+      llmService: LlmService;
+    };
+    internals.quotaService.refund = refund;
+    internals.llmService = {
+      async *streamText() {
+        yield '  ';
+      },
+    } as unknown as LlmService;
+    const created = await service.createConversation('user-a', {});
+
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+    const roles = (await service.getMessages(created.conversationId, 'user-a')).map(
+      (message) => (message as { role: string }).role,
+    );
+
+    expect(events.at(-1)).toMatchObject({ type: 'error' });
+    expect(events.some((e) => e.type === 'done')).toBe(false);
+    expect(refund).not.toHaveBeenCalled();
+    // Accueil puis question de l'élève : aucune réponse vide.
+    expect(roles).toEqual(['assistant', 'user']);
+  });
+
+  // L'élève ferme l'écran : Nest se désabonne, la requête au fournisseur doit
+  // être annulée au lieu d'être lue (et payée) jusqu'au bout.
+  it('le désabonnement du client annule la requête au fournisseur', async () => {
+    const service = makeService(new Date());
+    let received: AbortSignal | undefined;
+    let firstToken!: () => void;
+    const tokenSent = new Promise<void>((resolve) => (firstToken = resolve));
+    (service as unknown as { llmService: LlmService }).llmService = {
+      async *streamText(params: { signal?: AbortSignal }) {
+        received = params.signal;
+        yield 'Début';
+        firstToken();
+        await new Promise<void>((_resolve, reject) =>
+          params.signal?.addEventListener('abort', () =>
+            reject(new Error('aborted')),
+          ),
+        );
+      },
+    } as unknown as LlmService;
+    const created = await service.createConversation('user-a', {});
+
+    const subscription = service
+      .streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      })
+      .subscribe();
+    await tokenSent;
+    expect(received?.aborted).toBe(false);
+    subscription.unsubscribe();
+    expect(received?.aborted).toBe(true);
+  });
+
+  // Revue du constat 16 : seul un échec NON facturé est remboursé.
+  async function refundsFor(error: unknown): Promise<number> {
+    const service = makeService(new Date());
+    const refund = jest.fn();
+    const internals = service as unknown as {
+      quotaService: { refund: jest.Mock };
+      llmService: LlmService;
+    };
+    internals.quotaService.refund = refund;
+    internals.llmService = {
+      async *streamText() {
+        throw error;
+      },
+    } as unknown as LlmService;
+    const created = await service.createConversation('user-a', {});
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+    expect(events.map((e) => e.type)).toEqual(['error']);
+    return refund.mock.calls.length;
+  }
+
+  it('rembourse une panne avant toute réponse du fournisseur', async () => {
+    expect(await refundsFor(new LlmUnavailableError('connexion refusée'))).toBe(1);
+  });
+
+  it('ne rembourse pas un flux accepté (200) puis coupé avant le premier jeton', async () => {
+    expect(
+      await refundsFor(new LlmUnavailableError('délai', { billed: true })),
+    ).toBe(0);
+  });
+
+  it('ne rembourse pas une erreur inattendue', async () => {
+    expect(await refundsFor(new Error('bug'))).toBe(0);
   });
 });

@@ -1,4 +1,9 @@
-import { CampaignCronService } from './campaign-cron.service';
+import {
+  CampaignCronService,
+  ORPHAN_DRAFT_GRACE_MS,
+  ORPHAN_DRAFT_MAX_AGE_MS,
+  STALE_SENDING_MS,
+} from './campaign-cron.service';
 import { CampaignExecutorService } from './campaign-executor.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -12,13 +17,40 @@ import { PrismaService } from '../prisma/prisma.service';
  * (`updateMany` sur `status: scheduled`) et seul le worker qui la gagne exécute.
  */
 describe('CampaignCronService', () => {
-  type Row = { id: string; name: string; status: string; scheduledFor: Date };
-  type Where = { id?: string; status?: string };
+  type Row = {
+    id: string;
+    name: string;
+    status: string;
+    scheduledFor: Date | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+  };
+  type Range = { lt?: Date; lte?: Date; gte?: Date };
+  type Where = Record<string, unknown>;
+
+  /** Évalue un `where` Prisma simple (égalité, null, lt / lte / gte). */
+  function matches(row: Row, where: Where) {
+    return Object.entries(where).every(([key, cond]) => {
+      const value = row[key as keyof Row];
+      if (cond === null) return value === null || value === undefined;
+      if (cond && typeof cond === 'object' && !(cond instanceof Date)) {
+        const r = cond as Range;
+        if (!(value instanceof Date)) return false;
+        if (r.lt && !(value < r.lt)) return false;
+        if (r.lte && !(value <= r.lte)) return false;
+        if (r.gte && !(value >= r.gte)) return false;
+        return true;
+      }
+      return value === cond;
+    });
+  }
 
   /** Base partagée entre répliques : c'est elle qui arbitre la prise. */
   function makeDb(initial: Row[]) {
     const rows = [...initial];
+    /** Lectures des campagnes PROGRAMMÉES (ids vus), dans l'ordre. */
     const findManyCalls: string[][] = [];
+    const failedDeliveriesOf: string[] = [];
     const hooks: { afterRead?: () => void; failRead?: boolean } = {};
     const client = {
       notificationCampaign: {
@@ -26,11 +58,11 @@ describe('CampaignCronService', () => {
         // workers qui lisent avant toute prise voient la même campagne.
         findMany: async ({ where }: { where: Where }) => {
           if (hooks.failRead) throw new Error('db down');
-          const hit = rows
-            .filter((r) => r.status === where.status)
-            .map((r) => ({ ...r }));
-          findManyCalls.push(hit.map((r) => r.id));
-          hooks.afterRead?.();
+          const hit = rows.filter((r) => matches(r, where)).map((r) => ({ ...r }));
+          if (where.status === 'scheduled') {
+            findManyCalls.push(hit.map((r) => r.id));
+            hooks.afterRead?.();
+          }
           return hit;
         },
         // Vérification et écriture dans le même pas synchrone : c'est la
@@ -42,12 +74,11 @@ describe('CampaignCronService', () => {
           where: Where;
           data: { status: string };
         }) => {
-          const hit = rows.filter(
-            (r) =>
-              (!where.id || r.id === where.id) &&
-              (!where.status || r.status === where.status),
-          );
-          hit.forEach((r) => (r.status = data.status));
+          const hit = rows.filter((r) => matches(r, where));
+          hit.forEach((r) => {
+            r.status = data.status;
+            r.updatedAt = new Date();
+          });
           return { count: hit.length };
         },
         update: async ({
@@ -62,6 +93,12 @@ describe('CampaignCronService', () => {
           return row;
         },
       },
+      notificationDelivery: {
+        updateMany: async ({ where }: { where: { campaignId: string } }) => {
+          failedDeliveriesOf.push(where.campaignId);
+          return { count: 3 };
+        },
+      },
     };
     const prisma = {
       isEnabled: true,
@@ -73,6 +110,7 @@ describe('CampaignCronService', () => {
       rows,
       hooks,
       findManyCalls,
+      failedDeliveriesOf,
       status: (id: string) => rows.find((r) => r.id === id)?.status,
       /** Ce que ferait un autre worker : prendre la ligne avant nous. */
       claimElsewhere: (id: string) => {
@@ -214,4 +252,138 @@ describe('CampaignCronService', () => {
     expect(executed).toEqual([]);
     expect(db.findManyCalls).toEqual([]);
   });
+
+  /**
+   * Reprise des campagnes orphelines : processus mort entre la création et la
+   * réservation (reste `draft`), ou en plein envoi (reste `sending`).
+   */
+  describe('reprise des campagnes orphelines', () => {
+    const MIN = 60 * 1000;
+    const ago = (ms: number) => new Date(Date.now() - ms);
+
+    function draft(id: string, createdMsAgo: number): Row {
+      return {
+        id,
+        name: `Immédiate ${id}`,
+        status: 'draft',
+        scheduledFor: null,
+        createdAt: ago(createdMsAgo),
+        updatedAt: ago(createdMsAgo),
+      };
+    }
+    function sending(id: string, heartbeatMsAgo: number): Row {
+      return {
+        id,
+        name: `En cours ${id}`,
+        status: 'sending',
+        scheduledFor: null,
+        createdAt: ago(heartbeatMsAgo + MIN),
+        updatedAt: ago(heartbeatMsAgo),
+      };
+    }
+
+    it('reprend un draft immédiat orphelin (> 5 min) via la réservation', async () => {
+      const db = makeDb([draft('d1', ORPHAN_DRAFT_GRACE_MS + MIN)]);
+      const { executor, executed } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(executed).toEqual(['d1']);
+      expect(db.status('d1')).toBe('sending');
+    });
+
+    it('ne touche pas un draft tout juste créé (la requête va le réserver)', async () => {
+      const db = makeDb([draft('d1', 30 * 1000)]);
+      const { executor, executed } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(executed).toEqual([]);
+      expect(db.status('d1')).toBe('draft');
+    });
+
+    it('ne renvoie pas un draft trop ancien (> 24 h)', async () => {
+      const db = makeDb([draft('d1', ORPHAN_DRAFT_MAX_AGE_MS + MIN)]);
+      const { executor, executed } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(executed).toEqual([]);
+    });
+
+    it('ne reprend pas un draft programmé (scheduledFor renseigné)', async () => {
+      const row = draft('d1', ORPHAN_DRAFT_GRACE_MS + MIN);
+      row.scheduledFor = ago(MIN);
+      const db = makeDb([row]);
+      const { executor, executed } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(executed).toEqual([]);
+    });
+
+    it('deux répliques reprennent le même draft : un seul envoi', async () => {
+      const db = makeDb([draft('d1', ORPHAN_DRAFT_GRACE_MS + MIN)]);
+      const { executor, executed } = makeExecutor();
+      await Promise.all([
+        new CampaignCronService(db.prisma, executor).handleScheduledCampaigns(),
+        new CampaignCronService(db.prisma, executor).handleScheduledCampaigns(),
+      ]);
+      expect(executed).toEqual(['d1']);
+    });
+
+    it('sending sans battement depuis > 15 min → failed, livraisons queued abandonnées', async () => {
+      const db = makeDb([sending('s1', STALE_SENDING_MS + MIN)]);
+      const { executor, executed } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(db.status('s1')).toBe('failed');
+      expect(db.failedDeliveriesOf).toEqual(['s1']);
+      // Pas de relance automatique : une partie a pu être livrée.
+      expect(executed).toEqual([]);
+    });
+
+    it('ne coupe jamais un envoi vivant (battement récent)', async () => {
+      const db = makeDb([sending('s1', 2 * MIN)]);
+      const { executor } = makeExecutor();
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(db.status('s1')).toBe('sending');
+      expect(db.failedDeliveriesOf).toEqual([]);
+    });
+
+    it('un battement arrivé entre la lecture et l’écriture annule la mise en échec', async () => {
+      const db = makeDb([sending('s1', STALE_SENDING_MS + MIN)]);
+      const { executor } = makeExecutor();
+      // La lecture voit la campagne « muette » ; le battement tombe juste
+      // après, avant l'UPDATE conditionnel.
+      const client = (db.prisma as unknown as {
+        execute: (fn: (c: unknown) => unknown) => Promise<unknown>;
+      });
+      const original = client.execute;
+      let first = true;
+      client.execute = async (fn) => {
+        const result = await original(fn);
+        if (first) {
+          first = false;
+          db.rows[0].updatedAt = new Date();
+        }
+        return result;
+      };
+      await new CampaignCronService(db.prisma, executor).handleScheduledCampaigns();
+      expect(db.status('s1')).toBe('sending');
+    });
+  });
+
+  it('à l’arrêt, attend le tick en cours', async () => {
+    let release!: () => void;
+    const hold = new Promise<void>((resolve) => (release = resolve));
+    const db = makeDb([due('c1')]);
+    const { executor } = makeExecutor({ hold });
+    const service = new CampaignCronService(db.prisma, executor);
+
+    const tick = service.handleScheduledCampaigns();
+    await flush();
+    let shutDown = false;
+    const shutdown = service.onModuleDestroy().then(() => {
+      shutDown = true;
+    });
+    await flush();
+    expect(shutDown).toBe(false);
+
+    release();
+    await Promise.all([tick, shutdown]);
+    expect(shutDown).toBe(true);
+  });
 });
+

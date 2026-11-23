@@ -42,9 +42,20 @@ export class SalonReminderCronService {
 
     const regs = await this.prisma.execute((p) =>
       p.salonRegistration.findMany({
+        // Seules les inscriptions actives (`registered` : ni `cancelled` ni
+        // `attended`) à une session qui aura VRAIMENT lieu. Annuler une
+        // session ou tout l'événement (PATCH admin → `cancelled`) ne touche pas
+        // aux inscriptions : sans ce filtre, chaque inscrit recevait « Salon
+        // demain » puis « Salon bientôt » pour une session qui n'existe plus.
+        // `ended` est exclu aussi (session close plus tôt que prévu), et un
+        // événement encore `draft` n'est pas publié : pas de rappel non plus.
         where: {
           status: 'registered',
-          session: { startAt: { gt: now, lte: horizon } },
+          session: {
+            startAt: { gt: now, lte: horizon },
+            status: { in: ['scheduled', 'live'] },
+            event: { status: { in: ['scheduled', 'live'] } },
+          },
         },
         select: {
           id: true,

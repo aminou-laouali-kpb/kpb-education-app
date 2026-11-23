@@ -562,6 +562,12 @@ mixin _SessionMixin on _AppControllerBase {
     // bloque plus celle du compte suivant, et la relance différée de la file
     // des messages ne part plus sous ce compte-là.
     _sessionGeneration++;
+    // Le socket temps réel quitte la room du compte parti. Les jetons des
+    // écrans restent : la prochaine ouverture de dossier reconnecte.
+    unawaited(_caseSocket.disconnect());
+    _caseSocketGeneration = null;
+    _caseTypingToken++;
+    isCaseAdvisorTyping = false;
     isSyncing = false;
     _inFlightSync = null;
     _cancelOutboxRetry();
@@ -619,6 +625,10 @@ mixin _SessionMixin on _AppControllerBase {
     // reste ouvert et ses requêtes en vol ne sont pas perdues.
     _sessionClosings++;
     try {
+      // L'identité PostHog du compte supprimé ne doit pas survivre (RGPD) :
+      // sans cette remise à zéro, la session suivante sur ce téléphone était
+      // attribuée à son distinct_id.
+      unawaited(AnalyticsService.instance.resetIdentity());
       unawaited(PushService.instance.logout());
       if (Get.isRegistered<AuthService>()) {
         await Get.find<AuthService>().clearSession();

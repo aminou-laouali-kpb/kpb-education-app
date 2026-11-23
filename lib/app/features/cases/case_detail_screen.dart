@@ -174,20 +174,29 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
 
   AppController get _ctrl => Get.find<AppController>();
 
+  /// Le jeton de cet écran sur le socket temps réel du contrôleur : à sa
+  /// fermeture, seul CE jeton est rendu, et le dossier resté ouvert en
+  /// dessous garde son temps réel.
+  Object? _socketLease;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ctrl.markCaseMessagesRead(widget.caseId);
+      // Écran déjà fermé avant la première image : pas d'abonnement, sinon
+      // personne ne le rendrait.
+      if (!mounted) return;
       if (AppConfig.enableRemoteSync) {
-        _ctrl.connectCaseDetailSocket(widget.caseId);
+        _socketLease = _ctrl.connectCaseDetailSocket(widget.caseId);
       }
     });
   }
 
   @override
   void dispose() {
-    _ctrl.disconnectCaseDetailSocket();
+    final lease = _socketLease;
+    if (lease != null) unawaited(_ctrl.disconnectCaseDetailSocket(lease));
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

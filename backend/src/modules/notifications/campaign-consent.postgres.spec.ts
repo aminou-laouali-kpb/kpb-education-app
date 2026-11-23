@@ -205,6 +205,8 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
       channels: ['push', 'email'],
     });
     campaignIds.push(created.id);
+    // L'envoi immédiat tourne hors de la requête (audit §12) : on l'attend.
+    await notifications.waitForInFlightCampaigns();
     expect(created.purpose).toBe('promotional');
     expect(pushedTo.sort()).toEqual([id('adult'), id('minorok')].sort());
     expect(mailedTo.sort()).toEqual([`${id('adult')}@example.test`, `${id('minorok')}@example.test`].sort());
@@ -230,6 +232,7 @@ describePostgres('Campagnes : finalité et consentement — PostgreSQL', () => {
       purpose: 'promotional',
     });
     campaignIds.push(created.id);
+    await notifications.waitForInFlightCampaigns();
     expect(mailedTo).toEqual([`${id('minorok')}@example.test`]);
   });
 });

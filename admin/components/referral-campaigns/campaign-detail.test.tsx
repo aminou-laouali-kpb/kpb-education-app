@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isPrizeHolderChanged, type PrizeAward } from '../../lib/referral-campaigns';
 import { LocaleProvider } from '../locale-provider';
-import { ForfeitFormBody, PayoutFormBody } from './campaign-detail';
+import { ForfeitFormBody, PayoutFormBody, payoutRequestBody } from './campaign-detail';
 
 // Rendu serveur (effets non exécutés), même méthode que les autres tests de
 // composants. Audit 57, F21 : le refus du serveur doit s'afficher DANS la
@@ -34,7 +34,7 @@ describe('modales des prix : l’erreur du serveur est dans la modale (F21)', ()
   it('versement refusé : l’alerte est en tête du contenu, avant les champs', () => {
     const html = render(
       <PayoutFormBody
-        draft={{ rank: 2, reference: 'W-1', date: '2026-11-20', recipient: 'ambassador' }}
+        draft={{ rank: 2, participantId: 'rp_1', reference: 'W-1', date: '2026-11-20', recipient: 'ambassador' }}
         error="Lauréat mineur : le prix est versé au parent."
         onChange={noop}
       />,
@@ -73,7 +73,7 @@ describe('modales des prix : l’erreur du serveur est dans la modale (F21)', ()
 
   it('sans erreur, aucune alerte rouge', () => {
     const html = render(
-      <PayoutFormBody draft={{ rank: 1, reference: '', date: '', recipient: 'parent' }} error={null} onChange={noop} />,
+      <PayoutFormBody draft={{ rank: 1, participantId: 'rp_1', reference: '', date: '', recipient: 'parent' }} error={null} onChange={noop} />,
     );
     expect(html).not.toContain('role="alert"');
   });
@@ -94,5 +94,24 @@ describe('isPrizeHolderChanged : quand recharger la liste des prix', () => {
     expect(isPrizeHolderChanged(apiError(409, 'pas du json'))).toBe(false);
     expect(isPrizeHolderChanged(new Error('réseau'))).toBe(false);
     expect(isPrizeHolderChanged(null)).toBe(false);
+  });
+});
+
+describe('payoutRequestBody : le versement porte le lauréat affiché', () => {
+  it('envoie participantId (le serveur refuse si le prix a changé de main)', () => {
+    expect(
+      payoutRequestBody({ rank: 1, participantId: 'rp_1', reference: ' W-1 ', date: '2026-11-20', recipient: 'parent' }),
+    ).toEqual({
+      payoutReference: 'W-1',
+      recipient: 'parent',
+      participantId: 'rp_1',
+      paidAt: '2026-11-20T12:00:00.000Z',
+    });
+  });
+
+  it('prix orphelin : pas de participantId', () => {
+    const body = payoutRequestBody({ rank: 1, participantId: null, reference: 'W-1', date: '', recipient: 'parent' });
+    expect(body).not.toHaveProperty('participantId');
+    expect(body).not.toHaveProperty('paidAt');
   });
 });

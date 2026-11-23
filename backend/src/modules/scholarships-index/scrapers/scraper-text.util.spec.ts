@@ -4,8 +4,19 @@ import {
   detectFundingType,
   htmlToText,
   isArticleLink,
+  isHttpNotFound,
   parseDeadline,
 } from './scraper-text.util';
+
+describe('isHttpNotFound', () => {
+  it('ne reconnaît que le 404 levé par fetchPageHtml', () => {
+    expect(isHttpNotFound(new Error('HTTP 404 for https://x.org/page/5/'))).toBe(true);
+    expect(isHttpNotFound(new Error('HTTP 503 for https://x.org/page/5/'))).toBe(false);
+    expect(isHttpNotFound(new Error('HTTP 4040 for https://x.org/'))).toBe(false);
+    expect(isHttpNotFound(new Error('fetch failed'))).toBe(false);
+    expect(isHttpNotFound('HTTP 404 for https://x.org/')).toBe(false);
+  });
+});
 
 describe('scraper text helpers', () => {
   describe('detectFundingType', () => {

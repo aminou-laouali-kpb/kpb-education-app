@@ -48,6 +48,11 @@ export type RefreshResult = {
     deactivated: number;
     merged: number;
     error: string | null;
+    /**
+     * `false` quand la source n'a été lue que partiellement (fenêtre de crawl
+     * tronquée) : aucune désactivation n'a alors été faite pour elle.
+     */
+    complete: boolean;
   }>;
   totalFetched: number;
   totalUpserted: number;
@@ -142,7 +147,11 @@ export class ScholarshipsIndexService {
 
   private async runRefresh(): Promise<RefreshResult> {
     const startedAt = new Date();
-    const allScraped: Array<{ prefix: string; rows: ScrapedScholarship[] }> = [];
+    const allScraped: Array<{
+      prefix: string;
+      rows: ScrapedScholarship[];
+      complete: boolean;
+    }> = [];
     const sources: RefreshResult['sources'] = [];
 
     // ── Phase 1: Fetch from all scrapers ─────────────────────────────────────
@@ -155,9 +164,14 @@ export class ScholarshipsIndexService {
         deactivated: 0,
         merged: 0,
         error: null as string | null,
+        complete: false,
       };
       try {
-        const rows = await scraper.fetch();
+        const fetched = await scraper.fetch();
+        // Un tableau nu est une liste exhaustive ; sinon le scraper dit
+        // lui-même s'il a tout lu (fenêtre de pages/articles plafonnée).
+        const rows = Array.isArray(fetched) ? fetched : fetched.rows;
+        sourceResult.complete = Array.isArray(fetched) || fetched.complete === true;
         const valid = rows.filter((r) => {
           if (!r.sourceKey.startsWith(`${scraper.prefix}-`)) {
             this.logger.warn(
@@ -168,7 +182,11 @@ export class ScholarshipsIndexService {
           return true;
         });
         sourceResult.fetched = valid.length;
-        allScraped.push({ prefix: scraper.prefix, rows: valid });
+        allScraped.push({
+          prefix: scraper.prefix,
+          rows: valid,
+          complete: sourceResult.complete,
+        });
       } catch (error) {
         sourceResult.error =
           error instanceof Error ? error.message : 'unknown error';
@@ -176,7 +194,7 @@ export class ScholarshipsIndexService {
           `[${scraper.prefix}] failed: ${sourceResult.error}`,
           error instanceof Error ? error.stack : undefined,
         );
-        allScraped.push({ prefix: scraper.prefix, rows: [] });
+        allScraped.push({ prefix: scraper.prefix, rows: [], complete: false });
       }
       sources.push(sourceResult);
     }
@@ -210,6 +228,15 @@ export class ScholarshipsIndexService {
       if (source.error || source.fetched === 0) {
         this.logger.warn(
           `[${source.prefix}] no rows fetched — skipping deactivation`,
+        );
+        continue;
+      }
+      // Une fenêtre de crawl tronquée (plafond de pages ou d'articles, article
+      // en erreur) n'est pas la liste de la source : une bourse sortie de la
+      // fenêtre est toujours en ligne. On ne désactive que sur crawl complet.
+      if (!source.complete) {
+        this.logger.warn(
+          `[${source.prefix}] partial crawl — skipping deactivation`,
         );
         continue;
       }
@@ -656,7 +683,7 @@ export class ScholarshipsIndexService {
     if (status === 'approved') {
       await this.contentQuality.assertReady(id);
     }
-    return this.prismaService.execute((prisma) =>
+    const updated = await this.prismaService.execute((prisma) =>
       prisma.scholarship.update({
         where: { id },
         data: {
@@ -674,6 +701,22 @@ export class ScholarshipsIndexService {
         },
       }),
     );
+    // Approuver ne réactive PAS une fiche inactive (elle a pu être retirée
+    // volontairement par un admin) : mais la console doit savoir qu'une fiche
+    // « approuvée » reste invisible des étudiants tant que `isActive` est faux
+    // (publicScholarshipWhere l'exige), au lieu de le découvrir par une plainte.
+    if (status === 'approved' && updated && updated.isActive === false) {
+      this.logger.warn(
+        `[moderation] scholarship ${id} approved but inactive — not published`,
+      );
+      return {
+        ...updated,
+        publicationWarning:
+          'Bourse approuvée mais inactive (isActive=false) : elle reste invisible ' +
+          'des étudiants. Réactivez-la explicitement si elle est toujours ouverte.',
+      };
+    }
+    return updated;
   }
 
   private boundedInt(
