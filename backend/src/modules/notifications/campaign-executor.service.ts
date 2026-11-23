@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { NotificationCampaign } from '@prisma/client';
+import type { CaseStatus, NotificationCampaign } from '@prisma/client';
 import { NotificationCampaignStatus } from '../../common/enums/notification-campaign-status.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -165,9 +165,33 @@ export class CampaignExecutorService {
         }
       : null;
 
+    // Un filtre absent ou inutilisable (statut de dossier inconnu, jeton
+    // d'exclusion mal écrit…) résout à « personne » — jamais à « tout le
+    // monde ». Mais la campagne ne doit pas pour autant s'afficher
+    // « terminée » : elle n'a rien fait de ce qu'on lui demandait. Elle passe
+    // `failed`, visible dans l'admin. (La création refuse déjà ces filtres en
+    // 400 ; ce cas vise une ligne plus ancienne que la validation.)
+    const filters = (campaign.filters as Record<string, unknown>) ?? {};
+    if (
+      audienceFilterMissing(campaign.audienceType, filters) ||
+      audienceFilterInvalid(campaign.audienceType, filters)
+    ) {
+      this.logger.error(
+        `Campaign ${campaignId}: unusable filter for audience ` +
+          `"${campaign.audienceType}" — marked failed, nothing sent.`,
+      );
+      await this.prismaService.execute((prisma) =>
+        prisma.notificationCampaign.update({
+          where: { id: campaignId },
+          data: { status: NotificationCampaignStatus.Failed },
+        }),
+      );
+      return { enqueued: 0 };
+    }
+
     const audience = await this.resolveRecipients(
       campaign.audienceType,
-      (campaign.filters as Record<string, unknown>) ?? {},
+      filters,
     );
 
     // ── Finalité : qui a le droit de recevoir quoi (XC-06) ────────────────
@@ -535,12 +559,14 @@ export class CampaignExecutorService {
           }
           case 'case_status': {
             const status = filters['status'] as string | undefined;
-            return prisma.userProfile
-              .findMany({
-                where: { cases: { some: { status: status as any } } },
-                select: RECIPIENT_SELECT,
-              })
-              .catch(() => []);
+            // Pas de `.catch(() => [])` : une erreur Prisma devenait « zéro
+            // destinataire » et la campagne passait `completed`. Elle remonte
+            // désormais à `execute()`, qui marque la campagne `failed`. Le
+            // statut est validé en amont (`audienceFilterInvalid`).
+            return prisma.userProfile.findMany({
+              where: { cases: { some: { status: status as CaseStatus } } },
+              select: RECIPIENT_SELECT,
+            });
           }
           case 'single_user': {
             const userId = filters['userId'] as string | undefined;

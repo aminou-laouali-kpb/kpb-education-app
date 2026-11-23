@@ -17,6 +17,7 @@ import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { MvpGuard } from '../../common/guards/mvp.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import { SupabaseAuthService } from '../auth/supabase-auth.service';
 import { SalonService } from './salon.service';
 
 type StudentReq = Request & { studentUser?: { id: string } };
@@ -29,7 +30,10 @@ type StudentReq = Request & { studentUser?: { id: string } };
 @Controller('salon')
 @UseGuards(MvpGuard)
 export class SalonController {
-  constructor(private readonly salonService: SalonService) {}
+  constructor(
+    private readonly salonService: SalonService,
+    private readonly supabaseAuthService: SupabaseAuthService,
+  ) {}
 
   @Get('events')
   listEvents() {
@@ -37,13 +41,33 @@ export class SalonController {
   }
 
   @Get('events/:slug')
-  getEvent(@Param('slug') slug: string) {
-    return this.salonService.getEventBySlug(slug);
+  async getEvent(@Param('slug') slug: string, @Req() req: Request) {
+    return this.salonService.getEventBySlug(slug, await this.viewerId(req));
   }
 
   @Get('sessions/:id')
-  getSession(@Param('id') id: string) {
-    return this.salonService.getSession(id);
+  async getSession(@Param('id') id: string, @Req() req: Request) {
+    return this.salonService.getSession(id, await this.viewerId(req));
+  }
+
+  /**
+   * Authentification FACULTATIVE : ces routes restent publiques (programme
+   * consultable sans compte), mais l'élève connecté — l'app envoie son jeton
+   * sur toutes les requêtes — est reconnu pour recevoir le lien de visio des
+   * sessions auxquelles il est inscrit. Jeton absent ou invalide : anonyme,
+   * jamais d'erreur (un jeton expiré ne doit pas masquer le programme).
+   */
+  private async viewerId(req: Request): Promise<string | undefined> {
+    const header = req.headers?.authorization;
+    if (!header || !header.startsWith('Bearer ')) return undefined;
+    try {
+      const user = await this.supabaseAuthService.verifyAndResolve(
+        header.slice(7),
+      );
+      return user.id;
+    } catch {
+      return undefined;
+    }
   }
 }
 

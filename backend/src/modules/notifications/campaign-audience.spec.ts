@@ -132,6 +132,36 @@ describe('audienceFilterInvalid', () => {
   });
 });
 
+// ── `case_status` : le statut doit exister dans l'enum `CaseStatus` ────────
+//
+// Une valeur hors enum faisait échouer la requête Prisma ; l'erreur était
+// avalée et la campagne se disait « terminée » à zéro destinataire.
+describe('audienceFilterInvalid — case_status', () => {
+  it.each(['documents_needed', 'awaiting_payment', 'submitted'])(
+    'accepte %s',
+    (status) => {
+      expect(audienceFilterInvalid('case_status', { status })).toBeNull();
+    },
+  );
+
+  it.each([
+    ['traduction française', 'documents_requis'],
+    ['casse différente', 'Documents_Needed'],
+    ['espaces autour', ' submitted '],
+    ['non textuel', 7],
+    ['tableau', ['submitted']],
+  ])('refuse : %s', (_label, status) => {
+    const reason = audienceFilterInvalid('case_status', { status });
+    expect(reason).toContain('statut de dossier inconnu');
+    expect(reason).toContain('documents_needed');
+  });
+
+  it('laisse le filtre absent à audienceFilterMissing', () => {
+    expect(audienceFilterInvalid('case_status', {})).toBeNull();
+    expect(audienceFilterInvalid('case_status', { status: '  ' })).toBeNull();
+  });
+});
+
 describe('countryVariants', () => {
   it("couvre l'apostrophe droite, la typographique, et les accents", () => {
     expect(countryVariants("Côte d'Ivoire").sort()).toEqual(
