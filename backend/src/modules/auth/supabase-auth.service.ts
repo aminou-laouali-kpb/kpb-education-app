@@ -9,6 +9,7 @@ import { createPublicKey } from 'crypto';
 import type { JsonWebKey as CryptoJsonWebKey } from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import type { AccountType } from '@prisma/client';
 
 /// Shape attached to `request.studentUser` by the guard. Kept identical to the
@@ -273,20 +274,38 @@ export class SupabaseAuthService {
 
     const displayName =
       email.split('@')[0]?.replace(/[._-]+/g, ' ').trim() || 'Utilisateur';
-    const created = await this.prismaService.execute((prisma) =>
-      prisma.userProfile.create({
-        data: {
-          supabaseUserId: sub,
-          accountType: role,
-          fullName: displayName.slice(0, 80),
-          email,
-          phone: '',
-          countryOfResidence: '',
-          preferredLanguage: 'fr',
-        },
-        select: { id: true, accountType: true, fullName: true },
-      }),
-    );
+    const created = await this.prismaService.execute(async (prisma) => {
+      try {
+        return await prisma.userProfile.create({
+          data: {
+            supabaseUserId: sub,
+            accountType: role,
+            fullName: displayName.slice(0, 80),
+            email,
+            phone: '',
+            countryOfResidence: '',
+            preferredLanguage: 'fr',
+          },
+          select: { id: true, accountType: true, fullName: true },
+        });
+      } catch (error) {
+        // Premier login en parallèle (ouverture de l'app : plusieurs appels
+        // simultanés) : une seule requête gagne la contrainte unique (P2002),
+        // fenêtre élargie par l'appel admin Supabase ci-dessus. Les autres
+        // relisent le profil créé au lieu de répondre 500.
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          const again = await prisma.userProfile.findUnique({
+            where: { supabaseUserId: sub },
+            select: { id: true, accountType: true, fullName: true },
+          });
+          if (again) return again;
+        }
+        throw error;
+      }
+    });
     if (!created) {
       throw new ServiceUnavailableException('Database unavailable.');
     }

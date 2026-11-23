@@ -4,6 +4,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { sign as jsonwebtokenSign } from 'jsonwebtoken';
 import { generateKeyPairSync } from 'crypto';
+import { Prisma } from '@prisma/client';
 
 import { SupabaseAuthService } from './supabase-auth.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -62,11 +63,16 @@ describe('SupabaseAuthService', () => {
   const originalEnv = {
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_JWT_SECRET: process.env.SUPABASE_JWT_SECRET,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
 
   beforeAll(() => {
     process.env.SUPABASE_URL = SUPABASE_URL;
     delete process.env.SUPABASE_JWT_SECRET;
+    // La CI (backend-ci.yml) définit une clé service-role pour tout le job :
+    // sans ce retrait, les tests de provisionnement ci-dessous appelleraient
+    // l'API admin. Les tests qui en ont besoin la posent eux-mêmes.
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   });
 
   afterAll(() => {
@@ -78,10 +84,18 @@ describe('SupabaseAuthService', () => {
     if (originalEnv.SUPABASE_JWT_SECRET !== undefined) {
       process.env.SUPABASE_JWT_SECRET = originalEnv.SUPABASE_JWT_SECRET;
     }
+    if (originalEnv.SUPABASE_SERVICE_ROLE_KEY !== undefined) {
+      process.env.SUPABASE_SERVICE_ROLE_KEY =
+        originalEnv.SUPABASE_SERVICE_ROLE_KEY;
+    }
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // mockReset (et non seulement clear) : un test qui échoue ne laisse pas
+    // de mockResolvedValueOnce en file pour le suivant.
+    mockPrismaService.execute.mockReset();
+    mockPrismaService.tryExecute.mockReset();
     const jwk = { ...publicKey.export({ format: 'jwk' }), kid: KID };
     jest.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -208,6 +222,62 @@ describe('SupabaseAuthService', () => {
       ServiceUnavailableException,
     );
   });
+  it('premier login en parallèle : un P2002 au create relit le profil gagnant au lieu de répondre 500', async () => {
+    const service = await makeService();
+    mockPrismaService.execute
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockImplementationOnce(async (op: (p: unknown) => Promise<unknown>) => {
+        const winner = {
+          id: 'profile-winner',
+          accountType: 'student',
+          fullName: 'student',
+        };
+        const prisma = {
+          userProfile: {
+            create: jest.fn().mockRejectedValue(
+              new Prisma.PrismaClientKnownRequestError(
+                'Unique constraint failed',
+                { code: 'P2002', clientVersion: 'test' },
+              ),
+            ),
+            findUnique: jest.fn().mockResolvedValue(winner),
+          },
+        };
+        const result = await op(prisma);
+        expect(prisma.userProfile.findUnique).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { supabaseUserId: 'supabase-user-1' },
+          }),
+        );
+        return result;
+      });
+
+    const result = await service.verifyAndResolve(makeToken());
+    expect(result.id).toBe('profile-winner');
+  });
+
+  it('une autre erreur Prisma au create reste remontée', async () => {
+    const service = await makeService();
+    const failure = new Prisma.PrismaClientKnownRequestError('FK', {
+      code: 'P2003',
+      clientVersion: 'test',
+    });
+    mockPrismaService.execute
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockImplementationOnce(async (op: (p: unknown) => Promise<unknown>) =>
+        op({
+          userProfile: {
+            create: jest.fn().mockRejectedValue(failure),
+            findUnique: jest.fn(),
+          },
+        }),
+      );
+
+    await expect(service.verifyAndResolve(makeToken())).rejects.toBe(failure);
+  });
+
   describe('provisionnement après suppression du compte (constat 6)', () => {
     const SERVICE_KEY = `sb_secret_${'s'.repeat(32)}`;
     let previousKey: string | undefined;
