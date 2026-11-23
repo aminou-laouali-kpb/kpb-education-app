@@ -19,6 +19,7 @@ export class UpdateCaseDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
   assignedAdvisorName?: string;
 
   @IsOptional()

@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Bloque la CI si une dépendance de production (next en tête) est visée
+      # par un avis de sécurité de sévérité élevée ou critique.
+      - name: Audit des dépendances de production
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Lint
         run: npm run lint
 
