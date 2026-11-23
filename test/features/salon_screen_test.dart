@@ -89,4 +89,119 @@ void main() {
     expect(find.byType(KpbEmptyState), findsOneWidget);
     expect(calls, 2);
   });
+
+  group('inscription à une session', () {
+    const event = <String, dynamic>{
+      'slug': 'spring-2026',
+      'nameFr': 'Salon Printemps',
+      'year': 2026,
+      'startAt': '2026-06-01T10:00:00.000Z',
+      'endAt': '2026-06-02T18:00:00.000Z',
+      'status': 'live',
+    };
+    Map<String, dynamic> edition({String? joinUrl}) => <String, dynamic>{
+          ...event,
+          'sessions': [
+            <String, dynamic>{
+              'id': 's1',
+              'titleFr': 'Études au Canada',
+              'status': 'live',
+              if (joinUrl != null) 'joinUrl': joinUrl,
+            },
+          ],
+        };
+
+    Future<void> openEdition(WidgetTester tester) async {
+      when(() => mock.listSalonEvents()).thenAnswer((_) async => [event]);
+      await tester.pumpWidget(MaterialApp(home: SalonScreen(apiClient: mock)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('salon_view_sessions'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+        'le lien « Rejoindre » apparaît après l\'inscription, sans geste de '
+        'l\'élève', (tester) async {
+      // Le serveur ne sert `joinUrl` qu'aux élèves inscrits.
+      var registered = false;
+      when(() => mock.getSalonEvent('spring-2026')).thenAnswer((_) async =>
+          edition(joinUrl: registered ? 'https://meet.example/s1' : null));
+      when(() => mock.listMySalonRegistrations())
+          .thenAnswer((_) async => registered
+              ? [
+                  <String, dynamic>{'sessionId': 's1'}
+                ]
+              : <dynamic>[]);
+      when(() => mock.registerForSalonSession('s1')).thenAnswer((_) async {
+        registered = true;
+        return <String, dynamic>{'sessionId': 's1'};
+      });
+
+      await openEdition(tester);
+      expect(find.text('salon_join'), findsNothing);
+      verify(() => mock.getSalonEvent('spring-2026')).called(1);
+
+      await tester.tap(find.text('salon_register'));
+      await tester.pumpAndSettle();
+
+      verify(() => mock.registerForSalonSession('s1')).called(1);
+      // UNE relecture de l'édition, pas d'écran de chargement entre-temps.
+      verify(() => mock.getSalonEvent('spring-2026')).called(1);
+      expect(find.text('salon_join'), findsOneWidget);
+      expect(find.text('salon_registration_confirmed'), findsNothing);
+    });
+
+    testWidgets('l\'annulation relit aussi l\'édition', (tester) async {
+      var registered = true;
+      when(() => mock.listMySalonRegistrations())
+          .thenAnswer((_) async => registered
+              ? [
+                  <String, dynamic>{'sessionId': 's1'}
+                ]
+              : <dynamic>[]);
+      when(() => mock.cancelSalonRegistration('s1')).thenAnswer((_) async {
+        registered = false;
+      });
+      // Session programmée (pas encore en direct) : le bouton d'inscription
+      // reste affiché, et c'est lui qui annule.
+      when(() => mock.getSalonEvent('spring-2026')).thenAnswer((_) async {
+        final e =
+            edition(joinUrl: registered ? 'https://meet.example/s1' : null);
+        ((e['sessions'] as List).first as Map<String, dynamic>)['status'] =
+            'scheduled';
+        return e;
+      });
+
+      await openEdition(tester);
+      expect(find.text('salon_registration_confirmed'), findsOneWidget);
+      verify(() => mock.getSalonEvent('spring-2026')).called(1);
+
+      await tester.tap(find.text('salon_registration_confirmed'));
+      await tester.pumpAndSettle();
+
+      verify(() => mock.cancelSalonRegistration('s1')).called(1);
+      verify(() => mock.getSalonEvent('spring-2026')).called(1);
+      expect(find.text('salon_register'), findsOneWidget);
+    });
+
+    testWidgets('inscription en échec : pas de relecture, toast d\'erreur',
+        (tester) async {
+      when(() => mock.getSalonEvent('spring-2026'))
+          .thenAnswer((_) async => edition());
+      when(() => mock.listMySalonRegistrations())
+          .thenAnswer((_) async => <dynamic>[]);
+      when(() => mock.registerForSalonSession('s1'))
+          .thenThrow(Exception('network'));
+
+      await openEdition(tester);
+      verify(() => mock.getSalonEvent('spring-2026')).called(1);
+
+      await tester.tap(find.text('salon_register'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => mock.getSalonEvent('spring-2026'));
+      expect(find.text('salon_register'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }
