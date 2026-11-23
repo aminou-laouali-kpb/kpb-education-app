@@ -13,11 +13,29 @@ import {
   MessageEvent,
 } from '@nestjs/common';
 import { METHOD_METADATA } from '@nestjs/common/constants';
+import { Throttle } from '@nestjs/throttler';
 import { Observable } from 'rxjs';
 
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import {
+  GLOBAL_THROTTLER,
+  PRODUCTION_READ_LIMIT,
+} from '../../common/throttler-options';
 import { CoachService } from './coach.service';
 import { StreamCoachMessageDto } from './dto/stream-coach-message.dto';
+
+/**
+ * Plafond par IP du flux du coach en POST : celui des LECTURES (300/min),
+ * comme l'ancien GET, et non celui des écritures (60/min) que le limiteur
+ * global applique à tout POST en production. Le passage du GET au POST
+ * (constat 33) ne devait pas faire retomber à 60 les élèves d'un même
+ * opérateur mobile (CGNAT : une seule IP pour des milliers d'abonnés). La
+ * vraie borne de coût reste le quota par élève (cinq messages par semaine).
+ * Comme les autres `@Throttle` du dépôt, il vaut dans tous les environnements.
+ */
+export const COACH_STREAM_THROTTLE = {
+  [GLOBAL_THROTTLER]: { limit: PRODUCTION_READ_LIMIT, ttl: 60_000 },
+};
 
 @Controller('coach')
 @UseGuards(StudentAuthGuard)
@@ -68,6 +86,7 @@ export class CoachController {
   })
   // 200 comme le GET : c'est un flux de lecture, pas une création.
   @HttpCode(200)
+  @Throttle(COACH_STREAM_THROTTLE)
   streamMessageFromBody(
     @Param('id') id: string,
     @Body() body: StreamCoachMessageDto,

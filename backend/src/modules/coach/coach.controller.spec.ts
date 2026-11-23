@@ -14,14 +14,21 @@ import {
   PATH_METADATA,
   SSE_METADATA,
 } from '@nestjs/common/constants';
+import { APP_GUARD } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Observable, of } from 'rxjs';
 
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import {
+  buildThrottlerOptions,
+  GLOBAL_THROTTLER,
+  PRODUCTION_READ_LIMIT,
+} from '../../common/throttler-options';
 
 import { LlmService, LlmUnavailableError } from '../ai/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { CoachController } from './coach.controller';
+import { COACH_STREAM_THROTTLE, CoachController } from './coach.controller';
 import { CoachQuotaService } from './coach-quota.service';
 import { CoachService, describeCoachError } from './coach.service';
 import { StreamCoachMessageDto } from './dto/stream-coach-message.dto';
@@ -324,4 +331,65 @@ describe('CoachController — routes HTTP réelles (Nest + ValidationPipe)', () 
       expect.objectContaining({ message: 'Bonjour', userId: 'user-real' }),
     );
   });
+});
+
+describe('CoachController — plafond par IP du flux POST (production)', () => {
+  let app: INestApplication;
+  let baseUrl: string;
+  const streamReply = jest.fn(
+    (): Observable<MessageEvent> => of({ data: { type: 'done' } }),
+  );
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [ThrottlerModule.forRoot(buildThrottlerOptions('production'))],
+      controllers: [CoachController],
+      providers: [
+        { provide: APP_GUARD, useClass: ThrottlerGuard },
+        { provide: CoachService, useValue: { streamReply } },
+      ],
+    })
+      .overrideGuard(StudentAuthGuard)
+      .useValue({
+        canActivate: (ctx: ExecutionContext) => {
+          ctx.switchToHttp().getRequest().studentUser = { id: 'user-real' };
+          return true;
+        },
+      })
+      .compile();
+    app = moduleRef.createNestApplication({ logger: false });
+    await app.listen(0, '127.0.0.1');
+    baseUrl = await app.getUrl();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('porte le plafond des lectures (300/min), pas celui des écritures', () => {
+    expect(COACH_STREAM_THROTTLE).toEqual({
+      [GLOBAL_THROTTLER]: { limit: PRODUCTION_READ_LIMIT, ttl: 60_000 },
+    });
+    expect(PRODUCTION_READ_LIMIT).toBe(300);
+  });
+
+  it('le POST tient 300 requêtes par minute et par IP, la 301e est refusée', async () => {
+    const post = () =>
+      fetch(`${baseUrl}/coach/conversations/conv-1/messages/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Bonjour' }),
+      }).then(async (res) => {
+        await res.text();
+        return res.status;
+      });
+    const results: number[] = [];
+    for (let i = 0; i < 301; i += 1) results.push(await post());
+
+    // Sans le @Throttle, la 61e (PRODUCTION_WRITE_LIMIT) serait un 429.
+    expect(results.slice(0, 300).filter((status) => status !== 200)).toEqual(
+      [],
+    );
+    expect(results[300]).toBe(429);
+  }, 60_000);
 });
