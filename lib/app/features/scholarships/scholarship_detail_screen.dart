@@ -447,6 +447,15 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
+        // La vidéo d'abord : une explication de 5 minutes vaut mieux qu'un
+        // long texte. Lecteur différé : rien n'est chargé avant le tap.
+        if (scholarship.videos.isNotEmpty) ...[
+          _VideoHero(
+            video: scholarship.videos.first,
+            onTap: () => _openVideo(0),
+          ),
+          const SizedBox(height: 12),
+        ],
         // En tête : là où un tap de push (ouverture, rappel de clôture) fait
         // atterrir l'élève — il lit d'abord ce que le push annonçait.
         ScholarshipStatusHeader(scholarship: scholarship, urgency: urgency),
@@ -548,9 +557,13 @@ class _ScholarshipDetailScreenState extends State<ScholarshipDetailScreen> {
             items: scholarship.keyRequirements,
           ),
         ],
-        if (scholarship.videos.isNotEmpty) ...[
+        // Les autres vidéos (la première est en haut de la fiche).
+        if (scholarship.videos.length > 1) ...[
           const SizedBox(height: 12),
-          _VideosSection(videos: scholarship.videos, onOpen: _openVideo),
+          _VideosSection(
+            videos: scholarship.videos.sublist(1),
+            onOpen: (index) => _openVideo(index + 1),
+          ),
         ],
         // Communauté : « Discussions (N) » sur cette bourse (drapeau distant
         // `community` ; hauteur nulle sinon).
@@ -1131,6 +1144,84 @@ class _BulletSection extends StatelessWidget {
           ],
         ),
       );
+}
+
+/// La vidéo mise en avant, en haut de la fiche : vignette 16:9 pleine largeur.
+class _VideoHero extends StatelessWidget {
+  const _VideoHero({required this.video, required this.onTap});
+
+  final ScholarshipVideoModel video;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final title =
+        video.title.isEmpty ? 'scholarship_video_explanation'.tr : video.title;
+    return Semantics(
+      button: true,
+      label: '${'scholarship_video_play'.tr}: $title',
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          key: const ValueKey<String>('scholarship-video-hero'),
+          onTap: onTap,
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                KpbNetworkImage(
+                  imageUrl: video.effectiveThumbnailUrl,
+                  targetWidth: 900,
+                  placeholderIcon: Icons.play_circle_outline_rounded,
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                    ),
+                  ),
+                ),
+                Center(
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      color: Colors.black87,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.play_arrow_rounded,
+                        color: Colors.white, size: 40),
+                  ),
+                ),
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: 12,
+                  child: Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: KpbFontSize.sm,
+                      height: 1.25,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _VideosSection extends StatelessWidget {
