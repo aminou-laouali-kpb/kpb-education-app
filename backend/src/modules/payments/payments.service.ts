@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -136,16 +137,29 @@ export class PaymentsService {
       cancelUrl: input.cancelUrl,
     });
 
-    const updated = await this.prismaService.execute((prisma) =>
-      prisma.paymentIntent.update({
-        where: { id: intent.id },
+    // Le webhook peut arriver AVANT le retour d'initiate (paiement mobile
+    // money très rapide) : on ne passe à `pending` que depuis `created`, sinon
+    // on enregistre seulement la référence et l'URL sans toucher au statut.
+    const updated = await this.prismaService.execute(async (prisma) => {
+      const { count } = await prisma.paymentIntent.updateMany({
+        where: { id: intent.id, status: 'created' },
         data: {
           providerRef: result.providerRef,
           checkoutUrl: result.checkoutUrl,
           status: 'pending',
         },
-      }),
-    );
+      });
+      if (count === 0) {
+        await prisma.paymentIntent.updateMany({
+          where: { id: intent.id },
+          data: {
+            providerRef: result.providerRef,
+            checkoutUrl: result.checkoutUrl,
+          },
+        });
+      }
+      return prisma.paymentIntent.findUnique({ where: { id: intent.id } });
+    });
     return updated;
   }
 
@@ -238,18 +252,37 @@ export class PaymentsService {
     return { ok: true, intentId: current.id };
   }
 
-  /** Admin-only: mark an intent as paid manually (offline payments). */
+  /**
+   * Admin-only: mark an intent as paid manually (offline payments).
+   *
+   * Transition gardée (même règle que les webhooks) : écriture conditionnelle
+   * depuis created/pending/failed/cancelled. Un intent déjà `paid` est rendu
+   * tel quel (idempotent : ni paidAt ni provider réécrits) ; un intent
+   * `refunded` ne repasse jamais `paid` (409).
+   */
   async markPaidManually(id: string, note?: string) {
-    return this.prismaService.execute((prisma) =>
-      prisma.paymentIntent.update({
-        where: { id },
+    const outcome = await this.prismaService.execute(async (prisma) => {
+      const { count } = await prisma.paymentIntent.updateMany({
+        where: { id, status: { in: WEBHOOK_ALLOWED_FROM.paid } },
         data: {
           status: 'paid',
           paidAt: new Date(),
+          failureReason: null,
           description: note,
           provider: 'manual',
         },
-      }),
-    );
+      });
+      const current = await prisma.paymentIntent.findUnique({ where: { id } });
+      return { applied: count > 0, current };
+    });
+    if (outcome === null) return null;
+    const { applied, current } = outcome;
+    if (!current) throw new NotFoundException(`Payment intent ${id} not found.`);
+    if (!applied && current.status !== 'paid') {
+      throw new ConflictException(
+        `Payment intent ${id} is ${current.status}: it cannot be marked paid.`,
+      );
+    }
+    return current;
   }
 }

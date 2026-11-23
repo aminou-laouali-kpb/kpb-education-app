@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import type { PrismaService } from '../prisma/prisma.service';
 import type { CinetpayAdapter } from './cinetpay.adapter';
@@ -21,11 +21,14 @@ type Row = {
   paidAt: Date | null;
   failureReason: string | null;
   lastWebhookAt: Date | null;
+  provider?: string;
+  description?: string | null;
+  checkoutUrl?: string | null;
 };
 
-type Where = { id?: string; providerRef?: string; status?: { in: string[] } };
+type Where = { id?: string; providerRef?: string; status?: string | { in: string[] } };
 
-function setup(initial: Partial<Row> = {}) {
+function setup(initial: Partial<Row> = {}, onInitiate?: () => Promise<unknown>) {
   const row: Row = {
     id: 'pi_1',
     providerRef: 'cp_ref_1',
@@ -38,7 +41,8 @@ function setup(initial: Partial<Row> = {}) {
   const matches = (where: Where) =>
     (where.id === undefined || where.id === row.id) &&
     (where.providerRef === undefined || where.providerRef === row.providerRef) &&
-    (where.status === undefined || where.status.in.includes(row.status));
+    (where.status === undefined ||
+      (typeof where.status === 'string' ? where.status === row.status : where.status.in.includes(row.status)));
   const client = {
     paymentIntent: {
       updateMany: async ({ where, data }: { where: Where; data: Partial<Row> }) => {
@@ -49,6 +53,10 @@ function setup(initial: Partial<Row> = {}) {
         return { count: 1 };
       },
       findUnique: async ({ where }: { where: Where }) => (matches(where) ? { ...row } : null),
+      create: async ({ data }: { data: Partial<Row> }) => {
+        Object.assign(row, { status: 'created', providerRef: null, paidAt: null }, data);
+        return { ...row, amountMinor: 5000, currency: 'XOF', description: null };
+      },
     },
   };
   const prisma = {
@@ -59,7 +67,10 @@ function setup(initial: Partial<Row> = {}) {
   const cinetpay = {
     name: 'cinetpay',
     isConfigured: () => true,
-    initiate: async () => ({ providerRef: 'x', checkoutUrl: 'x' }),
+    initiate: async () => {
+      await onInitiate?.();
+      return { providerRef: 'cp_ref_1', checkoutUrl: 'https://pay.test/1' };
+    },
     parseWebhook: async () => next,
   } as unknown as CinetpayAdapter;
   const paydunya = { ...cinetpay, name: 'paydunya' } as unknown as PaydunyaAdapter;
@@ -69,7 +80,16 @@ function setup(initial: Partial<Row> = {}) {
     next = { providerRef: 'cp_ref_1', intentId: 'pi_1', status, amountMinor: 5000, ...over };
     return service.handleWebhook('cinetpay', { body: {}, headers: {} });
   };
-  return { row, webhook };
+  const createIntent = () =>
+    service.createIntent({
+      userId: 'u1',
+      provider: 'cinetpay',
+      amountMinor: 5000,
+      customer: { email: 'a@b.c', phone: '+221', fullName: 'A' },
+      returnUrl: 'https://r',
+      cancelUrl: 'https://c',
+    });
+  return { row, webhook, service, createIntent };
 }
 
 describe('PaymentsService.handleWebhook — transitions gardées', () => {
@@ -136,5 +156,55 @@ describe('PaymentsService.handleWebhook — transitions gardées', () => {
   it('intent inconnu : 404', async () => {
     const { webhook } = setup();
     await expect(webhook('paid', { intentId: 'pi_inconnu' })).rejects.toBeInstanceOf(NotFoundException);
+  });
+});
+
+describe('PaymentsService.createIntent — pas de retour à pending', () => {
+  it('nominal : created → pending avec référence et URL', async () => {
+    const { row, createIntent } = setup();
+    const out = await createIntent();
+    expect(out).toMatchObject({ status: 'pending', providerRef: 'cp_ref_1', checkoutUrl: 'https://pay.test/1' });
+    expect(row.status).toBe('pending');
+  });
+
+  it('webhook paid arrivé AVANT le retour d’initiate : reste paid', async () => {
+    let webhook: ReturnType<typeof setup>['webhook'] = async () => ({ ok: true });
+    const ctx = setup({}, async () => {
+      await webhook('paid');
+    });
+    webhook = ctx.webhook;
+    const out = await ctx.createIntent();
+    expect(ctx.row.status).toBe('paid');
+    expect(ctx.row.paidAt).toBeInstanceOf(Date);
+    expect(out).toMatchObject({ status: 'paid', checkoutUrl: 'https://pay.test/1' });
+  });
+});
+
+describe('PaymentsService.markPaidManually — transition gardée', () => {
+  it('pending → paid manuel', async () => {
+    const { row, service } = setup({ provider: 'cinetpay' });
+    await expect(service.markPaidManually('pi_1', 'virement')).resolves.toMatchObject({ status: 'paid' });
+    expect(row.provider).toBe('manual');
+    expect(row.paidAt).toBeInstanceOf(Date);
+  });
+
+  it('déjà paid : idempotent, ni paidAt ni provider réécrits', async () => {
+    const paidAt = new Date('2026-11-20T10:00:00Z');
+    const { row, service } = setup({ status: 'paid', paidAt, provider: 'cinetpay', description: 'orig' });
+    await expect(service.markPaidManually('pi_1', 'note')).resolves.toMatchObject({ status: 'paid' });
+    expect(row.paidAt).toBe(paidAt);
+    expect(row.provider).toBe('cinetpay');
+    expect(row.description).toBe('orig');
+  });
+
+  it('refunded ne repasse jamais paid : 409', async () => {
+    const { row, service } = setup({ status: 'refunded', paidAt: new Date('2026-11-01') });
+    await expect(service.markPaidManually('pi_1')).rejects.toBeInstanceOf(ConflictException);
+    expect(row.status).toBe('refunded');
+  });
+
+  it('intent inconnu : 404', async () => {
+    const { service } = setup();
+    await expect(service.markPaidManually('pi_x')).rejects.toBeInstanceOf(NotFoundException);
   });
 });

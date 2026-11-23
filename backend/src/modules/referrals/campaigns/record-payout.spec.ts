@@ -152,3 +152,114 @@ describe('ReferralCampaignService.recordPayout — garde transactionnelle', () =
     expect(award.payoutStatus).toBe('pending');
   });
 });
+
+/**
+ * Revue Postgres de 24bd4d1 : `forfeitPrize` lisait le prix non versé puis
+ * l'écrasait sans condition (payoutStatus 'pending', référence null). Un
+ * `recordPayout` validé entre les deux faisait perdre le versement Wave.
+ * L'écriture du forfait est maintenant conditionnelle (participantId lu +
+ * payoutStatus ≠ paid) : 409 et annulation au lieu d'effacer le versement.
+ */
+describe('ReferralCampaignService.forfeitPrize — ne peut plus effacer un versement concurrent', () => {
+  function setupForfeit(beforeWrite?: (award: Award) => void) {
+    const award: Award = {
+      id: 'award_1',
+      campaignId: 'camp_1',
+      rank: 1,
+      participantId: 'p_awa',
+      amountFcfa: 100000,
+      recipient: 'ambassador',
+      payoutStatus: 'pending',
+      payoutReference: null,
+      payoutMethod: null,
+      paidAmountFcfa: null,
+      paidAt: null,
+      paidByAdminId: null,
+      note: null,
+    };
+    const ranked = [
+      { id: 'p_awa', rank: 1, publicName: 'Awa S.', city: 'Cotonou', minorStatus: 'adult' },
+      { id: 'p_next', rank: 2, publicName: 'Moussa D.', city: 'Maradi', minorStatus: 'adult' },
+    ];
+    const audits: unknown[] = [];
+    type W = { id: string; participantId: string | null; payoutStatus: { not: string } };
+    const matches = (where: W) => {
+      beforeWrite?.(award);
+      return (
+        where.id === award.id &&
+        where.participantId === award.participantId &&
+        award.payoutStatus !== where.payoutStatus.not
+      );
+    };
+    const tx = {
+      referralCampaignPrizeAward: {
+        findUnique: async () => ({ ...award }),
+        findMany: async () => [{ ...award }],
+        updateMany: async ({ where, data }: { where: W; data: Partial<Award> }) => {
+          if (!matches(where)) return { count: 0 };
+          Object.assign(award, data);
+          return { count: 1 };
+        },
+        deleteMany: async ({ where }: { where: W }) => ({ count: matches(where) ? 1 : 0 }),
+        create: async () => {
+          throw new Error('inattendu');
+        },
+      },
+      referralCampaignPrizeForfeit: {
+        findFirst: async () => null,
+        findMany: async () => [],
+        create: async ({ data }: { data: object }) => ({ id: 'forfeit_1', ...data }),
+      },
+      referralCampaignParticipant: { findMany: async () => ranked },
+      adminAuditEvent: {
+        create: async ({ data }: { data: unknown }) => {
+          audits.push(data);
+          return data;
+        },
+      },
+    };
+    const client = {
+      referralCampaign: {
+        findUnique: async () => ({
+          id: 'camp_1',
+          slug: 'c',
+          podiumValidatedAt: new Date('2026-11-12'),
+          prizes: [{ rank: 1, amountFcfa: 100000 }],
+        }),
+      },
+      referralCampaignPrizeAward: { findMany: async () => [{ ...award }] },
+      referralCampaignPrizeForfeit: { findMany: async () => [] },
+      $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
+    };
+    const prisma = {
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    const svc = new ReferralCampaignService(prisma);
+    const forfeit = () =>
+      svc.forfeitPrize('camp_1', 1, { participantId: 'p_awa', reason: 'Injoignable' }, actor, 'rq');
+    return { award, audits, forfeit };
+  }
+
+  it('nominal : le prix passe au suivant', async () => {
+    const { award, audits, forfeit } = setupForfeit();
+    await forfeit();
+    expect(award).toMatchObject({ participantId: 'p_next', payoutStatus: 'pending' });
+    expect(audits).toHaveLength(1);
+  });
+
+  it('versement validé entre la lecture et l’écriture du forfait : 409, versement intact', async () => {
+    const { award, audits, forfeit } = setupForfeit((a) => {
+      if (a.payoutStatus === 'paid') return;
+      // recordPayout concurrent, validé avant notre écriture.
+      Object.assign(a, { payoutStatus: 'paid', payoutReference: 'WAVE-TX-1', paidAmountFcfa: 100000 });
+    });
+    await expect(forfeit()).rejects.toMatchObject({ response: { code: 'prize_holder_changed' } });
+    expect(award).toMatchObject({
+      participantId: 'p_awa',
+      payoutStatus: 'paid',
+      payoutReference: 'WAVE-TX-1',
+      paidAmountFcfa: 100000,
+    });
+    expect(audits).toHaveLength(0);
+  });
+});

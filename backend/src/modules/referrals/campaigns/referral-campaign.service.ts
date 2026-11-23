@@ -1095,9 +1095,25 @@ export class ReferralCampaignService {
             if (from === target.participantId) continue;
             changes.push({ rank: target.rank, from, to: target.participantId });
             const winner = target.participantId ? byId.get(target.participantId) : undefined;
+            // Écritures conditionnelles : la ligne doit toujours porter le
+            // lauréat lu ET ne pas être versée. Un `recordPayout` validé entre
+            // notre lecture et notre écriture (Postgres réévalue ce WHERE sur
+            // la ligne verrouillée) fait échouer le forfait — toute la
+            // transaction est annulée — au lieu d'effacer le versement.
+            const unchanged = existing
+              ? { id: existing.id, participantId: from, payoutStatus: { not: 'paid' } }
+              : null;
+            const prizeChanged = () =>
+              new ConflictException({
+                code: 'prize_holder_changed',
+                message: 'Ce prix a changé entre-temps (versement ou forfait déjà noté) : recharge la page.',
+              });
             if (!winner) {
               // Plus de candidat : le prix reste non attribué.
-              if (existing) await tx.referralCampaignPrizeAward.delete({ where: { id: existing.id } });
+              if (unchanged) {
+                const { count } = await tx.referralCampaignPrizeAward.deleteMany({ where: unchanged });
+                if (count === 0) throw prizeChanged();
+              }
               continue;
             }
             const data = {
@@ -1112,8 +1128,9 @@ export class ReferralCampaignService {
               paidByAdminId: null,
               note: null,
             };
-            if (existing) {
-              await tx.referralCampaignPrizeAward.update({ where: { id: existing.id }, data });
+            if (unchanged) {
+              const { count } = await tx.referralCampaignPrizeAward.updateMany({ where: unchanged, data });
+              if (count === 0) throw prizeChanged();
             } else {
               await tx.referralCampaignPrizeAward.create({
                 data: { campaignId, rank: target.rank, ...data },
