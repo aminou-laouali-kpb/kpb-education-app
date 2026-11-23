@@ -90,11 +90,44 @@ if [ "${KPB_RESTORE_CONFIRM:-}" != "$POSTGRES_DB" ]; then
   fi
 fi
 
-swapped=false
+# Étape de l'échange, lue par le trap : chaque état sait remettre la base
+# cible sous son nom si le script s'arrête (erreur, ou signal hors de la
+# fenêtre d'échange).
+#   restoring      : la base actuelle est intacte, seule la base neuve existe en plus
+#   locked         : connexions interdites sur la base actuelle, pas encore renommée
+#   target_renamed : base actuelle renommée en OLD, la restaurée pas encore en place
+#   swapped        : la restaurée porte le nom cible (fin de l'échange)
+state=restoring
+manual_fix() {
+  echo "MANUAL ACTION REQUIRED — $1" >&2
+  echo "  docker exec -i $DB_CONTAINER psql -U $POSTGRES_USER -d $MAINTENANCE_DB -c '$2'" >&2
+}
 cleanup() {
-  if [ "$swapped" != "true" ]; then
-    psql_admin -c "DROP DATABASE IF EXISTS \"$TMP_DB\" WITH (FORCE)" >/dev/null 2>&1 || true
-  fi
+  case "$state" in
+    restoring) ;;
+    locked)
+      psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS true" >/dev/null 2>&1 \
+        || manual_fix "'$POSTGRES_DB' still refuses connections" \
+          "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS true"
+      ;;
+    target_renamed)
+      # Retour arrière : la base d'origine reprend son nom.
+      if psql_admin -c "ALTER DATABASE \"$OLD_DB\" RENAME TO \"$POSTGRES_DB\"" >/dev/null 2>&1; then
+        echo "rollback: previous database put back as '$POSTGRES_DB'" >&2
+        psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS true" >/dev/null 2>&1 \
+          || manual_fix "'$POSTGRES_DB' still refuses connections" \
+            "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS true"
+      else
+        # Sans retour arrière possible, on garde AUSSI la restaurée : aucune
+        # base n'est supprimée tant qu'aucune ne porte le nom cible.
+        manual_fix "no database is named '$POSTGRES_DB'; previous one is '$OLD_DB', restored one is '$TMP_DB'" \
+          "ALTER DATABASE \"$OLD_DB\" RENAME TO \"$POSTGRES_DB\""
+        return
+      fi
+      ;;
+    swapped) return ;;
+  esac
+  psql_admin -c "DROP DATABASE IF EXISTS \"$TMP_DB\" WITH (FORCE)" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -130,25 +163,29 @@ echo "restored_public_tables=$table_count"
 
 # 2) Échange des noms. Plus aucune connexion n'est admise sur la base actuelle
 #    (db-backup s'y reconnecte chaque jour), puis les sessions restantes sont
-#    coupées : RENAME exige une base sans connexion.
+#    coupées : RENAME exige une base sans connexion. Ctrl-C et TERM sont
+#    ignorés pendant l'échange : une interruption entre les deux RENAME
+#    laissait aucune base sous le nom cible. Toute erreur ici est rattrapée par
+#    le trap EXIT selon `state`.
+trap '' INT TERM
 if [ "$target_exists" = "1" ]; then
+  state=locked
   psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS false"
   psql_admin -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '$POSTGRES_DB' AND pid <> pg_backend_pid()" >/dev/null
-  if ! psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" RENAME TO \"$OLD_DB\""; then
-    psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" WITH ALLOW_CONNECTIONS true" || true
-    echo "error: could not rename the current database, it is left untouched" >&2
-    exit 1
-  fi
-  psql_admin -c "ALTER DATABASE \"$OLD_DB\" WITH ALLOW_CONNECTIONS true"
+  psql_admin -c "ALTER DATABASE \"$POSTGRES_DB\" RENAME TO \"$OLD_DB\""
+  state=target_renamed
 fi
-if ! psql_admin -c "ALTER DATABASE \"$TMP_DB\" RENAME TO \"$POSTGRES_DB\""; then
-  if [ "$target_exists" = "1" ]; then
-    psql_admin -c "ALTER DATABASE \"$OLD_DB\" RENAME TO \"$POSTGRES_DB\"" || true
-  fi
-  echo "error: could not put the restored database in place; previous database restored" >&2
-  exit 1
+psql_admin -c "ALTER DATABASE \"$TMP_DB\" RENAME TO \"$POSTGRES_DB\""
+state=swapped
+trap - INT TERM
+
+if [ "$target_exists" = "1" ]; then
+  # Non bloquant : la restauration est en place ; seule la base de retour
+  # arrière reste fermée aux connexions.
+  psql_admin -c "ALTER DATABASE \"$OLD_DB\" WITH ALLOW_CONNECTIONS true" >/dev/null \
+    || manual_fix "rollback copy '$OLD_DB' still refuses connections" \
+      "ALTER DATABASE \"$OLD_DB\" WITH ALLOW_CONNECTIONS true"
 fi
-swapped=true
 
 echo "Restore complete: '$POSTGRES_DB' now holds $FILE."
 if [ "$target_exists" = "1" ]; then

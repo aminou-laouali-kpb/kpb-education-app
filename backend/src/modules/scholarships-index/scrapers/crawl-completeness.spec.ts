@@ -30,10 +30,15 @@ const harnesses: Array<[string, () => Harness]> = [
 
 describe.each(harnesses)('%s — crawl completeness', (_name, build) => {
   /**
-   * `listing[i]` = slugs de la page i+1 ; une page absente lève (HTTP 404).
+   * `listing[i]` = slugs de la page i+1 ; une page absente lève `pastEnd`
+   * (HTTP 404 par défaut, comme WordPress au-delà de la dernière page).
    * Les articles dont le slug est dans `broken` lèvent à la lecture.
    */
-  function run(listing: string[][], broken: string[] = []) {
+  function run(
+    listing: string[][],
+    broken: string[] = [],
+    pastEnd: (url: string) => Error = (url) => new Error(`HTTP 404 for ${url}`),
+  ) {
     const { scraper, articleLink } = build();
     const s = scraper as unknown as Record<string, unknown>;
     s.sleep = async () => undefined;
@@ -44,7 +49,7 @@ describe.each(harnesses)('%s — crawl completeness', (_name, build) => {
       if (isListing) {
         const n = page ? Number(page[1]) : 1;
         const slugs = listing[n - 1];
-        if (!slugs) throw new Error(`HTTP 404 for ${url}`);
+        if (!slugs) throw pastEnd(url);
         return slugs.map((sl) => `<a href="${articleLink(sl)}">x</a>`).join('');
       }
       throw new Error('unexpected fetch');
@@ -78,12 +83,28 @@ describe.each(harnesses)('%s — crawl completeness', (_name, build) => {
     expect(result.complete).toBe(false);
   });
 
-  it('is partial when the page cap is hit or a listing page errors', async () => {
+  it('is complete when the page after the last one answers 404 (WordPress)', async () => {
+    const result = await run([slugs('a', 3), slugs('b', 2)]);
+    expect(result.complete).toBe(true);
+    expect(result.rows).toHaveLength(5);
+  });
+
+  it('is partial when the page cap is hit', async () => {
     // Pages pleines jusqu'au plafond : la fin du listing n'a jamais été vue.
     const capped = await run(Array.from({ length: 6 }, (_, i) => [`p${i}-bourse-pleine`]));
     expect(capped.complete).toBe(false);
-    // Page 2 en erreur (404/503) : on ne sait pas ce qui suit.
-    const errored = await run([slugs('a', 2)]);
-    expect(errored.complete).toBe(false);
+  });
+
+  it('is partial when a listing page past page 1 fails with a 5xx or a network error', async () => {
+    const unavailable = await run([slugs('a', 2)], [], (url) => new Error(`HTTP 503 for ${url}`));
+    expect(unavailable.complete).toBe(false);
+    const network = await run([slugs('a', 2)], [], () => new Error('fetch failed'));
+    expect(network.complete).toBe(false);
+  });
+
+  it('is partial when page 1 itself answers 404', async () => {
+    const result = await run([]);
+    expect(result.complete).toBe(false);
+    expect(result.rows).toHaveLength(0);
   });
 });

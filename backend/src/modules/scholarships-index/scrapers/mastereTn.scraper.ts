@@ -12,6 +12,7 @@ import {
   fetchPageHtml,
   htmlToText,
   isArticleLink,
+  isHttpNotFound,
   parseDeadline,
 } from './scraper-text.util';
 
@@ -84,9 +85,9 @@ export class MastereTnScraper implements ScholarshipScraper {
   }
 
   /**
-   * `reachedEnd` n'est vrai que si une page de listing vide a été rencontrée :
-   * le plafond de pages atteint ou une page en erreur laissent la liste
-   * tronquée.
+   * `reachedEnd` n'est vrai que si une page de listing vide, ou un 404 au-delà
+   * de la page 1, a été rencontré : le plafond de pages atteint ou une page en
+   * erreur (5xx, réseau) laissent la liste tronquée.
    */
   private async collectArticleUrls(): Promise<{
     urls: string[];
@@ -118,6 +119,13 @@ export class MastereTnScraper implements ScholarshipScraper {
         }
         await this.sleep(500);
       } catch (err) {
+        // Un 404 au-delà de la page 1 est la fin normale de la pagination
+        // WordPress ; en page 1, ou pour un 5xx / une erreur réseau, la liste
+        // reste tronquée.
+        if (page > 1 && isHttpNotFound(err)) {
+          reachedEnd = true;
+          break;
+        }
         this.logger.warn(`[${this.prefix}] Listing page ${page} failed: ${err instanceof Error ? err.message : err}`);
         break;
       }

@@ -75,8 +75,11 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
+          # restore-db.sh voyage aussi : l'exercice doit éprouver le script de
+          # CETTE révision, pas la copie (peut-être plus ancienne) du VPS.
           scp -i ~/.ssh/deploy_key -o BatchMode=yes \
             scripts/check-backup-freshness.sh scripts/restore-drill.sh \
+            backend/scripts/restore-db.sh \
             "${VPS_USER}@${VPS_HOST}:/tmp/"
 
       - name: Run recorded restore validation
@@ -92,7 +95,7 @@ jobs:
           args=''
           if [ "$EXECUTE_RESTORE" = 'true' ]; then args='--execute'; fi
           output="$(ssh -n -i ~/.ssh/deploy_key -o BatchMode=yes "${VPS_USER}@${VPS_HOST}" \
-            "cd $remote_path && BACKUP_DIR=./backups MAX_AGE_SECONDS=$((MAX_AGE_HOURS * 3600)) bash /tmp/restore-drill.sh $args")"
+            "cd $remote_path && BACKUP_DIR=./backups MAX_AGE_SECONDS=$((MAX_AGE_HOURS * 3600)) RESTORE_DB_SCRIPT=/tmp/restore-db.sh bash /tmp/restore-drill.sh $args")"
           printf '%s\n' "$output"
           {
             echo '## Backup restore drill evidence'
@@ -112,6 +115,6 @@ jobs:
         run: |
           if [ -f ~/.ssh/deploy_key ] && [ -n "${VPS_HOST:-}" ] && [ -n "${VPS_USER:-}" ]; then
             ssh -n -i ~/.ssh/deploy_key -o BatchMode=yes "${VPS_USER}@${VPS_HOST}" \
-              'rm -f /tmp/check-backup-freshness.sh /tmp/restore-drill.sh' || true
+              'rm -f /tmp/check-backup-freshness.sh /tmp/restore-drill.sh /tmp/restore-db.sh' || true
           fi
           rm -f ~/.ssh/deploy_key

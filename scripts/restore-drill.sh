@@ -76,6 +76,12 @@ done
 # quand il est présent (exécution depuis la racine du dépôt sur le VPS), et
 # DEUX fois : la seconde passe restaure par-dessus une base déjà peuplée, le
 # cas d'un incident, qu'une restauration dans une base vide ne prouvait pas.
+# Le workflow passe RESTORE_DB_SCRIPT (copie de la révision testée) : s'il est
+# posé mais introuvable, c'est une erreur, pas un repli silencieux.
+if [ -n "${RESTORE_DB_SCRIPT:-}" ] && [ ! -f "$RESTORE_DB_SCRIPT" ]; then
+  echo "error: RESTORE_DB_SCRIPT not found: $RESTORE_DB_SCRIPT" >&2
+  exit 1
+fi
 RESTORE_DB_SCRIPT="${RESTORE_DB_SCRIPT:-backend/scripts/restore-db.sh}"
 if [ -f "$RESTORE_DB_SCRIPT" ]; then
   for pass in 1 2; do

@@ -437,12 +437,24 @@ Au même passage, il archive le volume `kpb-uploads` (pièces de dossier des
 élèves : relevés, passeports, preuves — monté en lecture seule) en
 `./backups/kpb-uploads-AAAAMMJJ-HHMMSSZ.tar.gz`, avec la même rétention. Sans
 cette archive, une base restaurée pointerait vers des documents perdus
-(téléchargements en 404/500).
+(téléchargements en 404/500). Dumps et archives sont écrits en mode `0600`
+(`umask 077`), et rien n'est écrit si `./backups` a moins de
+`BACKUP_MIN_FREE_MB` Mo libres (1024 par défaut) : la boucle journalise alors
+une `ERROR` explicite et garde les sauvegardes précédentes.
+
+Le déploiement complet (`deploy.yml`) applique la définition courante de
+`db-backup` (`docker compose up -d --no-deps db-backup`, sans toucher `db`),
+après le portail de santé de l'API. Il échoue — sans retirer l'API, déjà
+validée — si le conteneur ne tourne pas, ne monte pas `/uploads`, ou si aucun
+dump ET aucune archive des pièces de moins de 30 heures n'apparaissent dans les
+10 minutes.
 
 Le conteneur est marqué `unhealthy` si aucun dump quotidien non vide de moins de
 30 heures n'existe, ou si aucune archive `kpb-uploads-*.tar.gz` de moins de
 30 heures n'existe. Le workflow **Backup readiness** vérifie cet état et
-l'intégrité de l'archive toutes les six heures. Le workflow manuel **Backup
+l'intégrité de l'archive toutes les six heures ; dès que `db-backup` monte
+`/uploads` (ou avec `REQUIRE_UPLOADS_ARCHIVE=true`), l'absence d'archive des
+pièces récente le fait échouer. Le workflow manuel **Backup
 restore drill** restaure dans un conteneur et un volume jetables, jamais dans
 `kpb_db`.
 Voir [`go-live-operations-gates.md`](go-live-operations-gates.md#3-backup-heartbeat-and-safe-restore-evidence).
@@ -478,7 +490,10 @@ exists`) : il restaure dans une base neuve `kpb_prod_restore_<horodatage>`,
 vérifie le résultat, puis échange les noms. La base remplacée est conservée sous
 `kpb_prod_pre_restore_<horodatage>` (retour arrière : la renommer à l'inverse) ;
 supprimez-la une fois la restauration validée, avec la commande affichée en fin
-de script. Un échec avant l'échange laisse la base actuelle intacte. Le script
+de script. Un échec avant l'échange laisse la base actuelle intacte ; pendant
+l'échange, Ctrl-C est ignoré, et une erreur entre les deux renommages remet la
+base d'origine sous son nom (si même ce retour arrière échoue, le script garde
+les deux bases et affiche la commande à lancer). Le script
 refuse de tourner si `kpb_api` est démarré, et demande de taper le nom de la base
 (ou `KPB_RESTORE_CONFIRM=kpb_prod` en non interactif). Prévoir l'espace disque
 d'une seconde copie de la base pendant l'opération.

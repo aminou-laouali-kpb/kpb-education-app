@@ -9,6 +9,9 @@ MAX_AGE_SECONDS="${MAX_AGE_SECONDS:-108000}" # 30 hours for a daily backup
 MIN_BYTES="${MIN_BYTES:-1024}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 CHECK_SERVICE="${CHECK_BACKUP_SERVICE:-true}"
+# true = une archive récente des pièces (kpb-uploads-*.tar.gz) est exigée.
+# Posé automatiquement quand le conteneur db-backup monte /uploads.
+REQUIRE_UPLOADS="${REQUIRE_UPLOADS_ARCHIVE:-false}"
 
 case "$MAX_AGE_SECONDS:$MIN_BYTES" in
   *[!0-9:]*|:*|*:) echo "error: age and size limits must be non-negative integers" >&2; exit 2 ;;
@@ -24,6 +27,14 @@ if [ "$CHECK_SERVICE" = "true" ]; then
     echo "error: db-backup service state is '$service_state', expected running" >&2
     exit 1
   }
+  # Le service archive les pièces dès qu'il monte le volume : à partir de là,
+  # l'absence d'archive est une panne, pas un « pas encore ».
+  # Sortie capturée puis testée : sous `pipefail`, `… | grep -q` peut échouer
+  # sur un SIGPIPE alors même que la ligne a été trouvée.
+  service_mounts="$(docker inspect --format '{{range .Mounts}}{{println .Destination}}{{end}}' "$service_id")"
+  if printf '%s\n' "$service_mounts" | grep -qx '/uploads'; then
+    REQUIRE_UPLOADS=true
+  fi
 fi
 
 if [ -n "$BACKUP_FILE" ]; then
@@ -68,11 +79,15 @@ case "$newest" in
 esac
 
 # Archive des pièces de dossier (volume kpb-uploads), produite par le même
-# service : vérifiée dès qu'il en existe une, pour qu'une boucle d'archivage
-# cassée se voie (un répertoire sans aucune archive reste accepté, comme avant
-# le premier passage).
+# service : vérifiée dès qu'il en existe une, et EXIGÉE quand le service monte
+# /uploads (ou REQUIRE_UPLOADS_ARCHIVE=true). Un répertoire sans archive n'est
+# accepté que hors de ces cas (fixtures CI, service pas encore recréé).
 uploads_newest="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'kpb-uploads-*.tar.gz' \
   -print0 | xargs -0 -r ls -1t | head -1 || true)"
+if [ -z "$BACKUP_FILE" ] && [ "$REQUIRE_UPLOADS" = "true" ] && [ -z "$uploads_newest" ]; then
+  echo "error: no uploads archive (kpb-uploads-*.tar.gz) in $BACKUP_DIR although one is required" >&2
+  exit 1
+fi
 if [ -z "$BACKUP_FILE" ] && [ -n "$uploads_newest" ]; then
   uploads_mtime="$(stat -c %Y "$uploads_newest" 2>/dev/null || stat -f %m "$uploads_newest")"
   uploads_age=$((now - uploads_mtime))
