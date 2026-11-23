@@ -4,16 +4,35 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import type { PaymentStatus } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CinetpayAdapter } from './cinetpay.adapter';
 import { PaydunyaAdapter } from './paydunya.adapter';
 import {
   PaymentProviderAdapter,
+  WebhookParsedEvent,
   WebhookRawInput,
 } from './payment-provider.interface';
 
 type ProviderName = 'cinetpay' | 'paydunya' | 'stripe' | 'manual';
+
+/**
+ * Statuts depuis lesquels un webhook peut faire passer un intent au statut
+ * annoncé. `paid` gagne sur un échec/annulation antérieur (le fournisseur
+ * confirme l'encaissement), mais rien ne fait quitter `paid` ni `refunded`,
+ * et un échec ne redevient pas `pending`. Un webhook identique rejoué ne
+ * matche pas (paid → paid exclu) : il est idempotent et ne réécrit pas paidAt.
+ */
+const WEBHOOK_ALLOWED_FROM: Record<
+  WebhookParsedEvent['status'],
+  PaymentStatus[]
+> = {
+  paid: ['created', 'pending', 'failed', 'cancelled'],
+  failed: ['created', 'pending'],
+  cancelled: ['created', 'pending'],
+  pending: ['created'],
+};
 
 @Injectable()
 export class PaymentsService {
@@ -167,22 +186,56 @@ export class PaymentsService {
       return { ok: false };
     }
 
-    const updated = await this.prismaService.execute((prisma) =>
-      prisma.paymentIntent.update({
-        where,
+    // Transitions gardées (audit 2026-11-22, constat 7) : les notifications
+    // mobile money arrivent dans le désordre et sont re-livrées par les
+    // fournisseurs. Un intent `paid` (ou `refunded`) ne redescend JAMAIS ;
+    // `paidAt` n'est posé qu'à la première transition vers `paid`. L'écriture
+    // est conditionnelle (updateMany … status in [...]) pour rester sûre
+    // quand deux webhooks du même intent arrivent en même temps.
+    const allowedFrom = WEBHOOK_ALLOWED_FROM[event.status];
+    const now = new Date();
+    const outcome = await this.prismaService.execute(async (prisma) => {
+      const { count } = await prisma.paymentIntent.updateMany({
+        where: { ...where, status: { in: allowedFrom } },
         data: {
-          status: event.status === 'paid' ? 'paid' : event.status,
-          paidAt: event.status === 'paid' ? new Date() : null,
-          failureReason: event.failureReason,
-          lastWebhookAt: new Date(),
+          status: event.status,
+          ...(event.status === 'paid' ? { paidAt: now } : {}),
+          failureReason: event.status === 'paid' ? null : event.failureReason,
+          lastWebhookAt: now,
         },
-      }),
-    );
+      });
+      const current = await prisma.paymentIntent.findUnique({ where });
+      if (count === 0 && current) {
+        // Rejeu ou notification tardive : on ne touche qu'à lastWebhookAt
+        // (trace support), jamais au statut ni à paidAt.
+        await prisma.paymentIntent.updateMany({
+          where: { id: current.id },
+          data: { lastWebhookAt: now },
+        });
+      }
+      return { applied: count > 0, current };
+    });
+
+    if (outcome === null) {
+      // Pas de base (mode démo) : rien à persister.
+      this.logger.warn(`Webhook ${provider} reçu sans base de données.`);
+      return { ok: false };
+    }
+    if (!outcome.current) {
+      throw new NotFoundException('Payment intent not found for this webhook.');
+    }
+    const { applied, current } = outcome;
+    if (!applied) {
+      this.logger.warn(
+        `Webhook ${provider} → intent ${current.id} : transition ${current.status} → ${event.status} ignorée (rejeu ou notification tardive)`,
+      );
+      return { ok: true, intentId: current.id, ignored: true };
+    }
 
     this.logger.log(
-      `Webhook ${provider} → intent ${updated?.id} = ${updated?.status}`,
+      `Webhook ${provider} → intent ${current.id} = ${current.status}`,
     );
-    return { ok: true, intentId: updated?.id };
+    return { ok: true, intentId: current.id };
   }
 
   /** Admin-only: mark an intent as paid manually (offline payments). */
