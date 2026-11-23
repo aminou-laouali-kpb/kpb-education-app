@@ -976,7 +976,9 @@ export default function ScholarshipsPage() {
       />
       <RemoveStepDialog
         target={removingStep}
-        loading={removingStep !== null && stepPendingId === removingStep.entry.id}
+        // Une opération d'étape en cours (même sur une autre bourse) bloque le
+        // retrait : le dialogue l'affiche au lieu d'ignorer le clic en silence.
+        loading={removingStep !== null && stepPendingId !== null}
         onConfirm={() => void removeStep()}
         onCancel={() => setRemovingStep(null)}
       />
