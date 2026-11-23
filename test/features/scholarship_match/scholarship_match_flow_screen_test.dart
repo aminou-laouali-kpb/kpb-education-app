@@ -200,6 +200,49 @@ void main() {
     expect(find.byKey(_k('match-results-counts')), findsOneWidget);
   });
 
+  testWidgets(
+      '« Réessayer » du bandeau après la fermeture de l\'écran : aucune '
+      'relance sur un State démonté', (t) async {
+    // Audit du 22/11/2026, n° 36 : le bandeau (ScaffoldMessenger racine, 6 s)
+    // survit à l'écran ; son action relançait `_submit`, dont le setState
+    // levait « setState() called after dispose() ».
+    resetMatchWorld();
+    final api = FakeMatchApi(
+      state: matchStateJson(required: [], answers: _fullAnswers()),
+    )..runError =
+        const ScholarshipMatchException(ScholarshipMatchFailure.timeout);
+    await pumpMatchApp(
+      t,
+      child: const ScholarshipMatchFlowScreen(
+        mode: MatchFlowMode.recap,
+        source: 'test',
+      ),
+      api: api,
+    );
+    await t.scrollUntilVisible(
+      find.byKey(_k('match-nationality-consent')),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await t.drag(find.byType(Scrollable).first, const Offset(0, -400));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(_k('match-nationality-consent')));
+    await t.pumpAndSettle();
+    await t.tap(find.byKey(_k('match-submit')));
+    await t.pumpAndSettle();
+    expect(api.runCalls, hasLength(1));
+
+    final retry = t.widget<SnackBarAction>(find.byType(SnackBarAction));
+    // L'écran disparaît ; l'élève appuie ensuite sur « Réessayer ».
+    await t.pumpWidget(const SizedBox.shrink());
+    api.runError = null;
+    retry.onPressed();
+    await t.pump();
+
+    expect(t.takeException(), isNull);
+    expect(api.runCalls, hasLength(1));
+  });
+
   testWidgets('le brouillon reprend au même écran après un redémarrage',
       (t) async {
     final cache = resetMatchWorld();

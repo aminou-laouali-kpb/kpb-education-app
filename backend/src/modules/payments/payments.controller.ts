@@ -28,7 +28,13 @@ export class PaymentsController {
 
   @Get('providers')
   listProviders() {
-    return { providers: this.paymentsService.listAvailableProviders() };
+    // `manual` n'est pas un moyen de paiement proposé à l'étudiant (audit
+    // 2026-11-22, constat 25) : seul le back-office l'utilise.
+    return {
+      providers: this.paymentsService
+        .listAvailableProviders()
+        .filter((name) => name !== 'manual'),
+    };
   }
 
   @Post('intents')
@@ -51,8 +57,17 @@ export class PaymentsController {
     if (!req.studentUser) {
       throw new Error('Student context missing.');
     }
-    return this.paymentsService.createIntent({
-      ...body,
+    // Champs repris un à un (plus de `...body`) : `counsellorId` et tout
+    // champ inattendu du corps ne sont plus transmis ; le service vérifie
+    // le fournisseur, le montant et la propriété du dossier.
+    return this.paymentsService.createStudentIntent({
+      provider: body.provider,
+      amountMinor: body.amountMinor,
+      currency: body.currency,
+      caseId: body.caseId,
+      description: body.description,
+      returnUrl: body.returnUrl,
+      cancelUrl: body.cancelUrl,
       userId: req.studentUser.id,
       customer: {
         email: req.studentUser.email,
@@ -64,8 +79,12 @@ export class PaymentsController {
 
   @Get('intents/:id')
   @UseGuards(StudentAuthGuard)
-  get(@Param('id') id: string) {
-    return this.paymentsService.getIntent(id);
+  get(@Req() req: StudentReq, @Param('id') id: string) {
+    if (!req.studentUser) {
+      throw new Error('Student context missing.');
+    }
+    // Seulement ses propres intents (audit 2026-11-22, constat 25).
+    return this.paymentsService.getIntent(id, req.studentUser.id);
   }
 
   /**

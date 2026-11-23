@@ -463,9 +463,25 @@ class _AuthInterceptor extends Interceptor {
         message: 'No access token available for retry.',
       );
     }
-    options.headers['Authorization'] = 'Bearer $token';
-    // Mark so a recursive 401 short-circuits to permanent failure (Bug A).
-    options.extra['authRetried'] = true;
-    return _dio.fetch(options);
+    return _dio.fetch(prepareAuthRetryOptions(options, token));
   }
+}
+
+/// Prépare [options] pour le rejeu unique qui suit un refresh réussi.
+///
+/// Un corps multipart ([FormData]) est à usage unique : Dio le finalise au
+/// premier envoi et lève `StateError('The FormData has already been
+/// finalized')` au second. Le rejeu des envois de fichiers (avatar, pièces
+/// d'un dossier, Success Lab) échouait donc toujours, et l'écran affichait le
+/// 401 d'origine alors que la session était saine (audit du 22/11/2026,
+/// n° 35). On rejoue une copie neuve du formulaire (`FormData.clone`, qui
+/// relit chaque fichier depuis sa source).
+@visibleForTesting
+RequestOptions prepareAuthRetryOptions(RequestOptions options, String token) {
+  options.headers['Authorization'] = 'Bearer $token';
+  // Mark so a recursive 401 short-circuits to permanent failure (Bug A).
+  options.extra['authRetried'] = true;
+  final data = options.data;
+  if (data is FormData) options.data = data.clone();
+  return options;
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 
 import { LlmService } from '../ai/llm.service';
@@ -40,6 +40,57 @@ type StoredOrientationSession = OrientationSessionDto & {
   userId: string | null;
 };
 
+/** Longueur maximale d'une explication rendue par le modèle. */
+const MAX_LLM_EXPLANATION_LENGTH = 1000;
+
+/** Texte non vide et tronqué, sinon `undefined`. */
+function llmText(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, MAX_LLM_EXPLANATION_LENGTH) : undefined;
+}
+
+/**
+ * Valide et normalise la sortie JSON du modèle (audit 22/11/2026, constat 32).
+ *
+ * `completeJson` garantit seulement un objet JSON, pas sa forme. Avant :
+ * un `recommendations` non tableau (ou un élément `null`) levait une
+ * TypeError, donc une 500 avec le quota consommé ; une `explanationFr` non
+ * chaîne (tableau, objet, nombre) était recopiée telle quelle, enregistrée,
+ * et rendait la session illisible pour l'app (cast `as String?`) à chaque
+ * relecture.
+ *
+ * Rend l'explication `{ fr, en }` de chaque filière que le modèle a
+ * correctement décrite : un élément mal formé est ignoré (la filière garde son
+ * explication déterministe), une `explanationEn` invalide reprend le texte
+ * français. Rend `undefined` quand la sortie n'est pas exploitable du tout
+ * (pas de tableau `recommendations`).
+ */
+export function parseOrientationLlmOutput(
+  value: unknown,
+): Map<string, { fr: string; en: string }> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return undefined;
+  }
+  const recommendations = (value as Record<string, unknown>).recommendations;
+  if (!Array.isArray(recommendations)) return undefined;
+
+  const byField = new Map<string, { fr: string; en: string }>();
+  for (const item of recommendations) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const record = item as Record<string, unknown>;
+    if (typeof record.fieldId !== 'string') continue;
+    const fieldId = record.fieldId.trim();
+    const fr = llmText(record.explanationFr);
+    if (!fieldId || !fr || byField.has(fieldId)) continue;
+    byField.set(fieldId, { fr, en: llmText(record.explanationEn) ?? fr });
+  }
+  return byField;
+}
+
+/** Modèle enregistré quand aucune explication du modèle n'est retenue. */
+const LOCAL_FALLBACK_MODEL = 'local-fallback';
+
 /** Field ids declared in a client-supplied profile, ignoring anything else. */
 function readFieldIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -56,6 +107,24 @@ function readAnswers(value: unknown): Answers {
     );
   }
   return answers;
+}
+
+/**
+ * `{ fr, en }` en chaînes pour une explication relue en base. Une session
+ * enregistrée avant la validation de la sortie du modèle (constat 32) peut
+ * porter un tableau ou un objet dans `explanation.fr` : l'app installée le lit
+ * avec un cast `as String?` et ne pouvait plus jamais rouvrir la session.
+ * Une valeur non chaîne devient une chaîne vide (l'app affiche alors la
+ * carte sans paragraphe) ; rien n'est réécrit en base.
+ */
+function sanitizeStoredExplanation(value: unknown): { fr: string; en: string } {
+  const record =
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const fr = typeof record.fr === 'string' ? record.fr : '';
+  const en = typeof record.en === 'string' ? record.en : fr;
+  return { fr, en };
 }
 
 /**
@@ -97,7 +166,11 @@ function normalizeRecommendationScores(
       fieldId,
       score,
       recomputed: percentByField.has(fieldId),
-      recommendation: { ...record, score },
+      recommendation: {
+        ...record,
+        score,
+        explanation: sanitizeStoredExplanation(record.explanation),
+      },
     };
   });
 
@@ -121,6 +194,7 @@ export class OrientationService {
    * a best-effort mirror.
    */
   private readonly sessions: StoredOrientationSession[] = [];
+  private readonly logger = new Logger(OrientationService.name);
 
   constructor(
     private readonly llmService: LlmService,
@@ -178,13 +252,8 @@ export class OrientationService {
           : null,
     };
 
-    const llmPayload = await this.llmService.completeJson<{
-      recommendations?: Array<{
-        fieldId: string;
-        explanationFr?: string;
-        explanationEn?: string;
-      }>;
-    }>({
+    // `unknown` : la forme rendue par le modèle est vérifiée juste après.
+    const llmPayload = await this.llmService.completeJson<unknown>({
       system:
         'Tu es l\'orientation IA KPB. Réponds UNIQUEMENT en JSON valide avec recommendations[].fieldId (d01-d12), explanationFr, explanationEn (2 phrases max, personnalisées).',
       user: JSON.stringify({
@@ -192,24 +261,38 @@ export class OrientationService {
         profile: promptProfile,
         topFields: ranked.slice(0, 5),
       }),
-      fallback: { recommendations: [] },
+      fallback: null,
     });
 
-    const llmByField = new Map(
-      (llmPayload.data.recommendations ?? []).map((item) => [item.fieldId, item]),
-    );
+    // Panne du fournisseur, sortie inexploitable, ou aucun élément valide
+    // pour une filière classée : la session déterministe est enregistrée
+    // comme avant (`local-fallback`), en 2xx. Seules des explications
+    // validées par `parseOrientationLlmOutput` sont reprises : aucune donnée
+    // invalide n'atteint la base (constat 32).
+    //
+    // Pas de remboursement du quota dans ce cas, même quand l'appel n'a pas
+    // été facturé : l'élève reçoit un résultat, et le quota borne aussi les
+    // écritures en base (voir `OrientationController`). Le rembourser
+    // rendrait les sessions illimitées pendant une panne ou quand l'IA n'est
+    // pas configurée.
+    const llmByField =
+      llmPayload.fallbackReason === undefined
+        ? parseOrientationLlmOutput(llmPayload.data)
+        : undefined;
+    const usedLlm =
+      !!llmByField &&
+      fallbackRecommendations.some((rec) => llmByField.has(rec.fieldId));
+    if (!usedLlm && llmPayload.fallbackReason === undefined) {
+      this.logger.warn(
+        'Orientation: unusable model output, deterministic explanations kept.',
+      );
+    }
+    const iaModelUsed = usedLlm ? llmPayload.model : LOCAL_FALLBACK_MODEL;
 
     const recommendations: RecommendationDto[] = fallbackRecommendations.map(
       (rec) => {
-        const llm = llmByField.get(rec.fieldId);
-        if (!llm?.explanationFr) return rec;
-        return {
-          ...rec,
-          explanation: {
-            fr: llm.explanationFr,
-            en: llm.explanationEn ?? llm.explanationFr,
-          },
-        };
+        const explanation = usedLlm ? llmByField.get(rec.fieldId) : undefined;
+        return explanation ? { ...rec, explanation } : rec;
       },
     );
 
@@ -231,7 +314,7 @@ export class OrientationService {
           userId,
           answers: answers as unknown as Prisma.InputJsonValue,
           recommendations: recommendations as unknown as Prisma.InputJsonValue,
-          iaModelUsed: llmPayload.model,
+          iaModelUsed,
           nextActions: nextActions as unknown as Prisma.InputJsonValue,
         },
       }),
@@ -255,7 +338,7 @@ export class OrientationService {
       completedAt: new Date().toISOString(),
       answers,
       recommendations,
-      iaModelUsed: llmPayload.model,
+      iaModelUsed,
       nextActions,
     };
 

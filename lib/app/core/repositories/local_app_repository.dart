@@ -22,6 +22,12 @@ class LocalAppRepository implements AppRepository {
 
   String get _storageKey => '${AppConfig.storageNamespace}.snapshot';
 
+  /// Copie brute d'un instantané illisible, gardée pour diagnostic. Elle
+  /// contient le profil et les dossiers en clair : [clear] l'efface avec
+  /// l'instantané, sinon elle survivait à la déconnexion et à la suppression
+  /// du compte (audit du 22/11/2026, n° 34).
+  String get _corruptCopyKey => '$_storageKey.corrupt';
+
   @override
   Future<AppSnapshot> loadSnapshot() async {
     final raw = _preferences.getString(_storageKey);
@@ -35,7 +41,7 @@ class LocalAppRepository implements AppRepository {
       // faisait échouer le démarrage À CHAQUE lancement (BootstrapErrorApp),
       // sans autre issue que réinstaller. On repart d'un état vierge en
       // gardant une copie pour diagnostic ; le serveur restaure le reste.
-      await _preferences.setString('$_storageKey.corrupt', raw);
+      await _preferences.setString(_corruptCopyKey, raw);
       await _preferences.remove(_storageKey);
       return AppSnapshot.initial();
     }
@@ -144,6 +150,7 @@ class LocalAppRepository implements AppRepository {
   @override
   Future<void> clear() async {
     await _preferences.remove(_storageKey);
+    await _preferences.remove(_corruptCopyKey);
   }
 
   Map<String, dynamic>? _userProfileToJson(UserProfile? profile) {

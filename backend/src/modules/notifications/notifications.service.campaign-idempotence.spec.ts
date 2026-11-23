@@ -1,3 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
+
 import { CasesService } from '../cases/cases.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CampaignExecutorService } from './campaign-executor.service';
@@ -240,5 +242,20 @@ describe('NotificationsService.createCampaign — idempotence', () => {
     await service.waitForInFlightCampaigns();
 
     expect(db.rows[0].status).toBe('failed');
+  });
+
+  // Audit §30 — un statut de dossier hors enum est refusé à la création (400)
+  // au lieu de produire une campagne « terminée » à zéro destinataire.
+  it('refuse en 400 une audience case_status au statut inconnu', async () => {
+    const { service, db, executed } = makeService();
+    await expect(
+      service.createCampaign({
+        ...form,
+        audienceType: 'case_status',
+        filters: { status: 'documents_requis' },
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(db.rows).toHaveLength(0);
+    expect(executed).toEqual([]);
   });
 });

@@ -210,6 +210,29 @@ void main() {
   });
 
   testWidgets(
+      'relance périmée en échec : « Réessayer » après la fermeture de '
+      'l\'écran ne relance rien sur un State démonté', (t) async {
+    // Audit du 22/11/2026, n° 36 : le bandeau survit à l'écran ; son action
+    // relançait `_rerun`, dont le setState levait après dispose.
+    resetMatchWorld();
+    final api = FakeMatchApi(
+      state: matchStateJson(latestRun: matchRunJson(), isStale: true),
+    )..runError =
+        const ScholarshipMatchException(ScholarshipMatchFailure.timeout);
+    await _open(t, api);
+    expect(api.runCalls, hasLength(1));
+
+    final retry = t.widget<SnackBarAction>(find.byType(SnackBarAction));
+    await t.pumpWidget(const SizedBox.shrink());
+    api.runError = null;
+    retry.onPressed();
+    await t.pump();
+
+    expect(t.takeException(), isNull);
+    expect(api.runCalls, hasLength(1));
+  });
+
+  testWidgets(
       'run périmé : relancé UNE fois à l\'ouverture, toast des '
       'différences, puce « Nouveau »', (t) async {
     resetMatchWorld();

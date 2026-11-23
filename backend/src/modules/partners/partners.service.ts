@@ -56,11 +56,14 @@ export class PartnersService {
 
   /** Homepage strip — featured partners only, capped so it fits the UI. */
   async listFeatured(limit = 12) {
+    // `?limit=abc` ou `?limit=1e999` donnent NaN/Infinity : Prisma rejette
+    // `take: NaN` (500). On retombe sur la valeur par défaut et on tronque.
+    const safeLimit = Number.isFinite(limit) ? Math.trunc(limit) : 12;
     const items = await this.prismaService.execute((prisma) =>
       prisma.partner.findMany({
         where: { isActive: true, isFeatured: true },
         orderBy: { displayOrder: 'asc' },
-        take: Math.min(Math.max(limit, 1), 24),
+        take: Math.min(Math.max(safeLimit, 1), 24),
         select: {
           id: true,
           slug: true,

@@ -5,6 +5,10 @@ import { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
 import { useLocale } from '../../components/locale-provider';
+import {
+  ResetPasswordDialog,
+  type ResetPasswordTarget,
+} from '../../components/users/reset-password-dialog';
 import { apiFetch } from '../../lib/api-client';
 import {
   AdminTable,
@@ -78,6 +82,10 @@ export default function UsersPage() {
     isActive: true,
     workload: '0',
   });
+  const [resetTarget, setResetTarget] = useState<ResetPasswordTarget | null>(
+    null,
+  );
+  const [resetting, setResetting] = useState(false);
   const [credential, setCredential] = useState<{
     email: string;
     tempPassword: string;
@@ -197,15 +205,19 @@ export default function UsersPage() {
     }
   }
 
+  // Appelée uniquement depuis la confirmation : le compte visé est celui
+  // nommé dans le dialogue, même si la sélection a changé entre-temps.
   async function resetPassword() {
-    if (!selectedUser) {
+    const target = resetTarget;
+    if (!target || resetting) {
       return;
     }
     setStatusMessage(null);
     setErrorMessage(null);
+    setResetting(true);
     try {
       const result = await apiFetch<{ email: string; tempPassword: string }>(
-        `/admin/users/${selectedUser.id}/reset-password`,
+        `/admin/users/${target.id}/reset-password`,
         { method: 'POST' },
       );
       setCredential({
@@ -217,6 +229,9 @@ export default function UsersPage() {
       setErrorMessage(
         error instanceof Error ? error.message : t('users.resetError'),
       );
+    } finally {
+      setResetting(false);
+      setResetTarget(null);
     }
   }
 
@@ -485,7 +500,17 @@ export default function UsersPage() {
                   </label>
                   <Button type="submit">{t('users.saveCta')}</Button>
                 </form>
-                <Button variant="danger" onClick={resetPassword}>
+                <Button
+                  variant="danger"
+                  disabled={resetting}
+                  onClick={() =>
+                    setResetTarget({
+                      id: selectedUser.id,
+                      fullName: selectedUser.fullName,
+                      email: selectedUser.email,
+                    })
+                  }
+                >
                   {t('users.resetPasswordCta')}
                 </Button>
                 <p style={{ margin: 0, fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
@@ -496,6 +521,13 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+      <ResetPasswordDialog
+        target={resetTarget}
+        isSelf={resetTarget !== null && resetTarget.id === session?.user.id}
+        loading={resetting}
+        onConfirm={() => void resetPassword()}
+        onCancel={() => setResetTarget(null)}
+      />
     </DashboardShell>
   );
 }

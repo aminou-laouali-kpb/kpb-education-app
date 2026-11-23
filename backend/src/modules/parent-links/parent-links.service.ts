@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -65,9 +66,12 @@ export class ParentLinksService {
       throw new BadRequestException('Cannot link an account to itself.');
     }
 
-    const updated = await this.prismaService.execute((prisma) =>
-      prisma.parentChildLink.update({
-        where: { id: link.id },
+    // Mise à jour conditionnelle : seule la première acceptation concurrente
+    // trouve encore le lien en `pending`. Les suivantes obtiennent count = 0
+    // et reçoivent une 409 au lieu d'un faux succès.
+    const result = await this.prismaService.execute((prisma) =>
+      prisma.parentChildLink.updateMany({
+        where: { id: link.id, status: 'pending' },
         data: {
           childId: childUserId,
           status: 'active',
@@ -75,7 +79,12 @@ export class ParentLinksService {
         },
       }),
     );
-    return updated;
+    if (!result || result.count === 0) {
+      throw new ConflictException('Invite is invalid or already used.');
+    }
+    return this.prismaService.execute((prisma) =>
+      prisma.parentChildLink.findUnique({ where: { id: link.id } }),
+    );
   }
 
   /** Revoke an existing link. Either side can revoke. */

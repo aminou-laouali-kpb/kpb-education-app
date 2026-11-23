@@ -1028,6 +1028,8 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
   function makeService(opts: {
     greatYop: () => Promise<unknown[]>;
     mastereTn?: () => Promise<unknown[]>;
+    /** Préfixes des deux scrapers simulés (défaut : greatyop / masteretn). */
+    prefixes?: [string, string];
     existing?: Record<string, string>;
   }) {
     const upserts: Array<Record<string, any>> = [];
@@ -1054,12 +1056,12 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
       tryExecute: async (fn: (c: typeof client) => unknown) => fn(client),
     } as unknown as PrismaService;
     const greatYop = {
-      prefix: 'greatyop',
+      prefix: opts.prefixes?.[0] ?? 'greatyop',
       name: 'GreatYop',
       fetch: opts.greatYop,
     } as unknown as GreatYopScraper;
     const mastereTn = {
-      prefix: 'masteretn',
+      prefix: opts.prefixes?.[1] ?? 'masteretn',
       name: 'MastereTn',
       fetch: opts.mastereTn ?? (async () => []),
     } as unknown as MastereTnScraper;
@@ -1104,6 +1106,87 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     );
     expect(greatYopCall!.where.moderationStatus).toEqual({ not: 'approved' });
     expect(greatYopCall!.where.NOT.sourceKey.in).toContain('greatyop-a');
+  });
+
+  // Audit 27 : la déduplication ne fusionne que des sources DIFFÉRENTES.
+  it('ne fusionne pas deux bourses de la même source au titre normalisé identique', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Chevening Scholarship 2026'),
+        scraped('greatyop-b', 'Chevening Scholarship 2025-2026'),
+      ],
+    });
+    const result = await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'greatyop-b',
+    ]);
+    expect(result.totalMerged).toBe(0);
+  });
+
+  it('fusionne un doublon inter-sources et compte `merged` sur la source absorbée seulement', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Bourse Été 2026'),
+        scraped('greatyop-b', 'Bourse Été 2025'),
+      ],
+      mastereTn: async () => [
+        { ...scraped('masteretn-x', 'Bourse Ete'), contentScore: 9 },
+      ],
+    });
+    const result = await service.refresh();
+    // « Été » et « Ete » se rejoignent (accents retirés, pas la lettre) ; la
+    // grappe garde une seule ligne par source : greatyop-b reste distincte.
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-b',
+      'masteretn-x',
+    ]);
+    const bySource = Object.fromEntries(result.sources.map((s) => [s.prefix, s.merged]));
+    expect(bySource).toEqual({ greatyop: 1, masteretn: 0 });
+    expect(result.totalMerged).toBe(1);
+  });
+
+  // Préfixes à tiret : `split('-')[0]` confondait turkiye-burslari et
+  // turkiye-mevlana en « turkiye » et empêchait leur fusion.
+  it('fusionne deux sources dont les préfixes partagent le segment avant le tiret', async () => {
+    const { service, upserts } = makeService({
+      prefixes: ['turkiye-burslari', 'turkiye-mevlana'],
+      greatYop: async () => [scraped('turkiye-burslari-a', 'Turkiye Scholarships 2026')],
+      mastereTn: async () => [
+        { ...scraped('turkiye-mevlana-b', 'Türkiye Scholarships 2026'), contentScore: 9 },
+      ],
+    });
+    const result = await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey)).toEqual(['turkiye-mevlana-b']);
+    const bySource = Object.fromEntries(result.sources.map((s) => [s.prefix, s.merged]));
+    expect(bySource).toEqual({ 'turkiye-burslari': 1, 'turkiye-mevlana': 0 });
+  });
+
+  it('ne fusionne toujours pas deux lignes d’une même source à préfixe composé', async () => {
+    const { service, upserts } = makeService({
+      prefixes: ['turkiye-burslari', 'turkiye-mevlana'],
+      greatYop: async () => [
+        scraped('turkiye-burslari-a', 'Turkiye Scholarships 2026'),
+        scraped('turkiye-burslari-b', 'Turkiye Scholarships 2025'),
+      ],
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'turkiye-burslari-a',
+      'turkiye-burslari-b',
+    ]);
+  });
+
+  it('ne fusionne rien sur une clé normalisée vide', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [scraped('greatyop-a', '2026')],
+      mastereTn: async () => [scraped('masteretn-b', '— 2026 —')],
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'masteretn-b',
+    ]);
   });
 
   it('leaves an approved row untouched and does not reactivate a rejected one', async () => {

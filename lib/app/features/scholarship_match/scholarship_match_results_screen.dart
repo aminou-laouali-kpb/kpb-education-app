@@ -201,7 +201,11 @@ class _ScholarshipMatchResultsScreenState
             context: context,
             action: KpbToastAction(
               label: 'retry'.tr,
-              onPressed: () => unawaited(_rerun(trigger: trigger)),
+              // Bandeau encore visible après un retour : pas de relance sur
+              // un State démonté (audit du 22/11/2026, n° 36).
+              onPressed: () {
+                if (mounted) unawaited(_rerun(trigger: trigger));
+              },
             ),
           );
         }
