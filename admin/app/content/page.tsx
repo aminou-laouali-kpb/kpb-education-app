@@ -4,6 +4,7 @@ import { CSSProperties, FormEvent, useEffect, useState } from 'react';
 
 import { useAdminAuth } from '../../components/admin-auth-provider';
 import { DashboardShell } from '../../components/dashboard-shell';
+import { DeleteParcoursDialog } from '../../components/content/delete-parcours-dialog';
 import { useLocale } from '../../components/locale-provider';
 import { apiFetch } from '../../lib/api-client';
 import { splitList } from '../../lib/ui';
@@ -259,6 +260,10 @@ export default function ContentPage() {
   const [editingDestinationId, setEditingDestinationId] = useState<string | null>(null);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
   const [editingParcoursId, setEditingParcoursId] = useState<string | null>(null);
+  const [deletingParcours, setDeletingParcours] = useState<ParcoursItem | null>(
+    null,
+  );
+  const [deletingBusy, setDeletingBusy] = useState(false);
 
   function patchOffer(patch: Partial<typeof EMPTY_OFFER_FORM>) {
     setOfferForm((current) => ({ ...current, ...patch }));
@@ -530,9 +535,16 @@ export default function ContentPage() {
     }
   }
 
-  async function deleteParcours(id: string) {
+  // Appelée uniquement depuis la confirmation (suppression physique côté API).
+  async function deleteParcours() {
+    const target = deletingParcours;
+    if (!target || deletingBusy) {
+      return;
+    }
+    const { id } = target;
     setStatusMessage(null);
     setErrorMessage(null);
+    setDeletingBusy(true);
     try {
       await apiFetch(`/admin/parcours/${id}`, { method: 'DELETE' });
       if (editingParcoursId === id) {
@@ -547,6 +559,9 @@ export default function ContentPage() {
           ? error.message
           : t('content.parcoursDeleteError'),
       );
+    } finally {
+      setDeletingBusy(false);
+      setDeletingParcours(null);
     }
   }
 
@@ -1227,7 +1242,8 @@ export default function ContentPage() {
                   <Button
                     size="sm"
                     variant="dangerOutline"
-                    onClick={() => deleteParcours(story.id)}
+                    disabled={deletingBusy}
+                    onClick={() => setDeletingParcours(story)}
                   >
                     {t('content.deleteCta')}
                   </Button>
@@ -1489,6 +1505,12 @@ export default function ContentPage() {
           </form>
         </section>
       </div>
+      <DeleteParcoursDialog
+        target={deletingParcours}
+        loading={deletingBusy}
+        onConfirm={() => void deleteParcours()}
+        onCancel={() => setDeletingParcours(null)}
+      />
     </DashboardShell>
   );
 }
