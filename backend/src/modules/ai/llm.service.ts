@@ -65,6 +65,8 @@ const GROQ_CHAT_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const DEFAULT_OPENROUTER_MODEL = 'deepseek/deepseek-v4-flash';
 const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
 const DEFAULT_TIMEOUT_MS = 18000;
+/** Durée totale maximale d'une réponse du coach en flux (en-têtes + corps). */
+const DEFAULT_STREAM_TOTAL_TIMEOUT_MS = 60000;
 
 /** Le fournisseur du modèle n'a pas répondu (panne, délai, refus). */
 export class LlmUnavailableError extends Error {
@@ -164,6 +166,8 @@ export class LlmService {
 
   /// Per-request upper bound so a stalled provider connection can never hang
   /// the SSE response (or a JSON call) indefinitely. Configurable via env.
+  /// Pour un appel JSON, il couvre l'échange ENTIER (en-têtes ET corps) ; pour
+  /// le flux du coach, c'est le délai maximal sans nouveau jeton.
   private get timeoutMs(): number {
     const raw = Number(
       process.env.LLM_TIMEOUT_MS ?? process.env.GROQ_TIMEOUT_MS,
@@ -171,20 +175,77 @@ export class LlmService {
     return Number.isFinite(raw) && raw > 0 ? raw : DEFAULT_TIMEOUT_MS;
   }
 
-  /// `fetch` with an AbortController-backed timeout. Throws on timeout so the
-  /// caller's retry/fallback path engages.
-  private async fetchWithTimeout(
+  /// Durée totale maximale d'une réponse en flux : des commentaires keep-alive
+  /// du fournisseur ne peuvent pas la prolonger. Configurable via env.
+  private get streamTotalTimeoutMs(): number {
+    const raw = Number(process.env.LLM_STREAM_TIMEOUT_MS);
+    return Number.isFinite(raw) && raw > 0
+      ? raw
+      : DEFAULT_STREAM_TOTAL_TIMEOUT_MS;
+  }
+
+  /**
+   * AbortController armé d'un délai, relié au signal de l'appelant. Le délai
+   * reste armé jusqu'à `dispose()` : il borne aussi la lecture du corps, pas
+   * seulement l'arrivée des en-têtes (audit 22/11/2026, constat 15 — avant,
+   * le minuteur tombait dès que `fetch` résolvait, et un fournisseur qui
+   * s'arrêtait après ses en-têtes bloquait la lecture jusqu'à 300 s).
+   */
+  private abortScope(timeoutMs: number, parent?: AbortSignal) {
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const rearm = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(abort, timeoutMs);
+    };
+    if (parent?.aborted) abort();
+    else parent?.addEventListener('abort', abort, { once: true });
+    rearm();
+    return {
+      signal: controller.signal,
+      abort,
+      rearm,
+      dispose: () => {
+        if (timer) clearTimeout(timer);
+        parent?.removeEventListener('abort', abort);
+      },
+    };
+  }
+
+  /// `fetch` + lecture du corps par [read], le tout sous le même délai. Lève
+  /// sur délai dépassé pour que le chemin de reprise/repli de l'appelant joue.
+  private async fetchWithTimeout<R>(
     url: string,
     init: RequestInit,
+    read: (response: Response) => Promise<R>,
     timeoutMs: number = this.timeoutMs,
-  ): Promise<Response> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+  ): Promise<R> {
+    const scope = this.abortScope(timeoutMs);
     try {
-      return await fetch(url, { ...init, signal: controller.signal });
+      const response = await fetch(url, { ...init, signal: scope.signal });
+      return await read(response);
     } finally {
-      clearTimeout(timer);
+      scope.dispose();
     }
+  }
+
+  /// Lit la réponse d'un appel JSON : en cas d'erreur HTTP, vide le corps sans
+  /// jamais le journaliser (il peut renvoyer le prompt de l'élève).
+  private async readChatResponse(
+    response: Response,
+  ): Promise<
+    | { ok: true; payload: ProviderChatResponse }
+    | { ok: false; status: number }
+  > {
+    if (!response.ok) {
+      await response.text();
+      return { ok: false, status: response.status };
+    }
+    return {
+      ok: true,
+      payload: (await response.json()) as ProviderChatResponse,
+    };
   }
 
   async completeJson<T>(params: {
@@ -222,19 +283,23 @@ export class LlmService {
     // local fallback, so a single blip doesn't drop the feature.
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
-        const response = await this.fetchWithTimeout(config.chatUrl, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            authorization: `Bearer ${config.apiKey}`,
+        const response = await this.fetchWithTimeout(
+          config.chatUrl,
+          {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${config.apiKey}`,
+            },
+            body,
           },
-          body,
-        }, params.timeoutMs);
+          (res) => this.readChatResponse(res),
+          params.timeoutMs,
+        );
 
         if (!response.ok) {
           // Drain the provider response but never log it: error bodies can
           // echo prompts, document excerpts or provider diagnostics.
-          await response.text();
           this.logger.warn(
             `${config.name} error ${response.status} (attempt ${attempt + 1}).`,
           );
@@ -242,7 +307,7 @@ export class LlmService {
           return { data: params.fallback, model: 'local-fallback' };
         }
 
-        const payload = (await response.json()) as ProviderChatResponse;
+        const payload = response.payload;
         if (payload.choices?.[0]?.finish_reason === 'length') {
           // Truncated at max_tokens: the JSON is incomplete (or was never
           // started, when the budget went to reasoning). This used to degrade
@@ -306,6 +371,9 @@ export class LlmService {
         },
       },
       ...this.routingPolicy(config.name),
+      // Sans lui, un modèle hybride peut dépenser les 220 jetons en raisonnement
+      // caché et ne rien rendre (audit 22/11/2026, constat 14).
+      ...this.reasoningPolicy(config.name),
       messages: [
         {
           role: 'system',
@@ -316,15 +384,19 @@ export class LlmService {
     });
 
     try {
-      const response = await this.fetchWithTimeout(config.chatUrl, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${config.apiKey}`,
-          'x-client-request-id': params.attemptKey,
+      const response = await this.fetchWithTimeout(
+        config.chatUrl,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${config.apiKey}`,
+            'x-client-request-id': params.attemptKey,
+          },
+          body,
         },
-        body,
-      });
+        (res) => this.readChatResponse(res),
+      );
       const latencyMs = Date.now() - startedAt;
       if (!response.ok) {
         this.logger.warn(
@@ -345,7 +417,7 @@ export class LlmService {
         };
       }
 
-      const payload = (await response.json()) as ProviderChatResponse;
+      const payload = response.payload;
       const usage = payload.usage;
       const refusal = payload.choices?.[0]?.message?.refusal;
       if (refusal) {
@@ -469,6 +541,15 @@ export class LlmService {
    * [LlmUnavailableError] au lieu de rendre la phrase de repli comme si
    * c'était une réponse. Le coach s'en sert pour ne pas décompter un message
    * ni garder cette phrase dans l'historique (audit avant la 59).
+   *
+   * [signal] : abandon par l'appelant (l'élève a fermé l'écran). La requête
+   * au fournisseur est alors annulée, connexion comprise.
+   *
+   * Délais (audit 22/11/2026, constat 15) : le premier jeton doit arriver dans
+   * [timeoutMs], puis chaque jeton suivant dans [timeoutMs] après le précédent
+   * (les commentaires keep-alive ne comptent pas), et la réponse entière dans
+   * [streamTotalTimeoutMs]. Au-delà, le flux est coupé et lève
+   * [LlmUnavailableError], même après des jetons.
    */
   async *streamText(params: {
     system: string;
@@ -476,6 +557,7 @@ export class LlmService {
     maxTokens?: number;
     lang?: Lang;
     throwOnUnavailable?: boolean;
+    signal?: AbortSignal;
   }): AsyncGenerator<string> {
     const lang: Lang = params.lang === 'en' ? 'en' : 'fr';
 
@@ -494,6 +576,9 @@ export class LlmService {
       temperature: 0.6,
       stream: true,
       ...this.routingPolicy(config.name),
+      // Comme completeJson : sinon tout le budget peut partir en raisonnement
+      // caché et le flux se termine sans un seul jeton (constat 14).
+      ...this.reasoningPolicy(config.name),
       messages: [
         { role: 'system', content: params.system },
         ...conversationMessages,
@@ -503,21 +588,27 @@ export class LlmService {
     // One transient retry on the initial connection before yielding the
     // localized "temporarily unavailable" fallback (graceful degradation).
     let response: Response | null = null;
+    let scope: ReturnType<LlmService['abortScope']> | null = null;
     for (let attempt = 0; attempt < 2; attempt++) {
+      if (params.signal?.aborted) break;
+      scope = this.abortScope(this.timeoutMs, params.signal);
       try {
-        response = await this.fetchWithTimeout(config.chatUrl, {
+        response = await fetch(config.chatUrl, {
           method: 'POST',
           headers: {
             'content-type': 'application/json',
             authorization: `Bearer ${config.apiKey}`,
           },
           body,
+          signal: scope.signal,
         });
         if (response.ok && response.body) break;
         if (!response.ok) await response.text();
         this.logger.warn(
           `${config.name} stream error ${response.status} (attempt ${attempt + 1}).`,
         );
+        scope.dispose();
+        scope = null;
         if (response.status >= 500 && attempt === 0) {
           response = null;
           continue;
@@ -528,45 +619,75 @@ export class LlmService {
         this.logger.warn(
           `${config.name} stream failed (attempt ${attempt + 1}).`,
         );
+        scope?.dispose();
+        scope = null;
         response = null;
         if (attempt === 0) continue;
       }
     }
 
-    if (!response || !response.ok || !response.body) {
-      if (params.throwOnUnavailable) {
+    if (!scope || !response || !response.ok || !response.body) {
+      scope?.dispose();
+      if (params.throwOnUnavailable || params.signal?.aborted) {
         throw new LlmUnavailableError(`${config.name} did not answer.`);
       }
       yield this.unavailableFallback(lang);
       return;
     }
 
+    // Le délai d'inactivité reste armé pendant la lecture ; un délai total
+    // borne la réponse entière.
+    const activeScope = scope;
+    const totalTimer = setTimeout(
+      activeScope.abort,
+      this.streamTotalTimeoutMs,
+    );
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith('data:')) continue;
-        const payload = trimmed.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
+    try {
+      while (true) {
+        let result: ReadableStreamReadResult<Uint8Array>;
         try {
-          const event = JSON.parse(payload) as ProviderChatResponse;
-          const chunk = event.choices?.[0]?.delta?.content;
-          if (chunk) {
-            yield chunk;
-          }
+          result = await reader.read();
         } catch {
-          // Ignore malformed SSE chunks.
+          throw new LlmUnavailableError(
+            activeScope.signal.aborted
+              ? `${config.name} stream aborted (timeout or client gone).`
+              : `${config.name} stream interrupted.`,
+          );
+        }
+        const { done, value } = result;
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+          const payload = trimmed.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          try {
+            const event = JSON.parse(payload) as ProviderChatResponse;
+            const chunk = event.choices?.[0]?.delta?.content;
+            if (chunk) {
+              // Seul un vrai jeton relance le délai d'inactivité.
+              activeScope.rearm();
+              yield chunk;
+            }
+          } catch {
+            // Ignore malformed SSE chunks.
+          }
         }
       }
+    } finally {
+      // Fin normale, erreur, ou consommateur qui arrête d'itérer : on libère
+      // la connexion au fournisseur et les minuteurs.
+      clearTimeout(totalTimer);
+      activeScope.dispose();
+      reader.cancel().catch(() => undefined);
     }
   }
 

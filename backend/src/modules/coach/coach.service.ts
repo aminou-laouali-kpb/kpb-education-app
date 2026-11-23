@@ -8,7 +8,7 @@ import {
 import { Observable, Subscriber } from 'rxjs';
 
 import { AiConsentService } from '../ai/ai-consent.service';
-import { LlmService } from '../ai/llm.service';
+import { LlmService, LlmUnavailableError } from '../ai/llm.service';
 import { AssistBridgeQueueService } from '../assist-bridge/assist-bridge-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -205,12 +205,16 @@ export class CoachService {
     profile: Record<string, unknown>;
   }): Observable<MessageEvent> {
     return new Observable((subscriber) => {
+      // L'élève ferme l'écran : Nest se désabonne du flux SSE. On annule alors
+      // la requête au fournisseur au lieu de lire (et payer) la réponse
+      // jusqu'au bout pour personne (audit 22/11/2026, constat 15).
+      const abort = new AbortController();
       // Tout le tour est dans un try/catch : la promesse est lancée par `void`,
       // donc une exception qui s'en échapperait deviendrait un rejet non géré
       // qui arrête le process Node (et toutes les requêtes en cours).
       void (async () => {
         try {
-          await this.runStreamTurn(params, subscriber);
+          await this.runStreamTurn(params, subscriber, abort.signal);
         } catch (error) {
           this.logger.error(
             `Coach stream failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -223,6 +227,7 @@ export class CoachService {
           }
         }
       })();
+      return () => abort.abort();
     });
   }
 
@@ -234,6 +239,7 @@ export class CoachService {
       profile: Record<string, unknown>;
     },
     subscriber: Subscriber<MessageEvent>,
+    signal?: AbortSignal,
   ): Promise<void> {
     const params = {
       ...rawParams,
@@ -348,9 +354,17 @@ export class CoachService {
         lang,
         // Une panne du fournisseur doit lever, pas se déguiser en réponse.
         throwOnUnavailable: true,
+        signal,
       })) {
         full += chunk;
         subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
+      }
+      // Flux terminé sans aucun texte (budget parti en raisonnement caché,
+      // fin prématurée) : c'est une panne, pas une réponse. Pas de bulle vide
+      // enregistrée puis rejouée au modèle, et le message est rendu (constat
+      // 14 de l'audit 22/11/2026).
+      if (full.trim() === '') {
+        throw new LlmUnavailableError('Empty reply from the provider.');
       }
       // Output guardrail: if the model emitted a concrete figure while we
       // had NO verified context to ground it, it was invented — append a
@@ -382,7 +396,9 @@ export class CoachService {
       // Pas de remboursement dès qu'un jeton est parti : une réponse coupée en
       // route, ou un échec d'écriture après une réponse complète, a été LUE.
       // Rembourser là offrirait des réponses gratuites tant que la panne dure.
-      if (full === '') {
+      // Rien de lisible n'est parti (réponse vide, ou seulement des blancs) :
+      // même règle que la panne franche.
+      if (full.trim() === '') {
         try {
           await this.quotaService.refund(params.userId, consumedAt);
         } catch (refundError) {

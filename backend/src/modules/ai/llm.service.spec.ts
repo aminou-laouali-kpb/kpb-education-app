@@ -492,3 +492,235 @@ describe('LlmService.streamText — fournisseur en panne', () => {
     await expect(collect(true)).rejects.toBeInstanceOf(LlmUnavailableError);
   });
 });
+
+// ── Audit 22/11/2026, constats 14 et 15 ─────────────────────────────────────
+
+describe('LlmService — raisonnement caché et délais de lecture du corps', () => {
+  const ENV = [
+    ...PROVIDER_ENV_VARS,
+    'LLM_REASONING_ENABLED',
+    'LLM_TIMEOUT_MS',
+    'LLM_STREAM_TIMEOUT_MS',
+  ];
+  const previousEnv = Object.fromEntries(
+    ENV.map((name) => [name, process.env[name]]),
+  );
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    for (const name of ENV) delete process.env[name];
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    global.fetch = originalFetch;
+    for (const name of ENV) {
+      const value = previousEnv[name];
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+
+  const abortError = () => {
+    const error = new Error('aborted');
+    error.name = 'AbortError';
+    return error;
+  };
+
+  /// Flux SSE simulé : envoie [chunks], puis reste bloqué (sans jamais finir)
+  /// tant que le signal de la requête n'est pas abandonné — comme undici.
+  const stallingStream = (chunks: string[], signal?: AbortSignal | null) =>
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+        signal?.addEventListener('abort', () => controller.error(abortError()));
+      },
+    });
+
+  const sse = (text: string) =>
+    `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`;
+
+  const sentBody = () =>
+    JSON.parse(
+      ((global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit])[1]
+        .body as string,
+    ) as Record<string, unknown>;
+
+  it('le flux du coach désactive aussi le raisonnement caché sur OpenRouter', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    global.fetch = jest.fn(async () =>
+      new Response(sse('Bonjour') + 'data: [DONE]\n\n', { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    const chunks: string[] = [];
+    for await (const chunk of new LlmService().streamText({
+      system: 'sys',
+      messages: [{ role: 'user', content: 'Salut' }],
+    })) {
+      chunks.push(chunk);
+    }
+    expect(chunks).toEqual(['Bonjour']);
+    expect(sentBody().reasoning).toEqual({ enabled: false });
+  });
+
+  it('le diagnostic structuré désactive aussi le raisonnement caché sur OpenRouter', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+      );
+
+    await new LlmService().completeStructured(request);
+    expect(sentBody().reasoning).toEqual({ enabled: false });
+  });
+
+  it('pas de champ reasoning vers Groq pour le diagnostic', async () => {
+    process.env.GROQ_API_KEY = 'groq-key';
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+      );
+    await new LlmService().completeStructured(request);
+    expect(sentBody()).not.toHaveProperty('reasoning');
+  });
+
+  it('completeJson : un corps qui ne vient jamais est coupé par le délai', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    // En-têtes immédiats, puis le corps ne finit jamais (fournisseur bloqué).
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(stallingStream(['{"choices":'], init.signal), {
+          status: 200,
+        }),
+    ) as unknown as typeof fetch;
+
+    const startedAt = Date.now();
+    await expect(
+      new LlmService().completeJson({
+        system: 's',
+        user: 'u',
+        fallback: { ok: false },
+      }),
+    ).resolves.toEqual({ data: { ok: false }, model: 'local-fallback' });
+    // Deux tentatives de 30 ms, pas les 300 s du bodyTimeout d'undici.
+    expect(Date.now() - startedAt).toBeLessThan(2000);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('completeStructured : un corps bloqué finit en provider_timeout', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(stallingStream([], init.signal), { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      new LlmService().completeStructured(request),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        outcome: 'error',
+        fallbackReason: 'provider_timeout',
+      }),
+    );
+  });
+
+  it('streamText : un flux qui cale après un jeton lève au lieu de pendre', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(
+          // Un jeton, puis seulement des keep-alive : ils ne relancent pas le
+          // délai d'inactivité.
+          stallingStream([sse('Début'), ': OPENROUTER PROCESSING\n\n'], init.signal),
+          { status: 200 },
+        ),
+    ) as unknown as typeof fetch;
+
+    const chunks: string[] = [];
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+        })) {
+          chunks.push(chunk);
+        }
+      })(),
+    ).rejects.toBeInstanceOf(LlmUnavailableError);
+    expect(chunks).toEqual(['Début']);
+  });
+
+  it('streamText : un délai total borne la réponse même si les jetons continuent', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '1000';
+    process.env.LLM_STREAM_TIMEOUT_MS = '60';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              const encoder = new TextEncoder();
+              const timer = setInterval(
+                () => controller.enqueue(encoder.encode(sse('x'))),
+                10,
+              );
+              init.signal?.addEventListener('abort', () => {
+                clearInterval(timer);
+                controller.error(abortError());
+              });
+            },
+          }),
+          { status: 200 },
+        ),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+        })) {
+          void chunk;
+        }
+      })(),
+    ).rejects.toBeInstanceOf(LlmUnavailableError);
+  });
+
+  it("streamText : l'abandon par l'appelant annule la requête au fournisseur", async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    let providerSignal: AbortSignal | null | undefined;
+    global.fetch = jest.fn(async (_url: string, init: RequestInit) => {
+      providerSignal = init.signal;
+      return new Response(stallingStream([sse('Début')], init.signal), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const caller = new AbortController();
+    const chunks: string[] = [];
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+          signal: caller.signal,
+        })) {
+          chunks.push(chunk);
+          caller.abort();
+        }
+      })(),
+    ).rejects.toBeInstanceOf(LlmUnavailableError);
+    expect(chunks).toEqual(['Début']);
+    expect(providerSignal?.aborted).toBe(true);
+  });
+});

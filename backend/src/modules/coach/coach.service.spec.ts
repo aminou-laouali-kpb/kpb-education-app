@@ -427,4 +427,78 @@ describe('CoachService — AI consent gate', () => {
     });
     expect(events.some((e) => e.type === 'token')).toBe(false);
   });
+
+  // ── Audit 22/11/2026, constats 14 et 15 ───────────────────────────────────
+
+  // Le budget de jetons part en raisonnement caché : le flux se termine sans
+  // un seul jeton. Ce n'est pas une réponse : remboursement, pas de bulle
+  // vide enregistrée, événement d'erreur.
+  it('une réponse vide est remboursée et n’est pas enregistrée', async () => {
+    const service = makeService(new Date());
+    const refund = jest.fn();
+    const internals = service as unknown as {
+      quotaService: { refund: jest.Mock };
+      llmService: LlmService;
+    };
+    internals.quotaService.refund = refund;
+    internals.llmService = {
+      async *streamText() {
+        yield '  ';
+      },
+    } as unknown as LlmService;
+    const created = await service.createConversation('user-a', {});
+
+    const events = await collect(
+      service.streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      }),
+    );
+    const roles = (await service.getMessages(created.conversationId, 'user-a')).map(
+      (message) => (message as { role: string }).role,
+    );
+
+    expect(events.at(-1)).toMatchObject({ type: 'error' });
+    expect(events.some((e) => e.type === 'done')).toBe(false);
+    expect(refund).toHaveBeenCalledTimes(1);
+    // Accueil puis question de l'élève : aucune réponse vide.
+    expect(roles).toEqual(['assistant', 'user']);
+  });
+
+  // L'élève ferme l'écran : Nest se désabonne, la requête au fournisseur doit
+  // être annulée au lieu d'être lue (et payée) jusqu'au bout.
+  it('le désabonnement du client annule la requête au fournisseur', async () => {
+    const service = makeService(new Date());
+    let received: AbortSignal | undefined;
+    let firstToken!: () => void;
+    const tokenSent = new Promise<void>((resolve) => (firstToken = resolve));
+    (service as unknown as { llmService: LlmService }).llmService = {
+      async *streamText(params: { signal?: AbortSignal }) {
+        received = params.signal;
+        yield 'Début';
+        firstToken();
+        await new Promise<void>((_resolve, reject) =>
+          params.signal?.addEventListener('abort', () =>
+            reject(new Error('aborted')),
+          ),
+        );
+      },
+    } as unknown as LlmService;
+    const created = await service.createConversation('user-a', {});
+
+    const subscription = service
+      .streamReply({
+        conversationId: created.conversationId,
+        userId: 'user-a',
+        message: 'Bonjour',
+        profile: { preferredLanguage: 'fr' },
+      })
+      .subscribe();
+    await tokenSent;
+    expect(received?.aborted).toBe(false);
+    subscription.unsubscribe();
+    expect(received?.aborted).toBe(true);
+  });
 });
