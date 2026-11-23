@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, type PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import { randomBytes } from 'crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -89,8 +89,8 @@ export class ReferralsService {
     const code = normalizeReferralCode(rawCode);
     if (code.length < 4) throw unknownCodeError();
     const now = context.now ?? new Date();
-    const out = await this.prisma.execute(async (db) => {
-      const referrer = await this.resolveReferrer(db, code, rawCode);
+    const out = await this.prisma.execute(async (client) => {
+      const referrer = await this.resolveReferrer(client, code, rawCode);
       if (!referrer) throw unknownCodeError();
       if (referrer.profileId === userId) {
         throw new ForbiddenException({
@@ -99,76 +99,92 @@ export class ReferralsService {
         });
       }
 
-      const existing = await db.referral.findUnique({
-        where: { refereeProfileId: userId },
-      });
-      if (existing) {
-        // Already attributed (to anyone) — do not reassign. Rattaché à UN AUTRE
-        // parrain : la réponse le dit (`referredByOther`), pour que l'app
-        // l'annonce au lieu d'un faux succès silencieux.
-        const sameReferrer = existing.referrerId === referrer.profileId;
+      // Audit 2026-11-22, constat 24 : les contrôles ci-dessous (déjà
+      // rattaché, parrainage croisé, plafond horaire) sont des lectures suivies
+      // d'une écriture. Hors transaction, deux requêtes simultanées (A avec le
+      // code de B et B avec celui de A, ou N filleuls sur le même code) les
+      // passaient toutes. Verrous transactionnels pris sur les DEUX profils,
+      // dans un ordre fixe (pas d'interblocage) : la paire A/B et tous les
+      // rattachements d'un même parrain sont sérialisés ; chaque requête
+      // relit ensuite l'état validé par la précédente. Les verrous tombent
+      // avec la transaction.
+      return client.$transaction(async (tx) => {
+        const db = tx as PrismaClient;
+        for (const id of [userId, referrer.profileId].sort()) {
+          await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`referral-redeem:${id}`}))`;
+        }
+
+        const existing = await db.referral.findUnique({
+          where: { refereeProfileId: userId },
+        });
+        if (existing) {
+          // Already attributed (to anyone) — do not reassign. Rattaché à UN AUTRE
+          // parrain : la réponse le dit (`referredByOther`), pour que l'app
+          // l'annonce au lieu d'un faux succès silencieux.
+          const sameReferrer = existing.referrerId === referrer.profileId;
+          return {
+            result: {
+              attributed: sameReferrer,
+              alreadyReferred: true,
+              referredByOther: !sameReferrer,
+            },
+            created: null,
+          };
+        }
+
+        // Parrainage croisé : A parrain de B puis B parrain de A, et chacun
+        // gagnait un crédit (ferme à comptes).
+        const reverse = await db.referral.findFirst({
+          where: { referrerId: userId, refereeProfileId: referrer.profileId },
+          select: { id: true },
+        });
+        if (reverse) {
+          throw new ForbiddenException({
+            code: 'referral_cross' satisfies ReferralRedeemErrorCode,
+            message: 'Mutual referrals are not allowed.',
+          });
+        }
+
+        // Un code saisi après coup ne doit pas rémunérer un dossier déjà déposé :
+        // le parrainage s'applique avant la première demande.
+        const existingCases = await db.case.count({ where: { userId } });
+        if (existingCases > 0) {
+          throw new ForbiddenException({
+            code: 'referral_has_case' satisfies ReferralRedeemErrorCode,
+            message: 'A referral code must be used before your first request.',
+          });
+        }
+
+        // Plafond de rattachements par code et par heure (anti-ferme). Au-delà,
+        // le filleul réessaie plus tard ; rien n'est créé.
+        const lastHour = await db.referral.count({
+          where: {
+            referrerId: referrer.profileId,
+            createdAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) },
+          },
+        });
+        if (lastHour >= referralCodeHourlyLimit()) {
+          throw new HttpException(
+            {
+              statusCode: HttpStatus.TOO_MANY_REQUESTS,
+              code: 'referral_code_rate_limited' satisfies ReferralRedeemErrorCode,
+              message: 'This code has reached its hourly limit. Try again later.',
+            },
+            HttpStatus.TOO_MANY_REQUESTS,
+          );
+        }
+
+        await db.referral.create({
+          data: { referrerId: referrer.profileId, refereeProfileId: userId },
+        });
+        if (referrer.ambassadorId) {
+          await this.attachToAmbassador(db, referrer.ambassadorId, userId);
+        }
         return {
-          result: {
-            attributed: sameReferrer,
-            alreadyReferred: true,
-            referredByOther: !sameReferrer,
-          },
-          created: null,
+          result: { attributed: true, alreadyReferred: false, referredByOther: false },
+          created: referrer,
         };
-      }
-
-      // Parrainage croisé : A parrain de B puis B parrain de A, et chacun
-      // gagnait un crédit (ferme à comptes).
-      const reverse = await db.referral.findFirst({
-        where: { referrerId: userId, refereeProfileId: referrer.profileId },
-        select: { id: true },
       });
-      if (reverse) {
-        throw new ForbiddenException({
-          code: 'referral_cross' satisfies ReferralRedeemErrorCode,
-          message: 'Mutual referrals are not allowed.',
-        });
-      }
-
-      // Un code saisi après coup ne doit pas rémunérer un dossier déjà déposé :
-      // le parrainage s'applique avant la première demande.
-      const existingCases = await db.case.count({ where: { userId } });
-      if (existingCases > 0) {
-        throw new ForbiddenException({
-          code: 'referral_has_case' satisfies ReferralRedeemErrorCode,
-          message: 'A referral code must be used before your first request.',
-        });
-      }
-
-      // Plafond de rattachements par code et par heure (anti-ferme). Au-delà,
-      // le filleul réessaie plus tard ; rien n'est créé.
-      const lastHour = await db.referral.count({
-        where: {
-          referrerId: referrer.profileId,
-          createdAt: { gte: new Date(now.getTime() - 60 * 60 * 1000) },
-        },
-      });
-      if (lastHour >= referralCodeHourlyLimit()) {
-        throw new HttpException(
-          {
-            statusCode: HttpStatus.TOO_MANY_REQUESTS,
-            code: 'referral_code_rate_limited' satisfies ReferralRedeemErrorCode,
-            message: 'This code has reached its hourly limit. Try again later.',
-          },
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
-
-      await db.referral.create({
-        data: { referrerId: referrer.profileId, refereeProfileId: userId },
-      });
-      if (referrer.ambassadorId) {
-        await this.attachToAmbassador(db, referrer.ambassadorId, userId);
-      }
-      return {
-        result: { attributed: true, alreadyReferred: false, referredByOther: false },
-        created: referrer,
-      };
     });
 
     if (out?.created) {
@@ -218,26 +234,25 @@ export class ReferralsService {
       where: { id: refereeId },
       select: { fullName: true },
     });
-    try {
-      await db.ambassadorReferral.create({
-        data: {
+    // Déjà rattaché à un ambassadeur (contrainte unique) : rien à refaire.
+    // `skipDuplicates` (ON CONFLICT DO NOTHING) plutôt qu'un P2002 rattrapé :
+    // on est dans une transaction, et une erreur SQL l'aurait annulée en
+    // entier (rattachement `Referral` compris).
+    const { count } = await db.ambassadorReferral.createMany({
+      data: [
+        {
           ambassadorId,
           refereeProfileId: refereeId,
           refereeName: refereeDisplayName(referee?.fullName ?? ''),
         },
-      });
+      ],
+      skipDuplicates: true,
+    });
+    if (count > 0) {
       await db.ambassador.update({
         where: { id: ambassadorId },
         data: { totalReferrals: { increment: 1 } },
       });
-    } catch (error) {
-      // Déjà rattaché à un ambassadeur (contrainte unique) : rien à refaire.
-      if (
-        !(error instanceof Prisma.PrismaClientKnownRequestError) ||
-        error.code !== 'P2002'
-      ) {
-        throw error;
-      }
     }
   }
 
