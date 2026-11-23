@@ -1,8 +1,9 @@
 import { createHash } from 'crypto';
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
+import { HttpStatus, UnauthorizedException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 import { AuthService } from './auth.service';
 import { AdminUsersService } from '../admin-users/admin-users.service';
@@ -194,6 +195,72 @@ describe('AuthService', () => {
     } finally {
       process.env.NODE_ENV = previousEnv;
     }
+  });
+
+  describe('verrouillage du login par couple (e-mail, IP)', () => {
+    const admin = {
+      id: 'admin-lock',
+      fullName: 'Admin Lock',
+      email: 'admin-lock@kpb.education',
+      role: 'admin',
+      languageScope: ['fr'],
+      isActive: true,
+      workload: 0,
+    };
+    let passwordHash: string;
+
+    beforeAll(async () => {
+      passwordHash = await bcrypt.hash('bon-mot-de-passe', 4);
+    });
+
+    beforeEach(() => {
+      mockAdminUsersService.findActiveUserByEmailWithCredentials.mockResolvedValue(
+        { ...admin, passwordHash, refreshToken: null },
+      );
+    });
+
+    async function failFrom(ip: string, times: number) {
+      for (let i = 0; i < times; i++) {
+        await expect(
+          service.login(admin.email, 'mauvais', ip),
+        ).rejects.toThrow(UnauthorizedException);
+      }
+    }
+
+    it("des échecs depuis l'IP d'un attaquant ne bloquent pas l'admin sur une autre IP", async () => {
+      await failFrom('203.0.113.66', 5);
+      // L'attaquant est bloqué sur son IP...
+      await expect(
+        service.login(admin.email, 'mauvais', '203.0.113.66'),
+      ).rejects.toMatchObject({ status: HttpStatus.TOO_MANY_REQUESTS });
+
+      // ...mais l'admin légitime se connecte depuis son IP (constat 5).
+      const result = await service.login(
+        admin.email.toUpperCase(),
+        'bon-mot-de-passe',
+        '198.51.100.7',
+      );
+      expect(result.user.id).toBe(admin.id);
+    });
+
+    it('garde la protection brute force : 5 échecs depuis une IP la bloquent, même avec le bon mot de passe', async () => {
+      await failFrom('203.0.113.66', 5);
+      await expect(
+        service.login(admin.email, 'bon-mot-de-passe', '203.0.113.66'),
+      ).rejects.toMatchObject({ status: HttpStatus.TOO_MANY_REQUESTS });
+    });
+
+    it('un succès remet à zéro le compteur de ce couple (e-mail, IP)', async () => {
+      await failFrom('198.51.100.7', 4);
+      await service.login(admin.email, 'bon-mot-de-passe', '198.51.100.7');
+      await failFrom('198.51.100.7', 4);
+      const result = await service.login(
+        admin.email,
+        'bon-mot-de-passe',
+        '198.51.100.7',
+      );
+      expect(result.user.id).toBe(admin.id);
+    });
   });
 
   describe('revokeRefreshToken (logout)', () => {

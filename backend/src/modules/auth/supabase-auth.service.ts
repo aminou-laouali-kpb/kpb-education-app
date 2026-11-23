@@ -33,6 +33,7 @@ const JWKS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 // sinon chaque token forgé déclenche une requête sortante vers Supabase.
 const JWKS_MIN_REFRESH_INTERVAL_MS = 60 * 1000;
 const JWKS_FETCH_TIMEOUT_MS = 5000;
+const AUTH_ADMIN_LOOKUP_TIMEOUT_MS = 5000;
 const SUPABASE_ROLE_TO_ACCOUNT: Record<string, AccountType> = {
   student: 'student',
   parent: 'parent',
@@ -263,6 +264,13 @@ export class SupabaseAuthService {
       };
     }
 
+    // Aucun profil local : avant de provisionner, on vérifie que l'identité
+    // Supabase existe encore. Après DELETE /profiles/me, l'identité est
+    // supprimée mais un access token déjà émis reste valide jusqu'à son exp ;
+    // sans ce contrôle, ce jeton recréait un UserProfile orphelin avec
+    // l'e-mail de l'utilisateur effacé (audit 2026-11-22, constat 6).
+    await this.assertAuthIdentityExists(sub);
+
     const displayName =
       email.split('@')[0]?.replace(/[._-]+/g, ' ').trim() || 'Utilisateur';
     const created = await this.prismaService.execute((prisma) =>
@@ -283,5 +291,56 @@ export class SupabaseAuthService {
       throw new ServiceUnavailableException('Database unavailable.');
     }
     return created;
+  }
+
+  /**
+   * Interroge l'API admin Supabase (clé service-role, déjà requise en
+   * production pour la suppression de compte) : 404 ou utilisateur marqué
+   * supprimé → 401, le jeton ne provisionne rien. Une panne du fournisseur
+   * est un 503 (fail closed, sans déconnecter l'app). N'est appelé qu'au
+   * premier login, jamais sur le chemin courant (profil trouvé par sub).
+   */
+  private async assertAuthIdentityExists(sub: string): Promise<void> {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+    if (!this.supabaseUrl || !key) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new ServiceUnavailableException(
+          'Supabase admin configuration unavailable.',
+        );
+      }
+      // Hors production sans clé admin : provisionnement sans contrôle (dev).
+      return;
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(
+        `${this.supabaseUrl}/auth/v1/admin/users/${encodeURIComponent(sub)}`,
+        {
+          method: 'GET',
+          headers: { apikey: key, authorization: `Bearer ${key}` },
+          signal: AbortSignal.timeout(AUTH_ADMIN_LOOKUP_TIMEOUT_MS),
+        },
+      );
+    } catch {
+      throw new ServiceUnavailableException('Unable to verify account.');
+    }
+
+    if (res.status === 404) {
+      throw new UnauthorizedException('Account has been deleted.');
+    }
+    if (!res.ok) {
+      throw new ServiceUnavailableException('Unable to verify account.');
+    }
+    let body: { id?: unknown; deleted_at?: unknown } | null = null;
+    try {
+      body = (await res.json()) as { id?: unknown; deleted_at?: unknown };
+    } catch {
+      throw new ServiceUnavailableException('Unable to verify account.');
+    }
+    // Suppression « soft » éventuelle côté Supabase, ou réponse incohérente.
+    if (body?.id !== sub || body.deleted_at) {
+      throw new UnauthorizedException('Account has been deleted.');
+    }
   }
 }

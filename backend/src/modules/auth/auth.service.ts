@@ -38,6 +38,20 @@ interface LoginAttempt {
 
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+// Au-delà, on purge les entrées expirées pour borner la mémoire (le couple
+// e-mail/IP est contrôlé par le client).
+const LOGIN_ATTEMPTS_PRUNE_THRESHOLD = 10_000;
+
+/**
+ * Clé du compteur d'échecs : couple (e-mail, IP). Indexé par e-mail seul,
+ * n'importe qui pouvait verrouiller un compte admin connu (5 requêtes /
+ * 15 min) et l'admin légitime recevait un 429 même avec le bon mot de passe
+ * (audit 2026-11-22, constat 5). Le brute force reste limité par IP (ce
+ * compteur + ADMIN_LOGIN_THROTTLE) et par le coût bcrypt.
+ */
+function loginAttemptKey(email: string, clientIp?: string): string {
+  return `${email}|${clientIp?.trim() || 'unknown'}`;
+}
 
 @Injectable()
 export class AuthService {
@@ -56,9 +70,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(email: string, password?: string) {
+  async login(email: string, password?: string, clientIp?: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    this.checkLoginAttempts(normalizedEmail);
+    const attemptKey = loginAttemptKey(normalizedEmail, clientIp);
+    this.checkLoginAttempts(attemptKey);
 
     const dbUser = await this.adminUsersService.findActiveUserByEmailWithCredentials(normalizedEmail);
     
@@ -67,17 +82,17 @@ export class AuthService {
       // Fallback to memory search only if we are allowing mock access (not strictly production)
       const mockUser = await this.adminUsersService.findActiveUserByEmail(email);
       if (!mockUser) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey);
         throw new UnauthorizedException('Unknown or inactive admin account.');
       }
       
       // If we are relying on mock data, we bypass password check for backwards compatibility during dev
       if (process.env.NODE_ENV === 'production') {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey);
         throw new UnauthorizedException('Invalid credentials.');
       }
       
-      this.loginAttempts.delete(normalizedEmail);
+      this.loginAttempts.delete(attemptKey);
       const sessionUser = this.toSessionUser(mockUser);
       return this.issueTokens(sessionUser);
     }
@@ -85,12 +100,12 @@ export class AuthService {
     // Standard secure flow for DB users
     if (dbUser.passwordHash) {
       if (!password) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey);
         throw new UnauthorizedException('Password required.');
       }
       const valid = await bcrypt.compare(password, dbUser.passwordHash);
       if (!valid) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey);
         throw new UnauthorizedException('Invalid email or password.');
       }
     } else {
@@ -101,7 +116,7 @@ export class AuthService {
       }
     }
 
-    this.loginAttempts.delete(normalizedEmail);
+    this.loginAttempts.delete(attemptKey);
     const sessionUser = this.toSessionUser(dbUser);
     return this.issueTokens(sessionUser);
   }
@@ -238,13 +253,13 @@ export class AuthService {
     return { token, refreshToken, user };
   }
 
-  private checkLoginAttempts(email: string): void {
-    const attempt = this.loginAttempts.get(email);
+  private checkLoginAttempts(key: string): void {
+    const attempt = this.loginAttempts.get(key);
     if (!attempt) return;
 
     const elapsed = Date.now() - attempt.firstAttemptAt;
     if (elapsed > LOGIN_WINDOW_MS) {
-      this.loginAttempts.delete(email);
+      this.loginAttempts.delete(key);
       return;
     }
 
@@ -257,10 +272,18 @@ export class AuthService {
     }
   }
 
-  private recordFailedAttempt(email: string): void {
-    const attempt = this.loginAttempts.get(email);
-    if (!attempt || Date.now() - attempt.firstAttemptAt > LOGIN_WINDOW_MS) {
-      this.loginAttempts.set(email, { count: 1, firstAttemptAt: Date.now() });
+  private recordFailedAttempt(key: string): void {
+    const now = Date.now();
+    const attempt = this.loginAttempts.get(key);
+    if (!attempt || now - attempt.firstAttemptAt > LOGIN_WINDOW_MS) {
+      if (this.loginAttempts.size >= LOGIN_ATTEMPTS_PRUNE_THRESHOLD) {
+        for (const [k, a] of this.loginAttempts) {
+          if (now - a.firstAttemptAt > LOGIN_WINDOW_MS) {
+            this.loginAttempts.delete(k);
+          }
+        }
+      }
+      this.loginAttempts.set(key, { count: 1, firstAttemptAt: now });
     } else {
       attempt.count++;
     }
