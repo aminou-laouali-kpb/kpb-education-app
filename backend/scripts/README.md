@@ -34,9 +34,15 @@ Runs `seed:countries-m5`, then `seed:catalogue-unique` (d01..d12 fields,
 Senegal, general non-partner institutions and programs).
 
 It no longer chains `seed:omnes` and `seed:partners`: both now run on their own,
-on purpose (sections 4 and 5). Note that the two seeds it still runs upsert
-their rows with a full update — re-running them reverts admin edits on those
-rows — and have no production guard yet.
+on purpose (sections 4 and 5). The two seeds it still runs are create-only: a
+row already in the database (field, country, institution, program) is never
+rewritten, a country retired in the admin (`isActive=false`) is never
+reactivated, and an institution's `programIds` is only ever extended with the
+programs that run just created. Only the M5 eligibility quizzes (not editable
+in the admin) are kept in sync with the seed.
+
+Both refuse to run on a production database that already holds their rows,
+unless `KPB_ALLOW_PRODUCTION_SEED=1` (see `src/common/seed-safety.ts`).
 
 ## 4) OMNES programs
 

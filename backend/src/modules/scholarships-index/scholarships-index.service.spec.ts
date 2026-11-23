@@ -634,6 +634,59 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
       expect(update).not.toHaveBeenCalled();
     });
 
+    it('flags an approval that leaves the scholarship inactive (unpublished)', async () => {
+      const update = jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'sch-1',
+        isActive: false,
+        ...data,
+      }));
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (client: unknown) => unknown) =>
+          fn({ scholarship: { update } }),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        { assertReady: jest.fn() } as unknown as ScholarshipContentQualityService,
+      );
+
+      const result = (await service.setModeration('sch-1', 'approved')) as Record<
+        string,
+        unknown
+      >;
+      expect(result.moderationStatus).toBe('approved');
+      expect(result.publicationWarning).toEqual(expect.stringContaining('inactive'));
+      // Approuver ne réactive pas d'office : `isActive` n'est pas écrit.
+      expect(update.mock.calls[0][0].data).not.toHaveProperty('isActive');
+    });
+
+    it('returns no warning when the approved scholarship is active', async () => {
+      const update = jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'sch-1',
+        isActive: true,
+        ...data,
+      }));
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (client: unknown) => unknown) =>
+          fn({ scholarship: { update } }),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        { assertReady: jest.fn() } as unknown as ScholarshipContentQualityService,
+      );
+
+      const result = (await service.setModeration('sch-1', 'approved')) as Record<
+        string,
+        unknown
+      >;
+      expect(result).not.toHaveProperty('publicationWarning');
+    });
+
     it('returns a localized detail with published videos and alert state', async () => {
       const detailRow = {
         ...baseRow,
@@ -1064,6 +1117,30 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     await service.refresh();
     expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-rejected']);
     expect(upserts[0].update.isActive).toBeUndefined();
+  });
+
+  it('does not deactivate anything for a source whose crawl window was truncated', async () => {
+    const { service, updateManyCalls, upserts } = makeService({
+      greatYop: async () =>
+        ({ rows: [scraped('greatyop-a')], complete: false }) as unknown as unknown[],
+    });
+    const result = await service.refresh();
+    // Les fiches lues sont bien mises à jour…
+    expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-a']);
+    // …mais celles sorties de la fenêtre ne sont pas retirées.
+    expect(updateManyCalls).toHaveLength(0);
+    expect(result.sources[0]).toMatchObject({ complete: false, deactivated: 0 });
+  });
+
+  it('deactivates missing rows once the scraper reports a complete crawl', async () => {
+    const { service, updateManyCalls } = makeService({
+      greatYop: async () =>
+        ({ rows: [scraped('greatyop-a')], complete: true }) as unknown as unknown[],
+    });
+    const result = await service.refresh();
+    expect(result.sources[0].complete).toBe(true);
+    expect(updateManyCalls).toHaveLength(1);
+    expect(updateManyCalls[0].where.NOT.sourceKey.in).toEqual(['greatyop-a']);
   });
 
   it('refuses a second refresh while one is running', async () => {

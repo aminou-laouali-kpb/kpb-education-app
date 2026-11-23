@@ -272,7 +272,8 @@ aucune config nginx à écrire. Les limites `mem_limit` du `docker-compose.yml`
 protègent la box 8 Go partagée (une fuite Mautic/n8n ne peut pas tuer l'API).
 
 > Stockage des documents : le fallback disque est persisté sur le volume
-> `kpb-uploads` (OK sur VPS). Pour décharger le disque, renseigner les
+> `kpb-uploads` (OK sur VPS), archivé chaque jour par `db-backup` (voir
+> « Sauvegardes »). Pour décharger le disque, renseigner les
 > `KPB_S3_*` (Scaleway Paris `fr-par`, Bunny, ou R2) — voir §backend.
 
 > ⚠️ Ne pas ajouter un 2ᵉ reverse-proxy : le conteneur `traefik-hctj` en
@@ -401,7 +402,7 @@ Lorsque l'API Container est lancé pour la première fois, la base de données e
 
 ```bash
 docker exec -it kpb_api npx prisma migrate deploy
-docker exec -it kpb_api npm run seed:catalog   # pays + catalogue unique
+docker exec -it kpb_api npm run seed:catalog   # pays + catalogue unique (création seule ; refusé sur une base de prod déjà semée, sauf KPB_ALLOW_PRODUCTION_SEED=1)
 docker exec -it kpb_api sh -c 'npm run import:omnes:bundled && npm run seed:omnes'  # formations OMNES
 docker exec -it kpb_api npm run seed:partners  # écoles partenaires (annexe 05)
 docker exec -it kpb_api npm run prisma:seed    # comptes admin (mots de passe temporaires imprimés une fois) + contenu de démo
@@ -432,24 +433,36 @@ gzippé par jour dans `./backups` sur le VPS (bind mount → les dumps survivent
 `docker-compose down -v`), avec une rétention de `BACKUP_KEEP_DAYS` jours (14 par
 défaut ; réglable dans `.env`).
 
+Au même passage, il archive le volume `kpb-uploads` (pièces de dossier des
+élèves : relevés, passeports, preuves — monté en lecture seule) en
+`./backups/kpb-uploads-AAAAMMJJ-HHMMSSZ.tar.gz`, avec la même rétention. Sans
+cette archive, une base restaurée pointerait vers des documents perdus
+(téléchargements en 404/500).
+
 Le conteneur est marqué `unhealthy` si aucun dump quotidien non vide de moins de
+30 heures n'existe, ou si aucune archive `kpb-uploads-*.tar.gz` de moins de
 30 heures n'existe. Le workflow **Backup readiness** vérifie cet état et
 l'intégrité de l'archive toutes les six heures. Le workflow manuel **Backup
 restore drill** restaure dans un conteneur et un volume jetables, jamais dans
 `kpb_db`.
 Voir [`go-live-operations-gates.md`](go-live-operations-gates.md#3-backup-heartbeat-and-safe-restore-evidence).
 
-**Important — copie hors-site :** `./backups` est sur le même disque que la base.
-Pour protéger contre une perte totale du VPS, synchronisez ce dossier vers un
-stockage externe (les identifiants S3 `KPB_S3_*` existent déjà). Exemple de cron
-hôte (quotidien) :
+**Important — copie hors-site :** `./backups` (dumps ET archives des pièces) est
+sur le même disque que la base. Pour protéger contre une perte totale du VPS,
+synchronisez ce dossier vers un stockage externe (les identifiants S3 `KPB_S3_*`
+existent déjà). Exemple de cron hôte (quotidien) :
 
 ```bash
 # crontab -e  (sur le VPS)
-30 3 * * * aws s3 sync /chemin/vers/repo/backups s3://VOTRE_BUCKET/db-backups --delete
+30 3 * * * aws s3 sync /chemin/vers/repo/backups s3://VOTRE_BUCKET/db-backups
 ```
 
-**Restauration** (écrase la base — arrêter l'API d'abord) :
+Pas de `--delete` : un miroir propagerait au prochain cron un effacement local
+de `./backups` (rétention, erreur, rançongiciel) aux copies hors-site. Purgez
+le bucket par une règle de cycle de vie (et activez de préférence le
+versioning / object lock).
+
+**Restauration de la base** (remplace la base — arrêter l'API d'abord) :
 
 ```bash
 docker-compose stop api
@@ -458,10 +471,41 @@ POSTGRES_USER=kpb_admin POSTGRES_DB=kpb_prod \
 docker-compose up -d api
 ```
 
+Le script accepte les dumps `kpb-*.sql.gz` (service `db-backup`) et
+`predeploy-*.dump` (étape pré-déploiement). Les dumps ne contenant aucun `DROP`,
+il ne les rejoue PAS dans la base en place (échec au premier `CREATE … already
+exists`) : il restaure dans une base neuve `kpb_prod_restore_<horodatage>`,
+vérifie le résultat, puis échange les noms. La base remplacée est conservée sous
+`kpb_prod_pre_restore_<horodatage>` (retour arrière : la renommer à l'inverse) ;
+supprimez-la une fois la restauration validée, avec la commande affichée en fin
+de script. Un échec avant l'échange laisse la base actuelle intacte. Le script
+refuse de tourner si `kpb_api` est démarré, et demande de taper le nom de la base
+(ou `KPB_RESTORE_CONFIRM=kpb_prod` en non interactif). Prévoir l'espace disque
+d'une seconde copie de la base pendant l'opération.
+
+**Restauration des pièces de dossier** (volume `kpb-uploads`, API arrêtée) —
+avec l'archive de la même date que le dump restauré :
+
+```bash
+docker-compose stop api
+docker run --rm --volumes-from kpb_api -v "$PWD/backups:/backups:ro" \
+  --entrypoint sh postgres:15-alpine \
+  -c 'tar -xzf /backups/kpb-uploads-AAAAMMJJ-HHMMSSZ.tar.gz -C /app/uploads'
+docker-compose up -d api
+```
+
+L'extraction ajoute ou remplace les fichiers de l'archive sans supprimer ceux
+créés depuis (`--volumes-from` fonctionne aussi sur le conteneur arrêté). Après
+une perte du volume, recréez d'abord la pile (`docker compose up --no-start`)
+pour que `kpb_api` et un volume vide existent.
+
 Testez une restauration complète sur un environnement jetable avant le lancement.
 La commande sûre par défaut est `BACKUP_DIR=./backups scripts/restore-drill.sh`;
 elle ne fait qu'afficher le plan. Utilisez le workflow avec
-`execute_restore_drill=true` pour obtenir une preuve Actions horodatée.
+`execute_restore_drill=true` pour obtenir une preuve Actions horodatée : avec
+`--execute`, l'exercice passe par `backend/scripts/restore-db.sh` (lancé depuis la
+racine du dépôt), deux fois, la seconde par-dessus la base déjà peuplée — le cas
+réel d'un incident.
 
 ---
 

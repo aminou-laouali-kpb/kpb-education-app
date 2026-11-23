@@ -18,9 +18,26 @@ export interface ScholarshipScraper {
    * Fetch + parse the upstream index. Returns [] on any parse error rather
    * than throwing — a single flaky source shouldn't break the whole 48h
    * refresh. The service logs partial failures.
+   *
+   * Un tableau nu vaut liste EXHAUSTIVE de la source : le service désactive
+   * alors les fiches absentes. Un scraper qui ne lit qu'une fenêtre bornée
+   * (pages plafonnées, articles plafonnés, articles sautés sur erreur) DOIT
+   * renvoyer `{ rows, complete }` et ne poser `complete: true` que s'il a tout
+   * lu : sinon une bourse sortie de la fenêtre serait retirée alors qu'elle est
+   * toujours en ligne.
    */
-  fetch(): Promise<ScrapedScholarship[]>;
+  fetch(): Promise<ScrapedScholarship[] | ScraperFetchResult>;
 }
+
+/** Résultat d'un crawl qui sait dire s'il a couvert toute la source. */
+export type ScraperFetchResult = {
+  rows: ScrapedScholarship[];
+  /**
+   * `true` seulement si toutes les pages de listing ont été parcourues jusqu'à
+   * leur fin ET tous les articles listés ont été lus sans erreur.
+   */
+  complete: boolean;
+};
 
 export type FundingType = 'fully_funded' | 'partially_funded' | 'unknown';
 

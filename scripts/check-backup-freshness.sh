@@ -67,6 +67,27 @@ case "$newest" in
     ;;
 esac
 
+# Archive des pièces de dossier (volume kpb-uploads), produite par le même
+# service : vérifiée dès qu'il en existe une, pour qu'une boucle d'archivage
+# cassée se voie (un répertoire sans aucune archive reste accepté, comme avant
+# le premier passage).
+uploads_newest="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'kpb-uploads-*.tar.gz' \
+  -print0 | xargs -0 -r ls -1t | head -1 || true)"
+if [ -z "$BACKUP_FILE" ] && [ -n "$uploads_newest" ]; then
+  uploads_mtime="$(stat -c %Y "$uploads_newest" 2>/dev/null || stat -f %m "$uploads_newest")"
+  uploads_age=$((now - uploads_mtime))
+  [ "$uploads_age" -le "$MAX_AGE_SECONDS" ] || {
+    echo "error: newest uploads archive is ${uploads_age}s old (maximum ${MAX_AGE_SECONDS}s): $uploads_newest" >&2
+    exit 1
+  }
+  tar -tzf "$uploads_newest" >/dev/null || {
+    echo "error: uploads archive is unreadable: $uploads_newest" >&2
+    exit 1
+  }
+  echo "uploads_archive=$(basename "$uploads_newest")"
+  echo "uploads_archive_age_seconds=$uploads_age"
+fi
+
 echo "backup_service=${service_state:-not-checked}"
 echo "backup_file=$(basename "$newest")"
 echo "backup_bytes=$bytes"
