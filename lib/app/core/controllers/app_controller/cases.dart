@@ -9,6 +9,15 @@ LocalizedText _caseText(String key) => LocalizedText(
       en: appTranslationsEn[key] ?? key,
     );
 
+/// Le jeton d'un écran de dossier abonné au temps réel (voir
+/// `connectCaseDetailSocket`). Un objet par écran : deux écrans du même
+/// dossier tiennent deux jetons distincts.
+class _CaseSocketLease {
+  _CaseSocketLease(this.caseId);
+
+  final String caseId;
+}
+
 /// Dossiers : création, messagerie (socket + file d’envoi), documents.
 mixin _CasesMixin on _AppControllerBase {
   StudentCase submitCase({
@@ -434,26 +443,71 @@ mixin _CasesMixin on _AppControllerBase {
     update();
   }
 
-  Future<void> connectCaseDetailSocket(String caseId) async {
-    if (!AppConfig.enableRemoteSync) return;
+  /// Abonne un écran de dossier au temps réel et rend son JETON, à rendre à
+  /// [disconnectCaseDetailSocket] quand l'écran se ferme.
+  ///
+  /// Le contrôleur n'a qu'un socket, mais plusieurs écrans de dossier peuvent
+  /// s'empiler (notification ou lien profond `/cases/<id>` par-dessus un
+  /// dossier ouvert). Chaque écran tient donc un jeton dans une pile, et le
+  /// socket suit le dossier de l'écran du DESSUS : fermer le dossier B ouvert
+  /// par-dessus A rebranche le temps réel sur A, au lieu de le couper. Seul le
+  /// dernier écran qui ferme un dossier le quitte (audit du 22/11/2026,
+  /// n° 19).
+  Object connectCaseDetailSocket(String caseId) {
+    final lease = _CaseSocketLease(caseId);
+    if (!AppConfig.enableRemoteSync) return lease;
     // Ouvrir un dossier relance aussi la file d'envoi : sans transition de
     // réseau, rien d'autre ne la vidait avant la prochaine synchro.
     if (ConnectivityService.instance.isOnline) {
       unawaited(flushPendingCaseMessages());
     }
-    caseId = resolveCaseId(caseId);
-    // Un dossier encore local n'a pas de room côté serveur.
-    if (_localCaseId.hasMatch(caseId)) return;
+    _caseSocketLeases.add(lease);
+    unawaited(_syncCaseSocket());
+    return lease;
+  }
+
+  /// Rend le jeton de [connectCaseDetailSocket]. Le socket ne quitte le
+  /// dossier que si plus aucun écran ne le tient ; sinon il revient au
+  /// dossier de l'écran resté au-dessus.
+  Future<void> disconnectCaseDetailSocket(Object lease) async {
+    if (!_caseSocketLeases.remove(lease)) return;
+    await _syncCaseSocket();
+  }
+
+  /// Aligne le socket sur le dossier de l'écran du dessus de la pile.
+  ///
+  /// [_caseSocketRevision] change à chaque appel : après chaque attente, un
+  /// alignement dépassé par un plus récent (écran fermé pendant
+  /// `hasAuthSession`) s'arrête, au lieu de laisser un socket ouvert sur un
+  /// dossier qui n'est plus affiché.
+  Future<void> _syncCaseSocket() async {
+    final revision = ++_caseSocketRevision;
+    final top = _caseSocketLeases.isEmpty ? null : _caseSocketLeases.last;
+    final caseId = top == null ? null : resolveCaseId(top.caseId);
+    // Plus d'écran, ou un dossier encore local (pas de room côté serveur).
+    if (caseId == null || _localCaseId.hasMatch(caseId)) {
+      await _caseSocket.disconnect();
+      _caseSocketGeneration = null;
+      isCaseAdvisorTyping = false;
+      update();
+      return;
+    }
+    // Déjà dans la room de ce dossier, pour le compte connecté : rien à faire.
+    final joinedGeneration = _caseSocketGeneration;
+    if (_caseSocket.currentCaseId == caseId &&
+        joinedGeneration != null &&
+        !_isStaleSession(joinedGeneration)) {
+      return;
+    }
     // Le socket écoute le dossier du compte connecté à l'ouverture : après
     // une déconnexion, ses événements ne réécrivent plus l'état (audit du
     // 22/11/2026, n° 3).
     final generation = _sessionGeneration;
     if (!await _apiClient.hasAuthSession()) return;
-    if (_isStaleSession(generation)) return;
+    if (revision != _caseSocketRevision || _isStaleSession(generation)) return;
 
-    await _caseSocket.connect(caseId);
-    if (_isStaleSession(generation)) return;
-
+    // Écouteurs posés AVANT la connexion : le service les rattache au
+    // nouveau socket, et ils portent le dossier qu'il rejoint.
     _caseSocket.onMessage((data) {
       if (_isStaleSession(generation)) return;
       ingestRemoteCaseMessage(caseId, data);
@@ -481,12 +535,10 @@ mixin _CasesMixin on _AppControllerBase {
         });
       }
     });
-  }
-
-  Future<void> disconnectCaseDetailSocket() async {
-    await _caseSocket.disconnect();
+    // L'indicateur « en train d'écrire » appartenait au dossier quitté.
     isCaseAdvisorTyping = false;
-    update();
+    _caseSocketGeneration = generation;
+    await _caseSocket.connect(caseId);
   }
 
   String? _lastTypingCaseId;

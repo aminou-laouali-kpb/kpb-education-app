@@ -619,6 +619,10 @@ mixin _SessionMixin on _AppControllerBase {
     // reste ouvert et ses requêtes en vol ne sont pas perdues.
     _sessionClosings++;
     try {
+      // L'identité PostHog du compte supprimé ne doit pas survivre (RGPD) :
+      // sans cette remise à zéro, la session suivante sur ce téléphone était
+      // attribuée à son distinct_id.
+      unawaited(AnalyticsService.instance.resetIdentity());
       unawaited(PushService.instance.logout());
       if (Get.isRegistered<AuthService>()) {
         await Get.find<AuthService>().clearSession();

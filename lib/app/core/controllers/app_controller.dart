@@ -146,7 +146,11 @@ class AppController extends _AppControllerBase
         _OrientationMixin,
         _CasesMixin,
         _CatalogSyncMixin {
-  AppController({required super.repository, super.apiClient}) {
+  AppController({
+    required super.repository,
+    super.apiClient,
+    super.caseSocket,
+  }) {
     // Le « Mode données réduites » coupe aussi les animations
     // (KpbMotion.of) : les tokens lisent ce réglage par cette sonde.
     KpbMotion.dataSaverProbe = () => dataSaverEnabled;
@@ -177,8 +181,10 @@ abstract class _AppControllerBase extends GetxController {
   _AppControllerBase({
     required AppRepository repository,
     AppApiClient? apiClient,
+    CaseSocketService? caseSocket,
   })  : _repository = repository,
-        _apiClient = apiClient ?? AppApiClient();
+        _apiClient = apiClient ?? AppApiClient(),
+        _caseSocket = caseSocket ?? CaseSocketService();
 
   final AppRepository _repository;
   final AppApiClient _apiClient;
@@ -343,7 +349,18 @@ abstract class _AppControllerBase extends GetxController {
   final List<StudentCase> _cases = <StudentCase>[];
   final Map<String, CountryModel> _countryDetailCache =
       <String, CountryModel>{};
-  final CaseSocketService _caseSocket = CaseSocketService();
+  final CaseSocketService _caseSocket;
+
+  /// Écrans de dossier abonnés au temps réel, du plus ancien au plus récent :
+  /// le socket suit le dernier (voir `connectCaseDetailSocket`).
+  final List<_CaseSocketLease> _caseSocketLeases = <_CaseSocketLease>[];
+
+  /// Change à chaque alignement du socket sur la pile ; un alignement dépassé
+  /// s'arrête après son attente.
+  int _caseSocketRevision = 0;
+
+  /// Génération de session sous laquelle le socket a rejoint son dossier.
+  int? _caseSocketGeneration;
   final Map<String, DateTime> _caseLastReadAt = <String, DateTime>{};
   // True while the remote participant is typing (shown in CaseDetailScreen).
   bool isCaseAdvisorTyping = false;

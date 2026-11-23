@@ -81,6 +81,13 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
   final FocusNode _replyFocus = FocusNode();
   bool _sendingReply = false;
 
+  /// Bascules « utile » en cours (le post, puis les réponses par id) : un
+  /// second appui pendant l'envoi est ignoré, sinon helpful=true et
+  /// helpful=false partaient en parallèle et l'état affiché dépendait de
+  /// l'ordre d'arrivée des réponses.
+  bool _postHelpfulInFlight = false;
+  final Set<String> _replyHelpfulInFlight = <String>{};
+
   String get _cacheKey =>
       'post::${_store.accountKey}::${_store.lang}::${widget.postId}';
 
@@ -223,6 +230,16 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
       KpbToast.info('comm_err_react_own'.tr);
       return;
     }
+    if (_postHelpfulInFlight) return;
+    _postHelpfulInFlight = true;
+    try {
+      await _sendPostHelpful(post);
+    } finally {
+      _postHelpfulInFlight = false;
+    }
+  }
+
+  Future<void> _sendPostHelpful(CommunityPost post) async {
     if (!await ensureCommunityCanWrite(context)) return;
     final wanted = !post.viewer.hasMarkedHelpful;
     // Optimiste : l'élève voit sa réaction tout de suite ; le serveur fait foi.
@@ -260,6 +277,15 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
       KpbToast.info('comm_err_react_own'.tr);
       return;
     }
+    if (!_replyHelpfulInFlight.add(reply.id)) return;
+    try {
+      await _sendReplyHelpful(reply);
+    } finally {
+      _replyHelpfulInFlight.remove(reply.id);
+    }
+  }
+
+  Future<void> _sendReplyHelpful(CommunityReply reply) async {
     if (!await ensureCommunityCanWrite(context)) return;
     final wanted = !reply.viewer.hasMarkedHelpful;
     void put(CommunityReply next) => setState(() {
@@ -323,8 +349,18 @@ class _CommunityPostScreenState extends State<CommunityPostScreen> {
     final body = _reply.serializedText.trim();
     if (post == null || _sendingReply) return;
     if (_reply.text.trim().length < CommunityLimitsSpec.replyBodyMin) return;
-    if (!await ensureCommunityCanWrite(context)) return;
+    // Verrou posé AVANT l'attente de `ensureCommunityCanWrite` : elle peut
+    // durer (chargement de la fiche membre en réseau lent, feuille de la
+    // charte). Posé après, un second appui pendant cette attente passait la
+    // garde ci-dessus, et la réponse était publiée deux fois.
     setState(() => _sendingReply = true);
+    var canWrite = false;
+    try {
+      canWrite = await ensureCommunityCanWrite(context);
+    } finally {
+      if (!canWrite && mounted) setState(() => _sendingReply = false);
+    }
+    if (!canWrite) return;
     try {
       final reply = await _store.api.createCommunityReply(
         postId: post.id,
