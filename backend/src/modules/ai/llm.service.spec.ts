@@ -365,6 +365,7 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: { fr: 'Lettre', en: 'Letter' },
       model: 'deepseek/deepseek-v4-flash',
+      billed: true,
     });
     expect(sentBody().reasoning).toEqual({ enabled: false });
   });
@@ -404,6 +405,9 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: params.fallback,
       model: 'local-fallback',
+      // Réponse reçue puis tronquée : payée, l'appelant ne rembourse pas.
+      fallbackReason: 'provider_truncated',
+      billed: true,
     });
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('truncated at max_tokens'),
@@ -432,6 +436,8 @@ describe('LlmService.completeJson', () => {
     await expect(new LlmService().completeJson(params)).resolves.toEqual({
       data: params.fallback,
       model: 'local-fallback',
+      fallbackReason: 'provider_network_error',
+      billed: false,
     });
     // The per-call budget lets the same slow provider answer.
     await expect(
@@ -439,6 +445,7 @@ describe('LlmService.completeJson', () => {
     ).resolves.toEqual({
       data: { fr: 'Lettre', en: 'Letter' },
       model: 'deepseek/deepseek-v4-flash',
+      billed: true,
     });
   });
 });
@@ -490,5 +497,338 @@ describe('LlmService.streamText — fournisseur en panne', () => {
 
   it('avec throwOnUnavailable, lève LlmUnavailableError sans rien rendre', async () => {
     await expect(collect(true)).rejects.toBeInstanceOf(LlmUnavailableError);
+    // Erreur HTTP avant tout flux : rien de facturé, le coach peut rembourser.
+    await expect(collect(true)).rejects.toMatchObject({ billed: false });
+  });
+});
+
+// ── Audit 22/11/2026, constats 14 et 15 ─────────────────────────────────────
+
+describe('LlmService — raisonnement caché et délais de lecture du corps', () => {
+  const ENV = [
+    ...PROVIDER_ENV_VARS,
+    'LLM_REASONING_ENABLED',
+    'LLM_TIMEOUT_MS',
+    'LLM_STREAM_TIMEOUT_MS',
+  ];
+  const previousEnv = Object.fromEntries(
+    ENV.map((name) => [name, process.env[name]]),
+  );
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    for (const name of ENV) delete process.env[name];
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    global.fetch = originalFetch;
+    for (const name of ENV) {
+      const value = previousEnv[name];
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+
+  const abortError = () => {
+    const error = new Error('aborted');
+    error.name = 'AbortError';
+    return error;
+  };
+
+  /// Flux SSE simulé : envoie [chunks], puis reste bloqué (sans jamais finir)
+  /// tant que le signal de la requête n'est pas abandonné — comme undici.
+  const stallingStream = (chunks: string[], signal?: AbortSignal | null) =>
+    new ReadableStream<Uint8Array>({
+      start(controller) {
+        const encoder = new TextEncoder();
+        for (const chunk of chunks) controller.enqueue(encoder.encode(chunk));
+        signal?.addEventListener('abort', () => controller.error(abortError()));
+      },
+    });
+
+  const sse = (text: string) =>
+    `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}\n\n`;
+
+  const sentBody = () =>
+    JSON.parse(
+      ((global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit])[1]
+        .body as string,
+    ) as Record<string, unknown>;
+
+  it('le flux du coach désactive aussi le raisonnement caché sur OpenRouter', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    global.fetch = jest.fn(async () =>
+      new Response(sse('Bonjour') + 'data: [DONE]\n\n', { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    const chunks: string[] = [];
+    for await (const chunk of new LlmService().streamText({
+      system: 'sys',
+      messages: [{ role: 'user', content: 'Salut' }],
+    })) {
+      chunks.push(chunk);
+    }
+    expect(chunks).toEqual(['Bonjour']);
+    expect(sentBody().reasoning).toEqual({ enabled: false });
+  });
+
+  it('le diagnostic structuré désactive aussi le raisonnement caché sur OpenRouter', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+      );
+
+    await new LlmService().completeStructured(request);
+    expect(sentBody().reasoning).toEqual({ enabled: false });
+  });
+
+  it('pas de champ reasoning vers Groq pour le diagnostic', async () => {
+    process.env.GROQ_API_KEY = 'groq-key';
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ choices: [] }), { status: 200 }),
+      );
+    await new LlmService().completeStructured(request);
+    expect(sentBody()).not.toHaveProperty('reasoning');
+  });
+
+  it('completeJson : un corps qui ne vient jamais est coupé par le délai', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    // En-têtes immédiats, puis le corps ne finit jamais (fournisseur bloqué).
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(stallingStream(['{"choices":'], init.signal), {
+          status: 200,
+        }),
+    ) as unknown as typeof fetch;
+
+    const startedAt = Date.now();
+    await expect(
+      new LlmService().completeJson({
+        system: 's',
+        user: 'u',
+        fallback: { ok: false },
+      }),
+    ).resolves.toEqual({
+      data: { ok: false },
+      model: 'local-fallback',
+      // En-têtes 200 reçus : la génération a commencé, donc facturée.
+      fallbackReason: 'provider_interrupted',
+      billed: true,
+    });
+    // Deux tentatives de 30 ms, pas les 300 s du bodyTimeout d'undici.
+    expect(Date.now() - startedAt).toBeLessThan(2000);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('completeStructured : un corps bloqué finit en provider_timeout', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(stallingStream([], init.signal), { status: 200 }),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      new LlmService().completeStructured(request),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        outcome: 'error',
+        fallbackReason: 'provider_timeout',
+      }),
+    );
+  });
+
+  it('streamText : un flux qui cale après un jeton lève au lieu de pendre', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '30';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(
+          // Un jeton, puis seulement des keep-alive : ils ne relancent pas le
+          // délai d'inactivité.
+          stallingStream([sse('Début'), ': OPENROUTER PROCESSING\n\n'], init.signal),
+          { status: 200 },
+        ),
+    ) as unknown as typeof fetch;
+
+    const chunks: string[] = [];
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+        })) {
+          chunks.push(chunk);
+        }
+      })(),
+    ).rejects.toMatchObject({ name: 'LlmUnavailableError', billed: true });
+    expect(chunks).toEqual(['Début']);
+  });
+
+  it('streamText : un délai total borne la réponse même si les jetons continuent', async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    process.env.LLM_TIMEOUT_MS = '1000';
+    process.env.LLM_STREAM_TIMEOUT_MS = '60';
+    global.fetch = jest.fn(
+      async (_url: string, init: RequestInit) =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              const encoder = new TextEncoder();
+              const timer = setInterval(
+                () => controller.enqueue(encoder.encode(sse('x'))),
+                10,
+              );
+              init.signal?.addEventListener('abort', () => {
+                clearInterval(timer);
+                controller.error(abortError());
+              });
+            },
+          }),
+          { status: 200 },
+        ),
+    ) as unknown as typeof fetch;
+
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+        })) {
+          void chunk;
+        }
+      })(),
+    ).rejects.toBeInstanceOf(LlmUnavailableError);
+  });
+
+  it("streamText : l'abandon par l'appelant annule la requête au fournisseur", async () => {
+    process.env.LLM_API_KEY = 'openrouter-key';
+    let providerSignal: AbortSignal | null | undefined;
+    global.fetch = jest.fn(async (_url: string, init: RequestInit) => {
+      providerSignal = init.signal;
+      return new Response(stallingStream([sse('Début')], init.signal), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const caller = new AbortController();
+    const chunks: string[] = [];
+    await expect(
+      (async () => {
+        for await (const chunk of new LlmService().streamText({
+          system: 'sys',
+          messages: [{ role: 'user', content: 'Salut' }],
+          throwOnUnavailable: true,
+          signal: caller.signal,
+        })) {
+          chunks.push(chunk);
+          caller.abort();
+        }
+      })(),
+    ).rejects.toBeInstanceOf(LlmUnavailableError);
+    expect(chunks).toEqual(['Début']);
+    expect(providerSignal?.aborted).toBe(true);
+  });
+});
+
+// Revue du constat 16 : l'appelant doit savoir si le repli a été facturé,
+// sans deviner, pour ne rembourser que ce qui n'a rien coûté.
+describe('LlmService.completeJson — motif de repli et facturation', () => {
+  const ENV = [...PROVIDER_ENV_VARS, 'LLM_TIMEOUT_MS'];
+  const previousEnv = Object.fromEntries(
+    ENV.map((name) => [name, process.env[name]]),
+  );
+  const originalFetch = global.fetch;
+  const params = { system: 's', user: 'u', fallback: { ok: false } };
+
+  beforeEach(() => {
+    for (const name of ENV) delete process.env[name];
+    process.env.LLM_API_KEY = 'openrouter-key';
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    global.fetch = originalFetch;
+    for (const name of ENV) {
+      const value = previousEnv[name];
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  });
+
+  const content = (text: string) =>
+    new Response(
+      JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content: text } }] }),
+      { status: 200 },
+    );
+
+  it('non configuré : non facturé', async () => {
+    delete process.env.LLM_API_KEY;
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      model: 'local-fallback',
+      fallbackReason: 'provider_unconfigured',
+      billed: false,
+    });
+  });
+
+  it('erreur HTTP (429, 4xx, 5xx répétée) : non facturée', async () => {
+    global.fetch = jest
+      .fn()
+      .mockImplementation(async () => new Response('{}', { status: 503 }));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_http_error',
+      billed: false,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('5xx puis réponse tronquée : facturée (une tentative a abouti)', async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(new Response('{}', { status: 502 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ choices: [{ finish_reason: 'length', message: { content: '{' } }] }),
+          { status: 200 },
+        ),
+      );
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_truncated',
+      billed: true,
+    });
+  });
+
+  it('pas de JSON dans la réponse : facturée', async () => {
+    global.fetch = jest.fn().mockResolvedValue(content('Désolé.'));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_no_json',
+      billed: true,
+    });
+  });
+
+  it('JSON invalide : facturé, et PAS de seconde tentative payée', async () => {
+    global.fetch = jest.fn().mockResolvedValue(content('{"score": excellent}'));
+    await expect(new LlmService().completeJson(params)).resolves.toMatchObject({
+      fallbackReason: 'provider_invalid_json',
+      billed: true,
+    });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('LlmUnavailableError — facturation', () => {
+  it('non facturée par défaut, facturée sur demande', () => {
+    expect(new LlmUnavailableError('x').billed).toBe(false);
+    expect(new LlmUnavailableError('x', { billed: true }).billed).toBe(true);
   });
 });

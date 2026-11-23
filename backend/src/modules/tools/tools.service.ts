@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
-import { LlmService } from '../ai/llm.service';
+import { JsonCompletionResult, LlmService } from '../ai/llm.service';
 
 export interface CvSummaryDto {
   name: string;
@@ -62,6 +62,90 @@ export interface InterviewFeedback {
 /// the app's 90 s AI receive timeout.
 export const LETTER_TIMEOUT_MS = 40_000;
 
+/**
+ * 503 pour une génération que le fournisseur n'a PAS facturée (IA non
+ * configurée, erreur réseau ou HTTP, délai avant toute réponse). Seule cette
+ * 503 rend l'unité de quota (voir `ToolsController`).
+ */
+export class AiGenerationNotBilledException extends ServiceUnavailableException {}
+
+/**
+ * Le modèle n'a rien produit d'exploitable. Une 503 dans les deux cas : l'app
+ * installée l'affiche déjà (« service IA indisponible »), au lieu d'un faux
+ * résultat (audit 22/11/2026, constat 16).
+ *
+ * Remboursement seulement si le fournisseur n'a rien facturé. Une réponse
+ * reçue puis tronquée ou mal formée a été payée, et l'élève peut la provoquer
+ * (consigne glissée dans sa réponse, lettre très longue) : la rembourser
+ * offrait des appels illimités au fournisseur (revue du constat 16).
+ */
+function generationFailed(
+  result: JsonCompletionResult<unknown>,
+): ServiceUnavailableException {
+  return result.billed
+    ? new ServiceUnavailableException('AI generation failed.')
+    : new AiGenerationNotBilledException('AI generation failed.');
+}
+
+function notConfigured(): AiGenerationNotBilledException {
+  return new AiGenerationNotBilledException('AI not configured.');
+}
+
+/** Texte non vide, sinon `undefined`. */
+function nonEmptyString(value: unknown, max = 8000): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, max) : undefined;
+}
+
+/** Liste de textes non vides ; une chaîne seule est acceptée comme liste. */
+function stringList(value: unknown, maxItems: number): string[] | undefined {
+  const items = typeof value === 'string' ? [value] : value;
+  if (!Array.isArray(items)) return undefined;
+  return items
+    .map((item) => nonEmptyString(item, 1000))
+    .filter((item): item is string => item !== undefined)
+    .slice(0, maxItems);
+}
+
+/** `{ fr, en }` avec deux textes non vides, sinon `undefined`. */
+export function parseBilingualText(
+  value: unknown,
+): { fr: string; en: string } | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const fr = nonEmptyString((value as Record<string, unknown>).fr);
+  const en = nonEmptyString((value as Record<string, unknown>).en);
+  return fr && en ? { fr, en } : undefined;
+}
+
+/**
+ * Valide et normalise l'évaluation rendue par le modèle : note entière bornée
+ * à 0-100 (une note `"85"` en texte est convertie), listes de textes. Rend
+ * `undefined` si la note manque : pas de note inventée.
+ */
+export function parseInterviewFeedback(
+  value: unknown,
+): InterviewFeedback | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const raw = value as Record<string, unknown>;
+  const score =
+    typeof raw.score === 'number'
+      ? raw.score
+      : typeof raw.score === 'string' && raw.score.trim() !== ''
+        ? Number(raw.score)
+        : Number.NaN;
+  if (!Number.isFinite(score)) return undefined;
+  const strengths = stringList(raw.strengths, 8);
+  const improvements = stringList(raw.improvements, 8);
+  if (!strengths || !improvements) return undefined;
+  return {
+    score: Math.min(100, Math.max(0, Math.round(score))),
+    strengths,
+    improvements,
+    modelAnswer: nonEmptyString(raw.modelAnswer) ?? '',
+  };
+}
+
 @Injectable()
 export class ToolsService {
   private readonly logger = new Logger(ToolsService.name);
@@ -74,7 +158,7 @@ export class ToolsService {
     dto: CvSummaryDto,
   ): Promise<{ fr: string; en: string }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     // The student's civil name is intentionally omitted. The DTO still
@@ -97,7 +181,8 @@ export class ToolsService {
       .filter(Boolean)
       .join('\n');
 
-    const result = await this.llm.completeJson<{ fr: string; en: string }>({
+    // `unknown` : la forme rendue par le modèle est vérifiée plus bas.
+    const result = await this.llm.completeJson<unknown>({
       system:
         'Tu es un expert en rédaction de CV pour étudiants internationaux. ' +
         'Rédige un paragraphe de présentation professionnelle (5-7 phrases) ' +
@@ -113,13 +198,17 @@ export class ToolsService {
         'Retourne un JSON { "fr": "...", "en": "..." }.',
       user: context,
       maxTokens: 600,
-      fallback: {
-        fr: 'Étudiant(e) motivé(e) avec une solide formation.',
-        en: 'Motivated student with a solid academic background.',
-      },
+      // Jamais rendu : une phrase générique insérée dans le PDF comme si elle
+      // avait été rédigée pour l'élève était un faux résultat.
+      fallback: null,
     });
 
-    return result.data;
+    const summary =
+      result.model === 'local-fallback'
+        ? undefined
+        : parseBilingualText(result.data);
+    if (!summary) throw generationFailed(result);
+    return summary;
   }
 
   // ── 2. Letter personalisation (FR + EN) ───────────────────────────────────
@@ -128,7 +217,7 @@ export class ToolsService {
     dto: LetterPersonalizeDto,
   ): Promise<{ fr: string; en: string }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     // Civil name is accepted on the DTO (the letter PDF prints it) but must
@@ -144,7 +233,7 @@ export class ToolsService {
       .filter(Boolean)
       .join('\n');
 
-    const result = await this.llm.completeJson<{ fr: string; en: string }>({
+    const result = await this.llm.completeJson<unknown>({
       system:
         'Tu es un expert en rédaction de lettres de motivation pour étudiants internationaux. ' +
         'Personnalise le modèle fourni avec les informations de l\'étudiant. ' +
@@ -160,11 +249,12 @@ export class ToolsService {
     // The fallback IS the untouched template: returning it as if it were the
     // personalised letter showed students their own blank model under a
     // « personnalisée » label. Say the generation failed instead.
-    if (result.model === 'local-fallback') {
-      throw new ServiceUnavailableException('AI generation failed.');
-    }
-
-    return result.data;
+    const letters =
+      result.model === 'local-fallback'
+        ? undefined
+        : parseBilingualText(result.data);
+    if (!letters) throw generationFailed(result);
+    return letters;
   }
 
   // ── 3. Interview simulator ──────────────────────────────────────────────────
@@ -173,7 +263,7 @@ export class ToolsService {
     dto: InterviewQuestionsDto,
   ): Promise<{ questions: string[] }> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     const en = dto.language === 'en';
@@ -183,7 +273,25 @@ export class ToolsService {
       scholarship: en ? 'scholarship interview' : 'entretien de bourse d\'études',
     }[dto.type];
 
-    const result = await this.llm.completeJson<{ questions: string[] }>({
+    const fallbackQuestions = en
+      ? [
+          'Why did you choose this country for your studies?',
+          'How will you finance your studies and living costs?',
+          'What are your plans after graduation?',
+          'Why this specific programme and university?',
+          'What ties do you have to your home country?',
+          'How does this fit your long-term career goals?',
+        ]
+      : [
+          'Pourquoi avoir choisi ce pays pour vos études ?',
+          'Comment financerez-vous vos études et votre séjour ?',
+          'Quels sont vos projets après l\'obtention du diplôme ?',
+          'Pourquoi ce programme et cette université précisément ?',
+          'Quels liens conservez-vous avec votre pays d\'origine ?',
+          'En quoi cela s\'inscrit-il dans votre projet professionnel ?',
+        ];
+
+    const result = await this.llm.completeJson<unknown>({
       system: en
         ? `You are an experienced interviewer conducting a ${typeLabel}. ` +
           'Generate 6 realistic, progressively harder interview questions. ' +
@@ -198,40 +306,34 @@ export class ToolsService {
         .filter(Boolean)
         .join('\n'),
       maxTokens: 600,
-      fallback: {
-        questions: en
-          ? [
-              'Why did you choose this country for your studies?',
-              'How will you finance your studies and living costs?',
-              'What are your plans after graduation?',
-              'Why this specific programme and university?',
-              'What ties do you have to your home country?',
-              'How does this fit your long-term career goals?',
-            ]
-          : [
-              'Pourquoi avoir choisi ce pays pour vos études ?',
-              'Comment financerez-vous vos études et votre séjour ?',
-              'Quels sont vos projets après l\'obtention du diplôme ?',
-              'Pourquoi ce programme et cette université précisément ?',
-              'Quels liens conservez-vous avec votre pays d\'origine ?',
-              'En quoi cela s\'inscrit-il dans votre projet professionnel ?',
-            ],
-      },
+      // Repli gardé ici : ce sont de vraies questions types d'entretien, pas un
+      // résultat qui prétend juger l'élève.
+      fallback: { questions: fallbackQuestions },
     });
 
-    return result.data;
+    // Forme vérifiée : une liste de questions non vides, sinon la liste type.
+    const rawQuestions = (
+      result.data as { questions?: unknown } | null | undefined
+    )?.questions;
+    const questions = Array.isArray(rawQuestions)
+      ? stringList(rawQuestions, 10)
+      : undefined;
+    if (result.model !== 'local-fallback' && (!questions || !questions.length)) {
+      this.logger.warn('Interview questions had an invalid shape; using the default set.');
+    }
+    return { questions: questions?.length ? questions : fallbackQuestions };
   }
 
   async evaluateInterviewAnswer(
     dto: InterviewFeedbackDto,
   ): Promise<InterviewFeedback> {
     if (!this.llm.isConfigured) {
-      throw new ServiceUnavailableException('AI not configured.');
+      throw notConfigured();
     }
 
     const en = dto.language === 'en';
 
-    const result = await this.llm.completeJson<InterviewFeedback>({
+    const result = await this.llm.completeJson<unknown>({
       system: en
         ? 'You are a strict but supportive interview coach. Evaluate the candidate answer. ' +
           'Return JSON { "score": 0-100, "strengths": ["..."], "improvements": ["..."], "modelAnswer": "..." }.'
@@ -239,16 +341,16 @@ export class ToolsService {
           'Retourne un JSON { "score": 0-100, "strengths": ["..."], "improvements": ["..."], "modelAnswer": "..." }.',
       user: `Question : ${dto.question}\n\nRéponse du candidat : ${dto.answer}`,
       maxTokens: 700,
-      fallback: {
-        score: 70,
-        strengths: en ? ['Clear answer.'] : ['Réponse claire.'],
-        improvements: en
-          ? ['Add concrete examples.']
-          : ['Ajoutez des exemples concrets.'],
-        modelAnswer: '',
-      },
+      // Plus de note de repli : un « 70/100 – Réponse claire » rendu quelle
+      // que soit la réponse était une fausse évaluation (constat 16).
+      fallback: null,
     });
 
-    return result.data;
+    const feedback =
+      result.model === 'local-fallback'
+        ? undefined
+        : parseInterviewFeedback(result.data);
+    if (!feedback) throw generationFailed(result);
+    return feedback;
   }
 }

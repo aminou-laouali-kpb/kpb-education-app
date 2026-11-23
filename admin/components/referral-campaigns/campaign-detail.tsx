@@ -778,11 +778,7 @@ function PrizesTab({
     setBusy(true);
     setModalError(null);
     try {
-      await campaignsApi.payout(campaign.id, payout.rank, {
-        payoutReference: payout.reference.trim(),
-        recipient: payout.recipient,
-        ...(payout.date ? { paidAt: new Date(`${payout.date}T12:00:00Z`).toISOString() } : {}),
-      });
+      await campaignsApi.payout(campaign.id, payout.rank, payoutRequestBody(payout));
       setPayout(null);
       await load();
     } catch (e) {
@@ -866,7 +862,13 @@ function PrizesTab({
                   <Button
                     size="sm"
                     onClick={() =>
-                      openPayout({ rank: a.rank, reference: '', date: new Date().toISOString().slice(0, 10), recipient: a.recipient })
+                      openPayout({
+                        rank: a.rank,
+                        participantId: a.participantId,
+                        reference: '',
+                        date: new Date().toISOString().slice(0, 10),
+                        recipient: a.recipient,
+                      })
                     }
                   >
                     {t('parrainage.recordPayout')}
@@ -941,8 +943,30 @@ function PrizesTab({
   );
 }
 
-type PayoutDraft = { rank: number; reference: string; date: string; recipient: string };
+/**
+ * `participantId` : le lauréat affiché quand la modale s'ouvre. Il est renvoyé
+ * au serveur (comme pour le forfait) : si le prix a changé de main entre-temps
+ * (forfait réattribué), le versement est refusé (409 prize_holder_changed) au
+ * lieu de marquer payé quelqu'un d'autre. Null = prix orphelin.
+ */
+type PayoutDraft = {
+  rank: number;
+  participantId: string | null;
+  reference: string;
+  date: string;
+  recipient: string;
+};
 type ForfeitDraft = { award: PrizeAward; reason: string };
+
+/** Corps de la requête « Noter le versement », lauréat affiché compris. */
+export function payoutRequestBody(draft: PayoutDraft): Record<string, unknown> {
+  return {
+    payoutReference: draft.reference.trim(),
+    recipient: draft.recipient,
+    ...(draft.participantId ? { participantId: draft.participantId } : {}),
+    ...(draft.date ? { paidAt: new Date(`${draft.date}T12:00:00Z`).toISOString() } : {}),
+  };
+}
 
 /** Contenu de la modale « Noter le versement » : l'erreur du serveur en tête. */
 export function PayoutFormBody({

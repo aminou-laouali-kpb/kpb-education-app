@@ -634,6 +634,59 @@ describe('ScholarshipsIndexService — application requirement & steps', () => {
       expect(update).not.toHaveBeenCalled();
     });
 
+    it('flags an approval that leaves the scholarship inactive (unpublished)', async () => {
+      const update = jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'sch-1',
+        isActive: false,
+        ...data,
+      }));
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (client: unknown) => unknown) =>
+          fn({ scholarship: { update } }),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        { assertReady: jest.fn() } as unknown as ScholarshipContentQualityService,
+      );
+
+      const result = (await service.setModeration('sch-1', 'approved')) as Record<
+        string,
+        unknown
+      >;
+      expect(result.moderationStatus).toBe('approved');
+      expect(result.publicationWarning).toEqual(expect.stringContaining('inactive'));
+      // Approuver ne réactive pas d'office : `isActive` n'est pas écrit.
+      expect(update.mock.calls[0][0].data).not.toHaveProperty('isActive');
+    });
+
+    it('returns no warning when the approved scholarship is active', async () => {
+      const update = jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({
+        id: 'sch-1',
+        isActive: true,
+        ...data,
+      }));
+      const prisma = {
+        isEnabled: true,
+        execute: async (fn: (client: unknown) => unknown) =>
+          fn({ scholarship: { update } }),
+      } as unknown as PrismaService;
+      const service = new ScholarshipsIndexService(
+        prisma,
+        {} as GreatYopScraper,
+        {} as MastereTnScraper,
+        { assertReady: jest.fn() } as unknown as ScholarshipContentQualityService,
+      );
+
+      const result = (await service.setModeration('sch-1', 'approved')) as Record<
+        string,
+        unknown
+      >;
+      expect(result).not.toHaveProperty('publicationWarning');
+    });
+
     it('returns a localized detail with published videos and alert state', async () => {
       const detailRow = {
         ...baseRow,
@@ -975,6 +1028,8 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
   function makeService(opts: {
     greatYop: () => Promise<unknown[]>;
     mastereTn?: () => Promise<unknown[]>;
+    /** Préfixes des deux scrapers simulés (défaut : greatyop / masteretn). */
+    prefixes?: [string, string];
     existing?: Record<string, string>;
   }) {
     const upserts: Array<Record<string, any>> = [];
@@ -1001,12 +1056,12 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
       tryExecute: async (fn: (c: typeof client) => unknown) => fn(client),
     } as unknown as PrismaService;
     const greatYop = {
-      prefix: 'greatyop',
+      prefix: opts.prefixes?.[0] ?? 'greatyop',
       name: 'GreatYop',
       fetch: opts.greatYop,
     } as unknown as GreatYopScraper;
     const mastereTn = {
-      prefix: 'masteretn',
+      prefix: opts.prefixes?.[1] ?? 'masteretn',
       name: 'MastereTn',
       fetch: opts.mastereTn ?? (async () => []),
     } as unknown as MastereTnScraper;
@@ -1053,6 +1108,87 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     expect(greatYopCall!.where.NOT.sourceKey.in).toContain('greatyop-a');
   });
 
+  // Audit 27 : la déduplication ne fusionne que des sources DIFFÉRENTES.
+  it('ne fusionne pas deux bourses de la même source au titre normalisé identique', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Chevening Scholarship 2026'),
+        scraped('greatyop-b', 'Chevening Scholarship 2025-2026'),
+      ],
+    });
+    const result = await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'greatyop-b',
+    ]);
+    expect(result.totalMerged).toBe(0);
+  });
+
+  it('fusionne un doublon inter-sources et compte `merged` sur la source absorbée seulement', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [
+        scraped('greatyop-a', 'Bourse Été 2026'),
+        scraped('greatyop-b', 'Bourse Été 2025'),
+      ],
+      mastereTn: async () => [
+        { ...scraped('masteretn-x', 'Bourse Ete'), contentScore: 9 },
+      ],
+    });
+    const result = await service.refresh();
+    // « Été » et « Ete » se rejoignent (accents retirés, pas la lettre) ; la
+    // grappe garde une seule ligne par source : greatyop-b reste distincte.
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-b',
+      'masteretn-x',
+    ]);
+    const bySource = Object.fromEntries(result.sources.map((s) => [s.prefix, s.merged]));
+    expect(bySource).toEqual({ greatyop: 1, masteretn: 0 });
+    expect(result.totalMerged).toBe(1);
+  });
+
+  // Préfixes à tiret : `split('-')[0]` confondait turkiye-burslari et
+  // turkiye-mevlana en « turkiye » et empêchait leur fusion.
+  it('fusionne deux sources dont les préfixes partagent le segment avant le tiret', async () => {
+    const { service, upserts } = makeService({
+      prefixes: ['turkiye-burslari', 'turkiye-mevlana'],
+      greatYop: async () => [scraped('turkiye-burslari-a', 'Turkiye Scholarships 2026')],
+      mastereTn: async () => [
+        { ...scraped('turkiye-mevlana-b', 'Türkiye Scholarships 2026'), contentScore: 9 },
+      ],
+    });
+    const result = await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey)).toEqual(['turkiye-mevlana-b']);
+    const bySource = Object.fromEntries(result.sources.map((s) => [s.prefix, s.merged]));
+    expect(bySource).toEqual({ 'turkiye-burslari': 1, 'turkiye-mevlana': 0 });
+  });
+
+  it('ne fusionne toujours pas deux lignes d’une même source à préfixe composé', async () => {
+    const { service, upserts } = makeService({
+      prefixes: ['turkiye-burslari', 'turkiye-mevlana'],
+      greatYop: async () => [
+        scraped('turkiye-burslari-a', 'Turkiye Scholarships 2026'),
+        scraped('turkiye-burslari-b', 'Turkiye Scholarships 2025'),
+      ],
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'turkiye-burslari-a',
+      'turkiye-burslari-b',
+    ]);
+  });
+
+  it('ne fusionne rien sur une clé normalisée vide', async () => {
+    const { service, upserts } = makeService({
+      greatYop: async () => [scraped('greatyop-a', '2026')],
+      mastereTn: async () => [scraped('masteretn-b', '— 2026 —')],
+    });
+    await service.refresh();
+    expect(upserts.map((u) => u.where.sourceKey).sort()).toEqual([
+      'greatyop-a',
+      'masteretn-b',
+    ]);
+  });
+
   it('leaves an approved row untouched and does not reactivate a rejected one', async () => {
     const { service, upserts } = makeService({
       greatYop: async () => [scraped('greatyop-approved'), scraped('greatyop-rejected')],
@@ -1064,6 +1200,30 @@ describe('ScholarshipsIndexService — refresh never wipes or overwrites curated
     await service.refresh();
     expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-rejected']);
     expect(upserts[0].update.isActive).toBeUndefined();
+  });
+
+  it('does not deactivate anything for a source whose crawl window was truncated', async () => {
+    const { service, updateManyCalls, upserts } = makeService({
+      greatYop: async () =>
+        ({ rows: [scraped('greatyop-a')], complete: false }) as unknown as unknown[],
+    });
+    const result = await service.refresh();
+    // Les fiches lues sont bien mises à jour…
+    expect(upserts.map((u) => u.where.sourceKey)).toEqual(['greatyop-a']);
+    // …mais celles sorties de la fenêtre ne sont pas retirées.
+    expect(updateManyCalls).toHaveLength(0);
+    expect(result.sources[0]).toMatchObject({ complete: false, deactivated: 0 });
+  });
+
+  it('deactivates missing rows once the scraper reports a complete crawl', async () => {
+    const { service, updateManyCalls } = makeService({
+      greatYop: async () =>
+        ({ rows: [scraped('greatyop-a')], complete: true }) as unknown as unknown[],
+    });
+    const result = await service.refresh();
+    expect(result.sources[0].complete).toBe(true);
+    expect(updateManyCalls).toHaveLength(1);
+    expect(updateManyCalls[0].where.NOT.sourceKey.in).toEqual(['greatyop-a']);
   });
 
   it('refuses a second refresh while one is running', async () => {

@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Req,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -17,6 +18,7 @@ import { AdminAuthGuard } from '../../common/guards/admin-auth.guard';
 import { MvpGuard } from '../../common/guards/mvp.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { StudentAuthGuard } from '../../common/guards/student-auth.guard';
+import { SupabaseAuthService } from '../auth/supabase-auth.service';
 import { SalonService } from './salon.service';
 
 type StudentReq = Request & { studentUser?: { id: string } };
@@ -29,7 +31,10 @@ type StudentReq = Request & { studentUser?: { id: string } };
 @Controller('salon')
 @UseGuards(MvpGuard)
 export class SalonController {
-  constructor(private readonly salonService: SalonService) {}
+  constructor(
+    private readonly salonService: SalonService,
+    private readonly supabaseAuthService: SupabaseAuthService,
+  ) {}
 
   @Get('events')
   listEvents() {
@@ -37,13 +42,33 @@ export class SalonController {
   }
 
   @Get('events/:slug')
-  getEvent(@Param('slug') slug: string) {
-    return this.salonService.getEventBySlug(slug);
+  async getEvent(@Param('slug') slug: string, @Req() req: Request) {
+    return this.salonService.getEventBySlug(slug, await this.viewerId(req));
   }
 
   @Get('sessions/:id')
-  getSession(@Param('id') id: string) {
-    return this.salonService.getSession(id);
+  async getSession(@Param('id') id: string, @Req() req: Request) {
+    return this.salonService.getSession(id, await this.viewerId(req));
+  }
+
+  /**
+   * Authentification FACULTATIVE : ces routes restent publiques (programme
+   * consultable sans compte). Sans en-tête `Authorization` : visiteur anonyme.
+   * Avec un jeton Bearer, il est vérifié comme partout ailleurs : invalide ou
+   * expiré ⇒ 401 (levé par `verifyAndResolve`), ce qui déclenche le
+   * rafraîchissement du jeton dans l'app puis une nouvelle tentative — le
+   * traiter en anonyme privait l'élève de son lien de visio sans rien dire.
+   */
+  private async viewerId(req: Request): Promise<string | undefined> {
+    const header = req.headers?.authorization;
+    if (!header) return undefined;
+    if (!header.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Invalid authorization header.');
+    }
+    const user = await this.supabaseAuthService.verifyAndResolve(
+      header.slice(7),
+    );
+    return user.id;
   }
 }
 

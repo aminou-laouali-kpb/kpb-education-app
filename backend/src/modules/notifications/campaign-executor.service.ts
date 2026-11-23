@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { NotificationCampaign } from '@prisma/client';
+import type { CaseStatus, NotificationCampaign } from '@prisma/client';
 import { NotificationCampaignStatus } from '../../common/enums/notification-campaign-status.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -74,6 +74,33 @@ export function countryExclusion(countries: readonly string[]) {
   };
 }
 
+/** Période du battement de cœur d'une campagne en cours d'envoi. */
+export const CAMPAIGN_HEARTBEAT_MS = 60 * 1000;
+
+/**
+ * Rafraîchit `updatedAt` d'une campagne `sending` toutes les
+ * `CAMPAIGN_HEARTBEAT_MS`. La condition `status: sending` évite de toucher une
+ * campagne déjà terminée (ou passée à `failed` par la reprise du cron).
+ * Renvoie la fonction qui arrête le battement.
+ */
+export function startCampaignHeartbeat(
+  prismaService: PrismaService,
+  campaignId: string,
+  intervalMs = CAMPAIGN_HEARTBEAT_MS,
+): () => void {
+  const timer = setInterval(() => {
+    void prismaService.tryExecute((prisma) =>
+      prisma.notificationCampaign.updateMany({
+        where: { id: campaignId, status: NotificationCampaignStatus.Sending },
+        data: { updatedAt: new Date() },
+      }),
+    );
+  }, intervalMs);
+  // Ne retient pas le processus à l'arrêt.
+  timer.unref?.();
+  return () => clearInterval(timer);
+}
+
 @Injectable()
 export class CampaignExecutorService {
   private readonly logger = new Logger(CampaignExecutorService.name);
@@ -93,6 +120,13 @@ export class CampaignExecutorService {
       return { enqueued: 0 };
     }
 
+    // Battement de cœur : tant que CE processus exécute la campagne, son
+    // `updatedAt` avance chaque minute — même si un envoi traîne, puisqu'un
+    // minuteur tourne pendant les `await`. Le cron s'en sert pour reconnaître
+    // une campagne `sending` orpheline (processus mort en plein envoi) sans
+    // jamais couper un envoi vivant. Les livraisons ne suffisent pas comme
+    // trace : un échec d'envoi ne date rien (`deliveredAt` reste vide).
+    const stopHeartbeat = startCampaignHeartbeat(this.prismaService, campaignId);
     try {
       return await this.run(campaign, campaignId);
     } catch (error) {
@@ -106,6 +140,8 @@ export class CampaignExecutorService {
         }),
       );
       throw error;
+    } finally {
+      stopHeartbeat();
     }
   }
 
@@ -129,9 +165,33 @@ export class CampaignExecutorService {
         }
       : null;
 
+    // Un filtre absent ou inutilisable (statut de dossier inconnu, jeton
+    // d'exclusion mal écrit…) résout à « personne » — jamais à « tout le
+    // monde ». Mais la campagne ne doit pas pour autant s'afficher
+    // « terminée » : elle n'a rien fait de ce qu'on lui demandait. Elle passe
+    // `failed`, visible dans l'admin. (La création refuse déjà ces filtres en
+    // 400 ; ce cas vise une ligne plus ancienne que la validation.)
+    const filters = (campaign.filters as Record<string, unknown>) ?? {};
+    if (
+      audienceFilterMissing(campaign.audienceType, filters) ||
+      audienceFilterInvalid(campaign.audienceType, filters)
+    ) {
+      this.logger.error(
+        `Campaign ${campaignId}: unusable filter for audience ` +
+          `"${campaign.audienceType}" — marked failed, nothing sent.`,
+      );
+      await this.prismaService.execute((prisma) =>
+        prisma.notificationCampaign.update({
+          where: { id: campaignId },
+          data: { status: NotificationCampaignStatus.Failed },
+        }),
+      );
+      return { enqueued: 0 };
+    }
+
     const audience = await this.resolveRecipients(
       campaign.audienceType,
-      (campaign.filters as Record<string, unknown>) ?? {},
+      filters,
     );
 
     // ── Finalité : qui a le droit de recevoir quoi (XC-06) ────────────────
@@ -499,12 +559,14 @@ export class CampaignExecutorService {
           }
           case 'case_status': {
             const status = filters['status'] as string | undefined;
-            return prisma.userProfile
-              .findMany({
-                where: { cases: { some: { status: status as any } } },
-                select: RECIPIENT_SELECT,
-              })
-              .catch(() => []);
+            // Pas de `.catch(() => [])` : une erreur Prisma devenait « zéro
+            // destinataire » et la campagne passait `completed`. Elle remonte
+            // désormais à `execute()`, qui marque la campagne `failed`. Le
+            // statut est validé en amont (`audienceFilterInvalid`).
+            return prisma.userProfile.findMany({
+              where: { cases: { some: { status: status as CaseStatus } } },
+              select: RECIPIENT_SELECT,
+            });
           }
           case 'single_user': {
             const userId = filters['userId'] as string | undefined;

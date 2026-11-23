@@ -1095,9 +1095,25 @@ export class ReferralCampaignService {
             if (from === target.participantId) continue;
             changes.push({ rank: target.rank, from, to: target.participantId });
             const winner = target.participantId ? byId.get(target.participantId) : undefined;
+            // Écritures conditionnelles : la ligne doit toujours porter le
+            // lauréat lu ET ne pas être versée. Un `recordPayout` validé entre
+            // notre lecture et notre écriture (Postgres réévalue ce WHERE sur
+            // la ligne verrouillée) fait échouer le forfait — toute la
+            // transaction est annulée — au lieu d'effacer le versement.
+            const unchanged = existing
+              ? { id: existing.id, participantId: from, payoutStatus: { not: 'paid' } }
+              : null;
+            const prizeChanged = () =>
+              new ConflictException({
+                code: 'prize_holder_changed',
+                message: 'Ce prix a changé entre-temps (versement ou forfait déjà noté) : recharge la page.',
+              });
             if (!winner) {
               // Plus de candidat : le prix reste non attribué.
-              if (existing) await tx.referralCampaignPrizeAward.delete({ where: { id: existing.id } });
+              if (unchanged) {
+                const { count } = await tx.referralCampaignPrizeAward.deleteMany({ where: unchanged });
+                if (count === 0) throw prizeChanged();
+              }
               continue;
             }
             const data = {
@@ -1112,8 +1128,9 @@ export class ReferralCampaignService {
               paidByAdminId: null,
               note: null,
             };
-            if (existing) {
-              await tx.referralCampaignPrizeAward.update({ where: { id: existing.id }, data });
+            if (unchanged) {
+              const { count } = await tx.referralCampaignPrizeAward.updateMany({ where: unchanged, data });
+              if (count === 0) throw prizeChanged();
             } else {
               await tx.referralCampaignPrizeAward.create({
                 data: { campaignId, rank: target.rank, ...data },
@@ -1152,6 +1169,21 @@ export class ReferralCampaignService {
     return this.prizes(campaignId);
   }
 
+  /**
+   * Enregistre le versement d'un prix (audit 2026-11-22, constat 8).
+   *
+   * - lecture du lauréat, contrôle « mineur ⇒ parent » et écriture dans la
+   *   MÊME transaction : `forfeitPrize` réutilise la ligne du prix pour le
+   *   lauréat suivant, une lecture hors transaction pouvait donc marquer payé
+   *   (et avec le mauvais destinataire) un lauréat qui n'a rien reçu ;
+   * - écriture conditionnelle (`updateMany` sur id + participantId lu +
+   *   payoutStatus ≠ paid) : si un forfait ou un autre versement passe entre
+   *   la lecture et l'écriture, rien n'est écrit ⇒ 409 ;
+   * - un prix déjà versé ne l'est jamais une seconde fois (409) : un double
+   *   clic n'écrase plus la première référence de paiement ;
+   * - `dto.participantId` (optionnel) : le lauréat affiché à l'écran ; s'il a
+   *   changé entre-temps ⇒ 409 `prize_holder_changed`.
+   */
   async recordPayout(
     campaignId: string,
     rank: number,
@@ -1161,21 +1193,40 @@ export class ReferralCampaignService {
   ) {
     const campaign = await this.campaignOrThrow(campaignId);
     if (!campaign.podiumValidatedAt) throw new ConflictException('Podium non validé.');
-    const award = await this.db((db) =>
-      db.referralCampaignPrizeAward.findUnique({
-        where: { campaignId_rank: { campaignId, rank } },
-        include: { participant: { select: { minorStatus: true } } },
-      }),
-    );
-    if (!award) throw new NotFoundException('Aucun prix à ce rang.');
-    const recipient = dto.recipient ?? award.recipient;
-    if (award.participant?.minorStatus === 'minor' && recipient !== 'parent') {
-      throw new BadRequestException('Lauréat mineur : le prix est versé au parent.');
-    }
+    const expectedParticipantId = dto.participantId?.trim() || undefined;
     const updated = await this.db((db) =>
       db.$transaction(async (tx) => {
-        const a = await tx.referralCampaignPrizeAward.update({
-          where: { id: award.id },
+        const award = await tx.referralCampaignPrizeAward.findUnique({
+          where: { campaignId_rank: { campaignId, rank } },
+          include: { participant: { select: { minorStatus: true } } },
+        });
+        if (!award) throw new NotFoundException('Aucun prix à ce rang.');
+        if (award.payoutStatus === 'paid') {
+          throw new ConflictException({
+            code: 'prize_already_paid',
+            message: 'Ce prix est déjà versé : un second versement est refusé.',
+          });
+        }
+        if (expectedParticipantId !== undefined && award.participantId !== expectedParticipantId) {
+          throw new ConflictException({
+            code: 'prize_holder_changed',
+            message: 'Le lauréat de ce rang a changé entre-temps : recharge la page.',
+          });
+        }
+        const recipient = dto.recipient ?? award.recipient;
+        if (award.participant?.minorStatus === 'minor' && recipient !== 'parent') {
+          throw new BadRequestException('Lauréat mineur : le prix est versé au parent.');
+        }
+        // Garde en base : même lauréat que celui contrôlé ci-dessus, et pas
+        // encore versé. Sous READ COMMITTED, Postgres réévalue ce WHERE sur la
+        // ligne verrouillée : un forfait/versement concurrent validé entre-temps
+        // fait échouer l'écriture au lieu de l'écraser.
+        const { count } = await tx.referralCampaignPrizeAward.updateMany({
+          where: {
+            id: award.id,
+            participantId: award.participantId,
+            payoutStatus: { not: 'paid' },
+          },
           data: {
             payoutStatus: 'paid',
             payoutReference: dto.payoutReference.trim(),
@@ -1187,6 +1238,13 @@ export class ReferralCampaignService {
             note: dto.note?.trim() || null,
           },
         });
+        if (count === 0) {
+          throw new ConflictException({
+            code: 'prize_holder_changed',
+            message: 'Ce prix a changé entre-temps (forfait ou versement déjà noté) : recharge la page.',
+          });
+        }
+        const a = await tx.referralCampaignPrizeAward.findUniqueOrThrow({ where: { id: award.id } });
         await this.audit(tx, {
           action: 'referral_campaign.payout_recorded',
           entityType: 'ReferralCampaignPrizeAward',
@@ -1196,6 +1254,7 @@ export class ReferralCampaignService {
           changes: {
             campaignId,
             rank,
+            participantId: award.participantId,
             amountFcfa: a.paidAmountFcfa,
             method: a.payoutMethod,
             reference: a.payoutReference,

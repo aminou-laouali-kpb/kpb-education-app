@@ -65,11 +65,15 @@ mixin _SavedItemsMixin on _AppControllerBase {
   @override
   Future<void> _createRemoteSavedItem(SavedItem item) async {
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       final response = await _apiClient.createSavedItem(<String, dynamic>{
         'type': item.type.name,
         'itemId': item.itemId,
       });
+      // Favori du compte parti : son id distant n'entre pas dans l'état du
+      // compte suivant.
+      if (_isStaleSession(generation)) return;
       final savedId = response['id'] as String?;
       if (savedId != null && savedId.isNotEmpty) {
         _remoteSavedItemIds[_savedItemKey(item.type, item.itemId)] = savedId;
@@ -88,11 +92,13 @@ mixin _SavedItemsMixin on _AppControllerBase {
   @override
   Future<void> _deleteRemoteSavedItem(SavedItem item) async {
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       final key = _savedItemKey(item.type, item.itemId);
       final savedId = _remoteSavedItemIds[key];
       if (savedId != null && savedId.isNotEmpty) {
         await _apiClient.deleteSavedItem(savedId);
+        if (_isStaleSession(generation)) return;
         _remoteSavedItemIds.remove(key);
         // Server confirmed the delete — tombstone no longer needed.
         _savedItemTombstones.remove(key);

@@ -170,12 +170,24 @@ class AnalyticsService {
     }
   }
 
-  /// Clears the PostHog identity so a subsequent user on the same device starts
-  /// a fresh, unlinked session. Called from [logLogout].
-  Future<void> _resetIdentity() async {
-    if (!AppConfig.posthogEnabled) return;
+  /// Remise à zéro de l'identité PostHog, REMPLAÇABLE par un test (même
+  /// raison que [posthogConsent] : l'appel au SDK n'est pas observable en
+  /// test). Nul en production : c'est `Posthog().reset()`.
+  @visibleForTesting
+  Future<void> Function() posthogReset = _resetPosthog;
+
+  static Future<void> _resetPosthog() => Posthog().reset();
+
+  /// Détache l'appareil de l'utilisateur PostHog courant : l'utilisateur
+  /// suivant sur le même téléphone (ou la session invitée) repart d'une
+  /// session vierge, et ses événements et replays ne sont plus rattachés au
+  /// compte parti. Appelée par [logLogout] et par la suppression de compte
+  /// (`AppController.deleteAccount`). Indépendante de Firebase : PostHog
+  /// démarre même quand `Firebase.initializeApp` a échoué. Ne lève jamais.
+  Future<void> resetIdentity() async {
+    if (!posthogWired) return;
     try {
-      await Posthog().reset();
+      await posthogReset();
     } catch (e, s) {
       _logError('resetIdentity', e, s);
     }
@@ -311,13 +323,14 @@ class AnalyticsService {
   Future<void> logLogout() async {
     try {
       await _analytics.logEvent(name: AnalyticsEventName.logout);
-      _mirror(AnalyticsEventName.logout);
-      // Unlink the device from the signed-out user so the next session (and any
-      // replay) is not attributed to them.
-      await _resetIdentity();
     } catch (e, s) {
       _logError('logLogout', e, s);
     }
+    // Hors du try Firebase : sans app Firebase (démarrage hors ligne),
+    // `logEvent` lève, et ni le miroir ni la remise à zéro de l'identité ne
+    // partaient — le compte suivant restait rattaché au compte parti.
+    _mirror(AnalyticsEventName.logout);
+    await resetIdentity();
   }
 
   // ── Guest / acquisition (KPB-156) ──────────────────────────────────────────

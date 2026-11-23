@@ -120,6 +120,7 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     if (ids.isEmpty) return;
     if (!RemoteFeatureFlags.instance.followSetsOpeningAlert) return;
     if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) return;
+    final generation = _sessionGeneration;
     try {
       await _apiClient.subscribeScholarshipAlertsBulk(ids);
     } catch (error) {
@@ -128,6 +129,9 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
       if (error is ScholarshipMatchException &&
           error.failure == ScholarshipMatchFailure.disabled) {
         for (final id in ids) {
+          // Déconnexion entre deux alertes : les suivantes partiraient sous
+          // le compte suivant (audit du 22/11/2026, n° 3).
+          if (_isStaleSession(generation)) return;
           await _mirrorOpeningAlert(id, true);
         }
       }
@@ -158,11 +162,17 @@ mixin _ScholarshipFollowMixin on _AppControllerBase {
     final now = DateTime.now();
     if (!force && last != null && now.difference(last).inSeconds < 60) return;
     _lastUnreadFetchAt = now;
+    // Badge du compte qui l'a demandé : arrivé après une déconnexion, il ne
+    // s'affiche pas sur la cloche du compte suivant (audit du 22/11/2026,
+    // n° 3).
+    final generation = _sessionGeneration;
     try {
       final count = await _apiClient.fetchUnreadNotificationCount();
+      if (_isStaleSession(generation)) return;
       noteServerSupportsFollow();
       setServerUnreadNotifications(count);
     } catch (error) {
+      if (_isStaleSession(generation)) return;
       if (isEndpointUnavailable(error)) {
         _unreadEndpointAvailable = false;
         setServerUnreadNotifications(0);

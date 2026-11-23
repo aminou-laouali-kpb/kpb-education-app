@@ -13,6 +13,12 @@ mixin _OrientationMixin on _AppControllerBase {
     isSubmittingOrientation = true;
     update();
 
+    // Compte pour lequel ce test est soumis. Un 401 sur l'appel déclenche
+    // `handleSessionLost` (remise à zéro) AVANT que l'erreur ne remonte ici :
+    // le repli local ci-dessous recalculait alors le résultat sur le profil
+    // du compte parti, puis réinjectait ce profil, son historique et le
+    // résultat dans l'état et sur disque (audit du 22/11/2026, n° 3).
+    final generation = _sessionGeneration;
     OrientationSession session;
     try {
       if (AppConfig.enableRemoteSync) {
@@ -26,6 +32,9 @@ mixin _OrientationMixin on _AppControllerBase {
             'preferredLanguage': activeProfile.preferredLanguage,
           },
         });
+        if (_isStaleSession(generation)) {
+          throw StateError('Orientation submitted by a signed-out account.');
+        }
         session = _orientationSessionFromApi(response, answers);
       } else {
         session = OrientationEngine.evaluate(
@@ -37,6 +46,11 @@ mixin _OrientationMixin on _AppControllerBase {
         );
       }
     } catch (e, s) {
+      if (_isStaleSession(generation)) {
+        // Rien à calculer ni à écrire : l'erreur (401) remonte à l'écran,
+        // qui a déjà été remplacé par celui de connexion.
+        rethrow;
+      }
       safeRecordError(
         e,
         s,

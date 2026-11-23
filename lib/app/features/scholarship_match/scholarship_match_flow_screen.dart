@@ -227,7 +227,13 @@ class _ScholarshipMatchFlowScreenState
               ? null
               : KpbToastAction(
                   label: 'retry'.tr,
-                  onPressed: () => unawaited(_submit()),
+                  // Le bandeau survit à l'écran (ScaffoldMessenger racine,
+                  // 6 s) : après un retour, « Réessayer » ne doit pas relancer
+                  // une méthode d'un State démonté (setState après dispose,
+                  // audit du 22/11/2026, n° 36).
+                  onPressed: () {
+                    if (mounted) unawaited(_submit());
+                  },
                 ),
         );
     }

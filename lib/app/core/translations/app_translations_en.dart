@@ -1342,6 +1342,13 @@ const Map<String, String> appTranslationsEn = {
       'Hello, I\'m getting back to you about case @reference.',
   'case_whatsapp_continue_prefill_provisional':
       'Hello KPB, I\'d like to continue with my request « @title » (reference being registered).',
+  'case_whatsapp_continue_with_prefill_provisional':
+      'Hello, I\'m continuing here my in-app conversation with @name about my request "@title" (reference being registered).',
+  'case_whatsapp_continue_with_prefill':
+      'Hello, I\'m continuing here my in-app conversation with @name about case @reference.',
+  'case_continue_with_whatsapp': 'Continue with @name on WhatsApp',
+  'case_whatsapp_same_person_hint':
+      'On WhatsApp, your message names @name and your case, so the same person replies.',
   'case_whatsapp_continue_prefill':
       'Hello KPB, I\'d like to continue with case @reference.',
   'case_section_messages': 'Messages',

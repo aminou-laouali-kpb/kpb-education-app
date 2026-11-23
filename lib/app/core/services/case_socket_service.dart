@@ -31,6 +31,11 @@ class CaseSocketService {
   void Function(Map<String, dynamic> data)? _onTyping;
 
   bool get isConnected => _socket?.connected ?? false;
+
+  /// Le socket existe et vit : connecté, en poignée de main ou en
+  /// reconnexion automatique. Faux quand socket.io l'a détruit sans
+  /// reconnexion (refus de la poignée de main, « io server disconnect »).
+  bool get isActive => _socket?.active ?? false;
   String? get currentCaseId => _currentCaseId;
 
   Future<void> connect(String caseId) async {

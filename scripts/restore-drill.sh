@@ -72,18 +72,39 @@ for _ in $(seq 1 30); do
 done
 [ "$ready" = "1" ] || { echo "error: disposable PostgreSQL did not become ready" >&2; exit 1; }
 
-case "$DUMP_FILE" in
-  *.sql.gz)
-    gunzip -c "$DUMP_FILE" | docker exec -i "$container" \
-      psql -v ON_ERROR_STOP=1 -U postgres -d kpb_restore_drill >/dev/null
-    ;;
-  *.dump)
-    docker cp "$DUMP_FILE" "$container:/tmp/restore.dump"
-    docker exec "$container" pg_restore --exit-on-error --no-owner --no-privileges \
-      -U postgres -d kpb_restore_drill /tmp/restore.dump >/dev/null
-    ;;
-  *) echo "error: unsupported dump format: $DUMP_FILE" >&2; exit 1 ;;
-esac
+# Le chemin réel de restauration (backend/scripts/restore-db.sh) est exercé
+# quand il est présent (exécution depuis la racine du dépôt sur le VPS), et
+# DEUX fois : la seconde passe restaure par-dessus une base déjà peuplée, le
+# cas d'un incident, qu'une restauration dans une base vide ne prouvait pas.
+# Le workflow passe RESTORE_DB_SCRIPT (copie de la révision testée) : s'il est
+# posé mais introuvable, c'est une erreur, pas un repli silencieux.
+if [ -n "${RESTORE_DB_SCRIPT:-}" ] && [ ! -f "$RESTORE_DB_SCRIPT" ]; then
+  echo "error: RESTORE_DB_SCRIPT not found: $RESTORE_DB_SCRIPT" >&2
+  exit 1
+fi
+RESTORE_DB_SCRIPT="${RESTORE_DB_SCRIPT:-backend/scripts/restore-db.sh}"
+if [ -f "$RESTORE_DB_SCRIPT" ]; then
+  for pass in 1 2; do
+    POSTGRES_USER=postgres POSTGRES_DB=kpb_restore_drill DB_CONTAINER="$container" \
+      API_CONTAINER='' KPB_RESTORE_CONFIRM=kpb_restore_drill \
+      bash "$RESTORE_DB_SCRIPT" "$DUMP_FILE" </dev/null >/dev/null
+    echo "restore_db_pass_${pass}=ok"
+  done
+else
+  echo "warning: $RESTORE_DB_SCRIPT not found, restoring directly into the empty database" >&2
+  case "$DUMP_FILE" in
+    *.sql.gz)
+      gunzip -c "$DUMP_FILE" | docker exec -i "$container" \
+        psql -v ON_ERROR_STOP=1 -U postgres -d kpb_restore_drill >/dev/null
+      ;;
+    *.dump)
+      docker cp "$DUMP_FILE" "$container:/tmp/restore.dump"
+      docker exec "$container" pg_restore --exit-on-error --no-owner --no-privileges \
+        -U postgres -d kpb_restore_drill /tmp/restore.dump >/dev/null
+      ;;
+    *) echo "error: unsupported dump format: $DUMP_FILE" >&2; exit 1 ;;
+  esac
+fi
 
 table_count="$(docker exec "$container" psql -At -U postgres -d kpb_restore_drill \
   -c "SELECT count(*) FROM pg_catalog.pg_tables WHERE schemaname = 'public';")"

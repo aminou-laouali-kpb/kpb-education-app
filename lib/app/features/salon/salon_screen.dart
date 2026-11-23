@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -244,21 +246,9 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
       _error = null;
     });
     try {
-      final results = await Future.wait([
-        _api.getSalonEvent(widget.slug),
-        _api.listMySalonRegistrations(),
-      ]);
+      await _fetch();
       if (!mounted) return;
-      final regs = results[1] as List<dynamic>;
-      setState(() {
-        _event = results[0] as Map<String, dynamic>;
-        _registeredSessionIds = regs
-            .map((r) =>
-                ((r as Map<String, dynamic>)['sessionId'] as String?) ?? '')
-            .where((id) => id.isNotEmpty)
-            .toSet();
-        _loading = false;
-      });
+      setState(() => _loading = false);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -266,6 +256,58 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// Lit l'édition et les inscriptions de l'élève, et les pose à l'écran.
+  Future<void> _fetch() async {
+    final results = await Future.wait([
+      _api.getSalonEvent(widget.slug),
+      _api.listMySalonRegistrations(),
+    ]);
+    if (!mounted) return;
+    final regs = results[1] as List<dynamic>;
+    setState(() {
+      _event = results[0] as Map<String, dynamic>;
+      _registeredSessionIds = regs
+          .map((r) =>
+              ((r as Map<String, dynamic>)['sessionId'] as String?) ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
+    });
+  }
+
+  /// Rechargement silencieux en vol, et s'il faut en relancer un à la fin.
+  Future<void>? _silentReload;
+  bool _silentReloadAgain = false;
+
+  /// Recharge l'édition après une inscription ou une annulation. Le serveur
+  /// ne sert `joinUrl` qu'aux élèves inscrits : sans ce rechargement, le
+  /// bouton « Rejoindre » n'apparaissait qu'après un tirer-pour-rafraîchir,
+  /// et l'élève qui touchait « Inscription confirmée » pour entrer annulait
+  /// son inscription. Silencieux : ni écran de chargement, ni erreur (la
+  /// liste affichée reste valable). Une seule requête à la fois : un
+  /// rechargement demandé pendant un autre est rejoué une fois, à la fin.
+  Future<void> _reloadSilently() {
+    final inFlight = _silentReload;
+    if (inFlight != null) {
+      _silentReloadAgain = true;
+      return inFlight;
+    }
+    return _silentReload = () async {
+      try {
+        do {
+          _silentReloadAgain = false;
+          if (!mounted) return;
+          try {
+            await _fetch();
+          } catch (_) {
+            // Hors ligne ou serveur indisponible : on garde l'écran actuel.
+          }
+        } while (_silentReloadAgain);
+      } finally {
+        _silentReload = null;
+      }
+    }();
   }
 
   /// Sessions dont l'inscription/annulation est en cours : un double tap
@@ -289,9 +331,12 @@ class _SalonEventScreenState extends State<_SalonEventScreen> {
     } catch (_) {
       if (!mounted) return;
       KpbToast.error('salon_rsvp_error'.tr, context: context);
+      return;
     } finally {
       _togglingSessionIds.remove(id);
     }
+    // Le lien « Rejoindre » dépend de l'inscription : on relit l'édition.
+    unawaited(_reloadSilently());
   }
 
   // Lien venu du serveur : ouvert par le helper qui valide le schéma et

@@ -4,6 +4,7 @@ import {
   FundingType,
   ScrapedScholarship,
   ScholarshipScraper,
+  ScraperFetchResult,
 } from '../scholarship-source.interface';
 import {
   detectCountry,
@@ -11,8 +12,12 @@ import {
   fetchPageHtml,
   htmlToText,
   isArticleLink,
+  isHttpNotFound,
   parseDeadline,
 } from './scraper-text.util';
+
+/** Plafond d'articles lus par crawl (politesse envers la source). */
+const MAX_ARTICLES = 50;
 
 /**
  * Greatyop.com — English (primary) + French mirror scraper.
@@ -42,21 +47,25 @@ export class GreatYopScraper implements ScholarshipScraper {
     Accept: 'text/html,application/xhtml+xml',
   };
 
-  async fetch(): Promise<ScrapedScholarship[]> {
+  async fetch(): Promise<ScraperFetchResult> {
     const results: ScrapedScholarship[] = [];
+    // Articles listés mais non lus (erreur réseau, timeout, HTML cassé) : la
+    // bourse est peut-être toujours en ligne, le crawl n'est donc pas complet.
+    let parseFailures = 0;
 
     // ── Step 1: Collect article URLs from listing pages ──────────────────────
-    const articleUrls = await this.collectArticleUrls();
+    const { urls: articleUrls, reachedEnd } = await this.collectArticleUrls();
     this.logger.log(`[${this.prefix}] Found ${articleUrls.length} articles`);
 
     // ── Step 2: Parse each article ───────────────────────────────────────────
-    for (const url of articleUrls.slice(0, 50)) {
+    for (const url of articleUrls.slice(0, MAX_ARTICLES)) {
       // cap at 50 to avoid hammering
       try {
         const scholarship = await this.parseArticle(url);
         if (scholarship) results.push(scholarship);
         await this.sleep(600); // polite delay between requests
       } catch (error) {
+        parseFailures += 1;
         this.logger.warn(
           `[${this.prefix}] Failed to parse ${url}: ${error instanceof Error ? error.message : 'unknown'}`,
         );
@@ -64,11 +73,31 @@ export class GreatYopScraper implements ScholarshipScraper {
     }
 
     this.logger.log(`[${this.prefix}] Scraped ${results.length} scholarships`);
-    return results;
+    // Fenêtre bornée (pages et articles plafonnés) : le service ne retire les
+    // fiches absentes que si la source a été lue en entier.
+    const complete =
+      reachedEnd && articleUrls.length <= MAX_ARTICLES && parseFailures === 0;
+    if (!complete) {
+      this.logger.warn(
+        `[${this.prefix}] partial crawl (listing end reached: ${reachedEnd}, ` +
+          `${articleUrls.length} articles listed, ${parseFailures} failed) — ` +
+          'missing scholarships will not be deactivated',
+      );
+    }
+    return { rows: results, complete };
   }
 
-  private async collectArticleUrls(): Promise<string[]> {
+  /**
+   * `reachedEnd` n'est vrai que si une page de listing vide, ou un 404 au-delà
+   * de la page 1, a été rencontré : le plafond de pages atteint ou une page en
+   * erreur (5xx, réseau) laissent la liste tronquée.
+   */
+  private async collectArticleUrls(): Promise<{
+    urls: string[];
+    reachedEnd: boolean;
+  }> {
     const urls = new Set<string>();
+    let reachedEnd = false;
     // Paginate through up to 4 listing pages
     for (let page = 1; page <= 4; page++) {
       const listUrl =
@@ -90,14 +119,24 @@ export class GreatYopScraper implements ScholarshipScraper {
             found++;
           }
         }
-        if (found === 0) break; // No more pages
+        if (found === 0) {
+          reachedEnd = true; // No more pages
+          break;
+        }
         await this.sleep(500);
       } catch (err) {
+        // Un 404 au-delà de la page 1 est la fin normale de la pagination
+        // WordPress ; en page 1, ou pour un 5xx / une erreur réseau, la liste
+        // reste tronquée.
+        if (page > 1 && isHttpNotFound(err)) {
+          reachedEnd = true;
+          break;
+        }
         this.logger.warn(`[${this.prefix}] Listing page ${page} failed: ${err instanceof Error ? err.message : err}`);
         break;
       }
     }
-    return [...urls];
+    return { urls: [...urls], reachedEnd };
   }
 
   private async parseArticle(url: string): Promise<ScrapedScholarship | null> {

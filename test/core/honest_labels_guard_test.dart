@@ -37,6 +37,10 @@ import 'package:karatou/app/core/translations/app_translations.dart';
 const _percentAllowed = <String, String>{
   'home_profile_pct_notice': 'progression du remplissage du profil',
   'kpb_offer_partner_discount': 'remise tarifaire (−30 %)',
+  'premium_open_value_discount':
+      'remise du Pass Karatou sur l\'accompagnement KPB (−20 %)',
+  'premium_open_discount':
+      'remise du Pass Karatou, tableau gratuit / Pass (−20 %)',
 };
 
 /// Clés où « chance(s) » / « odds » figure dans une NÉGATION explicite.

@@ -8,7 +8,7 @@ import {
 import { Observable, Subscriber } from 'rxjs';
 
 import { AiConsentService } from '../ai/ai-consent.service';
-import { LlmService } from '../ai/llm.service';
+import { LlmService, LlmUnavailableError } from '../ai/llm.service';
 import { AssistBridgeQueueService } from '../assist-bridge/assist-bridge-queue.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -53,6 +53,20 @@ export function sanitizeCoachProfile(raw: unknown): Record<string, unknown> {
     annualTuitionBudgetEur: num(source.annualTuitionBudgetEur),
     monthlyBudgetEur: num(source.monthlyBudgetEur),
   };
+}
+
+/**
+ * Ce qu'un journal peut dire d'une erreur du coach : jamais son `message`
+ * brut. Une erreur inattendue (validation Prisma, TypeError sur une valeur)
+ * peut recopier les données en cours de traitement, donc le message libre de
+ * l'élève (audit 22/11/2026, constat 33). Seule `LlmUnavailableError`, dont
+ * les messages sont écrits par `LlmService` sans contenu de l'élève, garde
+ * son texte ; les autres ne sont décrites que par leur classe.
+ */
+export function describeCoachError(error: unknown): string {
+  if (error instanceof LlmUnavailableError) return error.message;
+  if (error instanceof Error) return error.name || 'Error';
+  return typeof error;
 }
 
 type CoachMessage = { role: CoachRole; content: string; createdAt: string };
@@ -205,16 +219,18 @@ export class CoachService {
     profile: Record<string, unknown>;
   }): Observable<MessageEvent> {
     return new Observable((subscriber) => {
+      // L'élève ferme l'écran : Nest se désabonne du flux SSE. On annule alors
+      // la requête au fournisseur au lieu de lire (et payer) la réponse
+      // jusqu'au bout pour personne (audit 22/11/2026, constat 15).
+      const abort = new AbortController();
       // Tout le tour est dans un try/catch : la promesse est lancée par `void`,
       // donc une exception qui s'en échapperait deviendrait un rejet non géré
       // qui arrête le process Node (et toutes les requêtes en cours).
       void (async () => {
         try {
-          await this.runStreamTurn(params, subscriber);
+          await this.runStreamTurn(params, subscriber, abort.signal);
         } catch (error) {
-          this.logger.error(
-            `Coach stream failed: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          this.logger.error(`Coach stream failed: ${describeCoachError(error)}`);
           if (!subscriber.closed) {
             subscriber.next({
               data: { type: 'error', message: 'KPB Intelligence est momentanément indisponible.' },
@@ -223,6 +239,7 @@ export class CoachService {
           }
         }
       })();
+      return () => abort.abort();
     });
   }
 
@@ -234,6 +251,7 @@ export class CoachService {
       profile: Record<string, unknown>;
     },
     subscriber: Subscriber<MessageEvent>,
+    signal?: AbortSignal,
   ): Promise<void> {
     const params = {
       ...rawParams,
@@ -350,9 +368,24 @@ export class CoachService {
         lang,
         // Une panne du fournisseur doit lever, pas se déguiser en réponse.
         throwOnUnavailable: true,
+        signal,
       })) {
         full += chunk;
         subscriber.next({ data: { type: 'token', text: chunk } } as MessageEvent);
+      }
+      // Flux 200 terminé sans aucun texte : c'est une panne, pas une réponse.
+      // Pas de bulle vide enregistrée puis rejouée au modèle, et l'élève voit
+      // une erreur (constat 14 de l'audit 22/11/2026).
+      //
+      // Mais le message reste décompté : le fournisseur a accepté et facturé
+      // la requête, et l'élève peut provoquer une réponse vide (« réponds par
+      // des espaces »). La rembourser contournait le quota (revue du constat
+      // 16). La cause mesurée, le raisonnement caché, est corrigée à la
+      // source (`reasoning: {enabled:false}`) : ce cas doit rester rare.
+      if (full.trim() === '') {
+        throw new LlmUnavailableError('Empty reply from the provider.', {
+          billed: true,
+        });
       }
       // Output guardrail: if the model emitted a concrete figure while we
       // had NO verified context to ground it, it was invented — append a
@@ -374,7 +407,7 @@ export class CoachService {
       subscriber.complete();
     } catch (error) {
       this.logger.error(
-        `Coach LLM stream failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Coach LLM stream failed: ${describeCoachError(error)}`,
       );
       // Le modèle n'a RIEN rendu : l'élève ne perd pas un de ses 5 messages de
       // la semaine. Avant la 59, la phrase de panne était enregistrée comme une
@@ -384,7 +417,17 @@ export class CoachService {
       // Pas de remboursement dès qu'un jeton est parti : une réponse coupée en
       // route, ou un échec d'écriture après une réponse complète, a été LUE.
       // Rembourser là offrirait des réponses gratuites tant que la panne dure.
-      if (full === '') {
+      //
+      // Et seulement si le fournisseur n'a rien facturé (connexion refusée,
+      // erreur HTTP, délai avant la réponse) : une réponse 200 vide, ou un
+      // flux accepté puis coupé (délai, élève qui ferme l'écran), reste
+      // décompté — sinon chaque essai provoqué serait gratuit (revue du
+      // constat 16). Une erreur inattendue n'est pas remboursée non plus.
+      if (
+        full === '' &&
+        error instanceof LlmUnavailableError &&
+        !error.billed
+      ) {
         try {
           await this.quotaService.refund(params.userId, consumedAt, quota.bucket);
         } catch (refundError) {

@@ -241,6 +241,16 @@ export class ReferralDecisionDto {
 }
 
 export class RecordPayoutDto {
+  /**
+   * Lauréat affiché à l'écran (optionnel) : si le prix a changé de main
+   * entre-temps (forfait réattribué), le serveur refuse au lieu de marquer
+   * payé quelqu'un d'autre.
+   */
+  @IsOptional()
+  @IsString()
+  @Length(1, 64)
+  participantId?: string;
+
   /** Référence de la transaction Wave (ou autre moyen). */
   @IsString()
   @MinLength(2)

@@ -20,12 +20,16 @@ export class AuthController {
   @Post('login')
   @Throttle(ADMIN_LOGIN_THROTTLE)
   async login(
+    @Req() req: Request,
     @Body() input: AdminLoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // IP vue par Express (`trust proxy` réglé dans main.ts) : le verrouillage
+    // anti brute force est compté par couple (e-mail, IP).
     const { token, refreshToken, user } = await this.authService.login(
       input.email,
       input.password,
+      req.ip,
     );
     // Tokens go into httpOnly cookies; the JSON body carries only the (non-
     // sensitive) user so the JWTs are never exposed to client-side JavaScript.

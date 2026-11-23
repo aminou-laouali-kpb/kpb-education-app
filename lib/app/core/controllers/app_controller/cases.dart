@@ -9,6 +9,15 @@ LocalizedText _caseText(String key) => LocalizedText(
       en: appTranslationsEn[key] ?? key,
     );
 
+/// Le jeton d'un écran de dossier abonné au temps réel (voir
+/// `connectCaseDetailSocket`). Un objet par écran : deux écrans du même
+/// dossier tiennent deux jetons distincts.
+class _CaseSocketLease {
+  _CaseSocketLease(this.caseId);
+
+  final String caseId;
+}
+
 /// Dossiers : création, messagerie (socket + file d’envoi), documents.
 mixin _CasesMixin on _AppControllerBase {
   StudentCase submitCase({
@@ -132,8 +141,10 @@ mixin _CasesMixin on _AppControllerBase {
     if (!AppConfig.enableRemoteSync || isGuestMode || profile == null) {
       return null;
     }
+    final generation = _sessionGeneration;
     try {
       final raw = await _apiClient.listCasesForScholarship(id);
+      if (_isStaleSession(generation)) return null;
       for (final entry in raw) {
         final remote = CaseApiCodec.studentCaseFromApi(entry);
         // Un serveur plus ancien ignore le filtre et rend TOUTE la liste :
@@ -172,12 +183,16 @@ mixin _CasesMixin on _AppControllerBase {
     update();
 
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       await _apiClient.setCaseParentVisibility(
         caseId: caseId,
         parentCanView: canView,
       );
     } catch (e, s) {
+      // Déconnexion pendant l'appel (souvent la cause du 401) : le dossier du
+      // compte parti n'est plus là, rien à rétablir ni à écrire.
+      if (_isStaleSession(generation)) return;
       // Revert the optimistic flip so the UI reflects the real backend state.
       final i = _cases.indexWhere((item) => item.id == caseId);
       if (i >= 0) {
@@ -268,6 +283,7 @@ mixin _CasesMixin on _AppControllerBase {
     required String senderName,
     required String messageId,
   }) async {
+    final generation = _sessionGeneration;
     try {
       final outbox = CaseMessageOutbox.maybeInstance;
       await outbox?.enqueue(
@@ -276,9 +292,13 @@ mixin _CasesMixin on _AppControllerBase {
         senderName: senderName,
         localMessageId: messageId,
       );
+      // Déconnexion pendant l'écriture : la file est vidée par `logout`, le
+      // message du compte parti ne part pas.
+      if (_isStaleSession(generation)) return;
       // L'id serveur a pu arriver pendant l'écriture.
       final target = resolveCaseId(caseId);
       if (target != caseId) await outbox?.reassignCase(caseId, target);
+      if (_isStaleSession(generation)) return;
       if (_localCaseId.hasMatch(target)) {
         // Dossier pas encore connu du serveur : le poster rendait un 404 et
         // le message était perdu (revue avant la 58, n° 18). Il attend en
@@ -423,22 +443,84 @@ mixin _CasesMixin on _AppControllerBase {
     update();
   }
 
-  Future<void> connectCaseDetailSocket(String caseId) async {
-    if (!AppConfig.enableRemoteSync) return;
+  /// Abonne un écran de dossier au temps réel et rend son JETON, à rendre à
+  /// [disconnectCaseDetailSocket] quand l'écran se ferme.
+  ///
+  /// Le contrôleur n'a qu'un socket, mais plusieurs écrans de dossier peuvent
+  /// s'empiler (notification ou lien profond `/cases/<id>` par-dessus un
+  /// dossier ouvert). Chaque écran tient donc un jeton dans une pile, et le
+  /// socket suit le dossier de l'écran du DESSUS : fermer le dossier B ouvert
+  /// par-dessus A rebranche le temps réel sur A, au lieu de le couper. Seul le
+  /// dernier écran qui ferme un dossier le quitte (audit du 22/11/2026,
+  /// n° 19).
+  Object connectCaseDetailSocket(String caseId) {
+    final lease = _CaseSocketLease(caseId);
+    if (!AppConfig.enableRemoteSync) return lease;
     // Ouvrir un dossier relance aussi la file d'envoi : sans transition de
     // réseau, rien d'autre ne la vidait avant la prochaine synchro.
     if (ConnectivityService.instance.isOnline) {
       unawaited(flushPendingCaseMessages());
     }
-    caseId = resolveCaseId(caseId);
-    // Un dossier encore local n'a pas de room côté serveur.
-    if (_localCaseId.hasMatch(caseId)) return;
+    _caseSocketLeases.add(lease);
+    unawaited(_syncCaseSocket());
+    return lease;
+  }
+
+  /// Rend le jeton de [connectCaseDetailSocket]. Le socket ne quitte le
+  /// dossier que si plus aucun écran ne le tient ; sinon il revient au
+  /// dossier de l'écran resté au-dessus.
+  Future<void> disconnectCaseDetailSocket(Object lease) async {
+    if (!_caseSocketLeases.remove(lease)) return;
+    await _syncCaseSocket();
+  }
+
+  /// Aligne le socket sur le dossier de l'écran du dessus de la pile.
+  ///
+  /// [_caseSocketRevision] change à chaque appel : après chaque attente, un
+  /// alignement dépassé par un plus récent (écran fermé pendant
+  /// `hasAuthSession`) s'arrête, au lieu de laisser un socket ouvert sur un
+  /// dossier qui n'est plus affiché.
+  Future<void> _syncCaseSocket() async {
+    final revision = ++_caseSocketRevision;
+    final top = _caseSocketLeases.isEmpty ? null : _caseSocketLeases.last;
+    final caseId = top == null ? null : resolveCaseId(top.caseId);
+    // Plus d'écran, ou un dossier encore local (pas de room côté serveur).
+    if (caseId == null || _localCaseId.hasMatch(caseId)) {
+      await _caseSocket.disconnect();
+      _caseSocketGeneration = null;
+      _caseTypingToken++;
+      isCaseAdvisorTyping = false;
+      update();
+      return;
+    }
+    // Déjà dans la room de ce dossier, pour le compte connecté, et le socket
+    // est vivant : rien à faire. `isActive` et non `isConnected` : pendant la
+    // poignée de main, le socket n'est pas encore connecté mais ne doit pas
+    // être recréé. Un socket détruit (refus de la poignée de main, « io
+    // server disconnect ») ne se reconnecte pas seul : rouvrir le dossier le
+    // relance.
+    final joinedGeneration = _caseSocketGeneration;
+    if (_caseSocket.currentCaseId == caseId &&
+        _caseSocket.isActive &&
+        joinedGeneration != null &&
+        !_isStaleSession(joinedGeneration)) {
+      return;
+    }
+    // Le socket écoute le dossier du compte connecté à l'ouverture : après
+    // une déconnexion, ses événements ne réécrivent plus l'état (audit du
+    // 22/11/2026, n° 3).
+    final generation = _sessionGeneration;
     if (!await _apiClient.hasAuthSession()) return;
+    if (revision != _caseSocketRevision || _isStaleSession(generation)) return;
 
-    await _caseSocket.connect(caseId);
-
-    _caseSocket.onMessage((data) => ingestRemoteCaseMessage(caseId, data));
+    // Écouteurs posés AVANT la connexion : le service les rattache au
+    // nouveau socket, et ils portent le dossier qu'il rejoint.
+    _caseSocket.onMessage((data) {
+      if (_isStaleSession(generation)) return;
+      ingestRemoteCaseMessage(caseId, data);
+    });
     _caseSocket.onCaseUpdated((data) {
+      if (_isStaleSession(generation)) return;
       try {
         _upsertCase(CaseApiCodec.studentCaseFromApi(data));
         _persist();
@@ -446,24 +528,38 @@ mixin _CasesMixin on _AppControllerBase {
       } catch (_) {}
     });
     _caseSocket.onTyping((data) {
+      // Compte parti, ou signal d'un autre dossier : ignoré.
+      if (_isStaleSession(generation)) return;
+      final typingCaseId = data['caseId'];
+      if (typingCaseId is String && typingCaseId != caseId) return;
       final isTyping = data['isTyping'] as bool? ?? false;
       if (isCaseAdvisorTyping == isTyping) return;
       isCaseAdvisorTyping = isTyping;
+      // Tout signal invalide les minuteries précédentes.
+      final token = ++_caseTypingToken;
       update();
       if (isTyping) {
-        // Auto-reset after 4 s in case the stop event is missed.
+        // Auto-reset after 4 s in case the stop event is missed. La minuterie
+        // ne vaut que pour CE signal : un changement de dossier ou un signal
+        // plus récent l'annule.
         Future.delayed(const Duration(seconds: 4), () {
-          if (isCaseAdvisorTyping) {
-            isCaseAdvisorTyping = false;
-            update();
-          }
+          if (token != _caseTypingToken || !isCaseAdvisorTyping) return;
+          isCaseAdvisorTyping = false;
+          update();
         });
       }
     });
+    // L'indicateur « en train d'écrire » appartenait au dossier quitté : il
+    // s'efface tout de suite à l'écran (sans `update()`, il restait affiché).
+    _clearCaseAdvisorTyping();
+    _caseSocketGeneration = generation;
+    await _caseSocket.connect(caseId);
   }
 
-  Future<void> disconnectCaseDetailSocket() async {
-    await _caseSocket.disconnect();
+  /// Efface l'indicateur « en train d'écrire » et annule sa minuterie.
+  void _clearCaseAdvisorTyping() {
+    _caseTypingToken++;
+    if (!isCaseAdvisorTyping) return;
     isCaseAdvisorTyping = false;
     update();
   }
@@ -516,8 +612,12 @@ mixin _CasesMixin on _AppControllerBase {
       senderName: data['senderName'] as String? ?? 'KPB',
       senderRole: senderRole,
       body: LocalizedText(fr: body, en: body),
-      createdAt: DateTime.tryParse(data['createdAt'] as String? ?? '') ??
-          DateTime.now(),
+      // Heure LOCALE, comme les messages lus par la synchro (CaseApiCodec) :
+      // sans `toLocal`, une réponse reçue en direct s'affichait à l'heure UTC
+      // (16:33 au lieu de 17:33 au Bénin) jusqu'à la synchro suivante.
+      createdAt:
+          DateTime.tryParse(data['createdAt'] as String? ?? '')?.toLocal() ??
+              DateTime.now(),
       clientMessageId: clientMessageId,
     );
 
@@ -618,6 +718,13 @@ mixin _CasesMixin on _AppControllerBase {
   @visibleForTesting
   Duration outboxRetryDelay = const Duration(seconds: 20);
 
+  /// Déconnexion : la relance différée ne part plus sous le compte suivant.
+  @override
+  void _cancelOutboxRetry() {
+    _outboxRetryTimer?.cancel();
+    _outboxRetryTimer = null;
+  }
+
   void _scheduleOutboxRetry() {
     if (_outboxRetryTimer?.isActive ?? false) return;
     _outboxRetryTimer = Timer(outboxRetryDelay, () {
@@ -632,6 +739,7 @@ mixin _CasesMixin on _AppControllerBase {
   Future<void> _createRemoteCase(StudentCase localCase) async {
     if (!AppConfig.enableRemoteSync) return;
     if (!_caseCreatesInFlight.add(localCase.id)) return;
+    final generation = _sessionGeneration;
     try {
       final response = await _apiClient.createCase(<String, dynamic>{
         'type': CaseApiCodec.encodeCaseType(localCase.type),
@@ -656,6 +764,9 @@ mixin _CasesMixin on _AppControllerBase {
         if (localCase.scholarshipId != null)
           'scholarshipId': localCase.scholarshipId,
       });
+      // Déconnexion pendant la création : le dossier du compte parti ne
+      // revient pas en mémoire (ni sur disque, ni dans le compte suivant).
+      if (_isStaleSession(generation)) return;
       final remote = CaseApiCodec.studentCaseFromApi(response);
       final outbox = CaseMessageOutbox.maybeInstance;
       final idChanged = remote.id.isNotEmpty && remote.id != localCase.id;
@@ -679,6 +790,7 @@ mixin _CasesMixin on _AppControllerBase {
       _persist();
       update();
       if (idChanged) await outbox?.reassignCase(localCase.id, remote.id);
+      if (_isStaleSession(generation)) return;
       if (outbox != null && outbox.hasPendingFor(remote.id)) {
         unawaited(flushPendingCaseMessages());
       }
@@ -756,6 +868,7 @@ mixin _CasesMixin on _AppControllerBase {
   ) async {
     final outbox = CaseMessageOutbox.maybeInstance;
     OutboxEntry? entry() => outbox?.entryForMessage(messageId);
+    final generation = _sessionGeneration;
     try {
       await _postCaseMessage(caseId, text, messageId);
     } catch (e, s) {
@@ -767,6 +880,9 @@ mixin _CasesMixin on _AppControllerBase {
         operation: 'create_remote_case_message',
       );
       final queued = entry();
+      // Échec d'un message du compte parti (401 une fois la session
+      // effacée) : ni marque « Non envoyé », ni message d'erreur.
+      if (_isStaleSession(generation)) return;
       if (_isPermanentRejection(e)) {
         // Refus définitif (message trop long, dossier introuvable…) : le
         // reposter à chaque reconnexion échouerait en silence. La bulle passe
@@ -781,7 +897,7 @@ mixin _CasesMixin on _AppControllerBase {
       }
       // Coupure réseau : reste en file, relance dans quelques secondes.
       if (queued != null) await outbox!.markFailure(queued.key, queued);
-      _scheduleOutboxRetry();
+      if (!_isStaleSession(generation)) _scheduleOutboxRetry();
       return;
     }
     // Le message EST parti : il sort de la file AVANT la relecture. Si la
@@ -794,7 +910,9 @@ mixin _CasesMixin on _AppControllerBase {
     // gardée à côté de la copie serveur, et le message s'affichait deux fois.
     _caseMessagesInFlight.remove(messageId);
     try {
+      if (_isStaleSession(generation)) return;
       final response = await _apiClient.getCase(caseId);
+      if (_isStaleSession(generation)) return;
       _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       _persist();
     } catch (e, s) {
@@ -840,11 +958,16 @@ mixin _CasesMixin on _AppControllerBase {
     if (!AppConfig.enableRemoteSync) return;
     final outbox = CaseMessageOutbox.maybeInstance;
     if (outbox == null || outbox.pendingCount == 0) return;
+    // Compte pour lequel ce vidage tourne : après une déconnexion, il s'arrête
+    // sans rien réécrire (la file du compte parti est vidée par `logout`).
+    final generation = _sessionGeneration;
     if (!await _apiClient.hasAuthSession()) return;
+    if (_isStaleSession(generation)) return;
     final touched = <String>{};
     var changed = false;
     var networkFailure = false;
     for (final entry in outbox.pending.toList()) {
+      if (_isStaleSession(generation)) return;
       final bubbleId = entry.localMessageId;
       // Un envoi direct s'en occupe déjà.
       if (bubbleId != null && _caseMessagesInFlight.contains(bubbleId)) {
@@ -888,8 +1011,10 @@ mixin _CasesMixin on _AppControllerBase {
       }
     }
     for (final caseId in touched) {
+      if (_isStaleSession(generation)) return;
       try {
         final response = await _apiClient.getCase(caseId);
+        if (_isStaleSession(generation)) return;
         _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       } catch (e, s) {
         safeRecordError(
@@ -901,6 +1026,7 @@ mixin _CasesMixin on _AppControllerBase {
         );
       }
     }
+    if (_isStaleSession(generation)) return;
     if (changed) {
       _persist();
       update();
@@ -921,13 +1047,16 @@ mixin _CasesMixin on _AppControllerBase {
     String filePath,
   ) async {
     if (!AppConfig.enableRemoteSync) return;
+    final generation = _sessionGeneration;
     try {
       await _apiClient.uploadCaseDocumentFile(
         caseId: caseId,
         filePath: filePath,
         title: resolve(document.title),
       );
+      if (_isStaleSession(generation)) return;
       final response = await _apiClient.getCase(caseId);
+      if (_isStaleSession(generation)) return;
       _upsertCase(CaseApiCodec.studentCaseFromApi(response));
       _persist();
       update();

@@ -21,10 +21,17 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
   };
 
   function makeService(
-    opts: { existing?: unknown; pkg?: unknown; hasPass?: boolean | Error } = {},
+    opts: {
+      existing?: unknown;
+      pkg?: unknown;
+      hasPass?: boolean | Error;
+      intentStatus?: string;
+      purchaseStatus?: string;
+    } = {},
   ) {
     const created: Array<Record<string, unknown>> = [];
     const updated: Array<Record<string, unknown>> = [];
+    const reconcileWheres: Array<Record<string, unknown>> = [];
     let intentCalls = 0;
     const client = {
       servicePackage: {
@@ -46,6 +53,20 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
         update: async ({ data }: { data: Record<string, unknown> }) => {
           updated.push(data);
           return { ...(opts.existing as object), ...data };
+        },
+        // Applique réellement le filtre conditionnel de reconcilePurchase.
+        updateMany: async ({
+          where,
+        }: {
+          where: { paymentIntentId: string; status: string; paymentIntent: { is: { status: string } } };
+        }) => {
+          reconcileWheres.push(where);
+          const purchaseStatus = opts.purchaseStatus ?? 'pending_payment';
+          const ok =
+            where.paymentIntentId === 'pi-1' &&
+            where.status === purchaseStatus &&
+            where.paymentIntent.is.status === (opts.intentStatus ?? 'pending');
+          return { count: ok ? 1 : 0 };
         },
       },
     };
@@ -72,6 +93,7 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
       service: new ServicePackagesService(prisma, payments, pass),
       created,
       updated,
+      reconcileWheres,
       getIntentCalls: () => intentCalls,
     };
   }
@@ -150,6 +172,51 @@ describe('ServicePackagesService — WhatsApp purchase', () => {
       expect(created).toEqual([
         expect.objectContaining({ caseId: 'case-own', paymentIntentId: 'pi-1' }),
       ]);
+    });
+  });
+
+  describe('reconcilePurchase (constats 23/40)', () => {
+    it('écriture conditionnelle : achat pending_payment ET intent paid', async () => {
+      const { service, reconcileWheres } = makeService({ intentStatus: 'paid' });
+      await expect(service.reconcilePurchase('pi-1')).resolves.toBe(true);
+      expect(reconcileWheres[0]).toEqual({
+        paymentIntentId: 'pi-1',
+        status: 'pending_payment',
+        paymentIntent: { is: { status: 'paid' } },
+      });
+    });
+
+    it('intent non payé : rien', async () => {
+      const { service } = makeService({ intentStatus: 'pending' });
+      // Le faux client ne matche que si l'intent est dans le statut demandé (paid).
+      await expect(service.reconcilePurchase('pi-1')).resolves.toBe(false);
+    });
+
+    it('achat déjà avancé (in_progress) : rien', async () => {
+      const { service } = makeService({ intentStatus: 'paid', purchaseStatus: 'in_progress' });
+      await expect(service.reconcilePurchase('pi-1')).resolves.toBe(false);
+    });
+
+    it('purchase() : intent payé AVANT la création de l’achat → achat rendu paid', async () => {
+      const { service } = makeService({ intentStatus: 'paid' });
+      const out = (await service.purchase({
+        userId: 'u1',
+        packageCode: 'dossier_pret',
+        returnUrl: 'kpb://ok',
+        cancelUrl: 'kpb://ko',
+      })) as { status: string };
+      expect(out.status).toBe('paid');
+    });
+
+    it('purchase() nominal : achat rendu pending_payment', async () => {
+      const { service } = makeService();
+      const out = (await service.purchase({
+        userId: 'u1',
+        packageCode: 'dossier_pret',
+        returnUrl: 'kpb://ok',
+        cancelUrl: 'kpb://ko',
+      })) as { status: string };
+      expect(out.status).toBe('pending_payment');
     });
   });
 

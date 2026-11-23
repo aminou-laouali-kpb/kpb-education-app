@@ -1,3 +1,5 @@
+import { CaseStatus } from '../../common/enums/case-status.enum';
+
 /**
  * Les audiences de campagne, et le filtre que chacune EXIGE.
  *
@@ -143,12 +145,16 @@ const TOKEN_LIKE = /^[a-z0-9]+(?:_[a-z0-9]+)+$/i;
  *    `_` collé : c'est un jeton mal écrit) ;
  *  - le jeton `eef_suspended` quand `KPB_EEF_SUSPENDED_COUNTRIES` est vide : il
  *    n'exclurait personne, et l'exploitant croirait le contraire.
+ *
+ * `case_status` a sa propre règle : le statut doit appartenir à l'enum
+ * `CaseStatus` (voir [caseStatusFilterInvalid]).
  */
 export function audienceFilterInvalid(
   audienceType: string,
   filters: Record<string, unknown>,
   env: NodeJS.ProcessEnv = process.env,
 ): string | null {
+  if (audienceType === 'case_status') return caseStatusFilterInvalid(filters);
   if (!EXCEPT_COUNTRIES_AUDIENCES.has(audienceType)) return null;
 
   for (const key of Object.keys(filters)) {
@@ -188,6 +194,27 @@ export function audienceFilterInvalid(
     resolveExcludedCountries([EEF_SUSPENDED_COUNTRIES_TOKEN], env).length === 0
   ) {
     return `le jeton « ${EEF_SUSPENDED_COUNTRIES_TOKEN} » est vide : KPB_EEF_SUSPENDED_COUNTRIES ne désigne aucun pays, l'exclusion n'exclurait personne`;
+  }
+  return null;
+}
+
+/**
+ * `case_status` : le statut doit être une valeur EXACTE de l'enum `CaseStatus`.
+ * Avant, `"documents_requis"` ou `"Documents_Needed"` faisait échouer la requête
+ * Prisma, l'erreur était avalée et la campagne se disait « terminée » à zéro
+ * destinataire — aucun élève relancé, aucun message d'erreur.
+ *
+ * Un filtre absent ou vide reste du ressort de [audienceFilterMissing].
+ */
+function caseStatusFilterInvalid(
+  filters: Record<string, unknown>,
+): string | null {
+  const value = filters['status'];
+  if (value === undefined || value === null) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  const allowed: string[] = Object.values(CaseStatus);
+  if (typeof value !== 'string' || !allowed.includes(value)) {
+    return `statut de dossier inconnu « ${String(value)} » (valeurs admises : ${allowed.join(', ')})`;
   }
   return null;
 }

@@ -26,6 +26,17 @@ export type AiQuotaOptions = {
 export const AI_QUOTA_KEY = 'kpb:ai-quota';
 
 /**
+ * Décompte posé sur la requête par le guard, pour qu'une route puisse rendre
+ * l'unité quand le modèle n'a rien produit (même instant qu'au décompte : un
+ * remboursement après minuit viserait sinon le compteur du lendemain).
+ */
+export type AiQuotaConsumption = {
+  userId: string;
+  feature: string;
+  consumedAt: Date;
+};
+
+/**
  * Borne le coût d'une route LLM : taille du body puis quota quotidien par
  * utilisateur. À poser APRÈS `StudentAuthGuard` et `AiConsentGuard`.
  */
@@ -54,6 +65,7 @@ export class AiQuotaGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{
       studentUser?: { id?: string };
       body?: unknown;
+      aiQuotaConsumption?: AiQuotaConsumption;
     }>();
     const userId = request.studentUser?.id;
     if (!userId) {
@@ -68,10 +80,12 @@ export class AiQuotaGuard implements CanActivate {
       });
     }
 
+    const consumedAt = new Date();
     const decision = await this.quota.consume({
       userId,
       feature: options.feature,
       limit: resolveAiDailyLimit(options),
+      now: consumedAt,
     });
     if (!decision.allowed) {
       throw new HttpException(
@@ -84,6 +98,11 @@ export class AiQuotaGuard implements CanActivate {
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
+    request.aiQuotaConsumption = {
+      userId,
+      feature: options.feature,
+      consumedAt,
+    };
     return true;
   }
 }

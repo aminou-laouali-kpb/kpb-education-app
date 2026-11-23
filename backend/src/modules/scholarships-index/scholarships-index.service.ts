@@ -48,6 +48,11 @@ export type RefreshResult = {
     deactivated: number;
     merged: number;
     error: string | null;
+    /**
+     * `false` quand la source n'a été lue que partiellement (fenêtre de crawl
+     * tronquée) : aucune désactivation n'a alors été faite pour elle.
+     */
+    complete: boolean;
   }>;
   totalFetched: number;
   totalUpserted: number;
@@ -142,7 +147,11 @@ export class ScholarshipsIndexService {
 
   private async runRefresh(): Promise<RefreshResult> {
     const startedAt = new Date();
-    const allScraped: Array<{ prefix: string; rows: ScrapedScholarship[] }> = [];
+    const allScraped: Array<{
+      prefix: string;
+      rows: ScrapedScholarship[];
+      complete: boolean;
+    }> = [];
     const sources: RefreshResult['sources'] = [];
 
     // ── Phase 1: Fetch from all scrapers ─────────────────────────────────────
@@ -155,9 +164,14 @@ export class ScholarshipsIndexService {
         deactivated: 0,
         merged: 0,
         error: null as string | null,
+        complete: false,
       };
       try {
-        const rows = await scraper.fetch();
+        const fetched = await scraper.fetch();
+        // Un tableau nu est une liste exhaustive ; sinon le scraper dit
+        // lui-même s'il a tout lu (fenêtre de pages/articles plafonnée).
+        const rows = Array.isArray(fetched) ? fetched : fetched.rows;
+        sourceResult.complete = Array.isArray(fetched) || fetched.complete === true;
         const valid = rows.filter((r) => {
           if (!r.sourceKey.startsWith(`${scraper.prefix}-`)) {
             this.logger.warn(
@@ -168,7 +182,11 @@ export class ScholarshipsIndexService {
           return true;
         });
         sourceResult.fetched = valid.length;
-        allScraped.push({ prefix: scraper.prefix, rows: valid });
+        allScraped.push({
+          prefix: scraper.prefix,
+          rows: valid,
+          complete: sourceResult.complete,
+        });
       } catch (error) {
         sourceResult.error =
           error instanceof Error ? error.message : 'unknown error';
@@ -176,23 +194,29 @@ export class ScholarshipsIndexService {
           `[${scraper.prefix}] failed: ${sourceResult.error}`,
           error instanceof Error ? error.stack : undefined,
         );
-        allScraped.push({ prefix: scraper.prefix, rows: [] });
+        allScraped.push({ prefix: scraper.prefix, rows: [], complete: false });
       }
       sources.push(sourceResult);
     }
 
     // ── Phase 2: Cross-source deduplication ──────────────────────────────────
     const allRows = allScraped.flatMap((s) => s.rows);
-    const { deduplicated, mergeCount } = this.deduplicateAcrossSources(allRows);
-
-    // Update merge counts per source
-    const mergesBySource = new Map<string, number>();
-    for (const row of deduplicated) {
-      const prefix = row.sourceKey.split('-')[0];
-      mergesBySource.set(prefix, (mergesBySource.get(prefix) ?? 0));
+    // Préfixe RÉEL du scraper pour chaque ligne : plusieurs préfixes contiennent
+    // un tiret (turkiye-burslari / turkiye-mevlana…), on ne peut pas le
+    // retrouver en coupant la clé au premier tiret.
+    const prefixByKey = new Map<string, string>();
+    for (const s of allScraped) {
+      for (const r of s.rows) prefixByKey.set(r.sourceKey, s.prefix);
     }
+    const { deduplicated, mergedKeys } = this.deduplicateAcrossSources(
+      allRows,
+      prefixByKey,
+    );
+
+    // `merged` par source = ses propres lignes absorbées par le doublon d'une
+    // autre source (et non plus le total global recopié sur chaque source).
     sources.forEach((s) => {
-      s.merged = mergeCount;
+      s.merged = mergedKeys.filter((k) => k.startsWith(`${s.prefix}-`)).length;
     });
 
     // ── Phase 3: Upsert all deduplicated rows ─────────────────────────────────
@@ -210,6 +234,15 @@ export class ScholarshipsIndexService {
       if (source.error || source.fetched === 0) {
         this.logger.warn(
           `[${source.prefix}] no rows fetched — skipping deactivation`,
+        );
+        continue;
+      }
+      // Une fenêtre de crawl tronquée (plafond de pages ou d'articles, article
+      // en erreur) n'est pas la liste de la source : une bourse sortie de la
+      // fenêtre est toujours en ligne. On ne désactive que sur crawl complet.
+      if (!source.complete) {
+        this.logger.warn(
+          `[${source.prefix}] partial crawl — skipping deactivation`,
         );
         continue;
       }
@@ -231,7 +264,7 @@ export class ScholarshipsIndexService {
       totalFetched: sources.reduce((sum, s) => sum + s.fetched, 0),
       totalUpserted: sources.reduce((sum, s) => sum + s.upserted, 0),
       totalDeactivated: sources.reduce((sum, s) => sum + s.deactivated, 0),
-      totalMerged: mergeCount,
+      totalMerged: mergedKeys.length,
     };
   }
 
@@ -582,30 +615,55 @@ export class ScholarshipsIndexService {
    * English titles (strip year, punctuation, lowercase). When a match is
    * found, merge into the record with the highest `contentScore`, filling
    * missing fields from the lower-score record.
+   *
+   * Seules des lignes de sources DIFFÉRENTES fusionnent : deux fiches d'une
+   * même source (« Chevening 2026 » et « Chevening 2025-2026 – Results », ou
+   * deux articles mastere.tn dont la page /en/ devinée renvoie le même
+   * og:title générique) sont deux bourses distinctes, et la perdante n'était
+   * jamais créée. Les accents sont retirés (NFD) au lieu d'effacer la lettre,
+   * et une clé vide ne fusionne rien.
    */
-  private deduplicateAcrossSources(rows: ScrapedScholarship[]): {
+  private deduplicateAcrossSources(
+    rows: ScrapedScholarship[],
+    prefixByKey: ReadonlyMap<string, string>,
+  ): {
     deduplicated: ScrapedScholarship[];
-    mergeCount: number;
+    /** `sourceKey` des lignes absorbées par le doublon d'une autre source. */
+    mergedKeys: string[];
   } {
     const normalized = (title: string) =>
       title
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
         .replace(/\d{4}[-/]\d{4}|\d{4}/g, '')
         .replace(/[^a-z\s]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
-
-    const groups = new Map<string, ScrapedScholarship[]>();
-    for (const row of rows) {
-      const key = normalized(row.nameEn || row.nameFr);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(row);
-    }
+    // Source d'une ligne = préfixe du scraper qui l'a produite (phase 1).
+    const sourceOf = (row: ScrapedScholarship) =>
+      prefixByKey.get(row.sourceKey) ?? row.sourceKey;
 
     const deduplicated: ScrapedScholarship[] = [];
-    let mergeCount = 0;
+    const mergedKeys: string[] = [];
+    // Par clé : des grappes contenant au plus UNE ligne par source.
+    const groups = new Map<string, ScrapedScholarship[][]>();
+    for (const row of rows) {
+      const key = normalized(row.nameEn || row.nameFr);
+      if (!key) {
+        deduplicated.push(row);
+        continue;
+      }
+      const clusters = groups.get(key) ?? [];
+      if (!groups.has(key)) groups.set(key, clusters);
+      const cluster = clusters.find(
+        (c) => !c.some((r) => sourceOf(r) === sourceOf(row)),
+      );
+      if (cluster) cluster.push(row);
+      else clusters.push([row]);
+    }
 
-    for (const [, group] of groups) {
+    for (const group of [...groups.values()].flat()) {
       if (group.length === 1) {
         deduplicated.push(group[0]);
         continue;
@@ -613,10 +671,10 @@ export class ScholarshipsIndexService {
       // Sort by contentScore desc — winner is the best record
       group.sort((a, b) => (b.contentScore ?? 0) - (a.contentScore ?? 0));
       const winner = { ...group[0] };
-      mergeCount += group.length - 1;
 
       // Fill empty fields from secondary records
       for (const other of group.slice(1)) {
+        mergedKeys.push(other.sourceKey);
         if (!winner.descriptionFr && other.descriptionFr) winner.descriptionFr = other.descriptionFr;
         if (!winner.descriptionEn && other.descriptionEn) winner.descriptionEn = other.descriptionEn;
         if (!winner.advantagesFr.length && other.advantagesFr.length) winner.advantagesFr = other.advantagesFr;
@@ -632,7 +690,7 @@ export class ScholarshipsIndexService {
       deduplicated.push(winner);
     }
 
-    return { deduplicated, mergeCount };
+    return { deduplicated, mergedKeys };
   }
 
   /// Admin moderation: approve / reject / reset a scholarship's visibility.
@@ -656,7 +714,7 @@ export class ScholarshipsIndexService {
     if (status === 'approved') {
       await this.contentQuality.assertReady(id);
     }
-    return this.prismaService.execute((prisma) =>
+    const updated = await this.prismaService.execute((prisma) =>
       prisma.scholarship.update({
         where: { id },
         data: {
@@ -674,6 +732,22 @@ export class ScholarshipsIndexService {
         },
       }),
     );
+    // Approuver ne réactive PAS une fiche inactive (elle a pu être retirée
+    // volontairement par un admin) : mais la console doit savoir qu'une fiche
+    // « approuvée » reste invisible des étudiants tant que `isActive` est faux
+    // (publicScholarshipWhere l'exige), au lieu de le découvrir par une plainte.
+    if (status === 'approved' && updated && updated.isActive === false) {
+      this.logger.warn(
+        `[moderation] scholarship ${id} approved but inactive — not published`,
+      );
+      return {
+        ...updated,
+        publicationWarning:
+          'Bourse approuvée mais inactive (isActive=false) : elle reste invisible ' +
+          'des étudiants. Réactivez-la explicitement si elle est toujours ouverte.',
+      };
+    }
+    return updated;
   }
 
   private boundedInt(

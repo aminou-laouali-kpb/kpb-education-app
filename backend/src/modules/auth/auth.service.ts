@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { isIPv4, isIPv6 } from 'net';
 
 import {
   Injectable,
@@ -36,8 +37,57 @@ interface LoginAttempt {
   firstAttemptAt: number;
 }
 
+// Verrou dur par couple (e-mail, réseau client).
 const LOGIN_MAX_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+// Plafond global par e-mail, toutes IP confondues : borne la force brute
+// distribuée (rotation d'IP). Nettement plus haut que le verrou par couple :
+// pour bloquer un admin il faut ≥ 50 échecs depuis ≥ 10 réseaux distincts
+// par fenêtre, au lieu de 5 requêtes depuis n'importe où.
+const LOGIN_EMAIL_MAX_FAILURES = 50;
+// Avant le plafond : délai progressif (sans blocage) au-delà de ce seuil.
+const LOGIN_EMAIL_DELAY_AFTER = 10;
+const LOGIN_EMAIL_DELAY_STEP_MS = 250;
+const LOGIN_EMAIL_DELAY_MAX_MS = 5000;
+// Taille max de chaque Map de compteurs (clés contrôlées par le client) :
+// au-delà, éviction de l'entrée la plus ancienne (ordre d'insertion, O(1)).
+const LOGIN_ATTEMPTS_MAX_ENTRIES = 10_000;
+
+/**
+ * Réseau client utilisé dans la clé : IPv4 telle quelle (y compris
+ * ::ffff:a.b.c.d), IPv6 regroupée par /64 — un hôte IPv6 dispose en général
+ * d'un /64 entier et pourrait sinon changer d'adresse à chaque essai.
+ */
+export function clientNetworkKey(clientIp?: string): string {
+  const ip = clientIp?.trim().toLowerCase() ?? '';
+  if (!ip) return 'unknown';
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/.exec(ip);
+  if (mapped && isIPv4(mapped[1])) return mapped[1];
+  if (isIPv4(ip)) return ip;
+  if (!isIPv6(ip)) return ip;
+
+  const [headRaw, tailRaw] = ip.split('::');
+  const head = headRaw ? headRaw.split(':') : [];
+  const tail = tailRaw !== undefined && tailRaw ? tailRaw.split(':') : [];
+  const groups =
+    tailRaw === undefined
+      ? head
+      : [...head, ...Array(8 - head.length - tail.length).fill('0'), ...tail];
+  return `${groups
+    .slice(0, 4)
+    .map((g) => parseInt(g, 16).toString(16))
+    .join(':')}::/64`;
+}
+
+/**
+ * Clé du compteur d'échecs : couple (e-mail, réseau). Indexé par e-mail seul,
+ * n'importe qui pouvait verrouiller un compte admin connu (5 requêtes /
+ * 15 min) et l'admin légitime recevait un 429 même avec le bon mot de passe
+ * (audit 2026-11-22, constat 5).
+ */
+function loginAttemptKey(email: string, clientIp?: string): string {
+  return `${email}|${clientNetworkKey(clientIp)}`;
+}
 
 @Injectable()
 export class AuthService {
@@ -50,15 +100,18 @@ export class AuthService {
   })();
 
   private readonly loginAttempts = new Map<string, LoginAttempt>();
+  private readonly emailFailures = new Map<string, LoginAttempt>();
 
   constructor(
     private readonly adminUsersService: AdminUsersService,
     private readonly jwtService: JwtService,
   ) {}
 
-  async login(email: string, password?: string) {
+  async login(email: string, password?: string, clientIp?: string) {
     const normalizedEmail = email.trim().toLowerCase();
-    this.checkLoginAttempts(normalizedEmail);
+    const attemptKey = loginAttemptKey(normalizedEmail, clientIp);
+    this.checkLoginAttempts(attemptKey);
+    await this.throttleByEmail(normalizedEmail);
 
     const dbUser = await this.adminUsersService.findActiveUserByEmailWithCredentials(normalizedEmail);
     
@@ -67,17 +120,17 @@ export class AuthService {
       // Fallback to memory search only if we are allowing mock access (not strictly production)
       const mockUser = await this.adminUsersService.findActiveUserByEmail(email);
       if (!mockUser) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey, normalizedEmail);
         throw new UnauthorizedException('Unknown or inactive admin account.');
       }
       
       // If we are relying on mock data, we bypass password check for backwards compatibility during dev
       if (process.env.NODE_ENV === 'production') {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey, normalizedEmail);
         throw new UnauthorizedException('Invalid credentials.');
       }
       
-      this.loginAttempts.delete(normalizedEmail);
+      this.loginAttempts.delete(attemptKey);
       const sessionUser = this.toSessionUser(mockUser);
       return this.issueTokens(sessionUser);
     }
@@ -85,12 +138,12 @@ export class AuthService {
     // Standard secure flow for DB users
     if (dbUser.passwordHash) {
       if (!password) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey, normalizedEmail);
         throw new UnauthorizedException('Password required.');
       }
       const valid = await bcrypt.compare(password, dbUser.passwordHash);
       if (!valid) {
-        this.recordFailedAttempt(normalizedEmail);
+        this.recordFailedAttempt(attemptKey, normalizedEmail);
         throw new UnauthorizedException('Invalid email or password.');
       }
     } else {
@@ -101,7 +154,7 @@ export class AuthService {
       }
     }
 
-    this.loginAttempts.delete(normalizedEmail);
+    this.loginAttempts.delete(attemptKey);
     const sessionUser = this.toSessionUser(dbUser);
     return this.issueTokens(sessionUser);
   }
@@ -164,24 +217,40 @@ export class AuthService {
   async verifyToken(token: string): Promise<AdminSessionUser> {
     try {
       const payload = this.jwtService.verify(token);
-      
-      const user = await this.adminUsersService.findActiveUserByEmail(payload.email);
-      if (!user) {
-        throw new UnauthorizedException('Admin account is no longer active.');
+      const email = typeof payload?.email === 'string' ? payload.email : '';
+      if (!email) {
+        throw new UnauthorizedException('Invalid admin token.');
       }
 
-      // For DB-backed accounts, reject a token whose password fingerprint no
-      // longer matches (e.g. after a reset), so a reset revokes any live
-      // session immediately rather than only blocking future refreshes.
-      const credentials =
-        await this.adminUsersService.findActiveUserByEmailWithCredentials(
-          payload.email,
-        );
-      if (
-        credentials &&
-        payload.pwd !== passwordFingerprint(credentials.passwordHash)
-      ) {
-        throw new UnauthorizedException('Admin session has been revoked.');
+      // Base disponible : seul l'utilisateur actif lu en base fait autorité.
+      // Pas de repli mock ici (sinon un compte fondateur désactivé en base
+      // restait accepté via la liste mock, sans contrôle d'empreinte pwd).
+      if (this.adminUsersService.usesDatabase()) {
+        const credentials =
+          await this.adminUsersService.findActiveUserByEmailWithCredentials(
+            email,
+          );
+        if (!credentials) {
+          throw new UnauthorizedException('Admin account is no longer active.');
+        }
+
+        // Rejette un jeton dont l'empreinte du mot de passe ne correspond plus
+        // (ex. après un reset) : le reset révoque immédiatement toute session.
+        if (payload.pwd !== passwordFingerprint(credentials.passwordHash)) {
+          throw new UnauthorizedException('Admin session has been revoked.');
+        }
+
+        return this.toSessionUser(credentials);
+      }
+
+      // Sans base : repli mock permis seulement hors production (même garde
+      // que login).
+      if (process.env.NODE_ENV === 'production') {
+        throw new UnauthorizedException('Admin account is no longer active.');
+      }
+      const user = await this.adminUsersService.findActiveUserByEmail(email);
+      if (!user) {
+        throw new UnauthorizedException('Admin account is no longer active.');
       }
 
       return this.toSessionUser(user);
@@ -222,32 +291,82 @@ export class AuthService {
     return { token, refreshToken, user };
   }
 
-  private checkLoginAttempts(email: string): void {
-    const attempt = this.loginAttempts.get(email);
-    if (!attempt) return;
-
-    const elapsed = Date.now() - attempt.firstAttemptAt;
-    if (elapsed > LOGIN_WINDOW_MS) {
-      this.loginAttempts.delete(email);
-      return;
+  private checkLoginAttempts(key: string): void {
+    const attempt = this.activeAttempt(this.loginAttempts, key);
+    if (attempt && attempt.count >= LOGIN_MAX_ATTEMPTS) {
+      this.throwTooManyAttempts(attempt);
     }
+  }
 
-    if (attempt.count >= LOGIN_MAX_ATTEMPTS) {
-      const minutesLeft = Math.ceil((LOGIN_WINDOW_MS - elapsed) / 60000);
-      throw new HttpException(
-        `Too many login attempts. Try again in ${minutesLeft} minute(s).`,
-        HttpStatus.TOO_MANY_REQUESTS,
+  /**
+   * Limite globale par e-mail : délai progressif au-delà de
+   * LOGIN_EMAIL_DELAY_AFTER échecs, puis 429 au plafond. Le compteur n'est
+   * pas remis à zéro par un succès : il mesure l'attaque, pas l'admin.
+   */
+  private async throttleByEmail(email: string): Promise<void> {
+    const failures = this.activeAttempt(this.emailFailures, email);
+    if (!failures) return;
+    if (failures.count >= LOGIN_EMAIL_MAX_FAILURES) {
+      this.throwTooManyAttempts(failures);
+    }
+    if (failures.count > LOGIN_EMAIL_DELAY_AFTER) {
+      await this.sleep(
+        Math.min(
+          (failures.count - LOGIN_EMAIL_DELAY_AFTER) * LOGIN_EMAIL_DELAY_STEP_MS,
+          LOGIN_EMAIL_DELAY_MAX_MS,
+        ),
       );
     }
   }
 
-  private recordFailedAttempt(email: string): void {
-    const attempt = this.loginAttempts.get(email);
-    if (!attempt || Date.now() - attempt.firstAttemptAt > LOGIN_WINDOW_MS) {
-      this.loginAttempts.set(email, { count: 1, firstAttemptAt: Date.now() });
-    } else {
-      attempt.count++;
+  /** Point d'injection pour les tests (évite d'attendre réellement). */
+  protected sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private activeAttempt(
+    map: Map<string, LoginAttempt>,
+    key: string,
+  ): LoginAttempt | undefined {
+    const attempt = map.get(key);
+    if (attempt && Date.now() - attempt.firstAttemptAt > LOGIN_WINDOW_MS) {
+      map.delete(key);
+      return undefined;
     }
+    return attempt;
+  }
+
+  private throwTooManyAttempts(attempt: LoginAttempt): never {
+    const elapsed = Date.now() - attempt.firstAttemptAt;
+    const minutesLeft = Math.max(
+      1,
+      Math.ceil((LOGIN_WINDOW_MS - elapsed) / 60000),
+    );
+    throw new HttpException(
+      `Too many login attempts. Try again in ${minutesLeft} minute(s).`,
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+
+  private recordFailedAttempt(key: string, email: string): void {
+    this.bumpAttempt(this.loginAttempts, key);
+    this.bumpAttempt(this.emailFailures, email);
+  }
+
+  private bumpAttempt(map: Map<string, LoginAttempt>, key: string): void {
+    const attempt = this.activeAttempt(map, key);
+    if (attempt) {
+      attempt.count++;
+      return;
+    }
+    // Map bornée : l'ordre d'insertion d'une Map donne la plus ancienne
+    // entrée en tête, évincée en O(1).
+    while (map.size >= LOGIN_ATTEMPTS_MAX_ENTRIES) {
+      const oldest = map.keys().next().value;
+      if (oldest === undefined) break;
+      map.delete(oldest);
+    }
+    map.set(key, { count: 1, firstAttemptAt: Date.now() });
   }
 
   private toSessionUser(user: {

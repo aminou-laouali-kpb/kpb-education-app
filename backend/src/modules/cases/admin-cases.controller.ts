@@ -149,7 +149,8 @@ export class AdminCasesController {
     @Req() req: any,
   ) {
     await this.casesService.assertStaffCanAccessCase(id, req.adminUser);
-    return this.casesService.update(id, input);
+    // L'acteur sert à refuser (403) qu'un conseiller réaffecte le dossier.
+    return this.casesService.updateAsStaff(id, input, req.adminUser);
   }
 
   // Affecter un dossier est une décision d'équipe : un conseiller pouvait

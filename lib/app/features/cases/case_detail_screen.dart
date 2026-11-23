@@ -120,6 +120,46 @@ Future<void> _openWhatsapp({
   );
 }
 
+/// Avec qui l'élève échange : le conseiller attribué, sinon le dernier membre
+/// de l'équipe qui lui a répondu dans le fil. Sur WhatsApp, son nom part dans
+/// le message pour que la même personne reprenne la conversation sur la ligne
+/// officielle KPB.
+String? caseContactName(StudentCase c) {
+  final assigned = c.assignedAdvisorName?.trim();
+  if (assigned != null && assigned.isNotEmpty) return assigned;
+  for (final m in c.messages.reversed) {
+    if (m.senderRole == 'student' || m.senderRole == 'system') continue;
+    final name = m.senderName.trim();
+    if (name.isEmpty || name == 'KPB' || name == 'KPB Operations') continue;
+    return name;
+  }
+  return null;
+}
+
+/// Le message pré-rempli de WhatsApp : la référence du dossier (ou son titre
+/// tant que la référence s'enregistre) et, quand on le connaît, le nom de la
+/// personne avec qui l'élève échange.
+String caseWhatsappPrefill(StudentCase c, String title) {
+  final name = caseContactName(c);
+  if (name != null && c.assignedAdvisorName == null) {
+    return c.isReferenceProvisional
+        ? 'case_whatsapp_continue_with_prefill_provisional'
+            .trParams({'name': name, 'title': title})
+        : 'case_whatsapp_continue_with_prefill'
+            .trParams({'name': name, 'reference': c.referenceCode});
+  }
+  if (c.assignedAdvisorName != null) {
+    return c.isReferenceProvisional
+        ? 'case_whatsapp_advisor_prefill_provisional'.trParams({'title': title})
+        : 'case_whatsapp_advisor_prefill'
+            .trParams({'reference': c.referenceCode});
+  }
+  return c.isReferenceProvisional
+      ? 'case_whatsapp_continue_prefill_provisional'.trParams({'title': title})
+      : 'case_whatsapp_continue_prefill'
+          .trParams({'reference': c.referenceCode});
+}
+
 class CaseDetailScreen extends StatefulWidget {
   const CaseDetailScreen({super.key, required this.caseId});
   final String caseId;
@@ -134,20 +174,29 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
 
   AppController get _ctrl => Get.find<AppController>();
 
+  /// Le jeton de cet écran sur le socket temps réel du contrôleur : à sa
+  /// fermeture, seul CE jeton est rendu, et le dossier resté ouvert en
+  /// dessous garde son temps réel.
+  Object? _socketLease;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ctrl.markCaseMessagesRead(widget.caseId);
+      // Écran déjà fermé avant la première image : pas d'abonnement, sinon
+      // personne ne le rendrait.
+      if (!mounted) return;
       if (AppConfig.enableRemoteSync) {
-        _ctrl.connectCaseDetailSocket(widget.caseId);
+        _socketLease = _ctrl.connectCaseDetailSocket(widget.caseId);
       }
     });
   }
 
   @override
   void dispose() {
-    _ctrl.disconnectCaseDetailSocket();
+    final lease = _socketLease;
+    if (lease != null) unawaited(_ctrl.disconnectCaseDetailSocket(lease));
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -545,12 +594,11 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 // ── WhatsApp CTA (official KPB line; verified-advisor gate) ───
                 _GreenWhatsAppCta(
                   onTap: () => _openWhatsapp(
+                    // La fiche « conseiller vérifié (KYC) » ne nomme que le conseiller
+                    // attribué : un commercial n'a pas ce contrôle. Son nom
+                    // part dans le message pré-rempli.
                     advisorName: c.assignedAdvisorName,
-                    prefill: c.isReferenceProvisional
-                        ? 'case_whatsapp_continue_prefill_provisional'
-                            .trParams({'title': _ctrl.resolve(c.title)})
-                        : 'case_whatsapp_continue_prefill'
-                            .trParams({'reference': c.referenceCode}),
+                    prefill: caseWhatsappPrefill(c, _ctrl.resolve(c.title)),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -636,23 +684,31 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 // Sans conseiller attribué, on ne promet pas « ton
                 // conseiller » : la ligne officielle KPB générale, avec la
                 // référence du dossier (relecture de la PR #407).
+                if (caseContactName(c) != null &&
+                    c.assignedAdvisorName == null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      'case_whatsapp_same_person_hint'
+                          .trParams({'name': caseContactName(c)!}),
+                      style: KpbTextStyles.caption
+                          .copyWith(color: KpbColors.textMuted),
+                    ),
+                  ),
+                ],
                 _WriteAdvisorOnWhatsAppButton(
                   label: c.assignedAdvisorName != null
                       ? 'case_write_advisor_whatsapp'.tr
-                      : 'case_write_kpb_whatsapp'.tr,
+                      : caseContactName(c) != null
+                          ? 'case_continue_with_whatsapp'
+                              .trParams({'name': caseContactName(c)!})
+                          : 'case_write_kpb_whatsapp'.tr,
                   onTap: () => _openWhatsapp(
+                    // La fiche « conseiller vérifié (KYC) » ne nomme que le conseiller
+                    // attribué : un commercial n'a pas ce contrôle. Son nom
+                    // part dans le message pré-rempli.
                     advisorName: c.assignedAdvisorName,
-                    prefill: c.assignedAdvisorName != null
-                        ? (c.isReferenceProvisional
-                            ? 'case_whatsapp_advisor_prefill_provisional'
-                                .trParams({'title': _ctrl.resolve(c.title)})
-                            : 'case_whatsapp_advisor_prefill'
-                                .trParams({'reference': c.referenceCode}))
-                        : (c.isReferenceProvisional
-                            ? 'case_whatsapp_continue_prefill_provisional'
-                                .trParams({'title': _ctrl.resolve(c.title)})
-                            : 'case_whatsapp_continue_prefill'
-                                .trParams({'reference': c.referenceCode})),
+                    prefill: caseWhatsappPrefill(c, _ctrl.resolve(c.title)),
                   ),
                 ),
               ],
@@ -721,6 +777,9 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
                 controller: _messageController,
                 maxLines: 3,
                 minLines: 1,
+                // Un toucher hors du champ range le clavier : sinon il restait
+                // ouvert et cachait la réponse qui venait d'arriver.
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 // La limite du serveur : au-delà, le message était refusé pour
                 // de bon et « Réessayer » échouait à chaque fois. Sans
                 // compteur : une conversation n'est pas un formulaire.

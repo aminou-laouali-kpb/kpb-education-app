@@ -3,7 +3,6 @@ import {
   HttpException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { ReferralsService } from './referrals.service';
@@ -35,6 +34,8 @@ describe('ReferralsService', () => {
       ambassadorIncrements: 0,
       signals: [] as Array<Record<string, unknown>>,
       lookedUpCodes: [] as string[],
+      transactions: 0,
+      locks: [] as string[],
     };
     const ambassadors = opts.ambassadors ?? [];
     const norm = (c: string) => c.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -75,15 +76,12 @@ describe('ReferralsService', () => {
         },
       },
       ambassadorReferral: {
-        create: async ({ data }: { data: Record<string, unknown> }) => {
-          if (opts.ambassadorReferralConflict) {
-            throw new Prisma.PrismaClientKnownRequestError('dup', {
-              code: 'P2002',
-              clientVersion: 'test',
-            });
-          }
-          calls.ambassadorReferrals.push(data);
-          return data;
+        // ON CONFLICT DO NOTHING : un doublon rend count 0, sans erreur SQL
+        // (une erreur aurait annulé toute la transaction de rattachement).
+        createMany: async ({ data }: { data: Array<Record<string, unknown>> }) => {
+          if (opts.ambassadorReferralConflict) return { count: 0 };
+          calls.ambassadorReferrals.push(...data);
+          return { count: data.length };
         },
       },
       referral: {
@@ -110,8 +108,19 @@ describe('ReferralsService', () => {
         },
       },
     };
+    const client = {
+      ...db,
+      $transaction: async (fn: (tx: unknown) => unknown): Promise<unknown> => {
+        calls.transactions += 1;
+        return fn(client);
+      },
+      $executeRaw: async (_sql: TemplateStringsArray, ...values: unknown[]) => {
+        calls.locks.push(String(values[0]));
+        return 1;
+      },
+    };
     const prisma = {
-      execute: async (fn: (c: typeof db) => unknown) => fn(db),
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
     } as unknown as PrismaService;
     return { service: new ReferralsService(prisma), calls };
   }
@@ -364,5 +373,125 @@ describe('ReferralsService', () => {
       const { service } = makeService({});
       await expect(service.redeem('u2', '- - -')).rejects.toBeInstanceOf(NotFoundException);
     });
+  });
+
+  it('verrouille les deux profils (ordre fixe) dans une transaction avant les contrôles', async () => {
+    const { service, calls } = makeService({ referrerByCode: { id: 'r1' } });
+    await service.redeem('u2', 'code1234');
+    expect(calls.transactions).toBe(1);
+    expect(calls.locks).toEqual(['referral-redeem:r1', 'referral-redeem:u2']);
+  });
+});
+
+/**
+ * Audit 2026-11-22, constat 24 : requêtes CONCURRENTES. Le faux client garde
+ * un état partagé et implémente de vrais verrous consultatifs (tenus jusqu'à
+ * la fin du `$transaction` qui les a pris), comme `pg_advisory_xact_lock`.
+ */
+describe('ReferralsService.redeem — concurrence', () => {
+  function makeShared(codes: Record<string, string>) {
+    const referrals: Array<{ referrerId: string; refereeProfileId: string; createdAt: Date }> = [];
+    const held = new Map<string, Promise<void>>();
+    const tick = () => new Promise((r) => setImmediate(r));
+    const base = {
+      userProfile: {
+        findUnique: async ({ where }: { where: { id?: string; referralCode?: string } }) => {
+          await tick();
+          if (where.referralCode !== undefined) {
+            const id = codes[where.referralCode];
+            return id ? { id } : null;
+          }
+          return { fullName: 'X', referralCode: null };
+        },
+      },
+      ambassador: { findUnique: async () => null, findFirst: async () => null },
+      referral: {
+        findUnique: async ({ where }: { where: { refereeProfileId: string } }) => {
+          await tick();
+          return referrals.find((r) => r.refereeProfileId === where.refereeProfileId) ?? null;
+        },
+        findFirst: async ({ where }: { where: { referrerId: string; refereeProfileId: string } }) => {
+          await tick();
+          return (
+            referrals.find(
+              (r) => r.referrerId === where.referrerId && r.refereeProfileId === where.refereeProfileId,
+            ) ?? null
+          );
+        },
+        count: async ({ where }: { where: { referrerId: string } }) => {
+          await tick();
+          return referrals.filter((r) => r.referrerId === where.referrerId).length;
+        },
+        create: async ({ data }: { data: { referrerId: string; refereeProfileId: string } }) => {
+          await tick();
+          if (referrals.some((r) => r.refereeProfileId === data.refereeProfileId)) {
+            throw new Error('P2002');
+          }
+          referrals.push({ ...data, createdAt: new Date() });
+          return data;
+        },
+      },
+      case: { count: async () => 0 },
+      deviceToken: { findMany: async () => [] },
+      referralAttributionSignal: { upsert: async () => ({}) },
+    };
+    const client = {
+      ...base,
+      $transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+        const mine: Array<() => void> = [];
+        const tx = {
+          ...base,
+          $executeRaw: async (_sql: TemplateStringsArray, key: string) => {
+            while (held.has(key)) await held.get(key);
+            let release!: () => void;
+            held.set(key, new Promise<void>((r) => (release = r)));
+            mine.push(() => {
+              held.delete(key);
+              release();
+            });
+            return 1;
+          },
+        };
+        try {
+          return await fn(tx);
+        } finally {
+          mine.forEach((release) => release());
+        }
+      },
+    };
+    const prisma = {
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    return { service: new ReferralsService(prisma), referrals };
+  }
+
+  it('A avec le code de B et B avec le code de A en même temps : un seul rattachement', async () => {
+    const { service, referrals } = makeShared({ CODEAAAA: 'A', CODEBBBB: 'B' });
+    const results = await Promise.allSettled([
+      service.redeem('A', 'CODEBBBB'),
+      service.redeem('B', 'CODEAAAA'),
+    ]);
+    expect(referrals).toHaveLength(1);
+    const rejected = results.filter((r) => r.status === 'rejected');
+    expect(rejected).toHaveLength(1);
+    expect((rejected[0] as PromiseRejectedResult).reason).toBeInstanceOf(ForbiddenException);
+  });
+
+  it('N filleuls simultanés sur le même code : le plafond horaire tient', async () => {
+    process.env.REFERRAL_CODE_HOURLY_LIMIT = '2';
+    try {
+      const { service, referrals } = makeShared({ CODEPPPP: 'P' });
+      const results = await Promise.allSettled(
+        ['f1', 'f2', 'f3', 'f4', 'f5'].map((id) => service.redeem(id, 'CODEPPPP')),
+      );
+      expect(referrals).toHaveLength(2);
+      const rejected = results.filter((r) => r.status === 'rejected');
+      expect(rejected).toHaveLength(3);
+      for (const r of rejected) {
+        expect((r as PromiseRejectedResult).reason).toBeInstanceOf(HttpException);
+      }
+    } finally {
+      delete process.env.REFERRAL_CODE_HOURLY_LIMIT;
+    }
   });
 });

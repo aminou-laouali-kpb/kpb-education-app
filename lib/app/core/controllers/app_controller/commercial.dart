@@ -15,15 +15,21 @@ mixin _CommercialMixin on _AppControllerBase {
     commercialLeadsError = null;
     update();
 
+    // Les leads lus appartiennent au conseiller qui les a demandés : arrivés
+    // après sa déconnexion, ils n'entrent pas dans l'état du compte suivant
+    // (audit du 22/11/2026, n° 3).
+    final generation = _sessionGeneration;
     try {
       final items = await _apiClient.listCommercialLeads(
         email: email,
         filter: filter,
       );
+      if (_isStaleSession(generation)) return;
       _commercialLeads
         ..clear()
         ..addAll(items);
     } catch (e, s) {
+      if (_isStaleSession(generation)) return;
       commercialLeadsError = userFacingSyncError(e, localeCode);
       safeRecordError(
         e,
@@ -33,7 +39,9 @@ mixin _CommercialMixin on _AppControllerBase {
         operation: 'fetch_commercial_leads',
       );
     } finally {
-      isLoadingCommercialLeads = false;
+      // Session périmée : la remise à zéro a déjà rendu le verrou, et un
+      // chargement du conseiller suivant peut le tenir à présent.
+      if (!_isStaleSession(generation)) isLoadingCommercialLeads = false;
       update();
     }
   }
@@ -71,12 +79,16 @@ mixin _CommercialMixin on _AppControllerBase {
     String documentId, {
     required String status,
   }) async {
+    final generation = _sessionGeneration;
     try {
       final data = await _apiClient.reviewCommercialDocument(
         documentId,
         status: status,
       );
       final updatedDoc = CommercialLeadDocument.fromApi(data);
+      // Déconnexion pendant l'appel : la liste du compte parti est vidée,
+      // on ne la réécrit pas.
+      if (_isStaleSession(generation)) return updatedDoc;
       final idx = _commercialLeads.indexWhere((l) => l.id == caseId);
       if (idx != -1) {
         final lead = _commercialLeads[idx];
@@ -107,8 +119,11 @@ mixin _CommercialMixin on _AppControllerBase {
     isLoadingCommercialStats = true;
     update();
 
+    final generation = _sessionGeneration;
     try {
       final data = await _apiClient.getCommercialStats(email: email);
+      // Statistiques du conseiller parti : pas affichées au compte suivant.
+      if (_isStaleSession(generation)) return;
       commercialStats = CommercialStats.fromApi(data);
     } catch (e, s) {
       safeRecordError(
@@ -119,7 +134,9 @@ mixin _CommercialMixin on _AppControllerBase {
         operation: 'fetch_commercial_stats',
       );
     } finally {
-      isLoadingCommercialStats = false;
+      // Même règle que pour les leads : ne pas couper le chargement du
+      // conseiller suivant.
+      if (!_isStaleSession(generation)) isLoadingCommercialStats = false;
       update();
     }
   }

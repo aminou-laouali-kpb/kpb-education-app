@@ -44,9 +44,11 @@ const PURCHASE_STATUSES: PurchaseStatus[] = [
  *      bundled with templates, checklists, and one counsellor sync-up.
  *
  * A ServicePurchase is always created first with `status: pending_payment`.
- * A PaymentIntent is then attached (CinetPay / Paydunya / manual). When the
- * payment webhook settles the intent to `paid`, `reconcilePurchase()` flips
- * the purchase to `paid` so ops can start delivery.
+ * A PaymentIntent is then attached (CinetPay / Paydunya / manual). Quand le
+ * webhook (ou le mark-paid admin) fait passer l'intent à `paid`,
+ * PaymentsService passe l'achat lié à `paid` dans la même transaction
+ * (`settleLinkedPurchase`) ; `reconcilePurchase()` couvre le cas où le
+ * paiement a été confirmé avant que la ligne d'achat n'existe.
  *
  * We do *not* auto-refund on payment failure — ops investigates because the
  * failure mode is usually a stuck mobile-money transfer that resolves itself.
@@ -246,6 +248,12 @@ export class ServicePackagesService {
     );
     if (!purchase) {
       throw new Error('Failed to create service purchase.');
+    }
+    // L'intent est créé AVANT l'achat : un webhook `paid` très rapide a pu
+    // passer l'intent à `paid` alors qu'aucun achat ne le référençait encore
+    // (rien à réconcilier à ce moment-là). On rattrape ce cas ici.
+    if (await this.reconcilePurchase(intent.id)) {
+      return { ...purchase, status: 'paid' as const };
     }
     return purchase;
   }
@@ -571,34 +579,30 @@ export class ServicePackagesService {
   }
 
   /**
-   * Called by the payments webhook loop: if a paid intent has a matching
-   * purchase row still in `pending_payment`, advance it to `paid`. Safe to
-   * call repeatedly (idempotent) since we check current status first.
+   * Passe à `paid` l'achat lié à cet intent s'il est encore `pending_payment`
+   * ET que l'intent est `paid`. Écriture conditionnelle unique (updateMany) :
+   * idempotente et sûre en concurrence avec le webhook, qui fait la même
+   * transition (PaymentsService.settleLinkedPurchase). Rend `true` si cet
+   * appel a fait la transition.
    */
-  async reconcilePurchase(paymentIntentId: string) {
-    const purchase = await this.prismaService.execute((prisma) =>
-      prisma.servicePurchase.findUnique({
-        where: { paymentIntentId },
-        include: { paymentIntent: true },
-      }),
-    );
-    if (!purchase) return null;
-    if (purchase.status !== 'pending_payment') {
-      return purchase;
-    }
-    if (purchase.paymentIntent?.status !== 'paid') {
-      return purchase;
-    }
-    const updated = await this.prismaService.execute((prisma) =>
-      prisma.servicePurchase.update({
-        where: { id: purchase.id },
+  async reconcilePurchase(paymentIntentId: string): Promise<boolean> {
+    const result = await this.prismaService.execute((prisma) =>
+      prisma.servicePurchase.updateMany({
+        where: {
+          paymentIntentId,
+          status: 'pending_payment',
+          paymentIntent: { is: { status: 'paid' } },
+        },
         data: { status: 'paid' },
       }),
     );
-    this.logger.log(
-      `Purchase ${purchase.id} reconciled → paid (intent ${paymentIntentId})`,
-    );
-    return updated;
+    const reconciled = (result?.count ?? 0) > 0;
+    if (reconciled) {
+      this.logger.log(
+        `Purchase reconciled → paid (intent ${paymentIntentId})`,
+      );
+    }
+    return reconciled;
   }
 
   private normalizeSource(source?: string) {

@@ -31,6 +31,8 @@ describe('CampaignExecutorService', () => {
     route?: string | null;
     purpose?: string;
     mailEnabled?: boolean;
+    /** La requête profils échoue (ex. valeur hors enum rejetée par Prisma). */
+    profileError?: Error;
   }) {
     // Par défaut, deux comptes qui ont accepté le push promotionnel (la
     // finalité par défaut est `promotional`, qui exige cet opt-in).
@@ -70,6 +72,7 @@ describe('CampaignExecutorService', () => {
       userProfile: {
         findMany: async (args?: { where?: unknown }) => {
           profileQueries.push(args?.where);
+          if (options.profileError) throw options.profileError;
           return recipients;
         },
       },
@@ -279,6 +282,66 @@ describe('CampaignExecutorService', () => {
       // Et surtout : aucune requête profil sans clause `where`, qui aurait
       // ramené la totalité des comptes.
       expect(h.profileQueries()).not.toContainEqual(undefined);
+    });
+  });
+
+  // ── Audience `case_status` : plus d'échec silencieux « terminé » ─────────
+  //
+  // `.catch(() => [])` remplaçait l'erreur Prisma (statut hors enum) par zéro
+  // destinataire, et la campagne s'affichait « terminée » sans que personne ne
+  // soit relancé. L'erreur remonte maintenant, la campagne passe `failed`.
+  describe('audience « case_status »', () => {
+    it('un statut inconnu marque la campagne failed, sans requête', async () => {
+      const h = makeService({
+        channels: ['push'],
+        template: TEMPLATE,
+        audienceType: 'case_status',
+        filters: { status: 'documents_requis' },
+      });
+      await h.service.execute('c1');
+      expect(h.status()).toBe('failed');
+      expect(h.profileQueries()).toEqual([]);
+      expect(h.deliveries()).toEqual([]);
+    });
+
+    it('une erreur Prisma n’est plus avalée : failed, pas completed', async () => {
+      const h = makeService({
+        channels: ['push'],
+        template: TEMPLATE,
+        audienceType: 'case_status',
+        filters: { status: 'documents_needed' },
+        profileError: Object.assign(new Error('invalid enum'), {
+          code: 'P2023',
+        }),
+      });
+      await expect(h.service.execute('c1')).rejects.toThrow('invalid enum');
+      expect(h.status()).toBe('failed');
+      expect(h.deliveries()).toEqual([]);
+    });
+
+    it('un statut valide interroge avec sa clause et envoie', async () => {
+      const h = makeService({
+        channels: ['push'],
+        template: TEMPLATE,
+        audienceType: 'case_status',
+        filters: { status: 'documents_needed' },
+      });
+      await h.service.execute('c1');
+      expect(h.profileQueries()).toContainEqual({
+        cases: { some: { status: 'documents_needed' } },
+      });
+      expect(h.status()).toBe('completed');
+    });
+
+    it('un filtre manquant marque aussi la campagne failed', async () => {
+      const h = makeService({
+        channels: ['push'],
+        template: TEMPLATE,
+        audienceType: 'case_status',
+        filters: {},
+      });
+      await h.service.execute('c1');
+      expect(h.status()).toBe('failed');
     });
   });
 

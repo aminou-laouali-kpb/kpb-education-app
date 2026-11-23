@@ -329,14 +329,26 @@ jobs:
           echo "── build ──"
           docker compose build api admin
 
+          # First install (run_seed's purpose): kpb_db does not exist yet, and
+          # the `docker compose exec db` backup below would fail. Start it and
+          # wait for its healthcheck — ONLY when it is not running, so a live
+          # deploy never recreates the production database container here.
+          if [ "$(docker inspect --format '{{.State.Running}}' kpb_db 2>/dev/null || true)" != "true" ]; then
+            echo "── db not running (first install?) — starting it ──"
+            docker compose up -d --no-deps --wait db < /dev/null
+          fi
+
           echo "── backup (expands \$POSTGRES_USER INSIDE the db container) ──"
           mkdir -p backups
           # `< /dev/null` belt-and-braces: even if this script is ever fed on
           # stdin again, no docker command can consume it.
-          docker compose exec -T db sh -c \
-            'pg_dump -U "$POSTGRES_USER" -d "${POSTGRES_DB:-kpb}" --format=custom' \
-            < /dev/null \
-            > "backups/predeploy-${IMAGE_TAG}-$(date +%Y%m%d-%H%M%S).dump"
+          # umask 077 : le dump (données personnelles) n'est lisible que par
+          # son propriétaire sur l'hôte.
+          ( umask 077
+            docker compose exec -T db sh -c \
+              'pg_dump -U "$POSTGRES_USER" -d "${POSTGRES_DB:-kpb}" --format=custom' \
+              < /dev/null \
+              > "backups/predeploy-${IMAGE_TAG}-$(date +%Y%m%d-%H%M%S).dump" )
           # A truncated dump must stop the deploy, not be discovered later.
           LATEST_DUMP="$(ls -t backups/predeploy-*.dump | head -1)"
           if [ ! -s "$LATEST_DUMP" ]; then
@@ -365,7 +377,11 @@ jobs:
             # holds its rows (backend/src/common/seed-safety.ts): on a live
             # base this stops the deploy here, before the release. No override
             # is passed from CI on purpose.
-            docker compose exec -T api npm run prisma:seed < /dev/null
+            # `run --rm --no-deps` like migrate/verify:catalog: the seed must
+            # come from the image just built (the schema it was migrated to),
+            # not from the still-running kpb_api of the PREVIOUS release — and
+            # on a first install there is no kpb_api to `exec` into at all.
+            docker compose run --rm --no-deps api npm run prisma:seed < /dev/null
           fi
 
           echo "── catalog database integrity ──"
@@ -450,6 +466,47 @@ jobs:
             nginx:1.27-alpine nginx -t < /dev/null
           docker compose up -d --no-deps --force-recreate web < /dev/null
           echo "kpb_web recreated with the current nginx.conf"
+
+          # `db-backup` n'est pas dans la liste du « release » : sans cette
+          # étape, il gardait indéfiniment sa définition d'origine (ni montage
+          # /uploads, ni archive des pièces de dossier). `up -d` ne le recrée
+          # que si sa définition a changé ; `--no-deps` ne touche jamais `db`.
+          # Placé APRÈS le portail de santé et le retour arrière : un problème
+          # de sauvegarde fait échouer le déploiement (il doit se voir) mais ne
+          # retire jamais la version de l'API, déjà validée.
+          echo "── backup service (db-backup) ──"
+          docker compose up -d --no-deps db-backup < /dev/null
+          backup_state="$(docker inspect --format '{{.State.Status}}' kpb_db_backup 2>/dev/null || echo missing)"
+          if [ "$backup_state" != "running" ]; then
+            echo "::error::db-backup is '$backup_state' — the API is released and healthy; backups are NOT running"
+            docker compose logs --tail=40 db-backup || true
+            exit 1
+          fi
+          # Sorties capturées puis testées : sous `pipefail`, `… | grep -q` peut
+          # échouer sur un SIGPIPE alors même que la ligne a été trouvée.
+          backup_mounts="$(docker inspect --format '{{range .Mounts}}{{println .Destination}}{{end}}' kpb_db_backup)"
+          if ! printf '%s\n' "$backup_mounts" | grep -qx '/uploads'; then
+            echo "::error::db-backup does not mount /uploads — student documents are not backed up"
+            exit 1
+          fi
+          # Preuve de fonctionnement : un dump ET une archive des pièces de
+          # moins de 30 h. Après une recréation, la boucle les écrit aussitôt ;
+          # on attend jusqu'à BACKUP_WAIT_SECONDS (10 min par défaut).
+          backup_ok=0
+          for i in $(seq 1 $(( ${BACKUP_WAIT_SECONDS:-600} / 10 ))); do
+            if [ -n "$(find backups -maxdepth 1 -type f -name 'kpb-*.sql.gz' -mmin -1800 -size +1023c -print -quit)" ] \
+              && [ -n "$(find backups -maxdepth 1 -type f -name 'kpb-uploads-*.tar.gz' -mmin -1800 -print -quit)" ]; then
+              backup_ok=1; break
+            fi
+            [ "$(docker inspect --format '{{.State.Status}}' kpb_db_backup 2>/dev/null || true)" = "running" ] || break
+            sleep 10
+          done
+          if [ "$backup_ok" != "1" ]; then
+            echo "::error::no recent database dump AND uploads archive in ./backups — the API is released and healthy; fix db-backup"
+            docker compose logs --tail=40 db-backup || true
+            exit 1
+          fi
+          echo "db-backup running, mounting /uploads, recent dump and uploads archive present"
 
           # Written proof of the schema state, in every run's log. Without this,
           # "did the migration apply?" is answered by presumption.

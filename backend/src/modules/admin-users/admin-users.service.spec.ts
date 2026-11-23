@@ -80,4 +80,40 @@ describe('AdminUsersService — provisioning & revocation', () => {
     expect(stored).toMatch(/^\$2[aby]\$/);
     expect(await bcrypt.compare(res.tempPassword as string, stored)).toBe(true);
   });
+
+  describe('findActiveUserByEmail — repli mock', () => {
+    const founderEmail = 'alaoualiabdou@karatoupostbac.com';
+
+    function makeLookupService(isEnabled: boolean) {
+      const client = { adminUser: { findFirst: async () => null } };
+      const prisma = {
+        isEnabled,
+        execute: async (fn: (c: typeof client) => unknown) =>
+          isEnabled ? fn(client) : null,
+      } as unknown as PrismaService;
+      return new AdminUsersService(prisma);
+    }
+
+    it('ne retombe pas sur le mock quand le compte est désactivé en base', async () => {
+      const service = makeLookupService(true);
+      await expect(service.findActiveUserByEmail(founderEmail)).resolves.toBeUndefined();
+    });
+
+    it('retombe sur le mock sans base, hors production', async () => {
+      const service = makeLookupService(false);
+      const user = await service.findActiveUserByEmail(founderEmail);
+      expect(user?.id).toBe('admin-aminou');
+    });
+
+    it('ne retombe pas sur le mock sans base en production', async () => {
+      const service = makeLookupService(false);
+      const previousEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        await expect(service.findActiveUserByEmail(founderEmail)).resolves.toBeUndefined();
+      } finally {
+        process.env.NODE_ENV = previousEnv;
+      }
+    });
+  });
 });

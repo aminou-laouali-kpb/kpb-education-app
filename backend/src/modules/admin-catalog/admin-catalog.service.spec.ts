@@ -608,6 +608,9 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
       },
       institution: {
         updateMany: async () => ({ count: 1 }),
+        // `createProgram` lit désormais le pays de l'établissement
+        // (invariant Program.countryId == Institution.countryId).
+        findUnique: async () => ({ countryId: 'fra' }),
       },
     };
     const prisma = {
@@ -936,6 +939,8 @@ describe('AdminCatalogService — Program match-scoring columns', () => {
             return { id: where.id, ...data };
           },
           updateMany: async () => ({ count: 1 }),
+          // Pays de l'établissement, lu par `createProgram` / `updateProgram`.
+          findUnique: async () => ({ countryId: 'fra' }),
         },
       };
       const prisma = {
@@ -1259,6 +1264,8 @@ describe('AdminCatalogService — entretien de Institution.programIds', () => {
           institutionUpdates.push(args);
           return { count: 1 };
         },
+        // Tous les établissements de ce harnais sont au Maroc.
+        findUnique: async () => ({ countryId: 'mar' }),
       },
     };
     const prisma = {
@@ -1326,50 +1333,196 @@ describe('AdminCatalogService — entretien de Institution.programIds', () => {
 });
 
 describe('AdminCatalogService — institution country change', () => {
-  function makeService(programsElsewhere: number) {
-    const updates: unknown[] = [];
-    const counts: unknown[] = [];
+  function makeService(opts: { institutionMissing?: boolean } = {}) {
+    const calls: Array<{ op: string; args: unknown }> = [];
+    let inTransaction = false;
     const client = {
       program: {
-        count: async (args: unknown) => {
-          counts.push(args);
-          return programsElsewhere;
+        updateMany: async (args: unknown) => {
+          calls.push({ op: `program.updateMany${inTransaction ? '@tx' : ''}`, args });
+          return { count: 3 };
         },
       },
       institution: {
-        update: async (args: { where: { id: string } }) => {
-          updates.push(args);
+        update: async (args: { where: { id: string }; data: unknown }) => {
+          calls.push({ op: `institution.update${inTransaction ? '@tx' : ''}`, args });
+          if (opts.institutionMissing) {
+            throw Object.assign(new Error('missing'), { code: 'P2025' });
+          }
           return { id: args.where.id };
         },
+      },
+      $transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+        inTransaction = true;
+        try {
+          return await fn(client);
+        } finally {
+          inTransaction = false;
+        }
       },
     };
     const prisma = {
       isEnabled: true,
       execute: async (fn: (c: typeof client) => unknown) => fn(client),
     } as unknown as PrismaService;
-    return { service: new AdminCatalogService(prisma), updates, counts };
+    return { service: new AdminCatalogService(prisma), calls };
   }
 
-  it('refuses to move an institution whose programs belong to another country', async () => {
-    const { service, updates, counts } = makeService(3);
+  it('déplace l’établissement ET ses formations dans une même transaction', async () => {
+    const { service, calls } = makeService();
+    await service.updateInstitution('inst-1', { countryId: 'deu' });
+    expect(calls.map((c) => c.op)).toEqual([
+      'institution.update@tx',
+      'program.updateMany@tx',
+    ]);
+    expect(calls[0].args).toMatchObject({
+      where: { id: 'inst-1' },
+      data: { countryId: 'deu' },
+    });
+    expect(calls[1].args).toEqual({
+      where: { institutionId: 'inst-1', countryId: { not: 'deu' } },
+      data: { countryId: 'deu' },
+    });
+  });
+
+  it('404 sans déplacer de formation quand l’établissement n’existe pas', async () => {
+    const { service, calls } = makeService({ institutionMissing: true });
     await expect(
       service.updateInstitution('inst-1', { countryId: 'deu' }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(calls.map((c) => c.op)).toEqual(['institution.update@tx']);
+  });
+
+  it('ne touche pas aux formations quand le pays ne change pas', async () => {
+    const { service, calls } = makeService();
+    await service.updateInstitution('inst-1', { nameFr: 'Nom' });
+    expect(calls.map((c) => c.op)).toEqual(['institution.update']);
+  });
+
+  it('garde EEF intacte : publier un établissement importé reste refusé, même en changeant de pays', async () => {
+    const { service, calls } = makeService();
+    await expect(
+      service.updateInstitution('eef-univ-0123456789abcdef', {
+        countryId: 'deu',
+        isActive: true,
+      }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('un établissement avec formations peut changer de pays, puis ses formations suivent la garde côté formation', async () => {
+    // Plus d'impasse : le changement de pays réussit (avant : 400 dès qu'une
+    // formation était dans l'ancien pays).
+    const { service } = makeService();
+    await expect(
+      service.updateInstitution('inst-1', { countryId: 'deu' }),
+    ).resolves.toEqual({ id: 'inst-1' });
+  });
+});
+
+// Invariant `Program.countryId == Institution.countryId` : le pendant, côté
+// formation, de la garde de `updateInstitution` ci-dessus.
+describe('AdminCatalogService — pays de la formation = pays de l’établissement', () => {
+  function makeService(
+    before: { institutionId: string; countryId: string; isActive: boolean } | null = null,
+  ) {
+    const institutions: Record<string, { countryId: string }> = {
+      'inst-fra': { countryId: 'fra' },
+      'inst-mar': { countryId: 'mar' },
+    };
+    const creates: Array<Record<string, unknown>> = [];
+    const updates: Array<Record<string, unknown>> = [];
+    const client = {
+      program: {
+        create: async ({ data }: { data: Record<string, unknown> }) => {
+          creates.push(data);
+          return { id: 'prog-new', ...data };
+        },
+        update: async ({ where, data }: { where: { id: string }; data: Record<string, unknown> }) => {
+          updates.push(data);
+          return { id: where.id, ...data };
+        },
+        findUnique: async () => before,
+        findMany: async () => [],
+      },
+      institution: {
+        findUnique: async ({ where }: { where: { id: string } }) =>
+          institutions[where.id] ?? null,
+        updateMany: async () => ({ count: 1 }),
+      },
+    };
+    const prisma = {
+      isEnabled: true,
+      execute: async (fn: (c: typeof client) => unknown) => fn(client),
+    } as unknown as PrismaService;
+    return { service: new AdminCatalogService(prisma), creates, updates };
+  }
+
+  const base = { fieldId: 'd01', nameFr: 'Licence Droit' };
+
+  it('createProgram refuse un pays différent de celui de l’établissement', async () => {
+    const { service, creates } = makeService();
+    await expect(
+      service.createProgram({ ...base, institutionId: 'inst-mar', countryId: 'fra' }),
     ).rejects.toBeInstanceOf(BadRequestException);
-    expect(counts).toEqual([
-      { where: { institutionId: 'inst-1', countryId: { not: 'deu' } } },
-    ]);
+    expect(creates).toHaveLength(0);
+  });
+
+  it('createProgram dérive le pays de l’établissement quand il manque', async () => {
+    const { service, creates } = makeService();
+    await service.createProgram({ ...base, institutionId: 'inst-mar' });
+    expect(creates[0].countryId).toBe('mar');
+  });
+
+  it('createProgram refuse un établissement inconnu', async () => {
+    const { service, creates } = makeService();
+    await expect(
+      service.createProgram({ ...base, institutionId: 'inst-x', countryId: 'fra' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(creates).toHaveLength(0);
+  });
+
+  it('updateProgram : changer d’établissement entraîne le pays', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await service.updateProgram('prog-1', { institutionId: 'inst-mar' });
+    expect(updates[0]).toMatchObject({ institutionId: 'inst-mar', countryId: 'mar' });
+  });
+
+  it('updateProgram refuse un établissement d’un autre pays que le pays demandé', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await expect(
+      service.updateProgram('prog-1', { institutionId: 'inst-mar', countryId: 'fra' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(updates).toHaveLength(0);
   });
 
-  it('allows the move when every program already matches (or there are none)', async () => {
-    const { service, updates } = makeService(0);
-    await service.updateInstitution('inst-1', { countryId: 'deu' });
-    expect(updates).toHaveLength(1);
+  it('updateProgram refuse de changer le pays seul, sans l’établissement', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await expect(
+      service.updateProgram('prog-1', { countryId: 'mar' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(updates).toHaveLength(0);
   });
 
-  it('does not query programs when the country is unchanged in the payload', async () => {
-    const { service, counts } = makeService(5);
-    await service.updateInstitution('inst-1', { nameFr: 'Nom' });
-    expect(counts).toHaveLength(0);
+  it('updateProgram sans établissement ni pays ne lit pas l’établissement', async () => {
+    const { service, updates } = makeService({
+      institutionId: 'inst-fra',
+      countryId: 'fra',
+      isActive: true,
+    });
+    await service.updateProgram('prog-1', { nameFr: 'Licence Histoire' });
+    expect(updates[0]).not.toHaveProperty('countryId');
   });
 });

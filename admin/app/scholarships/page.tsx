@@ -37,6 +37,10 @@ import type { BadgeVariant } from '../../components/ui';
 import { CycleOpeningPanel } from '../../components/scholarships/CycleOpeningPanel';
 import { EligibilityCoverageCard } from '../../components/scholarships/EligibilityCoverageCard';
 import { MatchPreviewDrawer } from '../../components/scholarships/MatchPreviewDrawer';
+import {
+  RemoveStepDialog,
+  type RemoveStepTarget,
+} from '../../components/scholarships/remove-step-dialog';
 import { ELIGIBILITY_STATE_VARIANT } from '../../components/scholarships/ScholarshipEligibilityEditor';
 import { OpeningTodoCard } from '../../components/scholarships/OpeningTodoCard';
 import { ScholarshipContentEditor } from '../../components/scholarships/ScholarshipContentEditor';
@@ -141,6 +145,9 @@ export default function ScholarshipsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stepDrafts, setStepDrafts] = useState<Record<string, StepDraft>>({});
   const [stepPendingId, setStepPendingId] = useState<string | null>(null);
+  const [removingStep, setRemovingStep] = useState<RemoveStepTarget | null>(
+    null,
+  );
   // Colonnes « Abonnés » / « Annoncé » et carte « À faire » (annonce
   // d'ouverture) : `null` tant que non chargées, ou si le chargement échoue —
   // la liste reste utilisable, les colonnes affichent « — ».
@@ -476,10 +483,13 @@ export default function ScholarshipsPage() {
     }
   }
 
-  async function removeStep(
-    entry: ScholarshipEntry,
-    step: ScholarshipStepEntry,
-  ) {
+  // Appelée uniquement depuis la confirmation (suppression définitive côté API).
+  async function removeStep() {
+    const target = removingStep;
+    if (!target || stepPendingId) {
+      return;
+    }
+    const { entry, step } = target;
     setStepPendingId(entry.id);
     setErrorMessage(null);
     try {
@@ -509,6 +519,7 @@ export default function ScholarshipsPage() {
       );
     } finally {
       setStepPendingId(null);
+      setRemovingStep(null);
     }
   }
 
@@ -551,7 +562,7 @@ export default function ScholarshipsPage() {
               size="sm"
               variant="dangerOutline"
               disabled={busy}
-              onClick={() => removeStep(entry, step)}
+              onClick={() => setRemovingStep({ entry, step })}
             >
               {t('scholarships.removeStepCta')}
             </Button>
@@ -962,6 +973,14 @@ export default function ScholarshipsPage() {
         onClose={() => setPreview(null)}
         focusScholarshipId={preview?.focusId}
         focusName={preview?.focusName}
+      />
+      <RemoveStepDialog
+        target={removingStep}
+        // Une opération d'étape en cours (même sur une autre bourse) bloque le
+        // retrait : le dialogue l'affiche au lieu d'ignorer le clic en silence.
+        loading={removingStep !== null && stepPendingId !== null}
+        onConfirm={() => void removeStep()}
+        onCancel={() => setRemovingStep(null)}
       />
     </DashboardShell>
   );
