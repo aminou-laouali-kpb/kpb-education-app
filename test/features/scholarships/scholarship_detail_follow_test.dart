@@ -197,6 +197,37 @@ void main() {
   });
 
   testWidgets(
+      '« Réessayer » après la fermeture de la fiche : aucune relance sur un '
+      'State démonté', (tester) async {
+    // Audit du 22/11/2026, n° 36 : le bandeau survit à l'écran ; son action
+    // relançait `_setNotifyOpening`, dont le setState levait après dispose.
+    final scholarship = LiveScholarshipModel.fromJson(_json(
+      follow: <String, dynamic>{'following': true, 'notifyOpening': true},
+    ));
+    final mock = await _pump(tester, scholarship, saved: true);
+    when(() => mock.updateScholarshipOpeningAlert(
+          any(),
+          notifyOpening: any(named: 'notifyOpening'),
+        )).thenThrow(DioException(
+      requestOptions: RequestOptions(path: '/me/scholarship-alerts/chevening'),
+      type: DioExceptionType.connectionError,
+    ));
+    await tester.tap(notify);
+    await tester.pumpAndSettle();
+
+    final retry = tester.widget<SnackBarAction>(find.byType(SnackBarAction));
+    await tester.pumpWidget(const SizedBox.shrink());
+    retry.onPressed();
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    verify(() => mock.updateScholarshipOpeningAlert(
+          'chevening',
+          notifyOpening: false,
+        )).called(1);
+  });
+
+  testWidgets(
       'PATCH en échec réseau : l\'interrupteur revient, KpbToast d\'erreur '
       'avec « Réessayer »', (tester) async {
     final scholarship = LiveScholarshipModel.fromJson(_json(

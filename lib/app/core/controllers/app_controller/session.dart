@@ -496,6 +496,12 @@ mixin _SessionMixin on _AppControllerBase {
       // Session/cache cleanup remains awaited below before the Future
       // completes.
       _resetUserState();
+      // Effacer AVANT de réécrire l'état anonyme : `clear` emporte aussi la
+      // copie d'un instantané illisible (profil, dossiers en clair) que la
+      // simple réécriture laissait au compte suivant (audit du 22/11/2026,
+      // n° 34). Les deux écritures partent dans cet ordre, sans attente :
+      // l'état anonyme reste observable immédiatement.
+      unawaited(_repository.clear());
       _persist();
       update();
       if (ConnectivityService.instance.isOnline) {
