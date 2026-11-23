@@ -33,6 +33,22 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LlmService } from '../ai/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrientationService } from './orientation.service';
+import { ORIENTATION_FIELDS } from './orientation-fields.data';
+
+/** Sortie bien formée du modèle : une explication par filière. */
+function validLlmOutput() {
+  return {
+    data: {
+      recommendations: ORIENTATION_FIELDS.map((field) => ({
+        fieldId: field.id,
+        explanationFr: `Explication ${field.id}.`,
+        explanationEn: `Explanation ${field.id}.`,
+      })),
+    },
+    model: 'test-model',
+    billed: true,
+  };
+}
 
 /// Ce que la projection est autorisée à contenir. La liste est CLOSE : ajouter
 /// un champ au corps de la requête ne suffit pas à le faire entrer dans
@@ -62,10 +78,7 @@ describe("l'invite d'orientation", () => {
   let completeJson: jest.Mock;
 
   beforeEach(async () => {
-    completeJson = jest.fn(async ({ fallback }) => ({
-      data: fallback,
-      model: 'test-fallback',
-    }));
+    completeJson = jest.fn(async () => validLlmOutput());
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrientationService,

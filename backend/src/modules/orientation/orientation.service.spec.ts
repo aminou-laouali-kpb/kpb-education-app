@@ -4,6 +4,22 @@ import { NotFoundException } from '@nestjs/common';
 import { LlmService } from '../ai/llm.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { OrientationService } from './orientation.service';
+import { ORIENTATION_FIELDS } from './orientation-fields.data';
+
+/** Sortie bien formée du modèle : une explication par filière. */
+function validLlmOutput() {
+  return {
+    data: {
+      recommendations: ORIENTATION_FIELDS.map((field) => ({
+        fieldId: field.id,
+        explanationFr: `Explication ${field.id}.`,
+        explanationEn: `Explanation ${field.id}.`,
+      })),
+    },
+    model: 'test-model',
+    billed: true,
+  };
+}
 
 describe('OrientationService', () => {
   let service: OrientationService;
@@ -17,10 +33,7 @@ describe('OrientationService', () => {
         {
           provide: LlmService,
           useValue: {
-            completeJson: jest.fn(async ({ fallback }) => ({
-              data: fallback,
-              model: 'test-fallback',
-            })),
+            completeJson: jest.fn(async () => validLlmOutput()),
           },
         },
         {
