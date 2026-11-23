@@ -39,25 +39,28 @@ mixin _CoachApi on _ApiClientBase {
     return data['suggestions'] as List<dynamic>? ?? const [];
   }
 
+  /// Réponse du coach en flux SSE.
+  ///
+  /// Le message part dans le CORPS d'un `POST` (audit du 22/11/2026, constat
+  /// 33) : en query string sur l'ancien `GET`, ce texte libre — où l'élève
+  /// décrit ses notes, ses finances, sa famille — finissait dans les journaux
+  /// d'accès des proxys, du CDN et de l'hébergeur. Le serveur garde le `GET`
+  /// pour les versions déjà installées ; cette version ne l'appelle plus.
+  ///
+  /// [userId] n'est pas envoyé : le serveur prend l'élève authentifié.
   Stream<Map<String, dynamic>> streamCoachReply({
     required String conversationId,
     required String userId,
     required String message,
     required Map<String, dynamic> profile,
   }) async* {
-    final response = await _dio.get<ResponseBody>(
+    final response = await _dio.post<ResponseBody>(
       '/coach/conversations/$conversationId/messages/stream',
-      queryParameters: {
-        'userId': userId,
-        'message': message,
-        // Pas de `fullName` : le serveur ne transmet jamais le nom au modèle,
-        // et une query string finit dans les journaux des proxys.
-        'currentLevel': profile['currentLevel'],
-        'targetCountryIds':
-            (profile['targetCountryIds'] as List<dynamic>?)?.join(',') ?? '',
-        'lang': profile['preferredLanguage'] ?? '',
-      },
-      options: Options(responseType: ResponseType.stream),
+      data: coachStreamRequestBody(message: message, profile: profile),
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: const {'Accept': 'text/event-stream'},
+      ),
     );
 
     final stream = response.data?.stream;
@@ -84,4 +87,30 @@ mixin _CoachApi on _ApiClientBase {
       }
     }
   }
+}
+
+/// Corps de `POST /coach/conversations/:id/messages/stream`.
+///
+/// Mêmes champs de profil que l'ancien `GET` : pas de `fullName` (le serveur
+/// ne transmet jamais le nom au modèle) ni de budget. Le serveur refuse tout
+/// champ inconnu (validation `forbidNonWhitelisted`) : n'ajouter ici qu'un
+/// champ que `StreamCoachMessageDto` déclare.
+@visibleForTesting
+Map<String, dynamic> coachStreamRequestBody({
+  required String message,
+  required Map<String, dynamic> profile,
+}) {
+  final targetCountryIds = profile['targetCountryIds'];
+  final currentLevel = profile['currentLevel'];
+  final preferredLanguage = profile['preferredLanguage'];
+  return <String, dynamic>{
+    'message': message,
+    'profile': <String, dynamic>{
+      if (currentLevel is String) 'currentLevel': currentLevel,
+      'targetCountryIds': targetCountryIds is List
+          ? targetCountryIds.whereType<String>().toList()
+          : const <String>[],
+      if (preferredLanguage is String) 'preferredLanguage': preferredLanguage,
+    },
+  };
 }

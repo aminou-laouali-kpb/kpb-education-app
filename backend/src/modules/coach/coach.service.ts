@@ -55,6 +55,20 @@ export function sanitizeCoachProfile(raw: unknown): Record<string, unknown> {
   };
 }
 
+/**
+ * Ce qu'un journal peut dire d'une erreur du coach : jamais son `message`
+ * brut. Une erreur inattendue (validation Prisma, TypeError sur une valeur)
+ * peut recopier les données en cours de traitement, donc le message libre de
+ * l'élève (audit 22/11/2026, constat 33). Seule `LlmUnavailableError`, dont
+ * les messages sont écrits par `LlmService` sans contenu de l'élève, garde
+ * son texte ; les autres ne sont décrites que par leur classe.
+ */
+export function describeCoachError(error: unknown): string {
+  if (error instanceof LlmUnavailableError) return error.message;
+  if (error instanceof Error) return error.name || 'Error';
+  return typeof error;
+}
+
 type CoachMessage = { role: CoachRole; content: string; createdAt: string };
 
 type Conversation = {
@@ -216,9 +230,7 @@ export class CoachService {
         try {
           await this.runStreamTurn(params, subscriber, abort.signal);
         } catch (error) {
-          this.logger.error(
-            `Coach stream failed: ${error instanceof Error ? error.message : String(error)}`,
-          );
+          this.logger.error(`Coach stream failed: ${describeCoachError(error)}`);
           if (!subscriber.closed) {
             subscriber.next({
               data: { type: 'error', message: 'KPB Intelligence est momentanément indisponible.' },
@@ -393,7 +405,7 @@ export class CoachService {
       subscriber.complete();
     } catch (error) {
       this.logger.error(
-        `Coach LLM stream failed: ${error instanceof Error ? error.message : String(error)}`,
+        `Coach LLM stream failed: ${describeCoachError(error)}`,
       );
       // Le modèle n'a RIEN rendu : l'élève ne perd pas un de ses 5 messages de
       // la semaine. Avant la 59, la phrase de panne était enregistrée comme une
